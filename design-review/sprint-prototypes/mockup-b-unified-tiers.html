@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Mockup B — Unified Tiers Treatment</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&family=Forum&family=Reem+Kufi:wght@400;700&family=Fustat:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ================================================
+       DESIGN TOKENS — Sacred Palette (Unified Tiers)
+       ================================================ */
+    :root {
+      /* Palette */
+      --color-bg-base: #0E0D10;
+      --color-lapis-deep: #1E3A6E;
+      --color-lapis-mid: #2A4F8A;
+      --color-lapis-light: #4A7FC1;
+      --color-ivory-bright: #F2EDE4;
+      --color-ivory-mid: #E8E0D0;
+      --color-ivory-warm: #D4D0C8;
+      --color-stone-recede: #7A7570;
+      --color-gold-warm: #C4943A;
+      --color-gold-bright: #E8B84B;
+      --color-flame-orange: #E8742A;
+      --color-flame-yellow: #F0C040;
+
+      /* Typography */
+      --font-arabic-display: 'Reem Kufi', 'Amiri', serif;
+      --font-arabic-body: 'Amiri', serif;
+      --font-arabic-ui: 'Tajawal', 'Fustat', sans-serif;
+      --font-latin: 'Forum', Georgia, serif;
+      --font-ui: 'Fustat', system-ui, sans-serif;
+
+      /* Font sizes — clamp-based fluid */
+      --fs-poem-title: clamp(1.5rem, 4vw, 2rem);
+      --fs-poet-name: clamp(0.85rem, 2vw, 1rem);
+      --fs-english: clamp(0.8rem, 2vw, 0.95rem);
+      --fs-wordmark: clamp(0.75rem, 2vw, 0.9rem);
+      --fs-sidebar-label: 0.65rem;
+      --fs-control-label: 0.53rem;
+
+      /* Spacing */
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --space-10: 40px;
+      --space-12: 48px;
+
+      /* Motion */
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+      --dur-hero: 0.7s;
+      --dur-content: 0.4s;
+      --dur-hover: 0.18s;
+      --dur-micro: 0.1s;
+
+      /* Elevation */
+      --shadow-card: 0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+      --shadow-sidebar: -2px 0 24px rgba(0,0,0,0.5);
+      --blur-glass: 16px;
+
+      /* Layout */
+      --sidebar-width: 52px;
+      --control-bar-height: 72px;
+    }
+
+    /* ================================================
+       RESET & BASE
+       ================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      background-color: var(--color-bg-base);
+      color: var(--color-ivory-bright);
+      font-family: var(--font-arabic-ui);
+      min-height: 100dvh;
+      min-height: 100vh;
+      overflow-x: hidden;
+      overscroll-behavior-y: contain;
+    }
+
+    /* ================================================
+       MOCKUP LABEL BANNER
+       ================================================ */
+    .mockup-label {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+      background: rgba(30, 58, 110, 0.85);
+      text-align: center;
+      padding: 4px var(--space-4);
+      font-family: var(--font-ui);
+      font-size: 0.6rem;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-ivory-mid);
+      opacity: 0.75;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    /* ================================================
+       BACKGROUND — Star Pattern + Radial Warmth
+       ================================================ */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .bg-star-pattern {
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 50% 40%, rgba(30, 24, 18, 0.5) 0%, transparent 70%);
+      background-color: var(--color-bg-base);
+    }
+
+    /* SVG 8-pointed star tile at 4% lapis-deep */
+    .bg-star-pattern::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%231E3A6E' fill-opacity='0.04'%3E%3Cpolygon points='30,5 33,22 48,15 38,28 55,30 38,32 48,45 33,38 30,55 27,38 12,45 22,32 5,30 22,28 12,15 27,22'/%3E%3C/g%3E%3C/svg%3E");
+      background-size: 60px 60px;
+    }
+
+    /* ================================================
+       APP SHELL
+       ================================================ */
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100dvh;
+      min-height: 100vh;
+      padding-top: 20px; /* account for mockup label */
+    }
+
+    /* ================================================
+       HEADER — Wordmark
+       ================================================ */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end; /* RTL: end = visual left */
+      padding: var(--space-4) var(--space-4) var(--space-3);
+      flex-shrink: 0;
+    }
+
+    /* In RTL, flex-end pushes to left visually */
+    /* We want wordmark top-left visually, so use dir override */
+    .header-inner {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+    }
+
+    .wordmark-feather {
+      width: 16px;
+      height: 16px;
+      opacity: 0.58;
+      flex-shrink: 0;
+    }
+
+    .wordmark-text {
+      font-family: var(--font-arabic-ui);
+      font-size: var(--fs-wordmark);
+      font-weight: 400;
+      color: var(--color-ivory-mid);
+      opacity: 0.58;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      direction: rtl;
+    }
+
+    .wordmark-text span {
+      font-family: var(--font-ui);
+      font-size: 0.65rem;
+      font-weight: 400;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.7;
+      margin-inline-start: var(--space-1);
+    }
+
+    /* ================================================
+       MAIN CONTENT AREA
+       ================================================ */
+    .main-area {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: var(--space-4) var(--space-4) 0;
+      gap: var(--space-3);
+      padding-inline-end: calc(var(--sidebar-width) + var(--space-3) + var(--space-4));
+    }
+
+    /* ================================================
+       POEM CARD — Ornamental Frame
+       ================================================ */
+    .poem-card {
+      flex: 1;
+      max-width: 420px;
+      position: relative;
+      padding: var(--space-6) var(--space-5);
+      animation: cardEntrance var(--dur-hero) var(--ease-out-expo) forwards;
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    @keyframes cardEntrance {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Ornamental corner dots — lapis */
+    .poem-card::before,
+    .poem-card::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-lapis-light);
+      opacity: 0.6;
+    }
+
+    .poem-card::before {
+      top: var(--space-2);
+      inset-inline-start: var(--space-2);
+      box-shadow: 0 0 8px rgba(74, 127, 193, 0.4);
+    }
+
+    .poem-card::after {
+      bottom: var(--space-2);
+      inset-inline-end: var(--space-2);
+      box-shadow: 0 0 8px rgba(74, 127, 193, 0.4);
+    }
+
+    /* Ornamental frame lines */
+    .frame-line {
+      position: absolute;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        var(--color-lapis-mid) 20%,
+        var(--color-lapis-light) 50%,
+        var(--color-lapis-mid) 80%,
+        transparent 100%
+      );
+      opacity: 0.35;
+    }
+
+    .frame-line-start {
+      top: var(--space-5);
+      bottom: var(--space-5);
+      inset-inline-start: 0;
+      width: 1.5px;
+    }
+
+    .frame-line-end {
+      top: var(--space-5);
+      bottom: var(--space-5);
+      inset-inline-end: 0;
+      width: 1.5px;
+    }
+
+    .frame-line-h {
+      inset-inline-start: var(--space-5);
+      inset-inline-end: var(--space-5);
+      height: 1.5px;
+      background: linear-gradient(
+        to right,
+        transparent 0%,
+        var(--color-lapis-mid) 20%,
+        var(--color-lapis-light) 50%,
+        var(--color-lapis-mid) 80%,
+        transparent 100%
+      );
+      opacity: 0.35;
+    }
+
+    .frame-line-top {
+      top: 0;
+    }
+
+    .frame-line-bottom {
+      bottom: 0;
+    }
+
+    /* Extra corner dots for visual richness */
+    .frame-dot {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--color-lapis-light);
+      opacity: 0.5;
+    }
+
+    .frame-dot-tl { top: var(--space-3); inset-inline-start: var(--space-3); }
+    .frame-dot-tr { top: var(--space-3); inset-inline-end: var(--space-3); }
+    .frame-dot-bl { bottom: var(--space-3); inset-inline-start: var(--space-3); }
+    .frame-dot-br { bottom: var(--space-3); inset-inline-end: var(--space-3); }
+
+    /* ................................................
+       Poem Title
+       ................................................ */
+    .poem-title {
+      font-family: var(--font-arabic-display);
+      font-size: var(--fs-poem-title);
+      font-weight: 700;
+      color: var(--color-ivory-bright);
+      line-height: 1.7;
+      text-align: center;
+      direction: rtl;
+      letter-spacing: 0.01em;
+      margin-bottom: var(--space-5);
+      animation: titleReveal calc(var(--dur-hero) * 1.1) var(--ease-out-expo) 0.1s forwards;
+      opacity: 0;
+    }
+
+    @keyframes titleReveal {
+      to { opacity: 1; }
+    }
+
+    /* ................................................
+       Divider
+       ................................................ */
+    .poem-divider {
+      width: 60%;
+      height: 1px;
+      margin: 0 auto var(--space-4);
+      background: linear-gradient(
+        to right,
+        transparent,
+        var(--color-lapis-light) 30%,
+        var(--color-lapis-light) 70%,
+        transparent
+      );
+      opacity: 0.45;
+      position: relative;
+    }
+
+    /* Central ornament on divider */
+    .poem-divider::after {
+      content: '◆';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.5rem;
+      color: var(--color-lapis-light);
+      opacity: 0.7;
+      background: var(--color-bg-base);
+      padding: 0 var(--space-1);
+    }
+
+    /* ................................................
+       Poet Attribution
+       ................................................ */
+    .poet-block {
+      text-align: center;
+      margin-bottom: var(--space-4);
+    }
+
+    .poet-name-ar {
+      font-family: var(--font-arabic-body);
+      font-size: var(--fs-poet-name);
+      font-weight: 700;
+      color: var(--color-ivory-mid);
+      opacity: 0.9;
+      direction: rtl;
+      display: block;
+      letter-spacing: 0.02em;
+    }
+
+    .poet-name-en {
+      font-family: var(--font-latin);
+      font-size: calc(var(--fs-poet-name) * 0.88);
+      font-weight: 400;
+      font-style: italic;
+      color: var(--color-ivory-warm);
+      opacity: 0.65;
+      direction: ltr;
+      display: block;
+      margin-top: var(--space-1);
+      letter-spacing: 0.03em;
+    }
+
+    /* ================================================
+       VERSE LINES — Below Card
+       ================================================ */
+    .verse-section {
+      padding: var(--space-4) var(--space-4) 0;
+      padding-inline-end: calc(var(--sidebar-width) + var(--space-3) + var(--space-4));
+      max-width: 480px;
+      animation: verseEntrance var(--dur-content) var(--ease-out-expo) 0.35s forwards;
+      opacity: 0;
+    }
+
+    @keyframes verseEntrance {
+      to { opacity: 1; }
+    }
+
+    .verse-ar {
+      font-family: var(--font-arabic-body);
+      font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+      font-weight: 400;
+      color: var(--color-ivory-mid);
+      opacity: 0.85;
+      direction: rtl;
+      line-height: 1.9;
+      text-align: center;
+      margin-bottom: var(--space-2);
+    }
+
+    .verse-en {
+      font-family: var(--font-latin);
+      font-size: var(--fs-english);
+      font-style: italic;
+      color: var(--color-ivory-warm);
+      opacity: 0.6;
+      direction: ltr;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    /* ================================================
+       SIDEBAR — Right edge (LTR end = visual right)
+       ================================================ */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      inset-inline-end: 0;
+      width: var(--sidebar-width);
+      height: 100dvh;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-1);
+      padding: var(--space-12) var(--space-2);
+      background: rgba(14, 13, 16, 0.6);
+      backdrop-filter: blur(var(--blur-glass));
+      -webkit-backdrop-filter: blur(var(--blur-glass));
+      border-inline-start: 1px solid rgba(30, 58, 110, 0.2);
+      box-shadow: var(--shadow-sidebar);
+      z-index: 100;
+    }
+
+    /* Sidebar tier separator */
+    .sidebar-sep {
+      width: 24px;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(74, 127, 193, 0.3), transparent);
+      margin: var(--space-1) 0;
+      flex-shrink: 0;
+    }
+
+    /* Sidebar button base */
+    .sidebar-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      min-width: 44px;
+      min-height: 44px;
+      padding: var(--space-2) var(--space-1);
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-radius: 8px;
+      transition:
+        background var(--dur-hover) var(--ease-out-quart),
+        transform var(--dur-micro) var(--ease-out-quart);
+      flex-shrink: 0;
+    }
+
+    .sidebar-btn:hover {
+      background: rgba(74, 127, 193, 0.08);
+      transform: scale(1.05);
+    }
+
+    .sidebar-btn:active {
+      transform: scale(0.97);
+    }
+
+    .sidebar-btn svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .sidebar-btn-label {
+      font-family: var(--font-ui);
+      font-size: var(--fs-sidebar-label);
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1;
+    }
+
+    /* Tier 1 — Copy, Share: ivory-bright 85% */
+    .sidebar-btn.tier-1 svg { color: rgba(242, 237, 228, 0.85); }
+    .sidebar-btn.tier-1 .sidebar-btn-label { color: rgba(242, 237, 228, 0.85); }
+
+    /* Tier 2 — Trans, Font, Theme: ivory-mid 60% */
+    .sidebar-btn.tier-2 svg { color: rgba(232, 224, 208, 0.6); }
+    .sidebar-btn.tier-2 .sidebar-btn-label { color: rgba(232, 224, 208, 0.6); }
+
+    /* Tier 3 — Settings, Account: stone-recede 50% */
+    .sidebar-btn.tier-3 svg { color: rgba(122, 117, 112, 0.5); }
+    .sidebar-btn.tier-3 .sidebar-btn-label { color: rgba(122, 117, 112, 0.5); }
+
+    /* ================================================
+       CONTROL BAR — Bottom
+       Unified Tiers: ALL primary = ivory-bright 60%
+                      ALL utility = stone-recede
+       ================================================ */
+    .control-bar {
+      position: fixed;
+      bottom: 0;
+      inset-inline-start: 0;
+      inset-inline-end: var(--sidebar-width);
+      height: auto;
+      min-height: var(--control-bar-height);
+      padding: var(--space-3) var(--space-4);
+      padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+      background: rgba(14, 13, 16, 0.75);
+      backdrop-filter: blur(var(--blur-glass));
+      -webkit-backdrop-filter: blur(var(--blur-glass));
+      border-top: 1px solid rgba(30, 58, 110, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      z-index: 100;
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+    }
+
+    /* Control button base */
+    .ctrl-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      min-width: 56px;
+      min-height: 44px;
+      padding: var(--space-2) var(--space-3);
+      background: none;
+      border: none;
+      cursor: pointer;
+      border-radius: 10px;
+      transition:
+        background var(--dur-hover) var(--ease-out-quart),
+        transform var(--dur-micro) var(--ease-out-quart);
+    }
+
+    .ctrl-btn:hover {
+      background: rgba(74, 127, 193, 0.08);
+      transform: scale(1.04);
+    }
+
+    .ctrl-btn:active {
+      transform: scale(0.96);
+    }
+
+    .ctrl-btn svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .ctrl-btn-label {
+      font-family: var(--font-ui);
+      font-size: var(--fs-control-label);
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: center;
+      line-height: 1;
+    }
+
+    /* PRIMARY controls — ivory-bright at 60% opacity */
+    .ctrl-btn.primary svg { color: rgba(242, 237, 228, 0.6); }
+    .ctrl-btn.primary .ctrl-btn-label { color: rgba(242, 237, 228, 0.6); }
+
+    /* Discover special: icon uses warm flame gradient but label stays unified */
+    .ctrl-btn.discover svg .flame-outer { fill: var(--color-flame-orange); }
+    .ctrl-btn.discover svg .flame-inner { fill: var(--color-flame-yellow); }
+    .ctrl-btn.discover .ctrl-btn-label { color: rgba(242, 237, 228, 0.6); }
+
+    /* UTILITY controls — stone-recede */
+    .ctrl-btn.utility svg { color: var(--color-stone-recede); }
+    .ctrl-btn.utility .ctrl-btn-label { color: var(--color-stone-recede); }
+
+    /* Thin separator between row groups */
+    .control-row-sep {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(
+        to right,
+        transparent,
+        rgba(74, 127, 193, 0.2) 30%,
+        rgba(74, 127, 193, 0.2) 70%,
+        transparent
+      );
+    }
+
+    /* ================================================
+       ACCESSIBILITY
+       ================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* ================================================
+       RESPONSIVE — wider viewports
+       ================================================ */
+    @media (min-width: 480px) {
+      .main-area {
+        justify-content: center;
+        padding-inline-start: var(--space-8);
+      }
+
+      .verse-section {
+        padding-inline-start: var(--space-8);
+      }
+
+      .poem-card {
+        max-width: 460px;
+      }
+    }
+
+    @media (min-width: 768px) {
+      :root {
+        --sidebar-width: 60px;
+        --control-bar-height: 80px;
+      }
+
+      .main-area {
+        padding: var(--space-8) var(--space-8) 0;
+        padding-inline-end: calc(var(--sidebar-width) + var(--space-6) + var(--space-8));
+        justify-content: center;
+      }
+
+      .verse-section {
+        padding: var(--space-5) var(--space-8) 0;
+        padding-inline-end: calc(var(--sidebar-width) + var(--space-6) + var(--space-8));
+        max-width: 600px;
+      }
+
+      .poem-card {
+        max-width: 520px;
+      }
+
+      .ctrl-btn {
+        min-width: 64px;
+        padding: var(--space-2) var(--space-4);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ================================================
+       MOCKUP LABEL
+       ================================================ -->
+  <div class="mockup-label" aria-hidden="true">
+    Mockup B &mdash; Unified Tiers Treatment
+  </div>
+
+  <!-- ================================================
+       BACKGROUND LAYERS
+       ================================================ -->
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-star-pattern"></div>
+  </div>
+
+  <!-- ================================================
+       APP SHELL
+       ================================================ -->
+  <div class="app-shell">
+
+    <!-- HEADER -->
+    <header class="header" dir="ltr">
+      <div class="header-inner">
+        <!-- Feather SVG -->
+        <svg class="wordmark-feather" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M20.5 4.5C18 2 13 2 10 5L3 12l1.5 1.5 2-2c0 2 .5 4 3 5.5L8 18.5l1.5 1.5 2-3c.8.2 1.6.3 2.3.3 3 0 6-2 7-6 .5-2 0-5-1-6.5z"
+            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+            fill="none" color="rgba(232,224,208,0.58)" />
+          <path d="M3 21l5-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            color="rgba(232,224,208,0.58)" />
+        </svg>
+        <div class="wordmark-text" dir="rtl">
+          بالعربي<span dir="ltr">poetry</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="main-area" dir="rtl">
+      <!-- POEM CARD -->
+      <article class="poem-card" lang="ar">
+        <!-- Ornamental Frame Lines -->
+        <div class="frame-line frame-line-start" aria-hidden="true"></div>
+        <div class="frame-line frame-line-end" aria-hidden="true"></div>
+        <div class="frame-line frame-line-h frame-line-top" aria-hidden="true"></div>
+        <div class="frame-line frame-line-h frame-line-bottom" aria-hidden="true"></div>
+
+        <!-- Corner Dots -->
+        <div class="frame-dot frame-dot-tl" aria-hidden="true"></div>
+        <div class="frame-dot frame-dot-tr" aria-hidden="true"></div>
+        <div class="frame-dot frame-dot-bl" aria-hidden="true"></div>
+        <div class="frame-dot frame-dot-br" aria-hidden="true"></div>
+
+        <!-- Poem Title Lines -->
+        <h1 class="poem-title" dir="rtl" lang="ar">
+          قِفَا نَبْكِ مِنْ ذِكْرَى حَبِيبٍ<br>وَمَنْزِلِ
+        </h1>
+
+        <!-- Lapis Divider -->
+        <div class="poem-divider" aria-hidden="true"></div>
+
+        <!-- Poet Attribution -->
+        <div class="poet-block">
+          <span class="poet-name-ar" dir="rtl" lang="ar">امرؤ القيس</span>
+          <span class="poet-name-en" dir="ltr" lang="en">Imru&#x02BC; al-Qais</span>
+        </div>
+      </article>
+    </main>
+
+    <!-- VERSE SECTION -->
+    <section class="verse-section" dir="rtl" aria-label="Verse translation">
+      <p class="verse-ar" dir="rtl" lang="ar">
+        بِسِقْطِ اللِّوَى بَيْنَ الدَّخُولِ فَحَوْمَلِ
+      </p>
+      <p class="verse-en" dir="ltr" lang="en">
+        At the edge of the curved sand-dune, between al-Dakhul and Hawmal
+      </p>
+    </section>
+
+  </div><!-- /.app-shell -->
+
+  <!-- ================================================
+       SIDEBAR
+       ================================================ -->
+  <nav class="sidebar" aria-label="Poem actions" dir="ltr">
+    <!-- Tier 1: Copy -->
+    <button class="sidebar-btn tier-1" aria-label="Copy poem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      </svg>
+      <span class="sidebar-btn-label">Copy</span>
+    </button>
+
+    <!-- Tier 1: Share -->
+    <button class="sidebar-btn tier-1" aria-label="Share poem">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="18" cy="5" r="3"/>
+        <circle cx="6" cy="12" r="3"/>
+        <circle cx="18" cy="19" r="3"/>
+        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+      </svg>
+      <span class="sidebar-btn-label">Share</span>
+    </button>
+
+    <!-- Separator Tier 1→2 -->
+    <div class="sidebar-sep" aria-hidden="true"></div>
+
+    <!-- Tier 2: Translation -->
+    <button class="sidebar-btn tier-2" aria-label="Toggle translation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 8l6 6"/>
+        <path d="M4 14l6-6 2-3"/>
+        <path d="M2 5h12"/>
+        <path d="M7 2h1"/>
+        <path d="M22 22l-5-10-5 10"/>
+        <path d="M14 18h6"/>
+      </svg>
+      <span class="sidebar-btn-label">Trans</span>
+    </button>
+
+    <!-- Tier 2: Font -->
+    <button class="sidebar-btn tier-2" aria-label="Change font">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="4 7 4 4 20 4 20 7"/>
+        <line x1="9" y1="20" x2="15" y2="20"/>
+        <line x1="12" y1="4" x2="12" y2="20"/>
+      </svg>
+      <span class="sidebar-btn-label">Font</span>
+    </button>
+
+    <!-- Tier 2: Theme -->
+    <button class="sidebar-btn tier-2" aria-label="Change theme">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1" x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1" y1="12" x2="3" y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+      </svg>
+      <span class="sidebar-btn-label">Theme</span>
+    </button>
+
+    <!-- Separator Tier 2→3 -->
+    <div class="sidebar-sep" aria-hidden="true"></div>
+
+    <!-- Tier 3: Settings -->
+    <button class="sidebar-btn tier-3" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+      </svg>
+      <span class="sidebar-btn-label">Set</span>
+    </button>
+
+    <!-- Tier 3: Account -->
+    <button class="sidebar-btn tier-3" aria-label="Account">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span class="sidebar-btn-label">Acct</span>
+    </button>
+  </nav>
+
+  <!-- ================================================
+       CONTROL BAR
+       Unified Tiers: primary = ivory-bright@60%, utility = stone-recede
+       ================================================ -->
+  <footer class="control-bar" dir="ltr" aria-label="Poem controls">
+    <!-- Primary Row: Listen, Discover, Explain -->
+    <div class="control-row">
+
+      <!-- Listen -->
+      <button class="ctrl-btn primary" aria-label="Listen to poem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+        <span class="ctrl-btn-label">Listen</span>
+      </button>
+
+      <!-- Discover — flame shape carries visual distinction, label unified -->
+      <button class="ctrl-btn discover primary" aria-label="Discover poem">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <!-- Outer flame -->
+          <path class="flame-outer"
+            d="M12 2C9 5 7 7 7 11c0 2.5 1.2 4.5 3 5.7C9.5 15 9 13.5 9 12c0-2 1-3.5 2-4.5.5 2 1.5 3 3 3.5-1 1-1.5 2.5-1.5 4 0 1 .3 2 .8 2.8A5 5 0 0 0 17 13c0-4-2-7.5-5-11z"
+            fill="rgba(232,116,42,0.9)"/>
+          <!-- Inner flame -->
+          <path class="flame-inner"
+            d="M12 10c-.5 1-1 2-1 3.5 0 1.4.8 2.5 2 3 0-1 .5-2 1.2-2.5-.8-1-1.5-2.5-2.2-4z"
+            fill="rgba(240,192,64,0.9)"/>
+        </svg>
+        <span class="ctrl-btn-label">Discover</span>
+      </button>
+
+      <!-- Explain -->
+      <button class="ctrl-btn primary" aria-label="Explain poem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span class="ctrl-btn-label">Explain</span>
+      </button>
+
+    </div>
+
+    <!-- Separator -->
+    <div class="control-row-sep" aria-hidden="true"></div>
+
+    <!-- Utility Row: Save, Flag -->
+    <div class="control-row">
+
+      <!-- Save -->
+      <button class="ctrl-btn utility" aria-label="Save poem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+        </svg>
+        <span class="ctrl-btn-label">Save</span>
+      </button>
+
+      <!-- Flag -->
+      <button class="ctrl-btn utility" aria-label="Flag poem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/>
+          <line x1="4" y1="22" x2="4" y2="15"/>
+        </svg>
+        <span class="ctrl-btn-label">Flag</span>
+      </button>
+
+    </div>
+  </footer>
+
+</body>
+</html>

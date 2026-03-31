@@ -1279,12 +1279,17 @@ export default function DiwanApp() {
                       currentIndex={carouselIndex}
                       onSlideChange={(idx) => {
                         setCarouselIndex(idx);
-                        // Pause audio when browsing via carousel
-                        const player = useAudioStore.getState().player;
-                        if (player && player.state === 'started') {
-                          player.stop();
+                        // Pause audio when browsing via carousel and clear the stale URL
+                        // so the next play request generates audio for the new poem instead
+                        // of resuming the previous poem's cached blob URL.
+                        const { player: activePlayer, resetAudio } = useAudioStore.getState();
+                        if (activePlayer && activePlayer.state === 'started') {
+                          activePlayer.stop();
                         }
-                        setIsPlaying(false);
+                        // Revoke the blob URL before clearing so the browser can free the
+                        // underlying audio buffer (prevents memory leaks during long sessions).
+                        if (audioUrl) URL.revokeObjectURL(audioUrl);
+                        resetAudio();
                         // Clear stale interpretation from the previous poem so versePairs
                         // doesn't flash the old translation while the new one loads.
                         setInterpretation(null);

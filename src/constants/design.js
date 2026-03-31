@@ -15,6 +15,7 @@ export const DESIGN = {
   glass: 'backdrop-blur-3xl backdrop-saturate-150',
   radius: 'rounded-2xl',
   anim: 'transition-all duration-300 ease-in-out',
+  animColors: 'transition-colors duration-300 ease-in-out',
   buttonHover: 'hover:scale-105 hover:shadow-lg transition-all duration-300',
   touchTarget: 'min-w-[44px] min-h-[44px]',
 };

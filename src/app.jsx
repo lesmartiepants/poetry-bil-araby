@@ -1242,6 +1242,10 @@ export default function DiwanApp() {
                           player.stop();
                         }
                         setIsPlaying(false);
+                        // Clear the stored audio URL so the next play loads audio for the
+                        // newly displayed poem rather than resuming the previous poem's audio.
+                        if (audioUrl) URL.revokeObjectURL(audioUrl);
+                        setAudioUrl(null);
                         // Clear stale interpretation from the previous poem so versePairs
                         // doesn't flash the old translation while the new one loads.
                         setInterpretation(null);

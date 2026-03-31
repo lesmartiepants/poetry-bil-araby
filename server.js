@@ -88,6 +88,26 @@ async function checkDiacritizedColumn() {
   }
 }
 
+// Check if verse_count column exists (graceful pre-migration fallback)
+// When present, servingFilters() uses an indexed integer comparison instead of the
+// expensive per-row array_length(string_to_array(...)) expression, which was causing
+// query timeouts on Supabase's 5s connection pooler limit.
+let hasVerseCount = false;
+async function checkVerseCountColumn() {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'poems' AND column_name = 'verse_count' LIMIT 1"
+    );
+    hasVerseCount = result.rows.length > 0;
+    log.info(
+      'DB',
+      `Verse count column: ${hasVerseCount ? 'available (fast filter)' : 'not found (verse filter skipped until migration runs)'}`
+    );
+  } catch {
+    hasVerseCount = false;
+  }
+}
+
 // Check if quality_score column exists (graceful pre-migration fallback)
 let hasQualityScore = false;
 async function checkQualityScoreColumn() {
@@ -203,9 +223,13 @@ function servingFilters() {
     clauses.push(`p.quality_score >= ${SERVING.minQualityScore}`);
   }
   if (SERVING.maxVerseLines) {
-    clauses.push(
-      `array_length(string_to_array(${poemContentExpr()}, '*'), 1) <= ${SERVING.maxVerseLines}`
-    );
+    if (hasVerseCount) {
+      // Fast path: indexed integer comparison (requires verse_count migration)
+      clauses.push(`p.verse_count <= ${SERVING.maxVerseLines}`);
+    }
+    // When verse_count column is absent, skip the filter rather than using the
+    // expensive array_length(string_to_array(...)) expression that causes query
+    // timeouts on Supabase's 5s connection pooler limit.
   }
   return clauses.length ? 'AND ' + clauses.join(' AND ') : '';
 }
@@ -224,6 +248,7 @@ pool.query('SELECT NOW()', (err, res) => {
   } else {
     log.info('DB', `Connected to PostgreSQL at ${res.rows[0].now}`);
     checkDiacritizedColumn();
+    checkVerseCountColumn();
     checkQualityScoreColumn();
     checkTranslationColumns();
     checkPoetNameEnColumn();

@@ -1246,6 +1246,12 @@ export default function DiwanApp() {
                         // newly displayed poem rather than resuming the previous poem's audio.
                         if (audioUrl) URL.revokeObjectURL(audioUrl);
                         setAudioUrl(null);
+                        // Also clear any audio generation state from the previous poem so the
+                        // new slide doesn't show stale "generating" spinners or errors.
+                        // Note: the [current?.id] cleanup effect does NOT fire on carousel
+                        // navigation since currentPoem() is independent of carouselIndex.
+                        setIsGeneratingAudio(false);
+                        setAudioError(null);
                         // Clear stale interpretation from the previous poem so versePairs
                         // doesn't flash the old translation while the new one loads.
                         setInterpretation(null);

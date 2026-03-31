@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Mockup A — Full Semantic Treatment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&family=Forum&family=Reem+Kufi:wght@400;700&family=Fustat:wght@400;500;700&family=Bodoni+Moda:ital,wght@1,400;1,700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       DESIGN TOKENS — Sacred Palette, Full Semantic Treatment
+       ============================================================ */
+    :root {
+      /* Palette — Background */
+      --color-base:              #0E0D10;
+      --color-base-warm:         rgba(30, 24, 18, 0.5);
+      --color-lapis-deep:        #1E3A6E;
+      --color-lapis-mid:         #2E5090;
+      --color-lapis-border:      rgba(30, 58, 110, 0.3);
+      --color-lapis-divider:     rgba(30, 58, 110, 0.2);
+      --color-lapis-frame:       rgba(30, 58, 110, 0.2);
+      --color-lapis-frame-dot:   rgba(46, 80, 144, 0.25);
+      --color-lapis-star-fill:   rgba(30, 58, 110, 0.04);
+
+      /* Palette — Text */
+      --color-ivory-bright:      #F2EDE4;
+      --color-ivory:             #E8E0D0;
+      --color-ivory-latin:       #D4D0C8;
+      --color-stone-200:         #e7e5e4;
+      --color-stone-recede:      #7A7570;
+
+      /* Palette — Sidebar glass */
+      --color-sidebar-bg:        rgba(0, 0, 0, 0.65);
+
+      /* Palette — Control bar actions */
+      --color-amber:             #D4A24C;
+      --color-terracotta:        #C47A5A;
+      --color-sage:              #8FA87A;
+
+      /* Typography */
+      --font-arabic-display:     'Reem Kufi', 'Tajawal', sans-serif;
+      --font-arabic-verse:       'Amiri', serif;
+      --font-arabic-ui:          'Fustat', 'Tajawal', sans-serif;
+      --font-latin-italic:       'Bodoni Moda', 'Forum', Georgia, serif;
+      --font-latin-ui:           'Forum', Georgia, serif;
+
+      --font-size-verse-ar:      clamp(1.1rem, 4vw, 1.375rem);
+      --font-size-verse-en:      clamp(0.8rem, 2.8vw, 0.9375rem);
+      --font-size-title-ar:      clamp(1.25rem, 5vw, 1.75rem);
+      --font-size-poet-ar:       clamp(0.875rem, 3vw, 1rem);
+      --font-size-poet-en:       clamp(0.75rem, 2.5vw, 0.875rem);
+      --font-size-label:         0.53125rem; /* 8.5px */
+      --font-size-wordmark:      0.75rem;
+
+      --line-height-verse:       2.2;
+      --line-height-title:       1.5;
+      --letter-spacing-label:    0.08em;
+
+      /* Spacing */
+      --space-1:  4px;
+      --space-2:  8px;
+      --space-3:  12px;
+      --space-4:  16px;
+      --space-5:  20px;
+      --space-6:  24px;
+      --space-8:  32px;
+      --space-10: 40px;
+      --space-12: 48px;
+      --space-16: 64px;
+
+      /* Layout */
+      --sidebar-width:           52px;
+      --control-bar-height:      72px;
+      --header-height:           48px;
+      --frame-padding:           var(--space-6);
+      --content-max-width:       640px;
+      --touch-target:            44px;
+
+      /* Elevation */
+      --shadow-card:             0 4px 32px rgba(0,0,0,0.6), 0 1px 8px rgba(0,0,0,0.4);
+      --shadow-sidebar:          -2px 0 24px rgba(0,0,0,0.5);
+      --blur-glass:              blur(12px) saturate(1.2);
+
+      /* Motion */
+      --ease-out-expo:           cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quart:          cubic-bezier(.4, 0, .2, 1);
+      --duration-entrance:       0.7s;
+      --duration-section:        0.45s;
+      --duration-content:        0.35s;
+      --duration-hover:          0.15s;
+    }
+
+    /* ============================================================
+       RESET & BASE
+       ============================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+
+    body {
+      background-color: var(--color-base);
+      color: var(--color-stone-200);
+      font-family: var(--font-arabic-ui);
+      min-height: 100dvh;
+      overflow-x: hidden;
+      overscroll-behavior-y: contain;
+      position: relative;
+    }
+
+    /* ============================================================
+       MOCKUP LABEL BANNER
+       ============================================================ */
+    .mockup-label {
+      position: fixed;
+      top: 0;
+      inset-inline-start: 0;
+      inset-inline-end: 0;
+      z-index: 9999;
+      background: rgba(14, 13, 16, 0.92);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      padding: 6px var(--space-4);
+      text-align: center;
+      font-family: 'Forum', Georgia, serif;
+      font-size: 0.6875rem;
+      color: var(--color-stone-recede);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* ============================================================
+       STAR PATTERN BACKGROUND
+       ============================================================ */
+    .bg-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .bg-star-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Crect x='5' y='5' width='30' height='30' fill='%231E3A6E' opacity='0.04' rx='2'/%3E%3Crect x='5' y='5' width='30' height='30' fill='%231E3A6E' opacity='0.04' rx='2' transform='rotate(45 20 20)'/%3E%3C/svg%3E");
+      background-size: 40px 40px;
+    }
+
+    .bg-radial-warmth {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, rgba(30, 24, 18, 0.5) 0%, transparent 70%);
+    }
+
+    /* ============================================================
+       LAYOUT SHELL
+       ============================================================ */
+    .app-shell {
+      position: relative;
+      z-index: 1;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      padding-top: 28px; /* space for mockup label */
+    }
+
+    /* ============================================================
+       HEADER
+       ============================================================ */
+    .header {
+      position: fixed;
+      top: 28px; /* below mockup label */
+      inset-inline-start: 0;
+      inset-inline-end: var(--sidebar-width);
+      height: var(--header-height);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      padding-inline-start: var(--space-4);
+    }
+
+    .wordmark {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      opacity: 0.58;
+      text-decoration: none;
+    }
+
+    .wordmark-feather {
+      width: 18px;
+      height: 18px;
+      color: var(--color-ivory);
+    }
+
+    .wordmark-arabic {
+      font-family: var(--font-arabic-ui);
+      font-size: var(--font-size-wordmark);
+      font-weight: 500;
+      color: var(--color-ivory);
+      letter-spacing: 0.02em;
+    }
+
+    .wordmark-latin {
+      font-family: var(--font-latin-ui);
+      font-size: var(--font-size-wordmark);
+      color: var(--color-ivory-latin);
+      letter-spacing: 0.04em;
+    }
+
+    /* ============================================================
+       SIDEBAR (right edge, vertical)
+       ============================================================ */
+    .sidebar {
+      position: fixed;
+      top: 28px; /* below mockup label */
+      inset-inline-end: 0;
+      bottom: 0;
+      width: var(--sidebar-width);
+      z-index: 200;
+      background: var(--color-sidebar-bg);
+      backdrop-filter: var(--blur-glass);
+      -webkit-backdrop-filter: var(--blur-glass);
+      border-inline-start: 1px solid var(--color-lapis-border);
+      box-shadow: var(--shadow-sidebar);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: var(--space-4);
+      padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+      gap: 0;
+    }
+
+    .sidebar-tier {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      gap: 2px;
+    }
+
+    .sidebar-divider {
+      width: 24px;
+      height: 1px;
+      background: var(--color-lapis-divider);
+      margin: var(--space-2) auto;
+      border: none;
+    }
+
+    .sidebar-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: var(--touch-target);
+      padding: var(--space-1) 0;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      gap: 3px;
+      position: relative;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* Expand tap area */
+    .sidebar-btn::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+    }
+
+    .sidebar-btn .btn-icon {
+      font-size: 1rem;
+      line-height: 1;
+      transition: opacity var(--duration-hover) var(--ease-out-quart),
+                  transform var(--duration-hover) var(--ease-out-quart);
+    }
+
+    .sidebar-btn .btn-label {
+      font-family: var(--font-latin-ui);
+      font-size: 0.5rem;
+      letter-spacing: var(--letter-spacing-label);
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    /* Tier 1: Primary actions */
+    .sidebar-tier-1 .sidebar-btn .btn-icon,
+    .sidebar-tier-1 .sidebar-btn .btn-label {
+      color: var(--color-ivory-bright);
+      opacity: 0.85;
+    }
+
+    /* Tier 2: Display controls */
+    .sidebar-tier-2 .sidebar-btn .btn-icon,
+    .sidebar-tier-2 .sidebar-btn .btn-label {
+      color: var(--color-ivory);
+      opacity: 0.60;
+    }
+
+    /* Tier 3: System */
+    .sidebar-tier-3 .sidebar-btn .btn-icon,
+    .sidebar-tier-3 .sidebar-btn .btn-label {
+      color: var(--color-stone-recede);
+      opacity: 0.50;
+    }
+
+    /* ============================================================
+       MAIN CONTENT AREA
+       ============================================================ */
+    .main {
+      margin-inline-end: var(--sidebar-width);
+      margin-top: calc(var(--header-height) + 28px);
+      padding-bottom: calc(var(--control-bar-height) + var(--space-6) + env(safe-area-inset-bottom, 0px));
+      padding-inline: var(--space-4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-8);
+      min-height: calc(100dvh - var(--header-height) - 28px);
+    }
+
+    /* ============================================================
+       POEM CARD WITH ORNAMENTAL FRAME
+       ============================================================ */
+    .poem-card {
+      position: relative;
+      width: 100%;
+      max-width: var(--content-max-width);
+      padding: var(--frame-padding);
+      background: rgba(14, 13, 16, 0.4);
+      border-radius: 4px;
+      box-shadow: var(--shadow-card);
+      margin-top: var(--space-4);
+    }
+
+    /* Ornamental corner frame — SVG corners */
+    .poem-card::before,
+    .poem-card::after {
+      content: '';
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      pointer-events: none;
+    }
+
+    /* Top-right and bottom-left corners (RTL aware) */
+    .poem-card::before {
+      top: 8px;
+      inset-inline-end: 8px;
+      border-top: 1.5px solid var(--color-lapis-frame);
+      border-inline-end: 1.5px solid var(--color-lapis-frame);
+    }
+
+    .poem-card::after {
+      bottom: 8px;
+      inset-inline-start: 8px;
+      border-bottom: 1.5px solid var(--color-lapis-frame);
+      border-inline-start: 1.5px solid var(--color-lapis-frame);
+    }
+
+    /* Additional corners via wrapper elements */
+    .poem-card-frame {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .poem-card-frame::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      inset-inline-start: 8px;
+      width: 32px;
+      height: 32px;
+      border-top: 1.5px solid var(--color-lapis-frame);
+      border-inline-start: 1.5px solid var(--color-lapis-frame);
+    }
+
+    .poem-card-frame::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      inset-inline-end: 8px;
+      width: 32px;
+      height: 32px;
+      border-bottom: 1.5px solid var(--color-lapis-frame);
+      border-inline-end: 1.5px solid var(--color-lapis-frame);
+    }
+
+    /* Corner dots */
+    .corner-dot {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--color-lapis-frame-dot);
+    }
+
+    .corner-dot--tl { top: 6px; inset-inline-start: 6px; }
+    .corner-dot--tr { top: 6px; inset-inline-end: 6px; }
+    .corner-dot--bl { bottom: 6px; inset-inline-start: 6px; }
+    .corner-dot--br { bottom: 6px; inset-inline-end: 6px; }
+
+    /* Card content */
+    .poem-title {
+      font-family: var(--font-arabic-display);
+      font-size: var(--font-size-title-ar);
+      font-weight: 700;
+      color: var(--color-ivory-bright);
+      line-height: var(--line-height-title);
+      text-align: center;
+      direction: rtl;
+      margin-bottom: var(--space-4);
+    }
+
+    .poem-card-divider {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(to right, transparent, rgba(30, 58, 110, 0.25), transparent);
+      border: none;
+      margin-block: var(--space-3);
+    }
+
+    .poem-poet-ar {
+      font-family: var(--font-arabic-ui);
+      font-size: var(--font-size-poet-ar);
+      color: var(--color-ivory);
+      opacity: 0.70;
+      text-align: center;
+      direction: rtl;
+      margin-bottom: var(--space-1);
+    }
+
+    .poem-poet-en {
+      font-family: var(--font-latin-italic);
+      font-size: var(--font-size-poet-en);
+      font-style: italic;
+      color: var(--color-ivory-latin);
+      text-align: center;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    /* ============================================================
+       VERSE DISPLAY
+       ============================================================ */
+    .verse-section {
+      width: 100%;
+      max-width: var(--content-max-width);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    .verse-pair {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .verse-arabic {
+      font-family: var(--font-arabic-verse);
+      font-size: var(--font-size-verse-ar);
+      color: var(--color-stone-200);
+      line-height: var(--line-height-verse);
+      direction: rtl;
+      text-align: center;
+    }
+
+    .verse-english {
+      font-family: var(--font-latin-italic);
+      font-size: var(--font-size-verse-en);
+      font-style: italic;
+      color: rgba(231, 229, 228, 0.40);
+      line-height: 1.7;
+      direction: ltr;
+      text-align: center;
+      unicode-bidi: isolate;
+    }
+
+    /* ============================================================
+       CONTROL BAR (bottom, horizontal)
+       ============================================================ */
+    .control-bar {
+      position: fixed;
+      bottom: 0;
+      inset-inline-start: 0;
+      inset-inline-end: var(--sidebar-width);
+      z-index: 150;
+      background: rgba(14, 13, 16, 0.75);
+      backdrop-filter: var(--blur-glass);
+      -webkit-backdrop-filter: var(--blur-glass);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom, 0px));
+      padding-top: var(--space-3);
+      padding-inline: var(--space-2);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: var(--space-1);
+    }
+
+    .control-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      min-height: var(--touch-target);
+      min-width: var(--touch-target);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      gap: 4px;
+      -webkit-tap-highlight-color: transparent;
+      position: relative;
+    }
+
+    .control-btn::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+    }
+
+    .control-btn .btn-icon {
+      font-size: 1.125rem;
+      line-height: 1;
+    }
+
+    .control-btn .btn-label {
+      font-family: var(--font-latin-ui);
+      font-size: var(--font-size-label);
+      letter-spacing: var(--letter-spacing-label);
+      text-transform: uppercase;
+      line-height: 1;
+    }
+
+    /* Action-specific colors */
+    .control-btn--listen .btn-icon,
+    .control-btn--listen .btn-label { color: var(--color-amber); }
+
+    .control-btn--discover .btn-icon,
+    .control-btn--discover .btn-label { color: var(--color-terracotta); }
+
+    .control-btn--explain .btn-icon,
+    .control-btn--explain .btn-label { color: var(--color-sage); }
+
+    .control-btn--save .btn-icon,
+    .control-btn--save .btn-label { color: var(--color-stone-recede); }
+
+    .control-btn--flag .btn-icon,
+    .control-btn--flag .btn-label {
+      color: var(--color-stone-recede);
+      opacity: 0.70;
+    }
+
+    /* ============================================================
+       REDUCED MOTION SUPPORT
+       ============================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* ============================================================
+       RESPONSIVE ENHANCEMENTS
+       ============================================================ */
+    @media (min-width: 414px) {
+      .poem-title {
+        font-size: clamp(1.375rem, 5vw, 1.875rem);
+      }
+    }
+
+    @media (min-width: 768px) {
+      :root {
+        --sidebar-width: 60px;
+        --control-bar-height: 80px;
+      }
+
+      .main {
+        padding-inline: var(--space-8);
+      }
+
+      .poem-card {
+        padding: var(--space-8);
+      }
+
+      .sidebar-btn .btn-label {
+        font-size: 0.5625rem;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .main {
+        padding-inline: var(--space-12);
+        padding-top: var(--space-6);
+      }
+    }
+
+    /* ============================================================
+       SVG ICON HELPERS (inline icons via mask)
+       ============================================================ */
+    .icon-svg {
+      display: inline-block;
+      width: 1em;
+      height: 1em;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mockup identification banner -->
+  <div class="mockup-label" aria-hidden="true">Mockup A — Full Semantic Treatment</div>
+
+  <!-- Background layers -->
+  <div class="bg-layer" aria-hidden="true">
+    <div class="bg-star-pattern"></div>
+    <div class="bg-radial-warmth"></div>
+  </div>
+
+  <!-- App shell -->
+  <div class="app-shell">
+
+    <!-- HEADER -->
+    <header class="header" role="banner">
+      <a href="#" class="wordmark" aria-label="Poetry Bil-Araby">
+        <!-- Feather icon (SVG inline) -->
+        <svg class="wordmark-feather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/>
+          <line x1="16" y1="8" x2="2" y2="22"/>
+          <line x1="17.5" y1="15" x2="9" y2="15"/>
+        </svg>
+        <span class="wordmark-arabic" dir="rtl" lang="ar">بالعربي</span>
+        <span class="wordmark-latin" dir="ltr" lang="en">poetry</span>
+      </a>
+    </header>
+
+    <!-- SIDEBAR (right edge) -->
+    <aside class="sidebar" role="complementary" aria-label="Controls">
+
+      <!-- Tier 1: Primary actions -->
+      <div class="sidebar-tier sidebar-tier-1" role="group" aria-label="Primary actions">
+        <button class="sidebar-btn" aria-label="Copy poem" type="button">
+          <span class="btn-icon" aria-hidden="true">≡</span>
+          <span class="btn-label">Copy</span>
+        </button>
+        <button class="sidebar-btn" aria-label="Share poem" type="button">
+          <span class="btn-icon" aria-hidden="true">↗</span>
+          <span class="btn-label">Share</span>
+        </button>
+      </div>
+
+      <hr class="sidebar-divider" aria-hidden="true">
+
+      <!-- Tier 2: Display controls -->
+      <div class="sidebar-tier sidebar-tier-2" role="group" aria-label="Display controls">
+        <button class="sidebar-btn" aria-label="Toggle language" type="button">
+          <span class="btn-icon" aria-hidden="true">ع|A</span>
+          <span class="btn-label">Trans</span>
+        </button>
+        <button class="sidebar-btn" aria-label="Font size" type="button">
+          <span class="btn-icon" aria-hidden="true">Aa</span>
+          <span class="btn-label">Font</span>
+        </button>
+        <button class="sidebar-btn" aria-label="Toggle theme" type="button">
+          <span class="btn-icon" aria-hidden="true">☀</span>
+          <span class="btn-label">Theme</span>
+        </button>
+      </div>
+
+      <hr class="sidebar-divider" aria-hidden="true">
+
+      <!-- Tier 3: System -->
+      <div class="sidebar-tier sidebar-tier-3" role="group" aria-label="System">
+        <button class="sidebar-btn" aria-label="Settings" type="button">
+          <span class="btn-icon" aria-hidden="true">⚙</span>
+          <span class="btn-label">Set</span>
+        </button>
+        <button class="sidebar-btn" aria-label="Account" type="button">
+          <span class="btn-icon" aria-hidden="true">👤</span>
+          <span class="btn-label">Acct</span>
+        </button>
+      </div>
+
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main" id="main-content">
+
+      <!-- POEM CARD with Ornamental Frame -->
+      <article class="poem-card" lang="ar" dir="rtl" aria-label="Poem card">
+        <!-- Frame decorations -->
+        <div class="poem-card-frame" aria-hidden="true"></div>
+        <span class="corner-dot corner-dot--tl" aria-hidden="true"></span>
+        <span class="corner-dot corner-dot--tr" aria-hidden="true"></span>
+        <span class="corner-dot corner-dot--bl" aria-hidden="true"></span>
+        <span class="corner-dot corner-dot--br" aria-hidden="true"></span>
+
+        <!-- Title: opening verse excerpt -->
+        <h1 class="poem-title" dir="rtl" lang="ar">
+          قِفَا نَبْكِ مِنْ ذِكْرَى حَبِيبٍ وَمَنْزِلِ
+        </h1>
+
+        <hr class="poem-card-divider" aria-hidden="true">
+
+        <!-- Poet attribution -->
+        <p class="poem-poet-ar" dir="rtl" lang="ar">امرؤ القيس</p>
+        <p class="poem-poet-en" dir="ltr" lang="en"><em>Imru' al-Qais</em></p>
+      </article>
+
+      <!-- VERSE DISPLAY -->
+      <section class="verse-section" aria-label="Poem verses">
+
+        <div class="verse-pair">
+          <p class="verse-arabic" dir="rtl" lang="ar">
+            بِسِقْطِ اللِّوَى بَيْنَ الدَّخُولِ فَحَوْمَلِ
+          </p>
+          <p class="verse-english" dir="ltr" lang="en">
+            At the edge of the curved sand-dune, between al-Dakhool and Hawmal
+          </p>
+        </div>
+
+        <div class="verse-pair">
+          <p class="verse-arabic" dir="rtl" lang="ar">
+            وَتُوضِحَ فَالْمِقْرَاةِ لَمْ يَعْفُ رَسْمُهَا
+          </p>
+          <p class="verse-english" dir="ltr" lang="en">
+            And Tawdih and al-Miqrat — the traces there have not faded
+          </p>
+        </div>
+
+        <div class="verse-pair">
+          <p class="verse-arabic" dir="rtl" lang="ar">
+            لِمَا نَسَجَتْهَا مِنْ جَنُوبٍ وَشَمْأَلِ
+          </p>
+          <p class="verse-english" dir="ltr" lang="en">
+            Though the south wind and the north have woven them into one another
+          </p>
+        </div>
+
+        <div class="verse-pair">
+          <p class="verse-arabic" dir="rtl" lang="ar">
+            تَرَى بَعَرَ الْأَرْآمِ فِي عَرَصَاتِهَا
+          </p>
+          <p class="verse-english" dir="ltr" lang="en">
+            You see the droppings of the white antelopes in its open spaces
+          </p>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- CONTROL BAR (bottom) -->
+    <nav class="control-bar" role="navigation" aria-label="Poem actions">
+
+      <button class="control-btn control-btn--listen" aria-label="Listen to poem" type="button">
+        <span class="btn-icon" aria-hidden="true">🔊</span>
+        <span class="btn-label">Listen</span>
+      </button>
+
+      <button class="control-btn control-btn--discover" aria-label="Discover new poem" type="button">
+        <span class="btn-icon" aria-hidden="true">🔥</span>
+        <span class="btn-label">Discover</span>
+      </button>
+
+      <button class="control-btn control-btn--explain" aria-label="Explain poem" type="button">
+        <span class="btn-icon" aria-hidden="true">💡</span>
+        <span class="btn-label">Explain</span>
+      </button>
+
+      <button class="control-btn control-btn--save" aria-label="Save poem" type="button">
+        <span class="btn-icon" aria-hidden="true">♡</span>
+        <span class="btn-label">Save</span>
+      </button>
+
+      <button class="control-btn control-btn--flag" aria-label="Flag poem" type="button">
+        <span class="btn-icon" aria-hidden="true">👎</span>
+        <span class="btn-label">Flag</span>
+      </button>
+
+    </nav>
+
+  </div><!-- /.app-shell -->
+
+</body>
+</html>

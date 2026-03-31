@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Islamic Art Pattern Generator</title>
+<style>
+  :root {
+    --bg: #0d0d14;
+    --gold: #c5a059;
+    --gold-dim: rgba(197,160,89,0.6);
+    --lapis: #2a5a8c;
+    --lapis-dim: rgba(42,90,140,0.5);
+    --emerald: #2d6b4a;
+    --rust: #8b4513;
+    --text: #e8dcc8;
+    --muted: rgba(240,232,216,0.5);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#111; color:#ccc; font-family:system-ui,sans-serif; }
+
+  .toolbar {
+    position:sticky; top:0; z-index:100;
+    background:rgba(17,17,17,0.95); backdrop-filter:blur(12px);
+    padding:16px 24px; border-bottom:1px solid rgba(197,160,89,0.15);
+    display:flex; gap:12px; align-items:center; flex-wrap:wrap;
+  }
+  .toolbar button {
+    background:transparent; color:var(--gold); border:1px solid rgba(197,160,89,0.3);
+    padding:8px 16px; border-radius:6px; cursor:pointer; font-size:13px;
+    transition:all 0.2s;
+  }
+  .toolbar button:hover { background:rgba(197,160,89,0.1); border-color:var(--gold); }
+  .toolbar button.active { background:rgba(197,160,89,0.15); border-color:var(--gold); }
+  .toolbar .title { font-size:15px; color:var(--gold); margin-right:auto; font-weight:600; }
+  .toolbar select {
+    background:#1a1a24; color:var(--text); border:1px solid rgba(197,160,89,0.3);
+    padding:6px 10px; border-radius:4px; font-size:13px;
+  }
+  #download-btn {
+    background:rgba(197,160,89,0.15); color:var(--gold); font-weight:600;
+  }
+
+  .canvas-wrap {
+    display:flex; align-items:center; justify-content:center;
+    min-height:calc(100vh - 60px); padding:24px;
+  }
+  canvas {
+    border:1px solid rgba(197,160,89,0.1);
+    max-width:100%; height:auto;
+  }
+  .info {
+    position:fixed; bottom:16px; left:16px; right:16px;
+    background:rgba(13,13,20,0.9); border:1px solid rgba(197,160,89,0.15);
+    padding:12px 16px; border-radius:8px; font-size:12px; color:var(--muted);
+    text-align:center; pointer-events:none;
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <span class="title">Islamic Pattern Generator</span>
+  <button onclick="draw('star-cross')" id="btn-star-cross">1. Star & Cross</button>
+  <button onclick="draw('muqarnas')" id="btn-muqarnas">2. Muqarnas</button>
+  <button onclick="draw('girih')" id="btn-girih">3. Girih</button>
+  <button onclick="draw('arabesque')" id="btn-arabesque">4. Arabesque</button>
+  <button onclick="draw('shamsa')" id="btn-shamsa">5. Shamsa</button>
+  <button onclick="draw('mashrabiya')" id="btn-mashrabiya">6. Mashrabiya</button>
+  <button onclick="draw('penrose')" id="btn-penrose">7. Penrose</button>
+  <button onclick="draw('kufic')" id="btn-kufic">8. Kufic Grid</button>
+  <button onclick="draw('hexfountain')" id="btn-hexfountain">9. Hex Fountain</button>
+  <button onclick="draw('zellige')" id="btn-zellige">10. Zellige</button>
+  <select id="size-select" onchange="redraw()">
+    <option value="1024">1024px</option>
+    <option value="1920" selected>1920px</option>
+    <option value="2560">2560px</option>
+  </select>
+  <button id="download-btn" onclick="downloadPNG()">⬇ PNG</button>
+</div>
+
+<div class="canvas-wrap">
+  <canvas id="c"></canvas>
+</div>
+<div class="info" id="info"></div>
+
+<script>
+const C = document.getElementById('c');
+const ctx = C.getContext('2d');
+let currentPattern = 'star-cross';
+
+const GOLD = '#c5a059';
+const LAPIS = '#2a5a8c';
+const BG = '#0d0d14';
+const EMERALD = '#2d6b4a';
+const RUST = '#8b4513';
+
+function getSize() { return parseInt(document.getElementById('size-select').value); }
+
+function draw(name) {
+  currentPattern = name;
+  document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('btn-' + name);
+  if (btn) btn.classList.add('active');
+  redraw();
+}
+
+function redraw() {
+  const S = getSize();
+  C.width = S; C.height = S;
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, S, S);
+  patterns[currentPattern](S);
+}
+
+function setInfo(text) { document.getElementById('info').textContent = text; }
+
+function downloadPNG() {
+  const a = document.createElement('a');
+  a.download = `islamic-${currentPattern}-${getSize()}px.png`;
+  a.href = C.toDataURL('image/png');
+  a.click();
+}
+
+// ─── HELPERS ────────────────────────────────────
+
+function strokePoly(cx, cy, r, n, rot, color, lw) {
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * Math.PI * 2 + rot;
+    const x = cx + Math.cos(a) * r;
+    const y = cy + Math.sin(a) * r;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw;
+  ctx.stroke();
+}
+
+function fillPoly(cx, cy, r, n, rot, color) {
+  ctx.beginPath();
+  for (let i = 0; i <= n; i++) {
+    const a = (i / n) * Math.PI * 2 + rot;
+    ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+  }
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function star8(cx, cy, outerR, innerR, rot) {
+  const pts = [];
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2 + rot;
+    const r = i % 2 === 0 ? outerR : innerR;
+    pts.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
+  }
+  return pts;
+}
+
+function drawStar8(cx, cy, outerR, innerR, rot, strokeColor, lw) {
+  const pts = star8(cx, cy, outerR, innerR, rot);
+  ctx.beginPath();
+  pts.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+  ctx.closePath();
+  ctx.strokeStyle = strokeColor;
+  ctx.lineWidth = lw;
+  ctx.stroke();
+}
+
+// ─── PATTERNS ───────────────────────────────────
+
+const patterns = {};
+
+// 1. STAR & CROSS
+patterns['star-cross'] = (S) => {
+  setInfo('Star & Cross (نجمة وصليب) — 8-pointed stars with cross fills. Alhambra, Isfahan.');
+  const cell = S / 12;
+  const outerR = cell * 0.42;
+  const innerR = outerR * 0.38;
+  ctx.globalAlpha = 0.12;
+
+  for (let row = -1; row < 14; row++) {
+    for (let col = -1; col < 14; col++) {
+      const cx = col * cell + cell / 2;
+      const cy = row * cell + cell / 2;
+      // 8-pointed star
+      drawStar8(cx, cy, outerR, innerR, Math.PI / 8, GOLD, S * 0.0008);
+      // Cross in between (rotated square)
+      const crossR = cell * 0.18;
+      strokePoly(cx + cell/2, cy + cell/2, crossR, 4, Math.PI/4, LAPIS, S * 0.0006);
+    }
+  }
+  // Second layer - fills
+  ctx.globalAlpha = 0.04;
+  for (let row = -1; row < 14; row++) {
+    for (let col = -1; col < 14; col++) {
+      const cx = col * cell + cell / 2;
+      const cy = row * cell + cell / 2;
+      if ((row + col) % 2 === 0) {
+        fillPoly(cx, cy, innerR * 1.2, 8, Math.PI / 8, LAPIS);
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+};
+
+// 2. MUQARNAS
+patterns['muqarnas'] = (S) => {
+  setInfo('Muqarnas (مقرنص) — Honeycomb vaulting. Overlapping diamonds create 3D depth.');
+  const scales = [
+    { cell: S / 8, color: LAPIS, alpha: 0.06 },
+    { cell: S / 14, color: GOLD, alpha: 0.08 },
+    { cell: S / 22, color: GOLD, alpha: 0.1 },
+  ];
+  scales.forEach(({ cell, color, alpha }) => {
+    ctx.globalAlpha = alpha;
+    const h = cell * 0.866;
+    for (let row = -2; row < S / h + 2; row++) {
+      for (let col = -2; col < S / cell + 2; col++) {
+        const x = col * cell + (row % 2 ? cell / 2 : 0);
+        const y = row * h;
+        strokePoly(x, y, cell * 0.45, 4, 0, color, S * 0.0005);
+      }
+    }
+  });
+  ctx.globalAlpha = 1;
+};
+
+// 3. GIRIH
+patterns['girih'] = (S) => {
+  setInfo('Girih Tiles (گره) — Persian strapwork. 5 shapes: decagon, pentagon, bowtie, rhombus, hexagon.');
+  const cell = S / 10;
+  ctx.globalAlpha = 0.1;
+  ctx.lineWidth = S * 0.0008;
+
+  for (let row = -1; row < 12; row++) {
+    for (let col = -1; col < 12; col++) {
+      const cx = col * cell + (row % 2 ? cell / 2 : 0);
+      const cy = row * cell * 0.866;
+      // Decagon
+      strokePoly(cx, cy, cell * 0.45, 10, Math.PI / 10, GOLD, S * 0.0008);
+      // Inner pentagon
+      strokePoly(cx, cy, cell * 0.25, 5, -Math.PI / 2, LAPIS, S * 0.0006);
+      // Bowtie connectors
+      const angle = Math.PI / 5;
+      for (let i = 0; i < 10; i += 2) {
+        const a1 = (i / 10) * Math.PI * 2 + Math.PI / 10;
+        const a2 = ((i + 1) / 10) * Math.PI * 2 + Math.PI / 10;
+        const ox = cx + Math.cos(a1) * cell * 0.45;
+        const oy = cy + Math.sin(a1) * cell * 0.45;
+        const ox2 = cx + Math.cos(a2) * cell * 0.45;
+        const oy2 = cy + Math.sin(a2) * cell * 0.45;
+        ctx.beginPath();
+        ctx.moveTo(ox, oy);
+        ctx.lineTo(ox2, oy2);
+        ctx.strokeStyle = GOLD;
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+};
+
+// 4. ARABESQUE
+patterns['arabesque'] = (S) => {
+  setInfo('Arabesque Scroll (توريق) — Flowing vine & palmette. All curves, no straight lines.');
+  const cell = S / 8;
+  ctx.globalAlpha = 0.1;
+  ctx.lineWidth = S * 0.001;
+  ctx.strokeStyle = GOLD;
+
+  for (let row = -1; row < 10; row++) {
+    for (let col = -1; col < 10; col++) {
+      const cx = col * cell + cell / 2;
+      const cy = row * cell + cell / 2;
+      const r = cell * 0.35;
+      // Central rosette (8 petals)
+      for (let i = 0; i < 8; i++) {
+        const a = (i / 8) * Math.PI * 2;
+        const px = cx + Math.cos(a) * r * 0.3;
+        const py = cy + Math.sin(a) * r * 0.3;
+        const ex = cx + Math.cos(a) * r;
+        const ey = cy + Math.sin(a) * r;
+        const cp1x = cx + Math.cos(a + 0.4) * r * 0.7;
+        const cp1y = cy + Math.sin(a + 0.4) * r * 0.7;
+        const cp2x = cx + Math.cos(a - 0.4) * r * 0.7;
+        const cp2y = cy + Math.sin(a - 0.4) * r * 0.7;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.quadraticCurveTo(cp1x, cp1y, ex, ey);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.quadraticCurveTo(cp2x, cp2y, ex, ey);
+        ctx.stroke();
+      }
+      // Connecting vines to adjacent cells
+      ctx.strokeStyle = LAPIS;
+      ctx.globalAlpha = 0.06;
+      for (let i = 0; i < 4; i++) {
+        const a = (i / 4) * Math.PI * 2;
+        const sx = cx + Math.cos(a) * r;
+        const sy = cy + Math.sin(a) * r;
+        const ex2 = cx + Math.cos(a) * cell * 0.5;
+        const ey2 = cy + Math.sin(a) * cell * 0.5;
+        const cpx = cx + Math.cos(a + 0.3) * cell * 0.4;
+        const cpy = cy + Math.sin(a + 0.3) * cell * 0.4;
+        ctx.beginPath();
+        ctx.moveTo(sx, sy);
+        ctx.quadraticCurveTo(cpx, cpy, ex2, ey2);
+        ctx.stroke();
+      }
+      ctx.strokeStyle = GOLD;
+      ctx.globalAlpha = 0.1;
+    }
+  }
+  ctx.globalAlpha = 1;
+};
+
+// 5. SHAMSA
+patterns['shamsa'] = (S) => {
+  setInfo('Shamsa / Rosette (شمسة) — Single radial sun medallion. Illuminated manuscript frontispiece.');
+  const cx = S / 2, cy = S / 2;
+  const maxR = S * 0.45;
+
+  // Outer rings
+  for (let ring = 0; ring < 5; ring++) {
+    const r = maxR * (1 - ring * 0.18);
+    const n = 16 + ring * 8;
+    ctx.globalAlpha = 0.04 + ring * 0.02;
+    strokePoly(cx, cy, r, n, ring * 0.05, GOLD, S * 0.0008);
+  }
+
+  // Radiating petals (16)
+  ctx.globalAlpha = 0.08;
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    const innerR = maxR * 0.15;
+    const outerR2 = maxR * 0.95;
+    const sx = cx + Math.cos(a) * innerR;
+    const sy = cy + Math.sin(a) * innerR;
+    const ex = cx + Math.cos(a) * outerR2;
+    const ey = cy + Math.sin(a) * outerR2;
+    const cp1x = cx + Math.cos(a + 0.12) * maxR * 0.55;
+    const cp1y = cy + Math.sin(a + 0.12) * maxR * 0.55;
+    const cp2x = cx + Math.cos(a - 0.12) * maxR * 0.55;
+    const cp2y = cy + Math.sin(a - 0.12) * maxR * 0.55;
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.quadraticCurveTo(cp1x, cp1y, ex, ey);
+    ctx.strokeStyle = GOLD;
+    ctx.lineWidth = S * 0.001;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.quadraticCurveTo(cp2x, cp2y, ex, ey);
+    ctx.stroke();
+  }
+
+  // Inner star
+  ctx.globalAlpha = 0.12;
+  drawStar8(cx, cy, maxR * 0.25, maxR * 0.1, 0, GOLD, S * 0.001);
+  ctx.globalAlpha = 0.06;
+  drawStar8(cx, cy, maxR * 0.45, maxR * 0.2, Math.PI / 8, LAPIS, S * 0.0008);
+
+  // Center dot
+  ctx.globalAlpha = 0.15;
+  ctx.beginPath();
+  ctx.arc(cx, cy, S * 0.008, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD;
+  ctx.fill();
+
+  ctx.globalAlpha = 1;
+};
+
+// 6. MASHRABIYA
+patterns['mashrabiya'] = (S) => {
+  setInfo('Mashrabiya Screen (مشربية) — Turned wood lattice. Light filters through like a window.');
+  const cell = S / 20;
+  const nodeR = cell * 0.12;
+  ctx.lineWidth = S * 0.0005;
+
+  // Diagonal struts
+  ctx.globalAlpha = 0.08;
+  ctx.strokeStyle = GOLD;
+  for (let row = -1; row < 22; row++) {
+    for (let col = -1; col < 22; col++) {
+      const x = col * cell;
+      const y = row * cell;
+      // Diagonal lines
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + cell, y + cell);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(x + cell, y);
+      ctx.lineTo(x, y + cell);
+      ctx.stroke();
+    }
+  }
+
+  // Horizontal and vertical
+  ctx.globalAlpha = 0.06;
+  ctx.strokeStyle = LAPIS;
+  for (let row = 0; row < 22; row++) {
+    ctx.beginPath();
+    ctx.moveTo(0, row * cell);
+    ctx.lineTo(S, row * cell);
+    ctx.stroke();
+  }
+  for (let col = 0; col < 22; col++) {
+    ctx.beginPath();
+    ctx.moveTo(col * cell, 0);
+    ctx.lineTo(col * cell, S);
+    ctx.stroke();
+  }
+
+  // Circle nodes at intersections
+  ctx.globalAlpha = 0.1;
+  for (let row = 0; row < 22; row++) {
+    for (let col = 0; col < 22; col++) {
+      ctx.beginPath();
+      ctx.arc(col * cell, row * cell, nodeR, 0, Math.PI * 2);
+      ctx.strokeStyle = GOLD;
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+};
+
+// 7. PENROSE
+patterns['penrose'] = (S) => {
+  setInfo('Penrose / Quasicrystal (شبه بلوري) — Aperiodic tiling. Darb-i Imam shrine, Isfahan (1453).');
+  const cell = S / 14;
+  ctx.globalAlpha = 0.09;
+  ctx.lineWidth = S * 0.0007;
+
+  // Approximate Penrose with two rhombus types
+  const phi = (1 + Math.sqrt(5)) / 2; // golden ratio
+  const thinAngle = Math.PI / 5;
+  const fatAngle = 2 * Math.PI / 5;
+
+  for (let row = -2; row < 16; row++) {
+    for (let col = -2; col < 16; col++) {
+      const cx = col * cell + (row % 2 ? cell * 0.618 : 0);
+      const cy = row * cell * 0.85;
+      const angle = ((row * 3 + col * 7) % 5) * Math.PI / 5;
+
+      // Fat rhombus
+      if ((row + col) % 3 !== 0) {
+        const pts = [];
+        pts.push([cx, cy]);
+        pts.push([cx + Math.cos(angle) * cell * 0.4, cy + Math.sin(angle) * cell * 0.4]);
+        pts.push([cx + Math.cos(angle) * cell * 0.4 + Math.cos(angle + fatAngle) * cell * 0.4,
+                   cy + Math.sin(angle) * cell * 0.4 + Math.sin(angle + fatAngle) * cell * 0.4]);
+        pts.push([cx + Math.cos(angle + fatAngle) * cell * 0.4,
+                   cy + Math.sin(angle + fatAngle) * cell * 0.4]);
+        ctx.beginPath();
+        pts.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.strokeStyle = GOLD;
+        ctx.stroke();
+      } else {
+        // Thin rhombus (dart)
+        const pts = [];
+        pts.push([cx, cy]);
+        pts.push([cx + Math.cos(angle) * cell * 0.45, cy + Math.sin(angle) * cell * 0.45]);
+        pts.push([cx + Math.cos(angle) * cell * 0.45 + Math.cos(angle + thinAngle) * cell * 0.45,
+                   cy + Math.sin(angle) * cell * 0.45 + Math.sin(angle + thinAngle) * cell * 0.45]);
+        pts.push([cx + Math.cos(angle + thinAngle) * cell * 0.45,
+                   cy + Math.sin(angle + thinAngle) * cell * 0.45]);
+        ctx.beginPath();
+        pts.forEach((p, i) => i === 0 ? ctx.moveTo(p[0], p[1]) : ctx.lineTo(p[0], p[1]));
+        ctx.closePath();
+        ctx.strokeStyle = LAPIS;
+        ctx.stroke();
+      }
+
+      // Inner arcs (Penrose matching rules)
+      ctx.globalAlpha = 0.04;
+      ctx.beginPath();
+      ctx.arc(cx, cy, cell * 0.12, angle, angle + fatAngle);
+      ctx.strokeStyle = GOLD;
+      ctx.stroke();
+      ctx.globalAlpha = 0.09;
+    }
+  }
+  ctx.globalAlpha = 1;
+};
+
+// 8. KUFIC GRID
+patterns['kufic'] = (S) => {
+  setInfo('Square Kufic (كوفي مربع) — Arabic words as geometric grid. Text IS the pattern.');
+  const cell = S / 32;
+  ctx.globalAlpha = 0.1;
+
+  // Encode "الله" (Allah) as a bitmap-like grid pattern
+  // Simplified square kufic representation
+  const word = [
+    [0,0,1,1,0,0,1,1,0,0,1,0,0,0,1,1],
+    [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],
+    [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],
+    [0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0],
+    [0,0,1,1,0,0,1,1,0,0,1,1,0,0,1,1],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0],
+    [0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0],
+    [0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0],
+    [0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0],
+    [1,1,0,0,1,1,0,0,1,1,0,0,1,1,0,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+  ];
+  const tileW = word[0].length;
+  const tileH = word.length;
+
+  for (let tileRow = 0; tileRow < Math.ceil(32 / tileH) + 1; tileRow++) {
+    for (let tileCol = 0; tileCol < Math.ceil(32 / tileW) + 1; tileCol++) {
+      for (let r = 0; r < tileH; r++) {
+        for (let c = 0; c < tileW; c++) {
+          if (word[r][c]) {
+            const x = (tileCol * tileW + c) * cell;
+            const y = (tileRow * tileH + r) * cell;
+            ctx.fillStyle = (r + c) % 3 === 0 ? LAPIS : GOLD;
+            ctx.fillRect(x + 1, y + 1, cell - 2, cell - 2);
+          }
+        }
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+};
+
+// 9. HEXAGONAL FOUNTAIN
+patterns['hexfountain'] = (S) => {
+  setInfo('Hexagonal Fountain (نافورة) — Water basin tiling. Hexagons with inner 6-point stars.');
+  const cell = S / 12;
+  const h = cell * Math.sqrt(3) / 2;
+  ctx.lineWidth = S * 0.0007;
+
+  for (let row = -2; row < S / h + 2; row++) {
+    for (let col = -2; col < S / cell + 2; col++) {
+      const cx = col * cell * 1.5;
+      const cy = row * h * 2 + (col % 2 ? h : 0);
+
+      // Outer hexagon
+      ctx.globalAlpha = 0.08;
+      strokePoly(cx, cy, cell * 0.55, 6, Math.PI / 6, GOLD, S * 0.0007);
+
+      // Inner 6-point star (two overlapping triangles)
+      ctx.globalAlpha = 0.06;
+      strokePoly(cx, cy, cell * 0.35, 3, Math.PI / 6, LAPIS, S * 0.0006);
+      strokePoly(cx, cy, cell * 0.35, 3, -Math.PI / 6 + Math.PI, LAPIS, S * 0.0006);
+
+      // Center hexagon
+      ctx.globalAlpha = 0.04;
+      strokePoly(cx, cy, cell * 0.18, 6, 0, GOLD, S * 0.0005);
+    }
+  }
+  ctx.globalAlpha = 1;
+};
+
+// 10. ZELLIGE
+patterns['zellige'] = (S) => {
+  setInfo('Zellige Mosaic (زليج) — Moroccan cut tilework. Irregular hand-cut shapes, multi-color.');
+  const cell = S / 16;
+  const colors = [GOLD, LAPIS, EMERALD, RUST];
+
+  // Pseudo-random seed from position
+  function hash(x, y) { return ((x * 374761393 + y * 668265263) >>> 0) % 1000 / 1000; }
+
+  ctx.lineWidth = S * 0.001;
+  ctx.globalAlpha = 0.09;
+
+  for (let row = -1; row < 18; row++) {
+    for (let col = -1; col < 18; col++) {
+      const x = col * cell;
+      const y = row * cell;
+      const h = hash(col + 100, row + 100);
+      const color = colors[Math.floor(h * colors.length)];
+
+      // Varied shapes based on hash
+      if (h < 0.25) {
+        // Diamond
+        strokePoly(x + cell/2, y + cell/2, cell * 0.4, 4, 0, color, S * 0.0008);
+      } else if (h < 0.5) {
+        // Hexagon
+        strokePoly(x + cell/2, y + cell/2, cell * 0.35, 6, Math.PI/6, color, S * 0.0008);
+      } else if (h < 0.75) {
+        // 8-star
+        drawStar8(x + cell/2, y + cell/2, cell * 0.38, cell * 0.15, h * Math.PI, color, S * 0.0007);
+      } else {
+        // Triangle pair
+        strokePoly(x + cell/2, y + cell/3, cell * 0.25, 3, 0, color, S * 0.0007);
+        strokePoly(x + cell/2, y + cell*2/3, cell * 0.25, 3, Math.PI, color, S * 0.0007);
+      }
+
+      // Fill some shapes subtly
+      if (hash(col, row) > 0.7) {
+        ctx.globalAlpha = 0.03;
+        fillPoly(x + cell/2, y + cell/2, cell * 0.3, h < 0.5 ? 4 : 6, h * Math.PI, color);
+        ctx.globalAlpha = 0.09;
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+};
+
+// ─── INIT ───────────────────────────────────────
+draw('star-cross');
+</script>
+</body>
+</html>

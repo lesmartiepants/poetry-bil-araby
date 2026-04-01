@@ -186,6 +186,7 @@ export default function DiwanApp() {
   const setAudioError = useAudioStore((s) => s.setError);
   const hasAutoLoaded = useRef(false);
   const longPressTimer = useRef(null);
+  const pendingSaveHandled = useRef(false);
   const logs = useUIStore((s) => s.logs);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const showCopySuccess = useModalStore((s) => s.copyToast);
@@ -473,14 +474,16 @@ export default function DiwanApp() {
     }
   }, []);
 
-  // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
+  // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up.
+  // Guard against multiple rapid onAuthStateChange fires (INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, etc.)
   useEffect(() => {
-    if (!user) return;
+    if (!user || pendingSaveHandled.current) return;
     let stashed;
     try {
       stashed = sessionStorage.getItem('pendingSavePoem');
     } catch {}
     if (!stashed) return;
+    pendingSaveHandled.current = true;
     sessionStorage.removeItem('pendingSavePoem');
     try {
       const poem = JSON.parse(stashed);

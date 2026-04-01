@@ -211,12 +211,12 @@ const DebugPanel = ({ controlBarRef }) => {
         {/* Log entries */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-4 py-1.5 font-mono text-[0.625rem] space-y-0.5 custom-scrollbar"
+          className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-1.5 font-mono text-[0.625rem] space-y-0.5 custom-scrollbar"
         >
           {logs.map((log, idx) => (
             <div
               key={idx}
-              className={`py-0.5 border-b ${darkMode ? 'border-stone-800/40' : 'border-stone-200/40'}`}
+              className={`py-0.5 border-b break-words overflow-hidden ${darkMode ? 'border-stone-800/40' : 'border-stone-200/40'}`}
             >
               <span className={darkMode ? 'text-stone-400' : 'text-stone-500'}>
                 {idx === 0 ? log.time : log.rel}

@@ -209,17 +209,54 @@
   .kbd-close:hover { background: rgba(197,160,89,0.2); }
 
   /* ── DISCOVER / COLLECTIONS ── */
+  .discover-top {
+    padding: 8px 12px 6px;
+    flex-shrink: 0;
+    display: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .discover-top.visible { display: block; }
+  .btn-surprise {
+    width: 100%; padding: 7px 10px; border-radius: 5px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    cursor: pointer; transition: all 0.15s;
+    background: var(--gold-bg); color: var(--gold);
+    border: 1px solid var(--gold-dim); text-align: center;
+  }
+  .btn-surprise:hover { background: rgba(197,160,89,0.22); border-color: var(--gold); }
   .collection-header {
     padding: 10px 16px 4px;
     font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
     color: var(--gold); display: flex; align-items: center; gap: 6px;
+    cursor: pointer; user-select: none;
+    transition: opacity 0.1s;
   }
-  .collection-star { font-size: 9px; opacity: 0.7; }
+  .collection-header:hover { opacity: 0.85; }
+  .collection-star { font-size: 9px; opacity: 0.7; flex-shrink: 0; }
+  .collection-chevron {
+    margin-left: auto; font-size: 9px; opacity: 0.6;
+    transition: transform 0.2s ease; flex-shrink: 0;
+  }
+  .collection-header.collapsed .collection-chevron { transform: rotate(-90deg); }
+  .collection-desc {
+    padding: 1px 16px 5px 28px;
+    font-size: 10px; color: var(--muted); letter-spacing: 0.01em;
+  }
+  .collection-header.collapsed + .collection-desc { display: none; }
+  .collection-items-wrap {
+    overflow: hidden;
+    transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .collection-items-wrap.collapsed { max-height: 0 !important; }
   .collection-item {
-    padding: 6px 16px 6px 24px;
+    padding: 6px 16px 6px 16px;
     font-size: 12px; cursor: pointer; color: var(--muted);
     transition: background 0.1s, color 0.1s;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .collection-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; opacity: 0.7;
   }
   .collection-item:hover { background: var(--gold-bg); color: var(--text); }
   .collection-item.active { background: rgba(197,160,89,0.15); color: var(--gold); }
@@ -327,14 +364,17 @@
     <div class="sidebar-header">
       <div class="sidebar-title">Islamic Patterns</div>
       <div class="tab-row">
-        <button class="tab-btn active" data-tab="tilings">Tilings</button>
+        <button class="tab-btn" data-tab="tilings">Tilings</button>
         <button class="tab-btn" data-tab="girih">Girih</button>
         <button class="tab-btn" data-tab="templates">Templates</button>
-        <button class="tab-btn" data-tab="discover">Discover</button>
+        <button class="tab-btn active" data-tab="discover">Discover</button>
       </div>
     </div>
     <div class="sidebar-search">
       <input type="text" id="searchInput" placeholder="Search patterns…" />
+    </div>
+    <div class="discover-top" id="discoverTop">
+      <button class="btn-surprise" id="surpriseBtn">Surprise me ✦</button>
     </div>
     <div class="sidebar-list" id="sidebarList"></div>
   </nav>
@@ -413,7 +453,7 @@ const CATALOG = {"tilings":[{"name":"10","t1":[2,0],"t2":[0.6180339887498949,1.9
 // ────────────────────────────────────────────────────────────────────────────
 // STATE
 // ────────────────────────────────────────────────────────────────────────────
-let currentTab  = 'tilings';
+let currentTab  = 'discover';
 let currentItem = null;   // { kind: 'tiling'|'girih'|'template', data: {...} }
 let searchQuery = '';
 let showConstruction = false;
@@ -546,6 +586,20 @@ function starMotifsFromPoly(verts) {
     return [(v[0] + next[0]) / 2, (v[1] + next[1]) / 2];
   });
 
+  // Special case: triangle (n=3) — d=1 rays point to adjacent midpoints which
+  // are parallel for equilateral triangles, so the ray-intersection algorithm
+  // produces 0 segments. Draw the Islamic Y-motif instead: connect each edge
+  // midpoint to the centroid.
+  if (n === 3) {
+    const cx = (verts[0][0] + verts[1][0] + verts[2][0]) / 3;
+    const cy = (verts[0][1] + verts[1][1] + verts[2][1]) / 3;
+    return [
+      [mids[0][0], mids[0][1], cx, cy],
+      [mids[1][0], mids[1][1], cx, cy],
+      [mids[2][0], mids[2][1], cx, cy],
+    ];
+  }
+
   // Special case: quadrilateral (n=4) — d=1 is degenerate because adjacent
   // midpoint rays are collinear with the edges.  Draw the Islamic cross motif
   // instead: connect each midpoint to the intersection of the two diagonals
@@ -600,15 +654,8 @@ function starMotifsFromPoly(verts) {
     }
   }
 
-  // Fallback: if no intersections found (degenerate polygon), draw the outline
-  if (segments.length === 0) {
-    for (let i = 0; i < n; i++) {
-      const [x1, y1] = verts[i];
-      const [x2, y2] = verts[(i + 1) % n];
-      segments.push([x1, y1, x2, y2]);
-    }
-  }
-
+  // If no intersections found, return empty — do NOT draw polygon outlines as
+  // that leaks construction geometry into the final render.
   return segments;
 }
 
@@ -827,8 +874,8 @@ function renderTiling(ctx, tiling, w, h, zoom = 1) {
   }
 
   // Draw star motifs using midpoint-ray algorithm
-  ctx.globalAlpha = c.strokeAlpha || 0.6;
-  ctx.lineWidth = 1.5;
+  ctx.globalAlpha = c.strokeAlpha || 0.85;
+  ctx.lineWidth = Math.max(1.5, w / 700);
   ctx.lineCap = 'round';
 
   for (const poly of polys) {
@@ -1032,19 +1079,27 @@ const TEMPLATE_GROUP_ORDER = [
 const COLLECTIONS = [
   {
     name: 'Masterpieces',
+    desc: 'The finest Islamic geometric art',
+    color: '#c5a059',
     items: [
-      { tab: 'girih', name: 'Girih Star' },
-      { tab: 'girih', name: 'Girih Tiles' },
-      { tab: 'tilings', name: 'Alhambra 16' },
-      { tab: 'templates', name: 'Green Mosque' },
-      { tab: 'templates', name: 'Mamluk Quran' },
-      { tab: 'templates', name: 'Alcazar De Seville 12 8' },
-      { tab: 'templates', name: 'Seville Alcazar 12.8.6' },
-      { tab: 'templates', name: 'Al-Mustansiriyya' },
+      { tab: 'tilings', name: 'Girih Star' },
+      { tab: 'tilings', name: 'Girih Tiles' },
+      { tab: 'tilings', name: 'alhambra16' },
+      { tab: 'tilings', name: 'Green Mosque' },
+      { tab: 'tilings', name: 'Mamluk Quran' },
+      { tab: 'tilings', name: 'Al-Mustansiriyya' },
+      { tab: 'tilings', name: 'Alcazar De Seville 12 8 - Shorter' },
+      { tab: 'tilings', name: 'Seville Alcazar 12.8.6' },
+      { tab: 'tilings', name: "Mughal I'timad" },
+      { tab: 'tilings', name: 'Ilkhanid Uljaytu' },
+      { tab: 'tilings', name: 'Sultan Lodge' },
+      { tab: 'tilings', name: 'Harem Lodge' },
     ],
   },
   {
     name: 'Elegant Simplicity',
+    desc: 'Beauty in mathematical restraint',
+    color: '#7ab8d4',
     items: [
       { tab: 'tilings', name: '6' },
       { tab: 'tilings', name: '4.8^2' },
@@ -1052,40 +1107,119 @@ const COLLECTIONS = [
       { tab: 'tilings', name: '3.4.6' },
       { tab: 'tilings', name: '4.6.12' },
       { tab: 'tilings', name: 'Diamond Hive' },
+      { tab: 'tilings', name: '6.5' },
+      { tab: 'tilings', name: '6.5 flower' },
+      { tab: 'tilings', name: '3.12^2' },
+      { tab: 'tilings', name: '4^4' },
+      { tab: 'tilings', name: 'regular-4' },
     ],
   },
   {
     name: 'Sacred Geometry',
+    desc: 'Aperiodic tilings and infinite complexity',
+    color: '#a87dc5',
     items: [
       { tab: 'tilings', name: 'Penrose' },
       { tab: 'tilings', name: 'Girih Inflation 10' },
       { tab: 'tilings', name: 'Girih Inflation 10.v1' },
       { tab: 'tilings', name: 'Girih Inflation 10.v2' },
       { tab: 'tilings', name: 'Girih Inflation 10.v3' },
-      { tab: 'templates', name: "Mughal I'timad" },
-      { tab: 'templates', name: 'Ilkhanid Uljaytu' },
+      { tab: 'tilings', name: 'Penrose Monster' },
+      { tab: 'tilings', name: 'csk_5' },
+      { tab: 'tilings', name: 'csk_7' },
+      { tab: 'tilings', name: 'csk_9' },
+      { tab: 'tilings', name: 'Square 12.4.3' },
     ],
   },
   {
-    name: 'From Real Buildings',
+    name: 'Andalusian & Moorish',
+    desc: 'From the Alhambra to Seville',
+    color: '#c5855a',
     items: [
-      { tab: 'templates', name: 'Al-Mustansiriyya' },
-      { tab: 'templates', name: 'Green Mosque' },
-      { tab: 'templates', name: 'Harem Lodge' },
-      { tab: 'templates', name: 'Sultan Lodge' },
-      { tab: 'templates', name: 'Alcazar De Seville' },
-      { tab: 'templates', name: 'Great Mosque of Malatya' },
+      { tab: 'tilings', name: 'alhambra16' },
+      { tab: 'tilings', name: 'alhambra 16 in pieces' },
+      { tab: 'tilings', name: 'Alcazar De Seville 12 8 - Shorter' },
+      { tab: 'tilings', name: 'Seville Alcazar 12.8.6' },
+      { tab: 'tilings', name: '8 and 8' },
+      { tab: 'tilings', name: '8 Ring' },
+      { tab: 'tilings', name: '8.5' },
+      { tab: 'tilings', name: '7.6' },
     ],
   },
   {
-    name: 'Hypnotic',
+    name: 'Persian & Central Asian',
+    desc: 'Girih tiles and Seljuk splendor',
+    color: '#5aa87d',
+    items: [
+      { tab: 'tilings', name: 'Girih Star' },
+      { tab: 'tilings', name: 'Girih Tiles' },
+      { tab: 'tilings', name: 'Girih Crab' },
+      { tab: 'tilings', name: 'Green Mosque' },
+      { tab: 'tilings', name: 'Ilkhanid Uljaytu' },
+      { tab: 'tilings', name: 'Timurid Tumaq Aqa' },
+      { tab: 'tilings', name: 'wonka' },
+      { tab: 'tilings', name: '9.6' },
+      { tab: 'tilings', name: '9.5.3.6' },
+    ],
+  },
+  {
+    name: 'Mughal & Mamluk',
+    desc: 'Indian and Egyptian traditions',
+    color: '#c5a059',
+    items: [
+      { tab: 'tilings', name: "Mughal I'timad" },
+      { tab: 'tilings', name: 'Mamluk Quran' },
+      { tab: 'tilings', name: 'Al-Mustansiriyya' },
+      { tab: 'tilings', name: '12-6-Trigon' },
+      { tab: 'tilings', name: '8.12' },
+      { tab: 'tilings', name: '9.12' },
+    ],
+  },
+  {
+    name: 'Hypnotic & Complex',
+    desc: 'Patterns that mesmerize',
+    color: '#c55a7d',
     items: [
       { tab: 'tilings', name: 'Girih Inflation 10.v3' },
       { tab: 'tilings', name: 'Two Monsters' },
       { tab: 'tilings', name: 'Penrose Monster' },
       { tab: 'tilings', name: 'Trigon of nanites' },
+      { tab: 'tilings', name: 'More alien' },
+      { tab: 'tilings', name: '8-6-5' },
+      { tab: 'tilings', name: '7.6.5' },
+      { tab: 'tilings', name: 'Chikipoo' },
+    ],
+  },
+  {
+    name: 'Stars',
+    desc: 'Eight-pointed and beyond',
+    color: '#d4c47a',
+    items: [
       { tab: 'tilings', name: '8 and 8' },
-      { tab: 'tilings', name: 'wonka' },
+      { tab: 'tilings', name: '8 Ring' },
+      { tab: 'tilings', name: '4.7 Star' },
+      { tab: 'tilings', name: '4.7 Stars' },
+      { tab: 'tilings', name: 'Girih Star' },
+      { tab: 'tilings', name: '8.5' },
+      { tab: 'tilings', name: '8_var' },
+      { tab: 'tilings', name: '8-6-5' },
+    ],
+  },
+  {
+    name: 'Hexagonal World',
+    desc: 'Six-fold symmetry',
+    color: '#5a9cc5',
+    items: [
+      { tab: 'tilings', name: '6' },
+      { tab: 'tilings', name: '6.5' },
+      { tab: 'tilings', name: '6.5 flower' },
+      { tab: 'tilings', name: '6.5x6' },
+      { tab: 'tilings', name: '6 Losange' },
+      { tab: 'tilings', name: '6.4 Boats' },
+      { tab: 'tilings', name: '6.4 Circles' },
+      { tab: 'tilings', name: 'Diamond Hive' },
+      { tab: 'tilings', name: '3.4.6' },
+      { tab: 'tilings', name: 'Curvy Hex' },
     ],
   },
 ];
@@ -1176,10 +1310,35 @@ function buildSidebar() {
 
   } else if (currentTab === 'discover') {
     for (const col of COLLECTIONS) {
+      const colName = col.name;
+      const isCollapsed = collapsedCollections.has(colName);
+
       const hdr = document.createElement('div');
-      hdr.className = 'collection-header';
-      hdr.innerHTML = `<span class="collection-star">&#x2736;</span>${escapeHtml(col.name)}`;
+      hdr.className = 'collection-header' + (isCollapsed ? ' collapsed' : '');
+      hdr.innerHTML =
+        `<span class="collection-star">&#x2736;</span>` +
+        `<span>${escapeHtml(colName)}</span>` +
+        `<span class="collection-chevron">&#x25BE;</span>`;
+      hdr.addEventListener('click', () => {
+        if (collapsedCollections.has(colName)) collapsedCollections.delete(colName);
+        else collapsedCollections.add(colName);
+        buildSidebar();
+      });
       list.appendChild(hdr);
+
+      if (col.desc) {
+        const descEl = document.createElement('div');
+        descEl.className = 'collection-desc';
+        descEl.textContent = col.desc;
+        if (isCollapsed) descEl.style.display = 'none';
+        list.appendChild(descEl);
+      }
+
+      const wrap = document.createElement('div');
+      wrap.className = 'collection-items-wrap' + (isCollapsed ? ' collapsed' : '');
+      // Set max-height for transition (approximate: items * 32px)
+      const filteredEntries = col.items.filter(e => findCatalogItem(e.tab, e.name));
+      wrap.style.maxHeight = isCollapsed ? '0' : (filteredEntries.length * 32 + 8) + 'px';
 
       for (const entry of col.items) {
         const data = findCatalogItem(entry.tab, entry.name);
@@ -1187,14 +1346,27 @@ function buildSidebar() {
         const kind = entry.tab === 'tilings' ? 'tiling' : entry.tab === 'girih' ? 'girih' : 'template';
         const el = document.createElement('div');
         el.className = 'collection-item';
-        el.textContent = data.name;
         if (currentItem?.data?.name === data.name && currentItem?.kind === kind)
           el.classList.add('active');
+        const dot = document.createElement('span');
+        dot.className = 'collection-dot';
+        dot.style.background = col.color || 'var(--gold)';
+        const nameSpan = document.createElement('span');
+        nameSpan.textContent = data.name;
+        nameSpan.style.overflow = 'hidden';
+        nameSpan.style.textOverflow = 'ellipsis';
+        el.appendChild(dot);
+        el.appendChild(nameSpan);
         el.addEventListener('click', () => selectItem(kind, data));
-        list.appendChild(el);
+        wrap.appendChild(el);
       }
+      list.appendChild(wrap);
     }
   }
+
+  // Show/hide Surprise me button
+  const discoverTop = document.getElementById('discoverTop');
+  if (discoverTop) discoverTop.classList.toggle('visible', currentTab === 'discover');
 
   // Sync highlighted index after rebuild
   syncHighlight();
@@ -1537,9 +1709,22 @@ window.addEventListener('resize', () => { if (currentItem) render(); });
 // INITIAL RENDER
 // ────────────────────────────────────────────────────────────────────────────
 buildSidebar();
-// Auto-select first tiling
-const first = CATALOG.tilings.find(t => t.name === '6') || CATALOG.tilings[0];
-if (first) selectItem('tiling', first);
+// Auto-select first pattern from Masterpieces collection in Discover tab
+(function() {
+  const firstCollection = COLLECTIONS[0];
+  if (firstCollection && firstCollection.items.length > 0) {
+    const entry = firstCollection.items[0];
+    const data = findCatalogItem(entry.tab, entry.name);
+    if (data) {
+      const kind = entry.tab === 'tilings' ? 'tiling' : entry.tab === 'girih' ? 'girih' : 'template';
+      selectItem(kind, data);
+      return;
+    }
+  }
+  // Fallback: first tiling
+  const first = CATALOG.tilings[0];
+  if (first) selectItem('tiling', first);
+})();
 
 </script>
 </body>

@@ -227,7 +227,7 @@ const DebugPanel = ({ controlBarRef }) => {
                 </span>{' '}
                 <span style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color, opacity: 0.7 }}>[{log.label}]</span>
               </div>
-              <div className={`pl-[3.5rem] ${darkMode ? 'text-stone-400' : 'text-stone-500'}`}>{log.msg}</div>
+              <div className={darkMode ? 'text-stone-400' : 'text-stone-500'}>{log.msg}</div>
             </div>
           ))}
         </div>

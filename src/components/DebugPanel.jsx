@@ -247,8 +247,12 @@ const DebugPanel = ({ controlBarRef }) => {
           ))}
         </div>
 
-        {/* Speech Engine model A/B toggle */}
-        <div className={`flex items-center gap-2 px-4 py-1.5 border-t ${theme.border} flex-none`}>
+        {/* Speech Engine model A/B toggle — full row is the tap target */}
+        <button
+          onClick={handleTtsModelToggle}
+          title={`Switch to ${ttsModel === 'pro' ? 'Flash' : 'Pro'} — clears audio cache for current poem`}
+          className={`flex items-center gap-2 w-full px-4 py-1.5 border-t ${theme.border} flex-none text-left`}
+        >
           {ttsModel === 'pro' ? (
             <Zap size={9} className="text-amber-400 flex-shrink-0" />
           ) : (
@@ -258,9 +262,7 @@ const DebugPanel = ({ controlBarRef }) => {
             Speech Engine
           </span>
           {/* Inline pill toggle — Flash (emerald, left) ↔ Pro (amber, right) */}
-          <button
-            onClick={handleTtsModelToggle}
-            title={`Switch to ${ttsModel === 'pro' ? 'Flash' : 'Pro'} — clears audio cache for current poem`}
+          <div
             className="relative flex-shrink-0 rounded-full transition-colors"
             style={{
               width: 24,
@@ -280,11 +282,11 @@ const DebugPanel = ({ controlBarRef }) => {
                 boxShadow: ttsModel === 'pro' ? '0 0 4px rgba(251,191,36,0.7)' : '0 0 4px rgba(52,211,153,0.6)',
               }}
             />
-          </button>
+          </div>
           <span className={`text-[0.5625rem] font-mono font-bold flex-shrink-0 ${ttsModel === 'pro' ? 'text-amber-400' : 'text-emerald-400'}`}>
             {ttsModel === 'pro' ? 'Pro' : 'Flash'}
           </span>
-        </div>
+        </button>
 
         {/* Bug report input */}
         <div

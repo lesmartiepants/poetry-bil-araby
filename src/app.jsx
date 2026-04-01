@@ -508,8 +508,7 @@ export default function DiwanApp() {
       autoExplainPending &&
       poemToExplain?.id &&
       !isFetching &&
-      !isInterpreting &&
-      !interpretation
+      !isInterpreting
     ) {
       setAutoExplainPending(false);
       if (explainedPoemIds.current.has(poemToExplain.id)) return;
@@ -521,6 +520,7 @@ export default function DiwanApp() {
         if (carouselPoems.length > 0) {
           carouselExplainTargetId.current = poemToExplain.id;
         }
+        setInterpretation(null);
         analyzePoemAction({ current: poemToExplain, addLog, track });
       }
     }
@@ -788,6 +788,11 @@ export default function DiwanApp() {
     if (current) {
       try {
         sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
+        const { carouselPoems: cp, carouselIndex: ci } = usePoemStore.getState();
+        if (cp.length > 0) {
+          sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp.map((p) => p.id)));
+          sessionStorage.setItem('pendingCarouselIndex', String(ci));
+        }
       } catch {}
     }
     const { error } = await signInWithGoogle();

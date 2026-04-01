@@ -33,6 +33,7 @@ const DebugPanel = ({ controlBarRef }) => {
   const [lastViewedCount, setLastViewedCount] = useState(0);
   const scrollRef = useRef(null);
   const btnPos = { right: 8, bottom: 52 };
+  const panelRight = 68; // clears sidebar (right:8 + ~52px wide + 8px gap)
 
   // Shake-to-open on mobile (DeviceMotion)
   useEffect(() => {
@@ -157,6 +158,7 @@ const DebugPanel = ({ controlBarRef }) => {
               ? `bg-black/70 text-gold/40 hover:text-gold/80 border ${theme.border}`
               : `bg-white/80 text-gold/30 hover:text-gold/70 border ${theme.border}`
           } backdrop-blur-xl`}
+          style={panelOpen ? { boxShadow: '0 0 10px 2px rgba(197,160,89,0.45)' } : undefined}
         >
           <Bug size={10} strokeWidth={1.5} />
           {unreadErrors > 0 && !panelOpen && (
@@ -182,7 +184,7 @@ const DebugPanel = ({ controlBarRef }) => {
             : 'bg-white/80'
         } backdrop-blur-xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
         style={{
-          right: btnPos.right,
+          right: panelRight,
           left: 8,
           bottom: btnPos.bottom + 48,
           height: '50vh',
@@ -232,7 +234,7 @@ const DebugPanel = ({ controlBarRef }) => {
               className={`py-0.5 border-b break-words overflow-hidden ${darkMode ? 'border-white/[0.04]' : 'border-black/[0.06]'}`}
             >
               <div>
-                <span className={darkMode ? 'text-white/70' : 'text-black/60'}>
+                <span className={darkMode ? 'text-white/95' : 'text-black/80'}>
                   {idx === 0 ? log.time : log.rel}
                 </span>{' '}
                 <span className="font-semibold" style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color }}>
@@ -246,39 +248,42 @@ const DebugPanel = ({ controlBarRef }) => {
         </div>
 
         {/* Speech Engine model A/B toggle */}
-        <div className={`flex items-center justify-between px-4 py-1.5 border-t ${theme.border} flex-none`}>
-          <div className="flex items-center gap-1.5">
-            {ttsModel === 'pro' ? (
-              <Zap size={9} className="text-amber-400" />
-            ) : (
-              <Radio size={9} className="text-emerald-400" />
-            )}
-            <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">
-              Speech Engine
-            </span>
-            <span className={`text-[0.5625rem] font-mono font-bold ${ttsModel === 'pro' ? 'text-amber-400' : 'text-emerald-400'}`}>
-              {ttsModel === 'pro' ? 'Pro' : 'Flash'}
-            </span>
-          </div>
-          {/* Left/right visual toggle — Flash (emerald, left) ↔ Pro (amber, right) */}
+        <div className={`flex items-center gap-2 px-4 py-1.5 border-t ${theme.border} flex-none`}>
+          {ttsModel === 'pro' ? (
+            <Zap size={9} className="text-amber-400 flex-shrink-0" />
+          ) : (
+            <Radio size={9} className="text-emerald-400 flex-shrink-0" />
+          )}
+          <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">
+            Speech Engine
+          </span>
+          {/* Inline pill toggle — Flash (emerald, left) ↔ Pro (amber, right) */}
           <button
             onClick={handleTtsModelToggle}
             title={`Switch to ${ttsModel === 'pro' ? 'Flash' : 'Pro'} — clears audio cache for current poem`}
-            className="relative w-9 h-4 rounded-full transition-colors flex items-center flex-shrink-0"
+            className="relative flex-shrink-0 rounded-full transition-colors"
             style={{
+              width: 24,
+              height: 12,
               backgroundColor: ttsModel === 'pro' ? 'rgba(251,191,36,0.18)' : 'rgba(52,211,153,0.15)',
-              border: `1px solid ${ttsModel === 'pro' ? 'rgba(251,191,36,0.3)' : 'rgba(52,211,153,0.25)'}`,
+              border: `1px solid ${ttsModel === 'pro' ? 'rgba(251,191,36,0.35)' : 'rgba(52,211,153,0.3)'}`,
             }}
           >
             <span
-              className="absolute w-3 h-3 rounded-full transition-all duration-200"
+              className="absolute rounded-full transition-all duration-200"
               style={{
+                width: 8,
+                height: 8,
+                top: 1,
+                left: ttsModel === 'pro' ? 13 : 1,
                 backgroundColor: ttsModel === 'pro' ? 'rgb(251,191,36)' : 'rgb(52,211,153)',
-                left: ttsModel === 'pro' ? 'calc(100% - 14px)' : '2px',
-                boxShadow: ttsModel === 'pro' ? '0 0 6px rgba(251,191,36,0.6)' : '0 0 6px rgba(52,211,153,0.5)',
+                boxShadow: ttsModel === 'pro' ? '0 0 4px rgba(251,191,36,0.7)' : '0 0 4px rgba(52,211,153,0.6)',
               }}
             />
           </button>
+          <span className={`text-[0.5625rem] font-mono font-bold flex-shrink-0 ${ttsModel === 'pro' ? 'text-amber-400' : 'text-emerald-400'}`}>
+            {ttsModel === 'pro' ? 'Pro' : 'Flash'}
+          </span>
         </div>
 
         {/* Bug report input */}

@@ -23,29 +23,31 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const estimateTTSSeconds = (arabicCharCount) => Math.max(8, Math.ceil(arabicCharCount * 0.06));
 
 const TTS_LOADING_MESSAGES = [
-  'Preparing recitation...',
-  'Clearing my throat...',
-  'The poet is getting ready...',
-  'Wise voice awakening...',
-  'Summoning the muse...',
-  'Warming up the oud strings...',
-  'The majlis is gathering...',
-  'Ink drying on the qasida...',
+  'Preparing recitation',
+  'Clearing my throat',
+  'The poet is getting ready',
+  'Wise voice awakening',
+  'Summoning the muse',
+  'Warming up the oud strings',
+  'The majlis is gathering',
+  'Ink drying on the qasida',
 ];
 
 /**
  * Create a Sonner toast with a countdown timer for TTS generation.
+ * Format: "Recitation ready in Xs" title, "Preparing N lines" description cycling with fun messages.
  * Returns { dismiss } function for cleanup. Auto-dismisses if isGenerating
  * goes false externally (e.g. poem navigation).
  */
-function createProgressToast(estimatedSeconds, arabicCharCount) {
+function createProgressToast(estimatedSeconds, arabicText) {
   const toastId = `tts-progress-${Date.now()}`;
   const startTime = Date.now();
-  const charInfo = arabicCharCount ? ` · ${arabicCharCount} chars of verse` : '';
+  const lineCount = arabicText ? arabicText.split('\n').filter(l => l.trim()).length : 0;
+  const lineInfo = lineCount > 0 ? `Preparing ${lineCount} line${lineCount !== 1 ? 's' : ''}` : 'Preparing recitation';
 
-  toast.loading(TTS_LOADING_MESSAGES[0], {
+  toast.loading(`Recitation ready in ${estimatedSeconds}s`, {
     id: toastId,
-    description: `~${estimatedSeconds}s${charInfo}`,
+    description: lineInfo,
     duration: Infinity,
   });
 
@@ -60,18 +62,18 @@ function createProgressToast(estimatedSeconds, arabicCharCount) {
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
     const remaining = estimatedSeconds - elapsed;
     const msgIndex = Math.floor(elapsed / 5) % TTS_LOADING_MESSAGES.length;
-    const title = TTS_LOADING_MESSAGES[msgIndex];
+    const subtitle = TTS_LOADING_MESSAGES[msgIndex];
 
     if (remaining > 0) {
-      toast.loading(title, {
+      toast.loading(`Recitation ready in ${remaining}s`, {
         id: toastId,
-        description: `~${remaining}s${charInfo}`,
+        description: subtitle,
         duration: Infinity,
       });
     } else {
-      toast.loading(title, {
+      toast.loading('Almost ready...', {
         id: toastId,
-        description: `Almost ready... hold tight`,
+        description: subtitle,
         duration: Infinity,
       });
     }
@@ -246,7 +248,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
     // Show progress toast with estimated countdown
     const estSeconds = estimateTTSSeconds(arabicTextChars);
-    const progress = createProgressToast(estSeconds, arabicTextChars);
+    const progress = createProgressToast(estSeconds, current?.arabic);
     addLog('Audio', `Estimated generation time: ~${estSeconds}s for ${arabicTextChars} Arabic chars`, 'info');
 
     try {
@@ -380,9 +382,8 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     addLog('Audio', 'Audio generation already in progress - waiting for completion', 'info');
 
     // Show progress toast while waiting for in-flight prefetch
-    const pollArabicChars = current?.arabic?.length || 0;
-    const pollEstSeconds = estimateTTSSeconds(pollArabicChars);
-    const pollProgress = createProgressToast(pollEstSeconds, pollArabicChars);
+    const pollEstSeconds = estimateTTSSeconds(current?.arabic?.length || 0);
+    const pollProgress = createProgressToast(pollEstSeconds, current?.arabic);
 
     const pollInterval = setInterval(async () => {
       if (!usePoemStore.getState().hasActiveAudio(current?.id)) {

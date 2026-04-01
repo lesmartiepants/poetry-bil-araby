@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bug, X, Trash2 } from 'lucide-react';
+import { Bug, X, Trash2, Zap, Radio } from 'lucide-react';
 import Sentry from '../sentry.js';
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { usePoemStore } from '../stores/poemStore';
+import { useAudioStore } from '../stores/audioStore';
+import { API_MODELS } from '../services/gemini.js';
+import { cacheOperations, CACHE_CONFIG } from '../services/cache.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -23,6 +26,7 @@ const DebugPanel = ({ controlBarRef }) => {
   };
   const theme = darkMode ? THEME.dark : THEME.light;
   const [panelOpen, setPanelOpen] = useState(false);
+  const [ttsModel, setTtsModel] = useState(API_MODELS.tts.includes('pro') ? 'pro' : 'flash');
   const [bugDescription, setBugDescription] = useState('');
   const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const [bugError, setBugError] = useState('');
@@ -49,6 +53,28 @@ const DebugPanel = ({ controlBarRef }) => {
     if (panelOpen) lastViewedErrors.current = errorCount;
   }, [panelOpen, errorCount]);
   const unreadErrors = errorCount - lastViewedErrors.current;
+
+  const handleTtsModelToggle = async () => {
+    const next = ttsModel === 'pro' ? 'flash' : 'pro';
+    if (next === 'pro') {
+      API_MODELS.tts = 'gemini-2.5-pro-preview-tts';
+      API_MODELS.ttsFallback = 'gemini-2.5-flash-preview-tts';
+    } else {
+      API_MODELS.tts = 'gemini-2.5-flash-preview-tts';
+      API_MODELS.ttsFallback = 'gemini-2.5-pro-preview-tts';
+    }
+    setTtsModel(next);
+
+    // Clear cached audio for current poem
+    const poem = usePoemStore.getState().currentPoem();
+    if (poem?.id) {
+      await cacheOperations.delete(CACHE_CONFIG.stores.audio, poem.id);
+    }
+    // Reset audio state
+    const { player, resetAudio } = useAudioStore.getState();
+    if (player) try { player.stop(); } catch {}
+    resetAudio();
+  };
 
   const handleSubmitBug = async () => {
     setBugStatus('sending');
@@ -200,6 +226,34 @@ const DebugPanel = ({ controlBarRef }) => {
               <span>{log.msg}</span>
             </div>
           ))}
+        </div>
+
+        {/* TTS model A/B toggle */}
+        <div className={`flex items-center justify-between px-4 py-1.5 border-t ${darkMode ? 'border-gold/10' : 'border-gold/10'} flex-none`}>
+          <div className="flex items-center gap-1.5">
+            {ttsModel === 'pro' ? (
+              <Zap size={9} className="text-amber-400" />
+            ) : (
+              <Radio size={9} className="text-emerald-400" />
+            )}
+            <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">
+              TTS
+            </span>
+            <span className={`text-[0.5625rem] font-mono font-bold ${ttsModel === 'pro' ? 'text-amber-400' : 'text-emerald-400'}`}>
+              {ttsModel === 'pro' ? 'Pro' : 'Flash'}
+            </span>
+          </div>
+          <button
+            onClick={handleTtsModelToggle}
+            title={`Switch to ${ttsModel === 'pro' ? 'Flash' : 'Pro'} TTS — clears audio cache for current poem`}
+            className={`px-2 py-0.5 rounded text-[0.5rem] font-bold uppercase tracking-wider transition-colors ${
+              darkMode
+                ? 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-200'
+                : 'bg-stone-100 text-stone-500 hover:bg-stone-200 hover:text-stone-700'
+            }`}
+          >
+            Switch
+          </button>
         </div>
 
         {/* Bug report input */}

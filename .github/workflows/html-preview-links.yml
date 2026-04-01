@@ -54,9 +54,8 @@ jobs:
               const baseUrl = `https://htmlpreview.github.io/?https://github.com/${owner}/${repo}/blob/${branch}`;
               const rows = htmlFiles.map(f => {
                 const url = `${baseUrl}/${f.filename}`;
-                const short = f.filename.replace(/^design-review\//, '').replace(/^docs\/design\//, 'docs/');
                 const badge = f.status === 'added' ? ' ✦' : '';
-                return `| \`${f.filename}\`${badge} | [open ↗](${url}) |`;
+                return `| [${f.filename}${badge}](${url}) |`;
               });
 
               body = [
@@ -65,8 +64,8 @@ jobs:
                 ``,
                 `Branch: \`${branch}\` · commit \`${sha}\``,
                 ``,
-                `| File | Preview |`,
-                `|---|---|`,
+                `| File |`,
+                `|---|`,
                 ...rows,
                 ``,
                 `<sub>✦ newly added · links update automatically on each commit</sub>`,

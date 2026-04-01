@@ -1036,10 +1036,11 @@ export default function DiwanApp() {
     // Render free tier cold starts take up to ~15s; this ping starts the wake-up clock.
     pingHealth().catch(() => {});
 
-    // Prefetch current poem audio after 2s (only if user lingers on this poem)
+    // Prefetch current poem audio after 500ms (backend warmup ping fires first, so Render
+    // is already waking up — no need for the old 2s conservative delay)
     const prefetchCurrentAudio = setTimeout(() => {
       prefetchManager.prefetchAudio(current.id, current, addLog);
-    }, 2000);
+    }, 500);
 
     // Prefetch current poem insights after 5s (only if user stays)
     const prefetchCurrentInsights = setTimeout(() => {

@@ -218,14 +218,16 @@ const DebugPanel = ({ controlBarRef }) => {
               key={idx}
               className={`py-0.5 border-b break-words overflow-hidden ${darkMode ? 'border-stone-800/40' : 'border-stone-200/40'}`}
             >
-              <span className={darkMode ? 'text-stone-400' : 'text-stone-500'}>
-                {idx === 0 ? log.time : log.rel}
-              </span>{' '}
-              <span className="font-semibold" style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color }}>
-                {(CATEGORY_MAP[log.type] || CATEGORY_MAP.info).prefix}
-              </span>{' '}
-              <span style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color, opacity: 0.7 }}>[{log.label}]</span>{' '}
-              <span className={darkMode ? 'text-stone-400' : 'text-stone-500'}>{log.msg}</span>
+              <div>
+                <span className={darkMode ? 'text-stone-400' : 'text-stone-500'}>
+                  {idx === 0 ? log.time : log.rel}
+                </span>{' '}
+                <span className="font-semibold" style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color }}>
+                  {(CATEGORY_MAP[log.type] || CATEGORY_MAP.info).prefix}
+                </span>{' '}
+                <span style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color, opacity: 0.7 }}>[{log.label}]</span>
+              </div>
+              <div className={`pl-[3.5rem] ${darkMode ? 'text-stone-400' : 'text-stone-500'}`}>{log.msg}</div>
             </div>
           ))}
         </div>

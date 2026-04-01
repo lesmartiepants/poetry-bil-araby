@@ -86,10 +86,33 @@ export const prefetchManager = {
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
       };
-      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
-        addLog,
-        label: 'Prefetch Audio',
-      });
+
+      // Retry once on network-level failure (TypeError: Failed to fetch) to handle
+      // Render cold starts — backend may take up to ~15s to wake from idle.
+      let fetchResult;
+      try {
+        fetchResult = await fetchTTSWithFallback(url, fetchOptions, {
+          addLog,
+          label: 'Prefetch Audio',
+        });
+      } catch (networkErr) {
+        if (networkErr instanceof TypeError) {
+          if (addLog)
+            addLog(
+              'Prefetch Audio',
+              `Network error (backend cold start?) — retrying in 3s: ${networkErr.message}`,
+              'info'
+            );
+          await new Promise((r) => setTimeout(r, 3000));
+          fetchResult = await fetchTTSWithFallback(url, fetchOptions, {
+            addLog,
+            label: 'Prefetch Audio',
+          });
+        } else {
+          throw networkErr;
+        }
+      }
+      const { res, model: ttsModel } = fetchResult;
 
       if (!res.ok) {
         const errorText = await res.text();

@@ -456,22 +456,31 @@ export default function DiwanApp() {
 
         // Restore carousel position if the user was mid-carousel before OAuth redirect
         try {
-          const rawIds = sessionStorage.getItem('pendingCarouselPoems');
+          const rawPoems = sessionStorage.getItem('pendingCarouselPoems');
           const rawIdx = sessionStorage.getItem('pendingCarouselIndex');
           sessionStorage.removeItem('pendingCarouselPoems');
           sessionStorage.removeItem('pendingCarouselIndex');
-          if (rawIds) {
-            const ids = JSON.parse(rawIds);
+          if (rawPoems) {
+            const poems = JSON.parse(rawPoems);
             const targetIdx = rawIdx ? parseInt(rawIdx, 10) : 0;
-            Promise.all(ids.map((id) => fetchPoemById(id)))
-              .then((fetchedPoems) => {
-                setCarouselPoems(fetchedPoems);
-                setCarouselIndex(targetIdx);
-                addLog('Init', `Restored carousel: ${fetchedPoems.length} poems, index ${targetIdx}`, 'success');
-              })
-              .catch((err) => {
-                addLog('Init', `Carousel restore failed: ${err.message}`, 'error');
-              });
+            if (Array.isArray(poems) && poems.length > 0) {
+              setCarouselPoems(poems);
+              setCarouselIndex(targetIdx);
+              addLog('Init', `Restored carousel: ${poems.length} poems, index ${targetIdx}`, 'success');
+            }
+          }
+        } catch {}
+
+        // Restore pre-login logs so the debug panel shows the full session history
+        try {
+          const savedLogs = sessionStorage.getItem('pendingLogs');
+          sessionStorage.removeItem('pendingLogs');
+          if (savedLogs) {
+            const parsed = JSON.parse(savedLogs);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              // Prepend saved logs before the current (post-login) logs
+              useUIStore.setState((s) => ({ logs: [...parsed, ...s.logs] }));
+            }
           }
         } catch {}
       } else if (initial?.cachedTranslation) {
@@ -811,11 +820,18 @@ export default function DiwanApp() {
         sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
         const { carouselPoems: cp, carouselIndex: ci } = usePoemStore.getState();
         if (cp.length > 0) {
-          sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp.map((p) => p.id)));
+          sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp));
           sessionStorage.setItem('pendingCarouselIndex', String(ci));
         }
       } catch {}
     }
+    // Save logs before OAuth redirect so they persist after page reload
+    try {
+      const currentLogs = useUIStore.getState().logs;
+      if (currentLogs?.length > 0) {
+        sessionStorage.setItem('pendingLogs', JSON.stringify(currentLogs.slice(-100)));
+      }
+    } catch {}
     const { error } = await signInWithGoogle();
     if (error) {
       addLog('Auth Error', error.message, 'error');
@@ -834,11 +850,18 @@ export default function DiwanApp() {
         sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
         const { carouselPoems: cp, carouselIndex: ci } = usePoemStore.getState();
         if (cp.length > 0) {
-          sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp.map((p) => p.id)));
+          sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp));
           sessionStorage.setItem('pendingCarouselIndex', String(ci));
         }
       } catch {}
     }
+    // Save logs before OAuth redirect so they persist after page reload
+    try {
+      const currentLogs = useUIStore.getState().logs;
+      if (currentLogs?.length > 0) {
+        sessionStorage.setItem('pendingLogs', JSON.stringify(currentLogs.slice(-100)));
+      }
+    } catch {}
     const { error } = await signInWithApple();
     if (error) {
       addLog('Auth Error', error.message, 'error');

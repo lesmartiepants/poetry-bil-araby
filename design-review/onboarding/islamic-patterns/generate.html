@@ -142,7 +142,93 @@
     flex: 1; display: flex; align-items: center; justify-content: center;
     overflow: hidden; position: relative; background: var(--bg);
   }
-  #patternCanvas { display:block; }
+  #patternCanvas { display:block; transition: opacity 0.2s ease; }
+  #patternCanvas.fading { opacity: 0; }
+
+  /* ── COLOR MODE PILLS ── */
+  .color-mode-row {
+    display: flex; gap: 4px; align-items: center; flex-shrink: 0;
+  }
+  .color-pill {
+    padding: 4px 9px; border-radius: 12px; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.04em; cursor: pointer; transition: all 0.15s;
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border);
+  }
+  .color-pill.active {
+    background: var(--gold-bg); color: var(--gold); border-color: var(--gold-dim);
+  }
+  .color-pill:hover:not(.active) { color: var(--text); border-color: var(--gold-dim); }
+
+  /* ── KEYBOARD HELP OVERLAY ── */
+  .kbd-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.72); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .kbd-overlay.visible { opacity: 1; pointer-events: auto; }
+  .kbd-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px 28px; min-width: 340px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  }
+  .kbd-panel h2 {
+    font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--gold); margin-bottom: 16px;
+  }
+  .kbd-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0; border-bottom: 1px solid rgba(197,160,89,0.08);
+    gap: 16px;
+  }
+  .kbd-row:last-child { border-bottom: none; }
+  .kbd-label { font-size: 12px; color: var(--muted); }
+  .kbd-key {
+    font-size: 10px; font-weight: 700; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 2px 6px; color: var(--gold); white-space: nowrap; flex-shrink: 0;
+  }
+  .kbd-close {
+    margin-top: 16px; width: 100%; padding: 8px; border-radius: 6px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+    background: var(--gold-bg); color: var(--gold);
+    border: 1px solid var(--gold-dim); cursor: pointer;
+    transition: background 0.15s;
+  }
+  .kbd-close:hover { background: rgba(197,160,89,0.2); }
+
+  /* ── DISCOVER / COLLECTIONS ── */
+  .collection-header {
+    padding: 10px 16px 4px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+    color: var(--gold); display: flex; align-items: center; gap: 6px;
+  }
+  .collection-star { font-size: 9px; opacity: 0.7; }
+  .collection-item {
+    padding: 6px 16px 6px 24px;
+    font-size: 12px; cursor: pointer; color: var(--muted);
+    transition: background 0.1s, color 0.1s;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .collection-item:hover { background: var(--gold-bg); color: var(--text); }
+  .collection-item.active { background: rgba(197,160,89,0.15); color: var(--gold); }
+
+  /* ── BTN-ICON ── */
+  .btn-icon {
+    padding: 7px 10px; border-radius: 5px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+    background: var(--gold-bg); color: var(--gold);
+    border: 1px solid var(--gold-dim); line-height: 1;
+  }
+  .btn-icon:hover { background: rgba(197,160,89,0.2); border-color: var(--gold); }
+
+  /* ── FULLSCREEN ── */
+  .canvas-wrap.fullscreen {
+    position: fixed; inset: 0; z-index: 500;
+    background: var(--bg); align-items: center; justify-content: center;
+  }
 
   /* ── MOBILE ── */
   @media (max-width: 640px) {
@@ -152,6 +238,7 @@
     .tab-row { display:none; }
     .sidebar-search { display:none; }
     .sidebar-list { display:none; }
+    .color-mode-row { display: none; }
   }
 </style>
 </head>
@@ -167,6 +254,7 @@
         <button class="tab-btn active" data-tab="tilings">Tilings</button>
         <button class="tab-btn" data-tab="girih">Girih</button>
         <button class="tab-btn" data-tab="templates">Templates</button>
+        <button class="tab-btn" data-tab="discover">Discover</button>
       </div>
     </div>
     <div class="sidebar-search">
@@ -183,6 +271,13 @@
         <div class="toolbar-desc" id="patternDesc"></div>
       </div>
       <div class="toolbar-controls">
+        <div class="color-mode-row" id="colorModeRow">
+          <button class="color-pill active" data-mode="gold">Gold</button>
+          <button class="color-pill" data-mode="lapis">Lapis</button>
+          <button class="color-pill" data-mode="multicolor">Multi</button>
+          <button class="color-pill" data-mode="neon">Neon</button>
+          <button class="color-pill" data-mode="parchment">Parchment</button>
+        </div>
         <select class="size-sel" id="sizeSelect">
           <option value="1024">1024px</option>
           <option value="1920" selected>1920px</option>
@@ -190,9 +285,11 @@
         </select>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;flex-shrink:0;">
           <input type="checkbox" id="showConstruction" style="accent-color:var(--gold);">
-          Show construction
+          Construction
         </label>
-        <button class="btn" id="downloadBtn">Download PNG</button>
+        <button class="btn-icon" id="randomBtn" title="Random pattern (R)">&#x1F3B2;</button>
+        <button class="btn" id="downloadBtn" title="Save PNG (S)">Download PNG</button>
+        <button class="btn-icon" id="helpBtn" title="Keyboard shortcuts (?)">?</button>
       </div>
     </div>
     <div class="canvas-wrap" id="canvasWrap">
@@ -318,12 +415,18 @@ function defaultD(n) {
  *    ray[i] (forward) meets ray[i+1] (backward, i.e. toward mid[(i+1-d+n)%n])
  * 4. The visible segments are: mid[i] → intersection → mid[i+1]
  *
+ * Special case: n=4 with d=1 produces degenerate results (rays are collinear
+ * with polygon edges). Instead, draw the classic cross/plus motif by connecting
+ * opposite midpoints through their intersection point at the polygon center.
+ *
+ * Fallback: if the ray-intersection algorithm produces 0 segments (degenerate
+ * polygon), draw the polygon outline so the tile is never invisible.
+ *
  * Returns an array of [x1,y1,x2,y2] segments.
  */
 function starMotifsFromPoly(verts) {
   const n = verts.length;
   if (n < 3) return [];
-  const d = defaultD(n);
 
   // Compute edge midpoints
   const mids = verts.map((v, i) => {
@@ -331,6 +434,34 @@ function starMotifsFromPoly(verts) {
     return [(v[0] + next[0]) / 2, (v[1] + next[1]) / 2];
   });
 
+  // Special case: quadrilateral (n=4) — d=1 is degenerate because adjacent
+  // midpoint rays are collinear with the edges.  Draw the Islamic cross motif
+  // instead: connect each midpoint to the intersection of the two diagonals
+  // (mid[0]↔mid[2] and mid[1]↔mid[3]).
+  if (n === 4) {
+    const [m0x, m0y] = mids[0];
+    const [m1x, m1y] = mids[1];
+    const [m2x, m2y] = mids[2];
+    const [m3x, m3y] = mids[3];
+    // Find where the two diagonals cross
+    const center = lineIntersect(m0x, m0y, m2x, m2y, m1x, m1y, m3x, m3y);
+    if (center) {
+      const [cx, cy] = center;
+      return [
+        [m0x, m0y, cx, cy],
+        [m2x, m2y, cx, cy],
+        [m1x, m1y, cx, cy],
+        [m3x, m3y, cx, cy],
+      ];
+    }
+    // Fallback for degenerate quads: connect opposite midpoints directly
+    return [
+      [m0x, m0y, m2x, m2y],
+      [m1x, m1y, m3x, m3y],
+    ];
+  }
+
+  const d = defaultD(n);
   const segments = [];
   const FAR = 20; // extension multiplier — large enough to guarantee intersection
 
@@ -354,6 +485,15 @@ function starMotifsFromPoly(verts) {
     if (pt) {
       segments.push([mx0, my0, pt[0], pt[1]]);
       segments.push([mx1, my1, pt[0], pt[1]]);
+    }
+  }
+
+  // Fallback: if no intersections found (degenerate polygon), draw the outline
+  if (segments.length === 0) {
+    for (let i = 0; i < n; i++) {
+      const [x1, y1] = verts[i];
+      const [x2, y2] = verts[(i + 1) % n];
+      segments.push([x1, y1, x2, y2]);
     }
   }
 
@@ -389,8 +529,14 @@ function buildTilingPolygons(tiling, canvasW, canvasH) {
       baseVerts = regularPolygon(feature.sides, 0);
     } else if (feature.points && feature.points.length >= 3) {
       baseVerts = feature.points;
+    } else if (feature.sides && feature.sides >= 3) {
+      // polygon type with explicit sides but no points — treat as regular
+      baseVerts = regularPolygon(feature.sides, 0);
     } else {
-      continue;
+      // Feature with no usable geometry — infer a square from the tiling cell size
+      // (handles data defects like regular-4.v5 where points/sides are null)
+      const r = Math.sqrt(t1x * t1x + t1y * t1y) / 2 || 1;
+      baseVerts = [[-r, -r], [r, -r], [r, r], [-r, r]];
     }
 
     for (const placement of feature.placements) {

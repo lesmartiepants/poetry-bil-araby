@@ -176,17 +176,19 @@ const DebugPanel = ({ controlBarRef }) => {
 
       {/* Floating log panel */}
       <div
-        className={`fixed z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 border ${theme.border} ${
+        className={`fixed z-[200] flex flex-col rounded-2xl transition-all duration-200 border ${theme.border} ${
           darkMode
             ? 'bg-black/70'
             : 'bg-white/80'
         } backdrop-blur-xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
         style={{
           right: btnPos.right,
+          left: 8,
           bottom: btnPos.bottom + 48,
           height: '50vh',
           maxHeight: '480px',
           minHeight: '240px',
+          boxShadow: '0 0 24px 4px rgba(197,160,89,0.12), 0 8px 32px rgba(0,0,0,0.5)',
         }}
         aria-hidden={!panelOpen}
       >
@@ -196,9 +198,9 @@ const DebugPanel = ({ controlBarRef }) => {
         >
           <span
             className="text-[0.625rem] font-brand-en uppercase tracking-widest font-bold"
-            style={{ color: gold, opacity: 0.5 }}
+            style={{ color: 'var(--gold)' }}
           >
-            Dev Logs
+            Application Logs
             <span className="ml-1.5 opacity-60">({logs.length})</span>
           </span>
           <div className="flex items-center gap-1.5">
@@ -243,7 +245,7 @@ const DebugPanel = ({ controlBarRef }) => {
           ))}
         </div>
 
-        {/* TTS model A/B toggle */}
+        {/* Speech Engine model A/B toggle */}
         <div className={`flex items-center justify-between px-4 py-1.5 border-t ${theme.border} flex-none`}>
           <div className="flex items-center gap-1.5">
             {ttsModel === 'pro' ? (
@@ -252,22 +254,30 @@ const DebugPanel = ({ controlBarRef }) => {
               <Radio size={9} className="text-emerald-400" />
             )}
             <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">
-              TTS
+              Speech Engine
             </span>
             <span className={`text-[0.5625rem] font-mono font-bold ${ttsModel === 'pro' ? 'text-amber-400' : 'text-emerald-400'}`}>
               {ttsModel === 'pro' ? 'Pro' : 'Flash'}
             </span>
           </div>
+          {/* Left/right visual toggle — Flash (emerald, left) ↔ Pro (amber, right) */}
           <button
             onClick={handleTtsModelToggle}
-            title={`Switch to ${ttsModel === 'pro' ? 'Flash' : 'Pro'} TTS — clears audio cache for current poem`}
-            className={`px-2 py-0.5 rounded text-[0.5rem] font-bold uppercase tracking-wider transition-colors ${
-              darkMode
-                ? 'bg-gold/10 text-gold/50 hover:bg-gold/20 hover:text-gold/80'
-                : 'bg-gold/8 text-gold/50 hover:bg-gold/15 hover:text-gold/70'
-            }`}
+            title={`Switch to ${ttsModel === 'pro' ? 'Flash' : 'Pro'} — clears audio cache for current poem`}
+            className="relative w-9 h-4 rounded-full transition-colors flex items-center flex-shrink-0"
+            style={{
+              backgroundColor: ttsModel === 'pro' ? 'rgba(251,191,36,0.18)' : 'rgba(52,211,153,0.15)',
+              border: `1px solid ${ttsModel === 'pro' ? 'rgba(251,191,36,0.3)' : 'rgba(52,211,153,0.25)'}`,
+            }}
           >
-            Switch
+            <span
+              className="absolute w-3 h-3 rounded-full transition-all duration-200"
+              style={{
+                backgroundColor: ttsModel === 'pro' ? 'rgb(251,191,36)' : 'rgb(52,211,153)',
+                left: ttsModel === 'pro' ? 'calc(100% - 14px)' : '2px',
+                boxShadow: ttsModel === 'pro' ? '0 0 6px rgba(251,191,36,0.6)' : '0 0 6px rgba(52,211,153,0.5)',
+              }}
+            />
           </button>
         </div>
 

@@ -426,20 +426,17 @@
 <div class="kbd-overlay" id="kbdOverlay">
   <div class="kbd-panel">
     <h2>Keyboard Shortcuts</h2>
-    <div class="kbd-row"><span class="kbd-label">Navigate patterns</span><span class="kbd-key">&#x2191; / &#x2193;</span></div>
-    <div class="kbd-row"><span class="kbd-label">Switch tabs</span><span class="kbd-key">&#x2190; / &#x2192;</span></div>
-    <div class="kbd-row"><span class="kbd-label">Select pattern</span><span class="kbd-key">Enter</span></div>
-    <div class="kbd-row"><span class="kbd-label">Toggle construction lines</span><span class="kbd-key">Space</span></div>
+    <div class="kbd-row"><span class="kbd-label">Browse patterns</span><span class="kbd-key">&#x2191; / &#x2193;</span></div>
+    <div class="kbd-row"><span class="kbd-label">Zoom in / out</span><span class="kbd-key">&#x2190; / &#x2192;</span></div>
+    <div class="kbd-row"><span class="kbd-label">Switch tabs</span><span class="kbd-key">Tab / Shift+Tab</span></div>
+    <div class="kbd-row"><span class="kbd-label">Toggle tile mode</span><span class="kbd-key">T</span></div>
     <div class="kbd-row"><span class="kbd-label">Save PNG</span><span class="kbd-key">S</span></div>
-    <div class="kbd-row"><span class="kbd-label">Cycle color mode</span><span class="kbd-key">C</span></div>
-    <div class="kbd-row"><span class="kbd-label">Toggle fullscreen</span><span class="kbd-key">F</span></div>
-    <div class="kbd-row"><span class="kbd-label">Toggle tile wallpaper mode</span><span class="kbd-key">T</span></div>
-    <div class="kbd-row"><span class="kbd-label">Zoom in / out</span><span class="kbd-key">+ / -</span></div>
-    <div class="kbd-row"><span class="kbd-label">Reset zoom</span><span class="kbd-key">0</span></div>
-    <div class="kbd-row"><span class="kbd-label">Focus search</span><span class="kbd-key">/ or Ctrl+K</span></div>
-    <div class="kbd-row"><span class="kbd-label">Random pattern</span><span class="kbd-key">R</span></div>
-    <div class="kbd-row"><span class="kbd-label">Clear search / exit fullscreen</span><span class="kbd-key">Esc</span></div>
-    <div class="kbd-row"><span class="kbd-label">This help</span><span class="kbd-key">?</span></div>
+    <div class="kbd-row"><span class="kbd-label">Color mode</span><span class="kbd-key">C</span></div>
+    <div class="kbd-row"><span class="kbd-label">Random</span><span class="kbd-key">R</span></div>
+    <div class="kbd-row"><span class="kbd-label">Construction toggle</span><span class="kbd-key">Space</span></div>
+    <div class="kbd-row"><span class="kbd-label">Fullscreen</span><span class="kbd-key">F</span></div>
+    <div class="kbd-row"><span class="kbd-label">Search</span><span class="kbd-key">/</span></div>
+    <div class="kbd-row"><span class="kbd-label">Help</span><span class="kbd-key">?</span></div>
     <button class="kbd-close" id="kbdClose">Close</button>
   </div>
 </div>
@@ -1591,7 +1588,19 @@ document.getElementById('zoomSlider').addEventListener('input', e => {
 // ────────────────────────────────────────────────────────────────────────────
 // KEYBOARD SHORTCUTS
 // ────────────────────────────────────────────────────────────────────────────
-const TABS_ORDER = ['tilings', 'girih', 'templates', 'discover'];
+const TABS_ORDER = ['discover', 'tilings', 'girih', 'templates'];
+
+function switchTab(tabName) {
+  currentTab = tabName;
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tabName);
+  });
+  // Highlight and auto-render first item in new tab
+  const flat = getFlatItems();
+  highlightedIndex = flat.length > 0 ? 0 : -1;
+  buildSidebar();
+  if (flat.length > 0) selectItem(flat[0].kind, flat[0].data);
+}
 
 document.addEventListener('keydown', e => {
   const search = document.getElementById('searchInput');
@@ -1626,8 +1635,19 @@ document.addEventListener('keydown', e => {
   // If overlay open, block other shortcuts
   if (isOverlayOpen) return;
 
-  // Don't intercept when typing in search, except arrow keys
-  if (isSearchFocused && !['ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)) return;
+  // Tab / Shift+Tab — cycle tabs (only when search not focused)
+  if (e.key === 'Tab' && !isSearchFocused) {
+    e.preventDefault();
+    const idx = TABS_ORDER.indexOf(currentTab);
+    const next = e.shiftKey
+      ? TABS_ORDER[(idx - 1 + TABS_ORDER.length) % TABS_ORDER.length]
+      : TABS_ORDER[(idx + 1) % TABS_ORDER.length];
+    switchTab(next);
+    return;
+  }
+
+  // Don't intercept when typing in search, except Up/Down arrows
+  if (isSearchFocused && !['ArrowUp', 'ArrowDown'].includes(e.key)) return;
 
   switch (e.key) {
     case 'ArrowUp': {
@@ -1636,38 +1656,28 @@ document.addEventListener('keydown', e => {
       if (flat.length === 0) break;
       highlightedIndex = highlightedIndex <= 0 ? flat.length - 1 : highlightedIndex - 1;
       buildSidebar();
+      // Auto-render the newly highlighted item
+      const pick = flat[highlightedIndex];
+      if (pick) selectItem(pick.kind, pick.data);
       break;
     }
     case 'ArrowDown': {
       e.preventDefault();
       const flat = getFlatItems();
       if (flat.length === 0) break;
-      highlightedIndex = (highlightedIndex + 1) % flat.length;
+      highlightedIndex = highlightedIndex < 0 ? 0 : (highlightedIndex + 1) % flat.length;
       buildSidebar();
+      // Auto-render the newly highlighted item
+      const pick = flat[highlightedIndex];
+      if (pick) selectItem(pick.kind, pick.data);
       break;
     }
     case 'ArrowLeft': {
-      e.preventDefault();
-      const idx = TABS_ORDER.indexOf(currentTab);
-      const prev = TABS_ORDER[(idx - 1 + TABS_ORDER.length) % TABS_ORDER.length];
-      const btn = document.querySelector(`.tab-btn[data-tab="${prev}"]`);
-      if (btn) btn.click();
+      if (!isSearchFocused) { e.preventDefault(); setZoom(zoomLevel - 0.25); }
       break;
     }
     case 'ArrowRight': {
-      e.preventDefault();
-      const idx = TABS_ORDER.indexOf(currentTab);
-      const next = TABS_ORDER[(idx + 1) % TABS_ORDER.length];
-      const btn = document.querySelector(`.tab-btn[data-tab="${next}"]`);
-      if (btn) btn.click();
-      break;
-    }
-    case 'Enter': {
-      if (highlightedIndex >= 0) {
-        const flat = getFlatItems();
-        const pick = flat[highlightedIndex];
-        if (pick) selectItem(pick.kind, pick.data);
-      }
+      if (!isSearchFocused) { e.preventDefault(); setZoom(zoomLevel + 0.25); }
       break;
     }
     case ' ': {

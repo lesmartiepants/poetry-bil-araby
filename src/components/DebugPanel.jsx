@@ -32,8 +32,7 @@ const DebugPanel = ({ controlBarRef }) => {
   const [bugError, setBugError] = useState('');
   const [lastViewedCount, setLastViewedCount] = useState(0);
   const scrollRef = useRef(null);
-  // Fixed position for bug button — aligned with paintbrush button at bottom-left
-  const btnPos = { left: 8, bottom: 52 };
+  const btnPos = { right: 8, bottom: 52 };
 
   // Shake-to-open on mobile (DeviceMotion)
   useEffect(() => {
@@ -144,22 +143,22 @@ const DebugPanel = ({ controlBarRef }) => {
 
   return (
     <>
-      {/* Floating trigger — minimal dot, 44px touch target */}
+      {/* Floating trigger — bottom-right, aligned with controls */}
       <button
         onClick={() => setPanelOpen((prev) => !prev)}
         className="fixed z-[200] w-[44px] h-[44px] flex items-center justify-center"
-        style={{ left: btnPos.left, bottom: btnPos.bottom }}
+        style={{ right: btnPos.right, bottom: btnPos.bottom }}
         title="Toggle dev logs"
         aria-label="Toggle developer log panel"
       >
         <span
-          className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+          className={`relative w-6 h-6 rounded-full flex items-center justify-center transition-all duration-200 ${
             darkMode
-              ? 'bg-black/60 text-gold/40 hover:text-gold/80'
-              : 'bg-white/60 text-gold/30 hover:text-gold/70'
-          } backdrop-blur-md`}
+              ? `bg-black/70 text-gold/40 hover:text-gold/80 border ${theme.border}`
+              : `bg-white/80 text-gold/30 hover:text-gold/70 border ${theme.border}`
+          } backdrop-blur-xl`}
         >
-          <Bug size={9} />
+          <Bug size={10} strokeWidth={1.5} />
           {unreadErrors > 0 && !panelOpen && (
             <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500/80" />
           )}
@@ -177,13 +176,13 @@ const DebugPanel = ({ controlBarRef }) => {
 
       {/* Floating log panel */}
       <div
-        className={`fixed z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 ${
+        className={`fixed z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 border ${theme.border} ${
           darkMode
-            ? 'bg-black/95 border border-gold/15'
-            : 'bg-white/95 border border-gold/10'
-        } backdrop-blur-2xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
+            ? 'bg-black/70'
+            : 'bg-white/80'
+        } backdrop-blur-xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
         style={{
-          left: btnPos.left,
+          right: btnPos.right,
           bottom: btnPos.bottom + 48,
           height: '50vh',
           maxHeight: '480px',
@@ -193,7 +192,7 @@ const DebugPanel = ({ controlBarRef }) => {
       >
         {/* Panel header */}
         <div
-          className={`flex items-center justify-between px-4 py-2.5 border-b ${darkMode ? 'border-gold/15' : 'border-gold/15'} flex-none`}
+          className={`flex items-center justify-between px-4 py-2.5 border-b ${theme.border} flex-none`}
         >
           <span
             className="text-[0.625rem] font-brand-en uppercase tracking-widest font-bold"
@@ -228,7 +227,7 @@ const DebugPanel = ({ controlBarRef }) => {
           {logs.map((log, idx) => (
             <div
               key={idx}
-              className={`py-0.5 border-b break-words overflow-hidden ${darkMode ? 'border-gold/5' : 'border-gold/8'}`}
+              className={`py-0.5 border-b break-words overflow-hidden ${darkMode ? 'border-white/[0.04]' : 'border-black/[0.06]'}`}
             >
               <div>
                 <span className={darkMode ? 'text-white/70' : 'text-black/60'}>
@@ -245,7 +244,7 @@ const DebugPanel = ({ controlBarRef }) => {
         </div>
 
         {/* TTS model A/B toggle */}
-        <div className={`flex items-center justify-between px-4 py-1.5 border-t ${darkMode ? 'border-gold/10' : 'border-gold/10'} flex-none`}>
+        <div className={`flex items-center justify-between px-4 py-1.5 border-t ${theme.border} flex-none`}>
           <div className="flex items-center gap-1.5">
             {ttsModel === 'pro' ? (
               <Zap size={9} className="text-amber-400" />
@@ -274,14 +273,14 @@ const DebugPanel = ({ controlBarRef }) => {
 
         {/* Bug report input */}
         <div
-          className={`flex items-center gap-1.5 px-4 py-2 border-t ${darkMode ? 'border-gold/15' : 'border-gold/15'} flex-none`}
+          className={`flex items-center gap-1.5 px-4 py-2 border-t ${theme.border} flex-none`}
         >
           <input
             type="text"
             value={bugDescription}
             onChange={(e) => setBugDescription(e.target.value)}
             placeholder="Describe the bug..."
-            className={`flex-1 px-2 py-1 rounded text-[1rem] border ${darkMode ? 'bg-black/60 border-gold/15 text-white/80 placeholder:text-white/25' : 'bg-white/60 border-gold/15 text-black/80 placeholder:text-black/30'}`}
+            className={`flex-1 px-2 py-1 rounded text-[1rem] border ${darkMode ? 'bg-white/[0.04] border-white/[0.06] text-white/70 placeholder:text-white/20' : 'bg-black/[0.03] border-black/[0.06] text-black/70 placeholder:text-black/25'}`}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSubmitBug();
             }}

@@ -236,6 +236,49 @@
     background: var(--bg); align-items: center; justify-content: center;
   }
 
+  /* ── TILE MODE ── */
+  .canvas-wrap.tile-mode {
+    position: fixed; inset: 0; z-index: 10;
+    background: var(--bg);
+    pointer-events: none;
+  }
+  .canvas-wrap.tile-mode #patternCanvas {
+    width: 100% !important; height: 100% !important;
+  }
+  .app.tile-mode-active .sidebar {
+    background: rgba(13,13,20,0.85); backdrop-filter: blur(8px);
+    position: relative; z-index: 20;
+  }
+  .app.tile-mode-active .main {
+    position: relative; z-index: 20;
+  }
+  .app.tile-mode-active .toolbar {
+    background: rgba(13,13,20,0.85); backdrop-filter: blur(8px);
+  }
+
+  /* ── ZOOM SLIDER ── */
+  .zoom-group {
+    display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+  }
+  .zoom-label {
+    font-size: 11px; color: var(--muted); white-space: nowrap; min-width: 30px; text-align: right;
+  }
+  input[type="range"]#zoomSlider {
+    -webkit-appearance: none;
+    width: 80px; height: 4px;
+    background: rgba(197,160,89,0.2);
+    border-radius: 2px; outline: none; cursor: pointer;
+  }
+  input[type="range"]#zoomSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #c5a059; cursor: pointer;
+    box-shadow: 0 0 4px rgba(197,160,89,0.4);
+  }
+  .btn-icon.active {
+    background: rgba(197,160,89,0.3); border-color: var(--gold); color: var(--gold);
+  }
+
   /* ── MOBILE ── */
   @media (max-width: 640px) {
     .app { flex-direction: column; }
@@ -293,6 +336,11 @@
           <input type="checkbox" id="showConstruction" style="accent-color:var(--gold);">
           Construction
         </label>
+        <button class="btn-icon" id="tileModeBtn" title="Toggle tile wallpaper mode (T)">&#x2586;</button>
+        <div class="zoom-group">
+          <input type="range" id="zoomSlider" min="0.25" max="4" step="0.05" value="1" title="Pattern zoom">
+          <span class="zoom-label" id="zoomLabel">1.0x</span>
+        </div>
         <button class="btn-icon" id="randomBtn" title="Random pattern (R)">&#x1F3B2;</button>
         <button class="btn" id="downloadBtn" title="Save PNG (S)">Download PNG</button>
         <button class="btn-icon" id="helpBtn" title="Keyboard shortcuts (?)">?</button>
@@ -315,6 +363,9 @@
     <div class="kbd-row"><span class="kbd-label">Save PNG</span><span class="kbd-key">S</span></div>
     <div class="kbd-row"><span class="kbd-label">Cycle color mode</span><span class="kbd-key">C</span></div>
     <div class="kbd-row"><span class="kbd-label">Toggle fullscreen</span><span class="kbd-key">F</span></div>
+    <div class="kbd-row"><span class="kbd-label">Toggle tile wallpaper mode</span><span class="kbd-key">T</span></div>
+    <div class="kbd-row"><span class="kbd-label">Zoom in / out</span><span class="kbd-key">+ / -</span></div>
+    <div class="kbd-row"><span class="kbd-label">Reset zoom</span><span class="kbd-key">0</span></div>
     <div class="kbd-row"><span class="kbd-label">Focus search</span><span class="kbd-key">/ or Ctrl+K</span></div>
     <div class="kbd-row"><span class="kbd-label">Random pattern</span><span class="kbd-key">R</span></div>
     <div class="kbd-row"><span class="kbd-label">Clear search / exit fullscreen</span><span class="kbd-key">Esc</span></div>
@@ -338,6 +389,9 @@ let searchQuery = '';
 let showConstruction = false;
 let colorMode = 'gold';   // 'gold' | 'lapis' | 'multicolor' | 'neon' | 'parchment'
 let isFullscreen = false;
+let isTileMode = false;
+let zoomLevel = 1.0;
+let offscreenTileCanvas = null; // cached offscreen canvas for tile mode
 let highlightedIndex = -1; // index in current flat item list for keyboard nav
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -829,6 +883,20 @@ function renderTemplate(ctx, template, w, h) {
   }
 }
 
+// ── Renders the pattern into an offscreen canvas at the given tile size
+function renderToOffscreen(tileSize) {
+  const oc = document.createElement('canvas');
+  oc.width  = tileSize;
+  oc.height = tileSize;
+  const ctx = oc.getContext('2d');
+  ctx.globalAlpha = 1;
+  const { kind, data } = currentItem;
+  if (kind === 'tiling')        renderTiling(ctx, data, tileSize, tileSize);
+  else if (kind === 'girih')    renderGirih(ctx, data, tileSize, tileSize);
+  else if (kind === 'template') renderTemplate(ctx, data, tileSize, tileSize);
+  return oc;
+}
+
 function render() {
   if (!currentItem) return;
 
@@ -840,28 +908,80 @@ function render() {
   canvas.classList.add('fading');
 
   requestAnimationFrame(() => {
-    // Set canvas resolution
-    canvas.width  = sizeVal;
-    canvas.height = sizeVal;
+    if (isTileMode) {
+      // Full-viewport tiling mode
+      const vpW = window.innerWidth;
+      const vpH = window.innerHeight;
+      canvas.width  = vpW;
+      canvas.height = vpH;
+      canvas.style.width  = vpW + 'px';
+      canvas.style.height = vpH + 'px';
 
-    // Scale canvas to fit viewport
-    const wrapW = wrap.clientWidth  - 32;
-    const wrapH = wrap.clientHeight - 32;
-    const fitScale = Math.min(wrapW / sizeVal, wrapH / sizeVal, 1);
-    canvas.style.width  = Math.round(sizeVal * fitScale) + 'px';
-    canvas.style.height = Math.round(sizeVal * fitScale) + 'px';
+      // Tile size is base 300px * zoom
+      const baseTile = 300;
+      const tileSize = Math.round(baseTile * zoomLevel);
 
-    const ctx = canvas.getContext('2d');
-    ctx.globalAlpha = 1;
+      // Render pattern to offscreen canvas (cache it)
+      offscreenTileCanvas = renderToOffscreen(tileSize);
 
-    const { kind, data } = currentItem;
-    if (kind === 'tiling')        renderTiling(ctx, data, sizeVal, sizeVal);
-    else if (kind === 'girih')    renderGirih(ctx, data, sizeVal, sizeVal);
-    else if (kind === 'template') renderTemplate(ctx, data, sizeVal, sizeVal);
+      const ctx = canvas.getContext('2d');
+      ctx.globalAlpha = 1;
+      // Fill background first
+      const c = getColors(colorMode);
+      ctx.fillStyle = c.bg;
+      ctx.fillRect(0, 0, vpW, vpH);
+      // Tile with createPattern
+      const pat = ctx.createPattern(offscreenTileCanvas, 'repeat');
+      ctx.fillStyle = pat;
+      ctx.fillRect(0, 0, vpW, vpH);
+    } else {
+      // Normal mode: render at sizeVal with zoom scaling
+      const scaledSize = Math.round(sizeVal * zoomLevel);
+
+      canvas.width  = scaledSize;
+      canvas.height = scaledSize;
+
+      const wrapW = wrap.clientWidth  - 32;
+      const wrapH = wrap.clientHeight - 32;
+      const fitScale = Math.min(wrapW / scaledSize, wrapH / scaledSize, 1);
+      canvas.style.width  = Math.round(scaledSize * fitScale) + 'px';
+      canvas.style.height = Math.round(scaledSize * fitScale) + 'px';
+
+      const ctx = canvas.getContext('2d');
+      ctx.globalAlpha = 1;
+
+      const { kind, data } = currentItem;
+      if (kind === 'tiling')        renderTiling(ctx, data, scaledSize, scaledSize);
+      else if (kind === 'girih')    renderGirih(ctx, data, scaledSize, scaledSize);
+      else if (kind === 'template') renderTemplate(ctx, data, scaledSize, scaledSize);
+    }
 
     // Trigger fade-in
     requestAnimationFrame(() => canvas.classList.remove('fading'));
   });
+}
+
+// ── Toggle tile wallpaper mode
+function toggleTileMode(force) {
+  isTileMode = force !== undefined ? force : !isTileMode;
+  const app  = document.querySelector('.app');
+  const wrap = document.getElementById('canvasWrap');
+  const btn  = document.getElementById('tileModeBtn');
+  app.classList.toggle('tile-mode-active', isTileMode);
+  wrap.classList.toggle('tile-mode', isTileMode);
+  btn.classList.toggle('active', isTileMode);
+  if (currentItem) render();
+}
+
+// ── Zoom helpers
+function setZoom(val) {
+  zoomLevel = Math.max(0.25, Math.min(4, val));
+  const slider = document.getElementById('zoomSlider');
+  const label  = document.getElementById('zoomLabel');
+  slider.value = zoomLevel;
+  label.textContent = zoomLevel.toFixed(2).replace(/\.?0+$/, '') + 'x';
+  offscreenTileCanvas = null; // invalidate cache
+  if (currentItem) render();
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -1111,6 +1231,7 @@ function escapeHtml(s) {
 // ────────────────────────────────────────────────────────────────────────────
 function selectItem(kind, data) {
   currentItem = { kind, data };
+  offscreenTileCanvas = null; // invalidate tile cache on pattern change
   buildSidebar();
 
   const nameEl = document.getElementById('patternName');
@@ -1184,6 +1305,7 @@ document.getElementById('colorModeRow').addEventListener('click', e => {
 
 function setColorMode(mode) {
   colorMode = mode;
+  offscreenTileCanvas = null; // invalidate tile cache on color change
   document.querySelectorAll('.color-pill').forEach(p => {
     p.classList.toggle('active', p.dataset.mode === mode);
   });
@@ -1237,6 +1359,14 @@ function toggleFullscreen(force) {
   if (currentItem) render();
 }
 
+// Tile mode button
+document.getElementById('tileModeBtn').addEventListener('click', () => toggleTileMode());
+
+// Zoom slider
+document.getElementById('zoomSlider').addEventListener('input', e => {
+  setZoom(parseFloat(e.target.value));
+});
+
 // ────────────────────────────────────────────────────────────────────────────
 // KEYBOARD SHORTCUTS
 // ────────────────────────────────────────────────────────────────────────────
@@ -1250,6 +1380,7 @@ document.addEventListener('keydown', e => {
   // Always: Escape
   if (e.key === 'Escape') {
     if (isOverlayOpen) { toggleHelp(false); return; }
+    if (isTileMode) { toggleTileMode(false); return; }
     if (isFullscreen) { toggleFullscreen(false); return; }
     if (searchQuery) { search.value = ''; searchQuery = ''; highlightedIndex = -1; buildSidebar(); return; }
     if (isSearchFocused) { search.blur(); return; }
@@ -1346,6 +1477,24 @@ document.addEventListener('keydown', e => {
     case 'r':
     case 'R': {
       if (!isSearchFocused) selectRandom();
+      break;
+    }
+    case 't':
+    case 'T': {
+      if (!isSearchFocused) toggleTileMode();
+      break;
+    }
+    case '+':
+    case '=': {
+      if (!isSearchFocused) { e.preventDefault(); setZoom(zoomLevel + 0.25); }
+      break;
+    }
+    case '-': {
+      if (!isSearchFocused) { e.preventDefault(); setZoom(zoomLevel - 0.25); }
+      break;
+    }
+    case '0': {
+      if (!isSearchFocused) setZoom(1.0);
       break;
     }
   }

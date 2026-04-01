@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bug, X, Trash2, Zap, Radio } from 'lucide-react';
+import { X, Trash2, Zap, Radio } from 'lucide-react';
 import Sentry from '../sentry.js';
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
@@ -115,24 +115,11 @@ const DebugPanel = ({ controlBarRef }) => {
 
   if (!visible) return null;
 
-  const logTypeColor = (type) => {
-    switch (type) {
-      case 'error':
-        return 'text-red-400';
-      case 'success':
-        return 'text-emerald-400';
-      case 'warning':
-        return 'text-amber-400';
-      default:
-        return darkMode ? 'text-stone-400' : 'text-stone-500';
-    }
-  };
-
   const gold = 'var(--gold)';
 
   return (
     <>
-      {/* Floating trigger — small visual dot, 44px touch target, centered in gap */}
+      {/* Floating trigger — minimal dot, 44px touch target */}
       <button
         onClick={() => setPanelOpen((prev) => !prev)}
         className="fixed z-[200] w-[44px] h-[44px] flex items-center justify-center"
@@ -141,15 +128,14 @@ const DebugPanel = ({ controlBarRef }) => {
         aria-label="Toggle developer log panel"
       >
         <span
-          className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+          className={`relative w-1.5 h-1.5 rounded-full transition-all duration-200 ${
             darkMode
-              ? 'bg-stone-900/60 border border-gold/20 text-stone-500 hover:text-gold hover:border-gold/40'
-              : 'bg-white/50 border border-gold/20 text-stone-400 hover:text-gold hover:border-gold/40'
-          } backdrop-blur-md`}
+              ? 'bg-gold/30 hover:bg-gold/60'
+              : 'bg-gold/25 hover:bg-gold/50'
+          }`}
         >
-          <Bug size={9} />
           {unreadErrors > 0 && !panelOpen && (
-            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-black/30" />
+            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500/80" />
           )}
         </span>
       </button>
@@ -163,12 +149,12 @@ const DebugPanel = ({ controlBarRef }) => {
         />
       )}
 
-      {/* Floating log panel — matches poet picker styling */}
+      {/* Floating log panel */}
       <div
         className={`fixed z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 ${
           darkMode
-            ? 'bg-black/95 border border-gold/25 text-stone-300'
-            : 'bg-white/95 border border-gold/20 text-stone-700'
+            ? 'bg-black/95 border border-gold/15'
+            : 'bg-white/95 border border-gold/10'
         } backdrop-blur-2xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
         style={{
           left: btnPos.left,
@@ -193,14 +179,14 @@ const DebugPanel = ({ controlBarRef }) => {
           <div className="flex items-center gap-1.5">
             <button
               onClick={onClear}
-              className={`p-1 transition-colors ${darkMode ? 'text-stone-600 hover:text-stone-300' : 'text-stone-400 hover:text-stone-600'}`}
+              className="p-1 transition-colors text-gold/30 hover:text-gold/70"
               title="Clear logs"
             >
               <Trash2 size={11} />
             </button>
             <button
               onClick={() => setPanelOpen(false)}
-              className={`p-1 transition-colors ${darkMode ? 'text-stone-600 hover:text-stone-300' : 'text-stone-400 hover:text-stone-600'}`}
+              className="p-1 transition-colors text-gold/30 hover:text-gold/70"
               title="Close panel"
             >
               <X size={12} />
@@ -216,10 +202,10 @@ const DebugPanel = ({ controlBarRef }) => {
           {logs.map((log, idx) => (
             <div
               key={idx}
-              className={`py-0.5 border-b break-words overflow-hidden ${darkMode ? 'border-stone-800/40' : 'border-stone-200/40'}`}
+              className={`py-0.5 border-b break-words overflow-hidden ${darkMode ? 'border-gold/5' : 'border-gold/8'}`}
             >
               <div>
-                <span className={darkMode ? 'text-stone-400' : 'text-stone-500'}>
+                <span className={darkMode ? 'text-white/70' : 'text-black/60'}>
                   {idx === 0 ? log.time : log.rel}
                 </span>{' '}
                 <span className="font-semibold" style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color }}>
@@ -227,7 +213,7 @@ const DebugPanel = ({ controlBarRef }) => {
                 </span>{' '}
                 <span style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color, opacity: 0.7 }}>[{log.label}]</span>
               </div>
-              <div className={darkMode ? 'text-stone-400' : 'text-stone-500'}>{log.msg}</div>
+              <div className={darkMode ? 'text-white/50' : 'text-black/50'}>{log.msg}</div>
             </div>
           ))}
         </div>
@@ -252,8 +238,8 @@ const DebugPanel = ({ controlBarRef }) => {
             title={`Switch to ${ttsModel === 'pro' ? 'Flash' : 'Pro'} TTS — clears audio cache for current poem`}
             className={`px-2 py-0.5 rounded text-[0.5rem] font-bold uppercase tracking-wider transition-colors ${
               darkMode
-                ? 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-200'
-                : 'bg-stone-100 text-stone-500 hover:bg-stone-200 hover:text-stone-700'
+                ? 'bg-gold/10 text-gold/50 hover:bg-gold/20 hover:text-gold/80'
+                : 'bg-gold/8 text-gold/50 hover:bg-gold/15 hover:text-gold/70'
             }`}
           >
             Switch
@@ -269,7 +255,7 @@ const DebugPanel = ({ controlBarRef }) => {
             value={bugDescription}
             onChange={(e) => setBugDescription(e.target.value)}
             placeholder="Describe the bug..."
-            className={`flex-1 px-2 py-1 rounded text-[1rem] border ${darkMode ? 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500' : 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400'}`}
+            className={`flex-1 px-2 py-1 rounded text-[1rem] border ${darkMode ? 'bg-black/60 border-gold/15 text-white/80 placeholder:text-white/25' : 'bg-white/60 border-gold/15 text-black/80 placeholder:text-black/30'}`}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSubmitBug();
             }}
@@ -283,7 +269,7 @@ const DebugPanel = ({ controlBarRef }) => {
                 : bugStatus === 'error'
                   ? `${theme.errorBg} text-white`
                   : bugStatus === 'sending'
-                    ? 'bg-stone-600/80 text-stone-400'
+                    ? 'bg-gold/10 text-gold/40'
                     : darkMode
                       ? 'bg-gold/20 text-gold hover:bg-gold/30'
                       : 'bg-gold/15 text-gold hover:bg-gold/25'

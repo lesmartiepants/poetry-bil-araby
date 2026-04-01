@@ -463,6 +463,7 @@ let isTileMode = false;
 let zoomLevel = 1.0;
 let offscreenTileCanvas = null; // cached offscreen canvas for tile mode
 let highlightedIndex = -1; // index in current flat item list for keyboard nav
+const collapsedCollections = new Set(); // track which collections are collapsed
 
 // ────────────────────────────────────────────────────────────────────────────
 // MATH HELPERS
@@ -1538,6 +1539,24 @@ function selectRandom() {
   selectItem(pick.kind, pick.data);
 }
 document.getElementById('randomBtn').addEventListener('click', selectRandom);
+
+// Surprise me button — random pattern from any Discover collection
+function selectSurprise() {
+  const all = [];
+  for (const col of COLLECTIONS) {
+    for (const entry of col.items) {
+      const data = findCatalogItem(entry.tab, entry.name);
+      if (!data) continue;
+      const kind = entry.tab === 'tilings' ? 'tiling' : entry.tab === 'girih' ? 'girih' : 'template';
+      all.push({ kind, data });
+    }
+  }
+  if (all.length === 0) return;
+  const pick = all[Math.floor(Math.random() * all.length)];
+  highlightedIndex = -1;
+  selectItem(pick.kind, pick.data);
+}
+document.getElementById('surpriseBtn').addEventListener('click', selectSurprise);
 
 // Help overlay
 function toggleHelp(show) {

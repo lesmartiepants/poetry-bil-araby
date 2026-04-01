@@ -453,6 +453,27 @@ export default function DiwanApp() {
         addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
         setAutoExplainPending(true);
         if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
+
+        // Restore carousel position if the user was mid-carousel before OAuth redirect
+        try {
+          const rawIds = sessionStorage.getItem('pendingCarouselPoems');
+          const rawIdx = sessionStorage.getItem('pendingCarouselIndex');
+          sessionStorage.removeItem('pendingCarouselPoems');
+          sessionStorage.removeItem('pendingCarouselIndex');
+          if (rawIds) {
+            const ids = JSON.parse(rawIds);
+            const targetIdx = rawIdx ? parseInt(rawIdx, 10) : 0;
+            Promise.all(ids.map((id) => fetchPoemById(id)))
+              .then((fetchedPoems) => {
+                setCarouselPoems(fetchedPoems);
+                setCarouselIndex(targetIdx);
+                addLog('Init', `Restored carousel: ${fetchedPoems.length} poems, index ${targetIdx}`, 'success');
+              })
+              .catch((err) => {
+                addLog('Init', `Carousel restore failed: ${err.message}`, 'error');
+              });
+          }
+        } catch {}
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(
@@ -811,6 +832,11 @@ export default function DiwanApp() {
     if (current) {
       try {
         sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
+        const { carouselPoems: cp, carouselIndex: ci } = usePoemStore.getState();
+        if (cp.length > 0) {
+          sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp.map((p) => p.id)));
+          sessionStorage.setItem('pendingCarouselIndex', String(ci));
+        }
       } catch {}
     }
     const { error } = await signInWithApple();

@@ -44,6 +44,11 @@ export function useAuth() {
       setLoading(false);
       log.info('StateChange', `${event}${session ? ` — ${session.user.email}` : ''}`);
 
+      // Strip OAuth ?code= param from URL after PKCE exchange
+      if (event === 'SIGNED_IN' && window.location.search.includes('code=')) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+
       // Sync Sentry user context with auth state
       if (session?.user) {
         Sentry.setUser({ id: session.user.id, email: session.user.email });

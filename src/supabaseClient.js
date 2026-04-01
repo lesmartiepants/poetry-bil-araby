@@ -8,11 +8,15 @@ export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
+// Restore OAuth hash fragment if it was captured by the inline script in index.html.
+// The hash may have been stripped by the router before this module loads.
+// Restoring it lets Supabase's detectSessionInUrl pick up the access_token.
+if (supabase && window.__supabaseAuthHash && !window.location.hash.includes('access_token')) {
+  window.location.hash = window.__supabaseAuthHash;
+  delete window.__supabaseAuthHash;
+}
+
 // Eagerly trigger session detection BEFORE React mounts.
-// After OAuth redirect, the URL contains #access_token=... which Supabase
-// needs to process. If we wait until useAuth's useEffect runs, the router
-// (wouter) may have already stripped the hash. Calling getSession() here
-// at module load time ensures the hash is captured immediately.
 if (supabase && window.location.hash.includes('access_token')) {
   supabase.auth.getSession();
 }

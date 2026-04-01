@@ -1028,7 +1028,7 @@ export default function DiwanApp() {
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes
-  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (100 RPD per model, free tier)
+  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (flash: ~100 RPD, pro: 50 RPD on Tier 1)
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
 

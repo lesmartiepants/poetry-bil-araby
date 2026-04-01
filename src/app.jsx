@@ -1309,7 +1309,7 @@ export default function DiwanApp() {
                         // Auto-explain via autoExplainPending (single explain path).
                         // This avoids the race where carousel-populate and autoExplainPending
                         // both fire analyzePoemAction and fight over interpretation state.
-                        const newPoem = carouselPoems[idx];
+                        const newPoem = usePoemStore.getState().carouselPoems[idx];
                         if (FEATURES.logging && newPoem) {
                           const fromPoem = carouselPoems[carouselIndex];
                           addLog('Carousel', `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`, 'user');

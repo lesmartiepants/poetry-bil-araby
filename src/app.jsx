@@ -50,7 +50,7 @@ import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
 import { useModalStore } from './stores/modalStore';
 import { fetchPoem as fetchPoemAction } from './stores/actions/fetchPoem';
-import { togglePlay as togglePlayAction } from './stores/actions/togglePlay';
+import { togglePlay as togglePlayAction, dismissTTSProgress } from './stores/actions/togglePlay';
 import { analyzePoem as analyzePoemAction } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { transliterate } from './utils/transliterate.js';
@@ -1005,6 +1005,7 @@ export default function DiwanApp() {
     setAudioUrl(null);
 
     // Clear any stuck loading states when poem changes
+    dismissTTSProgress();
     setIsGeneratingAudio(false);
     setIsInterpreting(false);
     setAudioError(null);
@@ -1496,9 +1497,16 @@ export default function DiwanApp() {
                         <Volume2 className={theme.error} size={21} />
                       ) : isPlaying ? (
                         <>
-                          <PulseGlowBars volumePulseRef={volumePulseRef} />
+                          <PulseGlowBars volumePulseRef={volumePulseRef} isPlaying={true} />
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
                             <Pause fill={GOLD.gold} size={14} />
+                          </div>
+                        </>
+                      ) : audioUrl ? (
+                        <>
+                          <PulseGlowBars volumePulseRef={null} isPlaying={false} />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-200 pointer-events-none">
+                            <Play fill={GOLD.gold} size={14} />
                           </div>
                         </>
                       ) : (
@@ -1508,7 +1516,7 @@ export default function DiwanApp() {
                     <span
                       className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                     >
-                      {isPlaying ? 'Playing' : 'Listen'}
+                      {isPlaying ? 'Playing' : audioUrl ? 'Paused' : 'Listen'}
                     </span>
                   </>
                 )}
@@ -1519,6 +1527,7 @@ export default function DiwanApp() {
                   onClick={() => {
                     setFireTapped(true);
                     setTimeout(() => setFireTapped(false), 400);
+                    dismissTTSProgress();
                     setDiscoverDrawerOpen(true);
                   }}
                   onTouchStart={() => {

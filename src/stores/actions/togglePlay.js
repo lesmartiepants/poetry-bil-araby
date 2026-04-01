@@ -91,7 +91,24 @@ function createProgressToast(estimatedSeconds, arabicText) {
     }
   };
 
+  // Store globally so it can be dismissed from outside (e.g. drawer open, poem change)
+  _activeProgressDismiss = dismiss;
+
   return { dismiss };
+}
+
+/** Module-level ref to the active progress toast's dismiss function. */
+let _activeProgressDismiss = null;
+
+/**
+ * Dismiss any active TTS progress toast. Safe to call anytime.
+ * Called by app.jsx when discover drawer opens, carousel navigates, etc.
+ */
+export function dismissTTSProgress() {
+  if (_activeProgressDismiss) {
+    _activeProgressDismiss();
+    _activeProgressDismiss = null;
+  }
 }
 
 /**

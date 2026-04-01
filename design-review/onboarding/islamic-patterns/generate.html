@@ -343,6 +343,62 @@
   #tileCloseBtn:hover { background: rgba(197,160,89,0.2); transform: scale(1.08); }
   .tile-mode-active #tileCloseBtn { display: flex; }
 
+  /* ── HEART / FAVORITES ── */
+  .heart-btn {
+    background: transparent; border: none; padding: 4px 6px;
+    font-size: 16px; line-height: 1; cursor: pointer;
+    color: var(--muted); flex-shrink: 0;
+    transition: transform 0.2s ease, color 0.2s ease;
+    border-radius: 4px;
+  }
+  .heart-btn:hover { color: var(--gold); }
+  .heart-btn.hearted { color: var(--gold); }
+  .heart-btn.pop {
+    animation: heartPop 0.2s ease forwards;
+  }
+  @keyframes heartPop {
+    0%   { transform: scale(1.0); }
+    50%  { transform: scale(1.3); }
+    100% { transform: scale(1.0); }
+  }
+  .sidebar-heart {
+    font-size: 10px; color: var(--gold); flex-shrink: 0; line-height: 1;
+    opacity: 0.85;
+  }
+
+  /* ── FAVORITES DROPDOWN ── */
+  .fav-wrap { position: relative; flex-shrink: 0; }
+  .fav-menu {
+    position: absolute; top: calc(100% + 6px); right: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 0; min-width: 180px;
+    z-index: 300; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    opacity: 0; pointer-events: none;
+    transform: translateY(-4px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+  }
+  .fav-menu.open { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  .fav-menu-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 14px; font-size: 12px; color: var(--text);
+    cursor: pointer; transition: background 0.1s;
+    white-space: nowrap;
+  }
+  .fav-menu-item:hover { background: var(--gold-bg); color: var(--gold); }
+  .fav-menu-item .fav-icon { font-size: 13px; flex-shrink: 0; }
+  .fav-divider { height: 1px; background: var(--border); margin: 4px 0; }
+  .fav-count {
+    font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 3px;
+    background: rgba(197,160,89,0.12); color: var(--gold);
+    letter-spacing: 0.06em; flex-shrink: 0;
+  }
+
+  /* ── SAVED COLLECTION EMPTY STATE ── */
+  .saved-empty {
+    padding: 10px 16px 6px 28px;
+    font-size: 11px; color: var(--muted); font-style: italic;
+  }
+
   /* ── MOBILE ── */
   @media (max-width: 640px) {
     .app { flex-direction: column; }
@@ -382,9 +438,12 @@
   <!-- ── MAIN ── -->
   <div class="main">
     <div class="toolbar">
-      <div class="toolbar-info">
-        <div class="toolbar-name" id="patternName">Select a pattern</div>
-        <div class="toolbar-desc" id="patternDesc"></div>
+      <div class="toolbar-info" style="display:flex;align-items:center;gap:6px;min-width:0;">
+        <div style="min-width:0;flex:1;">
+          <div class="toolbar-name" id="patternName">Select a pattern</div>
+          <div class="toolbar-desc" id="patternDesc"></div>
+        </div>
+        <button class="heart-btn" id="heartBtn" title="Save to favorites (H)">&#x2661;</button>
       </div>
       <div class="toolbar-controls">
         <div class="color-mode-row" id="colorModeRow">
@@ -409,6 +468,14 @@
           <span class="zoom-label" id="zoomLabel">1.0x</span>
         </div>
         <button class="btn-icon" id="randomBtn" title="Random pattern (R)">&#x1F3B2;</button>
+        <div class="fav-wrap" id="favWrap">
+          <button class="btn-icon" id="favMenuBtn" title="Saved patterns">&#x2665; <span id="favCount" style="font-size:10px;margin-left:2px;"></span></button>
+          <div class="fav-menu" id="favMenu">
+            <div class="fav-menu-item" id="favExportBtn"><span class="fav-icon">&#x2913;</span>Export saved (JSON)</div>
+            <div class="fav-menu-item" id="favImportBtn"><span class="fav-icon">&#x2912;</span>Import saved</div>
+            <input type="file" id="favFileInput" accept=".json" style="display:none;">
+          </div>
+        </div>
         <button class="btn" id="downloadBtn" title="Save PNG (S)">Download PNG</button>
         <button class="btn-icon" id="helpBtn" title="Keyboard shortcuts (?)">?</button>
       </div>
@@ -433,6 +500,7 @@
     <div class="kbd-row"><span class="kbd-label">Save PNG</span><span class="kbd-key">S</span></div>
     <div class="kbd-row"><span class="kbd-label">Color mode</span><span class="kbd-key">C</span></div>
     <div class="kbd-row"><span class="kbd-label">Random</span><span class="kbd-key">R</span></div>
+    <div class="kbd-row"><span class="kbd-label">Heart / save favorite</span><span class="kbd-key">H</span></div>
     <div class="kbd-row"><span class="kbd-label">Construction toggle</span><span class="kbd-key">Space</span></div>
     <div class="kbd-row"><span class="kbd-label">Fullscreen</span><span class="kbd-key">F</span></div>
     <div class="kbd-row"><span class="kbd-label">Search</span><span class="kbd-key">/</span></div>
@@ -460,6 +528,89 @@ let isTileMode = false;
 let zoomLevel = 1.0;
 let offscreenTileCanvas = null; // cached offscreen canvas for tile mode
 let highlightedIndex = -1; // index in current flat item list for keyboard nav
+
+// ── FAVORITES STATE ──
+const FAVORITES_KEY = 'islamic-patterns-favorites';
+let favorites = new Set();
+
+function loadFavorites() {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.favorites)) {
+        favorites = new Set(parsed.favorites);
+      }
+    }
+  } catch(e) { /* ignore */ }
+}
+
+function saveFavorites() {
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify({
+      favorites: [...favorites],
+      updatedAt: new Date().toISOString(),
+    }));
+  } catch(e) { /* ignore */ }
+}
+
+function toggleFavorite(name) {
+  if (!name) return;
+  if (favorites.has(name)) {
+    favorites.delete(name);
+  } else {
+    favorites.add(name);
+  }
+  saveFavorites();
+  updateHeartBtn();
+  updateFavCount();
+  buildSidebar();
+}
+
+function updateHeartBtn() {
+  const btn = document.getElementById('heartBtn');
+  if (!btn) return;
+  const name = currentItem?.data?.name;
+  const isFav = name && favorites.has(name);
+  btn.innerHTML = isFav ? '&#x2665;' : '&#x2661;';
+  btn.classList.toggle('hearted', !!isFav);
+}
+
+function updateFavCount() {
+  const el = document.getElementById('favCount');
+  if (!el) return;
+  el.textContent = favorites.size > 0 ? favorites.size : '';
+}
+
+function exportFavorites() {
+  const data = JSON.stringify({ favorites: [...favorites], updatedAt: new Date().toISOString() }, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'favorites.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importFavorites(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (Array.isArray(parsed.favorites)) {
+        for (const name of parsed.favorites) favorites.add(name);
+        saveFavorites();
+        updateHeartBtn();
+        updateFavCount();
+        buildSidebar();
+      }
+    } catch(err) { /* ignore bad file */ }
+  };
+  reader.readAsText(file);
+}
+
+loadFavorites();
 const collapsedCollections = new Set(); // track which collections are collapsed
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -1307,6 +1458,66 @@ function buildSidebar() {
     }
 
   } else if (currentTab === 'discover') {
+    // ── My Saved Patterns (always at top) ──
+    {
+      const savedNames = [...favorites];
+      const savedColName = '\u2665 My Saved Patterns';
+      const isCollapsed = collapsedCollections.has(savedColName);
+
+      const hdr = document.createElement('div');
+      hdr.className = 'collection-header' + (isCollapsed ? ' collapsed' : '');
+      hdr.innerHTML =
+        `<span class="collection-star">\u2665</span>` +
+        `<span>${escapeHtml(savedColName)}</span>` +
+        `<span class="collection-chevron">&#x25BE;</span>`;
+      hdr.style.color = 'var(--gold)';
+      hdr.addEventListener('click', () => {
+        if (collapsedCollections.has(savedColName)) collapsedCollections.delete(savedColName);
+        else collapsedCollections.add(savedColName);
+        buildSidebar();
+      });
+      list.appendChild(hdr);
+
+      const wrap = document.createElement('div');
+      wrap.className = 'collection-items-wrap' + (isCollapsed ? ' collapsed' : '');
+
+      if (savedNames.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'saved-empty';
+        empty.textContent = 'Heart patterns to save them here';
+        wrap.appendChild(empty);
+        wrap.style.maxHeight = isCollapsed ? '0' : '48px';
+      } else {
+        wrap.style.maxHeight = isCollapsed ? '0' : (savedNames.length * 32 + 8) + 'px';
+        for (const name of savedNames) {
+          // Find in any catalog
+          let data = null, kind = null;
+          data = CATALOG.tilings.find(t => t.name === name);
+          if (data) { kind = 'tiling'; }
+          if (!data) { data = CATALOG.girihShapes.find(g => g.name === name); if (data) kind = 'girih'; }
+          if (!data) { data = CATALOG.templates.find(t => t.name === name); if (data) kind = 'template'; }
+          if (!data) continue;
+
+          const el = document.createElement('div');
+          el.className = 'collection-item';
+          if (currentItem?.data?.name === data.name && currentItem?.kind === kind)
+            el.classList.add('active');
+          const dot = document.createElement('span');
+          dot.className = 'collection-dot';
+          dot.style.background = 'var(--gold)';
+          const nameSpan = document.createElement('span');
+          nameSpan.textContent = data.name;
+          nameSpan.style.overflow = 'hidden';
+          nameSpan.style.textOverflow = 'ellipsis';
+          el.appendChild(dot);
+          el.appendChild(nameSpan);
+          el.addEventListener('click', () => selectItem(kind, data));
+          wrap.appendChild(el);
+        }
+      }
+      list.appendChild(wrap);
+    }
+
     for (const col of COLLECTIONS) {
       const colName = col.name;
       const isCollapsed = collapsedCollections.has(colName);
@@ -1355,6 +1566,13 @@ function buildSidebar() {
         nameSpan.style.textOverflow = 'ellipsis';
         el.appendChild(dot);
         el.appendChild(nameSpan);
+        if (favorites.has(data.name)) {
+          const hrt = document.createElement('span');
+          hrt.className = 'sidebar-heart';
+          hrt.innerHTML = '&#x2665;';
+          hrt.style.marginLeft = 'auto';
+          el.appendChild(hrt);
+        }
         el.addEventListener('click', () => selectItem(kind, data));
         wrap.appendChild(el);
       }
@@ -1413,9 +1631,11 @@ function syncHighlight() {
 function makeItem(name, badge, onClick) {
   const el = document.createElement('div');
   el.className = 'pattern-item';
+  const heartSpan = favorites.has(name) ? `<span class="sidebar-heart">&#x2665;</span>` : '';
   el.innerHTML =
     `<span class="pattern-name">${escapeHtml(name)}</span>` +
-    (badge ? `<span class="badge">${escapeHtml(String(badge))}</span>` : '');
+    (badge ? `<span class="badge">${escapeHtml(String(badge))}</span>` : '') +
+    heartSpan;
   el.addEventListener('click', onClick);
   return el;
 }
@@ -1430,6 +1650,7 @@ function escapeHtml(s) {
 function selectItem(kind, data) {
   currentItem = { kind, data };
   offscreenTileCanvas = null; // invalidate tile cache on pattern change
+  updateHeartBtn();
   buildSidebar();
 
   const nameEl = document.getElementById('patternName');
@@ -1554,6 +1775,43 @@ function selectSurprise() {
   selectItem(pick.kind, pick.data);
 }
 document.getElementById('surpriseBtn').addEventListener('click', selectSurprise);
+
+// Heart button
+document.getElementById('heartBtn').addEventListener('click', () => {
+  const name = currentItem?.data?.name;
+  if (!name) return;
+  const btn = document.getElementById('heartBtn');
+  btn.classList.remove('pop');
+  // Force reflow to restart animation
+  void btn.offsetWidth;
+  btn.classList.add('pop');
+  toggleFavorite(name);
+});
+
+// Favorites menu toggle
+document.getElementById('favMenuBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = document.getElementById('favMenu');
+  menu.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('favWrap').contains(e.target)) {
+    document.getElementById('favMenu').classList.remove('open');
+  }
+});
+document.getElementById('favExportBtn').addEventListener('click', () => {
+  exportFavorites();
+  document.getElementById('favMenu').classList.remove('open');
+});
+document.getElementById('favImportBtn').addEventListener('click', () => {
+  document.getElementById('favFileInput').click();
+  document.getElementById('favMenu').classList.remove('open');
+});
+document.getElementById('favFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) importFavorites(file);
+  e.target.value = '';
+});
 
 // Help overlay
 function toggleHelp(show) {
@@ -1705,6 +1963,20 @@ document.addEventListener('keydown', e => {
       if (!isSearchFocused) toggleFullscreen();
       break;
     }
+    case 'h':
+    case 'H': {
+      if (!isSearchFocused) {
+        const name = currentItem?.data?.name;
+        if (name) {
+          const btn = document.getElementById('heartBtn');
+          btn.classList.remove('pop');
+          void btn.offsetWidth;
+          btn.classList.add('pop');
+          toggleFavorite(name);
+        }
+      }
+      break;
+    }
     case 'r':
     case 'R': {
       if (!isSearchFocused) selectRandom();
@@ -1737,6 +2009,7 @@ window.addEventListener('resize', () => { if (currentItem) render(); });
 // ────────────────────────────────────────────────────────────────────────────
 // INITIAL RENDER
 // ────────────────────────────────────────────────────────────────────────────
+updateFavCount();
 buildSidebar();
 // Auto-select first pattern from Masterpieces collection in Discover tab
 (function() {

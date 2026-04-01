@@ -240,18 +240,15 @@ export function useSavedPoems(user) {
       log.info('Poems', `Saving poem: ${poem.poet} — ${poem.title} (id: ${poem.id})`);
       const { data, error } = await supabase
         .from('saved_poems')
-        .upsert(
-          {
-            user_id: user.id,
-            poem_id: poem.id,
-            poem_text: poem.arabic,
-            poet: poem.poet,
-            title: poem.title,
-            english: poem.english,
-            category: poem.tags?.[0] || null,
-          },
-          { onConflict: 'user_id,poem_id', ignoreDuplicates: true }
-        )
+        .insert({
+          user_id: user.id,
+          poem_id: poem.id,
+          poem_text: poem.arabic,
+          poet: poem.poet,
+          title: poem.title,
+          english: poem.english,
+          category: poem.tags?.[0] || null,
+        })
         .select()
         .single();
 
@@ -268,11 +265,10 @@ export function useSavedPoems(user) {
 
       log.info('Poems', `Poem saved successfully (saved_id: ${data?.id})`);
       if (data) {
-        // Upsert returned the row — update local state immediately
+        // Insert returned the row — update local state immediately
         setSavedPoems((prev) => [data, ...prev]);
       } else {
-        // ignoreDuplicates: poem was already in DB (e.g. auto-save race after OAuth)
-        // Refresh to ensure local state reflects DB truth so isPoemSaved() returns true
+        // No data returned — refresh to ensure local state reflects DB truth
         log.info('Poems', 'Poem already existed — refreshing saved poems list');
         await loadSavedPoems();
       }

@@ -35,6 +35,31 @@ const DebugPanel = ({ controlBarRef }) => {
   // Fixed position for bug button — aligned with paintbrush button at bottom-left
   const btnPos = { left: 8, bottom: 52 };
 
+  // Shake-to-open on mobile (DeviceMotion)
+  useEffect(() => {
+    if (!FEATURES.debug) return;
+    let lastShake = 0;
+    const threshold = 25;
+    let lastX = 0, lastY = 0, lastZ = 0;
+
+    const handleMotion = (e) => {
+      const { x, y, z } = e.accelerationIncludingGravity || {};
+      if (x == null) return;
+      const delta = Math.abs(x - lastX) + Math.abs(y - lastY) + Math.abs(z - lastZ);
+      lastX = x; lastY = y; lastZ = z;
+      if (delta > threshold) {
+        const now = Date.now();
+        if (now - lastShake > 1000) {
+          lastShake = now;
+          setPanelOpen((prev) => !prev);
+        }
+      }
+    };
+
+    window.addEventListener('devicemotion', handleMotion);
+    return () => window.removeEventListener('devicemotion', handleMotion);
+  }, []);
+
   // Auto-scroll to bottom on new logs when panel is open
   useEffect(() => {
     if (panelOpen && scrollRef.current) {

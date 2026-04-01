@@ -103,19 +103,23 @@ THE AUTHOR: [Complete poet bio in Gen Z slang — no literary analysis here]
  * Text-to-Speech (TTS) Instruction
  * Used by: togglePlay, prefetchAudio
  *
- * The TTS model (gemini-2.5-flash-preview-tts) does NOT support systemInstruction.
+ * The TTS model does NOT support systemInstruction.
  * Everything must go in contents as a single text block.
  *
- * Prompt K scene-setting produces the most authentic Arabic poetry recitation.
- * The model inhabits the poet rather than following a rule list.
+ * Structure: delivery directions first, then the transcript clearly delimited.
+ * Directions must read as performance guidance for pre-written text, NOT as a
+ * request to generate new content — the latter triggers a 400 INVALID_ARGUMENT
+ * ("Model tried to generate text, but it should only be used for TTS").
+ *
+ * Pattern: "Read the following [description] as [character/style]: [transcript]"
  */
-const TTS_PROMPT = `أنت امرؤ القيس بن حُجر، الملك الضليل وشاعر العرب الأول. تقف أمام قبيلتك في مجلس شعر بصحراء نجد. النار تتقد، والحضور مُصغون. قُم وألقِ معلقتك — القصيدة التي خلّدت اسمك عبر الأجيال. هذه قصيدتك أنت، ألمك أنت، ذكرياتك أنت. ألقِها بسلطان الملوك وعاطفة الشعراء.`;
+const TTS_DELIVERY = `اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية. النص للتلاوة:`;
 
 /**
- * Build the full TTS content string (instruction + poem).
+ * Build the full TTS content string (delivery directions + transcript).
  * TTS model requires everything in a single contents text block.
  *
  * @param {Object} poem - The poem object containing arabic text
- * @returns {string} Combined instruction + poem text
+ * @returns {string} Delivery directions followed by the poem as transcript
  */
-export const getTTSContent = (poem) => `${TTS_PROMPT}\nابدأ:\n${poem.arabic}`;
+export const getTTSContent = (poem) => `${TTS_DELIVERY}\n${poem.arabic}`;

@@ -400,14 +400,100 @@
   }
 
   /* ── MOBILE ── */
+  /* ── MOBILE NAV (hidden on desktop) ── */
+  .mobile-nav { display: none; }
+  .saved-panel { display: none; }
+
   @media (max-width: 640px) {
-    .app { flex-direction: column; }
-    .sidebar { width: 100%; max-width: 100%; height: 48px; flex-direction: row; }
-    .sidebar-header { border-right: 1px solid var(--border); border-bottom: none; }
-    .tab-row { display:none; }
-    .sidebar-search { display:none; }
-    .sidebar-list { display:none; }
-    .color-mode-row { display: none; }
+    /* App fills above the nav bar */
+    .app { flex-direction: column; height: calc(100vh - 60px); overflow: hidden; }
+
+    /* Sidebar: full-screen panel, shown via JS */
+    .sidebar {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 60px;
+      width: 100%; max-width: 100%; height: auto;
+      z-index: 100; display: none; flex-direction: column;
+    }
+    .sidebar.mobile-active { display: flex; }
+
+    /* Main panel: same */
+    .main {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 60px;
+      width: 100%; display: none; flex-direction: column;
+    }
+    .main.mobile-active { display: flex; }
+
+    /* Toolbar: two rows on mobile */
+    .toolbar { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
+    .toolbar-info { width: 100%; min-width: 0; }
+    .toolbar-controls { flex-wrap: wrap; gap: 6px; width: 100%; }
+    .color-mode-row { flex-wrap: wrap; gap: 4px; }
+
+    /* Hide desktop-only controls */
+    .size-sel, .zoom-group, #tileModeBtn, #helpBtn, .fav-wrap,
+    .toolbar-controls label { display: none !important; }
+
+    /* Canvas fills remaining space */
+    .canvas-wrap { flex: 1; padding: 8px; }
+
+    /* ── BOTTOM NAV ── */
+    .mobile-nav {
+      display: flex;
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 200;
+    }
+    .mobile-nav-btn {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 3px;
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 10px; font-weight: 600;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      transition: color 0.15s;
+      -webkit-tap-highlight-color: transparent;
+      padding: 0;
+    }
+    .mobile-nav-btn .nav-icon { font-size: 20px; line-height: 1; }
+    .mobile-nav-btn.active { color: var(--gold); }
+
+    /* ── SAVED PANEL ── */
+    .saved-panel {
+      display: none;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 60px;
+      background: var(--bg); flex-direction: column;
+      z-index: 100; overflow: hidden;
+    }
+    .saved-panel.mobile-active { display: flex; }
+    .saved-panel-header {
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border);
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gold);
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
+    }
+    .saved-count-badge {
+      background: var(--gold-bg); color: var(--gold);
+      border: 1px solid var(--gold-dim);
+      border-radius: 10px; padding: 1px 8px;
+      font-size: 10px; font-weight: 700;
+    }
+    .saved-panel-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+    .saved-panel-item {
+      padding: 13px 16px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid rgba(197,160,89,0.07);
+      cursor: pointer; color: var(--text); font-size: 13px;
+      transition: background 0.1s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .saved-panel-item:active { background: var(--gold-bg); }
+    .saved-panel-item .s-icon { color: var(--gold); font-size: 14px; flex-shrink: 0; }
+    .saved-panel-empty {
+      padding: 48px 24px; text-align: center;
+      color: var(--muted); font-size: 13px; line-height: 1.8;
+    }
   }
 </style>
 </head>
@@ -484,6 +570,28 @@
       <canvas id="patternCanvas"></canvas>
     </div>
   </div>
+</div>
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav class="mobile-nav">
+  <button class="mobile-nav-btn active" id="mnavPatterns" onclick="mobileTab('patterns')">
+    <span class="nav-icon">◈</span>Patterns
+  </button>
+  <button class="mobile-nav-btn" id="mnavCanvas" onclick="mobileTab('canvas')">
+    <span class="nav-icon">✦</span>Canvas
+  </button>
+  <button class="mobile-nav-btn" id="mnavSaved" onclick="mobileTab('saved')">
+    <span class="nav-icon">♥</span>Saved
+  </button>
+</nav>
+
+<!-- ── MOBILE SAVED PANEL ── -->
+<div class="saved-panel" id="savedPanel">
+  <div class="saved-panel-header">
+    Saved
+    <span class="saved-count-badge" id="savedCountBadge" style="display:none;"></span>
+  </div>
+  <div class="saved-panel-list" id="savedPanelList"></div>
 </div>
 
 <!-- ── TILE MODE FLOATING CLOSE BUTTON ── -->
@@ -2062,6 +2170,86 @@ buildSidebar();
   // Fallback: first tiling
   const first = CATALOG.tilings[0];
   if (first) selectItem('tiling', first);
+})();
+
+// ── MOBILE NAVIGATION ──────────────────────────────────────────────────────
+(function() {
+  const MOBILE = () => window.innerWidth <= 640;
+
+  window.mobileTab = function(tab) {
+    if (!MOBILE()) return;
+    const sidebar = document.getElementById('sidebar');
+    const main = document.querySelector('.main');
+    const savedPanel = document.getElementById('savedPanel');
+    sidebar.classList.remove('mobile-active');
+    main.classList.remove('mobile-active');
+    savedPanel.classList.remove('mobile-active');
+    document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+
+    if (tab === 'patterns') {
+      sidebar.classList.add('mobile-active');
+      document.getElementById('mnavPatterns').classList.add('active');
+    } else if (tab === 'canvas') {
+      main.classList.add('mobile-active');
+      document.getElementById('mnavCanvas').classList.add('active');
+    } else if (tab === 'saved') {
+      savedPanel.classList.add('mobile-active');
+      document.getElementById('mnavSaved').classList.add('active');
+      buildSavedPanel();
+    }
+  };
+
+  function buildSavedPanel() {
+    const list = document.getElementById('savedPanelList');
+    const badge = document.getElementById('savedCountBadge');
+    if (!list) return;
+    if (favorites.size === 0) {
+      list.innerHTML = '<div class="saved-panel-empty">No saved patterns yet.<br>Tap ♡ on any pattern to save it.</div>';
+      if (badge) badge.style.display = 'none';
+      return;
+    }
+    if (badge) { badge.textContent = favorites.size; badge.style.display = ''; }
+    list.innerHTML = [...favorites].map(name =>
+      `<div class="saved-panel-item" onclick="loadFromSaved(${JSON.stringify(name)})">
+        <span class="s-icon">♥</span><span>${name}</span>
+      </div>`
+    ).join('');
+  }
+
+  window.loadFromSaved = function(name) {
+    // Find item by name across all catalog entries
+    function findItem(obj) {
+      if (!obj) return null;
+      if (obj.name === name) return obj;
+      for (const key of Object.keys(obj)) {
+        if (Array.isArray(obj[key])) {
+          for (const child of obj[key]) {
+            const found = findItem(child);
+            if (found) return found;
+          }
+        }
+      }
+      return null;
+    }
+    const item = findItem(CATALOG);
+    if (item) {
+      // Detect type by catalog membership
+      const type = CATALOG.tilings?.includes(item) ? 'tiling'
+                 : CATALOG.girih?.includes(item) ? 'girih' : 'template';
+      selectItem(type, item);
+      mobileTab('canvas');
+    }
+  };
+
+  // Switch to canvas when a sidebar pattern is tapped on mobile
+  document.getElementById('sidebarList').addEventListener('click', e => {
+    if (MOBILE() && e.target.closest('.pattern-item')) {
+      setTimeout(() => mobileTab('canvas'), 80);
+    }
+  });
+
+  // Init on mobile: show patterns panel
+  if (MOBILE()) mobileTab('patterns');
 })();
 
 </script>

@@ -596,7 +596,7 @@ function starMotifsFromPoly(verts) {
  * 3. Tile by T1/T2 vectors over a range that fills the canvas + padding
  * 4. Apply viewport centering transform
  */
-function buildTilingPolygons(tiling, canvasW, canvasH) {
+function buildTilingPolygons(tiling, canvasW, canvasH, zoom = 1) {
   const [t1x, t1y] = tiling.t1;
   const [t2x, t2y] = tiling.t2;
 
@@ -634,15 +634,17 @@ function buildTilingPolygons(tiling, canvasW, canvasH) {
   const t2Len = Math.sqrt(t2x * t2x + t2y * t2y);
   const cellSize = Math.max(t1Len, t2Len);
 
-  // Target: fit ~4 unit cells across the smaller canvas dimension with some padding
+  // Target: fit ~3.5 unit cells across the smaller canvas dimension.
+  // zoom scales the cell size: zoom=2 means each cell is twice as large (fewer cells).
   const targetFit = Math.min(canvasW, canvasH) * 0.9;
-  const numCellsTarget = 3.5;
-  const scale = (cellSize > 0) ? (targetFit / (cellSize * numCellsTarget)) : 1;
+  const numCellsTarget = 3.5 / zoom;
+  const scale = (cellSize > 0) ? (targetFit / (cellSize * numCellsTarget)) : zoom;
 
   // Tiling range: enough to fill canvas + margin
-  const margin = 2;  // extra cells in each direction
-  const rangeI = Math.ceil(canvasW / (t1Len * scale)) + margin;
-  const rangeJ = Math.ceil(canvasH / (t2Len * scale)) + margin;
+  // Use the actual T1/T2 projected extents to determine coverage
+  const margin = 3;  // extra cells in each direction to ensure full coverage
+  const rangeI = Math.ceil(Math.max(canvasW, canvasH) / (t1Len * scale)) + margin;
+  const rangeJ = Math.ceil(Math.max(canvasW, canvasH) / (t2Len * scale)) + margin;
 
   // Collect all polygons across the tile grid
   const allPolys = [];
@@ -661,9 +663,9 @@ function buildTilingPolygons(tiling, canvasW, canvasH) {
   const b = bbox(allPts);
 
   // Map to canvas: center + scale
-  const sx = canvasW / (b.w || 1);
-  const sy = canvasH / (b.h || 1);
-  const finalScale = Math.min(sx, sy) * 0.98;
+  // For tile mode (full viewport), use scale directly so pattern fills edge-to-edge
+  // without the bbox-fit compression that would leave edges unrendered.
+  const finalScale = scale;
   const offX = canvasW / 2 - b.cx * finalScale;
   const offY = canvasH / 2 - b.cy * finalScale;
 
@@ -771,12 +773,12 @@ function getMultiStroke(poly, fallback) {
   return MULTICOLOR_BY_SIDES[n] || fallback;
 }
 
-function renderTiling(ctx, tiling, w, h) {
+function renderTiling(ctx, tiling, w, h, zoom = 1) {
   const c = getColors(colorMode);
   ctx.fillStyle = c.bg;
   ctx.fillRect(0, 0, w, h);
 
-  const polys = buildTilingPolygons(tiling, w, h);
+  const polys = buildTilingPolygons(tiling, w, h, zoom);
   if (polys.length === 0) return;
 
   // Optional: show construction lines (polygon edges) at very low opacity
@@ -909,7 +911,10 @@ function render() {
 
   requestAnimationFrame(() => {
     if (isTileMode) {
-      // Full-viewport tiling mode
+      // Full-viewport tiling mode: render directly onto fullscreen canvas.
+      // Direct rendering fills the canvas edge-to-edge with no gaps — avoids
+      // the parallelogram-gap problem that createPattern('repeat') causes when
+      // the T1/T2 lattice is not axis-aligned.
       const vpW = window.innerWidth;
       const vpH = window.innerHeight;
       canvas.width  = vpW;
@@ -917,23 +922,15 @@ function render() {
       canvas.style.width  = vpW + 'px';
       canvas.style.height = vpH + 'px';
 
-      // Tile size is base 300px * zoom
-      const baseTile = 300;
-      const tileSize = Math.round(baseTile * zoomLevel);
-
-      // Render pattern to offscreen canvas (cache it)
-      offscreenTileCanvas = renderToOffscreen(tileSize);
-
       const ctx = canvas.getContext('2d');
       ctx.globalAlpha = 1;
-      // Fill background first
-      const c = getColors(colorMode);
-      ctx.fillStyle = c.bg;
-      ctx.fillRect(0, 0, vpW, vpH);
-      // Tile with createPattern
-      const pat = ctx.createPattern(offscreenTileCanvas, 'repeat');
-      ctx.fillStyle = pat;
-      ctx.fillRect(0, 0, vpW, vpH);
+
+      const { kind, data } = currentItem;
+      // Pass zoomLevel so the pattern scale responds to the zoom slider.
+      // zoom > 1 = larger cells (fewer across screen); zoom < 1 = smaller cells.
+      if (kind === 'tiling')        renderTiling(ctx, data, vpW, vpH, zoomLevel);
+      else if (kind === 'girih')    renderGirih(ctx, data, vpW, vpH);
+      else if (kind === 'template') renderTemplate(ctx, data, vpW, vpH);
     } else {
       // Normal mode: render at sizeVal with zoom scaling
       const scaledSize = Math.round(sizeVal * zoomLevel);

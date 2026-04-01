@@ -39,6 +39,75 @@ let _discoveredTextModels = null;
 const _ttsModelExhausted = {};
 
 /**
+ * TTS RPD (requests per day) limits by model — from Google AI Studio Rate Limit page.
+ * Tier 1 limits as of March 2026. These are hard daily caps that reset at midnight PT.
+ */
+export const TTS_RPD_LIMITS = {
+  'gemini-2.5-flash-preview-tts': 100,
+  'gemini-2.5-pro-preview-tts': 50,
+};
+
+const RPD_STORAGE_KEY = 'tts-rpd-tracker';
+
+/**
+ * Get today's date string in Pacific Time (quota resets at midnight PT).
+ */
+const getPacificDateStr = () => {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+};
+
+/**
+ * Load RPD counts from localStorage. Returns { date, models: { [model]: count } }.
+ */
+const loadRpdCounts = () => {
+  try {
+    const stored = localStorage.getItem(RPD_STORAGE_KEY);
+    if (stored) {
+      const data = JSON.parse(stored);
+      if (data.date === getPacificDateStr()) return data;
+    }
+  } catch {}
+  return { date: getPacificDateStr(), models: {} };
+};
+
+/**
+ * Increment RPD count for a model. Persists to localStorage.
+ */
+export const recordTtsRequest = (model) => {
+  const data = loadRpdCounts();
+  data.models[model] = (data.models[model] || 0) + 1;
+  data.date = getPacificDateStr();
+  try { localStorage.setItem(RPD_STORAGE_KEY, JSON.stringify(data)); } catch {}
+  return data.models[model];
+};
+
+/**
+ * Check if a model has remaining RPD quota for today.
+ * Returns { allowed, used, limit, remaining }.
+ */
+export const checkTtsQuota = (model) => {
+  const data = loadRpdCounts();
+  const used = data.models[model] || 0;
+  const limit = TTS_RPD_LIMITS[model] || 100;
+  return {
+    allowed: used < limit,
+    used,
+    limit,
+    remaining: Math.max(0, limit - used),
+  };
+};
+
+/**
+ * Check if prefetching should be allowed based on remaining quota.
+ * More conservative than direct play — reserves 20% of daily quota for user-initiated plays.
+ */
+export const canPrefetchTts = (model) => {
+  const { used, limit } = checkTtsQuota(model);
+  const prefetchCap = Math.floor(limit * 0.8); // Reserve 20% for manual plays
+  return used < prefetchCap;
+};
+
+/**
  * Fetch and rank available Gemini text models via the ListModels API.
  * Prefers newer versions and cheaper (flash) models over pro.
  * Falls back to API_MODELS.textDefaults if the API is unreachable or returns no usable models.
@@ -157,6 +226,7 @@ export const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS'
       );
     const fallbackUrl = url.replace(primaryModel, fallbackModel);
     const t = performance.now();
+    recordTtsRequest(fallbackModel);
     const res = await fetch(fallbackUrl, options);
     if (addLog)
       addLog(label, `${fallbackModel}: ${res.status} (${((performance.now() - t) / 1000).toFixed(1)}s)`, res.ok ? 'success' : 'warning');
@@ -164,6 +234,7 @@ export const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS'
   }
 
   const t0 = performance.now();
+  recordTtsRequest(primaryModel);
   const res = await fetch(url, options);
   const primaryMs = performance.now() - t0;
 
@@ -182,6 +253,7 @@ export const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS'
         'warning'
       );
     const t1 = performance.now();
+    recordTtsRequest(fallbackModel);
     const fallbackRes = await fetch(fallbackUrl, options);
     const fallbackMs = performance.now() - t1;
     if (addLog)

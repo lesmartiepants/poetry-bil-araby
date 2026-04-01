@@ -9,7 +9,7 @@
 
 import { FEATURES } from '../constants/index.js';
 import { INSIGHTS_SYSTEM_PROMPT, getTTSContent } from '../prompts';
-import { API_MODELS, TTS_CONFIG, geminiTextFetch, fetchTTSWithFallback } from './gemini.js';
+import { API_MODELS, TTS_CONFIG, geminiTextFetch, fetchTTSWithFallback, canPrefetchTts } from './gemini.js';
 import { CACHE_CONFIG, cacheOperations } from './cache.js';
 import { pcm16ToWav } from '../utils/audio.js';
 
@@ -30,6 +30,17 @@ export const prefetchManager = {
 
     // Skip if quota was exhausted for this poem earlier in the session
     if (_quotaExhaustedIds.has(poemId)) return;
+
+    // Check daily RPD quota — reserve 20% for user-initiated plays
+    if (!canPrefetchTts(API_MODELS.tts)) {
+      if (addLog)
+        addLog(
+          'Prefetch Audio',
+          `Daily TTS quota near limit — skipping prefetch to reserve for manual plays`,
+          'warning'
+        );
+      return;
+    }
 
     try {
       // Check if already generating - silently skip

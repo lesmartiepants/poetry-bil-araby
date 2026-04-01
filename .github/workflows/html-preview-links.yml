@@ -52,12 +52,24 @@ jobs:
               ].join('\n');
             } else {
               const baseUrl = `https://htmlpreview.github.io/?https://github.com/${owner}/${repo}/blob/${branch}`;
-              const rows = htmlFiles.map(f => {
-                const url = `${baseUrl}/${f.filename}`;
-                const short = f.filename.replace(/^design-review\//, '').replace(/^docs\/design\//, 'docs/');
-                const badge = f.status === 'added' ? ' ✦' : '';
-                return `| \`${f.filename}\`${badge} | [open ↗](${url}) |`;
-              });
+              // Group by directory
+              const byDir = {};
+              for (const f of htmlFiles) {
+                const dir = f.filename.includes('/') ? f.filename.replace(/\/[^/]+$/, '') : '.';
+                (byDir[dir] = byDir[dir] || []).push(f);
+              }
+
+              const lines = [];
+              for (const [dir, files] of Object.entries(byDir)) {
+                lines.push(`**${dir}/**`);
+                for (const f of files) {
+                  const url = `${baseUrl}/${f.filename}`;
+                  const name = f.filename.split('/').pop();
+                  const badge = f.status === 'added' ? ' ✦' : '';
+                  lines.push(`- [${name}${badge}](${url})`);
+                }
+                lines.push('');
+              }
 
               body = [
                 MARKER,
@@ -65,10 +77,7 @@ jobs:
                 ``,
                 `Branch: \`${branch}\` · commit \`${sha}\``,
                 ``,
-                `| File | Preview |`,
-                `|---|---|`,
-                ...rows,
-                ``,
+                ...lines,
                 `<sub>✦ newly added · links update automatically on each commit</sub>`,
               ].join('\n');
             }

@@ -3,7 +3,7 @@ import { Bug, X, Trash2, Zap, Radio } from 'lucide-react';
 import Sentry from '../sentry.js';
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
-import { useUIStore } from '../stores/uiStore';
+import { useUIStore, CATEGORY_MAP } from '../stores/uiStore';
 import { usePoemStore } from '../stores/poemStore';
 import { useAudioStore } from '../stores/audioStore';
 import { API_MODELS } from '../services/gemini.js';
@@ -129,7 +129,6 @@ const DebugPanel = ({ controlBarRef }) => {
   };
 
   const gold = 'var(--gold)';
-  const labelColor = 'text-gold/70';
 
   return (
     <>
@@ -222,7 +221,10 @@ const DebugPanel = ({ controlBarRef }) => {
               <span className={darkMode ? 'text-stone-400' : 'text-stone-500'}>
                 {idx === 0 ? log.time : log.rel}
               </span>{' '}
-              <span className={`font-semibold ${labelColor}`}>[{log.label}]</span>{' '}
+              <span className="font-semibold" style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color }}>
+                {(CATEGORY_MAP[log.type] || CATEGORY_MAP.info).prefix}
+              </span>{' '}
+              <span style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color, opacity: 0.7 }}>[{log.label}]</span>{' '}
               <span>{log.msg}</span>
             </div>
           ))}

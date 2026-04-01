@@ -1032,6 +1032,10 @@ export default function DiwanApp() {
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
 
+    // Warm up the backend immediately so it's awake by the time prefetch fires at 2s.
+    // Render free tier cold starts take up to ~15s; this ping starts the wake-up clock.
+    pingHealth().catch(() => {});
+
     // Prefetch current poem audio after 2s (only if user lingers on this poem)
     const prefetchCurrentAudio = setTimeout(() => {
       prefetchManager.prefetchAudio(current.id, current, addLog);

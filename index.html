@@ -44,15 +44,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script>
-      // Capture OAuth hash fragment BEFORE any module loads.
-      // Supabase implicit flow returns #access_token=... which the JS client
-      // needs to detect. But module imports + router can strip the hash before
-      // Supabase processes it. Stash it so supabaseClient.js can replay it.
-      if (window.location.hash && window.location.hash.includes('access_token')) {
-        window.__supabaseAuthHash = window.location.hash;
-      }
-    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

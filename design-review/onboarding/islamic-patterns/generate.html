@@ -1027,7 +1027,43 @@ function renderTiling(ctx, tiling, w, h, zoom = 1) {
   ctx.lineWidth = Math.max(1.5, w / 700);
   ctx.lineCap = 'round';
 
-  for (const poly of polys) {
+  // Compute area of each polygon (shoelace formula) and find the maximum.
+  // Small filler polygons (squares and triangles between the main star tiles)
+  // are left as negative space in real Islamic art — only large primary tiles
+  // get a star/cross/Y motif drawn inside them.
+  const areas = polys.map(poly => {
+    let a = 0;
+    const n = poly.length;
+    for (let i = 0; i < n; i++) {
+      const [x1, y1] = poly[i];
+      const [x2, y2] = poly[(i + 1) % n];
+      a += x1 * y2 - x2 * y1;
+    }
+    return Math.abs(a) / 2;
+  });
+  const maxArea = areas.reduce((m, a) => Math.max(m, a), 0);
+  // Only filter small filler polygons when:
+  // 1. maxArea is meaningful (> 1 canvas pixel²) — avoids fp-noise on degenerate/bowtie polygons
+  // 2. There are 3+ distinct polygon size classes — 2-class tilings like 4.8^2 (octagons+squares)
+  //    have both classes as primary tiles and must not be filtered.
+  // When filtering applies, skip polygons whose area is < 15% of the largest polygon.
+  // This removes small filler triangles/squares (~6-12% of max) while keeping all
+  // primary tiles including the smaller partner in 3-class tilings (~30%+ of max).
+  let areaThreshold = 0;
+  if (maxArea > 1) {
+    // Count distinct polygon types by side count (n-gon variety).
+    // Tilings with 3+ distinct polygon types (e.g. triangles + squares + octagons)
+    // contain filler polygons — skip the small ones (< 15% of largest area).
+    // Tilings with only 2 types are Archimedean partners (e.g. 4.8^2: squares +
+    // octagons) where both are primary decorated tiles — filter nothing.
+    const distinctSides = new Set(polys.map(p => p.length)).size;
+    if (distinctSides >= 3) areaThreshold = maxArea * 0.15;
+  }
+
+  for (let pi = 0; pi < polys.length; pi++) {
+    // Skip filler polygons — they are negative space, not decorated tiles
+    if (areas[pi] < areaThreshold) continue;
+    const poly = polys[pi];
     ctx.strokeStyle = colorMode === 'multicolor' ? getMultiStroke(poly, c.stroke) : c.stroke;
     const segs = starMotifsFromPoly(poly);
     for (const [x1, y1, x2, y2] of segs) {

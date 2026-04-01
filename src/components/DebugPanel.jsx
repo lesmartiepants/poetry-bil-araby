@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, Trash2, Zap, Radio } from 'lucide-react';
+import { Bug, X, Trash2, Zap, Radio } from 'lucide-react';
 import Sentry from '../sentry.js';
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
@@ -128,14 +128,15 @@ const DebugPanel = ({ controlBarRef }) => {
         aria-label="Toggle developer log panel"
       >
         <span
-          className={`relative w-1.5 h-1.5 rounded-full transition-all duration-200 ${
+          className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
             darkMode
-              ? 'bg-gold/30 hover:bg-gold/60'
-              : 'bg-gold/25 hover:bg-gold/50'
-          }`}
+              ? 'bg-black/60 text-gold/40 hover:text-gold/80'
+              : 'bg-white/60 text-gold/30 hover:text-gold/70'
+          } backdrop-blur-md`}
         >
+          <Bug size={9} />
           {unreadErrors > 0 && !panelOpen && (
-            <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500/80" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500/80" />
           )}
         </span>
       </button>

@@ -10,8 +10,8 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
  */
 export const API_MODELS = {
-  tts: 'gemini-2.5-flash-preview-tts',
-  ttsFallback: 'gemini-2.5-pro-preview-tts',
+  tts: 'gemini-2.5-pro-preview-tts',
+  ttsFallback: 'gemini-2.5-flash-preview-tts',
   textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
 };
 

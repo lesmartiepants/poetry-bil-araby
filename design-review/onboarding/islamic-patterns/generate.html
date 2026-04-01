@@ -215,6 +215,12 @@
   .collection-item:hover { background: var(--gold-bg); color: var(--text); }
   .collection-item.active { background: rgba(197,160,89,0.15); color: var(--gold); }
 
+  /* ── KEYBOARD FOCUS HIGHLIGHT ── */
+  .pattern-item.kbd-focus, .collection-item.kbd-focus {
+    background: rgba(197,160,89,0.22); color: var(--gold);
+    outline: 1px solid rgba(197,160,89,0.4);
+  }
+
   /* ── BTN-ICON ── */
   .btn-icon {
     padding: 7px 10px; border-radius: 5px; font-size: 13px; font-weight: 600;
@@ -298,6 +304,25 @@
   </div>
 </div>
 
+<!-- ── KEYBOARD HELP OVERLAY ── -->
+<div class="kbd-overlay" id="kbdOverlay">
+  <div class="kbd-panel">
+    <h2>Keyboard Shortcuts</h2>
+    <div class="kbd-row"><span class="kbd-label">Navigate patterns</span><span class="kbd-key">&#x2191; / &#x2193;</span></div>
+    <div class="kbd-row"><span class="kbd-label">Switch tabs</span><span class="kbd-key">&#x2190; / &#x2192;</span></div>
+    <div class="kbd-row"><span class="kbd-label">Select pattern</span><span class="kbd-key">Enter</span></div>
+    <div class="kbd-row"><span class="kbd-label">Toggle construction lines</span><span class="kbd-key">Space</span></div>
+    <div class="kbd-row"><span class="kbd-label">Save PNG</span><span class="kbd-key">S</span></div>
+    <div class="kbd-row"><span class="kbd-label">Cycle color mode</span><span class="kbd-key">C</span></div>
+    <div class="kbd-row"><span class="kbd-label">Toggle fullscreen</span><span class="kbd-key">F</span></div>
+    <div class="kbd-row"><span class="kbd-label">Focus search</span><span class="kbd-key">/ or Ctrl+K</span></div>
+    <div class="kbd-row"><span class="kbd-label">Random pattern</span><span class="kbd-key">R</span></div>
+    <div class="kbd-row"><span class="kbd-label">Clear search / exit fullscreen</span><span class="kbd-key">Esc</span></div>
+    <div class="kbd-row"><span class="kbd-label">This help</span><span class="kbd-key">?</span></div>
+    <button class="kbd-close" id="kbdClose">Close</button>
+  </div>
+</div>
+
 <script>
 // ────────────────────────────────────────────────────────────────────────────
 // CATALOG DATA (inline)
@@ -311,6 +336,9 @@ let currentTab  = 'tilings';
 let currentItem = null;   // { kind: 'tiling'|'girih'|'template', data: {...} }
 let searchQuery = '';
 let showConstruction = false;
+let colorMode = 'gold';   // 'gold' | 'lapis' | 'multicolor' | 'neon' | 'parchment'
+let isFullscreen = false;
+let highlightedIndex = -1; // index in current flat item list for keyboard nav
 
 // ────────────────────────────────────────────────────────────────────────────
 // MATH HELPERS
@@ -657,12 +685,41 @@ function buildTemplateGeometry(template, canvasW, canvasH) {
 // ────────────────────────────────────────────────────────────────────────────
 // RENDERING
 // ────────────────────────────────────────────────────────────────────────────
-const GOLD   = '#c5a059';
-const LAPIS  = '#2a5a8c';
-const BG     = '#0d0d14';
+// ────────────────────────────────────────────────────────────────────────────
+// COLOR MODES
+// ────────────────────────────────────────────────────────────────────────────
+const COLOR_MODES = ['gold', 'lapis', 'multicolor', 'neon', 'parchment'];
+
+const MULTICOLOR_BY_SIDES = {
+  3: '#e8715a', 4: '#c5a059', 5: '#6A4C93', 6: '#4a8abf',
+  8: '#c5a059', 10: '#2d6b4a', 12: '#8b4513',
+};
+
+function getColors(mode) {
+  switch (mode) {
+    case 'lapis':
+      return { bg: '#0d0d14', stroke: '#4a8abf', construction: '#2a5a8c', constructionAlpha: 0.5, fill: '#2a5a8c', fillAlpha: 0.15 };
+    case 'neon':
+      return { bg: '#050510', stroke: '#00ffaa', strokeAlpha: 0.7, construction: '#ff6b9d', constructionAlpha: 0.5, fill: '#00ffaa', fillAlpha: 0.08 };
+    case 'parchment':
+      return { bg: '#FDFCF8', stroke: '#2a1f14', strokeAlpha: 0.5, construction: '#8b7355', constructionAlpha: 0.08, fill: '#8b7355', fillAlpha: 0.08 };
+    case 'multicolor':
+      return { bg: '#0d0d14', stroke: '#c5a059', construction: '#2a5a8c', constructionAlpha: 0.5, fill: '#2a5a8c', fillAlpha: 0.12 };
+    case 'gold':
+    default:
+      return { bg: '#0d0d14', stroke: '#c5a059', construction: '#2a5a8c', constructionAlpha: 0.5, fill: '#2a5a8c', fillAlpha: 0.15 };
+  }
+}
+
+function getMultiStroke(poly, fallback) {
+  // Pick color by number of polygon sides
+  const n = poly.length;
+  return MULTICOLOR_BY_SIDES[n] || fallback;
+}
 
 function renderTiling(ctx, tiling, w, h) {
-  ctx.fillStyle = BG;
+  const c = getColors(colorMode);
+  ctx.fillStyle = c.bg;
   ctx.fillRect(0, 0, w, h);
 
   const polys = buildTilingPolygons(tiling, w, h);
@@ -670,8 +727,8 @@ function renderTiling(ctx, tiling, w, h) {
 
   // Optional: show construction lines (polygon edges) at very low opacity
   if (showConstruction) {
-    ctx.globalAlpha = 0.03;
-    ctx.strokeStyle = LAPIS;
+    ctx.globalAlpha = c.constructionAlpha || 0.03;
+    ctx.strokeStyle = c.construction;
     ctx.lineWidth = Math.max(0.5, w / 2000);
     for (const poly of polys) {
       if (poly.length < 2) continue;
@@ -684,12 +741,12 @@ function renderTiling(ctx, tiling, w, h) {
   }
 
   // Draw star motifs using midpoint-ray algorithm
-  ctx.globalAlpha = 0.6;
-  ctx.strokeStyle = GOLD;
+  ctx.globalAlpha = c.strokeAlpha || 0.6;
   ctx.lineWidth = 1.5;
   ctx.lineCap = 'round';
 
   for (const poly of polys) {
+    ctx.strokeStyle = colorMode === 'multicolor' ? getMultiStroke(poly, c.stroke) : c.stroke;
     const segs = starMotifsFromPoly(poly);
     for (const [x1, y1, x2, y2] of segs) {
       ctx.beginPath();
@@ -703,14 +760,15 @@ function renderTiling(ctx, tiling, w, h) {
 }
 
 function renderGirih(ctx, shape, w, h) {
-  ctx.fillStyle = BG;
+  const c = getColors(colorMode);
+  ctx.fillStyle = c.bg;
   ctx.fillRect(0, 0, w, h);
 
   const polys = buildGirihPolygons(shape, w, h);
   if (polys.length === 0) return;
 
-  ctx.globalAlpha = 0.15;
-  ctx.fillStyle = LAPIS;
+  ctx.globalAlpha = c.fillAlpha || 0.15;
+  ctx.fillStyle = c.fill;
   for (const poly of polys) {
     ctx.beginPath();
     ctx.moveTo(poly[0][0], poly[0][1]);
@@ -719,8 +777,8 @@ function renderGirih(ctx, shape, w, h) {
     ctx.fill();
   }
 
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = GOLD;
+  ctx.globalAlpha = c.strokeAlpha || 1;
+  ctx.strokeStyle = c.stroke;
   ctx.lineWidth = Math.max(2, w / 600);
   for (const poly of polys) {
     ctx.beginPath();
@@ -732,7 +790,7 @@ function renderGirih(ctx, shape, w, h) {
 
   // Label vertices
   ctx.globalAlpha = 0.5;
-  ctx.fillStyle = GOLD;
+  ctx.fillStyle = c.stroke;
   ctx.font = `${Math.max(10, w / 120)}px system-ui`;
   ctx.textAlign = 'center';
   for (const poly of polys) {
@@ -743,15 +801,16 @@ function renderGirih(ctx, shape, w, h) {
 }
 
 function renderTemplate(ctx, template, w, h) {
-  ctx.fillStyle = BG;
+  const c = getColors(colorMode);
+  ctx.fillStyle = c.bg;
   ctx.fillRect(0, 0, w, h);
 
   const { lines, circles } = buildTemplateGeometry(template, w, h);
 
   // Draw circles
-  ctx.strokeStyle = LAPIS;
+  ctx.strokeStyle = c.construction;
   ctx.lineWidth = Math.max(0.5, w / 2000);
-  ctx.globalAlpha = 0.6;
+  ctx.globalAlpha = c.constructionAlpha || 0.6;
   for (const { x, y, r } of circles) {
     ctx.beginPath();
     ctx.arc(x, y, Math.abs(r), 0, 2 * Math.PI);
@@ -759,8 +818,8 @@ function renderTemplate(ctx, template, w, h) {
   }
 
   // Draw lines
-  ctx.strokeStyle = GOLD;
-  ctx.globalAlpha = 1;
+  ctx.strokeStyle = c.stroke;
+  ctx.globalAlpha = c.strokeAlpha || 1;
   ctx.lineWidth = Math.max(0.8, w / 1500);
   for (const [x1, y1, x2, y2] of lines) {
     ctx.beginPath();
@@ -777,24 +836,32 @@ function render() {
   const canvas  = document.getElementById('patternCanvas');
   const wrap    = document.getElementById('canvasWrap');
 
-  // Set canvas resolution
-  canvas.width  = sizeVal;
-  canvas.height = sizeVal;
+  // Fade-in animation: briefly hide then reveal
+  canvas.classList.add('fading');
 
-  // Scale canvas to fit viewport
-  const wrapW = wrap.clientWidth  - 32;
-  const wrapH = wrap.clientHeight - 32;
-  const fitScale = Math.min(wrapW / sizeVal, wrapH / sizeVal, 1);
-  canvas.style.width  = Math.round(sizeVal * fitScale) + 'px';
-  canvas.style.height = Math.round(sizeVal * fitScale) + 'px';
+  requestAnimationFrame(() => {
+    // Set canvas resolution
+    canvas.width  = sizeVal;
+    canvas.height = sizeVal;
 
-  const ctx = canvas.getContext('2d');
-  ctx.globalAlpha = 1;
+    // Scale canvas to fit viewport
+    const wrapW = wrap.clientWidth  - 32;
+    const wrapH = wrap.clientHeight - 32;
+    const fitScale = Math.min(wrapW / sizeVal, wrapH / sizeVal, 1);
+    canvas.style.width  = Math.round(sizeVal * fitScale) + 'px';
+    canvas.style.height = Math.round(sizeVal * fitScale) + 'px';
 
-  const { kind, data } = currentItem;
-  if (kind === 'tiling')   renderTiling(ctx, data, sizeVal, sizeVal);
-  else if (kind === 'girih')    renderGirih(ctx, data, sizeVal, sizeVal);
-  else if (kind === 'template') renderTemplate(ctx, data, sizeVal, sizeVal);
+    const ctx = canvas.getContext('2d');
+    ctx.globalAlpha = 1;
+
+    const { kind, data } = currentItem;
+    if (kind === 'tiling')        renderTiling(ctx, data, sizeVal, sizeVal);
+    else if (kind === 'girih')    renderGirih(ctx, data, sizeVal, sizeVal);
+    else if (kind === 'template') renderTemplate(ctx, data, sizeVal, sizeVal);
+
+    // Trigger fade-in
+    requestAnimationFrame(() => canvas.classList.remove('fading'));
+  });
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -810,6 +877,78 @@ const TEMPLATE_GROUP_ORDER = [
   'Ben Yusuf Madrasa', 'Kharraqan', "Mosque of al-Salih Tala'i",
   'Tomb of Jalal al-Din', 'Broug', 'Hank', 'Other',
 ];
+
+// ────────────────────────────────────────────────────────────────────────────
+// CURATED COLLECTIONS
+// ────────────────────────────────────────────────────────────────────────────
+const COLLECTIONS = [
+  {
+    name: 'Masterpieces',
+    items: [
+      { tab: 'girih', name: 'Girih Star' },
+      { tab: 'girih', name: 'Girih Tiles' },
+      { tab: 'tilings', name: 'Alhambra 16' },
+      { tab: 'templates', name: 'Green Mosque' },
+      { tab: 'templates', name: 'Mamluk Quran' },
+      { tab: 'templates', name: 'Alcazar De Seville 12 8' },
+      { tab: 'templates', name: 'Seville Alcazar 12.8.6' },
+      { tab: 'templates', name: 'Al-Mustansiriyya' },
+    ],
+  },
+  {
+    name: 'Elegant Simplicity',
+    items: [
+      { tab: 'tilings', name: '6' },
+      { tab: 'tilings', name: '4.8^2' },
+      { tab: 'tilings', name: '3-8-12' },
+      { tab: 'tilings', name: '3.4.6' },
+      { tab: 'tilings', name: '4.6.12' },
+      { tab: 'tilings', name: 'Diamond Hive' },
+    ],
+  },
+  {
+    name: 'Sacred Geometry',
+    items: [
+      { tab: 'tilings', name: 'Penrose' },
+      { tab: 'tilings', name: 'Girih Inflation 10' },
+      { tab: 'tilings', name: 'Girih Inflation 10.v1' },
+      { tab: 'tilings', name: 'Girih Inflation 10.v2' },
+      { tab: 'tilings', name: 'Girih Inflation 10.v3' },
+      { tab: 'templates', name: "Mughal I'timad" },
+      { tab: 'templates', name: 'Ilkhanid Uljaytu' },
+    ],
+  },
+  {
+    name: 'From Real Buildings',
+    items: [
+      { tab: 'templates', name: 'Al-Mustansiriyya' },
+      { tab: 'templates', name: 'Green Mosque' },
+      { tab: 'templates', name: 'Harem Lodge' },
+      { tab: 'templates', name: 'Sultan Lodge' },
+      { tab: 'templates', name: 'Alcazar De Seville' },
+      { tab: 'templates', name: 'Great Mosque of Malatya' },
+    ],
+  },
+  {
+    name: 'Hypnotic',
+    items: [
+      { tab: 'tilings', name: 'Girih Inflation 10.v3' },
+      { tab: 'tilings', name: 'Two Monsters' },
+      { tab: 'tilings', name: 'Penrose Monster' },
+      { tab: 'tilings', name: 'Trigon of nanites' },
+      { tab: 'tilings', name: '8 and 8' },
+      { tab: 'tilings', name: 'wonka' },
+    ],
+  },
+];
+
+function findCatalogItem(tab, name) {
+  const lname = name.toLowerCase();
+  if (tab === 'tilings') return CATALOG.tilings.find(t => t.name.toLowerCase() === lname) || null;
+  if (tab === 'girih')   return CATALOG.girihShapes.find(g => g.name.toLowerCase() === lname) || null;
+  if (tab === 'templates') return CATALOG.templates.find(t => t.name.toLowerCase() === lname) || null;
+  return null;
+}
 
 function buildSidebar() {
   const list = document.getElementById('sidebarList');
@@ -834,7 +973,7 @@ function buildSidebar() {
       if (!items || items.length === 0) continue;
       const hdr = document.createElement('div');
       hdr.className = 'category-header';
-      hdr.textContent = cat;
+      hdr.textContent = `${cat} (${items.length})`;
       list.appendChild(hdr);
 
       for (const t of items) {
@@ -846,13 +985,13 @@ function buildSidebar() {
     }
 
   } else if (currentTab === 'girih') {
+    const filtered = CATALOG.girihShapes.filter(g => !q || g.name.toLowerCase().includes(q));
     const hdr = document.createElement('div');
     hdr.className = 'category-header';
-    hdr.textContent = 'Girih Shapes';
+    hdr.textContent = `Girih Shapes (${filtered.length})`;
     list.appendChild(hdr);
 
-    for (const g of CATALOG.girihShapes) {
-      if (q && !g.name.toLowerCase().includes(q)) continue;
+    for (const g of filtered) {
       const badge = g.type === 'regular' ? g.sides + '-gon' : 'irregular';
       const el = makeItem(g.name, badge, () => selectItem('girih', g));
       if (currentItem?.kind === 'girih' && currentItem.data.name === g.name)
@@ -876,7 +1015,7 @@ function buildSidebar() {
       if (!items || items.length === 0) continue;
       const hdr = document.createElement('div');
       hdr.className = 'category-header';
-      hdr.textContent = grp;
+      hdr.textContent = `${grp} (${items.length})`;
       list.appendChild(hdr);
 
       for (const t of items) {
@@ -886,6 +1025,70 @@ function buildSidebar() {
         list.appendChild(el);
       }
     }
+
+  } else if (currentTab === 'discover') {
+    for (const col of COLLECTIONS) {
+      const hdr = document.createElement('div');
+      hdr.className = 'collection-header';
+      hdr.innerHTML = `<span class="collection-star">&#x2736;</span>${escapeHtml(col.name)}`;
+      list.appendChild(hdr);
+
+      for (const entry of col.items) {
+        const data = findCatalogItem(entry.tab, entry.name);
+        if (!data) continue; // skip if not found in catalog
+        const kind = entry.tab === 'tilings' ? 'tiling' : entry.tab === 'girih' ? 'girih' : 'template';
+        const el = document.createElement('div');
+        el.className = 'collection-item';
+        el.textContent = data.name;
+        if (currentItem?.data?.name === data.name && currentItem?.kind === kind)
+          el.classList.add('active');
+        el.addEventListener('click', () => selectItem(kind, data));
+        list.appendChild(el);
+      }
+    }
+  }
+
+  // Sync highlighted index after rebuild
+  syncHighlight();
+}
+
+// Build a flat navigable list of all items for the current tab (for keyboard nav)
+function getFlatItems() {
+  const q = searchQuery.toLowerCase();
+  if (currentTab === 'tilings') {
+    return CATALOG.tilings.filter(t => !q || t.name.toLowerCase().includes(q))
+      .map(t => ({ kind: 'tiling', data: t }));
+  } else if (currentTab === 'girih') {
+    return CATALOG.girihShapes.filter(g => !q || g.name.toLowerCase().includes(q))
+      .map(g => ({ kind: 'girih', data: g }));
+  } else if (currentTab === 'templates') {
+    return CATALOG.templates.filter(t => !q || t.name.toLowerCase().includes(q))
+      .map(t => ({ kind: 'template', data: t }));
+  } else if (currentTab === 'discover') {
+    const flat = [];
+    for (const col of COLLECTIONS) {
+      for (const entry of col.items) {
+        const data = findCatalogItem(entry.tab, entry.name);
+        if (!data) continue;
+        const kind = entry.tab === 'tilings' ? 'tiling' : entry.tab === 'girih' ? 'girih' : 'template';
+        flat.push({ kind, data });
+      }
+    }
+    return flat;
+  }
+  return [];
+}
+
+function syncHighlight() {
+  // Remove all highlight classes
+  document.querySelectorAll('.pattern-item.kbd-focus, .collection-item.kbd-focus').forEach(el => {
+    el.classList.remove('kbd-focus');
+  });
+  if (highlightedIndex < 0) return;
+  const items = document.querySelectorAll('.pattern-item, .collection-item');
+  if (items[highlightedIndex]) {
+    items[highlightedIndex].classList.add('kbd-focus');
+    items[highlightedIndex].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
 }
 
@@ -938,6 +1141,7 @@ function selectItem(kind, data) {
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     currentTab = btn.dataset.tab;
+    highlightedIndex = -1;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     buildSidebar();
@@ -947,6 +1151,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 // Search
 document.getElementById('searchInput').addEventListener('input', e => {
   searchQuery = e.target.value;
+  highlightedIndex = -1;
   buildSidebar();
 });
 
@@ -959,14 +1164,191 @@ document.getElementById('showConstruction').addEventListener('change', e => {
   render();
 });
 
-// Download
-document.getElementById('downloadBtn').addEventListener('click', () => {
+// Download / Save
+function savePng() {
   const canvas = document.getElementById('patternCanvas');
   const name   = (currentItem?.data?.name || 'pattern').replace(/[^a-zA-Z0-9-_.]/g, '_');
   const link   = document.createElement('a');
   link.download = name + '.png';
   link.href     = canvas.toDataURL('image/png');
   link.click();
+}
+document.getElementById('downloadBtn').addEventListener('click', savePng);
+
+// Color mode pills
+document.getElementById('colorModeRow').addEventListener('click', e => {
+  const pill = e.target.closest('.color-pill');
+  if (!pill) return;
+  setColorMode(pill.dataset.mode);
+});
+
+function setColorMode(mode) {
+  colorMode = mode;
+  document.querySelectorAll('.color-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.mode === mode);
+  });
+  render();
+}
+
+function cycleColorMode() {
+  const idx = COLOR_MODES.indexOf(colorMode);
+  setColorMode(COLOR_MODES[(idx + 1) % COLOR_MODES.length]);
+}
+
+// Random button
+function selectRandom() {
+  const all = [
+    ...CATALOG.tilings.map(t => ({ kind: 'tiling', data: t })),
+    ...CATALOG.girihShapes.map(g => ({ kind: 'girih', data: g })),
+    ...CATALOG.templates.map(t => ({ kind: 'template', data: t })),
+  ];
+  const pick = all[Math.floor(Math.random() * all.length)];
+  // Switch to the correct tab
+  const tabMap = { tiling: 'tilings', girih: 'girih', template: 'templates' };
+  const newTab = tabMap[pick.kind];
+  if (newTab !== currentTab) {
+    currentTab = newTab;
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === newTab);
+    });
+  }
+  highlightedIndex = -1;
+  selectItem(pick.kind, pick.data);
+}
+document.getElementById('randomBtn').addEventListener('click', selectRandom);
+
+// Help overlay
+function toggleHelp(show) {
+  const overlay = document.getElementById('kbdOverlay');
+  if (show === undefined) show = !overlay.classList.contains('visible');
+  overlay.classList.toggle('visible', show);
+}
+document.getElementById('helpBtn').addEventListener('click', () => toggleHelp());
+document.getElementById('kbdClose').addEventListener('click', () => toggleHelp(false));
+document.getElementById('kbdOverlay').addEventListener('click', e => {
+  if (e.target === e.currentTarget) toggleHelp(false);
+});
+
+// Fullscreen canvas
+function toggleFullscreen(force) {
+  const wrap = document.getElementById('canvasWrap');
+  isFullscreen = force !== undefined ? force : !isFullscreen;
+  wrap.classList.toggle('fullscreen', isFullscreen);
+  if (currentItem) render();
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+// KEYBOARD SHORTCUTS
+// ────────────────────────────────────────────────────────────────────────────
+const TABS_ORDER = ['tilings', 'girih', 'templates', 'discover'];
+
+document.addEventListener('keydown', e => {
+  const search = document.getElementById('searchInput');
+  const isSearchFocused = document.activeElement === search;
+  const isOverlayOpen = document.getElementById('kbdOverlay').classList.contains('visible');
+
+  // Always: Escape
+  if (e.key === 'Escape') {
+    if (isOverlayOpen) { toggleHelp(false); return; }
+    if (isFullscreen) { toggleFullscreen(false); return; }
+    if (searchQuery) { search.value = ''; searchQuery = ''; highlightedIndex = -1; buildSidebar(); return; }
+    if (isSearchFocused) { search.blur(); return; }
+    return;
+  }
+
+  // Always: ? for help (only when search not focused)
+  if (e.key === '?' && !isSearchFocused) {
+    e.preventDefault();
+    toggleHelp();
+    return;
+  }
+
+  // / or Ctrl+K to focus search
+  if ((e.key === '/' || (e.key === 'k' && e.ctrlKey)) && !isSearchFocused) {
+    e.preventDefault();
+    search.focus();
+    search.select();
+    return;
+  }
+
+  // If overlay open, block other shortcuts
+  if (isOverlayOpen) return;
+
+  // Don't intercept when typing in search, except arrow keys
+  if (isSearchFocused && !['ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)) return;
+
+  switch (e.key) {
+    case 'ArrowUp': {
+      e.preventDefault();
+      const flat = getFlatItems();
+      if (flat.length === 0) break;
+      highlightedIndex = highlightedIndex <= 0 ? flat.length - 1 : highlightedIndex - 1;
+      buildSidebar();
+      break;
+    }
+    case 'ArrowDown': {
+      e.preventDefault();
+      const flat = getFlatItems();
+      if (flat.length === 0) break;
+      highlightedIndex = (highlightedIndex + 1) % flat.length;
+      buildSidebar();
+      break;
+    }
+    case 'ArrowLeft': {
+      e.preventDefault();
+      const idx = TABS_ORDER.indexOf(currentTab);
+      const prev = TABS_ORDER[(idx - 1 + TABS_ORDER.length) % TABS_ORDER.length];
+      const btn = document.querySelector(`.tab-btn[data-tab="${prev}"]`);
+      if (btn) btn.click();
+      break;
+    }
+    case 'ArrowRight': {
+      e.preventDefault();
+      const idx = TABS_ORDER.indexOf(currentTab);
+      const next = TABS_ORDER[(idx + 1) % TABS_ORDER.length];
+      const btn = document.querySelector(`.tab-btn[data-tab="${next}"]`);
+      if (btn) btn.click();
+      break;
+    }
+    case 'Enter': {
+      if (highlightedIndex >= 0) {
+        const flat = getFlatItems();
+        const pick = flat[highlightedIndex];
+        if (pick) selectItem(pick.kind, pick.data);
+      }
+      break;
+    }
+    case ' ': {
+      if (!isSearchFocused) {
+        e.preventDefault();
+        const cb = document.getElementById('showConstruction');
+        cb.checked = !cb.checked;
+        showConstruction = cb.checked;
+        render();
+      }
+      break;
+    }
+    case 's':
+    case 'S': {
+      if (!isSearchFocused) savePng();
+      break;
+    }
+    case 'c':
+    case 'C': {
+      if (!isSearchFocused) cycleColorMode();
+      break;
+    }
+    case 'f':
+    case 'F': {
+      if (!isSearchFocused) toggleFullscreen();
+      break;
+    }
+    case 'r':
+    case 'R': {
+      if (!isSearchFocused) selectRandom();
+      break;
+    }
+  }
 });
 
 // Resize: re-render on window resize

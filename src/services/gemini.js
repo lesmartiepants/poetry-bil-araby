@@ -10,8 +10,8 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
  */
 export const API_MODELS = {
-  tts: 'gemini-2.5-pro-preview-tts',
-  ttsFallback: 'gemini-2.5-flash-preview-tts',
+  tts: 'gemini-2.5-flash-preview-tts',
+  ttsFallback: 'gemini-2.5-pro-preview-tts',
   textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
 };
 
@@ -28,6 +28,15 @@ export const TTS_CONFIG = {
  * Populated on first call to discoverTextModels(); shared across all handlers.
  */
 let _discoveredTextModels = null;
+
+/**
+ * Per-model 429 memory — tracks which TTS models are known-exhausted this session.
+ * Key: model name string. Value: timestamp (ms) when the 429 was first seen.
+ * Once a model is marked here, fetchTTSWithFallback skips it immediately rather
+ * than spending ~300ms on a request that will fail.
+ * Resets on page reload (session scope only — daily quota resets at midnight PT).
+ */
+const _ttsModelExhausted = {};
 
 /**
  * Fetch and rank available Gemini text models via the ListModels API.
@@ -129,18 +138,42 @@ export const geminiTextFetch = async (endpoint, body, label, addLog) => {
  * Tries the primary TTS model first; on 429 (daily quota exhausted),
  * switches to the fallback model instead of retrying the same one.
  * Quotas are per-model-per-day, so the fallback has its own quota.
+ *
+ * Uses module-level _ttsModelExhausted to skip known-exhausted models
+ * immediately (avoids wasting ~300ms per request on a model whose 50 RPD
+ * quota is already gone for the day).
  */
 export const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS' } = {}) => {
   const primaryModel = API_MODELS.tts;
+  const fallbackModel = API_MODELS.ttsFallback;
+
+  // If primary is known-exhausted this session, skip straight to fallback
+  if (_ttsModelExhausted[primaryModel] && fallbackModel) {
+    if (addLog)
+      addLog(
+        label,
+        `${primaryModel}: skipped (quota exhausted this session) → using ${fallbackModel}`,
+        'warning'
+      );
+    const fallbackUrl = url.replace(primaryModel, fallbackModel);
+    const t = performance.now();
+    const res = await fetch(fallbackUrl, options);
+    if (addLog)
+      addLog(label, `${fallbackModel}: ${res.status} (${((performance.now() - t) / 1000).toFixed(1)}s)`, res.ok ? 'success' : 'warning');
+    return { res, model: fallbackModel };
+  }
+
   const t0 = performance.now();
   const res = await fetch(url, options);
   const primaryMs = performance.now() - t0;
 
   if (res.status !== 429) return { res, model: primaryModel };
 
-  // Primary model rate-limited — try fallback model (separate daily quota)
-  if (API_MODELS.ttsFallback) {
-    const fallbackModel = API_MODELS.ttsFallback;
+  // Primary model rate-limited — mark exhausted for remainder of session
+  _ttsModelExhausted[primaryModel] = Date.now();
+
+  // Try fallback model (separate daily quota)
+  if (fallbackModel) {
     const fallbackUrl = url.replace(primaryModel, fallbackModel);
     if (addLog)
       addLog(
@@ -157,6 +190,8 @@ export const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS'
         `${primaryModel}: 429 (${(primaryMs / 1000).toFixed(1)}s) → ${fallbackModel}: ${fallbackRes.status} (${(fallbackMs / 1000).toFixed(1)}s)`,
         fallbackRes.ok ? 'success' : 'warning'
       );
+    // If fallback is also exhausted, mark it too
+    if (fallbackRes.status === 429) _ttsModelExhausted[fallbackModel] = Date.now();
     return { res: fallbackRes, model: fallbackModel };
   }
 

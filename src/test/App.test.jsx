@@ -595,7 +595,7 @@ describe('DiwanApp', () => {
         timeout: 3000,
       });
 
-      // Queue a second poem for when the user manually clicks Discover
+      // Use URL-aware mock so background prefetch/health calls don't consume it
       const darwishPoem2 = {
         id: 202,
         poet: 'Mahmoud Darwish',
@@ -606,9 +606,12 @@ describe('DiwanApp', () => {
         cachedTranslation: 'Record: I am an Arab',
         tags: ['Modern', 'Political', 'Free Verse'],
       };
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => darwishPoem2,
+      global.fetch.mockImplementation((url) => {
+        if (typeof url === 'string' && url.includes('/api/poems/random')) {
+          global.fetch.mockImplementation(() => Promise.resolve({ ...defaultFetchResponse }));
+          return Promise.resolve({ ok: true, json: async () => darwishPoem2 });
+        }
+        return Promise.resolve({ ...defaultFetchResponse });
       });
 
       // Click Discover — should fetch the next Darwish poem while filter remains active

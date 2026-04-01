@@ -55,7 +55,7 @@ export const prefetchManager = {
       }
 
       // Check cache first - don't prefetch if already cached
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, poemId);
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, poemId, addLog);
       if (cached?.blob) {
         if (addLog)
           addLog('Prefetch Audio', `Audio already cached for poem ${poemId} - skipping`, 'info');
@@ -86,7 +86,7 @@ export const prefetchManager = {
         addLog(
           'Prefetch Audio',
           `→ Background audio generation (poem ${poemId}) | Model: ${API_MODELS.tts} | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
-          'info'
+          'request'
         );
       }
 
@@ -178,7 +178,7 @@ export const prefetchManager = {
               duration: audioDuration,
               model: ttsModel,
             },
-          });
+          }, addLog);
 
           if (addLog)
             addLog(
@@ -221,7 +221,7 @@ export const prefetchManager = {
       }
 
       // Check cache first - don't prefetch if already cached
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, poemId);
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, poemId, addLog);
       if (cached?.interpretation) {
         if (addLog)
           addLog(
@@ -248,7 +248,7 @@ export const prefetchManager = {
         addLog(
           'Prefetch Insights',
           `→ Background insights generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedInputTokens} tokens`,
-          'info'
+          'request'
         );
       }
 
@@ -278,7 +278,7 @@ export const prefetchManager = {
         await cacheOperations.set(CACHE_CONFIG.stores.insights, poemId, {
           interpretation,
           metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens },
-        });
+        }, addLog);
 
         if (addLog)
           addLog(

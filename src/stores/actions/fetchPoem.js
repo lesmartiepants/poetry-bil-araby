@@ -44,7 +44,7 @@ export async function fetchPoem({ addLog, track, emitEvent, navigate, markPoemSe
   addLog(
     'UI Event',
     `🐰 Discover button clicked | Category: ${selectedCategory} | Source: ${useDatabase ? 'Database' : 'LLM'}`,
-    'info'
+    'user'
   );
 
   if (isFetching) {
@@ -105,7 +105,7 @@ async function fetchFromDatabase({
   setCurrentIndex,
   setAutoExplain,
 }) {
-  addLog('Discovery DB', `→ Querying database | Category: ${selectedCategory}`, 'info');
+  addLog('Discovery DB', `→ Querying database | Category: ${selectedCategory}`, 'request');
 
   pruneSeenPoems();
   const seenIds = getRecentSeenIds();
@@ -179,7 +179,7 @@ async function fetchFromAI({
   addLog(
     'Discovery API',
     `→ Searching ${selectedCategory} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars + systemPromptChars} chars (${promptChars} prompt + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
-    'info'
+    'request'
   );
 
   const res = await geminiTextFetch('generateContent', requestBody, 'Discovery failed', addLog);

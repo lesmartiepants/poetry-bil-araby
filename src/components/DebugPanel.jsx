@@ -216,7 +216,7 @@ const DebugPanel = ({ controlBarRef }) => {
           {logs.map((log, idx) => (
             <div
               key={idx}
-              className={`py-0.5 border-b ${darkMode ? 'border-stone-800/40' : 'border-stone-200/40'} ${logTypeColor(log.type)}`}
+              className={`py-0.5 border-b ${darkMode ? 'border-stone-800/40' : 'border-stone-200/40'}`}
             >
               <span className={darkMode ? 'text-stone-400' : 'text-stone-500'}>
                 {idx === 0 ? log.time : log.rel}
@@ -225,7 +225,7 @@ const DebugPanel = ({ controlBarRef }) => {
                 {(CATEGORY_MAP[log.type] || CATEGORY_MAP.info).prefix}
               </span>{' '}
               <span style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color, opacity: 0.7 }}>[{log.label}]</span>{' '}
-              <span>{log.msg}</span>
+              <span className={darkMode ? 'text-stone-400' : 'text-stone-500'}>{log.msg}</span>
             </div>
           ))}
         </div>

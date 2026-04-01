@@ -68,8 +68,10 @@ const PoemCarousel = forwardRef(({
   // Notify parent when user swipes
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
+    const prev = emblaApi.previousScrollSnap();
     const idx = emblaApi.selectedScrollSnap();
-    onSlideChange(idx);
+    const direction = idx > prev ? 'next' : idx < prev ? 'prev' : 'same';
+    onSlideChange(idx, direction);
     setHasSwiped(true);
     setShowSwipeHint(false);
     updateScrollButtons();

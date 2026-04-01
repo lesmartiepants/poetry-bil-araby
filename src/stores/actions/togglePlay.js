@@ -155,7 +155,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   addLog(
     'UI Event',
     `🎵 Play button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
-    'info'
+    'user'
   );
   track('audio_play', { poet: current?.poet });
 
@@ -166,7 +166,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     }
     setPlaying(false);
     track('audio_pause', { poet: current?.poet });
-    addLog('UI Event', '⏸️ Pause button clicked', 'info');
+    addLog('UI Event', '⏸️ Pause button clicked', 'user');
     isTogglingPlay.current = false;
     return;
   }
@@ -200,7 +200,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     // CHECK CACHE
     if (FEATURES.caching && current?.id) {
       const cacheStart = performance.now();
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id, addLog);
       const cacheTime = performance.now() - cacheStart;
 
       if (cached?.blob) {
@@ -259,7 +259,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     addLog(
       'Audio API',
       `→ Starting generation | Model: ${API_MODELS.tts} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
-      'info'
+      'request'
     );
     setError(null);
 
@@ -366,7 +366,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
                 duration: audioDuration,
                 model: ttsModel,
               },
-            });
+            }, addLog);
             const cacheTime = performance.now() - cacheStart;
             addLog(
               'Audio Cache',
@@ -407,7 +407,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         clearInterval(pollInterval);
         usePoemStore.getState().removePollingInterval(pollInterval);
 
-        const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+        const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id, addLog);
         if (cached?.blob) {
           addLog(
             'Audio',
@@ -456,7 +456,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           'info'
         );
         setTimeout(async () => {
-          const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+          const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id, addLog);
           if (finalCheck?.blob) {
             addLog('Audio', '✓ Audio completed after extended wait - playing now', 'success');
             const u = URL.createObjectURL(finalCheck.blob);

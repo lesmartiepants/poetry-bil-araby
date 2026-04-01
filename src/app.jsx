@@ -231,7 +231,7 @@ export default function DiwanApp() {
     const nextIdx = (currentIdx + 1) % FONTS.length;
     setCurrentFont(FONTS[nextIdx].id);
     track('font_changed', { font: FONTS[nextIdx].id });
-    addLog('Font', `Switched to ${FONTS[nextIdx].label}`, 'info');
+    addLog('Font', `Switched to ${FONTS[nextIdx].label}`, 'user');
   };
 
   const TEXT_SIZES = [
@@ -362,7 +362,7 @@ export default function DiwanApp() {
   useEffect(() => {
     if (!interpretation || carouselPoems.length === 0) return;
 
-    const parts = parseInsight(interpretation);
+    const parts = parseInsight(interpretation, addLog);
     const translation = parts?.poeticTranslation;
     if (!translation) return;
 
@@ -417,7 +417,7 @@ export default function DiwanApp() {
       if (routeParams?.id && useDatabase) {
         const poemId = routeParams.id;
         track('deep_link_loaded', { poemId });
-        addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'info');
+        addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'request');
         fetchPoemById(poemId)
           .then((poem) => {
             setPoems([poem]);
@@ -618,7 +618,7 @@ export default function DiwanApp() {
       try {
         const poets = await fetchPoets();
         setDynamicPoets(poets);
-        addLog('Poets', `Loaded ${poets.length} poets from API`, 'info');
+        addLog('Poets', `Loaded ${poets.length} poets from API`, 'success');
       } catch {
         addLog('Poets', 'Failed to fetch poets from API', 'warn');
       } finally {
@@ -655,7 +655,7 @@ export default function DiwanApp() {
         };
       }
     }
-    return parseInsight(interpretation);
+    return parseInsight(interpretation, addLog);
   }, [
     interpretation,
     cachedTranslation,
@@ -663,6 +663,7 @@ export default function DiwanApp() {
     cachedAuthorBio,
     ratchetMode,
     displayedPoem?.arabic,
+    addLog,
   ]);
 
   const versePairs = useMemo(() => {
@@ -738,7 +739,7 @@ export default function DiwanApp() {
     addLog(
       'UI Event',
       `📋 Copy button clicked | Poem: ${displayedPoem?.poet} - ${displayedPoem?.title}`,
-      'info'
+      'user'
     );
 
     const englishText = insightParts?.poeticTranslation || displayedPoem?.english || '';
@@ -766,7 +767,7 @@ export default function DiwanApp() {
   };
 
   const handleShare = async () => {
-    addLog('UI Event', 'Share button clicked', 'info');
+    addLog('UI Event', 'Share button clicked', 'user');
     track('poem_shared', { poet: displayedPoem?.poet });
 
     // Open the share card modal for visual sharing
@@ -865,7 +866,7 @@ export default function DiwanApp() {
     addLog(
       'UI Event',
       `👎 Flag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
-      'info'
+      'user'
     );
 
     if (!user) {
@@ -874,7 +875,7 @@ export default function DiwanApp() {
       return;
     }
 
-    addLog('Downvote', `→ Sending downvote to Supabase | poem_id: ${current?.id}`, 'info');
+    addLog('Downvote', `→ Sending downvote to Supabase | poem_id: ${current?.id}`, 'request');
     const { error } = await downvotePoem(current);
     if (error) {
       addLog('Downvote Error', `✗ Failed: ${error.message}`, 'error');
@@ -894,9 +895,9 @@ export default function DiwanApp() {
     addLog(
       'UI Event',
       `👍 Unflag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
-      'info'
+      'user'
     );
-    addLog('Undownvote', `→ Removing downvote from Supabase | poem_id: ${current?.id}`, 'info');
+    addLog('Undownvote', `→ Removing downvote from Supabase | poem_id: ${current?.id}`, 'request');
 
     const { error } = await undownvotePoem(current?.id);
     if (error) {
@@ -951,7 +952,7 @@ export default function DiwanApp() {
     const newTheme = darkMode ? 'light' : 'dark';
     track('theme_changed', { theme: newTheme });
     setDarkMode(!darkMode);
-    addLog('Theme', `Switched to ${newTheme} mode`, 'info');
+    addLog('Theme', `Switched to ${newTheme} mode`, 'user');
   };
   const handleToggleTheme = handleToggleDarkMode;
 
@@ -965,7 +966,7 @@ export default function DiwanApp() {
   };
 
   const handleToggleTranslation = (showTranslation) => {
-    addLog('Translation', `Translation ${showTranslation ? 'shown' : 'hidden'}`, 'info');
+    addLog('Translation', `Translation ${showTranslation ? 'shown' : 'hidden'}`, 'user');
   };
 
   const handleToggleTransliteration = (showTransliteration) => {
@@ -977,15 +978,15 @@ export default function DiwanApp() {
   };
 
   const handleTextSizeChange = (level) => {
-    addLog('TextSize', `Text size changed to level ${level}`, 'info');
+    addLog('TextSize', `Text size changed to level ${level}`, 'user');
   };
 
   const handleKeyboardShortcut = (key, action) => {
-    addLog('Keyboard', `Shortcut: ${key} → ${action}`, 'info');
+    addLog('Keyboard', `Shortcut: ${key} → ${action}`, 'user');
   };
 
   const handleSplashDismissed = () => {
-    addLog('Splash', 'Splash screen dismissed', 'info');
+    addLog('Splash', 'Splash screen dismissed', 'user');
   };
 
   const handleSplashShown = () => {
@@ -1024,7 +1025,7 @@ export default function DiwanApp() {
     addLog(
       'Navigation',
       `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id} | Tags: ${tagsType} - ${tagsContent}`,
-      'info'
+      'user'
     );
   }, [current?.id]);
 
@@ -1283,7 +1284,7 @@ export default function DiwanApp() {
                       ref={carouselRef}
                       poems={carouselPoems}
                       currentIndex={carouselIndex}
-                      onSlideChange={(idx) => {
+                      onSlideChange={(idx, direction) => {
                         setCarouselIndex(idx);
                         // Pause audio when browsing via carousel and clear the stale URL
                         // so the next play request generates audio for the new poem instead
@@ -1307,11 +1308,8 @@ export default function DiwanApp() {
                         // both fire analyzePoemAction and fight over interpretation state.
                         const newPoem = carouselPoems[idx];
                         if (FEATURES.logging && newPoem) {
-                          addLog(
-                            'Navigation',
-                            `Carousel → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ID: ${newPoem.id}`,
-                            'info'
-                          );
+                          const fromPoem = carouselPoems[carouselIndex];
+                          addLog('Carousel', `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`, 'user');
                         }
                         // Update URL to reflect the currently displayed poem
                         if (newPoem?.id) {

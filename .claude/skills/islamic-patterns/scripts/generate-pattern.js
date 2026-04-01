@@ -5,15 +5,27 @@
  * Usage:
  *   node generate-pattern.js --pattern <name> [--size 1920] [--output <path>]
  *                            [--opacity 0.06] [--bg] [--png]
+ *                            [--d <skip>] [--show-construction]
  *
  * Options:
- *   --pattern   Pattern name (see BUILT_IN_PATTERNS) or path to tiling XML
- *   --size      Canvas size in pixels, default 1920
- *   --output    Output file path (default: stdout for SVG)
- *   --opacity   Line opacity 0–1, default 0.06 (good for dark backgrounds)
- *   --bg        Full-page background mode (outputs standalone HTML)
- *   --png       Render as PNG (requires `canvas` npm package)
- *   --color     Override line color hex, default #c5a059 (gold)
+ *   --pattern           Pattern name (see BUILT_IN_PATTERNS) or path to tiling XML
+ *   --size              Canvas size in pixels, default 1920
+ *   --output            Output file path (default: stdout for SVG)
+ *   --opacity           Line opacity 0–1, default 0.06 (good for dark backgrounds)
+ *   --bg                Full-page background mode (outputs standalone HTML)
+ *   --png               Render as PNG (requires `canvas` npm package)
+ *   --color             Override line color hex, default #c5a059 (gold)
+ *   --d                 Override the skip parameter for star motif generation
+ *   --show-construction Show polygon construction edges at low opacity (default: hidden)
+ *
+ * Rendering algorithm (TiledPatternMaker midpoint-connection method):
+ *   Polygons are CONSTRUCTION geometry — they are never drawn in final output.
+ *   The visible star motif comes from:
+ *     1. Compute edge midpoints of each polygon
+ *     2. Connect midpoint[i] to midpoint[(i+d) % n] with a ray (line segment)
+ *     3. Find where pairs of rays intersect — these are the star points
+ *     4. Output the midpoint→intersection→midpoint segments as SVG <line> elements
+ *   The `d` parameter controls star shape: higher d = more points, sharper star.
  *
  * SVG output requires no npm packages.
  * PNG output requires: npm install canvas
@@ -224,10 +236,133 @@ function featureBasePoints(feature) {
 }
 
 // ---------------------------------------------------------------------------
-// Tiling engine — tile over canvas via T1/T2 lattice
+// Star motif algorithm — TiledPatternMaker midpoint-connection method
 // ---------------------------------------------------------------------------
 
-export function tilePath(tiling, canvasSize) {
+/**
+ * Default d (skip) parameter by polygon side count.
+ * d controls which midpoints connect: midpoint[i] → midpoint[(i+d) % n]
+ * Source: TiledPatternMaker src/model/motifs/star.cpp
+ */
+export function defaultD(n) {
+  if (n <= 4) return 1;          // square → cross/plus
+  if (n === 5) return 2;         // pentagon → 5-pointed star
+  if (n === 6) return 2;         // hexagon → Star of David
+  if (n === 8) return 2;         // octagon → 8-pointed star
+  if (n === 10) return 3;        // decagon → 10-pointed star
+  if (n === 12) return 4;        // dodecagon → 12-pointed star
+  if (n > 12) return Math.floor(n / 4);
+  return Math.floor(n / 3);
+}
+
+/**
+ * Compute edge midpoints of a polygon.
+ * Each midpoint lies between vertex[i] and vertex[(i+1) % n].
+ */
+function edgeMidpoints(verts) {
+  const n = verts.length;
+  return verts.map((v, i) => {
+    const next = verts[(i + 1) % n];
+    return [(v[0] + next[0]) / 2, (v[1] + next[1]) / 2];
+  });
+}
+
+/**
+ * Line-line intersection (parametric form).
+ * Returns the intersection point of segment p1→p2 and p3→p4,
+ * or null if lines are parallel or intersection is outside segments.
+ *
+ * Formula: solve p1 + t*(p2-p1) = p3 + u*(p4-p3) for t and u.
+ * Intersection is valid when 0 ≤ t ≤ 1 AND 0 ≤ u ≤ 1.
+ */
+function lineIntersect(p1, p2, p3, p4) {
+  const dx1 = p2[0] - p1[0], dy1 = p2[1] - p1[1];
+  const dx2 = p4[0] - p3[0], dy2 = p4[1] - p3[1];
+  const denom = dx1 * dy2 - dy1 * dx2;
+  if (Math.abs(denom) < 1e-10) return null; // parallel
+
+  const dx3 = p3[0] - p1[0], dy3 = p3[1] - p1[1];
+  const t = (dx3 * dy2 - dy3 * dx2) / denom;
+  const u = (dx3 * dy1 - dy3 * dx1) / denom;
+
+  if (t < -1e-8 || t > 1 + 1e-8 || u < -1e-8 || u > 1 + 1e-8) return null;
+
+  return [p1[0] + t * dx1, p1[1] + t * dy1];
+}
+
+/**
+ * Generate star motif segments for a single polygon using the midpoint-connection algorithm.
+ *
+ * Algorithm (from TiledPatternMaker star.cpp / radial_motif.h):
+ *   1. Compute edge midpoints M[0..n-1]
+ *   2. For each i: draw a ray from M[i] toward M[(i+d) % n]
+ *   3. Find where ray i intersects ray j (for all j ≠ i, i±1)
+ *      The nearest intersection to M[i] is the star-point for that ray
+ *   4. Each visible segment is: M[i] → nearest_intersection[i]
+ *
+ * Returns an array of line segments: [[x1,y1,x2,y2], ...]
+ */
+export function starSegments(verts, d) {
+  const n = verts.length;
+  if (n < 3) return [];
+  const skip = d !== undefined ? d : defaultD(n);
+
+  const midpoints = edgeMidpoints(verts);
+
+  // Build rays: each ray goes from M[i] in the direction of M[(i+skip) % n]
+  // We extend the ray beyond M[(i+skip)] to ensure intersections are found
+  const rays = midpoints.map((m, i) => {
+    const target = midpoints[(i + skip) % n];
+    // Extend ray 3x past target to guarantee intersections with crossing rays
+    const dx = target[0] - m[0], dy = target[1] - m[1];
+    return [m, [m[0] + dx * 3, m[1] + dy * 3]];
+  });
+
+  const segments = [];
+
+  for (let i = 0; i < n; i++) {
+    const [rayStart, rayEnd] = rays[i];
+    let nearestDist = Infinity;
+    let nearestPt = null;
+
+    for (let j = 0; j < n; j++) {
+      // Skip the ray itself and its immediate neighbours (they share a midpoint)
+      if (j === i || j === (i + 1) % n || j === (i - 1 + n) % n) continue;
+
+      const [otherStart, otherEnd] = rays[j];
+      const pt = lineIntersect(rayStart, rayEnd, otherStart, otherEnd);
+      if (!pt) continue;
+
+      const dist = (pt[0] - rayStart[0]) ** 2 + (pt[1] - rayStart[1]) ** 2;
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearestPt = pt;
+      }
+    }
+
+    if (nearestPt) {
+      segments.push([rayStart[0], rayStart[1], nearestPt[0], nearestPt[1]]);
+    }
+  }
+
+  return segments;
+}
+
+// ---------------------------------------------------------------------------
+// Tiling engine — tile over canvas via T1/T2 lattice
+// Polygons are construction geometry; the visible output is star segments.
+// ---------------------------------------------------------------------------
+
+/**
+ * Generate all SVG line elements for the tiling.
+ *
+ * @param {object} tiling       - Parsed tiling spec (from parseTiling or BUILT_IN_PATTERNS)
+ * @param {number} canvasSize   - Canvas width/height in pixels
+ * @param {number|undefined} dOverride - Override the skip parameter (undefined = use defaults)
+ * @param {boolean} showConstruction  - If true, also emit polygon edges at low opacity
+ * @returns {{ starLines: string, constructionPaths: string }}
+ */
+export function tileLines(tiling, canvasSize, dOverride, showConstruction) {
   const { t1, t2, features } = tiling;
   const S = canvasSize;
 
@@ -255,7 +390,8 @@ export function tilePath(tiling, canvasSize) {
   const cy = S / 2;
   const margin = targetCellPx * 2;
 
-  const paths = [];
+  const starLineEls = [];
+  const constructionPathEls = [];
 
   for (let i = -nI; i <= nI; i++) {
     for (let j = -nJ; j <= nJ; j++) {
@@ -264,9 +400,12 @@ export function tilePath(tiling, canvasSize) {
 
       for (const feature of features) {
         const base = featureBasePoints(feature);
+        // Only regular polygons generate star motifs; edgepoly/polygon are pure construction
+        const isRegular = feature.type === 'regular';
 
         for (const pl of feature.placements) {
           const placed = applyPlacement(base, pl);
+          // Map to canvas coordinates
           const sv = placed.map(([x, y]) => [x * scale + offX, y * scale + offY]);
           if (sv.length < 3) continue;
 
@@ -275,29 +414,55 @@ export function tilePath(tiling, canvasSize) {
             x > -margin && x < S + margin && y > -margin && y < S + margin
           )) continue;
 
-          const d = sv.map(([x, y], k) =>
-            `${k === 0 ? 'M' : 'L'}${x.toFixed(3)},${y.toFixed(3)}`
-          ).join(' ') + ' Z';
-          paths.push(`    <path d="${d}"/>`);
+          // Construction polygon edges (optional, shown at very low opacity)
+          if (showConstruction) {
+            const pathD = sv.map(([x, y], k) =>
+              `${k === 0 ? 'M' : 'L'}${x.toFixed(3)},${y.toFixed(3)}`
+            ).join(' ') + ' Z';
+            constructionPathEls.push(`      <path d="${pathD}"/>`);
+          }
+
+          // Star motif: midpoint-connection algorithm (regular polygons only)
+          if (isRegular) {
+            const d = dOverride !== undefined ? dOverride : defaultD(sv.length);
+            const segs = starSegments(sv, d);
+            for (const [x1, y1, x2, y2] of segs) {
+              starLineEls.push(
+                `    <line x1="${x1.toFixed(3)}" y1="${y1.toFixed(3)}" x2="${x2.toFixed(3)}" y2="${y2.toFixed(3)}"/>`
+              );
+            }
+          }
         }
       }
     }
   }
 
-  return paths.join('\n');
+  return {
+    starLines: starLineEls.join('\n'),
+    constructionPaths: constructionPathEls.join('\n'),
+  };
+}
+
+// Keep tilePath as a thin wrapper for backward compatibility (returns star lines only)
+export function tilePath(tiling, canvasSize) {
+  const { starLines } = tileLines(tiling, canvasSize, undefined, false);
+  return starLines;
 }
 
 // ---------------------------------------------------------------------------
 // SVG renderer
 // ---------------------------------------------------------------------------
 
-export function renderSVG(tiling, size, lineColor, opacity) {
-  const paths = tilePath(tiling, size);
+export function renderSVG(tiling, size, lineColor, opacity, dOverride, showConstruction) {
+  const { starLines, constructionPaths } = tileLines(tiling, size, dOverride, showConstruction);
+  const constructionGroup = constructionPaths
+    ? `  <g stroke="${lineColor}" stroke-width="0.5" fill="none" opacity="0.08">\n${constructionPaths}\n  </g>\n`
+    : '';
   return `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <rect width="${size}" height="${size}" fill="${PALETTE.bg}"/>
-  <g stroke="${lineColor}" stroke-width="1" fill="none" opacity="${opacity}">
-${paths}
+${constructionGroup}  <g stroke="${lineColor}" stroke-width="1" fill="none" opacity="${opacity}">
+${starLines}
   </g>
 </svg>`;
 }
@@ -306,8 +471,11 @@ ${paths}
 // HTML background renderer
 // ---------------------------------------------------------------------------
 
-export function renderHTML(tiling, size, lineColor, opacity) {
-  const paths = tilePath(tiling, size);
+export function renderHTML(tiling, size, lineColor, opacity, dOverride, showConstruction) {
+  const { starLines, constructionPaths } = tileLines(tiling, size, dOverride, showConstruction);
+  const constructionGroup = constructionPaths
+    ? `    <g stroke="${lineColor}" stroke-width="0.5" fill="none" opacity="0.08">\n${constructionPaths}\n    </g>\n`
+    : '';
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -336,8 +504,8 @@ export function renderHTML(tiling, size, lineColor, opacity) {
 <body>
 <div class="pattern-bg">
   <svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" preserveAspectRatio="xMidYMid slice">
-    <g stroke="${lineColor}" stroke-width="1" fill="none" opacity="${opacity}">
-${paths}
+${constructionGroup}    <g stroke="${lineColor}" stroke-width="1" fill="none" opacity="${opacity}">
+${starLines}
     </g>
   </svg>
 </div>
@@ -355,7 +523,7 @@ ${paths}
 // PNG renderer (requires `canvas` package)
 // ---------------------------------------------------------------------------
 
-async function renderPNG(tiling, size, lineColor, opacity, outputPath) {
+async function renderPNG(tiling, size, lineColor, opacity, outputPath, dOverride, showConstruction) {
   let createCanvas;
   try {
     const mod = await import('canvas');
@@ -376,45 +544,40 @@ async function renderPNG(tiling, size, lineColor, opacity, outputPath) {
   const r = parseInt(lineColor.slice(1, 3), 16);
   const g = parseInt(lineColor.slice(3, 5), 16);
   const b = parseInt(lineColor.slice(5, 7), 16);
+
+  const { starLines, constructionPaths } = tileLines(tiling, size, dOverride, showConstruction);
+
+  // Parse and draw construction lines (if requested)
+  if (showConstruction && constructionPaths) {
+    ctx.strokeStyle = `rgba(${r},${g},${b},0.08)`;
+    ctx.lineWidth = 0.5;
+    // Construction paths are SVG path strings — parse them for canvas drawing
+    for (const pathEl of constructionPaths.split('\n')) {
+      const dMatch = pathEl.match(/d="([^"]+)"/);
+      if (!dMatch) continue;
+      const cmds = dMatch[1].split(/(?=[ML])/);
+      ctx.beginPath();
+      for (const cmd of cmds) {
+        const type = cmd[0];
+        const [x, y] = cmd.slice(1).split(',').map(Number);
+        if (type === 'M') ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+
+  // Draw star segments
   ctx.strokeStyle = `rgba(${r},${g},${b},${opacity})`;
   ctx.lineWidth = 1;
-
-  const { t1, t2, features } = tiling;
-  const allVerts = features.flatMap(f =>
-    f.placements.flatMap(pl => applyPlacement(featureBasePoints(f), pl))
-  );
-  const cellDim = Math.max(...allVerts.map(v => Math.abs(v[0])), ...allVerts.map(v => Math.abs(v[1])), 1);
-  const targetCellPx = Math.min(size / 8, 120);
-  const scale = targetCellPx / cellDim;
-  const cx = size / 2;
-  const cy = size / 2;
-  const t1len = Math.sqrt(t1[0] ** 2 + t1[1] ** 2) || 1;
-  const t2len = Math.sqrt(t2[0] ** 2 + t2[1] ** 2) || 1;
-  const nI = Math.ceil(size / (t1len * scale)) + 2;
-  const nJ = Math.ceil(size / (t2len * scale)) + 2;
-  const margin = targetCellPx * 2;
-
-  for (let i = -nI; i <= nI; i++) {
-    for (let j = -nJ; j <= nJ; j++) {
-      const offX = (i * t1[0] + j * t2[0]) * scale + cx;
-      const offY = (i * t1[1] + j * t2[1]) * scale + cy;
-
-      for (const feature of features) {
-        const base = featureBasePoints(feature);
-        for (const pl of feature.placements) {
-          const placed = applyPlacement(base, pl);
-          const verts = placed.map(([x, y]) => [x * scale + offX, y * scale + offY]);
-          if (verts.length < 3) continue;
-          if (!verts.some(([x, y]) => x > -margin && x < size + margin && y > -margin && y < size + margin)) continue;
-
-          ctx.beginPath();
-          ctx.moveTo(verts[0][0], verts[0][1]);
-          for (let k = 1; k < verts.length; k++) ctx.lineTo(verts[k][0], verts[k][1]);
-          ctx.closePath();
-          ctx.stroke();
-        }
-      }
-    }
+  for (const lineEl of starLines.split('\n')) {
+    const m = lineEl.match(/x1="([^"]+)" y1="([^"]+)" x2="([^"]+)" y2="([^"]+)"/);
+    if (!m) continue;
+    ctx.beginPath();
+    ctx.moveTo(parseFloat(m[1]), parseFloat(m[2]));
+    ctx.lineTo(parseFloat(m[3]), parseFloat(m[4]));
+    ctx.stroke();
   }
 
   const buffer = canvas.toBuffer('image/png');
@@ -473,12 +636,14 @@ if (isMain) {
       'Usage: node generate-pattern.js --pattern <name|xml-path> [options]\n\n' +
       'Built-in patterns: ' + Object.keys(BUILT_IN_PATTERNS).join(', ') + '\n\n' +
       'Options:\n' +
-      '  --size <px>       Canvas size (default: 1920)\n' +
-      '  --output <path>   Output file (default: stdout for SVG)\n' +
-      '  --opacity <0-1>   Line opacity (default: 0.06)\n' +
-      '  --color <hex>     Line color (default: #c5a059 gold)\n' +
-      '  --bg              Output full-page HTML\n' +
-      '  --png             Output PNG (requires npm install canvas)\n'
+      '  --size <px>          Canvas size (default: 1920)\n' +
+      '  --output <path>      Output file (default: stdout for SVG)\n' +
+      '  --opacity <0-1>      Line opacity (default: 0.06)\n' +
+      '  --color <hex>        Line color (default: #c5a059 gold)\n' +
+      '  --d <skip>           Override star skip parameter (default: auto by polygon type)\n' +
+      '  --show-construction  Show polygon construction edges at low opacity\n' +
+      '  --bg                 Output full-page HTML\n' +
+      '  --png                Output PNG (requires npm install canvas)\n'
     );
     process.exit(1);
   }
@@ -489,6 +654,8 @@ if (isMain) {
   const outputPath = args.output || null;
   const bgMode = !!args.bg;
   const pngMode = !!args.png;
+  const dOverride = args.d !== undefined ? parseInt(args.d) : undefined;
+  const showConstruction = !!args['show-construction'];
 
   loadTiling(args.pattern).then(async tiling => {
     if (pngMode) {
@@ -496,13 +663,13 @@ if (isMain) {
         console.error('--output <path> is required for PNG output');
         process.exit(1);
       }
-      await renderPNG(tiling, size, lineColor, opacity, outputPath);
+      await renderPNG(tiling, size, lineColor, opacity, outputPath, dOverride, showConstruction);
       return;
     }
 
     const output = bgMode
-      ? renderHTML(tiling, size, lineColor, opacity)
-      : renderSVG(tiling, size, lineColor, opacity);
+      ? renderHTML(tiling, size, lineColor, opacity, dOverride, showConstruction)
+      : renderSVG(tiling, size, lineColor, opacity, dOverride, showConstruction);
 
     if (outputPath) {
       mkdirSync(dirname(outputPath), { recursive: true });

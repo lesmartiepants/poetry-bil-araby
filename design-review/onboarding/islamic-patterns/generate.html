@@ -188,6 +188,10 @@
           <option value="1920" selected>1920px</option>
           <option value="2560">2560px</option>
         </select>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer;flex-shrink:0;">
+          <input type="checkbox" id="showConstruction" style="accent-color:var(--gold);">
+          Show construction
+        </label>
         <button class="btn" id="downloadBtn">Download PNG</button>
       </div>
     </div>
@@ -209,6 +213,7 @@ const CATALOG = {"tilings":[{"name":"10","t1":[2,0],"t2":[0.6180339887498949,1.9
 let currentTab  = 'tilings';
 let currentItem = null;   // { kind: 'tiling'|'girih'|'template', data: {...} }
 let searchQuery = '';
+let showConstruction = false;
 
 // ────────────────────────────────────────────────────────────────────────────
 // MATH HELPERS
@@ -272,6 +277,87 @@ function bbox(pts) {
   }
   return { minX, minY, maxX, maxY, w: maxX - minX, h: maxY - minY,
            cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+}
+
+/**
+ * Line-line intersection of segment (p1→p2) extended to infinite line vs (p3→p4).
+ * Returns [x,y] or null if parallel.
+ */
+function lineIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+  const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+  if (Math.abs(denom) < 1e-10) return null;
+  const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+  return [x1 + t * (x2 - x1), y1 + t * (y2 - y1)];
+}
+
+/**
+ * Default skip parameter d for a polygon with n sides.
+ * Controls which midpoints are connected to form star points.
+ */
+function defaultD(n) {
+  if (n === 3) return 1;
+  if (n === 4) return 1;
+  if (n === 5) return 2;
+  if (n === 6) return 2;
+  if (n === 7) return 2;
+  if (n === 8) return 2;
+  if (n === 9) return 3;
+  if (n === 10) return 3;
+  if (n === 12) return 4;
+  return Math.floor(n / 4);
+}
+
+/**
+ * Given an array of canvas-space polygon vertices, compute the star-motif
+ * line segments using the TiledPatternMaker midpoint-ray algorithm.
+ *
+ * Algorithm:
+ * 1. Compute edge midpoints mid[0..n-1]
+ * 2. For each midpoint i, construct a ray: mid[i] → mid[(i+d)%n]
+ * 3. The star inner vertex between midpoints i and i+1 is where
+ *    ray[i] (forward) meets ray[i+1] (backward, i.e. toward mid[(i+1-d+n)%n])
+ * 4. The visible segments are: mid[i] → intersection → mid[i+1]
+ *
+ * Returns an array of [x1,y1,x2,y2] segments.
+ */
+function starMotifsFromPoly(verts) {
+  const n = verts.length;
+  if (n < 3) return [];
+  const d = defaultD(n);
+
+  // Compute edge midpoints
+  const mids = verts.map((v, i) => {
+    const next = verts[(i + 1) % n];
+    return [(v[0] + next[0]) / 2, (v[1] + next[1]) / 2];
+  });
+
+  const segments = [];
+  const FAR = 20; // extension multiplier — large enough to guarantee intersection
+
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n; // adjacent midpoint
+
+    // Ray from mid[i] toward mid[(i+d)%n]
+    const [mx0, my0] = mids[i];
+    const [ax0, ay0] = mids[(i + d) % n];
+    const fwdFarX = ax0 + (ax0 - mx0) * FAR;
+    const fwdFarY = ay0 + (ay0 - my0) * FAR;
+
+    // Ray from mid[j] toward mid[(j-d+n)%n]  (backward direction from adjacent midpoint)
+    const [mx1, my1] = mids[j];
+    const [bx1, by1] = mids[(j - d + n) % n];
+    const bwdFarX = bx1 + (bx1 - mx1) * FAR;
+    const bwdFarY = by1 + (by1 - my1) * FAR;
+
+    // Find intersection — this is the star inner vertex between mid[i] and mid[j]
+    const pt = lineIntersect(mx0, my0, fwdFarX, fwdFarY, mx1, my1, bwdFarX, bwdFarY);
+    if (pt) {
+      segments.push([mx0, my0, pt[0], pt[1]]);
+      segments.push([mx1, my1, pt[0], pt[1]]);
+    }
+  }
+
+  return segments;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -436,29 +522,38 @@ function renderTiling(ctx, tiling, w, h) {
   const polys = buildTilingPolygons(tiling, w, h);
   if (polys.length === 0) return;
 
-  // Draw fill for regular polygons and stroke for all
-  ctx.globalAlpha = 0.13;
-  ctx.fillStyle = GOLD;
+  // Optional: show construction lines (polygon edges) at very low opacity
+  if (showConstruction) {
+    ctx.globalAlpha = 0.03;
+    ctx.strokeStyle = LAPIS;
+    ctx.lineWidth = Math.max(0.5, w / 2000);
+    for (const poly of polys) {
+      if (poly.length < 2) continue;
+      ctx.beginPath();
+      ctx.moveTo(poly[0][0], poly[0][1]);
+      for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i][0], poly[i][1]);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+
+  // Draw star motifs using midpoint-ray algorithm
+  ctx.globalAlpha = 0.6;
+  ctx.strokeStyle = GOLD;
+  ctx.lineWidth = 1.5;
+  ctx.lineCap = 'round';
+
   for (const poly of polys) {
-    if (poly.length < 3) continue;
-    ctx.beginPath();
-    ctx.moveTo(poly[0][0], poly[0][1]);
-    for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i][0], poly[i][1]);
-    ctx.closePath();
-    ctx.fill();
+    const segs = starMotifsFromPoly(poly);
+    for (const [x1, y1, x2, y2] of segs) {
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
   }
 
   ctx.globalAlpha = 1;
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = Math.max(0.5, w / 2000);
-  for (const poly of polys) {
-    if (poly.length < 2) continue;
-    ctx.beginPath();
-    ctx.moveTo(poly[0][0], poly[0][1]);
-    for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i][0], poly[i][1]);
-    ctx.closePath();
-    ctx.stroke();
-  }
 }
 
 function renderGirih(ctx, shape, w, h) {
@@ -711,6 +806,12 @@ document.getElementById('searchInput').addEventListener('input', e => {
 
 // Size select
 document.getElementById('sizeSelect').addEventListener('change', render);
+
+// Show construction toggle
+document.getElementById('showConstruction').addEventListener('change', e => {
+  showConstruction = e.target.checked;
+  render();
+});
 
 // Download
 document.getElementById('downloadBtn').addEventListener('click', () => {

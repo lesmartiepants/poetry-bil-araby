@@ -142,6 +142,18 @@ node .claude/skills/islamic-patterns/scripts/generate-pattern.js \
   --output design-review/onboarding/islamic-patterns/star-cross-1920.svg
 ```
 
+**Show construction geometry** (polygon edges at low opacity, useful for debugging):
+```bash
+node .claude/skills/islamic-patterns/scripts/generate-pattern.js \
+  --pattern hexagon-6 --show-construction --output /tmp/hex-debug.svg
+```
+
+**Override skip parameter** (controls star shape):
+```bash
+node .claude/skills/islamic-patterns/scripts/generate-pattern.js \
+  --pattern star-cross --d 3 --output /tmp/star-d3.svg
+```
+
 Available built-in pattern names:
 - `girih-decagon` — 10-fold decagon tiling
 - `star-cross` — 4.8² octagon + square (Seal of Solomon source)
@@ -173,23 +185,74 @@ The pattern should:
 
 ## Pattern Rendering Algorithm
 
-1. Parse tiling XML: extract T1, T2 vectors and all Feature placements
-2. For each `Feature type="regular"` with N sides: generate regular N-gon vertices
+Polygons are **construction geometry** (invisible guide lines). The visible Islamic star pattern
+comes entirely from the midpoint-connection algorithm. This matches TiledPatternMaker's pipeline
+in `src/model/motifs/star.cpp` and `src/model/motifs/radial_motif.h`.
+
+### TiledPatternMaker Pipeline
+
+```
+Tiling XML → Feature placements → Midpoints → d-skip rays → Ray intersections → Star segments → Style/color
+```
+
+### Step-by-Step
+
+1. **Parse tiling XML**: extract T1, T2 translation vectors and all Feature placements.
+2. **Compute polygon vertices**: for each `Feature type="regular"` with N sides:
    ```
    vertex[k] = (cos(2πk/N + rot), sin(2πk/N + rot)) * scale + (tx, ty)
    ```
-3. For each `Feature type="edgepoly"` or `type="polygon"`: use explicit Point coordinates
-4. Apply placement transform (new format: scale → rotate by rot° → translate by tranX/tranY)
-   For old format (flat matrix `a,b,c,d,e,f`): transform = [[a,b,c],[d,e,f]]
-5. Tile across viewport: repeat unit cell at integer multiples of T1 and T2
+   For `edgepoly`/`polygon` features: use explicit `<Point>` coordinates.
+   Apply placement transform: scale → rotate by rot° → translate by (tranX, tranY).
+3. **Edge midpoints**: for each polygon, compute the midpoint of every edge:
    ```
-   for i in range(-N, N):
-     for j in range(-N, N):
-       offset = i * T1 + j * T2
-       draw all features shifted by offset
+   midpoint[i] = (vertex[i] + vertex[(i+1) % N]) / 2
    ```
-6. For star patterns ({n/d} notation): connect every d-th vertex of the base N-gon
-7. Clip to viewport bounds + one unit-cell margin
+4. **d-skip rays**: for each midpoint[i], draw a ray toward midpoint[(i+d) % N].
+   Extend the ray 3× past the target to guarantee intersections with crossing rays.
+   The `d` (skip) parameter controls star shape — see table below.
+5. **Ray intersections**: for each ray i, find its nearest intersection with any
+   non-adjacent ray j (skip j == i, j == i±1). Use the parametric line formula:
+   ```
+   solve: p1 + t*(p2−p1) = p3 + u*(p4−p3)
+   denom = (p2x−p1x)*(p4y−p3y) − (p2y−p1y)*(p4x−p3x)
+   t = ((p3x−p1x)*(p4y−p3y) − (p3y−p1y)*(p4x−p3x)) / denom
+   u = ((p3x−p1x)*(p2y−p1y) − (p3y−p1y)*(p2x−p1x)) / denom
+   valid when 0 ≤ t ≤ 1 AND 0 ≤ u ≤ 1
+   ```
+6. **Visible segments**: each star arm is `midpoint[i] → nearest_intersection`.
+   These are emitted as SVG `<line>` elements (not `<path>` polygons).
+7. **Tile**: repeat the unit cell at integer multiples of T1 and T2 across the viewport.
+   Clip to canvas bounds + one-cell margin.
+8. **Construction lines** (optional, `--show-construction`): polygon edges rendered at
+   0.08 opacity for debugging. Never shown in production output.
+
+### The `d` Skip Parameter
+
+| Polygon (N sides) | d | Result              |
+|-------------------|---|---------------------|
+| 4 (square)        | 1 | cross / plus        |
+| 5 (pentagon)      | 2 | 5-pointed star      |
+| 6 (hexagon)       | 2 | Star of David       |
+| 8 (octagon)       | 2 | 8-pointed star      |
+| 10 (decagon)      | 3 | 10-pointed star     |
+| 12 (dodecagon)    | 4 | 12-pointed star     |
+| N > 12            | ⌊N/4⌋ | generalised star |
+| N ≤ 12, others    | ⌊N/3⌋ | generalised star |
+
+Override with `--d <value>` to experiment. For example `--d 3` on an octagon gives
+a tighter 8-pointed star with more angular arms.
+
+### Parse Script Output and Construction Geometry
+
+`parse-tiling.js` and `parse-girih.js` output **construction geometry** — the raw polygon
+placements from the XML. These are inputs to the rendering algorithm, not the final visual.
+The parsed `features` array contains:
+- `type: "regular"` — polygon side count and placement; used to compute vertices → midpoints → star
+- `type: "edgepoly"` / `type: "polygon"` — explicit point coordinates; construction-only filler tiles
+
+Do not draw feature outlines as the final pattern. Run them through the midpoint-connection
+algorithm (steps 3–6 above) to produce the correct Islamic star motif.
 
 ## Output Location
 
@@ -204,3 +267,9 @@ User can specify any path as `--output`.
 - The flat 6-number Placement format (`a,b,c,d,e,f`) is the older schema;
   the named `<scale>/<rot>/<tranX>/<tranY>` format is version 6+
 - Rotation in girih shape XMLs is in **radians**; in tiling version-6 XMLs it is in **degrees**
+- `--show-construction` renders polygon edges at 0.08 opacity — useful for debugging but
+  never used in production; the polygon outlines are construction guides, not the final pattern
+- `--d <skip>` overrides the star skip parameter; auto-defaults are set per polygon type
+  (see the d parameter table in the Rendering Algorithm section)
+- The `edgepoly` and `polygon` feature types are filler tiles (construction only) —
+  they do not generate star motifs, only `regular` polygons do

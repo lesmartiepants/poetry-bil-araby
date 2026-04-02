@@ -52,8 +52,8 @@ import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
 import { useModalStore } from './stores/modalStore';
 import { fetchPoem as fetchPoemAction } from './stores/actions/fetchPoem';
-import { togglePlay as togglePlayAction, dismissTTSProgress } from './stores/actions/togglePlay';
-import { analyzePoem as analyzePoemAction } from './stores/actions/analyzePoem';
+import { togglePlay as togglePlayAction, dismissTTSProgress, abortPlay } from './stores/actions/togglePlay';
+import { analyzePoem as analyzePoemAction, cancelAnalysis } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
@@ -1485,7 +1485,11 @@ export default function DiwanApp() {
                         // Revoke the blob URL before clearing so the browser can free the
                         // underlying audio buffer (prevents memory leaks during long sessions).
                         if (audioUrl) URL.revokeObjectURL(audioUrl);
+                        abortPlay();
                         resetAudio();
+                        // Cancel any in-flight poem analysis so stale streaming chunks
+                        // don't bleed onto the new poem's translation slot.
+                        cancelAnalysis();
                         // Clear stale interpretation from the previous poem so versePairs
                         // doesn't flash the old translation while the new one loads.
                         setInterpretation(null);
@@ -1549,7 +1553,9 @@ export default function DiwanApp() {
                         const { player: ap, resetAudio } = useAudioStore.getState();
                         if (ap) try { ap.stop(); } catch {}
                         if (audioUrl) URL.revokeObjectURL(audioUrl);
+                        abortPlay();
                         resetAudio();
+                        cancelAnalysis();
                         isTogglingPlay.current = false;
                         pauseOffset.value = 0;
                         playbackStartTime.value = 0;

@@ -104,6 +104,17 @@ function createProgressToast(estimatedSeconds, arabicText) {
   return { dismiss };
 }
 
+/** Monotonically increasing token — incremented by abortPlay() on each swipe. */
+let _currentPlayId = 0;
+
+/**
+ * Invalidate any in-flight togglePlay so it won't start playback after a swipe.
+ * Call this alongside resetAudio() in the carousel swipe handlers.
+ */
+export function abortPlay() {
+  _currentPlayId++;
+}
+
 /** Module-level ref to the active progress toast's dismiss function. */
 let _activeProgressDismiss = null;
 
@@ -204,6 +215,8 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
   setGenerating(true);
 
+  const playId = ++_currentPlayId;
+
   const doGenerate = async () => {
     // CHECK CACHE
     if (FEATURES.caching && current?.id) {
@@ -219,6 +232,13 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           'success'
         );
         useUIStore.getState().incrementCacheStat('audioHits');
+
+        // Guard: swipe may have called abortPlay() + resetAudio() while we awaited the cache
+        if (_currentPlayId !== playId) {
+          setGenerating(false);
+          isTogglingPlay.current = false;
+          return;
+        }
 
         const u = URL.createObjectURL(cached.blob);
         setUrl(u);
@@ -329,15 +349,24 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           },
         });
         const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+        // 120s hard timeout — prevents indefinite hang when Render backend stalls
+        const ttsAbortController = new AbortController();
+        const ttsTimeoutId = setTimeout(() => ttsAbortController.abort(), 120_000);
         const fetchOptions = {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: requestBody,
+          signal: ttsAbortController.signal,
         };
-        const fallbackResult = await fetchTTSWithFallback(url, fetchOptions, {
-          addLog,
-          label: 'Audio API',
-        });
+        let fallbackResult;
+        try {
+          fallbackResult = await fetchTTSWithFallback(url, fetchOptions, {
+            addLog,
+            label: 'Audio API',
+          });
+        } finally {
+          clearTimeout(ttsTimeoutId);
+        }
         const res = fallbackResult.res;
         ttsModel = fallbackResult.model;
 
@@ -397,6 +426,12 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
             'success'
           );
+
+          // Guard: user may have swiped to a new poem while audio was generating
+          if (_currentPlayId !== playId) {
+            progress.dismiss();
+            return;
+          }
 
           const u = URL.createObjectURL(blob);
           setUrl(u);
@@ -476,6 +511,12 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             `✓ Background audio generation completed${cached.metadata?.model ? ` [${cached.metadata.model}]` : ''} - playing from cache`,
             'success'
           );
+          // Guard: user may have swiped away while we were waiting for the prefetch
+          if (_currentPlayId !== playId) {
+            pollProgress.dismiss();
+            setGenerating(false);
+            return;
+          }
           const u = URL.createObjectURL(cached.blob);
           setUrl(u);
 
@@ -521,6 +562,11 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id, addLog);
           if (finalCheck?.blob) {
             addLog('Audio', '✓ Audio completed after extended wait - playing now', 'success');
+            if (_currentPlayId !== playId) {
+              pollProgress.dismiss();
+              setGenerating(false);
+              return;
+            }
             const u = URL.createObjectURL(finalCheck.blob);
             setUrl(u);
 

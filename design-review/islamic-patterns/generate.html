@@ -400,30 +400,25 @@
   }
 
   /* ── MOBILE ── */
-  /* ── MOBILE NAV (hidden on desktop) ── */
-  .mobile-nav { display: none; }
-  .saved-panel { display: none; }
+  /* ── MOBILE BAR (hidden on desktop) ── */
+  .mobile-bar { display: none; }
+  .palette-row { display: none; }
+  .pattern-sheet { display: none; }
 
   @media (max-width: 640px) {
-    /* App fills above the nav bar */
-    .app { flex-direction: column; height: calc(100vh - 60px); overflow: hidden; }
+    /* App: sidebar hidden, main fills full screen above bar */
+    .app { flex-direction: column; height: calc(100vh - 72px); overflow: hidden; }
 
-    /* Sidebar: full-screen panel, shown via JS */
-    .sidebar {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 60px;
-      width: 100%; max-width: 100%; height: auto;
-      z-index: 100; display: none; flex-direction: column;
-    }
-    .sidebar.mobile-active { display: flex; }
+    /* Hide sidebar completely on mobile — patterns accessed via bottom bar */
+    .sidebar { display: none !important; }
 
-    /* Main panel: same */
+    /* Main panel fills viewport */
     .main {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 60px;
-      width: 100%; display: none; flex-direction: column;
+      position: fixed; top: 0; left: 0; right: 0; bottom: 72px;
+      width: 100%; display: flex; flex-direction: column;
     }
-    .main.mobile-active { display: flex; }
 
-    /* Toolbar: two rows on mobile */
+    /* Toolbar: compact */
     .toolbar { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
     .toolbar-info { width: 100%; min-width: 0; }
     .toolbar-controls { flex-wrap: wrap; gap: 6px; width: 100%; }
@@ -436,51 +431,117 @@
     /* Canvas fills remaining space */
     .canvas-wrap { flex: 1; padding: 8px; }
 
-    /* ── BOTTOM NAV ── */
-    .mobile-nav {
+    /* ── MOBILE BOTTOM BAR ── */
+    .mobile-bar {
       display: flex;
-      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      height: 72px;
       background: var(--surface);
       border-top: 1px solid var(--border);
       z-index: 200;
+      align-items: center;
+      padding: 0 8px;
+      gap: 0;
     }
-    .mobile-nav-btn {
-      flex: 1; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 3px;
-      background: none; border: none; cursor: pointer;
-      color: var(--muted); font-size: 10px; font-weight: 600;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      transition: color 0.15s;
-      -webkit-tap-highlight-color: transparent;
-      padding: 0;
-    }
-    .mobile-nav-btn .nav-icon { font-size: 20px; line-height: 1; }
-    .mobile-nav-btn.active { color: var(--gold); }
 
-    /* ── SAVED PANEL ── */
-    .saved-panel {
-      display: none;
-      position: fixed; top: 0; left: 0; right: 0; bottom: 60px;
-      background: var(--bg); flex-direction: column;
-      z-index: 100; overflow: hidden;
+    /* Category + pattern name (tappable) */
+    .mb-info {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: flex-start; justify-content: center;
+      padding: 0 8px; min-width: 0; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
-    .saved-panel.mobile-active { display: flex; }
-    .saved-panel-header {
-      padding: 14px 16px 10px;
-      border-bottom: 1px solid var(--border);
-      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--gold);
-      display: flex; align-items: center; gap: 8px;
+    .mb-cat {
+      font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--gold); font-weight: 700; margin-bottom: 2px;
+    }
+    .mb-name {
+      font-size: 12px; color: var(--text);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 100%;
+    }
+
+    /* Prev / Next */
+    .mb-nav {
+      width: 44px; height: 44px; display: flex;
+      align-items: center; justify-content: center;
+      background: none; border: none; cursor: pointer;
+      color: var(--text); font-size: 20px;
+      -webkit-tap-highlight-color: transparent;
       flex-shrink: 0;
     }
-    .saved-count-badge {
-      background: var(--gold-bg); color: var(--gold);
-      border: 1px solid var(--gold-dim);
-      border-radius: 10px; padding: 1px 8px;
-      font-size: 10px; font-weight: 700;
+    .mb-nav:active { color: var(--gold); }
+
+    /* Heart */
+    .mb-heart {
+      width: 44px; height: 44px; display: flex;
+      align-items: center; justify-content: center;
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 20px;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+      transition: color 0.15s;
     }
-    .saved-panel-list { flex: 1; overflow-y: auto; padding: 4px 0; }
-    .saved-panel-item {
+    .mb-heart.active { color: #e05c5c; }
+
+    /* ── PALETTE ROW (shown only in multicolor mode) ── */
+    .palette-row {
+      position: fixed; bottom: 72px; left: 0; right: 0;
+      height: 44px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      z-index: 199;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      gap: 10px;
+      overflow-x: auto;
+    }
+    .palette-swatch {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      gap: 2px; flex-wrap: wrap; padding: 4px;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+    .palette-swatch.active { border-color: var(--gold); transform: scale(1.15); }
+    .palette-swatch .ps-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .palette-label {
+      font-size: 9px; color: var(--muted); letter-spacing: 0.08em;
+      text-transform: uppercase; white-space: nowrap;
+      margin-right: 4px; flex-shrink: 0;
+    }
+
+    /* ── PATTERN SHEET (bottom sheet for pattern picker) ── */
+    .pattern-sheet {
+      position: fixed; bottom: 72px; left: 0; right: 0;
+      max-height: 55vh;
+      background: var(--bg);
+      border-top: 2px solid var(--gold-dim);
+      z-index: 300;
+      display: flex; flex-direction: column;
+      border-radius: 16px 16px 0 0;
+      overflow: hidden;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
+    }
+    .pattern-sheet.open { transform: translateY(0); }
+    .sheet-handle {
+      width: 36px; height: 4px; border-radius: 2px;
+      background: var(--border); margin: 10px auto 6px; flex-shrink: 0;
+    }
+    .sheet-header {
+      padding: 4px 16px 10px;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--gold);
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
+    }
+    .sheet-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+    .sheet-item {
       padding: 13px 16px;
       display: flex; align-items: center; gap: 10px;
       border-bottom: 1px solid rgba(197,160,89,0.07);
@@ -488,12 +549,13 @@
       transition: background 0.1s;
       -webkit-tap-highlight-color: transparent;
     }
-    .saved-panel-item:active { background: var(--gold-bg); }
-    .saved-panel-item .s-icon { color: var(--gold); font-size: 14px; flex-shrink: 0; }
-    .saved-panel-empty {
-      padding: 48px 24px; text-align: center;
-      color: var(--muted); font-size: 13px; line-height: 1.8;
+    .sheet-item:active { background: var(--gold-bg); }
+    .sheet-item.active { color: var(--gold); }
+    .sheet-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 299;
+      background: rgba(0,0,0,0.5);
     }
+    .sheet-backdrop.open { display: block; }
   }
 </style>
 </head>
@@ -572,26 +634,26 @@
   </div>
 </div>
 
-<!-- ── MOBILE BOTTOM NAV ── -->
-<nav class="mobile-nav">
-  <button class="mobile-nav-btn active" id="mnavPatterns" onclick="mobileTab('patterns')">
-    <span class="nav-icon">◈</span>Patterns
-  </button>
-  <button class="mobile-nav-btn" id="mnavCanvas" onclick="mobileTab('canvas')">
-    <span class="nav-icon">✦</span>Canvas
-  </button>
-  <button class="mobile-nav-btn" id="mnavSaved" onclick="mobileTab('saved')">
-    <span class="nav-icon">♥</span>Saved
-  </button>
-</nav>
-
-<!-- ── MOBILE SAVED PANEL ── -->
-<div class="saved-panel" id="savedPanel">
-  <div class="saved-panel-header">
-    Saved
-    <span class="saved-count-badge" id="savedCountBadge" style="display:none;"></span>
+<!-- ── MOBILE BOTTOM BAR ── -->
+<div class="mobile-bar" id="mobileBar">
+  <button class="mb-nav" id="mbPrev" title="Previous pattern">&#x25C0;</button>
+  <div class="mb-info" id="mbInfo">
+    <div class="mb-cat" id="mbCat">Discover</div>
+    <div class="mb-name" id="mbName">Select a pattern</div>
   </div>
-  <div class="saved-panel-list" id="savedPanelList"></div>
+  <button class="mb-heart" id="mbHeart" title="Save to favorites">&#x2661;</button>
+  <button class="mb-nav" id="mbNext" title="Next pattern">&#x25B6;</button>
+</div>
+
+<!-- ── PALETTE ROW (multi-color mode) ── -->
+<div class="palette-row" id="paletteRow"></div>
+
+<!-- ── PATTERN PICKER SHEET ── -->
+<div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
+<div class="pattern-sheet" id="patternSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header" id="sheetHeader">Patterns</div>
+  <div class="sheet-list" id="sheetList"></div>
 </div>
 
 <!-- ── TILE MODE FLOATING CLOSE BUTTON ── -->
@@ -1076,10 +1138,16 @@ function buildTemplateGeometry(template, canvasW, canvasH) {
 // ────────────────────────────────────────────────────────────────────────────
 const COLOR_MODES = ['gold', 'lapis', 'multicolor', 'neon', 'parchment'];
 
-const MULTICOLOR_BY_SIDES = {
-  3: '#e8715a', 4: '#c5a059', 5: '#6A4C93', 6: '#4a8abf',
-  8: '#c5a059', 10: '#2d6b4a', 12: '#8b4513',
-};
+const MULTI_PALETTES = [
+  { name: 'Sacred',  colors: { 3:'#e8715a', 4:'#c5a059', 5:'#6A4C93', 6:'#4a8abf', 8:'#c5a059', 10:'#2d6b4a', 12:'#8b4513' } },
+  { name: 'Ocean',   colors: { 3:'#4a8abf', 4:'#2d6b9a', 5:'#1a4f7a', 6:'#5ba0d0', 8:'#3d8abf', 10:'#87ceeb', 12:'#b0d4e8' } },
+  { name: 'Sunset',  colors: { 3:'#e8742a', 4:'#d4a24c', 5:'#c5543a', 6:'#e89a3a', 8:'#d46a2a', 10:'#f0b86a', 12:'#c0742a' } },
+  { name: 'Garden',  colors: { 3:'#6ba87a', 4:'#4a8a6a', 5:'#2d7a4a', 6:'#8aba8a', 8:'#5a9a6a', 10:'#a0c890', 12:'#3a6a4a' } },
+  { name: 'Ember',   colors: { 3:'#c44a5a', 4:'#a03a8a', 5:'#7a2a9a', 6:'#d45a4a', 8:'#8a3a7a', 10:'#e07a6a', 12:'#6a2a8a' } },
+  { name: 'Frost',   colors: { 3:'#a0b8d0', 4:'#c8d8e8', 5:'#8098b8', 6:'#b0c8d8', 8:'#90a8c8', 10:'#d8e8f0', 12:'#7090a8' } },
+];
+let multiPaletteIndex = 0;
+let MULTICOLOR_BY_SIDES = { ...MULTI_PALETTES[0].colors };
 
 function getColors(mode) {
   switch (mode) {
@@ -1811,6 +1879,7 @@ function selectItem(kind, data) {
   }
 
   render();
+  if (typeof updateMobileBar === 'function' && typeof MOBILE === 'function' && MOBILE()) updateMobileBar();
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -2168,84 +2237,167 @@ buildSidebar();
   if (first) selectItem('tiling', first);
 })();
 
-// ── MOBILE NAVIGATION ──────────────────────────────────────────────────────
+// ── MOBILE BAR ──────────────────────────────────────────────────────────────
 (function() {
   const MOBILE = () => window.innerWidth <= 640;
+  window.MOBILE = MOBILE; // expose for selectItem patch
 
-  window.mobileTab = function(tab) {
+  const CAT_ORDER = ['discover', 'tilings', 'girih', 'templates'];
+
+  // ── Sync bar labels + heart state ──
+  window.updateMobileBar = function() {
     if (!MOBILE()) return;
-    const sidebar = document.getElementById('sidebar');
-    const main = document.querySelector('.main');
-    const savedPanel = document.getElementById('savedPanel');
-    sidebar.classList.remove('mobile-active');
-    main.classList.remove('mobile-active');
-    savedPanel.classList.remove('mobile-active');
-    document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
-
-    if (tab === 'patterns') {
-      sidebar.classList.add('mobile-active');
-      document.getElementById('mnavPatterns').classList.add('active');
-    } else if (tab === 'canvas') {
-      main.classList.add('mobile-active');
-      document.getElementById('mnavCanvas').classList.add('active');
-    } else if (tab === 'saved') {
-      savedPanel.classList.add('mobile-active');
-      document.getElementById('mnavSaved').classList.add('active');
-      buildSavedPanel();
+    const catEl = document.getElementById('mbCat');
+    const nameEl = document.getElementById('mbName');
+    const heartEl = document.getElementById('mbHeart');
+    if (catEl) catEl.textContent = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
+    if (nameEl) {
+      if (currentItem) {
+        const d = currentItem.data;
+        nameEl.textContent = d.name + (currentItem.kind === 'tiling' && d.category ? ' — ' + d.category : '');
+      } else {
+        nameEl.textContent = 'Tap ◀ ▶ to browse';
+      }
     }
+    if (heartEl) {
+      const isFav = currentItem && favorites.has(currentItem.data.name);
+      heartEl.textContent = isFav ? '♥' : '♡';
+      heartEl.classList.toggle('active', !!isFav);
+    }
+    syncPaletteRow();
   };
 
-  function buildSavedPanel() {
-    const list = document.getElementById('savedPanelList');
-    const badge = document.getElementById('savedCountBadge');
-    if (!list) return;
-    if (favorites.size === 0) {
-      list.innerHTML = '<div class="saved-panel-empty">No saved patterns yet.<br>Tap ♡ on any pattern to save it.</div>';
-      if (badge) badge.style.display = 'none';
-      return;
-    }
-    if (badge) { badge.textContent = favorites.size; badge.style.display = ''; }
-    list.innerHTML = [...favorites].map(name =>
-      `<div class="saved-panel-item" onclick="loadFromSaved(${JSON.stringify(name)})">
-        <span class="s-icon">♥</span><span>${name}</span>
-      </div>`
-    ).join('');
+  // ── Get adjacent item (dir: -1 | +1) ──
+  function getAdjacentItem(dir) {
+    const items = getFlatItems();
+    if (!items.length) return null;
+    if (!currentItem) return items[0];
+    const idx = items.findIndex(it => it.data === currentItem.data);
+    if (idx === -1) return items[0];
+    const next = (idx + dir + items.length) % items.length;
+    return items[next];
   }
 
-  window.loadFromSaved = function(name) {
-    // Find item by name across all catalog entries
-    function findItem(obj) {
-      if (!obj) return null;
-      if (obj.name === name) return obj;
-      for (const key of Object.keys(obj)) {
-        if (Array.isArray(obj[key])) {
-          for (const child of obj[key]) {
-            const found = findItem(child);
-            if (found) return found;
-          }
-        }
-      }
-      return null;
-    }
-    const item = findItem(CATALOG);
-    if (item) {
-      // Detect type by catalog membership
-      const type = CATALOG.tilings?.includes(item) ? 'tiling'
-                 : CATALOG.girih?.includes(item) ? 'girih' : 'template';
-      selectItem(type, item);
-      mobileTab('canvas');
+  // Prev / Next
+  document.getElementById('mbPrev').addEventListener('click', () => {
+    const it = getAdjacentItem(-1);
+    if (it) selectItem(it.kind, it.data);
+  });
+  document.getElementById('mbNext').addEventListener('click', () => {
+    const it = getAdjacentItem(1);
+    if (it) selectItem(it.kind, it.data);
+  });
+
+  // Category cycle (tap mb-info label area)
+  document.getElementById('mbCat').addEventListener('click', e => {
+    e.stopPropagation();
+    const idx = CAT_ORDER.indexOf(currentTab);
+    currentTab = CAT_ORDER[(idx + 1) % CAT_ORDER.length];
+    highlightedIndex = -1;
+    buildSidebar();
+    // Auto-select first item of new category
+    const items = getFlatItems();
+    if (items.length) selectItem(items[0].kind, items[0].data);
+    else updateMobileBar();
+  });
+
+  // Pattern name tap → open picker sheet
+  document.getElementById('mbName').addEventListener('click', () => openSheet());
+
+  // Heart → delegate to toolbar heart button
+  document.getElementById('mbHeart').addEventListener('click', () => {
+    document.getElementById('heartBtn').click();
+    setTimeout(updateMobileBar, 50);
+  });
+
+  // ── Pattern picker bottom sheet ──
+  window.openSheet = function() {
+    const sheet = document.getElementById('patternSheet');
+    const backdrop = document.getElementById('sheetBackdrop');
+    const list = document.getElementById('sheetList');
+    const header = document.getElementById('sheetHeader');
+    if (!sheet) return;
+
+    const catName = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
+    header.textContent = catName + ' — tap to select';
+
+    const items = getFlatItems();
+    list.innerHTML = items.map((it, i) => {
+      const isActive = currentItem && it.data === currentItem.data;
+      return `<div class="sheet-item${isActive ? ' active' : ''}" data-idx="${i}">
+        ${isActive ? '♥ ' : ''}${it.data.name}
+      </div>`;
+    }).join('');
+
+    list.querySelectorAll('.sheet-item').forEach((el, i) => {
+      el.addEventListener('click', () => {
+        const it = items[i];
+        if (it) selectItem(it.kind, it.data);
+        closeSheet();
+      });
+    });
+
+    sheet.classList.add('open');
+    backdrop.classList.add('open');
+  };
+
+  window.closeSheet = function() {
+    document.getElementById('patternSheet').classList.remove('open');
+    document.getElementById('sheetBackdrop').classList.remove('open');
+  };
+
+  // ── Palette row for multi-color mode ──
+  window.buildPaletteRow = function() {
+    const row = document.getElementById('paletteRow');
+    if (!row) return;
+    const label = document.createElement('span');
+    label.className = 'palette-label';
+    label.textContent = 'Palette:';
+    row.appendChild(label);
+
+    MULTI_PALETTES.forEach((pal, i) => {
+      const sw = document.createElement('div');
+      sw.className = 'palette-swatch' + (i === multiPaletteIndex ? ' active' : '');
+      sw.title = pal.name;
+      // Show 4 representative dots
+      const dotColors = Object.values(pal.colors).slice(0, 4);
+      sw.innerHTML = dotColors.map(c => `<div class="ps-dot" style="background:${c}"></div>`).join('');
+      sw.addEventListener('click', () => {
+        multiPaletteIndex = i;
+        MULTICOLOR_BY_SIDES = { ...MULTI_PALETTES[i].colors };
+        row.querySelectorAll('.palette-swatch').forEach((s, j) =>
+          s.classList.toggle('active', j === i));
+        render();
+      });
+      row.appendChild(sw);
+    });
+  };
+
+  window.syncPaletteRow = function() {
+    const row = document.getElementById('paletteRow');
+    if (!row) return;
+    if (MOBILE() && colorMode === 'multicolor') {
+      row.style.display = 'flex';
+    } else {
+      row.style.display = 'none';
     }
   };
 
-  // Switch to canvas when a sidebar pattern is tapped on mobile
-  document.getElementById('sidebarList').addEventListener('click', e => {
-    if (MOBILE() && e.target.closest('.pattern-item')) {
-      setTimeout(() => mobileTab('canvas'), 80);
-    }
+  // Also sync palette row when color mode changes
+  document.querySelectorAll('.color-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setTimeout(syncPaletteRow, 10);
+    });
   });
 
-  // Init on mobile: show patterns panel
-  if (MOBILE()) mobileTab('patterns');
+  // Init
+  if (MOBILE()) {
+    buildPaletteRow();
+    // Auto-select first item
+    const items = getFlatItems();
+    if (items.length && !currentItem) selectItem(items[0].kind, items[0].data);
+    updateMobileBar();
+  }
 })();
 
 </script>

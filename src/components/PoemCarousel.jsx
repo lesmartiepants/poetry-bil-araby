@@ -198,7 +198,7 @@ const PoemCarousel = forwardRef(({
                         {showTranslation && pair.en && (
                           <p
                             dir="ltr"
-                            className={`font-brand-en opacity-60 ${DESIGN.anim} mx-auto`}
+                            className={`font-brand-en inline-fade-in mx-auto`}
                             style={{
                               fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
                               maxWidth: '90%',

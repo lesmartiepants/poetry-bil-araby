@@ -416,6 +416,11 @@ export default function DiwanApp() {
     // During streaming, interpretation grows chunk by chunk. Always update if the
     // new translation is longer — this ensures the final complete translation lands
     // on the carousel poem, not just the first partial streaming chunk.
+    // Only write poem.english after streaming completes — patching on every chunk
+    // causes unnecessary re-renders and makes the Arabic verse animation replay
+    // each time Embla reacts to the slide height changing.
+    if (isInterpreting) return;
+
     const existing = carouselPoems[targetIdx].english || '';
     if (existing.length >= translation.length) return;
 
@@ -1469,7 +1474,7 @@ export default function DiwanApp() {
                             {showTranslation && pair.en && (
                               <p
                                 dir="ltr"
-                                className={`font-brand-en italic opacity-60 ${DESIGN.anim} mx-auto`}
+                                className={`font-brand-en italic inline-fade-in mx-auto`}
                                 style={{
                                   fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
                                   maxWidth: '90%',

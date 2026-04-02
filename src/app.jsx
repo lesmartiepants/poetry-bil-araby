@@ -256,6 +256,30 @@ export default function DiwanApp() {
 
   const addLog = useUIStore.getState().addLog;
 
+  // Log every time the displayed Arabic poem changes on screen
+  useEffect(() => {
+    if (!displayedPoem?.id) return;
+    const source = carouselPoems.length > 0 ? `carousel[${carouselIndex}]` : 'main';
+    const chars = displayedPoem.arabic?.length || 0;
+    addLog(
+      'Render',
+      `Arabic poem shown: ${displayedPoem.poet} — ${displayedPoem.title} | id: ${displayedPoem.id} | ${chars} chars | source: ${source}`,
+      'info'
+    );
+  }, [displayedPoem?.id]);
+
+  // Log when a translation appears or is cleared on screen (not every streaming chunk)
+  const prevInterpretationRef = useRef(null);
+  useEffect(() => {
+    const prev = prevInterpretationRef.current;
+    prevInterpretationRef.current = interpretation;
+    if (!prev && interpretation) {
+      addLog('Render', `Translation appeared | poem id: ${displayedPoem?.id ?? 'unknown'}`, 'info');
+    } else if (prev && !interpretation) {
+      addLog('Render', `Translation cleared | poem id: ${displayedPoem?.id ?? 'unknown'}`, 'info');
+    }
+  }, [interpretation]);
+
   // Track poem view time (emit 'view' event after 3s on same poem)
   useEffect(() => {
     if (!current?.id || !user) return;

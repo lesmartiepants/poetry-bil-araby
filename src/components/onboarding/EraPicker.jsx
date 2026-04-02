@@ -20,8 +20,8 @@ const MODERN_ERAS = [
   { slug: 'contemporary', name_ar: '\u0645\u0639\u0627\u0635\u0631', name_en: 'Contemporary' },
 ];
 
-const EraPicker = ({ onNext }) => {
-  const [selected, setSelected] = useState([]);
+const EraPicker = ({ onNext, initialValue = [] }) => {
+  const [selected, setSelected] = useState(() => initialValue);
   const [classicalOpen, setClassicalOpen] = useState(false);
   const [modernOpen, setModernOpen] = useState(false);
   const canvasRef = useRef(null);

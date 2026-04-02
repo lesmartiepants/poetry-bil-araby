@@ -25,8 +25,8 @@ const ROWS = [
   { indices: [6, 7, 8], shiftLeft: true },
 ];
 
-const MoodPicker = ({ onNext }) => {
-  const [selected, setSelected] = useState([]);
+const MoodPicker = ({ onNext, initialValue = [] }) => {
+  const [selected, setSelected] = useState(() => initialValue);
   const canvasRef = useRef(null);
 
   const spawnInkBlot = useCallback((x, y, color) => {

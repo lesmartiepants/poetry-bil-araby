@@ -43,8 +43,8 @@ const CONNECTIONS = [
   [4, 8], [5, 8], [5, 6], [7, 9], [8, 10],
 ];
 
-const TopicsPicker = ({ selectedMoods, selectedEras, onComplete }) => {
-  const [selected, setSelected] = useState([]);
+const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = [] }) => {
+  const [selected, setSelected] = useState(() => initialValue);
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);

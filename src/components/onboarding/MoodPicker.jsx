@@ -17,8 +17,6 @@ const MOODS = [
   { slug: 'nostalgia',  name_ar: '\u062d\u0646\u064a\u0646',  name_en: 'Nostalgia',  color: '#8B7355' },
 ];
 
-const MAX_SELECTIONS = 3;
-
 // Staggered grid: rows of [0,1,2], [3,4,5], [6,7,8]
 // Odd rows shift right, even rows shift left
 const ROWS = [
@@ -30,8 +28,6 @@ const ROWS = [
 const MoodPicker = ({ onNext }) => {
   const [selected, setSelected] = useState([]);
   const canvasRef = useRef(null);
-  const ctaRef = useRef(null);
-  const ctaShown = useRef(false);
 
   const spawnInkBlot = useCallback((x, y, color) => {
     const canvas = canvasRef.current;
@@ -105,19 +101,6 @@ const MoodPicker = ({ onNext }) => {
     return () => window.removeEventListener('resize', resize);
   }, []);
 
-  // Animate CTA visibility
-  useEffect(() => {
-    const el = ctaRef.current;
-    if (!el) return;
-    if (selected.length >= 1 && !ctaShown.current) {
-      ctaShown.current = true;
-      gsap.fromTo(el, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' });
-    } else if (selected.length === 0 && ctaShown.current) {
-      ctaShown.current = false;
-      gsap.to(el, { opacity: 0, y: 10, duration: 0.2 });
-    }
-  }, [selected]);
-
   const toggleMood = (slug, color, event) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
@@ -127,16 +110,13 @@ const MoodPicker = ({ onNext }) => {
       if (prev.includes(slug)) {
         return prev.filter((s) => s !== slug);
       }
-      if (prev.length >= MAX_SELECTIONS) return prev;
       spawnInkBlot(cx, cy, color);
       return [...prev, slug];
     });
   };
 
   const handleNext = () => {
-    if (selected.length >= 1) {
-      onNext(selected);
-    }
+    onNext(selected);
   };
 
   return (
@@ -284,11 +264,10 @@ const MoodPicker = ({ onNext }) => {
         {/* CTA */}
         <div style={{ marginTop: '2.5rem' }}>
           <button
-            ref={ctaRef}
             data-testid="mood-continue"
             onClick={handleNext}
             style={{
-              opacity: 0,
+              opacity: selected.length >= 1 ? 1 : 0.5,
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
@@ -301,7 +280,7 @@ const MoodPicker = ({ onNext }) => {
               fontSize: '0.9375rem',
               fontWeight: 500,
               cursor: 'pointer',
-              transition: 'background 0.3s ease, border-color 0.3s ease',
+              transition: 'background 0.3s ease, border-color 0.3s ease, opacity 0.2s ease',
               minHeight: '48px',
               direction: 'rtl',
             }}
@@ -311,9 +290,9 @@ const MoodPicker = ({ onNext }) => {
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
             }}
-            aria-label="\u0627\u0644\u062a\u0627\u0644\u064a"
+            aria-label={selected.length >= 1 ? '\u0627\u0644\u062a\u0627\u0644\u064a' : '\u062a\u062e\u0637\u0649'}
           >
-            <span>{'\u0627\u0644\u062a\u0627\u0644\u064a'}</span>
+            <span>{selected.length >= 1 ? '\u0627\u0644\u062a\u0627\u0644\u064a' : '\u062a\u062e\u0637\u0649'}</span>
             <ArrowRight size={16} />
           </button>
         </div>

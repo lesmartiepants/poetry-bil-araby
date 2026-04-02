@@ -42,6 +42,7 @@ const PlayControlsStrip = ({
       {isVisible && (
         <motion.div
           key="play-controls-strip"
+          data-testid="play-controls-strip"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 8 }}

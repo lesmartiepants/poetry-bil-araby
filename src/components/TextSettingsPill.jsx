@@ -215,6 +215,7 @@ const TextSettingsPill = () => {
                   <ToggleGroup.Item
                     key={s.value}
                     value={s.value}
+                    data-highlight-style={s.value === 'none' ? 'off' : s.value}
                     className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ${
                       highlightStyle === s.value
                         ? 'bg-gold/20 border-gold/40'

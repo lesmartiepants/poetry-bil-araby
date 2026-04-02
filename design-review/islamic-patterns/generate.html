@@ -514,6 +514,7 @@
     }
     .color-opts {
       display: flex; gap: 8px; flex-wrap: wrap;
+      max-height: 40vh; overflow-y: auto;
     }
     .color-opt {
       display: flex; align-items: center; gap: 6px;
@@ -658,9 +659,18 @@
         <div class="color-mode-row" id="colorModeRow">
           <button class="color-pill active" data-mode="gold">Gold</button>
           <button class="color-pill" data-mode="lapis">Lapis</button>
-          <button class="color-pill" data-mode="multicolor">Multi</button>
           <button class="color-pill" data-mode="neon">Neon</button>
           <button class="color-pill" data-mode="parchment">Parchment</button>
+          <button class="color-pill" data-mode="sacred">Sacred</button>
+          <button class="color-pill" data-mode="ocean">Ocean</button>
+          <button class="color-pill" data-mode="sunset">Sunset</button>
+          <button class="color-pill" data-mode="garden">Garden</button>
+          <button class="color-pill" data-mode="ember">Ember</button>
+          <button class="color-pill" data-mode="frost">Frost</button>
+          <button class="color-pill" data-mode="desert">Desert</button>
+          <button class="color-pill" data-mode="night">Night</button>
+          <button class="color-pill" data-mode="royal">Royal</button>
+          <button class="color-pill" data-mode="copper">Copper</button>
         </div>
         <select class="size-sel" id="sizeSelect">
           <option value="1024">1024px</option>
@@ -721,7 +731,6 @@
 <div class="color-popup" id="colorPopup">
   <div class="color-popup-label">Colour Mode</div>
   <div class="color-opts" id="colorOpts"></div>
-  <div class="popup-palettes" id="popupPalettes" style="display:none;"></div>
 </div>
 
 <!-- ── PATTERN PICKER ── -->
@@ -1215,18 +1224,23 @@ function buildTemplateGeometry(template, canvasW, canvasH) {
 // ────────────────────────────────────────────────────────────────────────────
 // COLOR MODES
 // ────────────────────────────────────────────────────────────────────────────
-const COLOR_MODES = ['gold', 'lapis', 'multicolor', 'neon', 'parchment'];
-
-const MULTI_PALETTES = [
-  { name: 'Sacred',  colors: { 3:'#e8715a', 4:'#c5a059', 5:'#6A4C93', 6:'#4a8abf', 8:'#c5a059', 10:'#2d6b4a', 12:'#8b4513' } },
-  { name: 'Ocean',   colors: { 3:'#4a8abf', 4:'#2d6b9a', 5:'#1a4f7a', 6:'#5ba0d0', 8:'#3d8abf', 10:'#87ceeb', 12:'#b0d4e8' } },
-  { name: 'Sunset',  colors: { 3:'#e8742a', 4:'#d4a24c', 5:'#c5543a', 6:'#e89a3a', 8:'#d46a2a', 10:'#f0b86a', 12:'#c0742a' } },
-  { name: 'Garden',  colors: { 3:'#6ba87a', 4:'#4a8a6a', 5:'#2d7a4a', 6:'#8aba8a', 8:'#5a9a6a', 10:'#a0c890', 12:'#3a6a4a' } },
-  { name: 'Ember',   colors: { 3:'#c44a5a', 4:'#a03a8a', 5:'#7a2a9a', 6:'#d45a4a', 8:'#8a3a7a', 10:'#e07a6a', 12:'#6a2a8a' } },
-  { name: 'Frost',   colors: { 3:'#a0b8d0', 4:'#c8d8e8', 5:'#8098b8', 6:'#b0c8d8', 8:'#90a8c8', 10:'#d8e8f0', 12:'#7090a8' } },
+const PALETTES = [
+  { mode: 'sacred',   name: 'Sacred',   dot: '#c5a059', colors: { 3:'#e8715a', 4:'#c5a059', 5:'#6A4C93', 6:'#4a8abf', 8:'#c5a059', 10:'#2d6b4a', 12:'#8b4513' } },
+  { mode: 'ocean',    name: 'Ocean',    dot: '#2d6b9a', colors: { 3:'#4a8abf', 4:'#2d6b9a', 5:'#1a4f7a', 6:'#5ba0d0', 8:'#3d8abf', 10:'#87ceeb', 12:'#b0d4e8' } },
+  { mode: 'sunset',   name: 'Sunset',   dot: '#d4a24c', colors: { 3:'#e8742a', 4:'#d4a24c', 5:'#c5543a', 6:'#e89a3a', 8:'#d46a2a', 10:'#f0b86a', 12:'#c0742a' } },
+  { mode: 'garden',   name: 'Garden',   dot: '#4a8a6a', colors: { 3:'#6ba87a', 4:'#4a8a6a', 5:'#2d7a4a', 6:'#8aba8a', 8:'#5a9a6a', 10:'#a0c890', 12:'#3a6a4a' } },
+  { mode: 'ember',    name: 'Ember',    dot: '#a03a8a', colors: { 3:'#c44a5a', 4:'#a03a8a', 5:'#7a2a9a', 6:'#d45a4a', 8:'#8a3a7a', 10:'#e07a6a', 12:'#6a2a8a' } },
+  { mode: 'frost',    name: 'Frost',    dot: '#c8d8e8', colors: { 3:'#a0b8d0', 4:'#c8d8e8', 5:'#8098b8', 6:'#b0c8d8', 8:'#90a8c8', 10:'#d8e8f0', 12:'#7090a8' } },
+  { mode: 'desert',   name: 'Desert',   dot: '#c8a878', colors: { 3:'#d4956a', 4:'#c8a878', 5:'#b87850', 6:'#e8c89a', 8:'#c89060', 10:'#a86840', 12:'#e0b88a' } },
+  { mode: 'night',    name: 'Night',    dot: '#2980b9', colors: { 3:'#9b59b6', 4:'#2980b9', 5:'#6c3483', 6:'#1a5276', 8:'#7d3c98', 10:'#154360', 12:'#4a235a' } },
+  { mode: 'royal',    name: 'Royal',    dot: '#8e44ad', colors: { 3:'#e74c3c', 4:'#8e44ad', 5:'#2ecc71', 6:'#3498db', 8:'#f39c12', 10:'#1abc9c', 12:'#c0392b' } },
+  { mode: 'copper',   name: 'Copper',   dot: '#cd7f32', colors: { 3:'#b87333', 4:'#cd7f32', 5:'#a0522d', 6:'#d2691e', 8:'#8b4513', 10:'#cd853f', 12:'#daa520' } },
 ];
-let multiPaletteIndex = 0;
-let MULTICOLOR_BY_SIDES = { ...MULTI_PALETTES[0].colors };
+const PALETTE_MODES = new Set(PALETTES.map(p => p.mode));
+function isPaletteMode(m) { return PALETTE_MODES.has(m); }
+function getPalette(m) { return PALETTES.find(p => p.mode === m); }
+
+const COLOR_MODES = ['gold', 'lapis', 'neon', 'parchment', ...PALETTES.map(p => p.mode)];
 
 function getColors(mode) {
   switch (mode) {
@@ -1236,18 +1250,19 @@ function getColors(mode) {
       return { bg: '#050510', stroke: '#00ffaa', strokeAlpha: 0.7, construction: '#ff6b9d', constructionAlpha: 0.5, fill: '#00ffaa', fillAlpha: 0.08 };
     case 'parchment':
       return { bg: '#FDFCF8', stroke: '#2a1f14', strokeAlpha: 0.5, construction: '#8b7355', constructionAlpha: 0.08, fill: '#8b7355', fillAlpha: 0.08 };
-    case 'multicolor':
-      return { bg: '#0d0d14', stroke: '#c5a059', construction: '#2a5a8c', constructionAlpha: 0.5, fill: '#2a5a8c', fillAlpha: 0.12 };
     case 'gold':
-    default:
+    default: {
+      if (isPaletteMode(mode))
+        return { bg: '#0d0d14', stroke: '#c5a059', construction: '#2a5a8c', constructionAlpha: 0.5, fill: '#2a5a8c', fillAlpha: 0.12 };
       return { bg: '#0d0d14', stroke: '#c5a059', construction: '#2a5a8c', constructionAlpha: 0.5, fill: '#2a5a8c', fillAlpha: 0.15 };
+    }
   }
 }
 
 function getMultiStroke(poly, fallback) {
-  // Pick color by number of polygon sides
-  const n = poly.length;
-  return MULTICOLOR_BY_SIDES[n] || fallback;
+  const pal = getPalette(colorMode);
+  if (!pal) return fallback;
+  return pal.colors[poly.length] || fallback;
 }
 
 function renderTiling(ctx, tiling, w, h, zoom = 1) {
@@ -1315,7 +1330,7 @@ function renderTiling(ctx, tiling, w, h, zoom = 1) {
     // Skip filler polygons — they are negative space, not decorated tiles
     if (areas[pi] < areaThreshold) continue;
     const poly = polys[pi];
-    ctx.strokeStyle = colorMode === 'multicolor' ? getMultiStroke(poly, c.stroke) : c.stroke;
+    ctx.strokeStyle = isPaletteMode(colorMode) ? getMultiStroke(poly, c.stroke) : c.stroke;
     const segs = starMotifsFromPoly(poly);
     for (const [x1, y1, x2, y2] of segs) {
       ctx.beginPath();
@@ -2324,14 +2339,25 @@ buildSidebar();
   // No Girih on mobile
   const CAT_ORDER = ['discover', 'tilings', 'templates'];
 
-  const MODE_DOT = {
-    gold: '#c5a059', lapis: '#4a8abf', multicolor: '#e8715a',
-    neon: '#00ffaa', parchment: '#8b7355',
-  };
-  const MODE_LABELS = {
-    gold: 'Gold', lapis: 'Lapis', multicolor: 'Multi',
-    neon: 'Neon', parchment: 'Parchment',
-  };
+  // Dot colours + labels for solid modes; palettes use PALETTES array
+  const SOLID_MODES = [
+    { mode: 'gold',      dot: '#c5a059', label: 'Gold' },
+    { mode: 'lapis',     dot: '#4a8abf', label: 'Lapis' },
+    { mode: 'neon',      dot: '#00ffaa', label: 'Neon' },
+    { mode: 'parchment', dot: '#8b7355', label: 'Parchment' },
+  ];
+  function modeLabel(m) {
+    const s = SOLID_MODES.find(x => x.mode === m);
+    if (s) return s.label;
+    const p = getPalette(m);
+    return p ? p.name : m;
+  }
+  function modeDot(m) {
+    const s = SOLID_MODES.find(x => x.mode === m);
+    if (s) return s.dot;
+    const p = getPalette(m);
+    return p ? p.dot : '#c5a059';
+  }
 
   // ── Sync bar ─────────────────────────────────────────────────────────────
   window.updateMobileBar = function() {
@@ -2356,8 +2382,8 @@ buildSidebar();
       heartEl.textContent = isFav ? '\u2665' : '\u2661';
       heartEl.classList.toggle('active', !!isFav);
     }
-    if (dot)   dot.style.background = MODE_DOT[colorMode] || '#c5a059';
-    if (label) label.textContent = MODE_LABELS[colorMode] || colorMode;
+    if (dot)   dot.style.background = modeDot(colorMode);
+    if (label) label.textContent = modeLabel(colorMode);
   };
 
   // ── Prev / Next ──────────────────────────────────────────────────────────
@@ -2400,41 +2426,22 @@ buildSidebar();
   function buildColorOpts() {
     const container = document.getElementById('colorOpts');
     container.innerHTML = '';
-    ['gold','lapis','multicolor','neon','parchment'].forEach(mode => {
+    const allModes = [
+      ...SOLID_MODES,
+      ...PALETTES.map(p => ({ mode: p.mode, dot: p.dot, label: p.name })),
+    ];
+    allModes.forEach(({ mode, dot, label }) => {
       const btn = document.createElement('button');
       btn.className = 'color-opt' + (mode === colorMode ? ' active' : '');
       btn.dataset.m = mode;
-      btn.innerHTML = `<span class="color-opt-dot" style="background:${MODE_DOT[mode]}"></span>${MODE_LABELS[mode]}`;
+      btn.innerHTML = `<span class="color-opt-dot" style="background:${dot}"></span>${label}`;
       btn.addEventListener('click', () => {
         setColorMode(mode);
         updateMobileBar();
         container.querySelectorAll('.color-opt').forEach(b =>
           b.classList.toggle('active', b.dataset.m === mode));
-        syncPalettePanel();
       });
       container.appendChild(btn);
-    });
-  }
-
-  function syncPalettePanel() {
-    const palEl = document.getElementById('popupPalettes');
-    if (!palEl) return;
-    if (colorMode !== 'multicolor') { palEl.style.display = 'none'; return; }
-    palEl.style.display = 'flex';
-    palEl.innerHTML = '';
-    MULTI_PALETTES.forEach((pal, i) => {
-      const sw = document.createElement('button');
-      sw.className = 'popup-pal-swatch' + (i === multiPaletteIndex ? ' active' : '');
-      const dots = Object.values(pal.colors).slice(0,4)
-        .map(c => `<div class="popup-pal-dot" style="background:${c}"></div>`).join('');
-      sw.innerHTML = `<div class="popup-pal-dots">${dots}</div>${pal.name}`;
-      sw.addEventListener('click', () => {
-        multiPaletteIndex = i;
-        MULTICOLOR_BY_SIDES = { ...MULTI_PALETTES[i].colors };
-        palEl.querySelectorAll('.popup-pal-swatch').forEach((s,j) => s.classList.toggle('active', j===i));
-        render();
-      });
-      palEl.appendChild(sw);
     });
   }
 
@@ -2444,7 +2451,6 @@ buildSidebar();
     const popup = document.getElementById('colorPopup');
     if (colorPopupOpen) {
       buildColorOpts();
-      syncPalettePanel();
       popup.classList.add('open');
       closePicker();
     } else {
@@ -2558,10 +2564,6 @@ buildSidebar();
     el.innerHTML = `<span class="picker-dot" style="background:${dotColor||'var(--gold)'}"></span>`
       + `<span class="picker-item-main">${escapeHtml(name)}${sub ? `<span class="picker-item-sub">${escapeHtml(sub)}</span>` : ''}</span>`;
     el.addEventListener('click', () => {
-      if (pickerCat && pickerCat !== currentTab && pickerCat !== 'discover') {
-        currentTab = pickerCat;
-        buildSidebar();
-      }
       selectItem(kind, data);
       closePicker();
     });

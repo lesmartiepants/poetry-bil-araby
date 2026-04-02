@@ -26,6 +26,7 @@
   ],
   "rewrites": [
     { "source": "/design-review/(.*)", "destination": "/design-review/$1" },
+    { "source": "/geometric-explorer", "destination": "/design-review/islamic-patterns/generate.html" },
     { "source": "/api/og/:id", "destination": "/api/og/[id]" },
     { "source": "/((?!design-review|api/).*)", "destination": "/index.html" }
   ]

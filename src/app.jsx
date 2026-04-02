@@ -73,6 +73,7 @@ const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
+import PreferencesDrawer from './components/PreferencesDrawer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
@@ -455,10 +456,15 @@ export default function DiwanApp() {
         // No cached translation — queue auto-explain and fetch from DB
         setAutoExplainPending(true);
 
-        // Seed the first poem with onboarding tag preferences (one-time only)
+        // Seed the first poem with onboarding tag preferences (one-time per session)
+        if (sessionStorage.getItem('prefSeedDone')) {
+          handleFetch();
+          return;
+        }
+        sessionStorage.setItem('prefSeedDone', '1');
         const prefs = getOnboardingPrefs();
         if (useDatabase && prefs?.topics?.length) {
-          const tags = prefs.topics.slice(0, 3).join(',');
+          const tags = prefs.topics.join(',');
           addLog('Discovery', `First poem seeded with tags: ${tags}`, 'info');
 
           const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -468,7 +474,7 @@ export default function DiwanApp() {
               return res.json();
             })
             .then((poem) => {
-              const normalized = { ...poem, arabic: poem.arabic?.replace(/\*/g, '\n'), isFromDatabase: true };
+              const normalized = { ...poem, arabic: poem.arabic?.replace(/\*/g, '\n'), isFromDatabase: true, isPreferenceSeeded: true };
               const rawTranslation = poem.cachedTranslation || poem.cached_translation || poem.english || '';
               if (rawTranslation) {
                 normalized.english = rawTranslation.replace(/\*/g, '\n');
@@ -1337,16 +1343,36 @@ export default function DiwanApp() {
                   )}
                 </div>
 
-                <div className="flex justify-center gap-3 mt-2 mb-4">
-                  {Array.isArray(current?.tags) &&
-                    current.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
-                      >
-                        {tag}
-                      </span>
-                    ))}
+                <div className="flex flex-col items-center mt-2 mb-4">
+                  {current?.isPreferenceSeeded && (() => {
+                    try {
+                      const prefs = JSON.parse(localStorage.getItem('onboardingPrefs') || '{}');
+                      const matched = (prefs.topics || []).filter(t => (current.tags || []).includes(t));
+                      if (matched.length === 0) return null;
+                      return (
+                        <div style={{ fontSize: '0.7rem', color: 'rgba(197,160,89,0.7)', marginBottom: '6px', direction: 'rtl', fontFamily: "'Tajawal', sans-serif" }}>
+                          لأنك تحب: {matched.join(' • ')}
+                        </div>
+                      );
+                    } catch { return null; }
+                  })()}
+                  <div className="flex justify-center gap-3">
+                    {Array.isArray(current?.tags) &&
+                      current.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                  </div>
+                  <button
+                    onClick={() => useModalStore.getState().openPrefsDrawer()}
+                    style={{ background: 'none', border: 'none', color: 'rgba(197,160,89,0.4)', fontSize: '11px', cursor: 'pointer', fontFamily: "'Tajawal', sans-serif", direction: 'rtl', padding: '4px 0', display: 'block' }}
+                  >
+                    تعديل الذوق
+                  </button>
                 </div>
               </div>
             </div>
@@ -1692,6 +1718,9 @@ export default function DiwanApp() {
 
       {/* Keyboard Shortcut Help */}
       <AnimatePresence>{showShortcutHelp && <ShortcutHelp key="shortcut-help" />}</AnimatePresence>
+
+      {/* Preferences Drawer */}
+      <PreferencesDrawer />
     </div>
   );
 }

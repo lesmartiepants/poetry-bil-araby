@@ -242,6 +242,7 @@ app.use(
       const allowed = [
         'http://localhost:5173',
         'http://localhost:3001',
+        'http://localhost:8080',
         'https://poetry-bil-araby.vercel.app',
       ];
       // Allow Vercel preview deployments (poetry-bil-araby-*.vercel.app)

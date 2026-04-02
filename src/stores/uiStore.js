@@ -23,6 +23,8 @@ const initialState = {
   showDebugLogs: FEATURES.debug,
   ratchetMode: false, // Ratchet Mode: explains poems in Gen Z / gangster slang
   ttsMode: 'rest', // 'rest' | 'live'
+  liveVoice: 'Orus',
+  liveTemperature: 0,
   highlightStyle: 'none', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
   logs: [],
   headerOpacity: 0,
@@ -38,6 +40,8 @@ export const useUIStore = create((set, get) => ({
   ...initialState,
 
   setTtsMode: (ttsMode) => set({ ttsMode }),
+  setLiveVoice: (liveVoice) => set({ liveVoice }),
+  setLiveTemperature: (liveTemperature) => set({ liveTemperature }),
   setHighlightStyle: (highlightStyle) => set({ highlightStyle }),
   setDarkMode: (darkMode) => set({ darkMode }),
   toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),

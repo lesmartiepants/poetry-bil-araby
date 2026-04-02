@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TTS Lab — Gemini 3.1 Flash Live</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #111; color: #e8e0d0; font-family: system-ui, sans-serif; padding: 24px; max-width: 860px; margin: 0 auto; }
+  h1 { color: #c9a84c; font-size: 1.15rem; margin-bottom: 6px; letter-spacing: 0.05em; }
+  .subtitle { color: #555; font-size: 0.75rem; margin-bottom: 20px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 0.68rem; color: #666; text-transform: uppercase; letter-spacing: 0.09em; }
+  textarea, select { background: #1a1a1a; border: 1px solid #2e2e2e; color: #e8e0d0; border-radius: 6px; padding: 9px 11px; font-size: 0.88rem; resize: vertical; width: 100%; transition: border-color 0.15s; }
+  textarea:focus, select:focus { outline: none; border-color: #444; }
+  #poem { direction: rtl; font-family: 'Amiri', 'Noto Naskh Arabic', Georgia, serif; font-size: 1.1rem; line-height: 2; min-height: 100px; }
+  #sysInstruction { font-size: 0.82rem; line-height: 1.55; min-height: 90px; }
+  select { cursor: pointer; }
+  .slider-wrap { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+  .slider-wrap input[type=range] { flex: 1; accent-color: #c9a84c; cursor: pointer; }
+  .slider-val { color: #c9a84c; font-size: 0.8rem; font-family: monospace; min-width: 32px; text-align: right; }
+  .divider { border: none; border-top: 1px solid #222; margin: 18px 0; }
+  .actions { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  button { background: #c9a84c; color: #111; border: none; border-radius: 6px; padding: 11px 26px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+  button:hover { opacity: 0.88; }
+  button:active { transform: scale(0.98); }
+  button:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  #status { font-size: 0.78rem; color: #555; }
+  #status.error { color: #ef4444; }
+  #status.ok { color: #4ade80; }
+  audio { width: 100%; margin-top: 16px; border-radius: 6px; }
+  .note { font-size: 0.7rem; color: #444; margin-top: 4px; }
+  .voice-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .voice-opt { display: none; }
+  .voice-btn {
+    padding: 7px 6px; border-radius: 5px; border: 1px solid #2e2e2e;
+    background: #1a1a1a; color: #888; font-size: 0.72rem; font-family: monospace;
+    cursor: pointer; text-align: center; transition: all 0.12s; user-select: none;
+  }
+  .voice-btn:hover { border-color: #555; color: #ccc; }
+  .voice-btn.active { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.5); color: #c9a84c; font-weight: 700; }
+  .voice-name { display: block; font-size: 0.75rem; }
+  .voice-desc { display: block; font-size: 0.6rem; color: #555; margin-top: 2px; line-height: 1.3; }
+  .voice-btn.active .voice-desc { color: #a07a30; }
+</style>
+</head>
+<body>
+
+<h1>TTS Lab</h1>
+<p class="subtitle">Gemini 3.1 Flash Live — experiment with voice, style, and delivery</p>
+
+<div class="row">
+  <div class="field full">
+    <label>Poem (Arabic) — sent as-is to the model</label>
+    <textarea id="poem" rows="4">يَمُرُّ الْحَوْلُ بَعُدَ الْحَوْلِ عَنِّيَ* وَتِلكَ مَصَارِعُ الْأَقْوَامِ حَوْلَيٌّ* كَأَنِّيَ بِالأُلى حَفَرُوا لِجَارِيٌّ* وَقَدٌْ أَخَذُوا المَحافِرَ وَاِنْتَحَوْا لِي</textarea>
+  </div>
+</div>
+
+<div class="row">
+  <div class="field full">
+    <label>System Instruction — controls delivery style + verbatim constraint</label>
+    <textarea id="sysInstruction" rows="4">You are a text-to-speech reader for classical Arabic poetry. Read aloud the exact text provided, word for word, with no additions or commentary. Do not respond conversationally.
+اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية.</textarea>
+    <p class="note">Tip: Add "صوت عميق رنان" for deeper resonance, or "ببطء شديد" for slower delivery.</p>
+  </div>
+</div>
+
+<hr class="divider">
+
+<div class="row">
+  <div class="field full">
+    <label>Voice</label>
+    <div class="voice-grid" id="voiceGrid">
+      <label class="voice-btn active" data-voice="Orus">
+        <span class="voice-name">Orus</span>
+        <span class="voice-desc">firm · decisive · deep</span>
+      </label>
+      <label class="voice-btn" data-voice="Charon">
+        <span class="voice-name">Charon</span>
+        <span class="voice-desc">informative · clear · calm</span>
+      </label>
+      <label class="voice-btn" data-voice="Fenrir">
+        <span class="voice-name">Fenrir</span>
+        <span class="voice-desc">excitable · dynamic</span>
+      </label>
+      <label class="voice-btn" data-voice="Kore">
+        <span class="voice-name">Kore</span>
+        <span class="voice-desc">steady · warm</span>
+      </label>
+      <label class="voice-btn" data-voice="Aoede">
+        <span class="voice-name">Aoede</span>
+        <span class="voice-desc">smooth · melodic</span>
+      </label>
+      <label class="voice-btn" data-voice="Leda">
+        <span class="voice-name">Leda</span>
+        <span class="voice-desc">clear · bright</span>
+      </label>
+      <label class="voice-btn" data-voice="Puck">
+        <span class="voice-name">Puck</span>
+        <span class="voice-desc">upbeat · lively</span>
+      </label>
+      <label class="voice-btn" data-voice="Zephyr">
+        <span class="voice-name">Zephyr</span>
+        <span class="voice-desc">gentle · airy</span>
+      </label>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="field">
+    <label>Temperature</label>
+    <div class="slider-wrap">
+      <input type="range" id="temp" min="0" max="2" step="0.05" value="0">
+      <span class="slider-val" id="tempVal">0.00</span>
+    </div>
+    <p class="note">0 = deterministic · 1 = default · 2 = max expressive variation</p>
+  </div>
+  <div class="field" style="justify-content: flex-end;">
+    <div class="actions">
+      <button id="generateBtn" onclick="generate()">▶ Generate</button>
+      <span id="status"></span>
+    </div>
+  </div>
+</div>
+
+<audio id="player" controls style="display:none"></audio>
+
+<script>
+const API = 'http://localhost:3001';
+let selectedVoice = 'Orus';
+
+// Voice buttons
+document.getElementById('voiceGrid').addEventListener('click', e => {
+  const btn = e.target.closest('[data-voice]');
+  if (!btn) return;
+  document.querySelectorAll('.voice-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedVoice = btn.dataset.voice;
+});
+
+// Temp slider
+document.getElementById('temp').addEventListener('input', e => {
+  document.getElementById('tempVal').textContent = parseFloat(e.target.value).toFixed(2);
+});
+
+async function generate() {
+  const btn = document.getElementById('generateBtn');
+  const status = document.getElementById('status');
+  const player = document.getElementById('player');
+
+  const text = document.getElementById('poem').value.trim();
+  const sysInstruction = document.getElementById('sysInstruction').value.trim();
+  const temp = parseFloat(document.getElementById('temp').value);
+
+  if (!text) { status.className = 'error'; status.textContent = 'No poem text.'; return; }
+
+  btn.disabled = true;
+  status.className = '';
+  status.textContent = `Generating · ${selectedVoice} · temp ${temp.toFixed(2)}…`;
+  player.style.display = 'none';
+  if (player.src) URL.revokeObjectURL(player.src);
+
+  const t0 = Date.now();
+  try {
+    const res = await fetch(`${API}/api/ai/live-tts`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voiceName: selectedVoice, systemInstruction: sysInstruction, temperature: temp })
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+    const pcmLen = atob(data.audioData.replace(/\s/g, '')).length;
+    const dur = (pcmLen / 2 / 24000).toFixed(1);
+
+    const wavBlob = pcm16ToWav(data.audioData);
+    player.src = URL.createObjectURL(wavBlob);
+    player.style.display = 'block';
+    player.play();
+
+    status.className = 'ok';
+    status.textContent = `✓ ${dur}s audio · ${elapsed}s · ${selectedVoice} · temp ${temp.toFixed(2)}`;
+  } catch (e) {
+    status.className = 'error';
+    status.textContent = `Error: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+function pcm16ToWav(b64) {
+  const pcm = Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0));
+  const buf = new ArrayBuffer(44 + pcm.length);
+  const v = new DataView(buf);
+  const s = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  const u4 = (o, n) => v.setUint32(o, n, true);
+  const u2 = (o, n) => v.setUint16(o, n, true);
+  s(0,'RIFF'); u4(4,36+pcm.length); s(8,'WAVE');
+  s(12,'fmt '); u4(16,16); u2(20,1); u2(22,1);
+  u4(24,24000); u4(28,48000); u2(32,2); u2(34,16);
+  s(36,'data'); u4(40,pcm.length);
+  new Uint8Array(buf,44).set(pcm);
+  return new Blob([buf], { type: 'audio/wav' });
+}
+</script>
+</body>
+</html>

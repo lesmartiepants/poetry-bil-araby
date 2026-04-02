@@ -25,6 +25,8 @@ const DebugPanel = ({ controlBarRef }) => {
     font: currentFont,
   };
   const theme = darkMode ? THEME.dark : THEME.light;
+  const liveVoice = useUIStore((s) => s.liveVoice);
+  const liveTemperature = useUIStore((s) => s.liveTemperature);
   const [panelOpen, setPanelOpen] = useState(false);
   const [ttsModel, setTtsModel] = useState(API_MODELS.tts.includes('pro') ? 'pro' : 'flash');
   const [bugDescription, setBugDescription] = useState('');
@@ -272,6 +274,35 @@ const DebugPanel = ({ controlBarRef }) => {
             {ttsModel === 'pro' ? 'Pro' : ttsModel === 'flash' ? 'Flash' : 'Live 3.1'}
           </span>
         </button>
+
+        {/* Live API voice + temperature — only shown in Live mode */}
+        {ttsModel === 'live' && (
+          <div className={`flex flex-col gap-2 px-4 py-2 border-t ${theme.border} flex-none`}>
+            <div className="flex items-center gap-2">
+              <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">Voice</span>
+              <select
+                value={liveVoice}
+                onChange={(e) => useUIStore.getState().setLiveVoice(e.target.value)}
+                className="flex-1 text-[0.6rem] font-mono rounded px-1.5 py-0.5 cursor-pointer"
+                style={{ background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', color: 'rgb(251,146,60)' }}
+              >
+                {['Orus','Charon','Fenrir','Kore','Aoede','Leda','Puck','Zephyr'].map(v => (
+                  <option key={v} value={v}>{v}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">Temp</span>
+              <input
+                type="range" min="0" max="2" step="0.05"
+                value={liveTemperature}
+                onChange={(e) => useUIStore.getState().setLiveTemperature(parseFloat(e.target.value))}
+                className="flex-1 h-1 cursor-pointer accent-orange-400"
+              />
+              <span className="text-[0.6rem] font-mono text-orange-400 w-7 text-right">{liveTemperature.toFixed(2)}</span>
+            </div>
+          </div>
+        )}
 
         {/* Bug report input */}
         <div

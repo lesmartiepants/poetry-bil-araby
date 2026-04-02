@@ -24,10 +24,12 @@ import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
+import { readFileSync } from 'fs';
 import WebSocket from 'ws';
 
 const { Pool } = pg;
 const app = express();
+const _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
 const PORT = process.env.PORT || 3001;
 const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
 const LOG_DEBUG = process.env.LOG_DEBUG === 'true'; // verbose DB debug, off by default
@@ -942,7 +944,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
     if (!GEMINI_API_KEY) {
       return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
     }
-    const { text, voiceName } = req.body || {};
+    const { text, voiceName, systemInstruction, temperature } = req.body || {};
     if (!text || typeof text !== 'string' || !text.trim()) {
       return res.status(400).json({ error: 'Missing or empty "text" field' });
     }
@@ -962,20 +964,20 @@ app.post('/api/ai/live-tts', async (req, res) => {
       const ws = new WebSocket(wsUrl);
 
       ws.on('open', () => {
-        ws.send(JSON.stringify({
+        const setupMsg = {
           setup: {
             model: 'models/gemini-3.1-flash-live-preview',
             generationConfig: {
               responseModalities: ['AUDIO'],
-              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } }
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
+              ...(temperature != null ? { temperature: parseFloat(temperature) } : {})
             },
             systemInstruction: {
-              parts: [{
-                text: 'You are a text-to-speech reader. Read aloud the exact text provided by the user, word for word, with no additions, commentary, questions, or paraphrasing. Do not respond conversationally. Only speak the text as given.'
-              }]
+              parts: [{ text: systemInstruction || 'You are a text-to-speech reader. Read aloud the exact text provided by the user, word for word, with no additions, commentary, questions, or paraphrasing. Do not respond conversationally. Only speak the text as given.' }]
             }
           }
-        }));
+        };
+        ws.send(JSON.stringify(setupMsg));
       });
 
       ws.on('message', (raw) => {
@@ -1044,6 +1046,9 @@ async function designTablesExist() {
 
 // ── OG Image: SVG-based share card for social link previews ─────────────
 // GET /api/poems/:id/og-image — returns an SVG image for Open Graph previews
+// TTS Lab — dev-only experiment page
+app.get('/tts-lab', (_req, res) => res.type('html').send(_labHtml));
+
 app.get(
   '/api/poems/:id/og-image',
   [param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'), validate],

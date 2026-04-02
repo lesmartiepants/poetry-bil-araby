@@ -285,12 +285,24 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
       if (ttsMode === 'live') {
         // ── Live API path — WebSocket TTS via server endpoint ──
+        // Delivery style goes in system instruction (not prepended to text) for Live API
+        const { liveVoice, liveTemperature } = useUIStore.getState();
+        const liveSystemInstruction =
+          'You are a text-to-speech reader for classical Arabic poetry. ' +
+          'Read aloud the exact text provided, word for word, with no additions or commentary. ' +
+          'اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. ' +
+          'أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية.';
         ttsModel = 'Live 3.1';
-        addLog('Audio API', `[${ttsModel}] Using Live API WebSocket endpoint`, 'info');
+        addLog('Audio API', `[${ttsModel}] Using Live API WebSocket | voice: ${liveVoice} | temp: ${liveTemperature}`, 'info');
         const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: ttsContent, voiceName: TTS_CONFIG.voiceName }),
+          body: JSON.stringify({
+            text: current.arabic,
+            voiceName: liveVoice,
+            temperature: liveTemperature,
+            systemInstruction: liveSystemInstruction,
+          }),
         });
 
         if (!liveRes.ok) {

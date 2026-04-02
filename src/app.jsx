@@ -327,8 +327,11 @@ export default function DiwanApp() {
     // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).
     if (selectedCategory !== 'All' && current.poetArabic !== selectedCategory) return;
 
-    // Don't overwrite a carousel that already exists (e.g. restored from OAuth sessionStorage).
-    if (usePoemStore.getState().carouselPoems.length > 1) return;
+    // If returning from OAuth, pendingCarouselPoems is still in sessionStorage at this point
+    // (hasAutoLoaded runs after this effect). Skip populate — hasAutoLoaded will restore it.
+    try {
+      if (sessionStorage.getItem('pendingCarouselPoems')) return;
+    } catch {}
 
     let cancelled = false;
     clearCarouselPoems();

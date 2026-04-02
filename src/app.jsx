@@ -409,6 +409,24 @@ export default function DiwanApp() {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
 
+      // Restore carousel position unconditionally — pendingCarouselPoems is only written
+      // before an OAuth redirect, so it's safe to read-and-clear on every load.
+      try {
+        const rawPoems = sessionStorage.getItem('pendingCarouselPoems');
+        const rawIdx = sessionStorage.getItem('pendingCarouselIndex');
+        sessionStorage.removeItem('pendingCarouselPoems');
+        sessionStorage.removeItem('pendingCarouselIndex');
+        if (rawPoems) {
+          const restoredPoems = JSON.parse(rawPoems);
+          const targetIdx = rawIdx ? parseInt(rawIdx, 10) : 0;
+          if (Array.isArray(restoredPoems) && restoredPoems.length > 0) {
+            setCarouselPoems(restoredPoems);
+            setCarouselIndex(targetIdx);
+            addLog('Init', `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`, 'success');
+          }
+        }
+      } catch {}
+
       // Restore pre-OAuth debug logs unconditionally — pendingLogs is only written
       // before an OAuth redirect, so it's safe to read-and-clear on every load.
       try {
@@ -467,22 +485,6 @@ export default function DiwanApp() {
         setAutoExplainPending(true);
         if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
 
-        // Restore carousel position if the user was mid-carousel before OAuth redirect
-        try {
-          const rawPoems = sessionStorage.getItem('pendingCarouselPoems');
-          const rawIdx = sessionStorage.getItem('pendingCarouselIndex');
-          sessionStorage.removeItem('pendingCarouselPoems');
-          sessionStorage.removeItem('pendingCarouselIndex');
-          if (rawPoems) {
-            const poems = JSON.parse(rawPoems);
-            const targetIdx = rawIdx ? parseInt(rawIdx, 10) : 0;
-            if (Array.isArray(poems) && poems.length > 0) {
-              setCarouselPoems(poems);
-              setCarouselIndex(targetIdx);
-              addLog('Init', `Restored carousel: ${poems.length} poems, index ${targetIdx}`, 'success');
-            }
-          }
-        } catch {}
 
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed

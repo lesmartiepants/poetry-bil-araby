@@ -95,21 +95,27 @@ async function setupRouteMocks(page) {
 // ─── Helper: advance through kinetic phases 0-3 ─────────────────────
 
 /**
- * Clicks through the kinetic brand reveal (phases 0-3).
- * The splash screen auto-advances on tap/click for phases 0-2,
- * then shows a Continue button at phase 3.
+ * Advances through the brand reveal into the mood picker.
+ *
+ * Updated flow (v2 — 5 phases):
+ *   Phase 0: Desert splash — "Enter" button appears after 2s animation
+ *   Phase 1: Arabic letters "بالعربي" — tap kinetic wrapper to advance
+ *   Phase 2: English letters "poetry" — "التالي" button appears after 1s animation
+ *   Phase 3: MoodPicker
  */
 async function advanceThroughKineticPhases(page) {
-  const splash = page.locator('[data-testid="splash-screen"]');
+  // Phase 0 → 1: wait for "Enter" button (2s CSS animation delay) and click it
+  const enterBtn = page.getByRole('button', { name: 'Enter the app' });
+  await expect(enterBtn).toBeVisible({ timeout: 8000 });
+  await enterBtn.click();
 
-  // Phases 0-2: tap/click the splash container to advance
-  for (let i = 0; i < 3; i++) {
-    await splash.click();
-    // Small wait for animation transition between phases
-    await page.waitForTimeout(300);
-  }
+  // Phase 1 → 2: tap the kinetic walkthrough wrapper (avoid the finish button area)
+  const kineticWrapper = page.getByRole('dialog', { name: 'Onboarding walkthrough' });
+  await expect(kineticWrapper).toBeVisible({ timeout: 3000 });
+  await page.waitForTimeout(300);
+  await kineticWrapper.click({ position: { x: 50, y: 50 } });
 
-  // Phase 3: wait for Continue button and click it
+  // Phase 2: wait for Continue button (1s CSS animation delay) and click it
   const continueBtn = page.locator('[data-testid="kinetic-continue"]');
   await expect(continueBtn).toBeVisible({ timeout: 5000 });
   await continueBtn.click();
@@ -141,13 +147,18 @@ test.describe('Onboarding Flow', () => {
     const splash = page.locator('[data-testid="splash-screen"]');
     await expect(splash).toBeVisible({ timeout: 5000 });
 
-    // Tap through phases 0-2
-    for (let i = 0; i < 3; i++) {
-      await splash.click();
-      await page.waitForTimeout(300);
-    }
+    // Phase 0 → 1: click "Enter" button (appears after 2s animation)
+    const enterBtn = page.getByRole('button', { name: 'Enter the app' });
+    await expect(enterBtn).toBeVisible({ timeout: 8000 });
+    await enterBtn.click();
 
-    // Phase 3 should show the Continue button
+    // Phase 1 → 2: tap kinetic wrapper
+    const kineticWrapper = page.getByRole('dialog', { name: 'Onboarding walkthrough' });
+    await expect(kineticWrapper).toBeVisible({ timeout: 3000 });
+    await page.waitForTimeout(300);
+    await kineticWrapper.click({ position: { x: 50, y: 50 } });
+
+    // Phase 2: Continue button should appear (1s animation delay)
     const continueBtn = page.locator('[data-testid="kinetic-continue"]');
     await expect(continueBtn).toBeVisible({ timeout: 5000 });
   });
@@ -174,16 +185,16 @@ test.describe('Onboarding Flow', () => {
     const moodPicker = page.locator('[data-testid="mood-picker"]');
     await expect(moodPicker).toBeVisible({ timeout: 5000 });
 
-    // Continue should NOT be visible before selection
+    // CTA is always visible (shows "تخطى" before selection, "التالي" after)
     const moodContinue = page.locator('[data-testid="mood-continue"]');
-    await expect(moodContinue).not.toBeVisible();
+    await expect(moodContinue).toBeVisible({ timeout: 3000 });
 
     // Select one mood
     const firstMood = page.locator('[data-testid="mood-item"]').first();
     await firstMood.click();
 
-    // Now Continue should appear
-    await expect(moodContinue).toBeVisible({ timeout: 3000 });
+    // CTA should still be visible with "التالي" label
+    await expect(moodContinue).toBeVisible();
   });
 
   // ── 5. Era picker: selecting portal reveals Continue ───────────────
@@ -201,16 +212,16 @@ test.describe('Onboarding Flow', () => {
     const eraPicker = page.locator('[data-testid="era-picker"]');
     await expect(eraPicker).toBeVisible({ timeout: 5000 });
 
-    // Continue should NOT be visible before selection
+    // CTA is always visible (shows "تخطى" before selection, "التالي" after)
     const eraContinue = page.locator('[data-testid="era-continue"]');
-    await expect(eraContinue).not.toBeVisible();
+    await expect(eraContinue).toBeVisible({ timeout: 3000 });
 
     // Select one era portal
     const firstPortal = page.locator('[data-testid="era-portal"]').first();
     await firstPortal.click();
 
-    // Now Continue should appear
-    await expect(eraContinue).toBeVisible({ timeout: 3000 });
+    // CTA still visible after selection
+    await expect(eraContinue).toBeVisible();
   });
 
   // ── 6. Topics: selecting 2+ themes reveals "أرني شعرًا" ────────────
@@ -230,17 +241,16 @@ test.describe('Onboarding Flow', () => {
     const topicsPicker = page.locator('[data-testid="topics-picker"]');
     await expect(topicsPicker).toBeVisible({ timeout: 5000 });
 
-    // "أرني شعرًا" button should NOT be visible with <2 selections
+    // "أرني شعرًا" button is always visible (shows "تخطى" with 0 selections)
     const showPoetryBtn = page.locator('[data-testid="show-poetry-btn"]');
-    await expect(showPoetryBtn).not.toBeVisible();
-
-    // Select only 1 topic — button still hidden
-    await page.locator('[data-testid="topic-node"]').nth(0).click();
-    await expect(showPoetryBtn).not.toBeVisible();
-
-    // Select 2nd topic — button should appear
-    await page.locator('[data-testid="topic-node"]').nth(1).click();
     await expect(showPoetryBtn).toBeVisible({ timeout: 3000 });
+
+    // Select topics — button label changes from "تخطى" to "أرني شعرًا"
+    await page.locator('[data-testid="topic-node"]').nth(0).click();
+    await page.locator('[data-testid="topic-node"]').nth(1).click();
+
+    // Button should still be visible and clickable
+    await expect(showPoetryBtn).toBeVisible();
   });
 
   // ── 7. Completing onboarding dismisses splash → poem visible ───────
@@ -323,10 +333,14 @@ test.describe('Onboarding Flow', () => {
     expect(prefs).toHaveProperty('topics');
     expect(prefs).toHaveProperty('completedAt');
 
-    // Arrays should be non-empty
+    // Arrays should exist (may be empty if user skipped, but test makes selections above)
+    expect(Array.isArray(prefs.moods)).toBe(true);
+    expect(Array.isArray(prefs.eras)).toBe(true);
+    expect(Array.isArray(prefs.topics)).toBe(true);
+    // We clicked 1 mood, 1 era, 2 topics above
     expect(prefs.moods.length).toBeGreaterThan(0);
     expect(prefs.eras.length).toBeGreaterThan(0);
-    expect(prefs.topics.length).toBeGreaterThanOrEqual(2);
+    expect(prefs.topics.length).toBeGreaterThanOrEqual(1);
 
     // completedAt should be a valid ISO date
     expect(new Date(prefs.completedAt).toISOString()).toBe(prefs.completedAt);

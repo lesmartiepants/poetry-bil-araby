@@ -360,10 +360,16 @@ function computeSvgPath(w, h) {
 }
 
 const PARALLAX_FACTOR = 0.3; // background drifts at 30% of scroll speed
+// Extra pattern height generated below the viewport so the tiling never
+// disappears as the SVG is translated upward during parallax scrolling.
+// Buffer = 2× viewport height → covers up to scrollY ≈ 6.7× viewport before
+// the pattern edge would ever be reached.
+const PARALLAX_BUFFER_MULTIPLIER = 2;
 
 const SquoctogonBackground = memo(function SquoctogonBackground({ darkMode, scrollY = 0 }) {
   const svgRef = useRef(null);
   const [pathData, setPathData] = useState('');
+  const [svgHeight, setSvgHeight] = useState(0);
 
   useEffect(() => {
     const compute = () => {
@@ -371,7 +377,10 @@ const SquoctogonBackground = memo(function SquoctogonBackground({ darkMode, scro
       const w = parent?.offsetWidth || window.innerWidth || 800;
       const h = parent?.offsetHeight || window.innerHeight || 600;
       if (w > 0 && h > 0) {
-        setPathData(computeSvgPath(w, h));
+        // Generate pattern for a taller canvas so parallax never reveals a blank edge
+        const tallH = h * (1 + PARALLAX_BUFFER_MULTIPLIER);
+        setPathData(computeSvgPath(w, tallH));
+        setSvgHeight(tallH);
       }
     };
 
@@ -395,15 +404,18 @@ const SquoctogonBackground = memo(function SquoctogonBackground({ darkMode, scro
   return (
     <svg
       ref={svgRef}
-      className="absolute inset-0 pointer-events-none"
+      className="absolute pointer-events-none"
       aria-hidden="true"
       style={{
         zIndex: 0,
+        top: 0,
+        left: 0,
+        right: 0,
+        width: '100%',
+        height: svgHeight > 0 ? svgHeight : '100%',
         transform: `translateY(${parallaxY.toFixed(1)}px)`,
         willChange: 'transform',
       }}
-      width="100%"
-      height="100%"
       xmlns="http://www.w3.org/2000/svg"
     >
       <path

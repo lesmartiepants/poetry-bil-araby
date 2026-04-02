@@ -400,38 +400,28 @@
   }
 
   /* ── MOBILE ── */
-  /* ── MOBILE BAR (hidden on desktop) ── */
   .mobile-bar { display: none; }
-  .palette-row { display: none; }
-  .pattern-sheet { display: none; }
+  .color-popup { display: none; }
+  .picker-panel { display: none; }
 
   @media (max-width: 640px) {
-    /* App: sidebar hidden, main fills full screen above bar */
+    /* App: sidebar hidden, canvas fills screen above bar */
     .app { flex-direction: column; height: calc(100vh - 72px); overflow: hidden; }
-
-    /* Hide sidebar completely on mobile — patterns accessed via bottom bar */
     .sidebar { display: none !important; }
-
-    /* Main panel fills viewport */
     .main {
       position: fixed; top: 0; left: 0; right: 0; bottom: 72px;
       width: 100%; display: flex; flex-direction: column;
     }
 
-    /* Toolbar: compact */
-    .toolbar { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
-    .toolbar-info { width: 100%; min-width: 0; }
-    .toolbar-controls { flex-wrap: wrap; gap: 6px; width: 100%; }
-    .color-mode-row { flex-wrap: wrap; gap: 4px; }
-
-    /* Hide desktop-only controls */
+    /* Toolbar: hide colour pills (they live in the bottom bar now) */
+    #colorModeRow { display: none !important; }
     .size-sel, .zoom-group, #tileModeBtn, #helpBtn, .fav-wrap,
     .toolbar-controls label { display: none !important; }
-
-    /* Canvas fills remaining space */
+    .toolbar { flex-wrap: wrap; padding: 8px 12px; gap: 6px; }
+    .toolbar-info { width: 100%; min-width: 0; }
     .canvas-wrap { flex: 1; padding: 8px; }
 
-    /* ── MOBILE BOTTOM BAR ── */
+    /* ── BOTTOM BAR ── */
     .mobile-bar {
       display: flex;
       position: fixed; bottom: 0; left: 0; right: 0;
@@ -440,15 +430,35 @@
       border-top: 1px solid var(--border);
       z-index: 400;
       align-items: center;
-      padding: 0 8px;
-      gap: 0;
+      padding: 0 4px;
     }
 
-    /* Category + pattern name (tappable) */
+    /* Colours button — left anchor */
+    .mb-colors-btn {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 3px;
+      min-width: 54px; height: 54px;
+      padding: 0 6px;
+      background: none; border: none; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+    .mb-colors-dot {
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.15);
+      flex-shrink: 0;
+    }
+    .mb-colors-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--muted);
+    }
+
+    /* Pattern info — fills remaining space, tappable */
     .mb-info {
       flex: 1; display: flex; flex-direction: column;
       align-items: flex-start; justify-content: center;
-      padding: 0 8px; min-width: 0; cursor: pointer;
+      padding: 0 6px; min-width: 0; cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
     .mb-cat {
@@ -463,16 +473,16 @@
 
     /* Prev / Next */
     .mb-nav {
-      width: 44px; height: 44px; display: flex;
+      width: 40px; height: 44px; display: flex;
       align-items: center; justify-content: center;
       background: none; border: none; cursor: pointer;
-      color: var(--text); font-size: 20px;
+      color: var(--text); font-size: 18px;
       -webkit-tap-highlight-color: transparent;
       flex-shrink: 0;
     }
     .mb-nav:active { color: var(--gold); }
 
-    /* Heart */
+    /* Heart — far right */
     .mb-heart {
       width: 44px; height: 44px; display: flex;
       align-items: center; justify-content: center;
@@ -484,73 +494,126 @@
     }
     .mb-heart.active { color: #e05c5c; }
 
-    /* ── PALETTE ROW (shown only in multicolor mode) ── */
-    .palette-row {
+    /* ── COLOUR POPUP (above bar, hidden by default via transform) ── */
+    .color-popup {
+      display: block;
       position: fixed; bottom: 72px; left: 0; right: 0;
-      height: 44px;
       background: var(--surface);
       border-top: 1px solid var(--border);
-      z-index: 199;
-      display: flex;
-      align-items: center;
-      padding: 0 12px;
-      gap: 10px;
+      z-index: 390;
+      padding: 14px 16px 10px;
+      transform: translateY(calc(100% + 72px));
+      transition: transform 0.22s ease;
+      pointer-events: none;
+    }
+    .color-popup.open { transform: translateY(0); pointer-events: auto; }
+    .color-popup-label {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .color-opts {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .color-opt {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px; border-radius: 20px;
+      border: 1px solid var(--border);
+      background: none; cursor: pointer;
+      color: var(--muted); font-size: 12px; font-weight: 600;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .color-opt.active {
+      border-color: var(--gold); color: var(--gold);
+    }
+    .color-opt-dot {
+      width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    /* Palette swatches inside popup (multi mode) */
+    .popup-palettes {
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-top: 12px; padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .popup-pal-swatch {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 8px; border-radius: 20px;
+      border: 1px solid var(--border);
+      background: none; cursor: pointer;
+      color: var(--muted); font-size: 11px;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .popup-pal-swatch.active { border-color: var(--gold); color: var(--gold); }
+    .popup-pal-dots { display: flex; gap: 2px; }
+    .popup-pal-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ── PATTERN PICKER (above bar, with search) ── */
+    .picker-panel {
+      display: flex; flex-direction: column;
+      position: fixed; bottom: 72px; left: 0; right: 0;
+      max-height: 60vh;
+      background: var(--bg);
+      border-top: 2px solid rgba(197,160,89,0.3);
+      border-radius: 14px 14px 0 0;
+      z-index: 395;
+      transform: translateY(calc(100% + 72px));
+      transition: transform 0.28s cubic-bezier(0.32,0.72,0,1);
+      pointer-events: none;
+    }
+    .picker-panel.open { transform: translateY(0); pointer-events: auto; }
+    .picker-header {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 12px 8px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .picker-search {
+      flex: 1; background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); font-size: 13px;
+      padding: 7px 10px; outline: none;
+    }
+    .picker-search::placeholder { color: var(--muted); }
+    .picker-close {
+      background: none; border: none; cursor: pointer;
+      color: var(--muted); font-size: 16px; padding: 4px 6px;
+      -webkit-tap-highlight-color: transparent;
+      flex-shrink: 0;
+    }
+    .picker-cats {
+      display: flex; gap: 6px; padding: 8px 12px 6px;
+      border-bottom: 1px solid var(--border); flex-shrink: 0;
       overflow-x: auto;
     }
-    .palette-swatch {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 2px solid transparent;
-      cursor: pointer; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      gap: 2px; flex-wrap: wrap; padding: 4px;
+    .picker-cat-btn {
+      padding: 4px 12px; border-radius: 16px;
+      border: 1px solid var(--border);
+      background: none; cursor: pointer;
+      color: var(--muted); font-size: 11px; font-weight: 600;
       -webkit-tap-highlight-color: transparent;
-      transition: border-color 0.15s, transform 0.1s;
+      white-space: nowrap; flex-shrink: 0;
     }
-    .palette-swatch.active { border-color: var(--gold); transform: scale(1.15); }
-    .palette-swatch .ps-dot {
-      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-    }
-    .palette-label {
-      font-size: 9px; color: var(--muted); letter-spacing: 0.08em;
-      text-transform: uppercase; white-space: nowrap;
-      margin-right: 4px; flex-shrink: 0;
-    }
-
-    /* ── PATTERN SHEET (bottom sheet for pattern picker) ── */
-    .pattern-sheet {
-      position: fixed; bottom: 72px; left: 0; right: 0;
-      max-height: 55vh;
-      background: var(--bg);
-      border-top: 2px solid var(--gold-dim);
-      z-index: 300;
-      display: flex; flex-direction: column;
-      border-radius: 16px 16px 0 0;
-      overflow: hidden;
-      transform: translateY(100%);
-      transition: transform 0.3s cubic-bezier(0.32,0.72,0,1);
-    }
-    .pattern-sheet.open { transform: translateY(0); }
-    .sheet-handle {
-      width: 36px; height: 4px; border-radius: 2px;
-      background: var(--border); margin: 10px auto 6px; flex-shrink: 0;
-    }
-    .sheet-header {
-      padding: 4px 16px 10px;
-      font-size: 11px; font-weight: 700; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--gold);
-      border-bottom: 1px solid var(--border); flex-shrink: 0;
-    }
-    .sheet-list { flex: 1; overflow-y: auto; padding: 4px 0; }
-    .sheet-item {
-      padding: 13px 16px;
-      display: flex; align-items: center; gap: 10px;
-      border-bottom: 1px solid rgba(197,160,89,0.07);
+    .picker-cat-btn.active { border-color: var(--gold); color: var(--gold); }
+    .picker-list { flex: 1; overflow-y: auto; }
+    .picker-item {
+      padding: 11px 16px;
+      border-bottom: 1px solid rgba(197,160,89,0.06);
       cursor: pointer; color: var(--text); font-size: 13px;
-      transition: background 0.1s;
       -webkit-tap-highlight-color: transparent;
+      transition: background 0.1s;
     }
-    .sheet-item:active { background: var(--gold-bg); }
-    .sheet-item.active { color: var(--gold); }
+    .picker-item:active { background: var(--gold-bg); }
+    .picker-item.active { color: var(--gold); }
+    .picker-item-sub {
+      font-size: 10px; color: var(--muted); margin-top: 1px;
+    }
+    .picker-backdrop {
+      display: none; position: fixed; inset: 0; z-index: 394;
+      background: rgba(0,0,0,0.45);
+    }
+    .picker-backdrop.open { display: block; }
   }
 </style>
 </head>
@@ -631,17 +694,36 @@
 
 <!-- ── MOBILE BOTTOM BAR ── -->
 <div class="mobile-bar" id="mobileBar">
-  <button class="mb-nav" id="mbPrev" title="Previous pattern">&#x25C0;</button>
+  <button class="mb-colors-btn" id="mbColorsBtn" title="Colour mode">
+    <div class="mb-colors-dot" id="mbColorsDot"></div>
+    <div class="mb-colors-label" id="mbColorsLabel">Gold</div>
+  </button>
   <div class="mb-info" id="mbInfo">
     <div class="mb-cat" id="mbCat">Discover</div>
     <div class="mb-name" id="mbName">Select a pattern</div>
   </div>
-  <button class="mb-heart" id="mbHeart" title="Save to favorites">&#x2661;</button>
+  <button class="mb-nav" id="mbPrev" title="Previous pattern">&#x25C0;</button>
   <button class="mb-nav" id="mbNext" title="Next pattern">&#x25B6;</button>
+  <button class="mb-heart" id="mbHeart" title="Save to favorites">&#x2661;</button>
 </div>
 
-<!-- ── PALETTE ROW (multi-color mode) ── -->
-<div class="palette-row" id="paletteRow"></div>
+<!-- ── COLOUR POPUP ── -->
+<div class="color-popup" id="colorPopup">
+  <div class="color-popup-label">Colour Mode</div>
+  <div class="color-opts" id="colorOpts"></div>
+  <div class="popup-palettes" id="popupPalettes" style="display:none;"></div>
+</div>
+
+<!-- ── PATTERN PICKER ── -->
+<div class="picker-backdrop" id="pickerBackdrop"></div>
+<div class="picker-panel" id="pickerPanel">
+  <div class="picker-header">
+    <input class="picker-search" id="pickerSearch" type="text" placeholder="Search patterns…" autocomplete="off">
+    <button class="picker-close" id="pickerClose">&#x2715;</button>
+  </div>
+  <div class="picker-cats" id="pickerCats"></div>
+  <div class="picker-list" id="pickerList"></div>
+</div>
 
 
 <!-- ── TILE MODE FLOATING CLOSE BUTTON ── -->
@@ -2228,14 +2310,26 @@ buildSidebar();
 // ── MOBILE BAR ──────────────────────────────────────────────────────────────
 (function() {
   const MOBILE = () => window.innerWidth <= 640;
-  window.MOBILE = MOBILE; // expose for selectItem patch
+  window.MOBILE = MOBILE;
 
   const CAT_ORDER = ['discover', 'tilings', 'girih', 'templates'];
 
-  // ── Sync bar labels + heart state ──
+  // Colour dot colours (representative per mode)
+  const MODE_DOT = {
+    gold: '#c5a059', lapis: '#4a8abf', multicolor: '#e8715a',
+    neon: '#00ffaa', parchment: '#8b7355',
+  };
+  const MODE_LABELS = {
+    gold: 'Gold', lapis: 'Lapis', multicolor: 'Multi',
+    neon: 'Neon', parchment: 'Parchment',
+  };
+
+  // ── Sync bar ────────────────────────────────────────────────────────────────
   window.updateMobileBar = function() {
     if (!MOBILE()) return;
-    const catEl = document.getElementById('mbCat');
+
+    // Pattern name + category
+    const catEl  = document.getElementById('mbCat');
     const nameEl = document.getElementById('mbName');
     const heartEl = document.getElementById('mbHeart');
     if (catEl) catEl.textContent = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
@@ -2252,97 +2346,220 @@ buildSidebar();
       heartEl.textContent = isFav ? '♥' : '♡';
       heartEl.classList.toggle('active', !!isFav);
     }
-    syncPaletteRow();
+
+    // Colour button
+    const dot   = document.getElementById('mbColorsDot');
+    const label = document.getElementById('mbColorsLabel');
+    if (dot)   dot.style.background = MODE_DOT[colorMode] || '#c5a059';
+    if (label) label.textContent = MODE_LABELS[colorMode] || colorMode;
   };
 
-  // ── Get adjacent item (dir: -1 | +1) ──
+  // ── Prev / Next ─────────────────────────────────────────────────────────────
   function getAdjacentItem(dir) {
     const items = getFlatItems();
     if (!items.length) return null;
     if (!currentItem) return items[0];
     const idx = items.findIndex(it => it.data === currentItem.data);
     if (idx === -1) return items[0];
-    const next = (idx + dir + items.length) % items.length;
-    return items[next];
+    return items[(idx + dir + items.length) % items.length];
   }
 
-  // Prev / Next
   document.getElementById('mbPrev').addEventListener('click', () => {
-    const it = getAdjacentItem(-1);
-    if (it) selectItem(it.kind, it.data);
+    const it = getAdjacentItem(-1); if (it) selectItem(it.kind, it.data);
   });
   document.getElementById('mbNext').addEventListener('click', () => {
-    const it = getAdjacentItem(1);
-    if (it) selectItem(it.kind, it.data);
+    const it = getAdjacentItem(1); if (it) selectItem(it.kind, it.data);
   });
 
-  // Category cycle (tap mb-info label area)
+  // Category cycle (tap the gold category label)
   document.getElementById('mbCat').addEventListener('click', e => {
     e.stopPropagation();
     const idx = CAT_ORDER.indexOf(currentTab);
     currentTab = CAT_ORDER[(idx + 1) % CAT_ORDER.length];
     highlightedIndex = -1;
     buildSidebar();
-    // Auto-select first item of new category
     const items = getFlatItems();
     if (items.length) selectItem(items[0].kind, items[0].data);
     else updateMobileBar();
   });
 
-  // Heart → delegate to toolbar heart button
+  // Heart
   document.getElementById('mbHeart').addEventListener('click', () => {
     document.getElementById('heartBtn').click();
     setTimeout(updateMobileBar, 50);
   });
 
-  // ── Palette row for multi-color mode ──
-  window.buildPaletteRow = function() {
-    const row = document.getElementById('paletteRow');
-    if (!row) return;
-    const label = document.createElement('span');
-    label.className = 'palette-label';
-    label.textContent = 'Palette:';
-    row.appendChild(label);
+  // ── COLOUR POPUP ─────────────────────────────────────────────────────────────
+  let colorPopupOpen = false;
 
+  function buildColorOpts() {
+    const container = document.getElementById('colorOpts');
+    container.innerHTML = '';
+    ['gold','lapis','multicolor','neon','parchment'].forEach(mode => {
+      const btn = document.createElement('button');
+      btn.className = 'color-opt' + (mode === colorMode ? ' active' : '');
+      btn.innerHTML = `<span class="color-opt-dot" style="background:${MODE_DOT[mode]}"></span>${MODE_LABELS[mode]}`;
+      btn.addEventListener('click', () => {
+        setColorMode(mode);
+        updateMobileBar();
+        // refresh active states
+        container.querySelectorAll('.color-opt').forEach(b =>
+          b.classList.toggle('active', b.dataset.m === mode));
+        btn.parentElement.querySelectorAll('.color-opt').forEach(b => {
+          b.classList.toggle('active', b.querySelector('.color-opt-dot').style.background === (MODE_DOT[mode] || ''));
+        });
+        syncPalettePanel();
+      });
+      btn.dataset.m = mode;
+      container.appendChild(btn);
+    });
+  }
+
+  function syncPalettePanel() {
+    const palEl = document.getElementById('popupPalettes');
+    if (!palEl) return;
+    if (colorMode !== 'multicolor') { palEl.style.display = 'none'; return; }
+    palEl.style.display = 'flex';
+    palEl.innerHTML = '';
     MULTI_PALETTES.forEach((pal, i) => {
-      const sw = document.createElement('div');
-      sw.className = 'palette-swatch' + (i === multiPaletteIndex ? ' active' : '');
-      sw.title = pal.name;
-      // Show 4 representative dots
-      const dotColors = Object.values(pal.colors).slice(0, 4);
-      sw.innerHTML = dotColors.map(c => `<div class="ps-dot" style="background:${c}"></div>`).join('');
+      const sw = document.createElement('button');
+      sw.className = 'popup-pal-swatch' + (i === multiPaletteIndex ? ' active' : '');
+      const dots = Object.values(pal.colors).slice(0,4)
+        .map(c => `<div class="popup-pal-dot" style="background:${c}"></div>`).join('');
+      sw.innerHTML = `<div class="popup-pal-dots">${dots}</div>${pal.name}`;
       sw.addEventListener('click', () => {
         multiPaletteIndex = i;
         MULTICOLOR_BY_SIDES = { ...MULTI_PALETTES[i].colors };
-        row.querySelectorAll('.palette-swatch').forEach((s, j) =>
-          s.classList.toggle('active', j === i));
+        palEl.querySelectorAll('.popup-pal-swatch').forEach((s,j) => s.classList.toggle('active', j===i));
         render();
       });
-      row.appendChild(sw);
+      palEl.appendChild(sw);
     });
-  };
+  }
 
-  window.syncPaletteRow = function() {
-    const row = document.getElementById('paletteRow');
-    if (!row) return;
-    if (MOBILE() && colorMode === 'multicolor') {
-      row.style.display = 'flex';
+  document.getElementById('mbColorsBtn').addEventListener('click', e => {
+    e.stopPropagation();
+    colorPopupOpen = !colorPopupOpen;
+    const popup = document.getElementById('colorPopup');
+    if (colorPopupOpen) {
+      buildColorOpts();
+      syncPalettePanel();
+      popup.classList.add('open');
+      // Close picker if open
+      closePicker();
     } else {
-      row.style.display = 'none';
+      popup.classList.remove('open');
     }
+  });
+
+  // Close colour popup on outside tap
+  document.addEventListener('click', e => {
+    if (colorPopupOpen && !e.target.closest('#colorPopup') && !e.target.closest('#mbColorsBtn')) {
+      colorPopupOpen = false;
+      document.getElementById('colorPopup').classList.remove('open');
+    }
+  });
+
+  // ── PATTERN PICKER ───────────────────────────────────────────────────────────
+  let pickerOpen = false;
+  let pickerCat  = null; // null = show current tab
+
+  function openPicker() {
+    if (colorPopupOpen) {
+      colorPopupOpen = false;
+      document.getElementById('colorPopup').classList.remove('open');
+    }
+    pickerCat = currentTab;
+    pickerOpen = true;
+    document.getElementById('pickerPanel').classList.add('open');
+    document.getElementById('pickerBackdrop').classList.add('open');
+    document.getElementById('pickerSearch').value = '';
+    buildPickerCats();
+    buildPickerList('');
+    setTimeout(() => document.getElementById('pickerSearch').focus(), 100);
+  }
+
+  window.closePicker = function() {
+    pickerOpen = false;
+    document.getElementById('pickerPanel').classList.remove('open');
+    document.getElementById('pickerBackdrop').classList.remove('open');
   };
 
-  // Also sync palette row when color mode changes
-  document.querySelectorAll('.color-pill').forEach(btn => {
-    btn.addEventListener('click', () => {
-      setTimeout(syncPaletteRow, 10);
+  function buildPickerCats() {
+    const el = document.getElementById('pickerCats');
+    el.innerHTML = '';
+    CAT_ORDER.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'picker-cat-btn' + (cat === pickerCat ? ' active' : '');
+      btn.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
+      btn.addEventListener('click', () => {
+        pickerCat = cat;
+        el.querySelectorAll('.picker-cat-btn').forEach(b =>
+          b.classList.toggle('active', b.textContent.toLowerCase() === cat));
+        buildPickerList(document.getElementById('pickerSearch').value);
+      });
+      el.appendChild(btn);
     });
+  }
+
+  function getAllItems() {
+    // get items for pickerCat (swap currentTab temporarily)
+    const saved = currentTab;
+    currentTab = pickerCat || saved;
+    const items = getFlatItems();
+    currentTab = saved;
+    return items;
+  }
+
+  function buildPickerList(query) {
+    const list = document.getElementById('pickerList');
+    const q = query.trim().toLowerCase();
+    let items = getAllItems();
+    if (q) items = items.filter(it => it.data.name.toLowerCase().includes(q)
+      || (it.data.category||'').toLowerCase().includes(q)
+      || (it.data.desc||'').toLowerCase().includes(q));
+
+    if (!items.length) {
+      list.innerHTML = '<div style="padding:24px 16px;color:var(--muted);font-size:13px;">No patterns found</div>';
+      return;
+    }
+
+    list.innerHTML = items.map((it, i) => {
+      const isActive = currentItem && it.data === currentItem.data;
+      const sub = it.kind === 'tiling'
+        ? (it.data.category || '') + (it.data.auth ? ' · ' + it.data.auth : '')
+        : it.kind === 'girih' ? it.data.type || '' : it.data.group || '';
+      return `<div class="picker-item${isActive ? ' active' : ''}" data-i="${i}">
+        ${it.data.name}
+        ${sub ? `<div class="picker-item-sub">${sub}</div>` : ''}
+      </div>`;
+    }).join('');
+
+    list.querySelectorAll('.picker-item').forEach((el, i) => {
+      el.addEventListener('click', () => {
+        const it = items[i];
+        if (it) {
+          // Switch to the right tab
+          if (pickerCat && pickerCat !== currentTab) {
+            currentTab = pickerCat;
+            buildSidebar();
+          }
+          selectItem(it.kind, it.data);
+        }
+        closePicker();
+      });
+    });
+  }
+
+  document.getElementById('mbInfo').addEventListener('click', () => openPicker());
+  document.getElementById('pickerBackdrop').addEventListener('click', () => closePicker());
+  document.getElementById('pickerClose').addEventListener('click', () => closePicker());
+  document.getElementById('pickerSearch').addEventListener('input', e => {
+    buildPickerList(e.target.value);
   });
 
   // Init
   if (MOBILE()) {
-    buildPaletteRow();
-    // Auto-select first item
     const items = getFlatItems();
     if (items.length && !currentItem) selectItem(items[0].kind, items[0].data);
     updateMobileBar();

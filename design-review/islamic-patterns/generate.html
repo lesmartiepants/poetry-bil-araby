@@ -597,15 +597,32 @@
     }
     .picker-cat-btn.active { border-color: var(--gold); color: var(--gold); }
     .picker-list { flex: 1; overflow-y: auto; }
+    .picker-group-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px 4px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--gold); border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; background: var(--bg); z-index: 1;
+    }
+    .picker-group-count {
+      font-size: 9px; color: var(--muted); font-weight: 400;
+      background: rgba(255,255,255,0.06); border-radius: 8px;
+      padding: 1px 6px; letter-spacing: 0;
+    }
     .picker-item {
-      padding: 11px 16px;
+      padding: 9px 16px 9px 12px;
       border-bottom: 1px solid rgba(197,160,89,0.06);
       cursor: pointer; color: var(--text); font-size: 13px;
       -webkit-tap-highlight-color: transparent;
       transition: background 0.1s;
+      display: flex; align-items: center; gap: 8px;
     }
     .picker-item:active { background: var(--gold-bg); }
-    .picker-item.active { color: var(--gold); }
+    .picker-item.active .picker-item-main { color: var(--gold); }
+    .picker-dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+    .picker-item-main { display: flex; flex-direction: column; min-width: 0; }
     .picker-item-sub {
       font-size: 10px; color: var(--muted); margin-top: 1px;
     }
@@ -705,6 +722,13 @@
   <button class="mb-nav" id="mbPrev" title="Previous pattern">&#x25C0;</button>
   <button class="mb-nav" id="mbNext" title="Next pattern">&#x25B6;</button>
   <button class="mb-heart" id="mbHeart" title="Save to favorites">&#x2661;</button>
+  <button class="mb-nav" id="mbRandom" title="Random pattern">
+    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+      <path d="M16 8h.01M8 8h.01M12 12h.01M16 16h.01M8 16h.01"/>
+    </svg>
+  </button>
 </div>
 
 <!-- ── COLOUR POPUP ── -->
@@ -2312,9 +2336,9 @@ buildSidebar();
   const MOBILE = () => window.innerWidth <= 640;
   window.MOBILE = MOBILE;
 
-  const CAT_ORDER = ['discover', 'tilings', 'girih', 'templates'];
+  // No Girih on mobile
+  const CAT_ORDER = ['discover', 'tilings', 'templates'];
 
-  // Colour dot colours (representative per mode)
   const MODE_DOT = {
     gold: '#c5a059', lapis: '#4a8abf', multicolor: '#e8715a',
     neon: '#00ffaa', parchment: '#8b7355',
@@ -2324,37 +2348,34 @@ buildSidebar();
     neon: 'Neon', parchment: 'Parchment',
   };
 
-  // ── Sync bar ────────────────────────────────────────────────────────────────
+  // ── Sync bar ─────────────────────────────────────────────────────────────
   window.updateMobileBar = function() {
     if (!MOBILE()) return;
-
-    // Pattern name + category
-    const catEl  = document.getElementById('mbCat');
-    const nameEl = document.getElementById('mbName');
+    const catEl   = document.getElementById('mbCat');
+    const nameEl  = document.getElementById('mbName');
     const heartEl = document.getElementById('mbHeart');
-    if (catEl) catEl.textContent = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
+    const dot     = document.getElementById('mbColorsDot');
+    const label   = document.getElementById('mbColorsLabel');
+
+    if (catEl)  catEl.textContent = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
     if (nameEl) {
       if (currentItem) {
         const d = currentItem.data;
         nameEl.textContent = d.name + (currentItem.kind === 'tiling' && d.category ? ' — ' + d.category : '');
       } else {
-        nameEl.textContent = 'Tap ◀ ▶ to browse';
+        nameEl.textContent = 'Tap to browse';
       }
     }
     if (heartEl) {
       const isFav = currentItem && favorites.has(currentItem.data.name);
-      heartEl.textContent = isFav ? '♥' : '♡';
+      heartEl.textContent = isFav ? '\u2665' : '\u2661';
       heartEl.classList.toggle('active', !!isFav);
     }
-
-    // Colour button
-    const dot   = document.getElementById('mbColorsDot');
-    const label = document.getElementById('mbColorsLabel');
     if (dot)   dot.style.background = MODE_DOT[colorMode] || '#c5a059';
     if (label) label.textContent = MODE_LABELS[colorMode] || colorMode;
   };
 
-  // ── Prev / Next ─────────────────────────────────────────────────────────────
+  // ── Prev / Next ──────────────────────────────────────────────────────────
   function getAdjacentItem(dir) {
     const items = getFlatItems();
     if (!items.length) return null;
@@ -2371,16 +2392,10 @@ buildSidebar();
     const it = getAdjacentItem(1); if (it) selectItem(it.kind, it.data);
   });
 
-  // Category cycle (tap the gold category label)
+  // Tapping the category label opens the picker
   document.getElementById('mbCat').addEventListener('click', e => {
     e.stopPropagation();
-    const idx = CAT_ORDER.indexOf(currentTab);
-    currentTab = CAT_ORDER[(idx + 1) % CAT_ORDER.length];
-    highlightedIndex = -1;
-    buildSidebar();
-    const items = getFlatItems();
-    if (items.length) selectItem(items[0].kind, items[0].data);
-    else updateMobileBar();
+    openPicker();
   });
 
   // Heart
@@ -2389,7 +2404,12 @@ buildSidebar();
     setTimeout(updateMobileBar, 50);
   });
 
-  // ── COLOUR POPUP ─────────────────────────────────────────────────────────────
+  // Dice → random
+  document.getElementById('mbRandom').addEventListener('click', () => {
+    selectRandom();
+  });
+
+  // ── COLOUR POPUP ─────────────────────────────────────────────────────────
   let colorPopupOpen = false;
 
   function buildColorOpts() {
@@ -2398,19 +2418,15 @@ buildSidebar();
     ['gold','lapis','multicolor','neon','parchment'].forEach(mode => {
       const btn = document.createElement('button');
       btn.className = 'color-opt' + (mode === colorMode ? ' active' : '');
+      btn.dataset.m = mode;
       btn.innerHTML = `<span class="color-opt-dot" style="background:${MODE_DOT[mode]}"></span>${MODE_LABELS[mode]}`;
       btn.addEventListener('click', () => {
         setColorMode(mode);
         updateMobileBar();
-        // refresh active states
         container.querySelectorAll('.color-opt').forEach(b =>
           b.classList.toggle('active', b.dataset.m === mode));
-        btn.parentElement.querySelectorAll('.color-opt').forEach(b => {
-          b.classList.toggle('active', b.querySelector('.color-opt-dot').style.background === (MODE_DOT[mode] || ''));
-        });
         syncPalettePanel();
       });
-      btn.dataset.m = mode;
       container.appendChild(btn);
     });
   }
@@ -2445,14 +2461,12 @@ buildSidebar();
       buildColorOpts();
       syncPalettePanel();
       popup.classList.add('open');
-      // Close picker if open
       closePicker();
     } else {
       popup.classList.remove('open');
     }
   });
 
-  // Close colour popup on outside tap
   document.addEventListener('click', e => {
     if (colorPopupOpen && !e.target.closest('#colorPopup') && !e.target.closest('#mbColorsBtn')) {
       colorPopupOpen = false;
@@ -2460,23 +2474,23 @@ buildSidebar();
     }
   });
 
-  // ── PATTERN PICKER ───────────────────────────────────────────────────────────
+  // ── PATTERN PICKER (grouped, with search) ────────────────────────────────
   let pickerOpen = false;
-  let pickerCat  = null; // null = show current tab
+  let pickerCat  = null;
 
   function openPicker() {
     if (colorPopupOpen) {
       colorPopupOpen = false;
       document.getElementById('colorPopup').classList.remove('open');
     }
-    pickerCat = currentTab;
+    pickerCat = CAT_ORDER.includes(currentTab) ? currentTab : 'discover';
     pickerOpen = true;
     document.getElementById('pickerPanel').classList.add('open');
     document.getElementById('pickerBackdrop').classList.add('open');
     document.getElementById('pickerSearch').value = '';
     buildPickerCats();
     buildPickerList('');
-    setTimeout(() => document.getElementById('pickerSearch').focus(), 100);
+    setTimeout(() => document.getElementById('pickerSearch').focus(), 120);
   }
 
   window.closePicker = function() {
@@ -2496,67 +2510,122 @@ buildSidebar();
         pickerCat = cat;
         el.querySelectorAll('.picker-cat-btn').forEach(b =>
           b.classList.toggle('active', b.textContent.toLowerCase() === cat));
-        buildPickerList(document.getElementById('pickerSearch').value);
+        document.getElementById('pickerSearch').value = '';
+        buildPickerList('');
       });
       el.appendChild(btn);
     });
   }
 
-  function getAllItems() {
-    // get items for pickerCat (swap currentTab temporarily)
-    const saved = currentTab;
-    currentTab = pickerCat || saved;
-    const items = getFlatItems();
-    currentTab = saved;
-    return items;
-  }
-
+  // Build grouped list matching desktop structure
   function buildPickerList(query) {
     const list = document.getElementById('pickerList');
     const q = query.trim().toLowerCase();
-    let items = getAllItems();
-    if (q) items = items.filter(it => it.data.name.toLowerCase().includes(q)
-      || (it.data.category||'').toLowerCase().includes(q)
-      || (it.data.desc||'').toLowerCase().includes(q));
+    list.innerHTML = '';
 
-    if (!items.length) {
-      list.innerHTML = '<div style="padding:24px 16px;color:var(--muted);font-size:13px;">No patterns found</div>';
-      return;
+    if (pickerCat === 'tilings') {
+      const grouped = {};
+      for (const cat of TILING_CATEGORY_ORDER) grouped[cat] = [];
+      for (const t of CATALOG.tilings) {
+        const cat = t.category || 'Mixed';
+        if (!grouped[cat]) grouped[cat] = [];
+        if (q && !t.name.toLowerCase().includes(q) && !(t.category||'').toLowerCase().includes(q)) continue;
+        grouped[cat].push(t);
+      }
+      for (const cat of TILING_CATEGORY_ORDER) {
+        const items = grouped[cat];
+        if (!items || !items.length) continue;
+        appendGroupHeader(list, cat, items.length);
+        for (const t of items) appendPickerItem(list, t.name, t.category || '', 'tiling', t);
+      }
+
+    } else if (pickerCat === 'templates') {
+      const grouped = {};
+      for (const g of TEMPLATE_GROUP_ORDER) grouped[g] = [];
+      for (const t of CATALOG.templates) {
+        const g = t.group || 'Other';
+        if (!grouped[g]) grouped[g] = [];
+        if (q && !t.name.toLowerCase().includes(q) && !(t.group||'').toLowerCase().includes(q)) continue;
+        grouped[g].push(t);
+      }
+      for (const grp of TEMPLATE_GROUP_ORDER) {
+        const items = grouped[grp];
+        if (!items || !items.length) continue;
+        appendGroupHeader(list, grp, items.length);
+        for (const t of items) appendPickerItem(list, t.name, t.lines.length + ' lines', 'template', t);
+      }
+
+    } else {
+      // discover: My Saved + Collections
+      const savedNames = [...favorites];
+      if (savedNames.length) {
+        const saved = savedNames
+          .map(name => {
+            const t = CATALOG.tilings.find(x => x.name === name);
+            if (t) return { kind:'tiling', data:t };
+            const tmpl = CATALOG.templates.find(x => x.name === name);
+            if (tmpl) return { kind:'template', data:tmpl };
+            return null;
+          })
+          .filter(Boolean)
+          .filter(it => !q || it.data.name.toLowerCase().includes(q));
+        if (saved.length) {
+          appendGroupHeader(list, 'My Saved', saved.length);
+          for (const it of saved) appendPickerItem(list, it.data.name, '', it.kind, it.data);
+        }
+      }
+      for (const col of COLLECTIONS) {
+        const entries = col.items
+          .map(e => {
+            const data = findCatalogItem(e.tab, e.name);
+            if (!data) return null;
+            const kind = e.tab === 'tilings' ? 'tiling' : e.tab === 'girih' ? 'girih' : 'template';
+            return { kind, data };
+          })
+          .filter(Boolean)
+          .filter(it => !q || it.data.name.toLowerCase().includes(q));
+        if (!entries.length) continue;
+        appendGroupHeader(list, col.name, entries.length, col.color);
+        for (const it of entries) appendPickerItem(list, it.data.name, '', it.kind, it.data, col.color);
+      }
+      if (!list.children.length) {
+        list.innerHTML = '<div style="padding:24px 16px;color:var(--muted);font-size:13px;">No patterns found</div>';
+      }
     }
 
-    list.innerHTML = items.map((it, i) => {
-      const isActive = currentItem && it.data === currentItem.data;
-      const sub = it.kind === 'tiling'
-        ? (it.data.category || '') + (it.data.auth ? ' · ' + it.data.auth : '')
-        : it.kind === 'girih' ? it.data.type || '' : it.data.group || '';
-      return `<div class="picker-item${isActive ? ' active' : ''}" data-i="${i}">
-        ${it.data.name}
-        ${sub ? `<div class="picker-item-sub">${sub}</div>` : ''}
-      </div>`;
-    }).join('');
+    if (!list.children.length) {
+      list.innerHTML = '<div style="padding:24px 16px;color:var(--muted);font-size:13px;">No patterns found</div>';
+    }
+  }
 
-    list.querySelectorAll('.picker-item').forEach((el, i) => {
-      el.addEventListener('click', () => {
-        const it = items[i];
-        if (it) {
-          // Switch to the right tab
-          if (pickerCat && pickerCat !== currentTab) {
-            currentTab = pickerCat;
-            buildSidebar();
-          }
-          selectItem(it.kind, it.data);
-        }
-        closePicker();
-      });
+  function appendGroupHeader(list, name, count, color) {
+    const hdr = document.createElement('div');
+    hdr.className = 'picker-group-hdr';
+    hdr.innerHTML = `<span style="color:${color||'var(--gold)'}">${escapeHtml(name)}</span><span class="picker-group-count">${count}</span>`;
+    list.appendChild(hdr);
+  }
+
+  function appendPickerItem(list, name, sub, kind, data, dotColor) {
+    const isActive = currentItem && currentItem.data === data;
+    const el = document.createElement('div');
+    el.className = 'picker-item' + (isActive ? ' active' : '');
+    el.innerHTML = `<span class="picker-dot" style="background:${dotColor||'var(--gold)'}"></span>`
+      + `<span class="picker-item-main">${escapeHtml(name)}${sub ? `<span class="picker-item-sub">${escapeHtml(sub)}</span>` : ''}</span>`;
+    el.addEventListener('click', () => {
+      if (pickerCat && pickerCat !== currentTab && pickerCat !== 'discover') {
+        currentTab = pickerCat;
+        buildSidebar();
+      }
+      selectItem(kind, data);
+      closePicker();
     });
+    list.appendChild(el);
   }
 
   document.getElementById('mbInfo').addEventListener('click', () => openPicker());
   document.getElementById('pickerBackdrop').addEventListener('click', () => closePicker());
   document.getElementById('pickerClose').addEventListener('click', () => closePicker());
-  document.getElementById('pickerSearch').addEventListener('input', e => {
-    buildPickerList(e.target.value);
-  });
+  document.getElementById('pickerSearch').addEventListener('input', e => buildPickerList(e.target.value));
 
   // Init
   if (MOBILE()) {

@@ -51,7 +51,7 @@ jobs:
                 `> HTML files removed in \`${sha}\``,
               ].join('\n');
             } else {
-              const baseUrl = `https://raw.githack.com/${owner}/${repo}/${branch}`;
+              const baseUrl = `https://htmlpreview.github.io/?https://github.com/${owner}/${repo}/blob/${branch}`;
               // Group by directory
               const byDir = {};
               for (const f of htmlFiles) {

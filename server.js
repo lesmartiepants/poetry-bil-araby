@@ -545,6 +545,21 @@ app.get('/api/poets', async (req, res) => {
   }
 });
 
+// Get all tags
+app.get('/api/tags', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, slug, name_ar, name_en, tag_type, color, display_order FROM public.tags ORDER BY tag_type, display_order'
+    );
+    log.info('Tags', `Returned ${result.rows.length} tags`);
+    res.json(result.rows);
+  } catch (error) {
+    Sentry.captureException(error);
+    log.error('Tags', `Error fetching tags: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Search poems
 app.get(
   '/api/poems/search',

@@ -290,6 +290,22 @@ export default function DiwanApp() {
     return () => clearTimeout(timer);
   }, [current?.id, user]);
 
+  // Show a loading toast while the translation is streaming, dismiss when done
+  const prevIsInterpretingRef = useRef(false);
+  useEffect(() => {
+    const prev = prevIsInterpretingRef.current;
+    prevIsInterpretingRef.current = isInterpreting;
+    if (!prev && isInterpreting) {
+      toast.loading('Translating poem…', { id: 'translation-progress', duration: Infinity });
+    } else if (prev && !isInterpreting) {
+      if (interpretation) {
+        toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });
+      } else {
+        toast.dismiss('translation-progress');
+      }
+    }
+  }, [isInterpreting]);
+
   useEffect(() => {
     if (selectedCategory !== 'All') {
       track('poet_filter_changed', { poet: selectedCategory });

@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
 import { FEATURES } from '../../constants/features';
 import { useAudioStore } from '../audioStore';
+import { startPlayer, recordPause, pauseOffset } from '../../hooks/useTTSHighlight.js';
 import { usePoemStore } from '../poemStore';
 import { useUIStore } from '../uiStore';
 import { getTTSContent } from '../../prompts';
@@ -167,6 +168,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
   // PAUSE — Tone.Player uses stop() rather than pause()
   if (isPlaying) {
+    recordPause();
     if (existingPlayer) {
       existingPlayer.stop();
     }
@@ -184,7 +186,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       // Unlock AudioContext after user gesture (handles iOS autoplay policy)
       await toneStart();
       const player = await createPlayerReady(audioUrl);
-      player.start();
+      startPlayer(player, pauseOffset.value);
       setPlayer(player);
       setPlaying(true);
     } catch (e) {
@@ -223,7 +225,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
         try {
           const player = await createPlayerReady(u);
-          player.start();
+          startPlayer(player, 0);
           setPlayer(player);
           setPlaying(true);
         } catch (err) {
@@ -347,7 +349,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
           try {
             const player = await createPlayerReady(u);
-            player.start();
+            startPlayer(player, 0);
             setPlayer(player);
             setPlaying(true);
             progress.dismiss('Recitation ready');
@@ -425,7 +427,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
           try {
             const player = await createPlayerReady(u);
-            player.start();
+            startPlayer(player, 0);
             setPlayer(player);
             setPlaying(true);
             pollProgress.dismiss('Recitation ready');
@@ -470,7 +472,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
             try {
               const player = await createPlayerReady(u);
-              player.start();
+              startPlayer(player, 0);
               setPlayer(player);
               setPlaying(true);
               pollProgress.dismiss('Recitation ready');

@@ -977,12 +977,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
         try {
           const msg = JSON.parse(raw.toString());
           if (msg.setupComplete) {
-            ws.send(JSON.stringify({
-              clientContent: {
-                turns: [{ role: 'user', parts: [{ text }] }],
-                turnComplete: true
-              }
-            }));
+            ws.send(JSON.stringify({ realtimeInput: { text } }));
             return;
           }
           if (msg.serverContent?.modelTurn?.parts) {
@@ -1015,8 +1010,11 @@ app.post('/api/ai/live-tts', async (req, res) => {
       return res.status(500).json({ error: 'No audio data received from Live API' });
     }
 
-    const combinedBase64 = audioChunks.join('');
-    log.info('Live TTS', `Complete | ${audioChunks.length} chunks | ${combinedBase64.length} chars`);
+    // Decode each base64 chunk to binary, concat, re-encode.
+    // Simple string join is wrong when chunks have base64 padding ('=') in the middle.
+    const combined = Buffer.concat(audioChunks.map(b64 => Buffer.from(b64, 'base64')));
+    const combinedBase64 = combined.toString('base64');
+    log.info('Live TTS', `Complete | ${audioChunks.length} chunks | ${combined.length} bytes | ${combinedBase64.length} b64 chars`);
     res.json({ audioData: combinedBase64 });
 
   } catch (error) {

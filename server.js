@@ -966,7 +966,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
       ws.on('open', () => {
         const setupMsg = {
           setup: {
-            model: 'models/gemini-3.1-flash-live-preview',
+            model: 'models/gemini-2.0-flash-live-001',
             generationConfig: {
               responseModalities: ['AUDIO'],
               speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },

@@ -154,7 +154,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     setPlayer,
   } = useAudioStore.getState();
 
-  if (isTogglingPlay.current) {
+  if (isTogglingPlay.current || isGenerating) {
     addLog('Audio', 'Play toggle already in progress — skipping', 'info');
     return;
   }
@@ -294,7 +294,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           'to think about what you\'re going to say, then it comes out heavy and hard.\n\n' +
           'اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. ' +
           'أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية.';
-        ttsModel = 'Live 3.1';
+        ttsModel = 'Live 2.0';
         addLog('Audio API', `[${ttsModel}] Using Live API WebSocket | voice: ${liveVoice} | temp: ${liveTemperature}`, 'info');
         const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
           method: 'POST',

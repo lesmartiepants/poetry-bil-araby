@@ -637,10 +637,13 @@
   <nav class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-title">Islamic Patterns</div>
+      <div class="tab-row" style="margin-bottom:4px;">
+        <button class="tab-btn" data-tab="favourites" style="flex:1;font-size:11px;">&#x2665; Saved Patterns</button>
+      </div>
       <div class="tab-row">
         <button class="tab-btn" data-tab="tilings">Tilings</button>
-        <button class="tab-btn" data-tab="girih">Girih</button>
-        <button class="tab-btn" data-tab="templates">Templates</button>
+        <button class="tab-btn" data-tab="girih" style="display:none">Girih</button>
+        <button class="tab-btn" data-tab="templates" style="display:none">Templates</button>
         <button class="tab-btn active" data-tab="discover">Discover</button>
       </div>
     </div>
@@ -1890,6 +1893,43 @@ function buildSidebar() {
     }
   }
 
+  // ── Favourites tab ──
+  if (currentTab === 'favourites') {
+    const q = searchQuery.toLowerCase();
+    const savedNames = [...favorites].filter(n => !q || n.toLowerCase().includes(q));
+    if (favorites.size === 0) {
+      const empty = document.createElement('div');
+      empty.className = 'saved-empty';
+      empty.style.cssText = 'padding:24px 16px;text-align:center;font-size:12px;line-height:1.6;';
+      empty.innerHTML = '&#x2661; No saved patterns yet<br><span style="font-size:10px;opacity:0.7">Press H on any pattern to save it</span>';
+      list.appendChild(empty);
+    } else {
+      const hdr = document.createElement('div');
+      hdr.className = 'category-header';
+      hdr.textContent = `${savedNames.length} / ${favorites.size} saved`;
+      list.appendChild(hdr);
+      for (const name of savedNames) {
+        let data = null, kind = null;
+        data = CATALOG.tilings.find(t => t.name === name); if (data) kind = 'tiling';
+        if (!data) { data = CATALOG.girihShapes.find(g => g.name === name); if (data) kind = 'girih'; }
+        if (!data) { data = CATALOG.templates.find(t => t.name === name); if (data) kind = 'template'; }
+        if (!data || !kind) continue;
+        const el = document.createElement('div');
+        el.className = 'pattern-item' + (currentItem?.data === data ? ' active' : '');
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.textContent = kind === 'tiling' ? 'T' : kind === 'girih' ? 'G' : 'TPL';
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'pattern-name';
+        nameSpan.textContent = name;
+        el.appendChild(badge);
+        el.appendChild(nameSpan);
+        el.addEventListener('click', () => selectItem(kind, data));
+        list.appendChild(el);
+      }
+    }
+  }
+
   // Show/hide Surprise me button
   const discoverTop = document.getElementById('discoverTop');
   if (discoverTop) discoverTop.classList.toggle('visible', currentTab === 'discover');
@@ -1899,19 +1939,50 @@ function buildSidebar() {
 }
 
 // Build a flat navigable list of all items for the current tab (for keyboard nav)
+// MUST match the exact render order of buildSidebar() so highlightedIndex maps correctly to DOM
 function getFlatItems() {
   const q = searchQuery.toLowerCase();
   if (currentTab === 'tilings') {
-    return CATALOG.tilings.filter(t => !q || t.name.toLowerCase().includes(q))
-      .map(t => ({ kind: 'tiling', data: t }));
+    // Mirror buildSidebar: grouped by TILING_CATEGORY_ORDER
+    const grouped = {};
+    for (const cat of TILING_CATEGORY_ORDER) grouped[cat] = [];
+    for (const t of CATALOG.tilings) {
+      const cat = t.category || 'Mixed';
+      if (!grouped[cat]) grouped[cat] = [];
+      if (q && !t.name.toLowerCase().includes(q)) continue;
+      grouped[cat].push(t);
+    }
+    const flat = [];
+    for (const cat of TILING_CATEGORY_ORDER)
+      for (const t of (grouped[cat] || [])) flat.push({ kind: 'tiling', data: t });
+    return flat;
   } else if (currentTab === 'girih') {
     return CATALOG.girihShapes.filter(g => !q || g.name.toLowerCase().includes(q))
       .map(g => ({ kind: 'girih', data: g }));
   } else if (currentTab === 'templates') {
-    return CATALOG.templates.filter(t => !q || t.name.toLowerCase().includes(q))
-      .map(t => ({ kind: 'template', data: t }));
+    // Mirror buildSidebar: grouped by TEMPLATE_GROUP_ORDER
+    const grouped = {};
+    for (const g of TEMPLATE_GROUP_ORDER) grouped[g] = [];
+    for (const t of CATALOG.templates) {
+      const g = t.group || 'Other';
+      if (!grouped[g]) grouped[g] = [];
+      if (q && !t.name.toLowerCase().includes(q)) continue;
+      grouped[g].push(t);
+    }
+    const flat = [];
+    for (const grp of TEMPLATE_GROUP_ORDER)
+      for (const t of (grouped[grp] || [])) flat.push({ kind: 'template', data: t });
+    return flat;
   } else if (currentTab === 'discover') {
     const flat = [];
+    // Saved patterns render first in buildSidebar — match that order here
+    for (const name of [...favorites]) {
+      let data = null, kind = null;
+      data = CATALOG.tilings.find(t => t.name === name); if (data) kind = 'tiling';
+      if (!data) { data = CATALOG.girihShapes.find(g => g.name === name); if (data) kind = 'girih'; }
+      if (!data) { data = CATALOG.templates.find(t => t.name === name); if (data) kind = 'template'; }
+      if (data && kind) flat.push({ kind, data });
+    }
     for (const col of COLLECTIONS) {
       for (const entry of col.items) {
         const data = findCatalogItem(entry.tab, entry.name);
@@ -1919,6 +1990,17 @@ function getFlatItems() {
         const kind = entry.tab === 'tilings' ? 'tiling' : entry.tab === 'girih' ? 'girih' : 'template';
         flat.push({ kind, data });
       }
+    }
+    return flat;
+  } else if (currentTab === 'favourites') {
+    const flat = [];
+    for (const name of [...favorites]) {
+      if (q && !name.toLowerCase().includes(q)) continue;
+      let data = null, kind = null;
+      data = CATALOG.tilings.find(t => t.name === name); if (data) kind = 'tiling';
+      if (!data) { data = CATALOG.girihShapes.find(g => g.name === name); if (data) kind = 'girih'; }
+      if (!data) { data = CATALOG.templates.find(t => t.name === name); if (data) kind = 'template'; }
+      if (data && kind) flat.push({ kind, data });
     }
     return flat;
   }
@@ -1988,9 +2070,10 @@ function selectItem(kind, data) {
 // EVENTS
 // ────────────────────────────────────────────────────────────────────────────
 
-// Tab switching
+// Tab switching (blocked on mobile — favourites only)
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', () => {
+    if (window.matchMedia('(max-width: 640px)').matches) return;
     currentTab = btn.dataset.tab;
     highlightedIndex = -1;
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -2047,23 +2130,45 @@ function cycleColorMode() {
   setColorMode(COLOR_MODES[(idx + 1) % COLOR_MODES.length]);
 }
 
-// Random button
+// Random button — tilings only (girih/templates hidden)
 function selectRandom() {
-  const all = [
-    ...CATALOG.tilings.map(t => ({ kind: 'tiling', data: t })),
-    ...CATALOG.girihShapes.map(g => ({ kind: 'girih', data: g })),
-    ...CATALOG.templates.map(t => ({ kind: 'template', data: t })),
-  ];
+  const all = CATALOG.tilings.map(t => ({ kind: 'tiling', data: t }));
+  if (!all.length) return;
   const pick = all[Math.floor(Math.random() * all.length)];
-  // Switch to the correct tab
-  const tabMap = { tiling: 'tilings', girih: 'girih', template: 'templates' };
-  const newTab = tabMap[pick.kind];
-  if (newTab !== currentTab) {
-    currentTab = newTab;
+  if (currentTab !== 'tilings') {
+    currentTab = 'tilings';
     document.querySelectorAll('.tab-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.tab === newTab);
+      b.classList.toggle('active', b.dataset.tab === 'tilings');
     });
   }
+  highlightedIndex = -1;
+  selectItem(pick.kind, pick.data);
+}
+
+// Curated featured set (exported 2026-04-02)
+const FEATURED = [
+  "3-8-12","Girih Inflation 10","Girih Inflation 10.v1","Girih Inflation 10.v2",
+  "Seville Alcazar 12.8.6","Girih Inflation 10.v3","6 Losange","Angel",
+  "18.9","18","24.12","8 Ring","8 and 8","8.12","8.5","9.6 Losange 2",
+  "Great Mosque of Malatya","Mughal I'timad","Penrose Monster","Tricorn",
+  "Squoctogon","alhambra16","alhambra 16 in pieces","Two Monsters",
+  "Square 12.4.3","Penrose","Girih Star","12.18","16.8","3.12^2",
+  "4.5","4.7 Star","Chikipoo","Mamluk Quran","Recursive Lock","square_12"
+];
+
+// Mobile random — only from featured set
+function selectRandomFavourite() {
+  const all = FEATURED.map(name => {
+    const t = CATALOG.tilings.find(x => x.name === name);
+    if (t) return { kind: 'tiling', data: t };
+    const g = CATALOG.girihShapes.find(x => x.name === name);
+    if (g) return { kind: 'girih', data: g };
+    const tmpl = CATALOG.templates.find(x => x.name === name);
+    if (tmpl) return { kind: 'template', data: tmpl };
+    return null;
+  }).filter(Boolean);
+  if (!all.length) return;
+  const pick = all[Math.floor(Math.random() * all.length)];
   highlightedIndex = -1;
   selectItem(pick.kind, pick.data);
 }
@@ -2157,7 +2262,7 @@ document.getElementById('zoomSlider').addEventListener('input', e => {
 // ────────────────────────────────────────────────────────────────────────────
 // KEYBOARD SHORTCUTS
 // ────────────────────────────────────────────────────────────────────────────
-const TABS_ORDER = ['discover', 'tilings', 'girih', 'templates'];
+const TABS_ORDER = ['favourites', 'discover', 'tilings'];
 
 function switchTab(tabName) {
   currentTab = tabName;
@@ -2321,6 +2426,13 @@ window.addEventListener('resize', () => { if (currentItem) render(); });
 // INITIAL RENDER
 // ────────────────────────────────────────────────────────────────────────────
 updateFavCount();
+// On mobile, lock to the favourites tab
+if (window.matchMedia('(max-width: 640px)').matches) {
+  currentTab = 'favourites';
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === 'favourites');
+  });
+}
 buildSidebar();
 // Auto-select first pattern from Masterpieces collection in Discover tab
 (function() {
@@ -2423,9 +2535,9 @@ buildSidebar();
     updateMobileBar();
   });
 
-  // Dice → random
+  // Dice → random from favourites only on mobile
   document.getElementById('mbRandom').addEventListener('click', () => {
-    selectRandom();
+    selectRandomFavourite();
   });
 
   // ── COLOUR POPUP ─────────────────────────────────────────────────────────

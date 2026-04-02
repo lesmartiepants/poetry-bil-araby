@@ -9,7 +9,7 @@ import { useAudioStore } from '../audioStore';
 import { startPlayer, recordPause, pauseOffset } from '../../hooks/useTTSHighlight.js';
 import { usePoemStore } from '../poemStore';
 import { useUIStore } from '../uiStore';
-import { getTTSContent } from '../../prompts';
+import { getTTSContent, LIVE_SYSTEM_INSTRUCTION, getLiveContent } from '../../prompts';
 import { API_MODELS, TTS_CONFIG, fetchTTSWithFallback } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
 import { pcm16ToWav } from '../../utils/audio.js';
@@ -252,23 +252,13 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     // Mark in-flight
     usePoemStore.getState().addActiveAudio(current?.id);
 
-    const ttsContent = getTTSContent(current);
     const ttsMode = useUIStore.getState().ttsMode;
-    const requestBody = JSON.stringify({
-      contents: [{ parts: [{ text: ttsContent }] }],
-      generationConfig: {
-        responseModalities: TTS_CONFIG.responseModalities,
-        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName } } },
-      },
-    });
-    const requestSize = new Blob([requestBody]).size;
-    const estimatedTokens = Math.ceil(ttsContent.length / 4);
     const arabicTextChars = current?.arabic?.length || 0;
 
-    const modelLabel = ttsMode === 'live' ? 'Live 3.1' : API_MODELS.tts;
+    const modelLabel = ttsMode === 'live' ? 'Live 2.0' : API_MODELS.tts;
     addLog(
       'Audio API',
-      `→ Starting generation | Model: ${modelLabel} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
+      `→ Starting generation | Model: ${modelLabel} | ${arabicTextChars} chars Arabic`,
       'request'
     );
     setError(null);
@@ -287,23 +277,16 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         // ── Live API path — WebSocket TTS via server endpoint ──
         // Delivery style goes in system instruction (not prepended to text) for Live API
         const { liveVoice, liveTemperature } = useUIStore.getState();
-        const liveSystemInstruction =
-          'You are a masculine Arabic speaker, reciting Arabic poetry. You don\'t slow down unnecessarily ' +
-          'and do this with the authority of a poet that is well practiced. It flows, and sounds serious. ' +
-          'Even when you read this quicker, you take breaths that are audible. It\'s like you\'re pausing ' +
-          'to think about what you\'re going to say, then it comes out heavy and hard.\n\n' +
-          'اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. ' +
-          'أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية.';
         ttsModel = 'Live 2.0';
         addLog('Audio API', `[${ttsModel}] Using Live API WebSocket | voice: ${liveVoice} | temp: ${liveTemperature}`, 'info');
         const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            text: current.arabic,
+            text: getLiveContent(current),
             voiceName: liveVoice,
             temperature: liveTemperature,
-            systemInstruction: liveSystemInstruction,
+            systemInstruction: LIVE_SYSTEM_INSTRUCTION,
           }),
         });
 
@@ -326,6 +309,15 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         b64 = liveData.audioData;
       } else {
         // ── REST API path — existing generateContent flow ──
+        // REST TTS does NOT support systemInstruction — delivery directions go in content block
+        const ttsContent = getTTSContent(current);
+        const requestBody = JSON.stringify({
+          contents: [{ parts: [{ text: ttsContent }] }],
+          generationConfig: {
+            responseModalities: TTS_CONFIG.responseModalities,
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName } } },
+          },
+        });
         const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
         const fetchOptions = {
           method: 'POST',

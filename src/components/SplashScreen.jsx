@@ -220,7 +220,13 @@ const SplashScreen = () => {
 
   const handleFinish = (e) => {
     e.stopPropagation();
-    handleDismiss();
+    try {
+      if (localStorage.getItem('hasSeenOnboarding')) {
+        handleDismiss();
+        return;
+      }
+    } catch {}
+    setPhase(4);
   };
 
   if (!isOpen) return null;
@@ -336,6 +342,7 @@ const SplashScreen = () => {
   // which avoids removeChild errors from imperatively-added star DOM nodes.
   return (
     <motion.div
+      data-testid="splash-screen"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
@@ -698,6 +705,7 @@ const SplashScreen = () => {
               </div>
               <button
                 data-splash-finish="true"
+                data-testid="kinetic-continue"
                 onClick={handleFinish}
                 style={{
                   display: 'inline-flex',
@@ -731,9 +739,9 @@ const SplashScreen = () => {
                   e.currentTarget.style.background = 'transparent';
                   e.currentTarget.style.borderColor = '#333333';
                 }}
-                aria-label="Start exploring"
+                aria-label="Continue to onboarding"
               >
-                <span>Explore</span>
+                <span>Continue</span>
                 <ArrowRight size={16} />
               </button>
             </div>

@@ -424,7 +424,7 @@ test.describe('Poem Carousel', () => {
     const dots = await discoverAndWaitForCarousel(page);
     // Navigate to slide 2 (MOCK_POEM_DARWISH_2, id 42002)
     await dots.nth(1).click();
-    await page.waitForTimeout(500);
+    await expect(page.locator('p[dir="rtl"]').filter({ hasText: 'سجِّل' }).first()).toBeVisible({ timeout: 5000 });
 
     // Find and click the Copy button
     const copyBtn = page.locator('button[aria-label*="Copy"], button:has-text("Copy")').first();

@@ -2488,7 +2488,15 @@ buildSidebar();
     const dot     = document.getElementById('mbColorsDot');
     const label   = document.getElementById('mbColorsLabel');
 
-    if (catEl)  catEl.textContent = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
+    if (catEl) {
+      let catLabel = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
+      if (currentItem) {
+        const col = COLLECTIONS.find(c => c.items.some(e => e.name === currentItem.data.name));
+        if (col) catLabel = col.name;
+        else if (FEATURED.includes(currentItem.data.name)) catLabel = 'Featured';
+      }
+      catEl.textContent = catLabel;
+    }
     if (nameEl) {
       if (currentItem) {
         const d = currentItem.data;

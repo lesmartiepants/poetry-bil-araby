@@ -605,7 +605,9 @@ export default function DiwanApp() {
     ) {
       setAutoExplainPending(false);
       if (explainedPoemIds.current.has(poemToExplain.id)) return;
-      if (ratchetMode || !poemToExplain?.cachedTranslation) {
+      // Always AI-translate carousel poems (even if they have a DB scholarly translation),
+      // so every swiped poem gets the same high-quality AI rendering.
+      if (ratchetMode || !poemToExplain?.cachedTranslation || carouselPoems.length > 0) {
         explainedPoemIds.current.add(poemToExplain.id);
         // Set the carousel target ref so the patching effect can match by ID.
         // When carouselPoems is empty (initial explain fires before carousel populates),
@@ -859,7 +861,15 @@ export default function DiwanApp() {
   const togglePlay = () =>
     togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track });
 
-  const handleAnalyze = () => analyzePoemAction({ current: displayedPoem, addLog, track });
+  const handleAnalyze = () => {
+    // When in carousel mode, record which poem we're explaining so the patching
+    // effect (line ~418) can stamp the arriving translation onto the right slide
+    // instead of falling back to carouselPoems[0].
+    if (carouselPoems.length > 0 && displayedPoem?.id) {
+      carouselExplainTargetId.current = displayedPoem.id;
+    }
+    analyzePoemAction({ current: displayedPoem, addLog, track });
+  };
 
   const handleFetch = () => fetchPoemAction({ addLog, track, emitEvent, navigate, markPoemSeen });
 
@@ -1497,9 +1507,10 @@ export default function DiwanApp() {
                           });
                           updateOGMetaTags(newPoem);
                         }
+                        // Queue AI translation for every swiped poem, even those that
+                        // already have a DB scholarly translation (cachedTranslation).
                         if (
                           newPoem &&
-                          !newPoem.cachedTranslation &&
                           !newPoem.english &&
                           !explainedPoemIds.current.has(newPoem.id)
                         ) {
@@ -1546,10 +1557,16 @@ export default function DiwanApp() {
                         dismissTTSProgress();
                         setInterpretation(null);
                         carouselExplainTargetId.current = null;
+                        setShowTranslation(true);
                         const dir = dx > 0 ? 'prev' : 'next';
                         const newIdx = dx > 0 ? Math.max(0, carouselIndex - 1) : Math.min(carouselPoems.length - 1, carouselIndex + 1);
                         addLog('Carousel', `↔️ Swiped ${dir} → ${carouselPoems[newIdx]?.poet} | ${carouselPoems[newIdx]?.title}`, 'user');
                         setCarouselIndex(newIdx);
+                        // Queue AI translation for the new poem (mirrors Embla handler).
+                        const swipedPoem = carouselPoems[newIdx];
+                        if (swipedPoem && !swipedPoem.english && !explainedPoemIds.current.has(swipedPoem.id)) {
+                          setAutoExplainPending(true);
+                        }
                       }}
                     >
                       <div

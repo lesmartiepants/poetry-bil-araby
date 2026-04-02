@@ -59,6 +59,7 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
   const rafRef = useRef(null);
   const activeIndexRef = useRef(-1);
   const activeVerseRef = useRef(-1);
+  const lastScrollRef = useRef(0);
   // Stable ref to onVerseChange so tick closure doesn't go stale
   const onVerseChangeRef = useRef(onVerseChange);
   useEffect(() => { onVerseChangeRef.current = onVerseChange; });
@@ -91,6 +92,22 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
             el.classList.add('tts-active');
           } else if (i < newIndex) {
             el.classList.add('tts-past');
+          }
+        }
+
+        // Auto-scroll: if active word is below viewport, scroll up to 2 lines
+        if (newIndex >= 0) {
+          const activeEl = wordRefs[newIndex]?.current;
+          if (activeEl) {
+            const rect = activeEl.getBoundingClientRect();
+            const overflow = rect.bottom - window.innerHeight;
+            const now = Date.now();
+            if (overflow > 0 && now - lastScrollRef.current > 400) {
+              lastScrollRef.current = now;
+              const fontSize = parseFloat(getComputedStyle(activeEl).fontSize) || 28;
+              const lineHeight = fontSize * 2.2; // matches leading-[2.2]
+              window.scrollBy({ top: Math.min(overflow + lineHeight * 0.5, lineHeight * 2), behavior: 'smooth' });
+            }
           }
         }
 

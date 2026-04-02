@@ -31,6 +31,7 @@ const PlayControlsStrip = ({
     try { player.stop(); } catch {}
     if (wasPlaying) {
       startPlayer(player, offset);
+      useAudioStore.getState().setPlaying(true);
     } else {
       // Paused — update position only, don't start
       pauseOffset.value = offset;

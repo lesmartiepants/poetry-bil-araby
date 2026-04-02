@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bug, X, Trash2, Zap, Radio } from 'lucide-react';
+import { Bug, X, Trash2, Zap, Radio, Wifi } from 'lucide-react';
 import Sentry from '../sentry.js';
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
@@ -55,13 +55,21 @@ const DebugPanel = ({ controlBarRef }) => {
   const unreadErrors = errorCount - lastViewedErrors.current;
 
   const handleTtsModelToggle = async () => {
-    const next = ttsModel === 'pro' ? 'flash' : 'pro';
-    if (next === 'pro') {
-      API_MODELS.tts = 'gemini-2.5-pro-preview-tts';
-      API_MODELS.ttsFallback = 'gemini-2.5-flash-preview-tts';
+    const cycle = { pro: 'flash', flash: 'live', live: 'pro' };
+    const next = cycle[ttsModel] || 'pro';
+
+    if (next === 'live') {
+      // Live API bypasses REST model selection entirely
+      useUIStore.getState().setTtsMode('live');
     } else {
-      API_MODELS.tts = 'gemini-2.5-flash-preview-tts';
-      API_MODELS.ttsFallback = 'gemini-2.5-pro-preview-tts';
+      useUIStore.getState().setTtsMode('rest');
+      if (next === 'pro') {
+        API_MODELS.tts = 'gemini-2.5-pro-preview-tts';
+        API_MODELS.ttsFallback = 'gemini-2.5-flash-preview-tts';
+      } else {
+        API_MODELS.tts = 'gemini-2.5-flash-preview-tts';
+        API_MODELS.ttsFallback = 'gemini-2.5-pro-preview-tts';
+      }
     }
     setTtsModel(next);
 
@@ -222,28 +230,30 @@ const DebugPanel = ({ controlBarRef }) => {
           ))}
         </div>
 
-        {/* Speech Engine model A/B toggle — full row is the tap target */}
+        {/* Speech Engine model toggle — cycles pro → flash → live */}
         <button
           onClick={handleTtsModelToggle}
-          title={`Switch to ${ttsModel === 'pro' ? 'Flash' : 'Pro'} — clears audio cache for current poem`}
+          title={`Switch TTS mode (current: ${ttsModel})${ttsModel === 'live' ? ' — requires backend server' : ''} — clears audio cache`}
           className={`flex items-center gap-2 w-full px-4 py-1.5 border-t ${theme.border} flex-none text-left`}
         >
           {ttsModel === 'pro' ? (
             <Zap size={9} className="text-amber-400 flex-shrink-0" />
-          ) : (
+          ) : ttsModel === 'flash' ? (
             <Radio size={9} className="text-emerald-400 flex-shrink-0" />
+          ) : (
+            <Wifi size={9} className="text-orange-400 flex-shrink-0" />
           )}
           <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">
             Speech Engine
           </span>
-          {/* Inline pill toggle — Flash (emerald, left) ↔ Pro (amber, right) */}
+          {/* 3-position indicator */}
           <div
             className="relative flex-shrink-0 rounded-full transition-colors"
             style={{
-              width: 24,
+              width: 30,
               height: 12,
-              backgroundColor: ttsModel === 'pro' ? 'rgba(251,191,36,0.18)' : 'rgba(52,211,153,0.15)',
-              border: `1px solid ${ttsModel === 'pro' ? 'rgba(251,191,36,0.35)' : 'rgba(52,211,153,0.3)'}`,
+              backgroundColor: ttsModel === 'pro' ? 'rgba(251,191,36,0.18)' : ttsModel === 'flash' ? 'rgba(52,211,153,0.15)' : 'rgba(251,146,60,0.18)',
+              border: `1px solid ${ttsModel === 'pro' ? 'rgba(251,191,36,0.35)' : ttsModel === 'flash' ? 'rgba(52,211,153,0.3)' : 'rgba(251,146,60,0.35)'}`,
             }}
           >
             <span
@@ -252,14 +262,14 @@ const DebugPanel = ({ controlBarRef }) => {
                 width: 8,
                 height: 8,
                 top: 1,
-                left: ttsModel === 'pro' ? 13 : 1,
-                backgroundColor: ttsModel === 'pro' ? 'rgb(251,191,36)' : 'rgb(52,211,153)',
-                boxShadow: ttsModel === 'pro' ? '0 0 4px rgba(251,191,36,0.7)' : '0 0 4px rgba(52,211,153,0.6)',
+                left: ttsModel === 'pro' ? 1 : ttsModel === 'flash' ? 10 : 19,
+                backgroundColor: ttsModel === 'pro' ? 'rgb(251,191,36)' : ttsModel === 'flash' ? 'rgb(52,211,153)' : 'rgb(251,146,60)',
+                boxShadow: ttsModel === 'pro' ? '0 0 4px rgba(251,191,36,0.7)' : ttsModel === 'flash' ? '0 0 4px rgba(52,211,153,0.6)' : '0 0 4px rgba(251,146,60,0.7)',
               }}
             />
           </div>
-          <span className={`text-[0.5625rem] font-mono font-bold flex-shrink-0 ${ttsModel === 'pro' ? 'text-amber-400' : 'text-emerald-400'}`}>
-            {ttsModel === 'pro' ? 'Pro' : 'Flash'}
+          <span className={`text-[0.5625rem] font-mono font-bold flex-shrink-0 ${ttsModel === 'pro' ? 'text-amber-400' : ttsModel === 'flash' ? 'text-emerald-400' : 'text-orange-400'}`}>
+            {ttsModel === 'pro' ? 'Pro' : ttsModel === 'flash' ? 'Flash' : 'Live 3.1'}
           </span>
         </button>
 

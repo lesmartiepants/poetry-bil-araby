@@ -24,6 +24,7 @@ import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
+import WebSocket from 'ws';
 
 const { Pool } = pg;
 const app = express();
@@ -928,6 +929,99 @@ app.post('/api/ai/:model/:action', async (req, res) => {
     Sentry.captureException(error);
     log.error('AI Proxy', `Proxy failed: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// GEMINI LIVE API — WebSocket TTS (fallback for rate-limited REST TTS)
+// ═══════════════════════════════════════════════════════════════
+app.post('/api/ai/live-tts', async (req, res) => {
+  const WS_TIMEOUT = 60000;
+
+  try {
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
+    }
+    const { text, voiceName } = req.body || {};
+    if (!text || typeof text !== 'string' || !text.trim()) {
+      return res.status(400).json({ error: 'Missing or empty "text" field' });
+    }
+
+    const voice = voiceName || 'Fenrir';
+    log.info('Live TTS', `Starting | text: ${text.length} chars | voice: ${voice}`);
+
+    const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
+
+    const audioChunks = await new Promise((resolve, reject) => {
+      const chunks = [];
+      let settled = false;
+      const timeout = setTimeout(() => {
+        if (!settled) { settled = true; ws.close(); reject(new Error('Live TTS timed out after 60s')); }
+      }, WS_TIMEOUT);
+
+      const ws = new WebSocket(wsUrl);
+
+      ws.on('open', () => {
+        ws.send(JSON.stringify({
+          setup: {
+            model: 'models/gemini-3.1-flash-live-preview',
+            generationConfig: {
+              responseModalities: ['AUDIO'],
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } }
+            }
+          }
+        }));
+      });
+
+      ws.on('message', (raw) => {
+        try {
+          const msg = JSON.parse(raw.toString());
+          if (msg.setupComplete) {
+            ws.send(JSON.stringify({
+              clientContent: {
+                turns: [{ role: 'user', parts: [{ text }] }],
+                turnComplete: true
+              }
+            }));
+            return;
+          }
+          if (msg.serverContent?.modelTurn?.parts) {
+            for (const part of msg.serverContent.modelTurn.parts) {
+              if (part.inlineData?.data) chunks.push(part.inlineData.data);
+            }
+          }
+          if (msg.serverContent?.turnComplete) {
+            if (!settled) { settled = true; clearTimeout(timeout); ws.close(); resolve(chunks); }
+          }
+        } catch (e) {
+          log.error('Live TTS', `Parse error: ${e.message}`);
+        }
+      });
+
+      ws.on('error', (err) => {
+        if (!settled) { settled = true; clearTimeout(timeout); reject(err); }
+      });
+
+      ws.on('close', (code, reason) => {
+        if (!settled) {
+          settled = true; clearTimeout(timeout);
+          if (chunks.length > 0) resolve(chunks);
+          else reject(new Error(`WebSocket closed: code=${code} reason=${reason}`));
+        }
+      });
+    });
+
+    if (!audioChunks.length) {
+      return res.status(500).json({ error: 'No audio data received from Live API' });
+    }
+
+    const combinedBase64 = audioChunks.join('');
+    log.info('Live TTS', `Complete | ${audioChunks.length} chunks | ${combinedBase64.length} chars`);
+    res.json({ audioData: combinedBase64 });
+
+  } catch (error) {
+    log.error('Live TTS', `Failed: ${error.message}`);
+    res.status(500).json({ error: `Live TTS failed: ${error.message}` });
   }
 });
 

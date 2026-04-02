@@ -253,6 +253,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     usePoemStore.getState().addActiveAudio(current?.id);
 
     const ttsContent = getTTSContent(current);
+    const ttsMode = useUIStore.getState().ttsMode;
     const requestBody = JSON.stringify({
       contents: [{ parts: [{ text: ttsContent }] }],
       generationConfig: {
@@ -264,9 +265,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     const estimatedTokens = Math.ceil(ttsContent.length / 4);
     const arabicTextChars = current?.arabic?.length || 0;
 
+    const modelLabel = ttsMode === 'live' ? 'Live 3.1' : API_MODELS.tts;
     addLog(
       'Audio API',
-      `→ Starting generation | Model: ${API_MODELS.tts} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
+      `→ Starting generation | Model: ${modelLabel} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
       'request'
     );
     setError(null);
@@ -278,47 +280,83 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
     try {
       const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-      const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      };
-      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
-        addLog,
-        label: 'Audio API',
-      });
+      let b64;
+      let ttsModel;
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        addLog(
-          'Audio API Error',
-          `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
-          'error'
-        );
-        if (res.status === 429) {
-          const msg =
-            'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.';
-          setError(msg);
-          toast.error(msg);
-          throw new Error('Rate limited (429)');
+      if (ttsMode === 'live') {
+        // ── Live API path — WebSocket TTS via server endpoint ──
+        ttsModel = 'Live 3.1';
+        addLog('Audio API', `[${ttsModel}] Using Live API WebSocket endpoint`, 'info');
+        const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: ttsContent, voiceName: TTS_CONFIG.voiceName }),
+        });
+
+        if (!liveRes.ok) {
+          const errorText = await liveRes.text();
+          addLog('Audio API Error', `[${ttsModel}] HTTP ${liveRes.status}: ${errorText.substring(0, 200)}`, 'error');
+          if (liveRes.status === 429) {
+            const msg = 'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.';
+            setError(msg);
+            toast.error(msg);
+            throw new Error('Rate limited (429)');
+          }
+          throw new Error(`Live API returned ${liveRes.status}: ${liveRes.statusText}`);
         }
-        throw new Error(`API returned ${res.status}: ${res.statusText}`);
+
+        const liveData = await liveRes.json();
+        if (!liveData.audioData) {
+          throw new Error('Live API returned no audio data');
+        }
+        b64 = liveData.audioData;
+      } else {
+        // ── REST API path — existing generateContent flow ──
+        const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+        const fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+        };
+        const fallbackResult = await fetchTTSWithFallback(url, fetchOptions, {
+          addLog,
+          label: 'Audio API',
+        });
+        const res = fallbackResult.res;
+        ttsModel = fallbackResult.model;
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          addLog(
+            'Audio API Error',
+            `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
+            'error'
+          );
+          if (res.status === 429) {
+            const msg =
+              'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.';
+            setError(msg);
+            toast.error(msg);
+            throw new Error('Rate limited (429)');
+          }
+          throw new Error(`API returned ${res.status}: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+
+        if (!data.candidates || data.candidates.length === 0) {
+          addLog(
+            'Audio API Error',
+            `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
+            'error'
+          );
+          throw new Error('Recitation failed - no audio candidates returned');
+        }
+
+        b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       }
 
-      const data = await res.json();
       const apiTime = performance.now() - apiStart;
-
-      if (!data.candidates || data.candidates.length === 0) {
-        addLog(
-          'Audio API Error',
-          `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
-          'error'
-        );
-        throw new Error('Recitation failed - no audio candidates returned');
-      }
-
-      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (b64) {
         const conversionStart = performance.now();
         const blob = pcm16ToWav(b64);

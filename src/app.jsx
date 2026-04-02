@@ -296,7 +296,7 @@ export default function DiwanApp() {
     const prev = prevIsInterpretingRef.current;
     prevIsInterpretingRef.current = isInterpreting;
     if (!prev && isInterpreting) {
-      toast.loading('Translating poem…', { id: 'translation-progress', duration: Infinity });
+      toast.loading('Translating poem…', { id: 'translation-progress', duration: Infinity, icon: <span className="rabbit-loading">🐇</span> });
     } else if (prev && !isInterpreting) {
       if (interpretation) {
         toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });
@@ -1494,7 +1494,7 @@ export default function DiwanApp() {
                                 style={{
                                   fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
                                   maxWidth: '90%',
-                                  animationDelay: `${idx * 80}ms`,
+                                  animationDelay: `${idx * 120}ms`,
                                 }}
                               >
                                 {pair.en}

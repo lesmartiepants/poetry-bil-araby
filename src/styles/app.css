@@ -28,6 +28,17 @@
   text-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
 }
 
+@keyframes rabbitHop {
+  0%, 100% { transform: translateY(0) scaleX(1); }
+  30%       { transform: translateY(-5px) scaleX(0.9); }
+  60%       { transform: translateY(0) scaleX(1.05); }
+}
+.rabbit-loading {
+  display: inline-block;
+  animation: rabbitHop 0.55s ease-in-out infinite;
+  font-style: normal;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -53,7 +64,7 @@
 }
 
 .inline-fade-in {
-  animation: inlineFadeIn 0.35s ease-out forwards;
+  animation: inlineFadeIn 0.55s ease-out forwards;
 }
 
 .minimal-frame {

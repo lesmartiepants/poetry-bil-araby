@@ -202,7 +202,7 @@ const PoemCarousel = forwardRef(({
                             style={{
                               fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
                               maxWidth: '90%',
-                              animationDelay: `${idx * 80}ms`,
+                              animationDelay: `${idx * 120}ms`,
                             }}
                           >
                             {pair.en}

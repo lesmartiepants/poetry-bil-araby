@@ -79,7 +79,7 @@ import './styles/app.css';
 import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
-import { useTTSHighlight, startPlayer, pauseOffset, playbackStartTime } from './hooks/useTTSHighlight.js';
+import { useTTSHighlight, startPlayer, pauseOffset, playbackStartTime, isSeeking } from './hooks/useTTSHighlight.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 
@@ -833,7 +833,12 @@ export default function DiwanApp() {
   useEffect(() => {
     if (audioPlayer) {
       audioPlayer.onstop = () => {
-        useAudioStore.getState().setPlaying(false);
+        // Skip during seek — seek sets isSeeking.value=true before stop() and
+        // calls setPlaying(true) itself after startPlayer(). Without this guard
+        // onstop fires asynchronously after setPlaying(true) and clobbers it.
+        if (!isSeeking.value) {
+          useAudioStore.getState().setPlaying(false);
+        }
       };
     }
   }, [audioPlayer]);

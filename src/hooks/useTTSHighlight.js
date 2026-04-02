@@ -9,6 +9,11 @@ import { FEATURES } from '../constants/features';
  */
 export const playbackStartTime = { value: 0 };
 export const pauseOffset = { value: 0 };
+/**
+ * Seek guard — set true before player.stop() in a seek operation so the
+ * onstop handler skips its setPlaying(false) call. Reset after startPlayer().
+ */
+export const isSeeking = { value: false };
 
 /**
  * Start a Tone.Player from a given offset and record the wall-clock start time.

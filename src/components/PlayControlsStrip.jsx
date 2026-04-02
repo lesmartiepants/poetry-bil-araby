@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { SkipBack, Play, Pause, SkipForward, Loader2 } from 'lucide-react';
-import { startPlayer, pauseOffset, playbackStartTime } from '../hooks/useTTSHighlight';
+import { startPlayer, pauseOffset, playbackStartTime, isSeeking } from '../hooks/useTTSHighlight';
 import { useAudioStore } from '../stores/audioStore';
 import { useUIStore } from '../stores/uiStore';
 
@@ -28,6 +28,7 @@ const PlayControlsStrip = ({
     // (onstop fires and updates the store, but this closure captured the old prop)
     const wasPlaying = useAudioStore.getState().isPlaying;
     useUIStore.getState().addLog('Playback', `⏩ Seek to ${offset.toFixed(2)}s | wasPlaying: ${wasPlaying}`, 'user');
+    isSeeking.value = true;
     try { player.stop(); } catch {}
     if (wasPlaying) {
       startPlayer(player, offset);
@@ -37,6 +38,7 @@ const PlayControlsStrip = ({
       pauseOffset.value = offset;
       playbackStartTime.value = Date.now() / 1000;
     }
+    isSeeking.value = false;
   };
 
   const handlePrev = () => {

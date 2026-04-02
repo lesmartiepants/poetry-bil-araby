@@ -248,10 +248,10 @@ test.describe('TTS Word-Highlight Reader', () => {
     await expect(controlsStrip).toBeVisible({ timeout: 5000 });
 
     // Should contain prev, play/pause, and next buttons
-    await expect(controlsStrip.locator('button[aria-label="Previous verse"]')).toBeVisible();
+    await expect(controlsStrip.locator('button[aria-label="Prev verse"]')).toBeVisible();
     await expect(controlsStrip.locator('button[aria-label="Next verse"]')).toBeVisible();
     await expect(
-      controlsStrip.locator('button[aria-label="Play recitation"], button[aria-label="Pause recitation"]').first()
+      controlsStrip.locator('button[aria-label="Play"], button[aria-label="Pause"]').first()
     ).toBeVisible();
   });
 

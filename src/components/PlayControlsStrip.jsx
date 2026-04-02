@@ -26,6 +26,8 @@ const PlayControlsStrip = ({
   const handlePrev = () => {
     const prevIndex = currentVerseIndex - 1;
     if (prevIndex >= 0) {
+      // Stop first if already playing — Tone.Player throws if start() called twice
+      if (isPlaying) player.stop();
       startPlayer(player, verseStartTimes[prevIndex]);
     }
   };
@@ -33,6 +35,7 @@ const PlayControlsStrip = ({
   const handleNext = () => {
     const nextIndex = currentVerseIndex + 1;
     if (nextIndex < verseStartTimes.length) {
+      if (isPlaying) player.stop();
       startPlayer(player, verseStartTimes[nextIndex]);
     }
   };

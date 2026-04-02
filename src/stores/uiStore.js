@@ -25,7 +25,6 @@ const initialState = {
   highlightStyle: 'none', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
   logs: [],
   headerOpacity: 0,
-  ratchetMode: false,
   cacheStats: {
     audioHits: 0,
     audioMisses: 0,
@@ -45,8 +44,6 @@ export const useUIStore = create((set, get) => ({
   setShowTranslation: (showTranslation) => set({ showTranslation }),
   setShowTransliteration: (showTransliteration) => set({ showTransliteration }),
   setHeaderOpacity: (headerOpacity) => set({ headerOpacity }),
-  toggleRatchetMode: () => set((s) => ({ ratchetMode: !s.ratchetMode })),
-
   cycleFont: () =>
     set((s) => {
       const idx = FONTS.findIndex((f) => f.id === s.font);
@@ -59,7 +56,7 @@ export const useUIStore = create((set, get) => ({
   toggleTranslation: () => set((s) => ({ showTranslation: !s.showTranslation })),
   toggleTransliteration: () => set((s) => ({ showTransliteration: !s.showTransliteration })),
   toggleDebugLogs: () => set((s) => ({ showDebugLogs: !s.showDebugLogs })),
-  toggleRatchetMode: () => set((s) => ({ ratchetMode: !s.ratchetMode })),
+  toggleRatchetMode: () => set((s) => ({ ratchetMode: !s.ratchetMode })), // keep this one
 
   addLog: (label, msg, type = 'info') => {
     const now = performance.now();

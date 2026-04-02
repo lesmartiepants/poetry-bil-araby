@@ -29,6 +29,9 @@
 
 .tts-en-line {
   opacity: 0.4;
+  /* Reserve padding always so pill active state doesn't cause layout shift */
+  padding: 2px 8px;
+  border-radius: 3px;
   transition:
     opacity 180ms,
     color 180ms,
@@ -50,8 +53,6 @@
 .tts-style-pill .tts-en-line.tts-line-active {
   opacity: 1;
   background: rgba(201, 168, 76, 0.12);
-  border-radius: 3px;
-  padding: 2px 8px;
 }
 
 .tts-style-focus-blur .tts-en-line.tts-line-active {

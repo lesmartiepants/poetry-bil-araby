@@ -812,31 +812,26 @@ export default function DiwanApp() {
   // for the English line tts-line-active treatment (managed below via rAF).
   const ttsContainerRef = useRef(null);
 
-  useTTSHighlight({ wordRefs, timings: wordTimings, totalDuration: audioDuration });
+  const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
 
-  // Derive which verse is currently active based on pauseOffset (updated each rAF tick)
-  // We read this reactively from the store indirectly via isPlaying state for re-renders.
-  const currentVerseIndex = useMemo(() => {
-    const elapsed = pauseOffset.value;
-    if (!elapsed || verseStartTimes.length === 0) return 0;
-    let idx = 0;
-    for (let i = 0; i < verseStartTimes.length; i++) {
-      if (elapsed >= verseStartTimes[i]) idx = i;
-    }
-    return idx;
-  }, [isPlaying, verseStartTimes]); // re-evaluate when play state changes
+  useTTSHighlight({
+    wordRefs,
+    timings: wordTimings,
+    totalDuration: audioDuration,
+    wordOffsets,
+    onVerseChange: setCurrentVerseIndex,
+  });
 
   // pcm16ToWav imported from ./utils/audio.js (used directly below)
 
-  // Wire Tone.Player end-of-playback — watch audioStore for player changes
+  // Wire Tone.Player end-of-playback — audioPlayer is a reactive selector (line 193)
   useEffect(() => {
-    const player = useAudioStore.getState().player;
-    if (player) {
-      player.onstop = () => {
+    if (audioPlayer) {
+      audioPlayer.onstop = () => {
         useAudioStore.getState().setPlaying(false);
       };
     }
-  }, [useAudioStore.getState().player]);
+  }, [audioPlayer]);
 
   // Volume detection for pulse & glow effect
   useVolumeDetection({

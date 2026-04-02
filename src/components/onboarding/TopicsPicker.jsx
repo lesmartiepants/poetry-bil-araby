@@ -43,15 +43,10 @@ const CONNECTIONS = [
   [4, 8], [5, 8], [5, 6], [7, 9], [8, 10],
 ];
 
-const MIN_SELECTIONS = 2;
-const MAX_SELECTIONS = 5;
-
 const TopicsPicker = ({ selectedMoods, selectedEras, onComplete }) => {
   const [selected, setSelected] = useState([]);
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
-  const ctaRef = useRef(null);
-  const ctaShown = useRef(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -104,19 +99,6 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete }) => {
     return () => window.removeEventListener('resize', resize);
   }, []);
 
-  // CTA animation
-  useEffect(() => {
-    const el = ctaRef.current;
-    if (!el) return;
-    if (selected.length >= MIN_SELECTIONS && !ctaShown.current) {
-      ctaShown.current = true;
-      gsap.fromTo(el, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' });
-    } else if (selected.length < MIN_SELECTIONS && ctaShown.current) {
-      ctaShown.current = false;
-      gsap.to(el, { opacity: 0, y: 10, duration: 0.2 });
-    }
-  }, [selected]);
-
   const toggleTopic = (slug, color, event) => {
     const rect = event.currentTarget.getBoundingClientRect();
     const cx = rect.left + rect.width / 2;
@@ -126,20 +108,17 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete }) => {
       if (prev.includes(slug)) {
         return prev.filter((s) => s !== slug);
       }
-      if (prev.length >= MAX_SELECTIONS) return prev;
       spawnParticles(cx, cy, color);
       return [...prev, slug];
     });
   };
 
   const handleComplete = () => {
-    if (selected.length >= MIN_SELECTIONS) {
-      onComplete({
-        moods: selectedMoods || [],
-        eras: selectedEras || [],
-        topics: selected,
-      });
-    }
+    onComplete({
+      moods: selectedMoods || [],
+      eras: selectedEras || [],
+      topics: selected,
+    });
   };
 
   // Get connections for a given node index
@@ -179,7 +158,7 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete }) => {
       />
 
       <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '600px', padding: '1.5rem 1rem' }}>
-        {/* Header with counter */}
+        {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '1rem', paddingTop: '1rem' }}>
           <h2
             style={{
@@ -192,24 +171,8 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete }) => {
             lang="ar"
             dir="rtl"
           >
-            {'\u0627\u062e\u062a\u0631 \u0662\u2013\u0665 \u0645\u0648\u0627\u0636\u064a\u0639'}
+            {'\u0627\u062e\u062a\u0631 \u0645\u0627 \u064a\u062b\u064a\u0631 \u0641\u0636\u0648\u0644\u0643'}
           </h2>
-
-          {/* Selection dots */}
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '0.5rem' }}>
-            {Array.from({ length: MAX_SELECTIONS }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: i < selected.length ? GOLD : 'rgba(255,255,255,0.15)',
-                  transition: 'background 0.2s ease',
-                }}
-              />
-            ))}
-          </div>
         </div>
 
         {/* Constellation / Grid */}
@@ -361,11 +324,10 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete }) => {
         {/* CTA */}
         <div style={{ textAlign: 'center', marginTop: isMobile ? '1.5rem' : '2rem', paddingBottom: '2rem' }}>
           <button
-            ref={ctaRef}
             data-testid="show-poetry-btn"
             onClick={handleComplete}
             style={{
-              opacity: 0,
+              opacity: selected.length >= 1 ? 1 : 0.5,
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
@@ -378,7 +340,7 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete }) => {
               fontSize: '1rem',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'background 0.3s ease, transform 0.2s ease',
+              transition: 'background 0.3s ease, transform 0.2s ease, opacity 0.2s ease',
               minHeight: '52px',
               direction: 'rtl',
             }}
@@ -390,9 +352,9 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete }) => {
               e.currentTarget.style.background = `${GOLD}15`;
               e.currentTarget.style.transform = 'scale(1)';
             }}
-            aria-label="\u0623\u0631\u0646\u064a \u0634\u0639\u0631\u064b\u0627"
+            aria-label={selected.length >= 1 ? '\u0623\u0631\u0646\u064a \u0634\u0639\u0631\u064b\u0627' : '\u062a\u062e\u0637\u0649'}
           >
-            <span>{'\u0623\u0631\u0646\u064a \u0634\u0639\u0631\u064b\u0627'}</span>
+            <span>{selected.length >= 1 ? '\u0623\u0631\u0646\u064a \u0634\u0639\u0631\u064b\u0627' : '\u062a\u062e\u0637\u0649'}</span>
             <ArrowRight size={18} />
           </button>
         </div>

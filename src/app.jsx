@@ -245,6 +245,13 @@ export default function DiwanApp() {
   // When the carousel is active, show the poem the user has swiped to
   const displayedPoem = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
 
+  const getOnboardingPrefs = () => {
+    try {
+      const raw = localStorage.getItem('onboardingPrefs');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  };
+
   const addLog = useUIStore.getState().addLog;
 
   // Track poem view time (emit 'view' event after 3s on same poem)
@@ -447,7 +454,39 @@ export default function DiwanApp() {
       } else {
         // No cached translation — queue auto-explain and fetch from DB
         setAutoExplainPending(true);
-        handleFetch();
+
+        // Seed the first poem with onboarding tag preferences (one-time only)
+        const prefs = getOnboardingPrefs();
+        if (useDatabase && prefs?.topics?.length) {
+          const tags = prefs.topics.slice(0, 3).join(',');
+          addLog('Discovery', `First poem seeded with tags: ${tags}`, 'info');
+
+          const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+          fetch(`${apiUrl}/api/poems/random?tags=${encodeURIComponent(tags)}`)
+            .then((res) => {
+              if (!res.ok) throw new Error(`Tag fetch returned ${res.status}`);
+              return res.json();
+            })
+            .then((poem) => {
+              const normalized = { ...poem, arabic: poem.arabic?.replace(/\*/g, '\n'), isFromDatabase: true };
+              const rawTranslation = poem.cachedTranslation || poem.cached_translation || poem.english || '';
+              if (rawTranslation) {
+                normalized.english = rawTranslation.replace(/\*/g, '\n');
+                normalized.cachedTranslation = normalized.english;
+              }
+              setPoems((prev) => [normalized, ...prev]);
+              setCurrentIndex(0);
+              navigate('/poem/' + poem.id + window.location.search, { replace: true });
+              addLog('Discovery', `Tag-seeded poem loaded: ${poem.poet} — ${poem.title}`, 'success');
+            })
+            .catch(() => {
+              // Fallback: tags not available or no matching poems — use normal fetch
+              addLog('Discovery', 'Tag-seeded fetch failed, falling back to normal discovery', 'warn');
+              handleFetch();
+            });
+        } else {
+          handleFetch();
+        }
       }
 
       // Background: pre-fetch next visit's poem

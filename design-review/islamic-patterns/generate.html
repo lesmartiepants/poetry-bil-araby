@@ -438,7 +438,7 @@
       height: 72px;
       background: var(--surface);
       border-top: 1px solid var(--border);
-      z-index: 200;
+      z-index: 400;
       align-items: center;
       padding: 0 8px;
       gap: 0;
@@ -551,11 +551,6 @@
     }
     .sheet-item:active { background: var(--gold-bg); }
     .sheet-item.active { color: var(--gold); }
-    .sheet-backdrop {
-      display: none; position: fixed; inset: 0; z-index: 299;
-      background: rgba(0,0,0,0.5);
-    }
-    .sheet-backdrop.open { display: block; }
   }
 </style>
 </head>
@@ -648,13 +643,6 @@
 <!-- ── PALETTE ROW (multi-color mode) ── -->
 <div class="palette-row" id="paletteRow"></div>
 
-<!-- ── PATTERN PICKER SHEET ── -->
-<div class="sheet-backdrop" id="sheetBackdrop" onclick="closeSheet()"></div>
-<div class="pattern-sheet" id="patternSheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header" id="sheetHeader">Patterns</div>
-  <div class="sheet-list" id="sheetList"></div>
-</div>
 
 <!-- ── TILE MODE FLOATING CLOSE BUTTON ── -->
 <button id="tileCloseBtn" title="Exit tile mode (Esc or T)">&#x2715;</button>
@@ -2301,50 +2289,11 @@ buildSidebar();
     else updateMobileBar();
   });
 
-  // Pattern name tap → open picker sheet
-  document.getElementById('mbName').addEventListener('click', () => openSheet());
-
   // Heart → delegate to toolbar heart button
   document.getElementById('mbHeart').addEventListener('click', () => {
     document.getElementById('heartBtn').click();
     setTimeout(updateMobileBar, 50);
   });
-
-  // ── Pattern picker bottom sheet ──
-  window.openSheet = function() {
-    const sheet = document.getElementById('patternSheet');
-    const backdrop = document.getElementById('sheetBackdrop');
-    const list = document.getElementById('sheetList');
-    const header = document.getElementById('sheetHeader');
-    if (!sheet) return;
-
-    const catName = currentTab.charAt(0).toUpperCase() + currentTab.slice(1);
-    header.textContent = catName + ' — tap to select';
-
-    const items = getFlatItems();
-    list.innerHTML = items.map((it, i) => {
-      const isActive = currentItem && it.data === currentItem.data;
-      return `<div class="sheet-item${isActive ? ' active' : ''}" data-idx="${i}">
-        ${isActive ? '♥ ' : ''}${it.data.name}
-      </div>`;
-    }).join('');
-
-    list.querySelectorAll('.sheet-item').forEach((el, i) => {
-      el.addEventListener('click', () => {
-        const it = items[i];
-        if (it) selectItem(it.kind, it.data);
-        closeSheet();
-      });
-    });
-
-    sheet.classList.add('open');
-    backdrop.classList.add('open');
-  };
-
-  window.closeSheet = function() {
-    document.getElementById('patternSheet').classList.remove('open');
-    document.getElementById('sheetBackdrop').classList.remove('open');
-  };
 
   // ── Palette row for multi-color mode ──
   window.buildPaletteRow = function() {

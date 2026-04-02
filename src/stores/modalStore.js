@@ -26,6 +26,7 @@ const initialState = {
   splash: computeSplash(),
   insightsDrawer: false,
   discoverDrawer: false,
+  prefsDrawer: false,
   shortcutHelp: false,
   poetPicker: false,
   poetPickerClosing: false,
@@ -70,6 +71,14 @@ export const useModalStore = create((set) => ({
   openDiscoverDrawer: () => set({ discoverDrawer: true }),
   closeDiscoverDrawer: () => set({ discoverDrawer: false }),
   setDiscoverDrawer: (open) => set({ discoverDrawer: open }),
+
+  openPrefsDrawer: () => set({ prefsDrawer: true }),
+  closePrefsDrawer: () => set({ prefsDrawer: false }),
+
+  resetPreferences: () => {
+    try { localStorage.removeItem('onboardingPrefs'); } catch {}
+    set({ onboarding: false });
+  },
 
   toggleShortcutHelp: () => set((s) => ({ shortcutHelp: !s.shortcutHelp })),
   closeShortcutHelp: () => set({ shortcutHelp: false }),

@@ -14,6 +14,7 @@ import {
   Check,
   X,
   Rabbit,
+  BookOpen,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -78,7 +79,7 @@ import './styles/app.css';
 import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
-import { useTTSHighlight, startPlayer, pauseOffset } from './hooks/useTTSHighlight.js';
+import { useTTSHighlight, startPlayer, pauseOffset, playbackStartTime } from './hooks/useTTSHighlight.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 
@@ -791,9 +792,12 @@ export default function DiwanApp() {
     return 0;
   }, [audioPlayer]);
 
+  // When no audio is loaded, use a character-weighted simulated duration (~650ms/word)
+  const effectiveDuration = audioDuration || allWords.length * 0.65;
+
   const wordTimings = useMemo(
-    () => computeWordTimings(allWords, audioDuration),
-    [allWords, audioDuration]
+    () => computeWordTimings(allWords, effectiveDuration),
+    [allWords, effectiveDuration]
   );
 
   // Per-verse start times — first word of each verse's timing.start
@@ -813,11 +817,33 @@ export default function DiwanApp() {
   const ttsContainerRef = useRef(null);
 
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
+  const [isReadAlong, setIsReadAlong] = useState(false);
+  const readAlongTimerRef = useRef(null);
+
+  const stopReadAlong = () => {
+    if (readAlongTimerRef.current) clearTimeout(readAlongTimerRef.current);
+    readAlongTimerRef.current = null;
+    setIsReadAlong(false);
+    useAudioStore.getState().setPlaying(false);
+    pauseOffset.value = 0;
+  };
+
+  const startReadAlong = () => {
+    if (isReadAlong) { stopReadAlong(); return; }
+    // Auto-select glow if no style is chosen
+    if (highlightStyle === 'none') useUIStore.getState().setHighlightStyle('glow');
+    setIsReadAlong(true);
+    setCurrentVerseIndex(0);
+    pauseOffset.value = 0;
+    playbackStartTime.value = Date.now() / 1000;
+    useAudioStore.getState().setPlaying(true);
+    readAlongTimerRef.current = setTimeout(stopReadAlong, effectiveDuration * 1000 + 500);
+  };
 
   useTTSHighlight({
     wordRefs,
     timings: wordTimings,
-    totalDuration: audioDuration,
+    totalDuration: effectiveDuration,
     wordOffsets,
     onVerseChange: setCurrentVerseIndex,
   });
@@ -1724,6 +1750,24 @@ export default function DiwanApp() {
                     </span>
                   </>
                 )}
+              </div>
+
+              {/* Read Along — no-audio highlight demo */}
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                <button
+                  onClick={startReadAlong}
+                  aria-label={isReadAlong ? 'Stop read along' : 'Start read along'}
+                  className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${isReadAlong ? 'bg-gold/15' : ''} ${GOLD.goldHoverBg} hover:scale-105`}
+                >
+                  <BookOpen
+                    className={GOLD.goldText}
+                    size={21}
+                    strokeWidth={isReadAlong ? 2.5 : 1.5}
+                  />
+                </button>
+                <span className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+                  {isReadAlong ? 'Reading' : 'Read'}
+                </span>
               </div>
 
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">

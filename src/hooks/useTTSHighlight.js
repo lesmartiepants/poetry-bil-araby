@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useAudioStore } from '../stores/audioStore';
+import { FEATURES } from '../constants/features';
 
 /**
  * Module-level playback state — mutable objects so tests can import by reference.
@@ -19,6 +20,7 @@ export const pauseOffset = { value: 0 };
 export function startPlayer(player, offset) {
   pauseOffset.value = offset;
   playbackStartTime.value = Date.now() / 1000;
+  if (FEATURES.logging) console.log(`[Playback:startPlayer] offset=${offset.toFixed(2)}s`);
   player.start(undefined, offset);
 }
 
@@ -32,7 +34,9 @@ export function startPlayer(player, offset) {
  */
 export function recordPause() {
   const elapsed = Date.now() / 1000 - playbackStartTime.value;
-  pauseOffset.value = pauseOffset.value + Math.max(0, elapsed);
+  const newOffset = pauseOffset.value + Math.max(0, elapsed);
+  if (FEATURES.logging) console.log(`[Playback:recordPause] elapsed=${elapsed.toFixed(2)}s → offset=${newOffset.toFixed(2)}s`);
+  pauseOffset.value = newOffset;
   // Reset start time so subsequent recordPause calls are safe
   playbackStartTime.value = Date.now() / 1000;
 }

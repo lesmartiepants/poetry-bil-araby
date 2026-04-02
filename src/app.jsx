@@ -1540,11 +1540,10 @@ export default function DiwanApp() {
                         dismissTTSProgress();
                         setInterpretation(null);
                         carouselExplainTargetId.current = null;
-                        if (dx > 0) {
-                          setCarouselIndex(Math.max(0, carouselIndex - 1));
-                        } else {
-                          setCarouselIndex(Math.min(carouselPoems.length - 1, carouselIndex + 1));
-                        }
+                        const dir = dx > 0 ? 'prev' : 'next';
+                        const newIdx = dx > 0 ? Math.max(0, carouselIndex - 1) : Math.min(carouselPoems.length - 1, carouselIndex + 1);
+                        addLog('Carousel', `↔️ Swiped ${dir} → ${carouselPoems[newIdx]?.poet} | ${carouselPoems[newIdx]?.title}`, 'user');
+                        setCarouselIndex(newIdx);
                       }}
                     >
                       <div

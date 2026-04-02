@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { SkipBack, Play, Pause, SkipForward, Loader2 } from 'lucide-react';
 import { startPlayer, pauseOffset, playbackStartTime } from '../hooks/useTTSHighlight';
 import { useAudioStore } from '../stores/audioStore';
+import { useUIStore } from '../stores/uiStore';
 
 /**
  * PlayControlsStrip — transport bar above the footer controls.
@@ -26,6 +27,7 @@ const PlayControlsStrip = ({
     // Read live store state BEFORE stop() — the isPlaying prop is stale
     // (onstop fires and updates the store, but this closure captured the old prop)
     const wasPlaying = useAudioStore.getState().isPlaying;
+    useUIStore.getState().addLog('Playback', `⏩ Seek to ${offset.toFixed(2)}s | wasPlaying: ${wasPlaying}`, 'user');
     try { player.stop(); } catch {}
     if (wasPlaying) {
       startPlayer(player, offset);

@@ -207,7 +207,10 @@ const TextSettingsPill = () => {
                 type="single"
                 value={highlightStyle}
                 onValueChange={(v) => {
-                  if (v) useUIStore.getState().setHighlightStyle(v);
+                  if (v) {
+                    useUIStore.getState().setHighlightStyle(v);
+                    useUIStore.getState().addLog('UI', `Highlight style: ${v}`, 'user');
+                  }
                 }}
                 className="flex gap-1 flex-wrap"
               >

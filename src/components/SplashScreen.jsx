@@ -20,7 +20,7 @@ const SplashScreen = () => {
       localStorage.setItem('hasSeenOnboarding', 'true');
     } catch {}
   };
-  // Phase: 0 = desert splash, 1 = kinetic step 0 (Arabic), 2 = kinetic step 1 (English), 3 = kinetic step 2 (count)
+  // Phase: 0 = desert splash, 1 = kinetic step 0 (Arabic), 2 = kinetic step 1 (English + Continue), 3 = MoodPicker, 4 = EraPicker, 5 = TopicsPicker
   const [phase, setPhase] = useState(0);
   const [fadeState, setFadeState] = useState('in');
   const starsRef = useRef(null);
@@ -218,7 +218,7 @@ const SplashScreen = () => {
 
   const handleWalkthroughTap = (e) => {
     if (e.target.closest('[data-splash-finish]')) return;
-    if (phase < 3) {
+    if (phase < 2) {
       setPhase(phase + 1);
     }
   };
@@ -231,7 +231,7 @@ const SplashScreen = () => {
         return;
       }
     } catch {}
-    setPhase(4);
+    setPhase(3);
   };
 
   if (!isOpen) return null;
@@ -497,14 +497,14 @@ const SplashScreen = () => {
         </button>
       </div>
 
-      {/* KINETIC WALKTHROUGH (phases 1-3) — hidden via display:none until phase >= 1 */}
+      {/* KINETIC WALKTHROUGH (phases 1-2) — hidden via display:none until phase >= 1 */}
       <div
         style={{
           position: 'fixed',
           inset: 0,
           zIndex: 60,
           background: '#000000',
-          display: phase >= 1 && phase <= 3 ? 'flex' : 'none',
+          display: phase >= 1 && phase <= 2 ? 'flex' : 'none',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
@@ -657,57 +657,6 @@ const SplashScreen = () => {
               >
                 Where words become worlds
               </div>
-            </div>
-          )}
-
-          {/* Step 2: Count + Explore */}
-          {kineticStep === 2 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '40vh',
-              }}
-              key="kinetic-2"
-            >
-              <div
-                style={{
-                  fontFamily: "'Forum', cursive",
-                  fontSize: 'clamp(2.5rem, 7vw, 4.5rem)',
-                  color: '#ffffff',
-                  letterSpacing: '-0.02em',
-                  marginBottom: '1rem',
-                  opacity: 0,
-                  animation: prefersReducedMotion
-                    ? 'splashFadeIn 0.01ms forwards'
-                    : 'splashCountReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
-                  willChange: 'transform, opacity',
-                  backfaceVisibility: 'hidden',
-                }}
-              >
-                84,000 verses await
-              </div>
-              <div
-                style={{
-                  fontFamily: "'Reem Kufi', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
-                  color: '#888888',
-                  direction: 'rtl',
-                  marginBottom: '2rem',
-                  opacity: 0,
-                  animation: prefersReducedMotion
-                    ? 'splashFadeIn 0.01ms forwards'
-                    : 'splashFadeIn 0.5s ease-out 0.6s forwards',
-                  willChange: 'opacity',
-                }}
-                lang="ar"
-                dir="rtl"
-              >
-                أكثر من 84,000 بيت بانتظارك
-              </div>
               <button
                 data-splash-finish="true"
                 data-testid="kinetic-continue"
@@ -725,10 +674,10 @@ const SplashScreen = () => {
                   fontSize: '0.8125rem',
                   fontWeight: 500,
                   letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
                   cursor: 'pointer',
                   transition: 'background 0.3s ease, border-color 0.3s ease',
                   minHeight: '48px',
+                  marginTop: '2rem',
                   opacity: 0,
                   animation: prefersReducedMotion
                     ? 'splashFadeIn 0.01ms forwards'
@@ -746,7 +695,7 @@ const SplashScreen = () => {
                 }}
                 aria-label="Continue to onboarding"
               >
-                <span>Continue</span>
+                <span>التالي</span>
                 <ArrowRight size={16} />
               </button>
             </div>
@@ -787,27 +736,27 @@ const SplashScreen = () => {
         />
       </div>
 
-      {/* ONBOARDING PHASES 4-6 — mood, era, topics pickers */}
+      {/* ONBOARDING PHASES 3-5 — mood, era, topics pickers */}
       <AnimatePresence mode="wait">
-        {phase === 4 && (
+        {phase === 3 && (
           <MoodPicker
             key="mood"
             onNext={(moods) => {
               setSelectedMoods(moods);
+              setPhase(4);
+            }}
+          />
+        )}
+        {phase === 4 && (
+          <EraPicker
+            key="era"
+            onNext={(eras) => {
+              setSelectedEras(eras);
               setPhase(5);
             }}
           />
         )}
         {phase === 5 && (
-          <EraPicker
-            key="era"
-            onNext={(eras) => {
-              setSelectedEras(eras);
-              setPhase(6);
-            }}
-          />
-        )}
-        {phase === 6 && (
           <TopicsPicker
             key="topics"
             selectedMoods={selectedMoods}
@@ -819,8 +768,8 @@ const SplashScreen = () => {
         )}
       </AnimatePresence>
 
-      {/* Progress dots for phases 4-6 */}
-      {phase >= 4 && phase <= 6 && (
+      {/* Progress dots for phases 3-5 */}
+      {phase >= 3 && phase <= 5 && (
         <div
           style={{
             position: 'fixed',
@@ -832,7 +781,7 @@ const SplashScreen = () => {
             zIndex: 70,
           }}
         >
-          {[4, 5, 6].map((step) => (
+          {[3, 4, 5].map((step) => (
             <div
               key={step}
               style={{

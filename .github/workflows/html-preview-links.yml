@@ -82,17 +82,16 @@ jobs:
               ].join('\n');
             }
 
-            // ── 4. Create or update ──────────────────────────────────────────
-            if (existing) {
-              await github.rest.issues.updateComment({
+            // ── 4. Always post new; delete old only if body is identical ────
+            await github.rest.issues.createComment({
+              owner, repo,
+              issue_number: pr.number,
+              body,
+            });
+
+            if (existing && existing.body === body) {
+              await github.rest.issues.deleteComment({
                 owner, repo,
                 comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                owner, repo,
-                issue_number: pr.number,
-                body,
               });
             }

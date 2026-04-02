@@ -417,6 +417,8 @@
     #colorModeRow { display: none !important; }
     .size-sel, .zoom-group, #tileModeBtn, #helpBtn, .fav-wrap,
     .toolbar-controls label { display: none !important; }
+    /* Heart + dice live in bottom bar on mobile */
+    #heartBtn, #randomBtn { display: none !important; }
     .toolbar { flex-wrap: wrap; padding: 8px 12px; gap: 6px; }
     .toolbar-info { width: 100%; min-width: 0; }
     .canvas-wrap { flex: 1; padding: 8px; }
@@ -530,6 +532,12 @@
     }
     .color-opt-dot {
       width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    }
+    .color-opt-dots {
+      display: flex; gap: 2px; flex-shrink: 0;
+    }
+    .color-opt-dots span {
+      width: 7px; height: 7px; border-radius: 50%; display: block;
     }
     /* Palette swatches inside popup (multi mode) */
     .popup-palettes {
@@ -2409,10 +2417,10 @@ buildSidebar();
     openPicker();
   });
 
-  // Heart
+  // Heart — wire directly (heartBtn is hidden on mobile)
   document.getElementById('mbHeart').addEventListener('click', () => {
-    document.getElementById('heartBtn').click();
-    setTimeout(updateMobileBar, 50);
+    if (currentItem) toggleFavorite(currentItem.data.name);
+    updateMobileBar();
   });
 
   // Dice → random
@@ -2426,15 +2434,11 @@ buildSidebar();
   function buildColorOpts() {
     const container = document.getElementById('colorOpts');
     container.innerHTML = '';
-    const allModes = [
-      ...SOLID_MODES,
-      ...PALETTES.map(p => ({ mode: p.mode, dot: p.dot, label: p.name })),
-    ];
-    allModes.forEach(({ mode, dot, label }) => {
+    function addOpt(mode, dotHtml, label) {
       const btn = document.createElement('button');
       btn.className = 'color-opt' + (mode === colorMode ? ' active' : '');
       btn.dataset.m = mode;
-      btn.innerHTML = `<span class="color-opt-dot" style="background:${dot}"></span>${label}`;
+      btn.innerHTML = dotHtml + label;
       btn.addEventListener('click', () => {
         setColorMode(mode);
         updateMobileBar();
@@ -2442,6 +2446,16 @@ buildSidebar();
           b.classList.toggle('active', b.dataset.m === mode));
       });
       container.appendChild(btn);
+    }
+    // Solid modes — single dot
+    SOLID_MODES.forEach(({ mode, dot, label }) =>
+      addOpt(mode, `<span class="color-opt-dot" style="background:${dot}"></span>`, label)
+    );
+    // Palette modes — 4-colour strip
+    PALETTES.forEach(pal => {
+      const dots = Object.values(pal.colors).slice(0, 4)
+        .map(c => `<span style="background:${c}"></span>`).join('');
+      addOpt(pal.mode, `<span class="color-opt-dots">${dots}</span>`, pal.name);
     });
   }
 

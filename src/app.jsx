@@ -137,6 +137,7 @@ export default function DiwanApp() {
   const volumePulseRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(0);
+  const [bgScrollY, setBgScrollY] = useState(0);
   const [fireTapped, setFireTapped] = useState(false);
 
   // ── Poem store (Zustand) ──
@@ -704,8 +705,10 @@ export default function DiwanApp() {
   }, []);
 
   const handleScroll = (e) => {
-    const progress = Math.min(1, e.target.scrollTop / 120);
+    const scrollTop = e.target.scrollTop;
+    const progress = Math.min(1, scrollTop / 120);
     setHeaderOpacity(progress);
+    setBgScrollY(scrollTop);
   };
 
   // Fetch dynamic poet list from API when discover drawer first opens
@@ -1278,8 +1281,8 @@ export default function DiwanApp() {
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
           {/* Squoctogon irregular tiling background — exact design from geometric-explorer */}
-          <SquoctogonBackground darkMode={darkMode} />
-          <MysticalConsultationEffect active={isInterpreting} theme={theme} />
+          <SquoctogonBackground darkMode={darkMode} scrollY={bgScrollY} />
+          <MysticalConsultationEffect active={isInterpreting} theme={theme} scrollY={bgScrollY} />
 
           <main
             ref={mainScrollRef}

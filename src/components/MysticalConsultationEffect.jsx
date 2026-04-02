@@ -26,7 +26,12 @@ function makeParticle(width, height) {
   };
 }
 
-const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ active }) {
+const PARALLAX_FACTOR = 0.3;
+
+const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
+  active,
+  scrollY = 0,
+}) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
   // Track latest active value inside the rAF loop without restarting the loop
@@ -134,7 +139,11 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ ac
     <canvas
       ref={canvasRef}
       className="absolute inset-0 pointer-events-none z-10"
-      style={{ mixBlendMode: 'screen' }}
+      style={{
+        mixBlendMode: 'screen',
+        transform: `translateY(${-(scrollY * PARALLAX_FACTOR).toFixed(1)}px)`,
+        willChange: 'transform',
+      }}
     />
   );
 });

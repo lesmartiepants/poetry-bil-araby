@@ -359,7 +359,9 @@ function computeSvgPath(w, h) {
   return parts.join(' ');
 }
 
-const SquoctogonBackground = memo(function SquoctogonBackground({ darkMode }) {
+const PARALLAX_FACTOR = 0.3; // background drifts at 30% of scroll speed
+
+const SquoctogonBackground = memo(function SquoctogonBackground({ darkMode, scrollY = 0 }) {
   const svgRef = useRef(null);
   const [pathData, setPathData] = useState('');
 
@@ -388,13 +390,18 @@ const SquoctogonBackground = memo(function SquoctogonBackground({ darkMode }) {
 
   const strokeColor = darkMode ? '#4a7cc9' : '#2e5090';
   const strokeOpacity = darkMode ? 0.22 : 0.15;
+  const parallaxY = -(scrollY * PARALLAX_FACTOR);
 
   return (
     <svg
       ref={svgRef}
       className="absolute inset-0 pointer-events-none"
       aria-hidden="true"
-      style={{ zIndex: 0 }}
+      style={{
+        zIndex: 0,
+        transform: `translateY(${parallaxY.toFixed(1)}px)`,
+        willChange: 'transform',
+      }}
       width="100%"
       height="100%"
       xmlns="http://www.w3.org/2000/svg"

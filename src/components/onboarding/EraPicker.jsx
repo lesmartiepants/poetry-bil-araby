@@ -27,8 +27,6 @@ const EraPicker = ({ onNext }) => {
   const canvasRef = useRef(null);
   const classicalChipsRef = useRef(null);
   const modernChipsRef = useRef(null);
-  const ctaRef = useRef(null);
-  const ctaShown = useRef(false);
 
   // Resize canvas
   useEffect(() => {
@@ -98,19 +96,6 @@ const EraPicker = ({ onNext }) => {
     }
   }, [modernOpen]);
 
-  // CTA animation
-  useEffect(() => {
-    const el = ctaRef.current;
-    if (!el) return;
-    if (selected.length >= 1 && !ctaShown.current) {
-      ctaShown.current = true;
-      gsap.fromTo(el, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out' });
-    } else if (selected.length === 0 && ctaShown.current) {
-      ctaShown.current = false;
-      gsap.to(el, { opacity: 0, y: 10, duration: 0.2 });
-    }
-  }, [selected]);
-
   const toggleEra = (slug) => {
     setSelected((prev) =>
       prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug]
@@ -118,9 +103,7 @@ const EraPicker = ({ onNext }) => {
   };
 
   const handleNext = () => {
-    if (selected.length >= 1) {
-      onNext(selected);
-    }
+    onNext(selected);
   };
 
   const chipStyle = (isSelected, isClassical) => ({
@@ -310,11 +293,10 @@ const EraPicker = ({ onNext }) => {
         {/* CTA */}
         <div style={{ marginTop: '2.5rem' }}>
           <button
-            ref={ctaRef}
             data-testid="era-continue"
             onClick={handleNext}
             style={{
-              opacity: 0,
+              opacity: selected.length >= 1 ? 1 : 0.5,
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
@@ -327,7 +309,7 @@ const EraPicker = ({ onNext }) => {
               fontSize: '0.9375rem',
               fontWeight: 500,
               cursor: 'pointer',
-              transition: 'background 0.3s ease',
+              transition: 'background 0.3s ease, opacity 0.2s ease',
               minHeight: '48px',
               direction: 'rtl',
             }}
@@ -337,9 +319,9 @@ const EraPicker = ({ onNext }) => {
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
             }}
-            aria-label="\u0627\u0644\u062a\u0627\u0644\u064a"
+            aria-label={selected.length >= 1 ? '\u0627\u0644\u062a\u0627\u0644\u064a' : '\u062a\u062e\u0637\u0649'}
           >
-            <span>{'\u0627\u0644\u062a\u0627\u0644\u064a'}</span>
+            <span>{selected.length >= 1 ? '\u0627\u0644\u062a\u0627\u0644\u064a' : '\u062a\u062e\u0637\u0649'}</span>
             <ArrowRight size={16} />
           </button>
         </div>

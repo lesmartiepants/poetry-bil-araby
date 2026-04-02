@@ -813,14 +813,7 @@ const SplashScreen = () => {
             selectedMoods={selectedMoods}
             selectedEras={selectedEras}
             onComplete={(prefs) => {
-              // TODO: completeOnboarding(prefs) — integration-agent adding to modalStore
-              const store = useModalStore.getState();
-              if (typeof store.completeOnboarding === 'function') {
-                store.completeOnboarding(prefs);
-              } else {
-                try { localStorage.setItem('hasSeenOnboarding', 'true'); } catch {}
-                store.dismissSplash();
-              }
+              useModalStore.getState().completeOnboarding(prefs);
             }}
           />
         )}
@@ -839,7 +832,7 @@ const SplashScreen = () => {
             zIndex: 70,
           }}
         >
-          {[4, 5, 6, 7].map((step) => (
+          {[4, 5, 6].map((step) => (
             <div
               key={step}
               style={{

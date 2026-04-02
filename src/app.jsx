@@ -327,6 +327,11 @@ export default function DiwanApp() {
     // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).
     if (selectedCategory !== 'All' && current.poetArabic !== selectedCategory) return;
 
+    // Don't overwrite a carousel that was just restored from OAuth sessionStorage.
+    // If the carousel already contains the current poem, it was restored — skip repopulate.
+    const existingCarousel = usePoemStore.getState().carouselPoems;
+    if (existingCarousel.length > 1 && existingCarousel.some((p) => p.id === current?.id)) return;
+
     let cancelled = false;
     clearCarouselPoems();
     explainedPoemIds.current.clear();
@@ -820,7 +825,7 @@ export default function DiwanApp() {
     // Stash current poem so it survives the OAuth page redirect
     if (current) {
       try {
-        sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
+        sessionStorage.setItem('pendingSavePoem', JSON.stringify(displayedPoem || current));
         const { carouselPoems: cp, carouselIndex: ci } = usePoemStore.getState();
         if (cp.length > 0) {
           sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp));
@@ -850,7 +855,7 @@ export default function DiwanApp() {
     // Stash current poem so it survives the OAuth page redirect
     if (current) {
       try {
-        sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
+        sessionStorage.setItem('pendingSavePoem', JSON.stringify(displayedPoem || current));
         const { carouselPoems: cp, carouselIndex: ci } = usePoemStore.getState();
         if (cp.length > 0) {
           sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp));

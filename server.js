@@ -968,6 +968,11 @@ app.post('/api/ai/live-tts', async (req, res) => {
             generationConfig: {
               responseModalities: ['AUDIO'],
               speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } }
+            },
+            systemInstruction: {
+              parts: [{
+                text: 'You are a text-to-speech reader. Read aloud the exact text provided by the user, word for word, with no additions, commentary, questions, or paraphrasing. Do not respond conversationally. Only speak the text as given.'
+              }]
             }
           }
         }));

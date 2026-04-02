@@ -349,11 +349,22 @@ app.get(
   [
     query('poet').optional().trim().isLength({ max: 100 }).withMessage('Poet name too long'),
     query('exclude').optional().trim().isLength({ max: 2000 }).withMessage('Exclude list too long'),
+    query('tags').optional().trim().isLength({ max: 500 }).withMessage('Tags list too long'),
     validate,
   ],
   async (req, res) => {
     try {
-      const { poet, exclude } = req.query;
+      const { poet, exclude, tags: tagsParam } = req.query;
+
+      // Parse and validate tags param (comma-separated slugs, max 20)
+      let tagSlugs = [];
+      if (tagsParam) {
+        tagSlugs = tagsParam
+          .split(',')
+          .map((s) => s.trim().toLowerCase())
+          .filter((s) => s.length > 0 && s.length <= 50)
+          .slice(0, 20);
+      }
 
       // Parse and validate exclude param (comma-separated integer IDs, max 200)
       let excludeIds = [];
@@ -402,6 +413,16 @@ app.get(
         paramIndex++;
       }
 
+      // Add tags filter using subquery on poem_tags + tags tables
+      if (tagSlugs.length > 0) {
+        const hasWhere = query.includes('WHERE');
+        query += hasWhere
+          ? ` AND p.id IN (SELECT pt.poem_id FROM poem_tags pt JOIN tags tg ON tg.id = pt.tag_id WHERE tg.slug = ANY($${paramIndex}::text[]))`
+          : ` WHERE p.id IN (SELECT pt.poem_id FROM poem_tags pt JOIN tags tg ON tg.id = pt.tag_id WHERE tg.slug = ANY($${paramIndex}::text[]))`;
+        params.push(tagSlugs);
+        paramIndex++;
+      }
+
       query += ' ORDER BY RANDOM() LIMIT 1';
 
       let result = await pool.query(query, params);
@@ -427,19 +448,33 @@ app.get(
         JOIN themes t ON p.theme_id = t.id
       `;
         const fallbackParams = [];
+        let fbParamIndex = 1;
         if (poet && poet !== 'All') {
-          fallbackQuery += ` WHERE po.name = $1 ${servingFilters()}`;
+          fallbackQuery += ` WHERE po.name = $${fbParamIndex} ${servingFilters()}`;
           fallbackParams.push(poet);
+          fbParamIndex++;
         } else {
           const qf = servingFilters();
           if (qf) fallbackQuery += ` WHERE 1=1 ${qf}`;
+        }
+        // Preserve tags filter in fallback (only exclude is dropped)
+        if (tagSlugs.length > 0) {
+          const hasWhere = fallbackQuery.includes('WHERE');
+          fallbackQuery += hasWhere
+            ? ` AND p.id IN (SELECT pt.poem_id FROM poem_tags pt JOIN tags tg ON tg.id = pt.tag_id WHERE tg.slug = ANY($${fbParamIndex}::text[]))`
+            : ` WHERE p.id IN (SELECT pt.poem_id FROM poem_tags pt JOIN tags tg ON tg.id = pt.tag_id WHERE tg.slug = ANY($${fbParamIndex}::text[]))`;
+          fallbackParams.push(tagSlugs);
+          fbParamIndex++;
         }
         fallbackQuery += ' ORDER BY RANDOM() LIMIT 1';
         result = await pool.query(fallbackQuery, fallbackParams);
       }
 
       if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'No poems found' });
+        const errorMsg = tagSlugs.length > 0
+          ? 'No poems found for requested tags'
+          : 'No poems found';
+        return res.status(404).json({ error: errorMsg });
       }
 
       const poem = result.rows[0];

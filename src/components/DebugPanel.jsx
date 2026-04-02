@@ -63,8 +63,11 @@ const DebugPanel = ({ controlBarRef }) => {
     if (next === 'live') {
       // Live API bypasses REST model selection entirely
       useUIStore.getState().setTtsMode('live');
+      const { liveVoice: v, liveTemperature: t } = useUIStore.getState();
+      useUIStore.getState().addLog('Settings', `Speech engine → Live (${v}, temp ${t})`, 'user');
     } else {
       useUIStore.getState().setTtsMode('rest');
+      useUIStore.getState().addLog('Settings', `Speech engine → REST (${API_MODELS?.tts || 'flash'})`, 'user');
       if (next === 'pro') {
         API_MODELS.tts = 'gemini-2.5-pro-preview-tts';
         API_MODELS.ttsFallback = 'gemini-2.5-flash-preview-tts';
@@ -282,7 +285,7 @@ const DebugPanel = ({ controlBarRef }) => {
               <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">Voice</span>
               <select
                 value={liveVoice}
-                onChange={(e) => useUIStore.getState().setLiveVoice(e.target.value)}
+                onChange={(e) => { useUIStore.getState().setLiveVoice(e.target.value); useUIStore.getState().addLog('Settings', `Live voice → ${e.target.value}`, 'user'); }}
                 className="flex-1 text-[0.6rem] font-mono rounded px-1.5 py-0.5 cursor-pointer"
                 style={{ background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', color: 'rgb(251,146,60)' }}
               >
@@ -311,7 +314,7 @@ const DebugPanel = ({ controlBarRef }) => {
               <input
                 type="range" min="0" max="2" step="0.05"
                 value={liveTemperature}
-                onChange={(e) => useUIStore.getState().setLiveTemperature(parseFloat(e.target.value))}
+                onChange={(e) => { useUIStore.getState().setLiveTemperature(parseFloat(e.target.value)); useUIStore.getState().addLog('Settings', `Live temperature → ${parseFloat(e.target.value).toFixed(2)}`, 'user'); }}
                 className="flex-1 h-1 cursor-pointer accent-orange-400"
               />
               <span className="text-[0.6rem] font-mono text-orange-400 w-7 text-right">{liveTemperature.toFixed(2)}</span>

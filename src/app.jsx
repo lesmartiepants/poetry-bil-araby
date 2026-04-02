@@ -75,7 +75,10 @@ import {
   pingHealth,
 } from './services/database.js';
 import './styles/app.css';
+import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
+import { computeWordTimings } from './utils/wordTiming.js';
+import { useTTSHighlight, startPlayer, pauseOffset } from './hooks/useTTSHighlight.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 
@@ -90,6 +93,8 @@ import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
+import HighlightedVerse from './components/HighlightedVerse.jsx';
+import PlayControlsStrip from './components/PlayControlsStrip.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -185,6 +190,8 @@ export default function DiwanApp() {
   const setAudioUrl = useAudioStore((s) => s.setUrl);
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
+  const audioPlayer = useAudioStore((s) => s.player);
+  const highlightStyle = useUIStore((s) => s.highlightStyle);
   const hasAutoLoaded = useRef(false);
   const longPressTimer = useRef(null);
   const pendingSaveHandled = useRef(false);
@@ -765,6 +772,59 @@ export default function DiwanApp() {
     }
     return pairs;
   }, [displayedPoem, insightParts]);
+
+  // ── TTS highlight: word list and per-verse offsets ──
+  const { allWords, wordOffsets } = useMemo(() => {
+    const allWords = [];
+    const wordOffsets = [];
+    versePairs.forEach((pair) => {
+      wordOffsets.push(allWords.length);
+      const words = (pair.ar || '').split(/\s+/).filter(Boolean);
+      words.forEach((w) => allWords.push(w));
+    });
+    return { allWords, wordOffsets };
+  }, [versePairs]);
+
+  // Estimate total audio duration from the player buffer (0 when no audio loaded)
+  const audioDuration = useMemo(() => {
+    if (audioPlayer?.buffer?.duration) return audioPlayer.buffer.duration;
+    return 0;
+  }, [audioPlayer]);
+
+  const wordTimings = useMemo(
+    () => computeWordTimings(allWords, audioDuration),
+    [allWords, audioDuration]
+  );
+
+  // Per-verse start times — first word of each verse's timing.start
+  const verseStartTimes = useMemo(() => {
+    return wordOffsets.map((offset) => wordTimings[offset]?.start ?? 0);
+  }, [wordOffsets, wordTimings]);
+
+  // One ref per word — stable array, recreated only when word count changes
+  const wordRefs = useMemo(
+    () => Array.from({ length: allWords.length }, () => ({ current: null })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [allWords.length]
+  );
+
+  // Container ref — useTTSHighlight also needs to know which verse is active
+  // for the English line tts-line-active treatment (managed below via rAF).
+  const ttsContainerRef = useRef(null);
+
+  useTTSHighlight({ wordRefs, timings: wordTimings, totalDuration: audioDuration });
+
+  // Derive which verse is currently active based on pauseOffset (updated each rAF tick)
+  // We read this reactively from the store indirectly via isPlaying state for re-renders.
+  const currentVerseIndex = useMemo(() => {
+    const elapsed = pauseOffset.value;
+    if (!elapsed || verseStartTimes.length === 0) return 0;
+    let idx = 0;
+    for (let i = 0; i < verseStartTimes.length; i++) {
+      if (elapsed >= verseStartTimes[i]) idx = i;
+    }
+    return idx;
+  }, [isPlaying, verseStartTimes]); // re-evaluate when play state changes
 
   // pcm16ToWav imported from ./utils/audio.js (used directly below)
 
@@ -1461,22 +1521,58 @@ export default function DiwanApp() {
                     />
                   ) : (
                     <div className="px-4 md:px-20 py-2 text-center">
-                      <div className="flex flex-col gap-5 md:gap-7">
+                      {highlightStyle !== 'none' && (
+                        <div className="flex justify-center mb-3" data-testid="play-controls-strip">
+                          <PlayControlsStrip
+                            player={audioPlayer}
+                            isPlaying={isPlaying}
+                            verseStartTimes={verseStartTimes}
+                            currentVerseIndex={currentVerseIndex}
+                            onPlayPause={() =>
+                              togglePlayAction({
+                                audioRef,
+                                isTogglingPlay,
+                                current,
+                                addLog,
+                                track,
+                              })
+                            }
+                          />
+                        </div>
+                      )}
+                      <div
+                        ref={ttsContainerRef}
+                        data-poem-container
+                        className={`flex flex-col gap-5 md:gap-7${highlightStyle !== 'none' ? ` tts-style-${highlightStyle}` : ''}`}
+                      >
                         {versePairs.map((pair, idx) => (
                           <div
                             key={`${current?.id}-${idx}`}
                             className="flex flex-col gap-0.5 verse-fade-up"
                             style={{ animationDelay: `${idx * 80}ms` }}
                           >
-                            <p
-                              dir="rtl"
-                              className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
-                              style={{
-                                fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})`,
-                              }}
-                            >
-                              {pair.ar}
-                            </p>
+                            {highlightStyle !== 'none' ? (
+                              <HighlightedVerse
+                                text={pair.ar}
+                                wordRefs={wordRefs}
+                                wordOffset={wordOffsets[idx] ?? 0}
+                                verseIndex={idx}
+                                className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
+                                style={{
+                                  fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})`,
+                                }}
+                              />
+                            ) : (
+                              <p
+                                dir="rtl"
+                                className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
+                                style={{
+                                  fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})`,
+                                }}
+                              >
+                                {pair.ar}
+                              </p>
+                            )}
                             {showTransliteration && pair.ar && (
                               <p
                                 dir="ltr"
@@ -1491,7 +1587,7 @@ export default function DiwanApp() {
                             {showTranslation && pair.en && (
                               <p
                                 dir="ltr"
-                                className={`font-brand-en italic inline-fade-in mx-auto`}
+                                className={`tts-en-line font-brand-en italic inline-fade-in mx-auto${idx === currentVerseIndex && highlightStyle !== 'none' ? ' tts-line-active' : ''}`}
                                 style={{
                                   fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
                                   maxWidth: '90%',

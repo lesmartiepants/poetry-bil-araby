@@ -1478,6 +1478,7 @@ export default function DiwanApp() {
                                 style={{
                                   fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
                                   maxWidth: '90%',
+                                  animationDelay: `${idx * 80}ms`,
                                 }}
                               >
                                 {pair.en}

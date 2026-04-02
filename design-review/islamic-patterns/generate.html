@@ -960,11 +960,11 @@ function defaultD(n) {
   if (n === 5) return 2;
   if (n === 6) return 2;
   if (n === 7) return 2;
-  if (n === 8) return 2;
+  if (n === 8) return 3;  // {8/3} = canonical Islamic 8-pointed star (not {8/2})
   if (n === 9) return 3;
   if (n === 10) return 3;
   if (n === 12) return 4;
-  return Math.floor(n / 4);
+  return Math.floor(n / 3);  // n/3 produces sharper star tips (traditional aesthetic)
 }
 
 /**
@@ -1323,21 +1323,18 @@ function renderTiling(ctx, tiling, w, h, zoom = 1) {
   // When filtering applies, skip polygons whose area is < 15% of the largest polygon.
   // This removes small filler triangles/squares (~6-12% of max) while keeping all
   // primary tiles including the smaller partner in 3-class tilings (~30%+ of max).
-  let areaThreshold = 0;
-  if (maxArea > 1) {
-    // Count distinct polygon types by side count (n-gon variety).
-    // Tilings with 3+ distinct polygon types (e.g. triangles + squares + octagons)
-    // contain filler polygons — skip the small ones (< 15% of largest area).
-    // Tilings with only 2 types are Archimedean partners (e.g. 4.8^2: squares +
-    // octagons) where both are primary decorated tiles — filter nothing.
-    const distinctSides = new Set(polys.map(p => p.length)).size;
-    if (distinctSides >= 3) areaThreshold = maxArea * 0.15;
-  }
+  // Filler filtering: small n<=4 polygons (squares, triangles) that fill gaps
+  // between larger star tiles are negative space — no motif drawn inside.
+  // Threshold 18.5% is just below the 4.8^2 square/octagon ratio (~20.7%),
+  // so primary squares in star-and-cross keep their cross, while filler
+  // squares and triangles (typically 6-12% of max) are suppressed.
+  // n>=5 polygons are always primary star tiles — never filtered.
+  const areaThreshold = maxArea > 1 ? maxArea * 0.185 : 0;
 
   for (let pi = 0; pi < polys.length; pi++) {
-    // Skip filler polygons — they are negative space, not decorated tiles
-    if (areas[pi] < areaThreshold) continue;
     const poly = polys[pi];
+    // Only filter n<=4 (triangles/squares). n>=5 are always primary star tiles.
+    if (poly.length <= 4 && areas[pi] < areaThreshold) continue;
     ctx.strokeStyle = isPaletteMode(colorMode) ? getMultiStroke(poly, c.stroke) : c.stroke;
     const segs = starMotifsFromPoly(poly);
     for (const [x1, y1, x2, y2] of segs) {

@@ -1,4 +1,6 @@
 import { createElement } from 'react';
+import { Rabbit } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Player, start as toneStart } from 'tone';
 import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
@@ -50,7 +52,7 @@ function createProgressToast(estimatedSeconds, arabicText) {
     id: toastId,
     description: lineInfo,
     duration: Infinity,
-    icon: createElement('span', { className: 'rabbit-loading' }, '🐇'),
+    icon: createElement(motion.div, { animate: { y: [0, -5, 0] }, transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' } }, createElement(Rabbit, { size: 16 })),
   });
 
   const interval = setInterval(() => {
@@ -71,14 +73,14 @@ function createProgressToast(estimatedSeconds, arabicText) {
         id: toastId,
         description: subtitle,
         duration: Infinity,
-        icon: createElement('span', { className: 'rabbit-loading' }, '🐇'),
+        icon: createElement(motion.div, { animate: { y: [0, -5, 0] }, transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' } }, createElement(Rabbit, { size: 16 })),
       });
     } else {
       toast.loading('Almost ready...', {
         id: toastId,
         description: subtitle,
         duration: Infinity,
-        icon: createElement('span', { className: 'rabbit-loading' }, '🐇'),
+        icon: createElement(motion.div, { animate: { y: [0, -5, 0] }, transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' } }, createElement(Rabbit, { size: 16 })),
       });
     }
   }, 1000);

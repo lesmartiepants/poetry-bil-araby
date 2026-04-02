@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { toast } from 'sonner';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Play,
   Pause,
@@ -13,6 +13,7 @@ import {
   Paintbrush,
   Check,
   X,
+  Rabbit,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -296,7 +297,7 @@ export default function DiwanApp() {
     const prev = prevIsInterpretingRef.current;
     prevIsInterpretingRef.current = isInterpreting;
     if (!prev && isInterpreting) {
-      toast.loading('Translating poem…', { id: 'translation-progress', duration: Infinity, icon: <span className="rabbit-loading">🐇</span> });
+      toast.loading('Translating poem…', { id: 'translation-progress', duration: Infinity, icon: <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}><Rabbit size={16} /></motion.div> });
     } else if (prev && !isInterpreting) {
       if (interpretation) {
         toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });

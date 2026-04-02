@@ -53,6 +53,17 @@ export const useModalStore = create((set) => ({
 
   dismissSplash: () => set({ splash: false }),
 
+  completeOnboarding: (prefs) => {
+    try {
+      localStorage.setItem('hasSeenOnboarding', 'true');
+      localStorage.setItem('onboardingPrefs', JSON.stringify({
+        ...prefs,
+        completedAt: new Date().toISOString(),
+      }));
+    } catch {}
+    set({ splash: false, onboarding: false });
+  },
+
   toggleInsightsDrawer: () => set((s) => ({ insightsDrawer: !s.insightsDrawer })),
   setInsightsDrawer: (open) => set({ insightsDrawer: open }),
 

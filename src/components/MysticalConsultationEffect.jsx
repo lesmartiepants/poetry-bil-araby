@@ -3,8 +3,8 @@ import { useRef, useEffect, memo } from 'react';
 const GOLD_COLORS = ['#c5a059', '#D4B463', '#E2C67A', '#B8922E', '#c5a059'];
 
 // Ambient mode: fewer particles, gentler opacity cap
-const AMBIENT_COUNT = 25;
-const ACTIVE_COUNT = 50;
+const AMBIENT_COUNT = 35;
+const ACTIVE_COUNT = 60;
 const REDUCED_MOTION_OPACITY = 0.08;
 
 function hexToRgb(hex) {
@@ -76,7 +76,7 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
     const animate = () => {
       const isActive = activeRef.current;
       const visibleCount = isActive ? ACTIVE_COUNT : AMBIENT_COUNT;
-      const maxOpacity = isActive ? 0.75 : 0.35;
+      const maxOpacity = isActive ? 0.9 : 0.5;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 

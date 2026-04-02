@@ -398,7 +398,7 @@ const SquoctogonBackground = memo(function SquoctogonBackground({ darkMode, scro
   }, []);
 
   const strokeColor = darkMode ? '#4a7cc9' : '#2e5090';
-  const strokeOpacity = darkMode ? 0.22 : 0.15;
+  const strokeOpacity = darkMode ? 0.154 : 0.105;
   const parallaxY = -(scrollY * PARALLAX_FACTOR);
 
   return (

@@ -409,6 +409,19 @@ export default function DiwanApp() {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
 
+      // Restore pre-OAuth debug logs unconditionally — pendingLogs is only written
+      // before an OAuth redirect, so it's safe to read-and-clear on every load.
+      try {
+        const savedLogs = sessionStorage.getItem('pendingLogs');
+        if (savedLogs) {
+          sessionStorage.removeItem('pendingLogs');
+          const parsed = JSON.parse(savedLogs);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            useUIStore.setState((s) => ({ logs: [...parsed, ...s.logs] }));
+          }
+        }
+      } catch {}
+
       // Deep link: restore poet filter from URL
       if (queryParams.poet && !routeParams?.id) {
         setSelectedCategory(queryParams.poet);
@@ -471,18 +484,6 @@ export default function DiwanApp() {
           }
         } catch {}
 
-        // Restore pre-login logs so the debug panel shows the full session history
-        try {
-          const savedLogs = sessionStorage.getItem('pendingLogs');
-          sessionStorage.removeItem('pendingLogs');
-          if (savedLogs) {
-            const parsed = JSON.parse(savedLogs);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              // Prepend saved logs before the current (post-login) logs
-              useUIStore.setState((s) => ({ logs: [...parsed, ...s.logs] }));
-            }
-          }
-        } catch {}
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(

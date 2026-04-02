@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { SkipBack, Play, Pause, SkipForward, Loader2 } from 'lucide-react';
-import { startPlayer } from '../hooks/useTTSHighlight';
+import { startPlayer, pauseOffset, playbackStartTime } from '../hooks/useTTSHighlight';
 
 /**
  * PlayControlsStrip — transport bar above the footer controls.
@@ -21,18 +21,26 @@ const PlayControlsStrip = ({
   currentVerseIndex = 0,
   onPlayPause,
 }) => {
+  const seek = (offset) => {
+    // Always stop first to clear any queued playback before repositioning
+    try { player.stop(); } catch {}
+    if (isPlaying) {
+      startPlayer(player, offset);
+    } else {
+      // Paused — update position only, don't start
+      pauseOffset.value = offset;
+      playbackStartTime.value = Date.now() / 1000;
+    }
+  };
+
   const handlePrev = () => {
-    if (isPlaying) player.stop();
     const offset = currentVerseIndex > 0 ? verseStartTimes[currentVerseIndex - 1] : 0;
-    startPlayer(player, offset);
+    seek(offset);
   };
 
   const handleNext = () => {
     const nextIndex = currentVerseIndex + 1;
-    if (nextIndex < verseStartTimes.length) {
-      if (isPlaying) player.stop();
-      startPlayer(player, verseStartTimes[nextIndex]);
-    }
+    if (nextIndex < verseStartTimes.length) seek(verseStartTimes[nextIndex]);
   };
 
   return (

@@ -2522,18 +2522,41 @@ buildSidebar();
     if (label) label.textContent = modeLabel(colorMode);
   };
 
-  // ── Prev / Next — always navigate through FEATURED on mobile ─────────────
-  function getMobileNavItems() {
-    return FEATURED.map(name => {
-      const t = CATALOG.tilings.find(x => x.name === name); if (t) return { kind:'tiling', data:t };
-      const g = CATALOG.girihShapes.find(x => x.name === name); if (g) return { kind:'girih', data:g };
-      const tmpl = CATALOG.templates.find(x => x.name === name); if (tmpl) return { kind:'template', data:tmpl };
-      return null;
-    }).filter(Boolean);
+  // ── Prev / Next — navigate through all picker items (My Saved → Featured → Collections) ──
+  // Returns all items in picker order: My Saved → Featured → Collections
+  function getMobilePickerItems() {
+    const seen = new Set();
+    const result = [];
+    function add(kind, data) {
+      if (!data || seen.has(data.name)) return;
+      seen.add(data.name);
+      result.push({ kind, data });
+    }
+    // My Saved
+    for (const name of [...favorites]) {
+      const t = CATALOG.tilings.find(x => x.name === name); if (t) { add('tiling', t); continue; }
+      const tmpl = CATALOG.templates.find(x => x.name === name); if (tmpl) { add('template', tmpl); continue; }
+    }
+    // Featured
+    for (const name of FEATURED) {
+      const t = CATALOG.tilings.find(x => x.name === name); if (t) { add('tiling', t); continue; }
+      const g = CATALOG.girihShapes.find(x => x.name === name); if (g) { add('girih', g); continue; }
+      const tmpl = CATALOG.templates.find(x => x.name === name); if (tmpl) { add('template', tmpl); continue; }
+    }
+    // Collections
+    for (const col of COLLECTIONS) {
+      for (const e of col.items) {
+        const data = findCatalogItem(e.tab, e.name);
+        if (!data) continue;
+        const kind = e.tab === 'tilings' ? 'tiling' : e.tab === 'girih' ? 'girih' : 'template';
+        add(kind, data);
+      }
+    }
+    return result;
   }
 
   function getAdjacentItem(dir) {
-    const items = getMobileNavItems();
+    const items = getMobilePickerItems();
     if (!items.length) return null;
     if (!currentItem) return items[0];
     const idx = items.findIndex(it => it.data === currentItem.data);

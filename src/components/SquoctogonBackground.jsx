@@ -1,4 +1,4 @@
-import { useRef, useEffect, memo } from 'react';
+import { useRef, useEffect, useState, memo } from 'react';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Squoctogon tiling data — "Octogons hidden as squares" by Pierre Baillargeon
@@ -329,15 +329,11 @@ function buildTilingPolygons(tiling, canvasW, canvasH, zoom = 1) {
   return allPolys.map((poly) => poly.map(([px, py]) => [px * scale + offX, py * scale + offY]));
 }
 
-function drawSquoctogon(ctx, w, h, darkMode) {
-  const strokeColor = darkMode ? '#4a7cc9' : '#2e5090';
-  const strokeAlpha = darkMode ? 0.22 : 0.15;
-  const zoom = 1;
+// Build a single SVG <path> `d` string containing every star-motif segment
+function computeSvgPath(w, h) {
+  const polys = buildTilingPolygons(SQUOCTOGON, w, h, 1);
+  if (polys.length === 0) return '';
 
-  const polys = buildTilingPolygons(SQUOCTOGON, w, h, zoom);
-  if (polys.length === 0) return;
-
-  // Compute areas for filler-polygon filtering
   const areas = polys.map((poly) => {
     let a = 0;
     const n = poly.length;
@@ -352,86 +348,66 @@ function drawSquoctogon(ctx, w, h, darkMode) {
   const distinctSides = new Set(polys.map((p) => p.length)).size;
   const areaThreshold = maxArea > 1 && distinctSides >= 3 ? maxArea * 0.15 : 0;
 
-  ctx.clearRect(0, 0, w, h);
-  ctx.globalAlpha = strokeAlpha;
-  ctx.strokeStyle = strokeColor;
-  ctx.lineWidth = Math.max(1, w / 900);
-  ctx.lineCap = 'round';
-
+  const parts = [];
   for (let pi = 0; pi < polys.length; pi++) {
     if (areas[pi] < areaThreshold) continue;
-    const poly = polys[pi];
-    const segs = starMotifsFromPoly(poly);
+    const segs = starMotifsFromPoly(polys[pi]);
     for (const [x1, y1, x2, y2] of segs) {
-      ctx.beginPath();
-      ctx.moveTo(x1, y1);
-      ctx.lineTo(x2, y2);
-      ctx.stroke();
+      parts.push(`M${x1.toFixed(2)},${y1.toFixed(2)}L${x2.toFixed(2)},${y2.toFixed(2)}`);
     }
   }
-
-  ctx.globalAlpha = 1;
+  return parts.join(' ');
 }
 
 const SquoctogonBackground = memo(function SquoctogonBackground({ darkMode }) {
-  const canvasRef = useRef(null);
-  const darkModeRef = useRef(darkMode);
+  const svgRef = useRef(null);
+  const [pathData, setPathData] = useState('');
 
   useEffect(() => {
-    darkModeRef.current = darkMode;
-  }, [darkMode]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const draw = () => {
-      const parent = canvas.parentElement;
-      const w = parent ? parent.offsetWidth : window.innerWidth;
-      const h = parent ? parent.offsetHeight : window.innerHeight;
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w;
-        canvas.height = h;
+    const compute = () => {
+      const parent = svgRef.current?.parentElement;
+      const w = parent?.offsetWidth || window.innerWidth || 800;
+      const h = parent?.offsetHeight || window.innerHeight || 600;
+      if (w > 0 && h > 0) {
+        setPathData(computeSvgPath(w, h));
       }
-      if (prefersReduced) {
-        // Static single-frame render for reduced-motion preference
-        drawSquoctogon(ctx, w, h, darkModeRef.current);
-        return;
-      }
-      drawSquoctogon(ctx, w, h, darkModeRef.current);
     };
 
-    draw();
+    compute();
 
-    const observer = new ResizeObserver(draw);
-    const parent = canvas.parentElement;
-    if (parent) observer.observe(parent);
-    window.addEventListener('resize', draw);
+    const ro = new ResizeObserver(compute);
+    const parent = svgRef.current?.parentElement;
+    if (parent) ro.observe(parent);
+    window.addEventListener('resize', compute);
 
     return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', draw);
+      ro.disconnect();
+      window.removeEventListener('resize', compute);
     };
   }, []);
 
-  // Re-draw when theme changes
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    drawSquoctogon(ctx, canvas.width, canvas.height, darkMode);
-  }, [darkMode]);
+  const strokeColor = darkMode ? '#4a7cc9' : '#2e5090';
+  const strokeOpacity = darkMode ? 0.22 : 0.15;
 
   return (
-    <canvas
-      ref={canvasRef}
+    <svg
+      ref={svgRef}
       className="absolute inset-0 pointer-events-none"
       aria-hidden="true"
       style={{ zIndex: 0 }}
-    />
+      width="100%"
+      height="100%"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d={pathData}
+        fill="none"
+        stroke={strokeColor}
+        strokeOpacity={strokeOpacity}
+        strokeWidth="1"
+        strokeLinecap="round"
+      />
+    </svg>
   );
 });
 

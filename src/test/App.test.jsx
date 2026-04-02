@@ -595,7 +595,7 @@ describe('DiwanApp', () => {
         timeout: 3000,
       });
 
-      // Queue a second poem for when the user manually clicks Discover
+      // Use URL-aware mock so background prefetch/health calls don't consume it
       const darwishPoem2 = {
         id: 202,
         poet: 'Mahmoud Darwish',
@@ -606,9 +606,12 @@ describe('DiwanApp', () => {
         cachedTranslation: 'Record: I am an Arab',
         tags: ['Modern', 'Political', 'Free Verse'],
       };
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => darwishPoem2,
+      global.fetch.mockImplementation((url) => {
+        if (typeof url === 'string' && url.includes('/api/poems/random')) {
+          global.fetch.mockImplementation(() => Promise.resolve({ ...defaultFetchResponse }));
+          return Promise.resolve({ ok: true, json: async () => darwishPoem2 });
+        }
+        return Promise.resolve({ ...defaultFetchResponse });
       });
 
       // Click Discover — should fetch the next Darwish poem while filter remains active
@@ -834,7 +837,7 @@ describe('DiwanApp', () => {
       });
     });
 
-    it('re-selecting the same poet fetches and shows a new poem', async () => {
+    it('re-selecting the same poet closes the picker and keeps the current poem displayed', async () => {
       mockAutoLoadFetch();
       render(<DiwanApp />);
 
@@ -872,35 +875,12 @@ describe('DiwanApp', () => {
         timeout: 8000,
       });
 
-      // ── Re-select the same poet: should fetch a new poem ─────────────────
+      // ── Re-select the same poet: selectedCategory stays the same so no new fetch fires.
+      // The drawer closes and the existing poem remains displayed.
       await userEvent.click(screen.getByLabelText('Open discover'));
-      // Wait for the picker to actually be open. After the Darwish poem loaded, the poem
-      // card already contains 'محمود درويش', so checking textContent would pass immediately
-      // before the picker re-renders. Instead, wait for the picker-specific 'Clear filter'
-      // button which only appears inside the picker when a poet filter is active.
+      // Wait for picker to open — 'Clear filter' only appears when a poet filter is active.
       await waitFor(() => expect(screen.getByText('Clear filter')).toBeInTheDocument());
 
-      const darwishPoem2 = {
-        id: 202,
-        poet: 'Mahmoud Darwish',
-        poetArabic: 'محمود درويش',
-        title: 'Identity Card',
-        titleArabic: 'بطاقة هوية',
-        arabic: 'سجّل أنا عربي',
-        cachedTranslation: 'Record: I am an Arab',
-        tags: ['Modern', 'Political', 'Free Verse'],
-      };
-      // Same URL-based approach: route the poem fetch to darwishPoem2, revert
-      // to default after the first /api/poems/random response so that any
-      // background prefetch timers get the neutral default instead of this mock.
-      global.fetch.mockImplementation((url) => {
-        if (typeof url === 'string' && url.includes('/api/poems/random')) {
-          global.fetch.mockImplementation(() => Promise.resolve({ ...defaultFetchResponse }));
-          return Promise.resolve({ ok: true, json: async () => darwishPoem2 });
-        }
-        return Promise.resolve({ ...defaultFetchResponse });
-      });
-      // Re-click the same poet — should trigger a new fetch.
       // When the picker is open after a Darwish selection, both the poem card and the
       // picker dropdown show "محمود درويش". Target the picker button using data-testid.
       const pickerDarwishBtn = screen
@@ -908,9 +888,11 @@ describe('DiwanApp', () => {
         .find((btn) => btn.textContent.includes('محمود درويش'));
       await userEvent.click(pickerDarwishBtn);
 
-      await waitFor(() => expect(document.body.textContent).toContain('Identity Card'), {
-        timeout: 8000,
+      // The current Darwish poem is still shown (no new fetch was triggered).
+      await waitFor(() => expect(document.body.textContent).toContain('On This Earth'), {
+        timeout: 3000,
       });
+      expect(document.body.textContent).toContain('Mahmoud Darwish');
     });
 
     it('selecting "All" after a poet and then a different poet fetches the new poet poem', async () => {

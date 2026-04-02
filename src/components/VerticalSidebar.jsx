@@ -1,6 +1,14 @@
-import { Check, Copy, Heart, LibraryBig, LogOut, Share2, UserRound } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  Heart,
+  LibraryBig,
+  LogOut,
+  Share2,
+  ThumbsDown,
+  UserRound,
+} from 'lucide-react';
 import { Popover } from 'radix-ui';
-import { track } from '@vercel/analytics';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
@@ -15,6 +23,9 @@ const VerticalSidebar = ({
   onSignOut,
   onOpenSavedPoems,
   savedPoemsCount,
+  onFlag,
+  isDownvoted,
+  onUnflag,
   user,
 }) => {
   const showCopySuccess = useModalStore((s) => s.copyToast);
@@ -46,6 +57,52 @@ const VerticalSidebar = ({
         className={`fixed right-2 md:right-[25rem] top-1/2 -translate-y-1/2 z-[45] rounded-2xl backdrop-blur-xl border ${theme.border} py-2 px-1.5 flex flex-col items-center gap-1 ${darkMode ? 'bg-black/70' : 'bg-white/80'}`}
         style={{ width: '2.75rem' }}
       >
+        {/* Heart / Save button */}
+        <button
+          onClick={() => (isSaved ? onUnsave?.() : onSave?.())}
+          aria-label={isSaved ? 'Unsave poem' : 'Save poem'}
+          className={`${btnBase} ${btnHover}`}
+        >
+          <Heart
+            size={18}
+            style={
+              isSaved ? { fill: '#ef4444', stroke: '#ef4444' } : { fill: 'none', stroke: gold }
+            }
+          />
+        </button>
+
+        {/* My Poems button */}
+        <button
+          onClick={onOpenSavedPoems}
+          aria-label={savedPoemsCount > 0 ? `My poems, ${savedPoemsCount} saved` : 'My poems'}
+          className={`${btnBase} ${btnHover} relative`}
+        >
+          <LibraryBig style={{ color: gold }} size={18} />
+          {savedPoemsCount > 0 && (
+            <span
+              className="absolute -top-0.5 -right-0.5 min-w-[1rem] h-4 rounded-full flex items-center justify-center text-[0.5625rem] font-bold px-0.5 font-brand-en"
+              style={{
+                background: 'linear-gradient(135deg, var(--gold), #B8943E)',
+                color: '#000',
+              }}
+            >
+              {savedPoemsCount > 99 ? '99+' : savedPoemsCount}
+            </span>
+          )}
+        </button>
+
+        {/* Share button */}
+        <button onClick={onShare} aria-label="Share poem" className={`${btnBase} ${btnHover}`}>
+          {showShareSuccess ? (
+            <Check
+              style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
+              size={18}
+            />
+          ) : (
+            <Share2 style={{ color: gold }} size={18} />
+          )}
+        </button>
+
         {/* Copy button */}
         <button
           onClick={onCopy}
@@ -62,34 +119,16 @@ const VerticalSidebar = ({
           )}
         </button>
 
-        {/* Share button */}
+        {/* Flag button */}
         <button
-          onClick={onShare}
-          aria-label="Share poem"
+          onClick={() => (isDownvoted ? onUnflag?.() : onFlag?.())}
+          aria-label={isDownvoted ? 'Unflag poem' : 'Flag poem'}
           className={`${btnBase} ${btnHover}`}
         >
-          {showShareSuccess ? (
-            <Check
-              style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-              size={18}
-            />
-          ) : (
-            <Share2 style={{ color: gold }} size={18} />
-          )}
-        </button>
-
-        {/* Save / Heart button */}
-        <button
-          onClick={() => onSave?.()}
-          aria-label={isSaved ? 'Unsave poem' : 'Save poem'}
-          className={`${btnBase} ${btnHover}`}
-        >
-          <Heart
+          <ThumbsDown
             size={18}
             style={
-              isSaved
-                ? { fill: '#ef4444', stroke: '#ef4444' }
-                : { fill: 'none', stroke: gold }
+              isDownvoted ? { fill: '#f87171', stroke: '#f87171' } : { fill: 'none', stroke: gold }
             }
           />
         </button>
@@ -98,14 +137,7 @@ const VerticalSidebar = ({
         {user ? (
           <Popover.Root>
             <Popover.Trigger asChild>
-              <button
-                aria-label={
-                  savedPoemsCount > 0
-                    ? `Account menu, ${savedPoemsCount} saved poem${savedPoemsCount === 1 ? '' : 's'}`
-                    : 'Account menu'
-                }
-                className={`${btnBase} ${btnHover} relative`}
-              >
+              <button aria-label="Account menu" className={`${btnBase} ${btnHover} relative`}>
                 <div
                   className="w-6 h-6 rounded-full flex items-center justify-center text-[0.6875rem] font-bold font-brand-en"
                   style={{
@@ -127,26 +159,6 @@ const VerticalSidebar = ({
                 style={{ animation: 'popoverSlideIn 0.2s ease-out' }}
               >
                 <button
-                  onClick={onOpenSavedPoems}
-                  aria-label="View saved poems"
-                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en ${btnHover}`}
-                  style={{ color: gold }}
-                >
-                  <LibraryBig size={16} style={{ color: gold }} />
-                  <span>My Poems</span>
-                  {savedPoemsCount > 0 && (
-                    <span
-                      className="ml-1 min-w-[1.25rem] h-5 rounded-full flex items-center justify-center text-[0.6875rem] font-bold px-1"
-                      style={{
-                        background: 'linear-gradient(135deg, var(--gold), #B8943E)',
-                        color: '#000',
-                      }}
-                    >
-                      {savedPoemsCount > 99 ? '99+' : savedPoemsCount}
-                    </span>
-                  )}
-                </button>
-                <button
                   onClick={onSignOut}
                   aria-label="Sign out"
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en ${btnHover}`}
@@ -160,11 +172,7 @@ const VerticalSidebar = ({
             </Popover.Portal>
           </Popover.Root>
         ) : (
-          <button
-            onClick={onSignIn}
-            aria-label="Sign in"
-            className={`${btnBase} ${btnHover}`}
-          >
+          <button onClick={onSignIn} aria-label="Sign in" className={`${btnBase} ${btnHover}`}>
             <UserRound style={{ color: gold }} size={18} />
           </button>
         )}

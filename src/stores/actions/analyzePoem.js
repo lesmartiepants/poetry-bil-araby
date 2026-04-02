@@ -26,7 +26,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
   addLog(
     'UI Event',
     `🔍 Dive In button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
-    'info'
+    'user'
   );
 
   if (interpretation || isInterpreting) return;
@@ -43,7 +43,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
         clearInterval(pollInterval);
         usePoemStore.getState().removePollingInterval(pollInterval);
 
-        const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
+        const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id, addLog);
         if (cached?.interpretation) {
           addLog(
             'Insights',
@@ -75,7 +75,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
           'info'
         );
         setTimeout(async () => {
-          const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
+          const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id, addLog);
           if (finalCheck?.interpretation) {
             addLog(
               'Insights',
@@ -101,7 +101,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
   // CHECK CACHE (skip for ratchet mode — different prompt style)
   if (FEATURES.caching && current?.id && !ratchetMode) {
     const cacheStart = performance.now();
-    const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
+    const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id, addLog);
     const cacheTime = performance.now() - cacheStart;
 
     if (cached?.interpretation) {
@@ -151,7 +151,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       addLog(
         'Insights API',
         `→ Starting streaming${ratchetMode ? ' [Ratchet Mode]' : ''} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars} chars (${arabicTextChars} Arabic + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
-        'info'
+        'request'
       );
 
       setInterpretation('');
@@ -230,7 +230,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
         'success'
       );
     } else {
-      addLog('Insights', `Analyzing poem...${ratchetMode ? ' [Ratchet Mode]' : ''}`, 'info');
+      addLog('Insights', `Analyzing poem...${ratchetMode ? ' [Ratchet Mode]' : ''}`, 'request');
       const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
       const arabicLineCount = (current?.arabic || '').split('\n').filter(l => l.trim()).length;
       const promptText = `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}\n\n[CRITICAL: This poem has exactly ${arabicLineCount} Arabic lines. You MUST produce exactly ${arabicLineCount} English lines in the POEM section. One line per Arabic line, no exceptions.]`;
@@ -264,7 +264,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
           charCount: insightText.length,
           tokens: Math.ceil(insightText.length / 4),
         },
-      });
+      }, addLog);
       const cacheTime = performance.now() - cacheStart;
       const elapsedTime = apiStartTime
         ? ((performance.now() - apiStartTime) / 1000).toFixed(1)
@@ -278,7 +278,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
 
     // Save translation to DB
     if (current?.isFromDatabase && current?.id && insightText) {
-      const parts = parseInsight(insightText);
+      const parts = parseInsight(insightText, addLog);
       if (parts?.poeticTranslation) {
         const arabicLines = (current?.arabic || '').split('\n').filter(l => l.trim());
         const englishLines = parts.poeticTranslation.split('\n').filter(l => l.trim());

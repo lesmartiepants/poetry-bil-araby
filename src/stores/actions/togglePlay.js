@@ -1,3 +1,6 @@
+import { createElement } from 'react';
+import { Rabbit } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Player, start as toneStart } from 'tone';
 import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
@@ -14,6 +17,105 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // FUTURE: Use Tone.Transport for verse-synced highlighting
 // FUTURE: Use Tone.Panner3D for spatial audio (stone hall reverb effect)
+
+/**
+ * Estimate TTS generation time based on Arabic character count.
+ * Conservative overestimate — better to finish early than go negative.
+ * Based on profiling: ~0.05-0.20 s/char depending on length and server load.
+ */
+const estimateTTSSeconds = (arabicCharCount) => Math.max(8, Math.ceil(arabicCharCount * 0.06));
+
+const TTS_LOADING_MESSAGES = [
+  'Preparing recitation',
+  'Clearing my throat',
+  'The poet is getting ready',
+  'Wise voice awakening',
+  'Summoning the muse',
+  'Warming up the oud strings',
+  'The majlis is gathering',
+  'Ink drying on the qasida',
+];
+
+/**
+ * Create a Sonner toast with a countdown timer for TTS generation.
+ * Format: "Recitation ready in Xs" title, "Preparing N lines" description cycling with fun messages.
+ * Returns { dismiss } function for cleanup. Auto-dismisses if isGenerating
+ * goes false externally (e.g. poem navigation).
+ */
+function createProgressToast(estimatedSeconds, arabicText) {
+  const toastId = `tts-progress-${Date.now()}`;
+  const startTime = Date.now();
+  const lineCount = arabicText ? arabicText.split('\n').filter(l => l.trim()).length : 0;
+  const lineInfo = lineCount > 0 ? `Preparing ${lineCount} line${lineCount !== 1 ? 's' : ''}` : 'Preparing recitation';
+
+  toast.loading(`Recitation ready in ${estimatedSeconds}s`, {
+    id: toastId,
+    description: lineInfo,
+    duration: Infinity,
+    icon: createElement(motion.div, { animate: { y: [0, -5, 0] }, transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' } }, createElement(Rabbit, { size: 16 })),
+  });
+
+  const interval = setInterval(() => {
+    // Auto-dismiss if generation was cancelled externally (poem change, etc.)
+    if (!useAudioStore.getState().isGenerating) {
+      clearInterval(interval);
+      toast.dismiss(toastId);
+      return;
+    }
+
+    const elapsed = Math.floor((Date.now() - startTime) / 1000);
+    const remaining = estimatedSeconds - elapsed;
+    const msgIndex = Math.floor(elapsed / 5) % TTS_LOADING_MESSAGES.length;
+    const subtitle = TTS_LOADING_MESSAGES[msgIndex];
+
+    if (remaining > 0) {
+      toast.loading(`Recitation ready in ${remaining}s`, {
+        id: toastId,
+        description: subtitle,
+        duration: Infinity,
+        icon: createElement(motion.div, { animate: { y: [0, -5, 0] }, transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' } }, createElement(Rabbit, { size: 16 })),
+      });
+    } else {
+      toast.loading('Almost ready...', {
+        id: toastId,
+        description: subtitle,
+        duration: Infinity,
+        icon: createElement(motion.div, { animate: { y: [0, -5, 0] }, transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' } }, createElement(Rabbit, { size: 16 })),
+      });
+    }
+  }, 1000);
+
+  let dismissed = false;
+  const dismiss = (successMsg) => {
+    if (dismissed) return;
+    dismissed = true;
+    clearInterval(interval);
+    if (successMsg) {
+      toast.success('The recitation begins', { id: toastId, duration: 2000 });
+    } else {
+      toast.dismiss(toastId);
+    }
+  };
+
+  // Store globally so it can be dismissed from outside (e.g. drawer open, poem change)
+  _activeProgressDismiss = dismiss;
+
+  return { dismiss };
+}
+
+/** Module-level ref to the active progress toast's dismiss function. */
+let _activeProgressDismiss = null;
+
+/**
+ * Dismiss any active TTS progress toast. Safe to call anytime.
+ * Called by app.jsx when discover drawer opens, carousel navigates, etc.
+ */
+export function dismissTTSProgress() {
+  if (_activeProgressDismiss) {
+    _activeProgressDismiss();
+    _activeProgressDismiss = null;
+  }
+}
 
 /**
  * Create a Tone.Player from a URL and wait until its buffer is fully decoded before returning.
@@ -59,7 +161,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   addLog(
     'UI Event',
     `🎵 Play button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
-    'info'
+    'user'
   );
   track('audio_play', { poet: current?.poet });
 
@@ -70,7 +172,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     }
     setPlaying(false);
     track('audio_pause', { poet: current?.poet });
-    addLog('UI Event', '⏸️ Pause button clicked', 'info');
+    addLog('UI Event', '⏸️ Pause button clicked', 'user');
     isTogglingPlay.current = false;
     return;
   }
@@ -104,7 +206,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     // CHECK CACHE
     if (FEATURES.caching && current?.id) {
       const cacheStart = performance.now();
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id, addLog);
       const cacheTime = performance.now() - cacheStart;
 
       if (cached?.blob) {
@@ -163,9 +265,14 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     addLog(
       'Audio API',
       `→ Starting generation | Model: ${API_MODELS.tts} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
-      'info'
+      'request'
     );
     setError(null);
+
+    // Show progress toast with estimated countdown
+    const estSeconds = estimateTTSSeconds(arabicTextChars);
+    const progress = createProgressToast(estSeconds, current?.arabic);
+    addLog('Audio', `Estimated generation time: ~${estSeconds}s for ${arabicTextChars} Arabic chars`, 'info');
 
     try {
       const apiStart = performance.now();
@@ -243,10 +350,12 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             player.start();
             setPlayer(player);
             setPlaying(true);
+            progress.dismiss('Recitation ready');
           } catch (err) {
             if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
             const msg = `Playback failed: ${err.message}`;
             addLog('Audio', msg, 'error');
+            progress.dismiss();
             setError(msg);
             toast.error(msg);
           }
@@ -263,7 +372,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
                 duration: audioDuration,
                 model: ttsModel,
               },
-            });
+            }, addLog);
             const cacheTime = performance.now() - cacheStart;
             addLog(
               'Audio Cache',
@@ -274,6 +383,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         }
       }
     } catch (e) {
+      progress.dismiss();
       Sentry.captureException(e);
       addLog('Audio System Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
       track('audio_error', { error: (e.message || '').slice(0, 100) });
@@ -283,6 +393,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         toast.error(`Recitation error: ${e.message}`);
       }
     } finally {
+      progress.dismiss(); // safety net — no-ops if already dismissed
       setGenerating(false);
       usePoemStore.getState().removeActiveAudio(current?.id);
       isTogglingPlay.current = false;
@@ -293,12 +404,16 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   if (usePoemStore.getState().hasActiveAudio(current?.id)) {
     addLog('Audio', 'Audio generation already in progress - waiting for completion', 'info');
 
+    // Show progress toast while waiting for in-flight prefetch
+    const pollEstSeconds = estimateTTSSeconds(current?.arabic?.length || 0);
+    const pollProgress = createProgressToast(pollEstSeconds, current?.arabic);
+
     const pollInterval = setInterval(async () => {
       if (!usePoemStore.getState().hasActiveAudio(current?.id)) {
         clearInterval(pollInterval);
         usePoemStore.getState().removePollingInterval(pollInterval);
 
-        const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+        const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id, addLog);
         if (cached?.blob) {
           addLog(
             'Audio',
@@ -313,15 +428,18 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             player.start();
             setPlayer(player);
             setPlaying(true);
+            pollProgress.dismiss('Recitation ready');
           } catch (err) {
             if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
             const msg = `Playback failed: ${err.message}`;
             addLog('Audio', msg, 'error');
+            pollProgress.dismiss();
             setError(msg);
             toast.error(msg);
           }
         } else {
           addLog('Audio', 'Prefetch failed — retrying audio generation automatically...', 'error');
+          pollProgress.dismiss();
           if (!isTogglingPlay.current) {
             isTogglingPlay.current = true;
             await doGenerate();
@@ -344,7 +462,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           'info'
         );
         setTimeout(async () => {
-          const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+          const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id, addLog);
           if (finalCheck?.blob) {
             addLog('Audio', '✓ Audio completed after extended wait - playing now', 'success');
             const u = URL.createObjectURL(finalCheck.blob);
@@ -355,16 +473,19 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               player.start();
               setPlayer(player);
               setPlaying(true);
+              pollProgress.dismiss('Recitation ready');
             } catch (err) {
               if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
               const msg = `Playback failed: ${err.message}`;
               addLog('Audio', msg, 'error');
+              pollProgress.dismiss();
               setError(msg);
               toast.error(msg);
             }
           } else {
             const msg = 'Audio generation timeout - please try again';
             addLog('Audio', msg, 'error');
+            pollProgress.dismiss();
             toast.error(msg);
           }
           usePoemStore.getState().removeActiveAudio(current?.id);

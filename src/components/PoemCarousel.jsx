@@ -68,8 +68,10 @@ const PoemCarousel = forwardRef(({
   // Notify parent when user swipes
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
+    const prev = emblaApi.previousScrollSnap();
     const idx = emblaApi.selectedScrollSnap();
-    onSlideChange(idx);
+    const direction = idx > prev ? 'next' : idx < prev ? 'prev' : 'same';
+    onSlideChange(idx, direction);
     setHasSwiped(true);
     setShowSwipeHint(false);
     updateScrollButtons();
@@ -196,10 +198,11 @@ const PoemCarousel = forwardRef(({
                         {showTranslation && pair.en && (
                           <p
                             dir="ltr"
-                            className={`font-brand-en opacity-60 ${DESIGN.anim} mx-auto`}
+                            className={`font-brand-en inline-fade-in mx-auto`}
                             style={{
                               fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
                               maxWidth: '90%',
+                              animationDelay: `${idx * 120}ms`,
                             }}
                           >
                             {pair.en}

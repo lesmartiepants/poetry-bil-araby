@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Feather, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BRAND } from '../constants/design.js';
 import { THEME, GOLD } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
+import MoodPicker from './onboarding/MoodPicker';
+import EraPicker from './onboarding/EraPicker';
+import TopicsPicker from './onboarding/TopicsPicker';
 
 const SplashScreen = () => {
   const isOpen = useModalStore((s) => s.splash);
@@ -26,6 +29,8 @@ const SplashScreen = () => {
   const particlesRef = useRef([]);
   const mouseRef = useRef({ x: 0, y: 0 });
   const [starsGenerated, setStarsGenerated] = useState(false);
+  const [selectedMoods, setSelectedMoods] = useState([]);
+  const [selectedEras, setSelectedEras] = useState([]);
 
   const isDark = theme === THEME.dark;
 
@@ -499,7 +504,7 @@ const SplashScreen = () => {
           inset: 0,
           zIndex: 60,
           background: '#000000',
-          display: phase >= 1 ? 'flex' : 'none',
+          display: phase >= 1 && phase <= 3 ? 'flex' : 'none',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
@@ -781,6 +786,73 @@ const SplashScreen = () => {
           }}
         />
       </div>
+
+      {/* ONBOARDING PHASES 4-6 — mood, era, topics pickers */}
+      <AnimatePresence mode="wait">
+        {phase === 4 && (
+          <MoodPicker
+            key="mood"
+            onNext={(moods) => {
+              setSelectedMoods(moods);
+              setPhase(5);
+            }}
+          />
+        )}
+        {phase === 5 && (
+          <EraPicker
+            key="era"
+            onNext={(eras) => {
+              setSelectedEras(eras);
+              setPhase(6);
+            }}
+          />
+        )}
+        {phase === 6 && (
+          <TopicsPicker
+            key="topics"
+            selectedMoods={selectedMoods}
+            selectedEras={selectedEras}
+            onComplete={(prefs) => {
+              // TODO: completeOnboarding(prefs) — integration-agent adding to modalStore
+              const store = useModalStore.getState();
+              if (typeof store.completeOnboarding === 'function') {
+                store.completeOnboarding(prefs);
+              } else {
+                try { localStorage.setItem('hasSeenOnboarding', 'true'); } catch {}
+                store.dismissSplash();
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Progress dots for phases 4-6 */}
+      {phase >= 4 && phase <= 6 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '2rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '8px',
+            zIndex: 70,
+          }}
+        >
+          {[4, 5, 6, 7].map((step) => (
+            <div
+              key={step}
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: phase >= step ? '#c5a059' : 'rgba(255,255,255,0.2)',
+                transition: 'background 0.3s ease',
+              }}
+            />
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 };

@@ -582,20 +582,6 @@
       -webkit-tap-highlight-color: transparent;
       flex-shrink: 0;
     }
-    .picker-cats {
-      display: flex; gap: 6px; padding: 8px 12px 6px;
-      border-bottom: 1px solid var(--border); flex-shrink: 0;
-      overflow-x: auto;
-    }
-    .picker-cat-btn {
-      padding: 4px 12px; border-radius: 16px;
-      border: 1px solid var(--border);
-      background: none; cursor: pointer;
-      color: var(--muted); font-size: 11px; font-weight: 600;
-      -webkit-tap-highlight-color: transparent;
-      white-space: nowrap; flex-shrink: 0;
-    }
-    .picker-cat-btn.active { border-color: var(--gold); color: var(--gold); }
     .picker-list { flex: 1; overflow-y: auto; }
     .picker-group-hdr {
       display: flex; align-items: center; justify-content: space-between;
@@ -745,7 +731,6 @@
     <input class="picker-search" id="pickerSearch" type="text" placeholder="Search patterns…" autocomplete="off">
     <button class="picker-close" id="pickerClose">&#x2715;</button>
   </div>
-  <div class="picker-cats" id="pickerCats"></div>
   <div class="picker-list" id="pickerList"></div>
 </div>
 
@@ -2474,21 +2459,34 @@ buildSidebar();
     }
   });
 
-  // ── PATTERN PICKER (grouped, with search) ────────────────────────────────
+  // ── PATTERN PICKER (single grouped list, with search) ───────────────────
   let pickerOpen = false;
-  let pickerCat  = null;
+
+  // Get subtitle for a catalog item: shape + source
+  function itemSubtitle(kind, data) {
+    const parts = [];
+    if (kind === 'tiling') {
+      if (data.category) parts.push(data.category);
+      if (data.auth)     parts.push(data.auth);
+    } else if (kind === 'template') {
+      if (data.group)    parts.push(data.group);
+      if (data.lines)    parts.push(data.lines.length + ' lines');
+    } else if (kind === 'girih') {
+      if (data.type)     parts.push(data.type);
+      if (data.sides)    parts.push(data.sides + '-gon');
+    }
+    return parts.join(' · ');
+  }
 
   function openPicker() {
     if (colorPopupOpen) {
       colorPopupOpen = false;
       document.getElementById('colorPopup').classList.remove('open');
     }
-    pickerCat = CAT_ORDER.includes(currentTab) ? currentTab : 'discover';
     pickerOpen = true;
     document.getElementById('pickerPanel').classList.add('open');
     document.getElementById('pickerBackdrop').classList.add('open');
     document.getElementById('pickerSearch').value = '';
-    buildPickerCats();
     buildPickerList('');
     setTimeout(() => document.getElementById('pickerSearch').focus(), 120);
   }
@@ -2499,100 +2497,48 @@ buildSidebar();
     document.getElementById('pickerBackdrop').classList.remove('open');
   };
 
-  function buildPickerCats() {
-    const el = document.getElementById('pickerCats');
-    el.innerHTML = '';
-    CAT_ORDER.forEach(cat => {
-      const btn = document.createElement('button');
-      btn.className = 'picker-cat-btn' + (cat === pickerCat ? ' active' : '');
-      btn.textContent = cat.charAt(0).toUpperCase() + cat.slice(1);
-      btn.addEventListener('click', () => {
-        pickerCat = cat;
-        el.querySelectorAll('.picker-cat-btn').forEach(b =>
-          b.classList.toggle('active', b.textContent.toLowerCase() === cat));
-        document.getElementById('pickerSearch').value = '';
-        buildPickerList('');
-      });
-      el.appendChild(btn);
-    });
-  }
-
-  // Build grouped list matching desktop structure
+  // Single unified list: My Saved + Collections (Discover format)
   function buildPickerList(query) {
     const list = document.getElementById('pickerList');
     const q = query.trim().toLowerCase();
     list.innerHTML = '';
 
-    if (pickerCat === 'tilings') {
-      const grouped = {};
-      for (const cat of TILING_CATEGORY_ORDER) grouped[cat] = [];
-      for (const t of CATALOG.tilings) {
-        const cat = t.category || 'Mixed';
-        if (!grouped[cat]) grouped[cat] = [];
-        if (q && !t.name.toLowerCase().includes(q) && !(t.category||'').toLowerCase().includes(q)) continue;
-        grouped[cat].push(t);
-      }
-      for (const cat of TILING_CATEGORY_ORDER) {
-        const items = grouped[cat];
-        if (!items || !items.length) continue;
-        appendGroupHeader(list, cat, items.length);
-        for (const t of items) appendPickerItem(list, t.name, t.category || '', 'tiling', t);
-      }
+    function matches(kind, data) {
+      if (!q) return true;
+      const sub = itemSubtitle(kind, data).toLowerCase();
+      return data.name.toLowerCase().includes(q) || sub.includes(q);
+    }
 
-    } else if (pickerCat === 'templates') {
-      const grouped = {};
-      for (const g of TEMPLATE_GROUP_ORDER) grouped[g] = [];
-      for (const t of CATALOG.templates) {
-        const g = t.group || 'Other';
-        if (!grouped[g]) grouped[g] = [];
-        if (q && !t.name.toLowerCase().includes(q) && !(t.group||'').toLowerCase().includes(q)) continue;
-        grouped[g].push(t);
-      }
-      for (const grp of TEMPLATE_GROUP_ORDER) {
-        const items = grouped[grp];
-        if (!items || !items.length) continue;
-        appendGroupHeader(list, grp, items.length);
-        for (const t of items) appendPickerItem(list, t.name, t.lines.length + ' lines', 'template', t);
-      }
-
-    } else {
-      // discover: My Saved + Collections
-      const savedNames = [...favorites];
-      if (savedNames.length) {
-        const saved = savedNames
-          .map(name => {
-            const t = CATALOG.tilings.find(x => x.name === name);
-            if (t) return { kind:'tiling', data:t };
-            const tmpl = CATALOG.templates.find(x => x.name === name);
-            if (tmpl) return { kind:'template', data:tmpl };
-            return null;
-          })
-          .filter(Boolean)
-          .filter(it => !q || it.data.name.toLowerCase().includes(q));
-        if (saved.length) {
-          appendGroupHeader(list, 'My Saved', saved.length);
-          for (const it of saved) appendPickerItem(list, it.data.name, '', it.kind, it.data);
-        }
-      }
-      for (const col of COLLECTIONS) {
-        const entries = col.items
-          .map(e => {
-            const data = findCatalogItem(e.tab, e.name);
-            if (!data) return null;
-            const kind = e.tab === 'tilings' ? 'tiling' : e.tab === 'girih' ? 'girih' : 'template';
-            return { kind, data };
-          })
-          .filter(Boolean)
-          .filter(it => !q || it.data.name.toLowerCase().includes(q));
-        if (!entries.length) continue;
-        appendGroupHeader(list, col.name, entries.length, col.color);
-        for (const it of entries) appendPickerItem(list, it.data.name, '', it.kind, it.data, col.color);
-      }
-      if (!list.children.length) {
-        list.innerHTML = '<div style="padding:24px 16px;color:var(--muted);font-size:13px;">No patterns found</div>';
+    // My Saved
+    const savedNames = [...favorites];
+    if (savedNames.length) {
+      const saved = savedNames.map(name => {
+        const t = CATALOG.tilings.find(x => x.name === name);
+        if (t) return { kind:'tiling', data:t };
+        const tmpl = CATALOG.templates.find(x => x.name === name);
+        if (tmpl) return { kind:'template', data:tmpl };
+        return null;
+      }).filter(Boolean).filter(it => matches(it.kind, it.data));
+      if (saved.length) {
+        appendGroupHeader(list, 'My Saved', saved.length);
+        for (const it of saved)
+          appendPickerItem(list, it.data.name, itemSubtitle(it.kind, it.data), it.kind, it.data);
       }
     }
 
+    // Collections
+    for (const col of COLLECTIONS) {
+      const entries = col.items.map(e => {
+        const data = findCatalogItem(e.tab, e.name);
+        if (!data) return null;
+        const kind = e.tab === 'tilings' ? 'tiling' : e.tab === 'girih' ? 'girih' : 'template';
+        return { kind, data };
+      }).filter(Boolean).filter(it => matches(it.kind, it.data));
+      if (!entries.length) continue;
+      appendGroupHeader(list, col.name, entries.length, col.color);
+      for (const it of entries)
+        appendPickerItem(list, it.data.name, itemSubtitle(it.kind, it.data), it.kind, it.data, col.color);
+      }
     if (!list.children.length) {
       list.innerHTML = '<div style="padding:24px 16px;color:var(--muted);font-size:13px;">No patterns found</div>';
     }

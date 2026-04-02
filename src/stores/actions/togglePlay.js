@@ -299,15 +299,25 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             toast.error(msg);
             throw new Error('Rate limited (429)');
           }
-          throw new Error(`Live API returned ${liveRes.status}: ${liveRes.statusText}`);
+          if (liveRes.status === 404) {
+            // Live endpoint not available on this backend — fall through to REST
+            addLog('Audio API', `[${ttsModel}] Live endpoint unavailable — falling back to REST`, 'warning');
+            ttsMode = 'rest';
+          } else {
+            throw new Error(`Live API returned ${liveRes.status}: ${liveRes.statusText}`);
+          }
         }
 
-        const liveData = await liveRes.json();
-        if (!liveData.audioData) {
-          throw new Error('Live API returned no audio data');
+        if (ttsMode === 'live') {
+          const liveData = await liveRes.json();
+          if (!liveData.audioData) {
+            throw new Error('Live API returned no audio data');
+          }
+          b64 = liveData.audioData;
         }
-        b64 = liveData.audioData;
-      } else {
+      }
+
+      if (ttsMode === 'rest') {
         // ── REST API path — existing generateContent flow ──
         // REST TTS does NOT support systemInstruction — delivery directions go in content block
         const ttsContent = getTTSContent(current);

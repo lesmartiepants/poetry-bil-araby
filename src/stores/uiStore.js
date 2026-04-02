@@ -22,7 +22,7 @@ const initialState = {
   showTransliteration: false,
   showDebugLogs: FEATURES.debug,
   ratchetMode: false, // Ratchet Mode: explains poems in Gen Z / gangster slang
-  ttsMode: 'live', // 'rest' | 'live'
+  ttsMode: 'rest', // 'rest' | 'live'
   liveVoice: 'Orus',
   liveTemperature: 0,
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'

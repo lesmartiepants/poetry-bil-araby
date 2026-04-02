@@ -78,6 +78,7 @@ import './styles/app.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
+import SquoctogonBackground from './components/SquoctogonBackground.jsx';
 
 import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
@@ -1276,17 +1277,8 @@ export default function DiwanApp() {
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
-          {/* Squactogon (4.8.8 tiling) background — squares + octagons in lapis/ocean colours */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            aria-hidden="true"
-            style={{
-              backgroundImage: darkMode
-                ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 48.284 48.284'%3E%3Cpath d='M14.142,0 L34.142,0 L48.284,14.142 L48.284,34.142 L34.142,48.284 L14.142,48.284 L0,34.142 L0,14.142 Z' fill='none' stroke='%234a7cc9' stroke-width='0.7' stroke-opacity='0.22'/%3E%3C/svg%3E")`
-                : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 48.284 48.284'%3E%3Cpath d='M14.142,0 L34.142,0 L48.284,14.142 L48.284,34.142 L34.142,48.284 L14.142,48.284 L0,34.142 L0,14.142 Z' fill='none' stroke='%232e5090' stroke-width='0.7' stroke-opacity='0.15'/%3E%3C/svg%3E")`,
-              backgroundSize: '64px 64px',
-            }}
-          />
+          {/* Squoctogon irregular tiling background — exact design from geometric-explorer */}
+          <SquoctogonBackground darkMode={darkMode} />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
           <main

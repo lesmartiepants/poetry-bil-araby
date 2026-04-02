@@ -1,35 +1,30 @@
-import { AnimatePresence, motion } from 'framer-motion';
-import { SkipBack, Play, Pause, SkipForward } from 'lucide-react';
-import { useUIStore } from '../stores/uiStore';
+import { motion } from 'framer-motion';
+import { SkipBack, Play, Pause, SkipForward, Loader2 } from 'lucide-react';
 import { startPlayer } from '../hooks/useTTSHighlight';
 
 /**
- * PlayControlsStrip — floating transport bar above the poem.
+ * PlayControlsStrip — transport bar above the footer controls.
  *
  * Props:
- *   player           {object}   Tone.Player instance
- *   isPlaying        {boolean}
- *   verseStartTimes  {number[]} Array of verse start offsets in seconds
- *   currentVerseIndex {number}  Index of the currently active verse
- *   onPlayPause      {function} Callback to toggle play/pause in the parent
+ *   player            {object}   Tone.Player instance
+ *   isPlaying         {boolean}
+ *   isLoading         {boolean}  Audio generation in progress — shows spinner
+ *   verseStartTimes   {number[]} Array of verse start offsets in seconds
+ *   currentVerseIndex {number}   Index of the currently active verse
+ *   onPlayPause       {function} Callback to toggle play/pause in the parent
  */
 const PlayControlsStrip = ({
   player,
   isPlaying,
+  isLoading = false,
   verseStartTimes = [],
   currentVerseIndex = 0,
   onPlayPause,
 }) => {
-  const highlightStyle = useUIStore((s) => s.highlightStyle);
-  const isVisible = highlightStyle !== 'none' && player != null;
-
   const handlePrev = () => {
-    const prevIndex = currentVerseIndex - 1;
-    if (prevIndex >= 0) {
-      // Stop first if already playing — Tone.Player throws if start() called twice
-      if (isPlaying) player.stop();
-      startPlayer(player, verseStartTimes[prevIndex]);
-    }
+    if (isPlaying) player.stop();
+    const offset = currentVerseIndex > 0 ? verseStartTimes[currentVerseIndex - 1] : 0;
+    startPlayer(player, offset);
   };
 
   const handleNext = () => {
@@ -41,52 +36,54 @@ const PlayControlsStrip = ({
   };
 
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div
-          key="play-controls-strip"
-          data-testid="play-controls-strip"
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 8 }}
-          transition={{ duration: 0.2, ease: 'easeOut' }}
-          className="flex items-center justify-center gap-2 px-4 py-2 rounded-2xl backdrop-blur-xl border border-white/10 bg-black/40"
-          style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
-        >
-          {/* Prev verse */}
-          <button
-            aria-label="Prev verse"
-            onClick={handlePrev}
-            disabled={currentVerseIndex <= 0}
-            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 disabled:opacity-30 hover:bg-white/10"
-            style={{ color: 'var(--gold, #c9a84c)' }}
-          >
-            <SkipBack size={16} />
-          </button>
+    <motion.div
+      key="play-controls-strip"
+      data-testid="play-controls-strip"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      transition={{ duration: 0.2, ease: 'easeOut' }}
+      className="flex items-center justify-center gap-2 px-4 py-2 rounded-2xl backdrop-blur-xl border border-white/10 bg-black/40"
+      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+    >
+      {/* Prev verse — restarts from beginning at verse 0 */}
+      <button
+        aria-label="Prev verse"
+        onClick={handlePrev}
+        className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/10"
+        style={{ color: 'var(--gold, #c9a84c)' }}
+      >
+        <SkipBack size={16} />
+      </button>
 
-          {/* Play / Pause */}
-          <button
-            aria-label={isPlaying ? 'Pause' : 'Play'}
-            onClick={onPlayPause}
-            className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 hover:bg-white/10"
-            style={{ color: 'var(--gold, #c9a84c)' }}
-          >
-            {isPlaying ? <Pause size={18} /> : <Play size={18} />}
-          </button>
+      {/* Play / Pause / Loading */}
+      <button
+        aria-label={isLoading ? 'Loading' : isPlaying ? 'Pause' : 'Play'}
+        onClick={onPlayPause}
+        disabled={isLoading}
+        className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 hover:bg-white/10 disabled:opacity-50"
+        style={{ color: 'var(--gold, #c9a84c)' }}
+      >
+        {isLoading ? (
+          <Loader2 size={18} className="animate-spin" />
+        ) : isPlaying ? (
+          <Pause size={18} />
+        ) : (
+          <Play size={18} />
+        )}
+      </button>
 
-          {/* Next verse */}
-          <button
-            aria-label="Next verse"
-            onClick={handleNext}
-            disabled={currentVerseIndex >= verseStartTimes.length - 1}
-            className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 disabled:opacity-30 hover:bg-white/10"
-            style={{ color: 'var(--gold, #c9a84c)' }}
-          >
-            <SkipForward size={16} />
-          </button>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      {/* Next verse */}
+      <button
+        aria-label="Next verse"
+        onClick={handleNext}
+        disabled={currentVerseIndex >= verseStartTimes.length - 1}
+        className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 disabled:opacity-30 hover:bg-white/10"
+        style={{ color: 'var(--gold, #c9a84c)' }}
+      >
+        <SkipForward size={16} />
+      </button>
+    </motion.div>
   );
 };
 

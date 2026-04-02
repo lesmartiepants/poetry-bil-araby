@@ -14,7 +14,6 @@ import {
   Check,
   X,
   Rabbit,
-  BookOpen,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -815,30 +814,9 @@ export default function DiwanApp() {
   // Container ref — useTTSHighlight also needs to know which verse is active
   // for the English line tts-line-active treatment (managed below via rAF).
   const ttsContainerRef = useRef(null);
+  const swipeTouchStartX = useRef(null);
 
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
-  const [isReadAlong, setIsReadAlong] = useState(false);
-  const readAlongTimerRef = useRef(null);
-
-  const stopReadAlong = () => {
-    if (readAlongTimerRef.current) clearTimeout(readAlongTimerRef.current);
-    readAlongTimerRef.current = null;
-    setIsReadAlong(false);
-    useAudioStore.getState().setPlaying(false);
-    pauseOffset.value = 0;
-  };
-
-  const startReadAlong = () => {
-    if (isReadAlong) { stopReadAlong(); return; }
-    // Auto-select glow if no style is chosen
-    if (highlightStyle === 'none') useUIStore.getState().setHighlightStyle('glow');
-    setIsReadAlong(true);
-    setCurrentVerseIndex(0);
-    pauseOffset.value = 0;
-    playbackStartTime.value = Date.now() / 1000;
-    useAudioStore.getState().setPlaying(true);
-    readAlongTimerRef.current = setTimeout(stopReadAlong, effectiveDuration * 1000 + 500);
-  };
 
   useTTSHighlight({
     wordRefs,
@@ -1543,26 +1521,30 @@ export default function DiwanApp() {
                       }}
                     />
                   ) : (
-                    <div className="px-4 md:px-20 py-2 text-center">
-                      {highlightStyle !== 'none' && (
-                        <div className="flex justify-center mb-3" data-testid="play-controls-strip">
-                          <PlayControlsStrip
-                            player={audioPlayer}
-                            isPlaying={isPlaying}
-                            verseStartTimes={verseStartTimes}
-                            currentVerseIndex={currentVerseIndex}
-                            onPlayPause={() =>
-                              togglePlayAction({
-                                audioRef,
-                                isTogglingPlay,
-                                current,
-                                addLog,
-                                track,
-                              })
-                            }
-                          />
-                        </div>
-                      )}
+                    <div
+                      className="px-4 md:px-20 py-2 text-center"
+                      onTouchStart={(e) => { swipeTouchStartX.current = e.touches[0].clientX; }}
+                      onTouchEnd={(e) => {
+                        if (swipeTouchStartX.current === null) return;
+                        const dx = e.changedTouches[0].clientX - swipeTouchStartX.current;
+                        swipeTouchStartX.current = null;
+                        if (Math.abs(dx) < 60 || carouselPoems.length === 0) return;
+                        const { player: ap, resetAudio } = useAudioStore.getState();
+                        if (ap) try { ap.stop(); } catch {}
+                        if (audioUrl) URL.revokeObjectURL(audioUrl);
+                        resetAudio();
+                        pauseOffset.value = 0;
+                        playbackStartTime.value = 0;
+                        dismissTTSProgress();
+                        setInterpretation(null);
+                        carouselExplainTargetId.current = null;
+                        if (dx > 0) {
+                          setCarouselIndex(Math.max(0, carouselIndex - 1));
+                        } else {
+                          setCarouselIndex(Math.min(carouselPoems.length - 1, carouselIndex + 1));
+                        }
+                      }}
+                    >
                       <div
                         ref={ttsContainerRef}
                         data-poem-container
@@ -1652,6 +1634,38 @@ export default function DiwanApp() {
           />
 
           <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom">
+            {/* Highlight mode: Listen (one-shot) → PlayControlsStrip (exclusive) */}
+            {highlightStyle !== 'none' && (
+              <div className="mb-2 flex justify-center">
+                <AnimatePresence mode="wait">
+                  {(isPlaying || isGeneratingAudio || audioPlayer !== null) ? (
+                    <PlayControlsStrip
+                      key="play-controls"
+                      player={audioPlayer}
+                      isPlaying={isPlaying}
+                      isLoading={isGeneratingAudio}
+                      verseStartTimes={verseStartTimes}
+                      currentVerseIndex={currentVerseIndex}
+                      onPlayPause={togglePlay}
+                    />
+                  ) : (
+                    <motion.button
+                      key="listen-trigger"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      onClick={togglePlay}
+                      aria-label="Start recitation"
+                      className={`px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 transition-all duration-150`}
+                      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+                    >
+                      Listen
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
             <div
               ref={controlBarRef}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${DESIGN.glass} ${theme.border} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
@@ -1662,7 +1676,7 @@ export default function DiwanApp() {
                 WebkitUserSelect: 'none',
               }}
             >
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+              {highlightStyle === 'none' && <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 {isGeneratingAudio ? (
                   <>
                     <button
@@ -1750,25 +1764,7 @@ export default function DiwanApp() {
                     </span>
                   </>
                 )}
-              </div>
-
-              {/* Read Along — no-audio highlight demo */}
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                <button
-                  onClick={startReadAlong}
-                  aria-label={isReadAlong ? 'Stop read along' : 'Start read along'}
-                  className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${isReadAlong ? 'bg-gold/15' : ''} ${GOLD.goldHoverBg} hover:scale-105`}
-                >
-                  <BookOpen
-                    className={GOLD.goldText}
-                    size={21}
-                    strokeWidth={isReadAlong ? 2.5 : 1.5}
-                  />
-                </button>
-                <span className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
-                  {isReadAlong ? 'Reading' : 'Read'}
-                </span>
-              </div>
+              </div>}
 
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button

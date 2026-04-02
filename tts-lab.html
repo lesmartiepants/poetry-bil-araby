@@ -3,9 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <title>TTS Lab — Gemini 3.1 Flash Live</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&display=swap" rel="stylesheet">
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #111; color: #e8e0d0; font-family: system-ui, sans-serif; padding: 24px; max-width: 860px; margin: 0 auto; }
+  body { background: #111; color: #e8e0d0; font-family: system-ui, sans-serif; padding: 24px; margin: 0 auto; }
+  .layout { display: grid; grid-template-columns: 1fr 290px; gap: 20px; max-width: 1120px; margin: 0 auto; }
+  .main-col { min-width: 0; }
   h1 { color: #c9a84c; font-size: 1.15rem; margin-bottom: 6px; letter-spacing: 0.05em; }
   .subtitle { color: #555; font-size: 0.75rem; margin-bottom: 20px; }
   .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
@@ -14,8 +19,8 @@
   label { font-size: 0.68rem; color: #666; text-transform: uppercase; letter-spacing: 0.09em; }
   textarea, select { background: #1a1a1a; border: 1px solid #2e2e2e; color: #e8e0d0; border-radius: 6px; padding: 9px 11px; font-size: 0.88rem; resize: vertical; width: 100%; transition: border-color 0.15s; }
   textarea:focus, select:focus { outline: none; border-color: #444; }
-  #poem { direction: rtl; font-family: 'Amiri', 'Noto Naskh Arabic', Georgia, serif; font-size: 1.1rem; line-height: 2; min-height: 100px; }
-  #sysInstruction { font-size: 0.82rem; line-height: 1.55; min-height: 90px; }
+  #poem { direction: rtl; font-family: 'Amiri', 'Noto Naskh Arabic', Georgia, serif; font-size: 1.35rem; line-height: 2.1; min-height: 100px; letter-spacing: 0.02em; color: #e8dfc8; }
+  #sysInstruction { font-size: 0.85rem; line-height: 1.7; min-height: 110px; font-family: 'Amiri', 'Noto Naskh Arabic', system-ui, sans-serif; }
   select { cursor: pointer; }
   .slider-wrap { display: flex; align-items: center; gap: 10px; margin-top: 2px; }
   .slider-wrap input[type=range] { flex: 1; accent-color: #c9a84c; cursor: pointer; }
@@ -31,36 +36,97 @@
   #status.ok { color: #4ade80; }
   audio { width: 100%; margin-top: 16px; border-radius: 6px; }
   .note { font-size: 0.7rem; color: #444; margin-top: 4px; }
-  .voice-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  /* Rating buttons */
+  #ratingRow { display: none; align-items: center; gap: 8px; margin-top: 10px; }
+  #ratingRow.visible { display: flex; }
+  .rating-label { font-size: 0.65rem; color: #444; }
+  .rating-btn {
+    background: none; border: 1px solid #2a2a2a; border-radius: 5px;
+    color: #555; font-size: 1rem; padding: 4px 10px; cursor: pointer;
+    transition: all 0.12s; line-height: 1;
+  }
+  .rating-btn:hover { border-color: #555; color: #ccc; transform: scale(1.1); }
+  .rating-btn.up.selected { border-color: rgba(74,222,128,0.6); background: rgba(74,222,128,0.1); color: #4ade80; }
+  .rating-btn.down.selected { border-color: rgba(239,68,68,0.6); background: rgba(239,68,68,0.1); color: #ef4444; }
+  /* History sidebar */
+  .history-sidebar {
+    position: sticky; top: 24px; height: calc(100vh - 48px);
+    display: flex; flex-direction: column;
+    background: #141414; border: 1px solid #1e1e1e; border-radius: 10px;
+    overflow: hidden;
+  }
+  .history-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 12px 8px; border-bottom: 1px solid #1e1e1e; flex-shrink: 0;
+  }
+  .history-label { font-size: 0.6rem; color: #c9a84c; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+  .history-count { font-size: 0.58rem; color: #333; font-family: monospace; }
+  .history-clear { font-size: 0.58rem; color: #2a2a2a; background: none; border: none; padding: 0; cursor: pointer; font-weight: normal; }
+  .history-clear:hover { color: #ef4444; }
+  .history-list { flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+  .history-list::-webkit-scrollbar { width: 3px; }
+  .history-list::-webkit-scrollbar-track { background: transparent; }
+  .history-list::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+  .history-empty { padding: 24px 12px; text-align: center; color: #2a2a2a; font-size: 0.7rem; line-height: 1.6; }
+  .history-item {
+    display: flex; flex-direction: column; gap: 4px;
+    background: #1a1a1a; border: 1px solid #252525; border-radius: 6px;
+    padding: 8px 10px; cursor: pointer; transition: border-color 0.12s; flex-shrink: 0;
+  }
+  .history-item:hover { border-color: rgba(201,168,76,0.35); background: #1d1d1d; }
+  .history-item.active-prompt { border-color: rgba(201,168,76,0.55); background: rgba(201,168,76,0.05); }
+  .history-text {
+    font-size: 0.7rem; color: #666; line-height: 1.5;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    font-family: 'Amiri', system-ui, sans-serif;
+  }
+  .history-item:hover .history-text { color: #999; }
+  .history-item.active-prompt .history-text { color: #c9a84c; }
+  .history-footer { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .history-meta { font-size: 0.56rem; color: #2e2e2e; font-family: monospace; flex: 1; min-width: 0; }
+  .history-item:hover .history-meta { color: #3a3a3a; }
+  .history-rating { font-size: 0.7rem; line-height: 1; flex-shrink: 0; }
+  .history-del { font-size: 0.6rem; color: #252525; background: none; border: none; padding: 0; cursor: pointer; line-height: 1; flex-shrink: 0; }
+  .history-del:hover { color: #ef4444; }
+  /* Voice grid */
+  .voice-section { margin-bottom: 10px; }
+  .voice-section-label { font-size: 0.6rem; color: #444; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 5px; }
+  .voice-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
   .voice-opt { display: none; }
   .voice-btn {
-    padding: 7px 6px; border-radius: 5px; border: 1px solid #2e2e2e;
-    background: #1a1a1a; color: #888; font-size: 0.72rem; font-family: monospace;
+    padding: 6px 5px; border-radius: 5px; border: 1px solid #2e2e2e;
+    background: #1a1a1a; color: #888; font-size: 0.68rem; font-family: monospace;
     cursor: pointer; text-align: center; transition: all 0.12s; user-select: none;
   }
   .voice-btn:hover { border-color: #555; color: #ccc; }
   .voice-btn.active { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.5); color: #c9a84c; font-weight: 700; }
-  .voice-name { display: block; font-size: 0.75rem; }
-  .voice-desc { display: block; font-size: 0.6rem; color: #555; margin-top: 2px; line-height: 1.3; }
+  .voice-name { display: block; font-size: 0.72rem; }
+  .voice-desc { display: block; font-size: 0.58rem; color: #555; margin-top: 1px; line-height: 1.2; }
   .voice-btn.active .voice-desc { color: #a07a30; }
 </style>
 </head>
 <body>
 
+<div class="layout">
+<div class="main-col">
 <h1>TTS Lab</h1>
 <p class="subtitle">Gemini 3.1 Flash Live — experiment with voice, style, and delivery</p>
 
 <div class="row">
   <div class="field full">
     <label>Poem (Arabic) — sent as-is to the model</label>
-    <textarea id="poem" rows="4">يَمُرُّ الْحَوْلُ بَعُدَ الْحَوْلِ عَنِّيَ* وَتِلكَ مَصَارِعُ الْأَقْوَامِ حَوْلَيٌّ* كَأَنِّيَ بِالأُلى حَفَرُوا لِجَارِيٌّ* وَقَدٌْ أَخَذُوا المَحافِرَ وَاِنْتَحَوْا لِي</textarea>
+    <textarea id="poem" rows="4">فَلِي فِيهِمَا قَلْبُ شَجَانِي اشْتِيَاقُهُ
+وَمُهْجَةُ نَفْس مَا أَمَلَّ ادِّكَارُهَا
+سَأَغْفِرُ لِلأَيَّامِ كُلَّ عَظِيمَةٍ
+لَئِنْ قَرَّبَتْ بَعْدَ البِعَادِ مَزَارُهَا</textarea>
   </div>
 </div>
 
 <div class="row">
   <div class="field full">
     <label>System Instruction — controls delivery style + verbatim constraint</label>
-    <textarea id="sysInstruction" rows="4">You are a text-to-speech reader for classical Arabic poetry. Read aloud the exact text provided, word for word, with no additions or commentary. Do not respond conversationally.
+    <textarea id="sysInstruction" rows="6">You are a masculaine arabic speaker, reciting arabic poetry. You don't slow down unnecessarily and do this with the authority of a poet that is well practiced. It flows, and sounds serious. Even when you read this quicker, you take breaths that are audbile. it's like you're pausing to think about what you're going to say, then it comes out heavy and hard.
+
 اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية.</textarea>
     <p class="note">Tip: Add "صوت عميق رنان" for deeper resonance, or "ببطء شديد" for slower delivery.</p>
   </div>
@@ -71,39 +137,47 @@
 <div class="row">
   <div class="field full">
     <label>Voice</label>
-    <div class="voice-grid" id="voiceGrid">
-      <label class="voice-btn active" data-voice="Orus">
-        <span class="voice-name">Orus</span>
-        <span class="voice-desc">firm · decisive · deep</span>
-      </label>
-      <label class="voice-btn" data-voice="Charon">
-        <span class="voice-name">Charon</span>
-        <span class="voice-desc">informative · clear · calm</span>
-      </label>
-      <label class="voice-btn" data-voice="Fenrir">
-        <span class="voice-name">Fenrir</span>
-        <span class="voice-desc">excitable · dynamic</span>
-      </label>
-      <label class="voice-btn" data-voice="Kore">
-        <span class="voice-name">Kore</span>
-        <span class="voice-desc">steady · warm</span>
-      </label>
-      <label class="voice-btn" data-voice="Aoede">
-        <span class="voice-name">Aoede</span>
-        <span class="voice-desc">smooth · melodic</span>
-      </label>
-      <label class="voice-btn" data-voice="Leda">
-        <span class="voice-name">Leda</span>
-        <span class="voice-desc">clear · bright</span>
-      </label>
-      <label class="voice-btn" data-voice="Puck">
-        <span class="voice-name">Puck</span>
-        <span class="voice-desc">upbeat · lively</span>
-      </label>
-      <label class="voice-btn" data-voice="Zephyr">
-        <span class="voice-name">Zephyr</span>
-        <span class="voice-desc">gentle · airy</span>
-      </label>
+    <div id="voiceGrid">
+      <div class="voice-section">
+        <div class="voice-section-label">♀ Female</div>
+        <div class="voice-grid">
+          <label class="voice-btn" data-voice="Zephyr"><span class="voice-name">Zephyr</span><span class="voice-desc">Bright</span></label>
+          <label class="voice-btn" data-voice="Kore"><span class="voice-name">Kore</span><span class="voice-desc">Firm</span></label>
+          <label class="voice-btn" data-voice="Leda"><span class="voice-name">Leda</span><span class="voice-desc">Youthful</span></label>
+          <label class="voice-btn" data-voice="Aoede"><span class="voice-name">Aoede</span><span class="voice-desc">Breezy</span></label>
+          <label class="voice-btn" data-voice="Callirrhoe"><span class="voice-name">Callirrhoe</span><span class="voice-desc">Easy-going</span></label>
+          <label class="voice-btn" data-voice="Autonoe"><span class="voice-name">Autonoe</span><span class="voice-desc">Bright</span></label>
+          <label class="voice-btn" data-voice="Despina"><span class="voice-name">Despina</span><span class="voice-desc">Smooth</span></label>
+          <label class="voice-btn" data-voice="Erinome"><span class="voice-name">Erinome</span><span class="voice-desc">Clear</span></label>
+          <label class="voice-btn" data-voice="Laomedeia"><span class="voice-name">Laomedeia</span><span class="voice-desc">Upbeat</span></label>
+          <label class="voice-btn" data-voice="Achernar"><span class="voice-name">Achernar</span><span class="voice-desc">Soft</span></label>
+          <label class="voice-btn" data-voice="Pulcherrima"><span class="voice-name">Pulcherrima</span><span class="voice-desc">Forward</span></label>
+          <label class="voice-btn" data-voice="Achird"><span class="voice-name">Achird</span><span class="voice-desc">Friendly</span></label>
+          <label class="voice-btn" data-voice="Schedar"><span class="voice-name">Schedar</span><span class="voice-desc">Even</span></label>
+          <label class="voice-btn" data-voice="Vindemiatrix"><span class="voice-name">Vindemiatrix</span><span class="voice-desc">Gentle</span></label>
+          <label class="voice-btn" data-voice="Sulafat"><span class="voice-name">Sulafat</span><span class="voice-desc">Warm</span></label>
+        </div>
+      </div>
+      <div class="voice-section">
+        <div class="voice-section-label">♂ Male</div>
+        <div class="voice-grid">
+          <label class="voice-btn active" data-voice="Orus"><span class="voice-name">Orus</span><span class="voice-desc">Firm</span></label>
+          <label class="voice-btn" data-voice="Puck"><span class="voice-name">Puck</span><span class="voice-desc">Upbeat</span></label>
+          <label class="voice-btn" data-voice="Charon"><span class="voice-name">Charon</span><span class="voice-desc">Informative</span></label>
+          <label class="voice-btn" data-voice="Fenrir"><span class="voice-name">Fenrir</span><span class="voice-desc">Excitable</span></label>
+          <label class="voice-btn" data-voice="Enceladus"><span class="voice-name">Enceladus</span><span class="voice-desc">Breathy</span></label>
+          <label class="voice-btn" data-voice="Iapetus"><span class="voice-name">Iapetus</span><span class="voice-desc">Clear</span></label>
+          <label class="voice-btn" data-voice="Umbriel"><span class="voice-name">Umbriel</span><span class="voice-desc">Easy-going</span></label>
+          <label class="voice-btn" data-voice="Algieba"><span class="voice-name">Algieba</span><span class="voice-desc">Smooth</span></label>
+          <label class="voice-btn" data-voice="Algenib"><span class="voice-name">Algenib</span><span class="voice-desc">Gravelly</span></label>
+          <label class="voice-btn" data-voice="Rasalgethi"><span class="voice-name">Rasalgethi</span><span class="voice-desc">Informative</span></label>
+          <label class="voice-btn" data-voice="Alnilam"><span class="voice-name">Alnilam</span><span class="voice-desc">Firm</span></label>
+          <label class="voice-btn" data-voice="Gacrux"><span class="voice-name">Gacrux</span><span class="voice-desc">Mature</span></label>
+          <label class="voice-btn" data-voice="Zubenelgenubi"><span class="voice-name">Zubenelgenubi</span><span class="voice-desc">Casual</span></label>
+          <label class="voice-btn" data-voice="Sadachbia"><span class="voice-name">Sadachbia</span><span class="voice-desc">Lively</span></label>
+          <label class="voice-btn" data-voice="Sadaltager"><span class="voice-name">Sadaltager</span><span class="voice-desc">Knowledgeable</span></label>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -127,11 +201,128 @@
 
 <audio id="player" controls style="display:none"></audio>
 
+<div id="ratingRow">
+  <span class="rating-label">Rate this reading:</span>
+  <button class="rating-btn up" onclick="rateGeneration(1)" title="Good">👍</button>
+  <button class="rating-btn down" onclick="rateGeneration(-1)" title="Bad">👎</button>
+</div>
+
+</div><!-- end main-col -->
+
+<div class="history-sidebar">
+  <div class="history-header">
+    <span class="history-label">History <span class="history-count" id="historyCount"></span></span>
+    <button class="history-clear" onclick="clearHistory()">clear all</button>
+  </div>
+  <div class="history-list" id="historyList">
+    <div class="history-empty">No generations yet.<br>Prompts are saved<br>after each ▶ Generate.</div>
+  </div>
+</div>
+
+</div><!-- end layout -->
+
 <script>
 const API = 'http://localhost:3001';
 let selectedVoice = 'Orus';
+let lastGeneratedTs = null;
+const HISTORY_KEY = 'tts-lab-prompt-history';
+const MAX_HISTORY = 30;
 
-// Voice buttons
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+
+function saveToHistory(text, voice, temp) {
+  const ts = Date.now();
+  const items = loadHistory().filter(h => h.text !== text); // dedupe on prompt text
+  items.unshift({ text, voice, temp, ts, rating: null });
+  if (items.length > MAX_HISTORY) items.length = MAX_HISTORY;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+  lastGeneratedTs = ts;
+  renderHistory();
+  return ts;
+}
+
+function rateGeneration(rating) {
+  if (!lastGeneratedTs) return;
+  const items = loadHistory();
+  const item = items.find(h => h.ts === lastGeneratedTs);
+  if (!item) return;
+  item.rating = item.rating === rating ? null : rating; // toggle off if same
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+  // update button states
+  document.querySelector('.rating-btn.up').classList.toggle('selected', item.rating === 1);
+  document.querySelector('.rating-btn.down').classList.toggle('selected', item.rating === -1);
+  renderHistory();
+}
+
+function deleteHistoryItem(ts) {
+  const items = loadHistory().filter(h => h.ts !== ts);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+  if (lastGeneratedTs === ts) {
+    lastGeneratedTs = null;
+    document.getElementById('ratingRow').classList.remove('visible');
+  }
+  renderHistory();
+}
+
+function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+  lastGeneratedTs = null;
+  document.getElementById('ratingRow').classList.remove('visible');
+  renderHistory();
+}
+
+function renderHistory() {
+  const items = loadHistory();
+  const list = document.getElementById('historyList');
+  const countEl = document.getElementById('historyCount');
+  if (countEl) countEl.textContent = items.length ? `(${items.length})` : '';
+  if (!items.length) {
+    list.innerHTML = '<div class="history-empty">No generations yet.<br>Prompts are saved<br>after each ▶ Generate.</div>';
+    return;
+  }
+  const current = document.getElementById('sysInstruction').value.trim();
+  list.innerHTML = items.map(h => {
+    const age = formatAge(h.ts);
+    const isActive = h.text === current;
+    const ratingIcon = h.rating === 1 ? '👍' : h.rating === -1 ? '👎' : '';
+    return `<div class="history-item${isActive ? ' active-prompt' : ''}" onclick="restorePrompt(${h.ts})">
+      <span class="history-text">${h.text.replace(/</g,'&lt;')}</span>
+      <div class="history-footer">
+        <span class="history-meta">${h.voice} · ${h.temp.toFixed(2)} · ${age}</span>
+        ${ratingIcon ? `<span class="history-rating">${ratingIcon}</span>` : ''}
+        <button class="history-del" onclick="event.stopPropagation();deleteHistoryItem(${h.ts})" title="Remove">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function restorePrompt(ts) {
+  const item = loadHistory().find(h => h.ts === ts);
+  if (!item) return;
+  document.getElementById('sysInstruction').value = item.text;
+  document.querySelectorAll('.voice-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`[data-voice="${item.voice}"]`);
+  if (btn) { btn.classList.add('active'); selectedVoice = item.voice; }
+  document.getElementById('temp').value = item.temp;
+  document.getElementById('tempVal').textContent = item.temp.toFixed(2);
+  renderHistory();
+}
+
+function formatAge(ts) {
+  const s = Math.floor((Date.now() - ts) / 1000);
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.floor(s/60)}m ago`;
+  if (s < 86400) return `${Math.floor(s/3600)}h ago`;
+  return new Date(ts).toLocaleDateString();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderHistory();
+  document.getElementById('sysInstruction').addEventListener('input', renderHistory);
+});
+
 document.getElementById('voiceGrid').addEventListener('click', e => {
   const btn = e.target.closest('[data-voice]');
   if (!btn) return;
@@ -140,7 +331,6 @@ document.getElementById('voiceGrid').addEventListener('click', e => {
   selectedVoice = btn.dataset.voice;
 });
 
-// Temp slider
 document.getElementById('temp').addEventListener('input', e => {
   document.getElementById('tempVal').textContent = parseFloat(e.target.value).toFixed(2);
 });
@@ -149,6 +339,7 @@ async function generate() {
   const btn = document.getElementById('generateBtn');
   const status = document.getElementById('status');
   const player = document.getElementById('player');
+  const ratingRow = document.getElementById('ratingRow');
 
   const text = document.getElementById('poem').value.trim();
   const sysInstruction = document.getElementById('sysInstruction').value.trim();
@@ -157,6 +348,7 @@ async function generate() {
   if (!text) { status.className = 'error'; status.textContent = 'No poem text.'; return; }
 
   btn.disabled = true;
+  ratingRow.classList.remove('visible');
   status.className = '';
   status.textContent = `Generating · ${selectedVoice} · temp ${temp.toFixed(2)}…`;
   player.style.display = 'none';
@@ -179,10 +371,19 @@ async function generate() {
     const wavBlob = pcm16ToWav(data.audioData);
     player.src = URL.createObjectURL(wavBlob);
     player.style.display = 'block';
-    player.play();
+    player.load();
+
+    saveToHistory(sysInstruction, selectedVoice, temp);
+
+    // show rating buttons, reset state
+    document.querySelector('.rating-btn.up').classList.remove('selected');
+    document.querySelector('.rating-btn.down').classList.remove('selected');
+    ratingRow.classList.add('visible');
 
     status.className = 'ok';
     status.textContent = `✓ ${dur}s audio · ${elapsed}s · ${selectedVoice} · temp ${temp.toFixed(2)}`;
+
+    player.play().catch(() => { status.textContent += ' · tap ▶ to play'; });
   } catch (e) {
     status.className = 'error';
     status.textContent = `Error: ${e.message}`;

@@ -288,8 +288,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         // Delivery style goes in system instruction (not prepended to text) for Live API
         const { liveVoice, liveTemperature } = useUIStore.getState();
         const liveSystemInstruction =
-          'You are a text-to-speech reader for classical Arabic poetry. ' +
-          'Read aloud the exact text provided, word for word, with no additions or commentary. ' +
+          'You are a masculine Arabic speaker, reciting Arabic poetry. You don\'t slow down unnecessarily ' +
+          'and do this with the authority of a poet that is well practiced. It flows, and sounds serious. ' +
+          'Even when you read this quicker, you take breaths that are audible. It\'s like you\'re pausing ' +
+          'to think about what you\'re going to say, then it comes out heavy and hard.\n\n' +
           'اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. ' +
           'أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية.';
         ttsModel = 'Live 3.1';

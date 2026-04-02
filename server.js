@@ -1046,8 +1046,13 @@ async function designTablesExist() {
 
 // ── OG Image: SVG-based share card for social link previews ─────────────
 // GET /api/poems/:id/og-image — returns an SVG image for Open Graph previews
-// TTS Lab — dev-only experiment page
-app.get('/tts-lab', (_req, res) => res.type('html').send(_labHtml));
+// TTS Lab — dev-only experiment page (relaxed CSP for inline scripts)
+app.get('/tts-lab', (_req, res) => {
+  res.setHeader('Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; media-src blob:"
+  );
+  res.type('html').send(_labHtml);
+});
 
 app.get(
   '/api/poems/:id/og-image',

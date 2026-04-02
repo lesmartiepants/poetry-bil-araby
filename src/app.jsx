@@ -1446,7 +1446,9 @@ export default function DiwanApp() {
                 </div>
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
-                  {carouselPoems.length > 0 ? (
+                  {/* When highlight is active, show single-poem view (focused reading/listening mode).
+                      Carousel navigation is still available but the highlight DOM needs direct word spans. */}
+                  {carouselPoems.length > 0 && highlightStyle === 'none' ? (
                     <PoemCarousel
                       ref={carouselRef}
                       poems={carouselPoems}

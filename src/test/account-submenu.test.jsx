@@ -125,9 +125,9 @@ describe('Account Submenu - Signed In', () => {
       expect(document.body.textContent).toContain('Nizar Qabbani');
     });
 
-    // Saved poems count is in the aria-label (badge is inside popover, not trigger)
-    const accountBtn = screen.getByLabelText(/Account menu.*2 saved poems/);
-    expect(accountBtn).toBeTruthy();
+    // Saved poems count is reflected in the "My poems" button aria-label (separate from Account menu trigger)
+    const myPoemsBtn = screen.getByLabelText(/My poems, 2 saved/);
+    expect(myPoemsBtn).toBeTruthy();
   });
 
   it('includes saved poems count in aria-label for accessibility', async () => {
@@ -138,11 +138,12 @@ describe('Account Submenu - Signed In', () => {
       expect(document.body.textContent).toContain('Nizar Qabbani');
     });
 
-    const accountBtn = screen.getByLabelText(/Account menu.*2 saved poems/);
-    expect(accountBtn).toBeTruthy();
+    // The "My poems" sidebar button aria-label includes the count for screen readers
+    const myPoemsBtn = screen.getByLabelText(/My poems, 2 saved/);
+    expect(myPoemsBtn).toBeTruthy();
   });
 
-  it('reveals My Poems and Sign Out submenu when Account is clicked', async () => {
+  it('reveals Sign Out option when Account is clicked', async () => {
     mockAutoLoadFetch();
     render(<DiwanApp />);
 
@@ -153,12 +154,11 @@ describe('Account Submenu - Signed In', () => {
     const accountBtn = screen.getByLabelText(/Account menu/);
     await userEvent.click(accountBtn);
 
-    // Submenu items should now be in the DOM
-    expect(screen.getByLabelText('View saved poems')).toBeTruthy();
+    // Account popover contains Sign out
     expect(screen.getByLabelText('Sign out')).toBeTruthy();
   });
 
-  it('opens SavedPoemsView when My Poems is clicked in the submenu', async () => {
+  it('opens SavedPoemsView when My Poems sidebar button is clicked', async () => {
     mockAutoLoadFetch();
     render(<DiwanApp />);
 
@@ -166,10 +166,8 @@ describe('Account Submenu - Signed In', () => {
       expect(document.body.textContent).toContain('Nizar Qabbani');
     });
 
-    const accountBtn = screen.getByLabelText(/Account menu/);
-    await userEvent.click(accountBtn);
-
-    const myPoemsBtn = screen.getByLabelText('View saved poems');
+    // Click the "My poems" button directly (it opens the saved poems view)
+    const myPoemsBtn = screen.getByLabelText(/My poems/);
     await userEvent.click(myPoemsBtn);
 
     // SavedPoemsView modal should open — it shows the header text

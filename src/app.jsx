@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { toast } from 'sonner';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Play,
   Pause,
@@ -13,6 +13,7 @@ import {
   Paintbrush,
   Check,
   X,
+  Rabbit,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -50,7 +51,7 @@ import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
 import { useModalStore } from './stores/modalStore';
 import { fetchPoem as fetchPoemAction } from './stores/actions/fetchPoem';
-import { togglePlay as togglePlayAction } from './stores/actions/togglePlay';
+import { togglePlay as togglePlayAction, dismissTTSProgress } from './stores/actions/togglePlay';
 import { analyzePoem as analyzePoemAction } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { transliterate } from './utils/transliterate.js';
@@ -186,6 +187,7 @@ export default function DiwanApp() {
   const setAudioError = useAudioStore((s) => s.setError);
   const hasAutoLoaded = useRef(false);
   const longPressTimer = useRef(null);
+  const pendingSaveHandled = useRef(false);
   const logs = useUIStore((s) => s.logs);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const showCopySuccess = useModalStore((s) => s.copyToast);
@@ -231,7 +233,7 @@ export default function DiwanApp() {
     const nextIdx = (currentIdx + 1) % FONTS.length;
     setCurrentFont(FONTS[nextIdx].id);
     track('font_changed', { font: FONTS[nextIdx].id });
-    addLog('Font', `Switched to ${FONTS[nextIdx].label}`, 'info');
+    addLog('Font', `Switched to ${FONTS[nextIdx].label}`, 'user');
   };
 
   const TEXT_SIZES = [
@@ -255,6 +257,30 @@ export default function DiwanApp() {
 
   const addLog = useUIStore.getState().addLog;
 
+  // Log every time the displayed Arabic poem changes on screen
+  useEffect(() => {
+    if (!displayedPoem?.id) return;
+    const source = carouselPoems.length > 0 ? `carousel[${carouselIndex}]` : 'main';
+    const chars = displayedPoem.arabic?.length || 0;
+    addLog(
+      'Render',
+      `Arabic poem shown: ${displayedPoem.poet} — ${displayedPoem.title} | id: ${displayedPoem.id} | ${chars} chars | source: ${source}`,
+      'info'
+    );
+  }, [displayedPoem?.id]);
+
+  // Log when a translation appears or is cleared on screen (not every streaming chunk)
+  const prevInterpretationRef = useRef(null);
+  useEffect(() => {
+    const prev = prevInterpretationRef.current;
+    prevInterpretationRef.current = interpretation;
+    if (!prev && interpretation) {
+      addLog('Render', `Translation appeared | poem id: ${displayedPoem?.id ?? 'unknown'}`, 'info');
+    } else if (prev && !interpretation) {
+      addLog('Render', `Translation cleared | poem id: ${displayedPoem?.id ?? 'unknown'}`, 'info');
+    }
+  }, [interpretation]);
+
   // Track poem view time (emit 'view' event after 3s on same poem)
   useEffect(() => {
     if (!current?.id || !user) return;
@@ -264,6 +290,22 @@ export default function DiwanApp() {
     }, 3000);
     return () => clearTimeout(timer);
   }, [current?.id, user]);
+
+  // Show a loading toast while the translation is streaming, dismiss when done
+  const prevIsInterpretingRef = useRef(false);
+  useEffect(() => {
+    const prev = prevIsInterpretingRef.current;
+    prevIsInterpretingRef.current = isInterpreting;
+    if (!prev && isInterpreting) {
+      toast.loading('Translating poem…', { id: 'translation-progress', duration: Infinity, icon: <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}><Rabbit size={16} /></motion.div> });
+    } else if (prev && !isInterpreting) {
+      if (interpretation) {
+        toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });
+      } else {
+        toast.dismiss('translation-progress');
+      }
+    }
+  }, [isInterpreting]);
 
   useEffect(() => {
     if (selectedCategory !== 'All') {
@@ -326,6 +368,12 @@ export default function DiwanApp() {
     // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).
     if (selectedCategory !== 'All' && current.poetArabic !== selectedCategory) return;
 
+    // If returning from OAuth, pendingCarouselPoems is still in sessionStorage at this point
+    // (hasAutoLoaded runs after this effect). Skip populate — hasAutoLoaded will restore it.
+    try {
+      if (sessionStorage.getItem('pendingCarouselPoems')) return;
+    } catch {}
+
     let cancelled = false;
     clearCarouselPoems();
     explainedPoemIds.current.clear();
@@ -362,7 +410,7 @@ export default function DiwanApp() {
   useEffect(() => {
     if (!interpretation || carouselPoems.length === 0) return;
 
-    const parts = parseInsight(interpretation);
+    const parts = parseInsight(interpretation, addLog);
     const translation = parts?.poeticTranslation;
     if (!translation) return;
 
@@ -385,6 +433,11 @@ export default function DiwanApp() {
     // During streaming, interpretation grows chunk by chunk. Always update if the
     // new translation is longer — this ensures the final complete translation lands
     // on the carousel poem, not just the first partial streaming chunk.
+    // Only write poem.english after streaming completes — patching on every chunk
+    // causes unnecessary re-renders and makes the Arabic verse animation replay
+    // each time Embla reacts to the slide height changing.
+    if (isInterpreting) return;
+
     const existing = carouselPoems[targetIdx].english || '';
     if (existing.length >= translation.length) return;
 
@@ -408,6 +461,37 @@ export default function DiwanApp() {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
 
+      // Restore carousel position unconditionally — pendingCarouselPoems is only written
+      // before an OAuth redirect, so it's safe to read-and-clear on every load.
+      try {
+        const rawPoems = sessionStorage.getItem('pendingCarouselPoems');
+        const rawIdx = sessionStorage.getItem('pendingCarouselIndex');
+        sessionStorage.removeItem('pendingCarouselPoems');
+        sessionStorage.removeItem('pendingCarouselIndex');
+        if (rawPoems) {
+          const restoredPoems = JSON.parse(rawPoems);
+          const targetIdx = rawIdx ? parseInt(rawIdx, 10) : 0;
+          if (Array.isArray(restoredPoems) && restoredPoems.length > 0) {
+            setCarouselPoems(restoredPoems);
+            setCarouselIndex(targetIdx);
+            addLog('Init', `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`, 'success');
+          }
+        }
+      } catch {}
+
+      // Restore pre-OAuth debug logs unconditionally — pendingLogs is only written
+      // before an OAuth redirect, so it's safe to read-and-clear on every load.
+      try {
+        const savedLogs = sessionStorage.getItem('pendingLogs');
+        if (savedLogs) {
+          sessionStorage.removeItem('pendingLogs');
+          const parsed = JSON.parse(savedLogs);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            useUIStore.setState((s) => ({ logs: [...parsed, ...s.logs] }));
+          }
+        }
+      } catch {}
+
       // Deep link: restore poet filter from URL
       if (queryParams.poet && !routeParams?.id) {
         setSelectedCategory(queryParams.poet);
@@ -417,7 +501,7 @@ export default function DiwanApp() {
       if (routeParams?.id && useDatabase) {
         const poemId = routeParams.id;
         track('deep_link_loaded', { poemId });
-        addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'info');
+        addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'request');
         fetchPoemById(poemId)
           .then((poem) => {
             setPoems([poem]);
@@ -452,6 +536,8 @@ export default function DiwanApp() {
         addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
         setAutoExplainPending(true);
         if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
+
+
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(
@@ -473,14 +559,16 @@ export default function DiwanApp() {
     }
   }, []);
 
-  // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
+  // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up.
+  // Guard against multiple rapid onAuthStateChange fires (INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, etc.)
   useEffect(() => {
-    if (!user) return;
+    if (!user || pendingSaveHandled.current) return;
     let stashed;
     try {
       stashed = sessionStorage.getItem('pendingSavePoem');
     } catch {}
     if (!stashed) return;
+    pendingSaveHandled.current = true;
     sessionStorage.removeItem('pendingSavePoem');
     try {
       const poem = JSON.parse(stashed);
@@ -505,8 +593,7 @@ export default function DiwanApp() {
       autoExplainPending &&
       poemToExplain?.id &&
       !isFetching &&
-      !isInterpreting &&
-      !interpretation
+      !isInterpreting
     ) {
       setAutoExplainPending(false);
       if (explainedPoemIds.current.has(poemToExplain.id)) return;
@@ -518,6 +605,7 @@ export default function DiwanApp() {
         if (carouselPoems.length > 0) {
           carouselExplainTargetId.current = poemToExplain.id;
         }
+        setInterpretation(null);
         analyzePoemAction({ current: poemToExplain, addLog, track });
       }
     }
@@ -618,7 +706,7 @@ export default function DiwanApp() {
       try {
         const poets = await fetchPoets();
         setDynamicPoets(poets);
-        addLog('Poets', `Loaded ${poets.length} poets from API`, 'info');
+        addLog('Poets', `Loaded ${poets.length} poets from API`, 'success');
       } catch {
         addLog('Poets', 'Failed to fetch poets from API', 'warn');
       } finally {
@@ -655,7 +743,7 @@ export default function DiwanApp() {
         };
       }
     }
-    return parseInsight(interpretation);
+    return parseInsight(interpretation, addLog);
   }, [
     interpretation,
     cachedTranslation,
@@ -663,6 +751,7 @@ export default function DiwanApp() {
     cachedAuthorBio,
     ratchetMode,
     displayedPoem?.arabic,
+    addLog,
   ]);
 
   const versePairs = useMemo(() => {
@@ -738,7 +827,7 @@ export default function DiwanApp() {
     addLog(
       'UI Event',
       `📋 Copy button clicked | Poem: ${displayedPoem?.poet} - ${displayedPoem?.title}`,
-      'info'
+      'user'
     );
 
     const englishText = insightParts?.poeticTranslation || displayedPoem?.english || '';
@@ -766,7 +855,7 @@ export default function DiwanApp() {
   };
 
   const handleShare = async () => {
-    addLog('UI Event', 'Share button clicked', 'info');
+    addLog('UI Event', 'Share button clicked', 'user');
     track('poem_shared', { poet: displayedPoem?.poet });
 
     // Open the share card modal for visual sharing
@@ -783,9 +872,21 @@ export default function DiwanApp() {
     // Stash current poem so it survives the OAuth page redirect
     if (current) {
       try {
-        sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
+        sessionStorage.setItem('pendingSavePoem', JSON.stringify(displayedPoem || current));
+        const { carouselPoems: cp, carouselIndex: ci } = usePoemStore.getState();
+        if (cp.length > 0) {
+          sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp));
+          sessionStorage.setItem('pendingCarouselIndex', String(ci));
+        }
       } catch {}
     }
+    // Save logs before OAuth redirect so they persist after page reload
+    try {
+      const currentLogs = useUIStore.getState().logs;
+      if (currentLogs?.length > 0) {
+        sessionStorage.setItem('pendingLogs', JSON.stringify(currentLogs.slice(-100)));
+      }
+    } catch {}
     const { error } = await signInWithGoogle();
     if (error) {
       addLog('Auth Error', error.message, 'error');
@@ -801,9 +902,21 @@ export default function DiwanApp() {
     // Stash current poem so it survives the OAuth page redirect
     if (current) {
       try {
-        sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
+        sessionStorage.setItem('pendingSavePoem', JSON.stringify(displayedPoem || current));
+        const { carouselPoems: cp, carouselIndex: ci } = usePoemStore.getState();
+        if (cp.length > 0) {
+          sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp));
+          sessionStorage.setItem('pendingCarouselIndex', String(ci));
+        }
       } catch {}
     }
+    // Save logs before OAuth redirect so they persist after page reload
+    try {
+      const currentLogs = useUIStore.getState().logs;
+      if (currentLogs?.length > 0) {
+        sessionStorage.setItem('pendingLogs', JSON.stringify(currentLogs.slice(-100)));
+      }
+    } catch {}
     const { error } = await signInWithApple();
     if (error) {
       addLog('Auth Error', error.message, 'error');
@@ -865,7 +978,7 @@ export default function DiwanApp() {
     addLog(
       'UI Event',
       `👎 Flag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
-      'info'
+      'user'
     );
 
     if (!user) {
@@ -874,7 +987,7 @@ export default function DiwanApp() {
       return;
     }
 
-    addLog('Downvote', `→ Sending downvote to Supabase | poem_id: ${current?.id}`, 'info');
+    addLog('Downvote', `→ Sending downvote to Supabase | poem_id: ${current?.id}`, 'request');
     const { error } = await downvotePoem(current);
     if (error) {
       addLog('Downvote Error', `✗ Failed: ${error.message}`, 'error');
@@ -894,9 +1007,9 @@ export default function DiwanApp() {
     addLog(
       'UI Event',
       `👍 Unflag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
-      'info'
+      'user'
     );
-    addLog('Undownvote', `→ Removing downvote from Supabase | poem_id: ${current?.id}`, 'info');
+    addLog('Undownvote', `→ Removing downvote from Supabase | poem_id: ${current?.id}`, 'request');
 
     const { error } = await undownvotePoem(current?.id);
     if (error) {
@@ -951,7 +1064,7 @@ export default function DiwanApp() {
     const newTheme = darkMode ? 'light' : 'dark';
     track('theme_changed', { theme: newTheme });
     setDarkMode(!darkMode);
-    addLog('Theme', `Switched to ${newTheme} mode`, 'info');
+    addLog('Theme', `Switched to ${newTheme} mode`, 'user');
   };
   const handleToggleTheme = handleToggleDarkMode;
 
@@ -965,7 +1078,7 @@ export default function DiwanApp() {
   };
 
   const handleToggleTranslation = (showTranslation) => {
-    addLog('Translation', `Translation ${showTranslation ? 'shown' : 'hidden'}`, 'info');
+    addLog('Translation', `Translation ${showTranslation ? 'shown' : 'hidden'}`, 'user');
   };
 
   const handleToggleTransliteration = (showTransliteration) => {
@@ -977,15 +1090,15 @@ export default function DiwanApp() {
   };
 
   const handleTextSizeChange = (level) => {
-    addLog('TextSize', `Text size changed to level ${level}`, 'info');
+    addLog('TextSize', `Text size changed to level ${level}`, 'user');
   };
 
   const handleKeyboardShortcut = (key, action) => {
-    addLog('Keyboard', `Shortcut: ${key} → ${action}`, 'info');
+    addLog('Keyboard', `Shortcut: ${key} → ${action}`, 'user');
   };
 
   const handleSplashDismissed = () => {
-    addLog('Splash', 'Splash screen dismissed', 'info');
+    addLog('Splash', 'Splash screen dismissed', 'user');
   };
 
   const handleSplashShown = () => {
@@ -1005,6 +1118,7 @@ export default function DiwanApp() {
     setAudioUrl(null);
 
     // Clear any stuck loading states when poem changes
+    dismissTTSProgress();
     setIsGeneratingAudio(false);
     setIsInterpreting(false);
     setAudioError(null);
@@ -1023,19 +1137,24 @@ export default function DiwanApp() {
     addLog(
       'Navigation',
       `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id} | Tags: ${tagsType} - ${tagsContent}`,
-      'info'
+      'user'
     );
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes
-  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (100 RPD per model, free tier)
+  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (flash: ~100 RPD, pro: 50 RPD on Tier 1)
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
 
-    // Prefetch current poem audio after 2s (only if user lingers on this poem)
+    // Warm up the backend immediately so it's awake by the time prefetch fires at 2s.
+    // Render free tier cold starts take up to ~15s; this ping starts the wake-up clock.
+    pingHealth().catch(() => {});
+
+    // Prefetch current poem audio after 500ms (backend warmup ping fires first, so Render
+    // is already waking up — no need for the old 2s conservative delay)
     const prefetchCurrentAudio = setTimeout(() => {
       prefetchManager.prefetchAudio(current.id, current, addLog);
-    }, 2000);
+    }, 500);
 
     // Prefetch current poem insights after 5s (only if user stays)
     const prefetchCurrentInsights = setTimeout(() => {
@@ -1277,7 +1396,7 @@ export default function DiwanApp() {
                       ref={carouselRef}
                       poems={carouselPoems}
                       currentIndex={carouselIndex}
-                      onSlideChange={(idx) => {
+                      onSlideChange={(idx, direction) => {
                         setCarouselIndex(idx);
                         // Pause audio when browsing via carousel and clear the stale URL
                         // so the next play request generates audio for the new poem instead
@@ -1299,13 +1418,10 @@ export default function DiwanApp() {
                         // Auto-explain via autoExplainPending (single explain path).
                         // This avoids the race where carousel-populate and autoExplainPending
                         // both fire analyzePoemAction and fight over interpretation state.
-                        const newPoem = carouselPoems[idx];
+                        const newPoem = usePoemStore.getState().carouselPoems[idx];
                         if (FEATURES.logging && newPoem) {
-                          addLog(
-                            'Navigation',
-                            `Carousel → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ID: ${newPoem.id}`,
-                            'info'
-                          );
+                          const fromPoem = carouselPoems[carouselIndex];
+                          addLog('Carousel', `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`, 'user');
                         }
                         // Update URL to reflect the currently displayed poem
                         if (newPoem?.id) {
@@ -1375,10 +1491,11 @@ export default function DiwanApp() {
                             {showTranslation && pair.en && (
                               <p
                                 dir="ltr"
-                                className={`font-brand-en italic opacity-60 ${DESIGN.anim} mx-auto`}
+                                className={`font-brand-en italic inline-fade-in mx-auto`}
                                 style={{
                                   fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
                                   maxWidth: '90%',
+                                  animationDelay: `${idx * 120}ms`,
                                 }}
                               >
                                 {pair.en}
@@ -1491,9 +1608,16 @@ export default function DiwanApp() {
                         <Volume2 className={theme.error} size={21} />
                       ) : isPlaying ? (
                         <>
-                          <PulseGlowBars volumePulseRef={volumePulseRef} />
+                          <PulseGlowBars volumePulseRef={volumePulseRef} isPlaying={true} />
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
                             <Pause fill={GOLD.gold} size={14} />
+                          </div>
+                        </>
+                      ) : audioUrl ? (
+                        <>
+                          <PulseGlowBars volumePulseRef={null} isPlaying={false} />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-200 pointer-events-none">
+                            <Play fill={GOLD.gold} size={14} />
                           </div>
                         </>
                       ) : (
@@ -1503,7 +1627,7 @@ export default function DiwanApp() {
                     <span
                       className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                     >
-                      {isPlaying ? 'Playing' : 'Listen'}
+                      {isPlaying ? 'Playing' : audioUrl ? 'Paused' : 'Listen'}
                     </span>
                   </>
                 )}
@@ -1514,6 +1638,7 @@ export default function DiwanApp() {
                   onClick={() => {
                     setFireTapped(true);
                     setTimeout(() => setFireTapped(false), 400);
+                    dismissTTSProgress();
                     setDiscoverDrawerOpen(true);
                   }}
                   onTouchStart={() => {

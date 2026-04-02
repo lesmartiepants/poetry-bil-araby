@@ -9,7 +9,7 @@
 
 import { FEATURES } from '../constants/index.js';
 import { INSIGHTS_SYSTEM_PROMPT, getTTSContent } from '../prompts';
-import { API_MODELS, TTS_CONFIG, geminiTextFetch, fetchTTSWithFallback } from './gemini.js';
+import { API_MODELS, TTS_CONFIG, geminiTextFetch, fetchTTSWithFallback, canPrefetchTts } from './gemini.js';
 import { CACHE_CONFIG, cacheOperations } from './cache.js';
 import { pcm16ToWav } from '../utils/audio.js';
 
@@ -31,6 +31,17 @@ export const prefetchManager = {
     // Skip if quota was exhausted for this poem earlier in the session
     if (_quotaExhaustedIds.has(poemId)) return;
 
+    // Check daily RPD quota — reserve 20% for user-initiated plays
+    if (!canPrefetchTts(API_MODELS.tts)) {
+      if (addLog)
+        addLog(
+          'Prefetch Audio',
+          `Daily TTS quota near limit — skipping prefetch to reserve for manual plays`,
+          'warning'
+        );
+      return;
+    }
+
     try {
       // Check if already generating - silently skip
       if (usePoemStore.getState().hasActiveAudio(poemId)) {
@@ -44,7 +55,7 @@ export const prefetchManager = {
       }
 
       // Check cache first - don't prefetch if already cached
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, poemId);
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, poemId, addLog);
       if (cached?.blob) {
         if (addLog)
           addLog('Prefetch Audio', `Audio already cached for poem ${poemId} - skipping`, 'info');
@@ -75,7 +86,7 @@ export const prefetchManager = {
         addLog(
           'Prefetch Audio',
           `→ Background audio generation (poem ${poemId}) | Model: ${API_MODELS.tts} | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
-          'info'
+          'request'
         );
       }
 
@@ -86,10 +97,33 @@ export const prefetchManager = {
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
       };
-      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
-        addLog,
-        label: 'Prefetch Audio',
-      });
+
+      // Retry once on network-level failure (TypeError: Failed to fetch) to handle
+      // Render cold starts — backend may take up to ~15s to wake from idle.
+      let fetchResult;
+      try {
+        fetchResult = await fetchTTSWithFallback(url, fetchOptions, {
+          addLog,
+          label: 'Prefetch Audio',
+        });
+      } catch (networkErr) {
+        if (networkErr instanceof TypeError) {
+          if (addLog)
+            addLog(
+              'Prefetch Audio',
+              `Network error (backend cold start?) — retrying in 3s: ${networkErr.message}`,
+              'info'
+            );
+          await new Promise((r) => setTimeout(r, 3000));
+          fetchResult = await fetchTTSWithFallback(url, fetchOptions, {
+            addLog,
+            label: 'Prefetch Audio',
+          });
+        } else {
+          throw networkErr;
+        }
+      }
+      const { res, model: ttsModel } = fetchResult;
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -144,7 +178,7 @@ export const prefetchManager = {
               duration: audioDuration,
               model: ttsModel,
             },
-          });
+          }, addLog);
 
           if (addLog)
             addLog(
@@ -187,7 +221,7 @@ export const prefetchManager = {
       }
 
       // Check cache first - don't prefetch if already cached
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, poemId);
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, poemId, addLog);
       if (cached?.interpretation) {
         if (addLog)
           addLog(
@@ -214,7 +248,7 @@ export const prefetchManager = {
         addLog(
           'Prefetch Insights',
           `→ Background insights generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedInputTokens} tokens`,
-          'info'
+          'request'
         );
       }
 
@@ -244,7 +278,7 @@ export const prefetchManager = {
         await cacheOperations.set(CACHE_CONFIG.stores.insights, poemId, {
           interpretation,
           metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens },
-        });
+        }, addLog);
 
         if (addLog)
           addLog(

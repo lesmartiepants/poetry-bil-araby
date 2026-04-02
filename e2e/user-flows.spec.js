@@ -214,11 +214,14 @@ test.describe('User Flows', () => {
     await textSettingsBtn.click();
     await page.waitForTimeout(300);
 
-    const fontBtn = page.locator('button[title^="Font:"]').first();
-    await expect(fontBtn).toBeVisible({ timeout: 2000 });
-    await fontBtn.click();
+    const fontTrigger = page.locator('button[aria-label="Select font"]').first();
+    await expect(fontTrigger).toBeVisible({ timeout: 2000 });
+    await fontTrigger.click();
 
-    // After cycling, Alexandria should be the active font (Amiri → Alexandria)
+    // Select Alexandria from the dropdown
+    await page.getByText('الإسكندرية').click();
+
+    // After selecting, Alexandria should be the active font
     await expect(page.locator('.font-alexandria').first()).toBeVisible({ timeout: 3000 });
   });
 

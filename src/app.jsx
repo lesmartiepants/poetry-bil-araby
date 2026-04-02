@@ -297,7 +297,18 @@ export default function DiwanApp() {
     const prev = prevIsInterpretingRef.current;
     prevIsInterpretingRef.current = isInterpreting;
     if (!prev && isInterpreting) {
-      toast.loading('Translating poem…', { id: 'translation-progress', duration: Infinity, icon: <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}><Rabbit size={16} /></motion.div> });
+      toast.loading('Translating poem…', {
+        id: 'translation-progress',
+        duration: Infinity,
+        icon: (
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
+          >
+            <Rabbit size={16} />
+          </motion.div>
+        ),
+      });
     } else if (prev && !isInterpreting) {
       if (interpretation) {
         toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });
@@ -474,7 +485,11 @@ export default function DiwanApp() {
           if (Array.isArray(restoredPoems) && restoredPoems.length > 0) {
             setCarouselPoems(restoredPoems);
             setCarouselIndex(targetIdx);
-            addLog('Init', `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`, 'success');
+            addLog(
+              'Init',
+              `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`,
+              'success'
+            );
           }
         }
       } catch {}
@@ -536,8 +551,6 @@ export default function DiwanApp() {
         addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
         setAutoExplainPending(true);
         if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
-
-
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(
@@ -589,12 +602,7 @@ export default function DiwanApp() {
   // When the carousel is active (user has swiped), explain the carousel poem, not the main poem.
   useEffect(() => {
     const poemToExplain = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
-    if (
-      autoExplainPending &&
-      poemToExplain?.id &&
-      !isFetching &&
-      !isInterpreting
-    ) {
+    if (autoExplainPending && poemToExplain?.id && !isFetching && !isInterpreting) {
       setAutoExplainPending(false);
       if (explainedPoemIds.current.has(poemToExplain.id)) return;
       if (ratchetMode || !poemToExplain?.cachedTranslation) {
@@ -1268,11 +1276,15 @@ export default function DiwanApp() {
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
+          {/* Squactogon (4.8.8 tiling) background — squares + octagons in lapis/ocean colours */}
           <div
-            className="absolute inset-0 pointer-events-none opacity-[0.03]"
+            className="absolute inset-0 pointer-events-none"
+            aria-hidden="true"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3C/svg%3E")`,
-              backgroundSize: '60px 60px',
+              backgroundImage: darkMode
+                ? `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 48.284 48.284'%3E%3Cpath d='M14.142,0 L34.142,0 L48.284,14.142 L48.284,34.142 L34.142,48.284 L14.142,48.284 L0,34.142 L0,14.142 Z' fill='none' stroke='%234a7cc9' stroke-width='0.7' stroke-opacity='0.22'/%3E%3C/svg%3E")`
+                : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 48.284 48.284'%3E%3Cpath d='M14.142,0 L34.142,0 L48.284,14.142 L48.284,34.142 L34.142,48.284 L14.142,48.284 L0,34.142 L0,14.142 Z' fill='none' stroke='%232e5090' stroke-width='0.7' stroke-opacity='0.15'/%3E%3C/svg%3E")`,
+              backgroundSize: '64px 64px',
             }}
           />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
@@ -1421,7 +1433,11 @@ export default function DiwanApp() {
                         const newPoem = usePoemStore.getState().carouselPoems[idx];
                         if (FEATURES.logging && newPoem) {
                           const fromPoem = carouselPoems[carouselIndex];
-                          addLog('Carousel', `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`, 'user');
+                          addLog(
+                            'Carousel',
+                            `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                            'user'
+                          );
                         }
                         // Update URL to reflect the currently displayed poem
                         if (newPoem?.id) {

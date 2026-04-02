@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import { Player, start as toneStart } from 'tone';
 import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
@@ -49,6 +50,7 @@ function createProgressToast(estimatedSeconds, arabicText) {
     id: toastId,
     description: lineInfo,
     duration: Infinity,
+    icon: createElement('span', { className: 'rabbit-loading' }, '🐇'),
   });
 
   const interval = setInterval(() => {
@@ -69,12 +71,14 @@ function createProgressToast(estimatedSeconds, arabicText) {
         id: toastId,
         description: subtitle,
         duration: Infinity,
+        icon: createElement('span', { className: 'rabbit-loading' }, '🐇'),
       });
     } else {
       toast.loading('Almost ready...', {
         id: toastId,
         description: subtitle,
         duration: Infinity,
+        icon: createElement('span', { className: 'rabbit-loading' }, '🐇'),
       });
     }
   }, 1000);

@@ -2658,6 +2658,21 @@ buildSidebar();
       }
     }
 
+    // Featured
+    {
+      const featured = FEATURED.map(name => {
+        const t = CATALOG.tilings.find(x => x.name === name); if (t) return { kind:'tiling', data:t };
+        const g = CATALOG.girihShapes.find(x => x.name === name); if (g) return { kind:'girih', data:g };
+        const tmpl = CATALOG.templates.find(x => x.name === name); if (tmpl) return { kind:'template', data:tmpl };
+        return null;
+      }).filter(Boolean).filter(it => matches(it.kind, it.data));
+      if (featured.length) {
+        appendGroupHeader(list, 'Featured', featured.length, 'var(--gold)');
+        for (const it of featured)
+          appendPickerItem(list, it.data.name, itemSubtitle(it.kind, it.data), it.kind, it.data);
+      }
+    }
+
     // Collections
     for (const col of COLLECTIONS) {
       const entries = col.items.map(e => {

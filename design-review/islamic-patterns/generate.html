@@ -2434,8 +2434,17 @@ if (window.matchMedia('(max-width: 640px)').matches) {
   });
 }
 buildSidebar();
-// Auto-select first pattern from Masterpieces collection in Discover tab
+// Auto-select first pattern on load
 (function() {
+  // On mobile: start with first FEATURED pattern
+  if (window.matchMedia('(max-width: 640px)').matches) {
+    for (const name of FEATURED) {
+      const t = CATALOG.tilings.find(x => x.name === name); if (t) { selectItem('tiling', t); return; }
+      const g = CATALOG.girihShapes.find(x => x.name === name); if (g) { selectItem('girih', g); return; }
+      const tmpl = CATALOG.templates.find(x => x.name === name); if (tmpl) { selectItem('template', tmpl); return; }
+    }
+  }
+  // Desktop: first pattern from Masterpieces collection
   const firstCollection = COLLECTIONS[0];
   if (firstCollection && firstCollection.items.length > 0) {
     const entry = firstCollection.items[0];
@@ -2446,7 +2455,6 @@ buildSidebar();
       return;
     }
   }
-  // Fallback: first tiling
   const first = CATALOG.tilings[0];
   if (first) selectItem('tiling', first);
 })();
@@ -2514,9 +2522,18 @@ buildSidebar();
     if (label) label.textContent = modeLabel(colorMode);
   };
 
-  // ── Prev / Next ──────────────────────────────────────────────────────────
+  // ── Prev / Next — always navigate through FEATURED on mobile ─────────────
+  function getMobileNavItems() {
+    return FEATURED.map(name => {
+      const t = CATALOG.tilings.find(x => x.name === name); if (t) return { kind:'tiling', data:t };
+      const g = CATALOG.girihShapes.find(x => x.name === name); if (g) return { kind:'girih', data:g };
+      const tmpl = CATALOG.templates.find(x => x.name === name); if (tmpl) return { kind:'template', data:tmpl };
+      return null;
+    }).filter(Boolean);
+  }
+
   function getAdjacentItem(dir) {
-    const items = getFlatItems();
+    const items = getMobileNavItems();
     if (!items.length) return null;
     if (!currentItem) return items[0];
     const idx = items.findIndex(it => it.data === currentItem.data);

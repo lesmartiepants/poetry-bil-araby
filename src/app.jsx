@@ -1537,6 +1537,7 @@ export default function DiwanApp() {
                         isTogglingPlay.current = false;
                         pauseOffset.value = 0;
                         playbackStartTime.value = 0;
+                        document.querySelectorAll('.tts-active, .tts-past').forEach(el => el.classList.remove('tts-active', 'tts-past'));
                         dismissTTSProgress();
                         setInterpretation(null);
                         carouselExplainTargetId.current = null;

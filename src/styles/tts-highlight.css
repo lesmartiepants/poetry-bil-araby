@@ -1,0 +1,131 @@
+/* TTS Word-Highlight Reader Styles
+   ============================================================
+   Classes applied by useTTSHighlight hook via classList mutation.
+   Imported once in main.jsx or app.jsx.
+   ============================================================ */
+
+/* Base word transition */
+.tts-word {
+  transition:
+    color 120ms ease-out,
+    text-shadow 120ms ease-out,
+    background-color 150ms ease-out,
+    box-shadow 150ms ease-out,
+    border-bottom-color 120ms ease-out;
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .tts-word,
+  .tts-line {
+    transition: none !important;
+  }
+}
+
+/* ============================================================
+   English line treatments
+   Inactive lines are dimmed; active line treatment varies by style.
+   ============================================================ */
+
+.tts-en-line {
+  opacity: 0.4;
+  transition:
+    opacity 180ms,
+    color 180ms,
+    background 250ms,
+    border-color 200ms;
+}
+
+.tts-style-glow .tts-en-line.tts-line-active {
+  opacity: 1;
+  color: rgba(201, 168, 76, 0.85);
+}
+
+.tts-style-underline .tts-en-line.tts-line-active {
+  opacity: 1;
+  border-left: 2px solid rgba(201, 168, 76, 0.5);
+  background: rgba(201, 168, 76, 0.08);
+}
+
+.tts-style-pill .tts-en-line.tts-line-active {
+  opacity: 1;
+  background: rgba(201, 168, 76, 0.12);
+  border-radius: 3px;
+  padding: 2px 8px;
+}
+
+.tts-style-focus-blur .tts-en-line.tts-line-active {
+  opacity: 1;
+}
+
+/* ============================================================
+   Glow style
+   Active word glows gold; past words dim; future words near-invisible.
+   ============================================================ */
+
+.tts-style-glow .tts-word {
+  color: rgba(255, 255, 255, 0.18);
+}
+
+.tts-style-glow .tts-active {
+  color: #d4b463;
+  text-shadow: 0 0 8px var(--gold), 0 0 20px rgba(201, 168, 76, 0.5);
+}
+
+.tts-style-glow .tts-past {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ============================================================
+   Underline style
+   Gold border sweeps under the active word.
+   ============================================================ */
+
+.tts-style-underline .tts-word {
+  border-bottom: 2px solid transparent;
+  padding-bottom: 2px;
+}
+
+.tts-style-underline .tts-active {
+  border-bottom-color: var(--gold);
+  color: white;
+}
+
+.tts-style-underline .tts-past {
+  border-bottom-color: rgba(201, 168, 76, 0.25);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ============================================================
+   Pill style
+   Active word gets a solid gold background block.
+   ============================================================ */
+
+.tts-style-pill .tts-word {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.tts-style-pill .tts-active {
+  background: var(--gold);
+  color: #1a1a1a;
+}
+
+/* ============================================================
+   Focus Blur style
+   Inactive lines blur and dim; active verse is fully visible.
+   Applied at line level, not word level.
+   ============================================================ */
+
+.tts-style-focus-blur .tts-line {
+  filter: blur(2px);
+  opacity: 0.2;
+  transition: filter 300ms, opacity 300ms;
+}
+
+.tts-style-focus-blur .tts-line.tts-line-active {
+  filter: none;
+  opacity: 1;
+}

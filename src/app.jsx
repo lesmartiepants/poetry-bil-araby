@@ -55,7 +55,6 @@ import { fetchPoem as fetchPoemAction } from './stores/actions/fetchPoem';
 import { togglePlay as togglePlayAction, dismissTTSProgress, abortPlay } from './stores/actions/togglePlay';
 import { analyzePoem as analyzePoemAction, cancelAnalysis } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
-import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
 import { pcm16ToWav } from './utils/audio.js';
 import {
@@ -94,7 +93,6 @@ import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
-import HighlightedVerse from './components/HighlightedVerse.jsx';
 import PlayControlsStrip from './components/PlayControlsStrip.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -816,8 +814,6 @@ export default function DiwanApp() {
 
   // Container ref — useTTSHighlight also needs to know which verse is active
   // for the English line tts-line-active treatment (managed below via rAF).
-  const ttsContainerRef = useRef(null);
-  const swipeTouchStartX = useRef(null);
 
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
 
@@ -1466,53 +1462,41 @@ export default function DiwanApp() {
                 </div>
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
-                  {/* When highlight is active, show single-poem view (focused reading/listening mode).
-                      Carousel navigation is still available but the highlight DOM needs direct word spans. */}
-                  {carouselPoems.length > 0 && highlightStyle === 'none' ? (
+                  {carouselPoems.length > 0 && (
                     <PoemCarousel
                       ref={carouselRef}
                       poems={carouselPoems}
                       currentIndex={carouselIndex}
                       onSlideChange={(idx, direction) => {
                         setCarouselIndex(idx);
-                        // Pause audio when browsing via carousel and clear the stale URL
-                        // so the next play request generates audio for the new poem instead
-                        // of resuming the previous poem's cached blob URL.
+                        // Stop audio and reset TTS state when navigating poems
                         const { player: activePlayer, resetAudio } = useAudioStore.getState();
                         if (activePlayer && activePlayer.state === 'started') {
                           activePlayer.stop();
                         }
-                        // Revoke the blob URL before clearing so the browser can free the
-                        // underlying audio buffer (prevents memory leaks during long sessions).
                         if (audioUrl) URL.revokeObjectURL(audioUrl);
                         abortPlay();
                         resetAudio();
-                        // Cancel any in-flight poem analysis so stale streaming chunks
-                        // don't bleed onto the new poem's translation slot.
+                        isTogglingPlay.current = false;
+                        pauseOffset.value = 0;
+                        playbackStartTime.value = 0;
+                        document.querySelectorAll('.tts-active, .tts-past').forEach(el => el.classList.remove('tts-active', 'tts-past'));
+                        dismissTTSProgress();
                         cancelAnalysis();
-                        // Clear stale interpretation from the previous poem so versePairs
-                        // doesn't flash the old translation while the new one loads.
                         setInterpretation(null);
                         carouselExplainTargetId.current = null;
-                        // Show translation for the new poem by default
                         setShowTranslation(true);
-                        // Auto-explain via autoExplainPending (single explain path).
-                        // This avoids the race where carousel-populate and autoExplainPending
-                        // both fire analyzePoemAction and fight over interpretation state.
                         const newPoem = usePoemStore.getState().carouselPoems[idx];
                         if (FEATURES.logging && newPoem) {
                           const fromPoem = carouselPoems[carouselIndex];
                           addLog('Carousel', `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`, 'user');
                         }
-                        // Update URL to reflect the currently displayed poem
                         if (newPoem?.id) {
                           navigate('/poem/' + newPoem.id + window.location.search, {
                             replace: true,
                           });
                           updateOGMetaTags(newPoem);
                         }
-                        // Queue AI translation for every swiped poem, even those that
-                        // already have a DB scholarly translation (cachedTranslation).
                         if (
                           newPoem &&
                           !newPoem.english &&
@@ -1540,102 +1524,11 @@ export default function DiwanApp() {
                               addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
                           });
                       }}
+                      highlightStyle={highlightStyle}
+                      activeVersePairs={versePairs}
+                      wordRefs={wordRefs}
+                      wordOffsets={wordOffsets}
                     />
-                  ) : (
-                    <div
-                      className="px-4 md:px-20 py-2 text-center"
-                      onTouchStart={(e) => { swipeTouchStartX.current = e.touches[0].clientX; }}
-                      onTouchEnd={(e) => {
-                        if (swipeTouchStartX.current === null) return;
-                        const dx = e.changedTouches[0].clientX - swipeTouchStartX.current;
-                        swipeTouchStartX.current = null;
-                        if (Math.abs(dx) < 60 || carouselPoems.length === 0) return;
-                        const { player: ap, resetAudio } = useAudioStore.getState();
-                        if (ap) try { ap.stop(); } catch {}
-                        if (audioUrl) URL.revokeObjectURL(audioUrl);
-                        abortPlay();
-                        resetAudio();
-                        cancelAnalysis();
-                        isTogglingPlay.current = false;
-                        pauseOffset.value = 0;
-                        playbackStartTime.value = 0;
-                        document.querySelectorAll('.tts-active, .tts-past').forEach(el => el.classList.remove('tts-active', 'tts-past'));
-                        dismissTTSProgress();
-                        setInterpretation(null);
-                        carouselExplainTargetId.current = null;
-                        setShowTranslation(true);
-                        const dir = dx > 0 ? 'prev' : 'next';
-                        const newIdx = dx > 0 ? Math.max(0, carouselIndex - 1) : Math.min(carouselPoems.length - 1, carouselIndex + 1);
-                        addLog('Carousel', `↔️ Swiped ${dir} → ${carouselPoems[newIdx]?.poet} | ${carouselPoems[newIdx]?.title}`, 'user');
-                        setCarouselIndex(newIdx);
-                        // Queue AI translation for the new poem (mirrors Embla handler).
-                        const swipedPoem = carouselPoems[newIdx];
-                        if (swipedPoem && !swipedPoem.english && !explainedPoemIds.current.has(swipedPoem.id)) {
-                          setAutoExplainPending(true);
-                        }
-                      }}
-                    >
-                      <div
-                        ref={ttsContainerRef}
-                        data-poem-container
-                        className={`flex flex-col gap-5 md:gap-7${highlightStyle !== 'none' ? ` tts-style-${highlightStyle}` : ''}`}
-                      >
-                        {versePairs.map((pair, idx) => (
-                          <div
-                            key={`${current?.id}-${idx}`}
-                            className="flex flex-col gap-0.5 verse-fade-up"
-                            style={{ animationDelay: `${idx * 80}ms` }}
-                          >
-                            {highlightStyle !== 'none' ? (
-                              <HighlightedVerse
-                                text={pair.ar}
-                                wordRefs={wordRefs}
-                                wordOffset={wordOffsets[idx] ?? 0}
-                                verseIndex={idx}
-                                className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
-                                style={{
-                                  fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})`,
-                                }}
-                              />
-                            ) : (
-                              <p
-                                dir="rtl"
-                                className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
-                                style={{
-                                  fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})`,
-                                }}
-                              >
-                                {pair.ar}
-                              </p>
-                            )}
-                            {showTransliteration && pair.ar && (
-                              <p
-                                dir="ltr"
-                                className={`font-brand-en italic opacity-50 ${DESIGN.anim}`}
-                                style={{
-                                  fontSize: `calc(${POEM_META.verseTranslitSize} * ${textScale})`,
-                                }}
-                              >
-                                {transliterate(pair.ar)}
-                              </p>
-                            )}
-                            {showTranslation && pair.en && (
-                              <p
-                                dir="ltr"
-                                className={`tts-en-line font-brand-en italic inline-fade-in mx-auto${idx === currentVerseIndex && highlightStyle !== 'none' ? ' tts-line-active' : ''}`}
-                                style={{
-                                  fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
-                                  maxWidth: '90%',
-                                  animationDelay: `${idx * 120}ms`,
-                                }}
-                              >
-                                {pair.en}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   )}
                 </div>
 

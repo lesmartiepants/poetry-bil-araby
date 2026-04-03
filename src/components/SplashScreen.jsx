@@ -1,19 +1,49 @@
 import { useState, useEffect, useRef } from 'react';
-import { Feather, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BRAND } from '../constants/design.js';
-import { THEME, GOLD } from '../constants/theme.js';
-import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
 import MoodPicker from './onboarding/MoodPicker';
 import EraPicker from './onboarding/EraPicker';
 import TopicsPicker from './onboarding/TopicsPicker';
 
+// ── Phase 0 (Ray-Tracing Splash) — all design/animation constants ──────────
+const PHASE0 = {
+  // Palette
+  BG: '#000000',
+  WARM: '#fbbf24',          // amber-400: Arabic brand text + button accent
+  STONE: '#a8a29e',         // stone-400: English brand text (muted)
+
+  // Primary light ray
+  RAY_WIDTH: 140,           // px width of the ray div
+  RAY_BLUR: 30,             // px gaussian blur
+  LIGHT_X_CENTER: 50,       // % horizontal center of sweep
+  LIGHT_X_RANGE: 30,        // ±% horizontal sweep amplitude
+  RAY_ANGLE_CENTER: -8,     // deg base tilt
+  RAY_ANGLE_RANGE: 12,      // ±deg tilt oscillation
+
+  // Secondary light ray (depth)
+  RAY2_WIDTH: 80,
+  RAY2_BLUR: 25,
+  LIGHT_X2_PHASE_OFFSET: 0.4, // cycle offset from primary
+  LIGHT_X2_RANGE: 25,
+  RAY2_ANGLE_CENTER: 6,
+  RAY2_ANGLE_RANGE: 8,
+
+  // Animation
+  CYCLE_DURATION: 12000,    // ms for one full left-right sweep
+  CONTENT_FADE_DELAY: '1s', // brand lockup fade-in delay
+  BTN_FADE_DELAY: '2s',     // enter button fade-in delay
+
+  // Dust particles
+  MAX_PARTICLES: 80,
+  SPAWN_RATE: 0.35,         // probability per frame of spawning a particle
+  BEAM_RANGE: 20,           // % proximity to beam that boosts particle brightness
+};
+
 const SplashScreen = () => {
   const isOpen = useModalStore((s) => s.splash);
   const showOnboarding = useModalStore((s) => s.onboarding);
-  const darkMode = useUIStore((s) => s.darkMode);
-  const theme = darkMode ? THEME.dark : THEME.light;
   const onDismiss = () => {
     useModalStore.getState().dismissSplash();
     try {
@@ -23,55 +53,101 @@ const SplashScreen = () => {
   // Phase: 0 = desert splash, 1 = kinetic step 0 (Arabic), 2 = kinetic step 1 (English + Continue), 3 = MoodPicker, 4 = EraPicker, 5 = TopicsPicker
   const [phase, setPhase] = useState(0);
   const [fadeState, setFadeState] = useState('in');
-  const starsRef = useRef(null);
   const canvasRef = useRef(null);
   const animFrameRef = useRef(null);
   const particlesRef = useRef([]);
   const mouseRef = useRef({ x: 0, y: 0 });
-  const [starsGenerated, setStarsGenerated] = useState(false);
+  // Phase 0 ray-tracing refs
+  const phase0WrapperRef = useRef(null);
+  const dustCanvasRef = useRef(null);
+  const phase0AnimRef = useRef(null);
   const [selectedMoods, setSelectedMoods] = useState([]);
   const [selectedEras, setSelectedEras] = useState([]);
 
-  const isDark = theme === THEME.dark;
-
-  // Generate stars for the splash desert sky
+  // Phase 0: animated ray-tracing light sweep + floating dust particles
   useEffect(() => {
-    if (!isOpen || phase !== 0 || starsGenerated) return;
-    const container = starsRef.current;
-    if (!container) return;
-    const stars = [];
-    for (let i = 0; i < 80; i++) {
-      const size = (1 + Math.random() * 2).toFixed(1);
-      stars.push({
-        left: (Math.random() * 100).toFixed(1) + '%',
-        top: (Math.random() * 48).toFixed(1) + '%',
-        width: size + 'px',
-        height: size + 'px',
-        dur: (1.2 + Math.random() * 3.5).toFixed(2) + 's',
-        delay: (Math.random() * 5).toFixed(2) + 's',
-      });
-    }
-    // Build star elements imperatively for performance
-    stars.forEach((s) => {
-      const el = document.createElement('div');
-      el.style.position = 'absolute';
-      el.style.background = '#FFF';
-      el.style.borderRadius = '50%';
-      el.style.left = s.left;
-      el.style.top = s.top;
-      el.style.width = s.width;
-      el.style.height = s.height;
-      el.style.animation = `splashTwinkle ${s.dur} ease-in-out infinite alternate`;
-      el.style.animationDelay = s.delay;
-      container.appendChild(el);
-    });
-    setStarsGenerated(true);
-    return () => {
-      // Use textContent to clear imperatively-added children safely —
-      // avoids removeChild errors if React is also tearing down the tree
-      if (container) container.textContent = '';
+    if (!isOpen || phase !== 0) return;
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const wrapper = phase0WrapperRef.current;
+    const canvas = dustCanvasRef.current;
+    if (!wrapper || !canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
-  }, [isOpen, phase, starsGenerated]);
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+
+    const startTime = Date.now();
+    const particles = [];
+    const TAU = Math.PI * 2;
+
+    const tick = () => {
+      const elapsed = Date.now() - startTime;
+      const cyclePhase = (elapsed % PHASE0.CYCLE_DURATION) / PHASE0.CYCLE_DURATION;
+
+      // Update CSS custom properties driving the ray divs
+      const lightX = PHASE0.LIGHT_X_CENTER + Math.sin(cyclePhase * TAU) * PHASE0.LIGHT_X_RANGE;
+      const rayAngle = PHASE0.RAY_ANGLE_CENTER + Math.sin(cyclePhase * TAU) * PHASE0.RAY_ANGLE_RANGE;
+      const lightX2 = PHASE0.LIGHT_X_CENTER + Math.sin((cyclePhase + PHASE0.LIGHT_X2_PHASE_OFFSET) * TAU) * PHASE0.LIGHT_X2_RANGE;
+      const rayAngle2 = PHASE0.RAY2_ANGLE_CENTER + Math.cos(cyclePhase * TAU) * PHASE0.RAY2_ANGLE_RANGE;
+
+      wrapper.style.setProperty('--light-x', lightX + '%');
+      wrapper.style.setProperty('--ray-angle', rayAngle + 'deg');
+      wrapper.style.setProperty('--light-x2', lightX2 + '%');
+      wrapper.style.setProperty('--ray-angle2', rayAngle2 + 'deg');
+
+      // Dust particle system
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (particles.length < PHASE0.MAX_PARTICLES && Math.random() < PHASE0.SPAWN_RATE) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: canvas.height + 10,
+          size: 0.5 + Math.random() * 2,
+          vx: (Math.random() - 0.5) * 0.3,
+          vy: -0.15 - Math.random() * 0.5,
+          life: 0.5 + Math.random() * 0.5,
+          decay: 0.001 + Math.random() * 0.003,
+          brightness: 0.4 + Math.random() * 0.6,
+        });
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= p.decay;
+
+        if (p.life <= 0 || p.y < -10) { particles.splice(i, 1); continue; }
+
+        const distFromLight = Math.abs((p.x / canvas.width) * 100 - lightX);
+        const beamBrightness = Math.max(0, 1 - distFromLight / PHASE0.BEAM_RANGE);
+
+        ctx.globalAlpha = p.life * (0.3 + beamBrightness * 0.6) * p.brightness;
+        ctx.fillStyle = 'rgba(255,245,220,1)';
+        ctx.shadowColor = 'rgba(255,245,220,0.8)';
+        ctx.shadowBlur = beamBrightness * 8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size * p.life, 0, TAU);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      ctx.shadowBlur = 0;
+
+      phase0AnimRef.current = requestAnimationFrame(tick);
+    };
+
+    tick();
+
+    return () => {
+      if (phase0AnimRef.current) cancelAnimationFrame(phase0AnimRef.current);
+      window.removeEventListener('resize', resize);
+    };
+  }, [isOpen, phase]);
 
   // Particle system for kinetic walkthrough phases
   useEffect(() => {
@@ -196,7 +272,6 @@ const SplashScreen = () => {
     if (isOpen) {
       setFadeState('in');
       setPhase(0);
-      setStarsGenerated(false);
     }
   }, [isOpen]);
 
@@ -244,12 +319,11 @@ const SplashScreen = () => {
 
   // Injected keyframe styles
   const splashStyles = `
-    @keyframes splashTwinkle { 0% { opacity: 0.1; } 100% { opacity: 0.95; } }
-    @keyframes splashDune1 { to { transform: translateX(18px); } }
-    @keyframes splashDune2 { to { transform: translateX(-22px); } }
-    @keyframes splashDune3 { to { transform: translateX(12px); } }
-    @keyframes splashDune4 { to { transform: translateX(-9px); } }
     @keyframes splashFadeIn { to { opacity: 1; } }
+    @keyframes phase0FadeUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
     @keyframes splashArabicReveal {
       from { opacity: 0; transform: scale(0.9); filter: blur(8px); }
       to { opacity: 1; transform: scale(1); filter: blur(0px); }
@@ -265,79 +339,8 @@ const SplashScreen = () => {
       from { opacity: 0; transform: translateY(20px) scale(0.95); }
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
-    @media (prefers-reduced-motion: reduce) {
-      .splash-dune { transform: none !important; animation: none !important; }
-    }
   `;
 
-  // Computed values needed by both phases
-  const desertNight = '#1A0F0A';
-  const gold = GOLD.gold;
-  const sandMuted = isDark ? 'rgba(232,213,183,0.5)' : 'rgba(26,15,10,0.4)';
-  const dunes = isDark
-    ? [
-        {
-          h: '25%',
-          bg: '#6B3720',
-          br: '55% 75% 0 0 / 100%',
-          z: 4,
-          anim: 'splashDune1 10s ease-in-out infinite alternate',
-        },
-        {
-          h: '33%',
-          bg: '#5A2E1A',
-          br: '75% 45% 0 0 / 100%',
-          z: 3,
-          anim: 'splashDune2 14s ease-in-out infinite alternate',
-        },
-        {
-          h: '40%',
-          bg: '#4A2516',
-          br: '45% 65% 0 0 / 100%',
-          z: 2,
-          anim: 'splashDune3 18s ease-in-out infinite alternate',
-        },
-        {
-          h: '48%',
-          bg: '#3A1C12',
-          br: '65% 50% 0 0 / 100%',
-          z: 1,
-          anim: 'splashDune4 23s ease-in-out infinite alternate',
-        },
-      ]
-    : [
-        {
-          h: '25%',
-          bg: '#D4B896',
-          br: '55% 75% 0 0 / 100%',
-          z: 4,
-          anim: 'splashDune1 10s ease-in-out infinite alternate',
-        },
-        {
-          h: '33%',
-          bg: '#C8A880',
-          br: '75% 45% 0 0 / 100%',
-          z: 3,
-          anim: 'splashDune2 14s ease-in-out infinite alternate',
-        },
-        {
-          h: '40%',
-          bg: '#BC9A6E',
-          br: '45% 65% 0 0 / 100%',
-          z: 2,
-          anim: 'splashDune3 18s ease-in-out infinite alternate',
-        },
-        {
-          h: '48%',
-          bg: '#B08C5E',
-          br: '65% 50% 0 0 / 100%',
-          z: 1,
-          anim: 'splashDune4 23s ease-in-out infinite alternate',
-        },
-      ];
-  const bgGradient = isDark
-    ? 'linear-gradient(180deg, #0D0A14 0%, #1A0F0A 40%, #3A1C12 100%)'
-    : `linear-gradient(180deg, #F5EDE0 0%, #EDE0CC 40%, #B08C5E 100%)`;
   const kineticStep = phase - 1; // 0, 1, or 2
   const progressWidth = ((Math.max(kineticStep, 0) + 1) / 3) * 100 + '%';
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -355,146 +358,181 @@ const SplashScreen = () => {
     >
       <style>{splashStyles}</style>
 
-      {/* DESERT SPLASH (phase 0) — hidden via display:none when phase >= 1 */}
+      {/* PHASE 0: Ray-Tracing Splash — hidden via display:none when phase >= 1 */}
       <div
+        ref={phase0WrapperRef}
         style={{
           position: 'fixed',
           inset: 0,
           zIndex: 60,
-          background: bgGradient,
-          display: phase === 0 ? 'flex' : 'none',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexDirection: 'column',
-          transition: 'opacity 1s ease-out',
+          background: PHASE0.BG,
+          display: phase === 0 ? 'block' : 'none',
+          transition: 'opacity 0.8s ease',
           opacity: fadeState === 'out' ? 0 : 1,
+          // CSS custom properties for JS-driven ray animation (initial values)
+          '--light-x': '50%',
+          '--ray-angle': '-8deg',
+          '--light-x2': '70%',
+          '--ray-angle2': '6deg',
         }}
         role="dialog"
         aria-label="Welcome to Poetry Bil-Araby"
       >
-        {/* Sand texture SVG overlay */}
+        {/* Primary light ray — wide warm sweep */}
         <div
           style={{
             position: 'absolute',
-            inset: 0,
-            zIndex: 0,
+            width: PHASE0.RAY_WIDTH + 'px',
+            height: '150%',
+            left: `calc(var(--light-x) - ${PHASE0.RAY_WIDTH / 2}px)`,
+            top: '-25%',
+            background: 'linear-gradient(180deg, rgba(255,245,220,0.45) 0%, rgba(255,235,200,0.3) 15%, rgba(255,225,180,0.2) 30%, rgba(255,215,160,0.12) 45%, rgba(255,205,140,0.08) 60%, rgba(255,195,120,0.04) 80%, transparent 100%)',
+            filter: `blur(${PHASE0.RAY_BLUR}px)`,
+            zIndex: 1,
+            transformOrigin: 'center top',
+            transform: 'rotate(var(--ray-angle)) skewX(-2deg)',
+            mixBlendMode: 'screen',
             pointerEvents: 'none',
-            opacity: 0.04,
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E\")",
+            willChange: 'left, transform',
           }}
         />
 
-        {/* Starfield — dangerouslySetInnerHTML tells React these children are externally managed */}
+        {/* Secondary light ray — narrower, offset phase */}
         <div
-          ref={starsRef}
-          style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
-          dangerouslySetInnerHTML={{ __html: '' }}
+          style={{
+            position: 'absolute',
+            width: PHASE0.RAY2_WIDTH + 'px',
+            height: '130%',
+            left: `calc(var(--light-x2) - ${PHASE0.RAY2_WIDTH / 2}px)`,
+            top: '-15%',
+            background: 'linear-gradient(180deg, rgba(255,245,220,0.2) 0%, rgba(255,235,200,0.12) 30%, rgba(255,215,160,0.05) 60%, transparent 100%)',
+            filter: `blur(${PHASE0.RAY2_BLUR}px)`,
+            zIndex: 1,
+            transformOrigin: 'center top',
+            transform: 'rotate(var(--ray-angle2))',
+            mixBlendMode: 'screen',
+            pointerEvents: 'none',
+            opacity: 0.6,
+            willChange: 'left, transform',
+          }}
         />
 
-        {/* Dunes */}
-        {dunes.map((d, i) => (
-          <div
-            key={i}
-            className="splash-dune"
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: '-5%',
-              width: '110%',
-              height: d.h,
-              background: d.bg,
-              borderRadius: d.br,
-              zIndex: d.z,
-              animation: prefersReducedMotion ? 'none' : d.anim,
-            }}
-          />
-        ))}
+        {/* Dust particle canvas */}
+        <canvas
+          ref={dustCanvasRef}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 2,
+            pointerEvents: 'none',
+          }}
+        />
 
-        {/* Brand — بالعربي + poetry + feather (uses BRAND constants) */}
+        {/* Brand + CTA — fades up after 1s */}
         <div
           style={{
             position: 'relative',
             zIndex: 10,
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.5rem',
-            marginBottom: '0.75rem',
-          }}
-        >
-          <span
-            style={{
-              ...BRAND.arabic,
-              color: gold,
-              textShadow: '0 0 40px rgba(197,160,89,0.3)',
-            }}
-            dir="rtl"
-            lang="ar"
-          >
-            بالعربي
-          </span>
-          <span
-            style={{
-              ...BRAND.english,
-              color: isDark ? '#D4D0C8' : '#1A1614',
-            }}
-          >
-            poetry
-          </span>
-          <Feather style={{ ...BRAND.feather, color: gold }} strokeWidth={1.5} />
-        </div>
-
-        {/* Subtitle */}
-        <p
-          style={{
-            position: 'relative',
-            zIndex: 10,
-            fontFamily: "'Tajawal', sans-serif",
-            fontSize: 'clamp(0.9rem, 2.5vw, 1.25rem)',
-            color: sandMuted,
-            marginTop: '0.5rem',
-            letterSpacing: '0.1em',
-            direction: 'ltr',
-          }}
-        >
-          Desert Mirage
-        </p>
-
-        {/* Enter button */}
-        <button
-          onClick={handleSplashEnter}
-          style={{
-            position: 'relative',
-            zIndex: 10,
-            marginTop: '2.5rem',
-            padding: '14px 40px',
-            minHeight: '44px',
-            background: 'transparent',
-            border: `1px solid ${gold}`,
-            color: gold,
-            fontFamily: "'Tajawal', sans-serif",
-            fontSize: '0.9375rem',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            transition: 'all 0.3s ease',
+            minHeight: '100vh',
+            padding: '2rem',
+            textAlign: 'center',
             opacity: 0,
-            animation: 'splashFadeIn 1s 2s forwards',
+            animation: `phase0FadeUp ${PHASE0.CONTENT_FADE_DELAY === '1s' ? '2s ease 1s' : '2s ease'} forwards`,
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = gold;
-            e.currentTarget.style.color = desertNight;
-            e.currentTarget.style.boxShadow = '0 0 30px rgba(197,160,89,0.3)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-            e.currentTarget.style.color = gold;
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-          aria-label="Enter the app"
         >
-          Enter
-        </button>
+          {/* Brand lockup: بالعربي + poetry (row-reverse so Arabic leads) */}
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'row-reverse',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              gap: '16px',
+              marginBottom: '3rem',
+            }}
+          >
+            <span
+              style={{
+                ...BRAND.arabic,
+                color: PHASE0.WARM,
+                textShadow: '0 0 60px rgba(251,191,36,0.5), 0 0 100px rgba(255,235,180,0.3), 0 5px 25px rgba(0,0,0,1)',
+              }}
+              dir="rtl"
+              lang="ar"
+            >
+              بالعربي
+            </span>
+            <span
+              style={{
+                ...BRAND.english,
+                color: PHASE0.STONE,
+                textShadow: '0 0 40px rgba(168,162,158,0.2), 0 5px 20px rgba(0,0,0,1)',
+              }}
+            >
+              poetry
+            </span>
+          </div>
+
+          {/* Enter button — appears after 2s */}
+          <button
+            onClick={handleSplashEnter}
+            style={{
+              position: 'relative',
+              display: 'inline-block',
+              padding: '18px 48px',
+              minHeight: '44px',
+              background: 'rgba(0,0,0,0.6)',
+              border: '2px solid rgba(251,191,36,0.3)',
+              color: PHASE0.WARM,
+              fontFamily: "'Tajawal', sans-serif",
+              fontSize: 'clamp(0.875rem, 2vw, 1rem)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.25em',
+              fontWeight: 400,
+              cursor: 'pointer',
+              transition: 'all 0.5s ease',
+              boxShadow: '0 0 40px rgba(251,191,36,0.25)',
+              borderRadius: '2px',
+              opacity: 0,
+              animation: `splashFadeIn 0.8s ease ${PHASE0.BTN_FADE_DELAY} forwards`,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(0,0,0,0.8)';
+              e.currentTarget.style.borderColor = 'rgba(251,191,36,0.6)';
+              e.currentTarget.style.boxShadow = '0 0 60px rgba(251,191,36,0.4), 0 0 100px rgba(255,235,180,0.2)';
+              e.currentTarget.style.transform = 'translateY(-3px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(0,0,0,0.6)';
+              e.currentTarget.style.borderColor = 'rgba(251,191,36,0.3)';
+              e.currentTarget.style.boxShadow = '0 0 40px rgba(251,191,36,0.25)';
+              e.currentTarget.style.transform = 'none';
+            }}
+            aria-label="Enter the app"
+          >
+            <span style={{ display: 'block' }}>Enter</span>
+            <span
+              style={{
+                fontFamily: "'Reem Kufi', sans-serif",
+                fontSize: '0.875rem',
+                opacity: 0.7,
+                marginTop: '0.25rem',
+                display: 'block',
+                letterSpacing: 'normal',
+              }}
+              lang="ar"
+              dir="rtl"
+            >
+              ادخل إلى النور
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* KINETIC WALKTHROUGH (phases 1-2) — hidden via display:none until phase >= 1 */}

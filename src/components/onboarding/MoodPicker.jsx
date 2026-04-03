@@ -3,7 +3,33 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import gsap from 'gsap';
 
-const GOLD = '#c5a059';
+/* ============================================
+   MOOD_CONFIG — all tunable constants
+   ============================================ */
+const MOOD_CONFIG = {
+  gold: '#c5a059',
+  blobCount: 10,
+  baseRMultiplier: 0.42,
+  flashRadiusScale: 0.25,
+  flashAlpha: 0.45,
+  flashFadeFactor: 0.3,
+  flashInDuration: 0.12,
+  flashFadeDuration: 0.6,
+  subBlobBaseDuration: 0.5,
+  subBlobDurationJitter: 0.4,
+  subBlobDelayJitter: 0.2,
+  subBlobMinAlpha: 0.18,
+  subBlobAlphaJitter: 0.14,
+  subBlobRxRange: [0.5, 0.5],   // min + random range
+  subBlobRyRange: [0.4, 0.5],
+  subBlobDistRange: [0.15, 0.4],
+  subBlobAngleJitter: 0.8,
+  luminanceThreshold: 0.35,
+  luminanceBoostBase: 1.6,
+  luminanceBoostScale: 2,
+  ctaActiveOpacity: 1,
+  ctaInactiveOpacity: 0.5,
+};
 
 const MOODS = [
   { slug: 'joy',        name_ar: '\u0641\u0631\u062d',   name_en: 'Joy',        color: '#c5a059' },
@@ -17,88 +43,165 @@ const MOODS = [
   { slug: 'nostalgia',  name_ar: '\u062d\u0646\u064a\u0646',  name_en: 'Nostalgia',  color: '#8B7355' },
 ];
 
-// Staggered grid: rows of [0,1,2], [3,4,5], [6,7,8]
-// Odd rows shift right, even rows shift left
 const ROWS = [
   { indices: [0, 1, 2], shiftLeft: true },
   { indices: [3, 4, 5], shiftLeft: false },
   { indices: [6, 7, 8], shiftLeft: true },
 ];
 
+/* ============================================
+   Helpers
+   ============================================ */
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return { r, g, b };
+}
+
+function brightenForInk(hex) {
+  let { r, g, b } = hexToRgb(hex);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  if (luminance < MOOD_CONFIG.luminanceThreshold) {
+    const boost = MOOD_CONFIG.luminanceBoostBase +
+      (MOOD_CONFIG.luminanceThreshold - luminance) * MOOD_CONFIG.luminanceBoostScale;
+    r = Math.min(255, Math.round(r * boost));
+    g = Math.min(255, Math.round(g * boost));
+    b = Math.min(255, Math.round(b * boost));
+  }
+  return { r, g, b };
+}
+
+function paintInk(ctx, blobs, w, h) {
+  ctx.clearRect(0, 0, w, h);
+  for (const blob of blobs) {
+    for (const sub of blob.subBlobs) {
+      ctx.save();
+      ctx.translate(blob.cx + sub.ox, blob.cy + sub.oy);
+      ctx.rotate(sub.rot);
+      const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, sub.rx);
+      grad.addColorStop(0, `rgba(${blob.color},${sub.alpha})`);
+      grad.addColorStop(0.6, `rgba(${blob.color},${sub.alpha * 0.6})`);
+      grad.addColorStop(1, `rgba(${blob.color},0)`);
+      ctx.scale(1, sub.ry / sub.rx);
+      ctx.beginPath();
+      ctx.arc(0, 0, sub.rx, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+
+/* ============================================
+   MoodPicker Component
+   ============================================ */
 const MoodPicker = ({ onNext, initialValue = [] }) => {
   const [selected, setSelected] = useState(() => initialValue);
   const canvasRef = useRef(null);
+  const inkBlobsRef = useRef([]);
+  const inkDirtyRef = useRef(false);
+  const rafIdRef = useRef(null);
 
-  const spawnInkBlot = useCallback((x, y, color) => {
+  // rAF paint loop
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    // Core circle flash
-    const core = { x, y, r: 0, opacity: 0 };
-    const coreRadius = 30 + Math.random() * 30;
-    gsap.to(core, {
-      r: coreRadius,
-      opacity: 1,
-      duration: 0.3,
-      ease: 'power2.out',
-      onUpdate: () => {
-        ctx.beginPath();
-        const grad = ctx.createRadialGradient(core.x, core.y, 0, core.x, core.y, core.r);
-        grad.addColorStop(0, color + 'cc');
-        grad.addColorStop(0.6, color + '44');
-        grad.addColorStop(1, 'transparent');
-        ctx.fillStyle = grad;
-        ctx.arc(core.x, core.y, core.r, 0, Math.PI * 2);
-        ctx.fill();
-      },
-    });
-    gsap.to(core, {
-      opacity: 0,
-      duration: 0.3,
-      delay: 0.3,
-    });
-
-    // 8 sub-blobs
-    for (let i = 0; i < 8; i++) {
-      const angle = (Math.PI * 2 * i) / 8 + (Math.random() - 0.5) * 0.4;
-      const dist = 40 + Math.random() * 50;
-      const blob = { x, y, r: 4 + Math.random() * 8, opacity: 0.7 };
-      const targetX = x + Math.cos(angle) * dist;
-      const targetY = y + Math.sin(angle) * dist;
-
-      gsap.to(blob, {
-        x: targetX,
-        y: targetY,
-        r: 2,
-        opacity: 0,
-        duration: 0.5,
-        delay: i * 0.03,
-        ease: 'power2.out',
-        onUpdate: () => {
-          ctx.beginPath();
-          const g = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.r);
-          g.addColorStop(0, color + 'aa');
-          g.addColorStop(1, 'transparent');
-          ctx.fillStyle = g;
-          ctx.arc(blob.x, blob.y, blob.r, 0, Math.PI * 2);
-          ctx.fill();
-        },
-      });
+    function loop() {
+      if (inkDirtyRef.current) {
+        paintInk(ctx, inkBlobsRef.current, canvas.width, canvas.height);
+        inkDirtyRef.current = false;
+      }
+      rafIdRef.current = requestAnimationFrame(loop);
     }
+    rafIdRef.current = requestAnimationFrame(loop);
+
+    return () => {
+      if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+    };
   }, []);
 
-  // Size canvas on mount / resize
+  // Size canvas with devicePixelRatio on mount / resize
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      inkDirtyRef.current = true;
     };
     resize();
     window.addEventListener('resize', resize, { passive: true });
     return () => window.removeEventListener('resize', resize);
+  }, []);
+
+  const addInkBlob = useCallback((cx, cy, color) => {
+    const { r, g, b } = brightenForInk(color);
+    const subBlobs = [];
+    const baseR = Math.min(window.innerWidth, window.innerHeight) * MOOD_CONFIG.baseRMultiplier;
+    const COUNT = MOOD_CONFIG.blobCount;
+
+    for (let i = 0; i < COUNT; i++) {
+      const angle = (i / COUNT) * Math.PI * 2 + Math.random() * MOOD_CONFIG.subBlobAngleJitter;
+      const dist = (MOOD_CONFIG.subBlobDistRange[0] + Math.random() * MOOD_CONFIG.subBlobDistRange[1]) * baseR;
+      const rx = baseR * (MOOD_CONFIG.subBlobRxRange[0] + Math.random() * MOOD_CONFIG.subBlobRxRange[1]);
+      const ry = baseR * (MOOD_CONFIG.subBlobRyRange[0] + Math.random() * MOOD_CONFIG.subBlobRyRange[1]);
+      const rot = Math.random() * Math.PI;
+      subBlobs.push({
+        ox: Math.cos(angle) * dist,
+        oy: Math.sin(angle) * dist,
+        rx, ry, rot,
+        alpha: 0,
+        targetAlpha: MOOD_CONFIG.subBlobMinAlpha + Math.random() * MOOD_CONFIG.subBlobAlphaJitter,
+      });
+    }
+    // Center flash blob
+    subBlobs.push({
+      ox: 0, oy: 0,
+      rx: baseR * MOOD_CONFIG.flashRadiusScale,
+      ry: baseR * MOOD_CONFIG.flashRadiusScale,
+      rot: 0,
+      alpha: 0,
+      targetAlpha: MOOD_CONFIG.flashAlpha,
+      isFlash: true,
+    });
+
+    const blob = { cx, cy, color: `${r},${g},${b}`, subBlobs, progress: 0 };
+    inkBlobsRef.current.push(blob);
+
+    // Animate sub-blobs in via GSAP
+    for (const sub of blob.subBlobs) {
+      if (sub.isFlash) {
+        gsap.timeline()
+          .to(sub, {
+            alpha: sub.targetAlpha,
+            duration: MOOD_CONFIG.flashInDuration,
+            ease: 'power2.out',
+            onUpdate: () => { inkDirtyRef.current = true; },
+          })
+          .to(sub, {
+            alpha: sub.targetAlpha * MOOD_CONFIG.flashFadeFactor,
+            duration: MOOD_CONFIG.flashFadeDuration,
+            ease: 'power2.inOut',
+            onUpdate: () => { inkDirtyRef.current = true; },
+          });
+      } else {
+        gsap.to(sub, {
+          alpha: sub.targetAlpha,
+          duration: MOOD_CONFIG.subBlobBaseDuration + Math.random() * MOOD_CONFIG.subBlobDurationJitter,
+          ease: 'power2.out',
+          delay: Math.random() * MOOD_CONFIG.subBlobDelayJitter,
+          onUpdate: () => { inkDirtyRef.current = true; },
+        });
+      }
+    }
   }, []);
 
   const toggleMood = (slug, color, event) => {
@@ -108,9 +211,10 @@ const MoodPicker = ({ onNext, initialValue = [] }) => {
 
     setSelected((prev) => {
       if (prev.includes(slug)) {
+        // Deselect — ink persists, no clear
         return prev.filter((s) => s !== slug);
       }
-      spawnInkBlot(cx, cy, color);
+      addInkBlob(cx, cy, color);
       return [...prev, slug];
     });
   };
@@ -118,6 +222,8 @@ const MoodPicker = ({ onNext, initialValue = [] }) => {
   const handleNext = () => {
     onNext(selected);
   };
+
+  const hasSelection = selected.length >= 1;
 
   return (
     <motion.div
@@ -138,15 +244,12 @@ const MoodPicker = ({ onNext, initialValue = [] }) => {
         overflow: 'hidden',
       }}
     >
-      {/* Ink blot canvas */}
+      {/* Ink canvas — position: fixed, inset: 0 */}
       <canvas
         ref={canvasRef}
         style={{
           position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
+          inset: 0,
           pointerEvents: 'none',
           zIndex: 0,
         }}
@@ -159,7 +262,7 @@ const MoodPicker = ({ onNext, initialValue = [] }) => {
           style={{
             fontFamily: "'Tajawal', sans-serif",
             fontSize: 'clamp(1.5rem, 4vw, 2rem)',
-            color: GOLD,
+            color: MOOD_CONFIG.gold,
             marginBottom: '0.25rem',
             direction: 'rtl',
           }}
@@ -261,21 +364,21 @@ const MoodPicker = ({ onNext, initialValue = [] }) => {
           ))}
         </div>
 
-        {/* CTA */}
+        {/* CTA — always visible */}
         <div style={{ marginTop: '2.5rem' }}>
           <button
             data-testid="mood-continue"
             onClick={handleNext}
             style={{
-              opacity: selected.length >= 1 ? 1 : 0.5,
+              opacity: hasSelection ? MOOD_CONFIG.ctaActiveOpacity : MOOD_CONFIG.ctaInactiveOpacity,
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
               padding: '12px 36px',
-              border: `1px solid ${GOLD}`,
+              border: `1px solid ${MOOD_CONFIG.gold}`,
               borderRadius: '999px',
               background: 'transparent',
-              color: GOLD,
+              color: MOOD_CONFIG.gold,
               fontFamily: "'Tajawal', sans-serif",
               fontSize: '0.9375rem',
               fontWeight: 500,
@@ -285,14 +388,14 @@ const MoodPicker = ({ onNext, initialValue = [] }) => {
               direction: 'rtl',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = `${GOLD}22`;
+              e.currentTarget.style.background = `${MOOD_CONFIG.gold}22`;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'transparent';
             }}
-            aria-label={selected.length >= 1 ? '\u0627\u0644\u062a\u0627\u0644\u064a' : '\u062a\u062e\u0637\u0649'}
+            aria-label={hasSelection ? '\u0627\u0644\u062a\u0627\u0644\u064a' : '\u062a\u062e\u0637\u0649'}
           >
-            <span>{selected.length >= 1 ? '\u0627\u0644\u062a\u0627\u0644\u064a' : '\u062a\u062e\u0637\u0649'}</span>
+            <span>{hasSelection ? '\u0627\u0644\u062a\u0627\u0644\u064a' : '\u062a\u062e\u0637\u0649'}</span>
             <ArrowRight size={16} />
           </button>
         </div>

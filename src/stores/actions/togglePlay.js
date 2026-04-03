@@ -272,7 +272,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     // Mark in-flight
     usePoemStore.getState().addActiveAudio(current?.id);
 
-    const ttsMode = useUIStore.getState().ttsMode;
+    let ttsMode = useUIStore.getState().ttsMode;
     const arabicTextChars = current?.arabic?.length || 0;
 
     const modelLabel = ttsMode === 'live' ? 'Live 2.0' : API_MODELS.tts;
@@ -413,6 +413,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           const pcmBytes = atob(b64.replace(/\s/g, '')).length;
           const samples = pcmBytes / 2;
           const audioDuration = samples / 24000;
+          const estimatedTokens = Math.ceil(arabicTextChars / 4);
           const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
           const totalTime = apiTime + conversionTime;
 

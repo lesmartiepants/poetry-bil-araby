@@ -181,6 +181,7 @@ export default function DiwanApp() {
   const bgOpacity = useUIStore((s) => s.bgOpacity);
   const bgColor = useUIStore((s) => s.bgColor);
   const bgParallax = useUIStore((s) => s.bgParallax);
+  const bgPattern = useUIStore((s) => s.bgPattern);
   // ── Audio store (Zustand) ──
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const setIsPlaying = useAudioStore((s) => s.setPlaying);
@@ -1283,13 +1284,14 @@ export default function DiwanApp() {
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
-          {/* Squoctogon irregular tiling background — exact design from geometric-explorer */}
+          {/* Islamic pattern tiling background — from geometric-explorer catalog */}
           <SquoctogonBackground
             darkMode={darkMode}
             scrollY={bgScrollY}
             opacityScale={bgOpacity}
             colorOverride={bgColor}
             parallaxFactor={bgParallax}
+            patternName={bgPattern}
           />
           <MysticalConsultationEffect
             active={isInterpreting}

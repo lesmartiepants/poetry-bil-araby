@@ -1,177 +1,5 @@
 import { useRef, useEffect, useState, memo } from 'react';
-
-// ────────────────────────────────────────────────────────────────────────────
-// Squoctogon tiling data — "Octogons hidden as squares" by Pierre Baillargeon
-// Extracted verbatim from design-review/islamic-patterns/generate.html catalog
-// Category: Irregular
-// ────────────────────────────────────────────────────────────────────────────
-const SQUOCTOGON = {
-  t1: [2.732050807568887, 4.732050807568871],
-  t2: [5.464101615137751, -1.554312234475219e-14],
-  features: [
-    {
-      type: 'polygon',
-      points: [
-        [1.110223024625157e-16, 0.9999999999999999],
-        [-0.9999999999999998, 1],
-        [-1, 1.110223024625157e-16],
-        [-1, -0.9999999999999998],
-        [-2.775557561562891e-16, -1],
-        [0.9999999999999996, -1],
-        [0.9999999999999998, -1.110223024625157e-16],
-        [0.9999999999999999, 0.9999999999999998],
-      ],
-      placements: [
-        {
-          type: 'matrix',
-          a: -0.8660254037844387,
-          b: 0.500000000000001,
-          tx: 2.250127018922189,
-          c: -0.500000000000001,
-          d: -0.8660254037844387,
-          ty: -0.466025403784446,
-        },
-        {
-          type: 'matrix',
-          a: 1,
-          b: 2.275957200481571e-15,
-          tx: -1.847949192431124,
-          c: -2.275957200481571e-15,
-          d: 1,
-          ty: 1.899999999999999,
-        },
-        {
-          type: 'matrix',
-          a: -0.8660254037844388,
-          b: -0.5000000000000001,
-          tx: -0.4819237886466903,
-          c: 0.5000000000000001,
-          d: -0.8660254037844388,
-          ty: -0.4660254037844442,
-        },
-      ],
-    },
-    {
-      type: 'polygon',
-      points: [
-        [3.152050807568878, 4.032050807568876],
-        [2.652050807568878, 3.166025403784438],
-        [3.152050807568877, 2.877350269189625],
-        [3.652050807568878, 3.166025403784437],
-      ],
-      placements: [
-        {
-          type: 'matrix',
-          a: 1.732050807568879,
-          b: -8.881784197001252e-16,
-          tx: -4.575410531610058,
-          c: 8.881784197001252e-16,
-          d: 1.732050807568879,
-          ty: -5.083716857408429,
-        },
-        {
-          type: 'matrix',
-          a: -0.8660254037844404,
-          b: 1.5,
-          tx: -2.43421852284165,
-          c: -1.5,
-          d: -0.8660254037844404,
-          ty: 10.11993464005752,
-        },
-        {
-          type: 'matrix',
-          a: 1.000000000000001,
-          b: -8.881784197001252e-16,
-          tx: -2.267949192431128,
-          c: 8.881784197001252e-16,
-          d: 1.000000000000001,
-          ty: -4.13205080756889,
-        },
-        {
-          type: 'matrix',
-          a: 0.8660254037844376,
-          b: -1.500000000000003,
-          tx: 4.202421753117172,
-          c: 1.500000000000003,
-          d: 0.8660254037844376,
-          ty: -6.319934640057536,
-        },
-        {
-          type: 'matrix',
-          a: -1.732050807568877,
-          b: -2.886579864025407e-15,
-          tx: 6.343613761885571,
-          c: 2.886579864025407e-15,
-          d: -1.732050807568877,
-          ty: 8.883716857408398,
-        },
-        {
-          type: 'matrix',
-          a: -0.4999999999999992,
-          b: 0.8660254037844406,
-          tx: -0.0317314097820276,
-          c: -0.8660254037844406,
-          d: -0.4999999999999992,
-          ty: 2.913730669589458,
-        },
-        {
-          type: 'matrix',
-          a: 0.5000000000000024,
-          b: -0.8660254037844383,
-          tx: -0.9321161675113676,
-          c: 0.8660254037844383,
-          d: 0.5000000000000024,
-          ty: -3.845781477158349,
-        },
-        {
-          type: 'matrix',
-          a: 0.8660254037844387,
-          b: 1.500000000000001,
-          tx: -7.89373066958947,
-          c: -1.500000000000001,
-          d: 0.8660254037844387,
-          ty: 3.136217782649108,
-        },
-        {
-          type: 'matrix',
-          a: -1.000000000000001,
-          b: 7.771561172376096e-16,
-          tx: 1.304101615137748,
-          c: -7.771561172376096e-16,
-          d: -1.000000000000001,
-          ty: 3.199999999999999,
-        },
-        {
-          type: 'matrix',
-          a: -0.5000000000000003,
-          b: -0.866025403784439,
-          tx: 4.951985447626398,
-          c: 0.866025403784439,
-          d: -0.5000000000000003,
-          ty: -2.545781477158349,
-        },
-        {
-          type: 'matrix',
-          a: -0.8660254037844347,
-          b: -1.500000000000001,
-          tx: 9.661933899864962,
-          c: 1.500000000000001,
-          d: -0.8660254037844347,
-          ty: 0.6637822173508621,
-        },
-        {
-          type: 'matrix',
-          a: 0.4999999999999993,
-          b: 0.86602540378444,
-          tx: -5.915833024919777,
-          c: -0.86602540378444,
-          d: 0.4999999999999993,
-          ty: 1.613730669589469,
-        },
-      ],
-    },
-  ],
-};
+import { ISLAMIC_PATTERNS } from '../constants/islamicPatterns.js';
 
 // ── Math helpers (ported from generate.html) ─────────────────────────────────
 
@@ -285,14 +113,31 @@ function starMotifsFromPoly(verts) {
   return segments;
 }
 
+// Generate vertices for a regular n-gon with unit circumradius, optionally rotated
+function regularPolygon(n, rotDeg = 0) {
+  const verts = [];
+  const rotRad = (rotDeg * Math.PI) / 180;
+  for (let k = 0; k < n; k++) {
+    const angle = (2 * Math.PI * k) / n + rotRad;
+    verts.push([Math.cos(angle), Math.sin(angle)]);
+  }
+  return verts;
+}
+
 function buildTilingPolygons(tiling, canvasW, canvasH, zoom = 1) {
   const [t1x, t1y] = tiling.t1;
   const [t2x, t2y] = tiling.t2;
 
   const unitPolys = [];
   for (const feature of tiling.features) {
-    const baseVerts = feature.points;
-    if (!baseVerts || baseVerts.length < 3) continue;
+    let baseVerts;
+    if (feature.sides) {
+      baseVerts = regularPolygon(feature.sides, 0);
+    } else if (feature.points && feature.points.length >= 3) {
+      baseVerts = feature.points;
+    } else {
+      continue;
+    }
     for (const placement of feature.placements) {
       unitPolys.push(applyPlacement(baseVerts, placement));
     }
@@ -330,8 +175,8 @@ function buildTilingPolygons(tiling, canvasW, canvasH, zoom = 1) {
 }
 
 // Build a single SVG <path> `d` string containing every star-motif segment
-function computeSvgPath(w, h) {
-  const polys = buildTilingPolygons(SQUOCTOGON, w, h, 1);
+function computeSvgPath(tiling, w, h) {
+  const polys = buildTilingPolygons(tiling, w, h, 1);
   if (polys.length === 0) return '';
 
   const areas = polys.map((poly) => {
@@ -365,18 +210,22 @@ function computeSvgPath(w, h) {
 // the pattern edge would ever be reached.
 const PARALLAX_BUFFER_MULTIPLIER = 2;
 
+const DEFAULT_PATTERN = 'Squoctogon';
+
 const SquoctogonBackground = memo(function SquoctogonBackground({
   darkMode,
   scrollY = 0,
   opacityScale = 1,
   colorOverride = '',
   parallaxFactor = 0.05,
+  patternName = DEFAULT_PATTERN,
 }) {
   const svgRef = useRef(null);
   const [pathData, setPathData] = useState('');
   const [svgHeight, setSvgHeight] = useState(0);
 
   useEffect(() => {
+    const tiling = ISLAMIC_PATTERNS[patternName] || ISLAMIC_PATTERNS[DEFAULT_PATTERN];
     const compute = () => {
       const parent = svgRef.current?.parentElement;
       const w = parent?.offsetWidth || window.innerWidth || 800;
@@ -384,7 +233,7 @@ const SquoctogonBackground = memo(function SquoctogonBackground({
       if (w > 0 && h > 0) {
         // Generate pattern for a taller canvas so parallax never reveals a blank edge
         const tallH = h * (1 + PARALLAX_BUFFER_MULTIPLIER);
-        setPathData(computeSvgPath(w, tallH));
+        setPathData(computeSvgPath(tiling, w, tallH));
         setSvgHeight(tallH);
       }
     };
@@ -403,7 +252,7 @@ const SquoctogonBackground = memo(function SquoctogonBackground({
       if (ro) ro.disconnect();
       window.removeEventListener('resize', compute);
     };
-  }, []);
+  }, [patternName]);
 
   const baseStrokeColor = darkMode ? '#4a7cc9' : '#2e5090';
   const baseStrokeOpacity = darkMode ? 0.154 : 0.105;

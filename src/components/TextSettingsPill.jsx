@@ -341,12 +341,7 @@ const TextSettingsPill = () => {
                 </span>
                 <Select.Root
                   value={bgPattern}
-                  onValueChange={(v) => {
-                    useUIStore.getState().setBgPattern(v);
-                    if (v !== 'Squoctogon') {
-                      window.open(GENERATOR_URL, '_blank', 'noopener,noreferrer');
-                    }
-                  }}
+                  onValueChange={(v) => useUIStore.getState().setBgPattern(v)}
                 >
                   <Select.Trigger
                     className={`w-full flex items-center justify-between rounded-lg px-3 py-2 border ${theme.border} backdrop-blur-xl transition-all duration-200 ${

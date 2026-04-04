@@ -152,14 +152,18 @@ export default function DiwanApp() {
   // Ref for the floating idle-state listen button — interactions inside it
   // won't reset the idle timer (user can listen without waking the chrome UI).
   const listenButtonIdleRef = useRef(null);
+  // Settings controls that stay visible during zen mode — interacting with them
+  // should NOT reset the idle timer (user adjusts settings without waking chrome).
+  const themeToggleRef = useRef(null);
+  const textSettingsRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(0);
   const [fireTapped, setFireTapped] = useState(false);
 
-  // Zen idle mode — hides chrome after 10s of inactivity, leaving only the poem
-  // and a gentle floating listen button. Any interaction outside the listen button
-  // wakes everything back with a spring animation.
-  const { isIdle } = useIdleTimer(10_000, listenButtonIdleRef);
+  // Zen idle mode — hides chrome after 4s of inactivity, leaving only the poem,
+  // the settings controls (Aa / sun icon), and a gentle floating listen button.
+  // Only deliberate taps/clicks wake the chrome back — scroll is ignored.
+  const { isIdle } = useIdleTimer(4_000, [listenButtonIdleRef, themeToggleRef, textSettingsRef]);
 
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
@@ -1960,33 +1964,15 @@ export default function DiwanApp() {
         </div>
       )}
 
-      {/* Theme Toggle — top-right, hides in zen idle mode */}
-      <motion.div
-        className="fixed top-10 right-2 md:right-[25rem] z-[46]"
-        animate={isIdle ? { opacity: 0, x: 20 } : { opacity: 1, x: 0 }}
-        transition={
-          isIdle
-            ? { duration: 0.65, ease: [0.16, 1, 0.3, 1], delay: 0.05 }
-            : { type: 'spring', stiffness: 280, damping: 26 }
-        }
-        style={{ pointerEvents: isIdle ? 'none' : 'auto' }}
-      >
+      {/* Theme Toggle — top-right, always visible (settings stay in zen mode) */}
+      <div ref={themeToggleRef} className="fixed top-10 right-2 md:right-[25rem] z-[46]">
         <ThemeToggle />
-      </motion.div>
+      </div>
 
-      {/* Text Settings — below theme toggle, hides in zen idle mode */}
-      <motion.div
-        className="fixed top-[5.5rem] right-2 md:right-[25rem] z-[46]"
-        animate={isIdle ? { opacity: 0, x: 20 } : { opacity: 1, x: 0 }}
-        transition={
-          isIdle
-            ? { duration: 0.65, ease: [0.16, 1, 0.3, 1], delay: 0.08 }
-            : { type: 'spring', stiffness: 280, damping: 26 }
-        }
-        style={{ pointerEvents: isIdle ? 'none' : 'auto' }}
-      >
+      {/* Text Settings — below theme toggle, always visible (settings stay in zen mode) */}
+      <div ref={textSettingsRef} className="fixed top-[5.5rem] right-2 md:right-[25rem] z-[46]">
         <TextSettingsPill />
-      </motion.div>
+      </div>
 
       {/* Vertical Sidebar — hides in zen idle mode */}
       <VerticalSidebar

@@ -831,12 +831,11 @@ export default function DiwanApp() {
   useEffect(() => {
     if (audioPlayer) {
       audioPlayer.onstop = () => {
-        // Skip during seek — seek sets isSeeking.value=true before stop() and
-        // calls setPlaying(true) itself after startPlayer(). Without this guard
-        // onstop fires asynchronously after setPlaying(true) and clobbers it.
-        if (!isSeeking.value) {
-          useAudioStore.getState().setPlaying(false);
+        if (isSeeking.value) {
+          isSeeking.value = false;
+          return;
         }
+        useAudioStore.getState().setPlaying(false);
       };
     }
   }, [audioPlayer]);
@@ -1570,6 +1569,11 @@ export default function DiwanApp() {
                       verseStartTimes={verseStartTimes}
                       currentVerseIndex={currentVerseIndex}
                       onPlayPause={togglePlay}
+                      wordRefs={wordRefs}
+                      wordOffsets={wordOffsets}
+                      timings={wordTimings}
+                      totalDuration={effectiveDuration}
+                      onVerseChange={setCurrentVerseIndex}
                     />
                   ) : (
                     <motion.button

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { SkipBack, Play, Pause, SkipForward, Loader2 } from 'lucide-react';
-import { startPlayer, pauseOffset, playbackStartTime, isSeeking } from '../hooks/useTTSHighlight';
+import { startPlayer, pauseOffset, playbackStartTime, isSeeking, applyHighlightsOnce } from '../hooks/useTTSHighlight';
 import { useAudioStore } from '../stores/audioStore';
 import { useUIStore } from '../stores/uiStore';
 
@@ -22,6 +22,11 @@ const PlayControlsStrip = ({
   verseStartTimes = [],
   currentVerseIndex = 0,
   onPlayPause,
+  wordRefs = [],
+  wordOffsets = [],
+  timings = [],
+  totalDuration = 0,
+  onVerseChange = () => {},
 }) => {
   const seek = (offset) => {
     // Read live store state BEFORE stop() — the isPlaying prop is stale
@@ -29,16 +34,22 @@ const PlayControlsStrip = ({
     const wasPlaying = useAudioStore.getState().isPlaying;
     useUIStore.getState().addLog('Playback', `⏩ Seek to ${offset.toFixed(2)}s | wasPlaying: ${wasPlaying}`, 'user');
     isSeeking.value = true;
+    if (wasPlaying) {
+      // Set state BEFORE stop() — isPlaying=true when onstop fires means
+      // the guard check will see isSeeking=true and return without clobbering.
+      useAudioStore.getState().setPlaying(true);
+    }
     try { player.stop(); } catch {}
     if (wasPlaying) {
       startPlayer(player, offset);
-      useAudioStore.getState().setPlaying(true);
     } else {
       // Paused — update position only, don't start
       pauseOffset.value = offset;
       playbackStartTime.value = Date.now() / 1000;
+      // Reposition pill to the target word immediately
+      applyHighlightsOnce(offset, wordRefs, wordOffsets, timings, totalDuration, onVerseChange);
     }
-    isSeeking.value = false;
+    // DO NOT clear isSeeking.value here — onstop handler clears it
   };
 
   const handlePrev = () => {

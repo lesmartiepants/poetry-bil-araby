@@ -47,6 +47,73 @@ export function recordPause() {
 }
 
 /**
+ * One-shot application of TTS highlights at a specific offset.
+ * Used when seeking while paused to reposition the active pill.
+ *
+ * @param {number} offset - playback offset in seconds
+ * @param {React.RefObject[]} wordRefs
+ * @param {number[]} wordOffsets
+ * @param {{start:number, end:number}[]} timings
+ * @param {number} totalDuration
+ * @param {function} onVerseChange
+ */
+export function applyHighlightsOnce(offset, wordRefs, wordOffsets, timings, totalDuration, onVerseChange) {
+  // Clear all existing highlight classes
+  for (let i = 0; i < wordRefs.length; i++) {
+    const el = wordRefs[i]?.current;
+    if (el) {
+      el.classList.remove('tts-active', 'tts-past');
+    }
+  }
+
+  // Compute elapsed time from global playback state
+  const elapsed = Date.now() / 1000 - playbackStartTime.value + pauseOffset.value;
+
+  // Find active word index
+  let newIndex = -1;
+  for (let i = 0; i < timings.length; i++) {
+    if (elapsed >= timings[i].start && elapsed < timings[i].end) {
+      newIndex = i;
+      break;
+    }
+  }
+  // If past the last word end, keep the last word active
+  if (elapsed >= totalDuration && timings.length > 0) {
+    newIndex = timings.length - 1;
+  }
+
+  // Apply classes to words
+  if (newIndex >= 0) {
+    for (let i = 0; i < wordRefs.length; i++) {
+      const el = wordRefs[i]?.current;
+      if (!el) continue;
+      if (i === newIndex) {
+        el.classList.add('tts-active');
+      } else if (i < newIndex) {
+        el.classList.add('tts-past');
+      }
+    }
+
+    // Scroll active element into view
+    const activeEl = wordRefs[newIndex]?.current;
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }
+
+  // Call onVerseChange if verse boundary crossed
+  if (wordOffsets.length > 0 && newIndex >= 0) {
+    let verseIdx = 0;
+    for (let v = 1; v < wordOffsets.length; v++) {
+      if (newIndex >= wordOffsets[v]) verseIdx = v;
+    }
+    if (onVerseChange && typeof onVerseChange === 'function') {
+      onVerseChange(verseIdx);
+    }
+  }
+}
+
+/**
  * Drive word-level highlight classes via rAF + DOM classList mutation.
  * Zero React re-renders for word updates — all class changes are direct DOM writes.
  *

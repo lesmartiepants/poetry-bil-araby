@@ -52,7 +52,11 @@ import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
 import { useModalStore } from './stores/modalStore';
 import { fetchPoem as fetchPoemAction } from './stores/actions/fetchPoem';
-import { togglePlay as togglePlayAction, dismissTTSProgress, abortPlay } from './stores/actions/togglePlay';
+import {
+  togglePlay as togglePlayAction,
+  dismissTTSProgress,
+  abortPlay,
+} from './stores/actions/togglePlay';
 import { analyzePoem as analyzePoemAction, cancelAnalysis } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
@@ -78,7 +82,14 @@ import './styles/app.css';
 import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
-import { useTTSHighlight, startPlayer, pauseOffset, playbackStartTime, isSeeking } from './hooks/useTTSHighlight.js';
+import {
+  useTTSHighlight,
+  startPlayer,
+  pauseOffset,
+  playbackStartTime,
+  isSeeking,
+} from './hooks/useTTSHighlight.js';
+import { useIdleTimer } from './hooks/useIdleTimer.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 
@@ -138,9 +149,17 @@ export default function DiwanApp() {
   const animationFrameRef = useRef(null);
   const sourceNodeRef = useRef(null);
   const volumePulseRef = useRef(null);
+  // Ref for the floating idle-state listen button — interactions inside it
+  // won't reset the idle timer (user can listen without waking the chrome UI).
+  const listenButtonIdleRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(0);
   const [fireTapped, setFireTapped] = useState(false);
+
+  // Zen idle mode — hides chrome after 10s of inactivity, leaving only the poem
+  // and a gentle floating listen button. Any interaction outside the listen button
+  // wakes everything back with a spring animation.
+  const { isIdle } = useIdleTimer(10_000, listenButtonIdleRef);
 
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
@@ -303,7 +322,18 @@ export default function DiwanApp() {
     const prev = prevIsInterpretingRef.current;
     prevIsInterpretingRef.current = isInterpreting;
     if (!prev && isInterpreting) {
-      toast.loading('Translating poem…', { id: 'translation-progress', duration: Infinity, icon: <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}><Rabbit size={16} /></motion.div> });
+      toast.loading('Translating poem…', {
+        id: 'translation-progress',
+        duration: Infinity,
+        icon: (
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
+          >
+            <Rabbit size={16} />
+          </motion.div>
+        ),
+      });
     } else if (prev && !isInterpreting) {
       if (interpretation) {
         toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });
@@ -480,7 +510,11 @@ export default function DiwanApp() {
           if (Array.isArray(restoredPoems) && restoredPoems.length > 0) {
             setCarouselPoems(restoredPoems);
             setCarouselIndex(targetIdx);
-            addLog('Init', `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`, 'success');
+            addLog(
+              'Init',
+              `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`,
+              'success'
+            );
           }
         }
       } catch {}
@@ -542,8 +576,6 @@ export default function DiwanApp() {
         addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
         setAutoExplainPending(true);
         if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
-
-
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(
@@ -595,12 +627,7 @@ export default function DiwanApp() {
   // When the carousel is active (user has swiped), explain the carousel poem, not the main poem.
   useEffect(() => {
     const poemToExplain = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
-    if (
-      autoExplainPending &&
-      poemToExplain?.id &&
-      !isFetching &&
-      !isInterpreting
-    ) {
+    if (autoExplainPending && poemToExplain?.id && !isFetching && !isInterpreting) {
       setAutoExplainPending(false);
       if (explainedPoemIds.current.has(poemToExplain.id)) return;
       // Always AI-translate carousel poems (even if they have a DB scholarly translation),
@@ -808,7 +835,7 @@ export default function DiwanApp() {
   // One ref per word — stable array, recreated only when word count changes
   const wordRefs = useMemo(
     () => Array.from({ length: allWords.length }, () => ({ current: null })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [allWords.length]
   );
 
@@ -1302,8 +1329,17 @@ export default function DiwanApp() {
         />
       )}
 
-      {/* Corner wordmark — top-right, fades out on scroll */}
-      <header
+      {/* Corner wordmark — top-right, fades out on scroll and when idle */}
+      <motion.header
+        animate={{
+          opacity: isIdle ? 0 : BRAND_HEADER.containerOpacity * (1 - headerOpacity),
+          y: isIdle ? -14 : 0,
+        }}
+        transition={
+          isIdle
+            ? { duration: 0.7, ease: [0.16, 1, 0.3, 1] }
+            : { type: 'spring', stiffness: 300, damping: 28, mass: 0.8 }
+        }
         style={{
           position: 'fixed',
           top: 0,
@@ -1311,8 +1347,6 @@ export default function DiwanApp() {
           zIndex: 40,
           pointerEvents: 'none',
           padding: '0.6rem 0.8rem',
-          opacity: BRAND_HEADER.containerOpacity * (1 - headerOpacity),
-          transition: 'opacity 0.3s ease-out',
         }}
       >
         <div className="flex flex-row items-center gap-1">
@@ -1334,7 +1368,7 @@ export default function DiwanApp() {
           </span>
           <Feather style={{ ...BRAND_HEADER.feather, color: 'var(--gold)' }} strokeWidth={1.5} />
         </div>
-      </header>
+      </motion.header>
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
@@ -1479,7 +1513,9 @@ export default function DiwanApp() {
                         isTogglingPlay.current = false;
                         pauseOffset.value = 0;
                         playbackStartTime.value = 0;
-                        document.querySelectorAll('.tts-active, .tts-past').forEach(el => el.classList.remove('tts-active', 'tts-past'));
+                        document
+                          .querySelectorAll('.tts-active, .tts-past')
+                          .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
                         dismissTTSProgress();
                         cancelAnalysis();
                         setInterpretation(null);
@@ -1488,7 +1524,11 @@ export default function DiwanApp() {
                         const newPoem = usePoemStore.getState().carouselPoems[idx];
                         if (FEATURES.logging && newPoem) {
                           const fromPoem = carouselPoems[carouselIndex];
-                          addLog('Carousel', `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`, 'user');
+                          addLog(
+                            'Carousel',
+                            `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                            'user'
+                          );
                         }
                         if (newPoem?.id) {
                           navigate('/poem/' + newPoem.id + window.location.search, {
@@ -1530,27 +1570,40 @@ export default function DiwanApp() {
                     />
                   )}
                 </div>
-
-
               </div>
             </div>
           </main>
 
-          {/* Bottom fade — content fades out above the control bar */}
-          <div
+          {/* Bottom fade — content fades out above the control bar; slides away with footer when idle */}
+          <motion.div
             className="pointer-events-none fixed bottom-0 left-0 right-0 z-40"
+            animate={isIdle ? { opacity: 0, y: 60 } : { opacity: 1, y: 0 }}
+            transition={
+              isIdle
+                ? { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }
+                : { type: 'spring', stiffness: 280, damping: 26 }
+            }
             style={{
               height: '100px',
               background: `linear-gradient(to top, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)'} 30%, ${darkMode ? 'rgba(12,12,14,0.4)' : 'rgba(253,252,248,0.4)'} 60%, transparent 100%)`,
             }}
           />
 
-          <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom">
+          <motion.footer
+            className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom"
+            animate={isIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
+            transition={
+              isIdle
+                ? { duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: 0.12 }
+                : { type: 'spring', stiffness: 280, damping: 26 }
+            }
+            style={{ pointerEvents: isIdle ? 'none' : 'auto' }}
+          >
             {/* Highlight mode: Listen (one-shot) → PlayControlsStrip (exclusive) */}
             {highlightStyle !== 'none' && (
               <div className="mb-2 flex justify-center">
                 <AnimatePresence mode="wait">
-                  {(isPlaying || isGeneratingAudio || audioPlayer !== null) ? (
+                  {isPlaying || isGeneratingAudio || audioPlayer !== null ? (
                     <PlayControlsStrip
                       key="play-controls"
                       player={audioPlayer}
@@ -1593,95 +1646,97 @@ export default function DiwanApp() {
                 WebkitUserSelect: 'none',
               }}
             >
-              {highlightStyle === 'none' && <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                {isGeneratingAudio ? (
-                  <>
-                    <button
-                      disabled
-                      aria-label="Preparing audio"
-                      className="min-w-[46px] min-h-[46px] p-[11px] bg-gold/8 border border-gold/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
-                    >
-                      <div className="flex items-center justify-center gap-0.5 h-[21px]">
-                        <div
-                          className="w-[2px] h-[6px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[10px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.15s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[14px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.3s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[10px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.45s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[6px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.6s',
-                          }}
-                        />
-                      </div>
-                    </button>
-                    <span
-                      className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                      style={{ animation: 'shimmer 2s ease-in-out infinite' }}
-                    >
-                      Loading
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={togglePlay}
-                      aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                      style={{ willChange: 'transform' }}
-                      className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
-                    >
-                      {audioError ? (
-                        <Volume2 className={theme.error} size={21} />
-                      ) : isPlaying ? (
-                        <>
-                          <PulseGlowBars volumePulseRef={volumePulseRef} isPlaying={true} />
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
-                            <Pause fill={GOLD.gold} size={14} />
-                          </div>
-                        </>
-                      ) : audioUrl ? (
-                        <>
-                          <PulseGlowBars volumePulseRef={null} isPlaying={false} />
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-200 pointer-events-none">
-                            <Play fill={GOLD.gold} size={14} />
-                          </div>
-                        </>
-                      ) : (
-                        <Volume2 className={GOLD.goldText} size={21} />
-                      )}
-                    </button>
-                    <span
-                      className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                    >
-                      {isPlaying ? 'Playing' : audioUrl ? 'Paused' : 'Listen'}
-                    </span>
-                  </>
-                )}
-              </div>}
+              {highlightStyle === 'none' && (
+                <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                  {isGeneratingAudio ? (
+                    <>
+                      <button
+                        disabled
+                        aria-label="Preparing audio"
+                        className="min-w-[46px] min-h-[46px] p-[11px] bg-gold/8 border border-gold/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
+                      >
+                        <div className="flex items-center justify-center gap-0.5 h-[21px]">
+                          <div
+                            className="w-[2px] h-[6px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[10px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.15s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[14px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.3s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[10px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.45s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[6px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.6s',
+                            }}
+                          />
+                        </div>
+                      </button>
+                      <span
+                        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+                      >
+                        Loading
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={togglePlay}
+                        aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
+                        style={{ willChange: 'transform' }}
+                        className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
+                      >
+                        {audioError ? (
+                          <Volume2 className={theme.error} size={21} />
+                        ) : isPlaying ? (
+                          <>
+                            <PulseGlowBars volumePulseRef={volumePulseRef} isPlaying={true} />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
+                              <Pause fill={GOLD.gold} size={14} />
+                            </div>
+                          </>
+                        ) : audioUrl ? (
+                          <>
+                            <PulseGlowBars volumePulseRef={null} isPlaying={false} />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-200 pointer-events-none">
+                              <Play fill={GOLD.gold} size={14} />
+                            </div>
+                          </>
+                        ) : (
+                          <Volume2 className={GOLD.goldText} size={21} />
+                        )}
+                      </button>
+                      <span
+                        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      >
+                        {isPlaying ? 'Playing' : audioUrl ? 'Paused' : 'Listen'}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
 
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
@@ -1748,16 +1803,24 @@ export default function DiwanApp() {
 
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
-                  onClick={() => isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()}
+                  onClick={() =>
+                    isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
+                  }
                   aria-label={isPoemSaved(displayedPoem) ? 'Unsave poem' : 'Save poem'}
                   className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                 >
                   <Heart
                     size={21}
-                    style={isPoemSaved(displayedPoem) ? { fill: '#ef4444', stroke: '#ef4444' } : { fill: 'none', stroke: GOLD.gold }}
+                    style={
+                      isPoemSaved(displayedPoem)
+                        ? { fill: '#ef4444', stroke: '#ef4444' }
+                        : { fill: 'none', stroke: GOLD.gold }
+                    }
                   />
                 </button>
-                <span className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+                <span
+                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                >
                   {isPoemSaved(displayedPoem) ? 'Saved' : 'Save'}
                 </span>
               </div>
@@ -1796,7 +1859,33 @@ export default function DiwanApp() {
                 </span>
               </div>
             </div>
-          </footer>
+          </motion.footer>
+
+          {/* Floating idle listen / pause button — only visible when chrome is hidden.
+              Attached to listenButtonIdleRef so tapping it does NOT wake the UI chrome;
+              the user can control playback while staying in immersive zen mode. */}
+          <AnimatePresence>
+            {isIdle && (
+              <motion.div
+                ref={listenButtonIdleRef}
+                className="fixed z-[55] flex justify-center"
+                style={{ bottom: '1.25rem', left: 0, right: 0, pointerEvents: 'auto' }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 8 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 26, delay: 0.35 }}
+              >
+                <button
+                  onClick={togglePlay}
+                  aria-label={isPlaying ? 'Pause recitation' : 'Listen to poem'}
+                  className={`px-7 py-2.5 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide transition-all duration-150`}
+                  style={{ boxShadow: '0 4px 32px rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)' }}
+                >
+                  {isPlaying ? 'Pause' : 'Listen'}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -1872,17 +1961,35 @@ export default function DiwanApp() {
         </div>
       )}
 
-      {/* Theme Toggle — top-right */}
-      <div className="fixed top-10 right-2 md:right-[25rem] z-[46]">
+      {/* Theme Toggle — top-right, hides in zen idle mode */}
+      <motion.div
+        className="fixed top-10 right-2 md:right-[25rem] z-[46]"
+        animate={isIdle ? { opacity: 0, x: 20 } : { opacity: 1, x: 0 }}
+        transition={
+          isIdle
+            ? { duration: 0.65, ease: [0.16, 1, 0.3, 1], delay: 0.05 }
+            : { type: 'spring', stiffness: 280, damping: 26 }
+        }
+        style={{ pointerEvents: isIdle ? 'none' : 'auto' }}
+      >
         <ThemeToggle />
-      </div>
+      </motion.div>
 
-      {/* Text Settings — below theme toggle */}
-      <div className="fixed top-[5.5rem] right-2 md:right-[25rem] z-[46]">
+      {/* Text Settings — below theme toggle, hides in zen idle mode */}
+      <motion.div
+        className="fixed top-[5.5rem] right-2 md:right-[25rem] z-[46]"
+        animate={isIdle ? { opacity: 0, x: 20 } : { opacity: 1, x: 0 }}
+        transition={
+          isIdle
+            ? { duration: 0.65, ease: [0.16, 1, 0.3, 1], delay: 0.08 }
+            : { type: 'spring', stiffness: 280, damping: 26 }
+        }
+        style={{ pointerEvents: isIdle ? 'none' : 'auto' }}
+      >
         <TextSettingsPill />
-      </div>
+      </motion.div>
 
-      {/* Vertical Sidebar - always visible */}
+      {/* Vertical Sidebar — hides in zen idle mode */}
       <VerticalSidebar
         onCopy={handleCopy}
         onShare={handleShare}
@@ -1897,6 +2004,7 @@ export default function DiwanApp() {
         isDownvoted={current ? isPoemDownvoted(current) : false}
         onUnflag={handleUndownvote}
         user={user}
+        isIdle={isIdle}
       />
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}

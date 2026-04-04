@@ -26,44 +26,77 @@ function makeParticle(width, height) {
   };
 }
 
+// Re-draws the static radial glow used for prefers-reduced-motion and as ambient glow
+function drawStaticGlow(ctx, canvas, opacity) {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, canvas.width * 0.4);
+  grad.addColorStop(0, `rgba(197,160,89,${opacity})`);
+  grad.addColorStop(1, 'rgba(197,160,89,0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
 const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
   active,
-  scrollY = 0,
-  parallaxFactor = 0.05,
+  // Sparkle controls (from uiStore)
+  sparkleEnabled = true,
+  sparkleGlow = false,
+  sparkleBrightness = 1.0,
+  sparkleSpeed = 1.0,
+  sparkleAmount = AMBIENT_COUNT,
 }) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
-  // Track latest active value inside the rAF loop without restarting the loop
+  // Track latest values inside the rAF loop without restarting the loop
   const activeRef = useRef(active);
+  const ctrlRef = useRef({
+    sparkleEnabled,
+    sparkleGlow,
+    sparkleBrightness,
+    sparkleSpeed,
+    sparkleAmount,
+  });
 
   useEffect(() => {
     activeRef.current = active;
   }, [active]);
 
   useEffect(() => {
+    ctrlRef.current = {
+      sparkleEnabled,
+      sparkleGlow,
+      sparkleBrightness,
+      sparkleSpeed,
+      sparkleAmount,
+    };
+  }, [sparkleEnabled, sparkleGlow, sparkleBrightness, sparkleSpeed, sparkleAmount]);
+
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Guard for test environments where matchMedia is unavailable
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const resize = () => {
       const parent = canvas.parentElement;
       canvas.width = parent ? parent.offsetWidth : window.innerWidth;
       canvas.height = parent ? parent.offsetHeight : window.innerHeight;
+      if (prefersReduced) {
+        // Re-draw static glow after resize (changing dimensions clears the canvas)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawStaticGlow(ctx, canvas, REDUCED_MOTION_OPACITY);
+      }
     };
     resize();
     window.addEventListener('resize', resize);
 
     if (prefersReduced) {
-      // Static subtle glow for reduced-motion users
-      const cx = canvas.width / 2;
-      const cy = canvas.height / 2;
-      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, canvas.width * 0.4);
-      grad.addColorStop(0, `rgba(197,160,89,${REDUCED_MOTION_OPACITY})`);
-      grad.addColorStop(1, 'rgba(197,160,89,0)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
       return () => window.removeEventListener('resize', resize);
     }
 
@@ -74,53 +107,59 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
 
     const animate = () => {
       const isActive = activeRef.current;
-      const visibleCount = isActive ? ACTIVE_COUNT : AMBIENT_COUNT;
-      const maxOpacity = isActive ? 0.9 : 0.5;
+      const ctrl = ctrlRef.current;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Central radial glow — only during insight mode
-      if (isActive) {
+      // Central radial glow — during insight mode OR when sparkleGlow toggle is on
+      if (isActive || ctrl.sparkleGlow) {
+        const glowOpacity = isActive ? 0.09 : 0.06;
         const cx = canvas.width / 2;
         const cy = canvas.height / 2;
         const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, canvas.width * 0.35);
-        glow.addColorStop(0, 'rgba(197,160,89,0.09)');
-        glow.addColorStop(0.5, 'rgba(197,160,89,0.04)');
+        glow.addColorStop(0, `rgba(197,160,89,${glowOpacity})`);
+        glow.addColorStop(0.5, `rgba(197,160,89,${glowOpacity * 0.44})`);
         glow.addColorStop(1, 'rgba(197,160,89,0)');
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, canvas.width, canvas.height);
       }
 
-      for (let i = 0; i < visibleCount; i++) {
-        const p = particles[i];
-        p.x += p.speedX;
-        p.y += p.speedY;
+      if (ctrl.sparkleEnabled) {
+        const visibleCount = isActive ? ACTIVE_COUNT : Math.min(ACTIVE_COUNT, ctrl.sparkleAmount);
+        const maxOpacity = Math.min(1, (isActive ? 0.9 : 0.5) * ctrl.sparkleBrightness);
+        const speedMul = ctrl.sparkleSpeed;
 
-        // Wrap at edges
-        if (p.y < -5) {
-          p.y = canvas.height + 5;
-          p.x = Math.random() * canvas.width;
-        }
-        if (p.x < -5) p.x = canvas.width + 5;
-        if (p.x > canvas.width + 5) p.x = -5;
+        for (let i = 0; i < visibleCount; i++) {
+          const p = particles[i];
+          p.x += p.speedX * speedMul;
+          p.y += p.speedY * speedMul;
 
-        const alpha = Math.min(p.opacity, maxOpacity);
-        const drawSize = p.size;
-        const rgb = hexToRgb(p.color);
+          // Wrap at edges
+          if (p.y < -5) {
+            p.y = canvas.height + 5;
+            p.x = Math.random() * canvas.width;
+          }
+          if (p.x < -5) p.x = canvas.width + 5;
+          if (p.x > canvas.width + 5) p.x = -5;
 
-        // Outer glow halo
-        if (drawSize > 1.2) {
+          const alpha = Math.min(p.opacity, maxOpacity);
+          const drawSize = p.size;
+          const rgb = hexToRgb(p.color);
+
+          // Outer glow halo
+          if (drawSize > 1.2) {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, drawSize * 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${rgb},${alpha * 0.12})`;
+            ctx.fill();
+          }
+
+          // Core particle
           ctx.beginPath();
-          ctx.arc(p.x, p.y, drawSize * 3.5, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${rgb},${alpha * 0.12})`;
+          ctx.arc(p.x, p.y, drawSize, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${rgb},${alpha})`;
           ctx.fill();
         }
-
-        // Core particle
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, drawSize, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${rgb},${alpha})`;
-        ctx.fill();
       }
 
       animRef.current = requestAnimationFrame(animate);
@@ -132,20 +171,16 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
       if (animRef.current) cancelAnimationFrame(animRef.current);
       window.removeEventListener('resize', resize);
     };
-  }, []); // Single animation loop — active changes tracked via activeRef
+  }, []); // Single animation loop — live values tracked via refs
 
+  // Canvas is fixed — does not move with scroll (no parallax on sparkles)
   return (
     <canvas
       ref={canvasRef}
       className="absolute inset-0 pointer-events-none z-10"
-      style={{
-        mixBlendMode: 'screen',
-        transform: `translateY(${-(scrollY * parallaxFactor).toFixed(1)}px)`,
-        willChange: 'transform',
-      }}
+      style={{ mixBlendMode: 'screen' }}
     />
   );
 });
 
-// Only re-render when active changes — not on parent streaming state
 export default MysticalConsultationEffect;

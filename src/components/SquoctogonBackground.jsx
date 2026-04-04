@@ -8,7 +8,21 @@ function applyMatrix(a, b, tx, c, d, ty, px, py) {
 }
 
 function applyPlacement(pts, p) {
-  const { a, b, tx, c, d, ty } = p;
+  let a, b, tx, c, d, ty;
+  if (p.type === 'srt') {
+    // SRT format: {scale, rot (degrees), tranX, tranY}
+    const rotRad = (p.rot * Math.PI) / 180;
+    const s = p.scale;
+    a = s * Math.cos(rotRad);
+    b = -s * Math.sin(rotRad);
+    c = s * Math.sin(rotRad);
+    d = s * Math.cos(rotRad);
+    tx = p.tranX;
+    ty = p.tranY;
+  } else {
+    // Matrix format: {a, b, tx, c, d, ty}
+    ({ a, b, tx, c, d, ty } = p);
+  }
   return pts.map(([px, py]) => applyMatrix(a, b, tx, c, d, ty, px, py));
 }
 
@@ -152,8 +166,17 @@ function buildTilingPolygons(tiling, canvasW, canvasH, zoom = 1) {
   const scale = cellSize > 0 ? targetFit / (cellSize * numCellsTarget) : zoom;
 
   const margin = 3;
-  const rangeI = Math.ceil(Math.max(canvasW, canvasH) / (t1Len * scale)) + margin;
-  const rangeJ = Math.ceil(Math.max(canvasW, canvasH) / (t2Len * scale)) + margin;
+  // Cap total polygons to prevent crashes on dense aperiodic tilings (e.g. Girih Inflation)
+  const MAX_TOTAL_POLYS = 30000;
+  let rangeI = Math.ceil(Math.max(canvasW, canvasH) / (t1Len * scale)) + margin;
+  let rangeJ = Math.ceil(Math.max(canvasW, canvasH) / (t2Len * scale)) + margin;
+  const cells = (2 * rangeI + 1) * (2 * rangeJ + 1);
+  if (cells * unitPolys.length > MAX_TOTAL_POLYS) {
+    const maxCells = Math.max(1, Math.floor(MAX_TOTAL_POLYS / unitPolys.length));
+    const rangeMax = Math.max(0, Math.floor((Math.sqrt(maxCells) - 1) / 2));
+    rangeI = Math.min(rangeI, rangeMax);
+    rangeJ = Math.min(rangeJ, rangeMax);
+  }
 
   const allPolys = [];
   for (let i = -rangeI; i <= rangeI; i++) {

@@ -27,8 +27,14 @@ const initialState = {
   // Background settings
   bgOpacity: 1.0, // multiplier for stroke opacity (1.0 = theme default)
   bgColor: '', // hex override for line colour; '' = use theme default
-  bgParallax: 0.05, // parallax drift factor (0.05 = 5% of scroll speed)
+  bgParallax: 0.08, // parallax drift factor (0.08 = 8% of scroll speed)
   bgPattern: 'Squoctogon', // currently-selected pattern from generator favorites
+  // Sparkle / particle controls
+  sparkleEnabled: true, // show gold sparkle particles
+  sparkleGlow: false, // show central radial glow permanently (not just during insight)
+  sparkleBrightness: 1.0, // opacity multiplier for particles
+  sparkleSpeed: 1.0, // speed multiplier for particles
+  sparkleAmount: 35, // ambient particle count (insight always uses ACTIVE_COUNT=60)
   cacheStats: {
     audioHits: 0,
     audioMisses: 0,
@@ -52,6 +58,11 @@ export const useUIStore = create((set, get) => ({
   setBgColor: (bgColor) => set({ bgColor }),
   setBgParallax: (bgParallax) => set({ bgParallax }),
   setBgPattern: (bgPattern) => set({ bgPattern }),
+  setSparkleEnabled: (sparkleEnabled) => set({ sparkleEnabled }),
+  setSparkleGlow: (sparkleGlow) => set({ sparkleGlow }),
+  setSparkleBrightness: (sparkleBrightness) => set({ sparkleBrightness }),
+  setSparkleSpeed: (sparkleSpeed) => set({ sparkleSpeed }),
+  setSparkleAmount: (sparkleAmount) => set({ sparkleAmount }),
 
   cycleFont: () =>
     set((s) => {

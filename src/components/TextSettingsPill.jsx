@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Popover, ToggleGroup, Select } from 'radix-ui';
-import { Languages, ALargeSmall, ChevronDown, Check, ExternalLink } from 'lucide-react';
+import { Drawer } from 'vaul';
+import { ToggleGroup, Select } from 'radix-ui';
+import {
+  Languages,
+  ALargeSmall,
+  ChevronDown,
+  Check,
+  ExternalLink,
+  X,
+  Sparkles,
+  Sun,
+  Zap,
+} from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
@@ -8,7 +19,7 @@ import { useUIStore } from '../stores/uiStore';
 // URL of the geometric-explorer pattern generator (open locally from project root)
 const GENERATOR_URL = '/design-review/islamic-patterns/generate.html';
 
-// Patterns saved as favorites in design-review/islamic-patterns/favourites.json
+// Patterns saved as favorites in the geometric-explorer
 const GENERATOR_FAVORITES = [
   'Squoctogon',
   '3-8-12',
@@ -55,298 +66,276 @@ const TEXT_SIZES = [
   { label: 'XL', multiplier: 1.3 },
 ];
 
+// Preset opacity values (shown as buttons instead of a slider)
+const OPACITY_PRESETS = [
+  { label: '30%', value: 0.3 },
+  { label: '40%', value: 0.4 },
+  { label: '65%', value: 0.65 },
+  { label: '155%', value: 1.55 },
+];
+
+// ── Section label ─────────────────────────────────────────────────────────────
+function SectionLabel({ gold, children }) {
+  return (
+    <div className="flex items-center gap-2 mt-4 mb-2">
+      <span
+        className="text-xs uppercase tracking-widest opacity-50 font-medium"
+        style={{ color: gold }}
+      >
+        {children}
+      </span>
+      <div className="flex-1 h-px opacity-10" style={{ background: gold }} />
+    </div>
+  );
+}
+
+// ── Toggle row (small pill) ───────────────────────────────────────────────────
+function ToggleRow({ gold, active, onClick, icon, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 ${
+        active ? 'bg-gold/20 border border-gold/40' : 'opacity-40 border border-transparent'
+      }`}
+      style={{ color: gold }}
+    >
+      {icon}
+      <span>{children}</span>
+    </button>
+  );
+}
+
+// ── Small control slider ──────────────────────────────────────────────────────
+function ControlSlider({ gold, label, value, min, max, step, display, onChange }) {
+  return (
+    <div className="flex items-center gap-3">
+      <span className="text-xs opacity-50 w-16 flex-shrink-0" style={{ color: gold }}>
+        {label}
+      </span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="flex-1"
+        style={{ accentColor: gold }}
+      />
+      <span className="text-xs opacity-70 font-mono w-10 text-right" style={{ color: gold }}>
+        {display ?? value}
+      </span>
+    </div>
+  );
+}
+
 const TextSettingsPill = () => {
+  const [open, setOpen] = useState(false);
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
   const gold = theme.gold;
+
+  // Text settings
   const showTranslation = useUIStore((s) => s.showTranslation);
   const showTransliteration = useUIStore((s) => s.showTransliteration);
   const textSizeLevel = useUIStore((s) => s.textSize);
   const currentFont = useUIStore((s) => s.font);
+
+  // Background settings
   const bgOpacity = useUIStore((s) => s.bgOpacity);
   const bgColor = useUIStore((s) => s.bgColor);
   const bgParallax = useUIStore((s) => s.bgParallax);
   const bgPattern = useUIStore((s) => s.bgPattern);
   const defaultColor = darkMode ? '#4a7cc9' : '#2e5090';
-  // Local state for the hex text input (allows partial edits)
   const [hexInput, setHexInput] = useState(bgColor || defaultColor);
   useEffect(() => {
     setHexInput(bgColor || defaultColor);
   }, [bgColor, defaultColor]);
+
+  // Sparkle settings
+  const sparkleEnabled = useUIStore((s) => s.sparkleEnabled);
+  const sparkleGlow = useUIStore((s) => s.sparkleGlow);
+  const sparkleBrightness = useUIStore((s) => s.sparkleBrightness);
+  const sparkleSpeed = useUIStore((s) => s.sparkleSpeed);
+  const sparkleAmount = useUIStore((s) => s.sparkleAmount);
+
+  const store = useUIStore.getState;
+
+  const panelBg = darkMode ? 'bg-stone-950/97' : 'bg-white/97';
+  const inputBg = darkMode ? 'bg-black/40' : 'bg-white/60';
+
   return (
     <>
       <style>{`
-        @keyframes pillSlideDown {
-          from { opacity: 0; transform: translateY(-0.5rem); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pillSlideUp {
-          from { opacity: 0; transform: translateY(0.5rem); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes pillSlideLeft {
-          from { opacity: 0; transform: translateX(0.5rem); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        @keyframes pillSlideRight {
-          from { opacity: 0; transform: translateX(-0.5rem); }
-          to { opacity: 1; transform: translateX(0); }
-        }
-        [data-side="bottom"] { animation: pillSlideDown 0.15s ease-out; }
-        [data-side="top"] { animation: pillSlideUp 0.15s ease-out; }
-        [data-side="left"] { animation: pillSlideLeft 0.15s ease-out; }
-        [data-side="right"] { animation: pillSlideRight 0.15s ease-out; }
+        [data-vaul-drawer] { touch-action: none; }
       `}</style>
 
-      <Popover.Root>
-        <Popover.Trigger asChild>
+      <Drawer.Root
+        open={open}
+        onOpenChange={setOpen}
+        snapPoints={[0.22, 0.45, 0.92]}
+        activeSnapPoint={open ? undefined : 0.22}
+        dismissible={false}
+        direction="bottom"
+      >
+        <Drawer.Trigger asChild>
           <button
-            aria-label="Text settings"
+            aria-label="Text and background settings"
             className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 backdrop-blur-xl border ${theme.border} ${
               darkMode ? 'bg-black/70' : 'bg-white/80'
             } ${theme.goldHoverBg15}`}
+            style={{ position: 'relative', zIndex: 50 }}
           >
             <ALargeSmall size={18} style={{ color: gold }} />
           </button>
-        </Popover.Trigger>
+        </Drawer.Trigger>
 
-        <Popover.Portal>
-          <Popover.Content
-            side="left"
-            align="start"
-            sideOffset={8}
-            className={`rounded-2xl p-4 min-w-[16rem] backdrop-blur-xl border ${theme.border} ${
-              darkMode ? 'bg-stone-950/95' : 'bg-white/95'
-            }`}
-            style={{ zIndex: 46 }}
+        <Drawer.Portal>
+          {/* Overlay — does NOT close drawer (dismissible=false) */}
+          <Drawer.Overlay className="fixed inset-0 bg-black/30 z-40" />
+
+          <Drawer.Content
+            className={`fixed bottom-0 left-0 right-0 ${panelBg} backdrop-blur-2xl border-t ${theme.border} rounded-t-3xl z-50 flex flex-col`}
+            style={{ maxHeight: '92vh' }}
           >
-            {/* Row 1: Translation Toggle */}
-            <button
-              onClick={() => useUIStore.getState().toggleTranslation()}
-              className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 ${
-                showTranslation
-                  ? 'bg-gold/20 border border-gold/40'
-                  : 'opacity-40 border border-transparent'
-              }`}
-              style={{ color: gold }}
-            >
-              <Languages size={14} style={{ color: gold }} />
-              <span>Translation</span>
-            </button>
-
-            {/* Row 2: Romanize Toggle */}
-            <button
-              onClick={() => useUIStore.getState().toggleTransliteration()}
-              className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 mt-1 ${
-                showTransliteration
-                  ? 'bg-gold/20 border border-gold/40'
-                  : 'opacity-40 border border-transparent'
-              }`}
-              style={{ color: gold }}
-            >
-              <ALargeSmall size={14} style={{ color: gold }} />
-              <span>Romanize</span>
-            </button>
-
-            {/* Row 3: Text Size */}
-            <div className="mt-3">
-              <span
-                className="text-xs uppercase tracking-wider opacity-60 mb-1.5 block"
-                style={{ color: gold }}
-              >
-                Text Size
-              </span>
-              <ToggleGroup.Root
-                type="single"
-                value={String(textSizeLevel)}
-                onValueChange={(v) => {
-                  if (v) useUIStore.getState().setTextSize(Number(v));
-                }}
-                className="flex gap-1"
-              >
-                {TEXT_SIZES.map((s, i) => (
-                  <ToggleGroup.Item
-                    key={i}
-                    value={String(i)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ${
-                      textSizeLevel === i
-                        ? 'bg-gold/20 border-gold/40'
-                        : 'opacity-50 hover:opacity-80 border-transparent'
-                    }`}
-                    style={{ color: gold }}
-                  >
-                    {s.label}
-                  </ToggleGroup.Item>
-                ))}
-              </ToggleGroup.Root>
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <Drawer.Handle
+                className="w-12 h-1.5 rounded-full opacity-30"
+                style={{ background: gold }}
+              />
             </div>
 
-            {/* Row 4: Font */}
-            <div className="mt-3">
-              <span
-                className="text-xs uppercase tracking-wider opacity-60 mb-1.5 block"
+            {/* Header row */}
+            <div className="flex items-center justify-between px-5 pb-2">
+              <Drawer.Title className="text-sm font-semibold opacity-60" style={{ color: gold }}>
+                Display
+              </Drawer.Title>
+              <button
+                aria-label="Close settings"
+                onClick={() => setOpen(false)}
+                className="w-7 h-7 flex items-center justify-center rounded-full opacity-40 hover:opacity-80 transition-opacity"
                 style={{ color: gold }}
               >
-                Font
-              </span>
-              <Select.Root
-                value={currentFont}
-                onValueChange={(v) => useUIStore.getState().setFont(v)}
-              >
-                <Select.Trigger
-                  className={`w-full flex items-center justify-between rounded-lg px-3 py-2 border ${theme.border} backdrop-blur-xl transition-all duration-200 ${
-                    darkMode ? 'bg-black/50' : 'bg-white/50'
-                  }`}
-                  style={{ color: gold }}
-                  aria-label="Select font"
-                >
-                  <Select.Value />
-                  <Select.Icon>
-                    <ChevronDown size={14} style={{ color: gold, opacity: 0.6 }} />
-                  </Select.Icon>
-                </Select.Trigger>
-                <Select.Portal>
-                  <Select.Content
-                    className={`rounded-xl p-1 backdrop-blur-xl border ${theme.border} ${
-                      darkMode ? 'bg-stone-950/95' : 'bg-white/95'
-                    }`}
-                    style={{ zIndex: 100 }}
-                    position="popper"
-                    sideOffset={4}
-                  >
-                    <Select.Viewport>
-                      {FONTS.map((f) => (
-                        <Select.Item
-                          key={f.id}
-                          value={f.id}
-                          className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-150 ${
-                            darkMode ? 'hover:bg-white/10' : 'hover:bg-black/5'
-                          }`}
-                          style={{ color: gold }}
-                        >
-                          <Select.ItemText>
-                            <span className={f.family} style={{ fontSize: '1rem' }}>
-                              {f.labelAr}
-                            </span>
-                          </Select.ItemText>
-                          <Select.ItemIndicator>
-                            <Check size={14} style={{ color: gold }} />
-                          </Select.ItemIndicator>
-                        </Select.Item>
-                      ))}
-                    </Select.Viewport>
-                  </Select.Content>
-                </Select.Portal>
-              </Select.Root>
+                <X size={16} />
+              </button>
             </div>
 
-            {/* ── Background Settings ──────────────────────────────────── */}
-            <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${gold}22` }}>
-              <div className="flex items-center justify-between mb-2">
-                <span
-                  className="text-xs uppercase tracking-wider opacity-60"
-                  style={{ color: gold }}
+            {/* Scrollable content */}
+            <div className="overflow-y-auto flex-1 px-5 pb-8" data-vaul-no-drag>
+              {/* ── Text section ───────────────────────────────────────── */}
+              <SectionLabel gold={gold}>Text</SectionLabel>
+
+              <div className="space-y-1">
+                <ToggleRow
+                  gold={gold}
+                  active={showTranslation}
+                  onClick={() => store().toggleTranslation()}
+                  icon={<Languages size={14} style={{ color: gold }} />}
                 >
-                  Background
-                </span>
-                <a
-                  href={GENERATOR_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-xs opacity-40 hover:opacity-70 transition-opacity"
-                  style={{ color: gold }}
-                  title="Open geometric-explorer pattern generator"
+                  Translation
+                </ToggleRow>
+
+                <ToggleRow
+                  gold={gold}
+                  active={showTransliteration}
+                  onClick={() => store().toggleTransliteration()}
+                  icon={<ALargeSmall size={14} style={{ color: gold }} />}
                 >
-                  <ExternalLink size={10} />
-                  Generator
-                </a>
+                  Romanize
+                </ToggleRow>
               </div>
 
-              {/* Opacity slider */}
-              <div className="mb-3">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs opacity-50" style={{ color: gold }}>
-                    Opacity
-                  </span>
-                  <span className="text-xs opacity-70 font-mono" style={{ color: gold }}>
-                    {Math.round(bgOpacity * 100)}%
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="200"
-                  step="5"
-                  value={Math.round(bgOpacity * 100)}
-                  onChange={(e) => useUIStore.getState().setBgOpacity(Number(e.target.value) / 100)}
-                  className="w-full"
-                  style={{ accentColor: gold }}
-                />
-              </div>
-
-              {/* Colour picker */}
-              <div className="mb-3">
+              {/* Text size */}
+              <div className="mt-3">
                 <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
-                  Line colour
+                  Text size
                 </span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="color"
-                    value={bgColor || defaultColor}
-                    onChange={(e) => {
-                      useUIStore.getState().setBgColor(e.target.value);
-                    }}
-                    className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0.5 flex-shrink-0"
-                    style={{ background: 'transparent' }}
-                    title="Pick line colour"
-                  />
-                  <input
-                    type="text"
-                    value={hexInput}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setHexInput(v);
-                      if (/^#[0-9A-Fa-f]{6}$/.test(v)) {
-                        useUIStore.getState().setBgColor(v);
-                      }
-                    }}
-                    className={`flex-1 rounded-lg px-2 py-1.5 text-xs font-mono border ${theme.border} min-w-0 ${
-                      darkMode ? 'bg-black/50' : 'bg-white/50'
-                    }`}
-                    style={{ color: gold }}
-                    maxLength={7}
-                    placeholder={defaultColor}
-                    spellCheck={false}
-                  />
-                  {bgColor && (
-                    <button
-                      onClick={() => {
-                        useUIStore.getState().setBgColor('');
-                        setHexInput(defaultColor);
-                      }}
-                      className="text-sm opacity-40 hover:opacity-80 transition-opacity flex-shrink-0"
+                <ToggleGroup.Root
+                  type="single"
+                  value={String(textSizeLevel)}
+                  onValueChange={(v) => {
+                    if (v) store().setTextSize(Number(v));
+                  }}
+                  className="flex gap-1"
+                >
+                  {TEXT_SIZES.map((s, i) => (
+                    <ToggleGroup.Item
+                      key={i}
+                      value={String(i)}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ${
+                        textSizeLevel === i
+                          ? 'bg-gold/20 border-gold/40'
+                          : 'opacity-50 hover:opacity-80 border-transparent'
+                      }`}
                       style={{ color: gold }}
-                      title="Reset to theme colour"
                     >
-                      ↺
-                    </button>
-                  )}
-                </div>
+                      {s.label}
+                    </ToggleGroup.Item>
+                  ))}
+                </ToggleGroup.Root>
               </div>
+
+              {/* Font */}
+              <div className="mt-3">
+                <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
+                  Font
+                </span>
+                <Select.Root value={currentFont} onValueChange={(v) => store().setFont(v)}>
+                  <Select.Trigger
+                    className={`w-full flex items-center justify-between rounded-xl px-3 py-2 border ${theme.border} ${inputBg} transition-all duration-200`}
+                    style={{ color: gold }}
+                    aria-label="Select font"
+                  >
+                    <Select.Value />
+                    <Select.Icon>
+                      <ChevronDown size={14} style={{ color: gold, opacity: 0.6 }} />
+                    </Select.Icon>
+                  </Select.Trigger>
+                  <Select.Portal>
+                    <Select.Content
+                      className={`rounded-xl p-1 backdrop-blur-xl border ${theme.border} ${
+                        darkMode ? 'bg-stone-950/95' : 'bg-white/95'
+                      }`}
+                      style={{ zIndex: 100 }}
+                      position="popper"
+                      sideOffset={4}
+                    >
+                      <Select.Viewport>
+                        {FONTS.map((f) => (
+                          <Select.Item
+                            key={f.id}
+                            value={f.id}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-150 ${
+                              darkMode ? 'hover:bg-white/10' : 'hover:bg-black/5'
+                            }`}
+                            style={{ color: gold }}
+                          >
+                            <Select.ItemText>
+                              <span className={f.family}>{f.labelAr}</span>
+                            </Select.ItemText>
+                            <Select.ItemIndicator>
+                              <Check size={14} style={{ color: gold }} />
+                            </Select.ItemIndicator>
+                          </Select.Item>
+                        ))}
+                      </Select.Viewport>
+                    </Select.Content>
+                  </Select.Portal>
+                </Select.Root>
+              </div>
+
+              {/* ── Background section ──────────────────────────────────── */}
+              <SectionLabel gold={gold}>Background</SectionLabel>
 
               {/* Pattern dropdown */}
               <div className="mb-3">
                 <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
                   Pattern
                 </span>
-                <Select.Root
-                  value={bgPattern}
-                  onValueChange={(v) => useUIStore.getState().setBgPattern(v)}
-                >
+                <Select.Root value={bgPattern} onValueChange={(v) => store().setBgPattern(v)}>
                   <Select.Trigger
-                    className={`w-full flex items-center justify-between rounded-lg px-3 py-2 border ${theme.border} backdrop-blur-xl transition-all duration-200 ${
-                      darkMode ? 'bg-black/50' : 'bg-white/50'
-                    }`}
+                    className={`w-full flex items-center justify-between rounded-xl px-3 py-2 border ${theme.border} ${inputBg} transition-all duration-200`}
                     style={{ color: gold }}
                     aria-label="Select background pattern"
                   >
@@ -386,33 +375,165 @@ const TextSettingsPill = () => {
                 </Select.Root>
               </div>
 
-              {/* Parallax speed slider */}
-              <div>
-                <div className="flex items-center justify-between mb-1">
+              {/* Opacity presets */}
+              <div className="mb-3">
+                <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs opacity-50" style={{ color: gold }}>
-                    Parallax
+                    Opacity
                   </span>
-                  <span className="text-xs opacity-70 font-mono" style={{ color: gold }}>
-                    {Math.round(bgParallax * 100)}%
+                  <span className="text-xs opacity-60 font-mono" style={{ color: gold }}>
+                    {Math.round(bgOpacity * 100)}%
                   </span>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="20"
-                  step="1"
+                <div className="flex gap-1.5">
+                  {OPACITY_PRESETS.map(({ label, value }) => (
+                    <button
+                      key={label}
+                      onClick={() => store().setBgOpacity(value)}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ${
+                        Math.abs(bgOpacity - value) < 0.01
+                          ? 'bg-gold/20 border-gold/40'
+                          : 'opacity-50 hover:opacity-80 border-transparent'
+                      }`}
+                      style={{ color: gold }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Colour picker */}
+              <div className="mb-3">
+                <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
+                  Line colour
+                </span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={bgColor || defaultColor}
+                    onChange={(e) => store().setBgColor(e.target.value)}
+                    className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0.5 flex-shrink-0"
+                    style={{ background: 'transparent' }}
+                    title="Pick line colour"
+                  />
+                  <input
+                    type="text"
+                    value={hexInput}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setHexInput(v);
+                      if (/^#[0-9A-Fa-f]{6}$/.test(v)) store().setBgColor(v);
+                    }}
+                    className={`flex-1 rounded-xl px-2 py-1.5 text-xs font-mono border ${theme.border} min-w-0 ${inputBg}`}
+                    style={{ color: gold }}
+                    maxLength={7}
+                    placeholder={defaultColor}
+                    spellCheck={false}
+                  />
+                  {bgColor && (
+                    <button
+                      onClick={() => {
+                        store().setBgColor('');
+                        setHexInput(defaultColor);
+                      }}
+                      className="text-sm opacity-40 hover:opacity-80 transition-opacity flex-shrink-0"
+                      style={{ color: gold }}
+                      title="Reset to theme colour"
+                    >
+                      ↺
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Parallax speed slider */}
+              <div className="mb-2">
+                <ControlSlider
+                  gold={gold}
+                  label="Parallax"
                   value={Math.round(bgParallax * 100)}
-                  onChange={(e) =>
-                    useUIStore.getState().setBgParallax(Number(e.target.value) / 100)
-                  }
-                  className="w-full"
-                  style={{ accentColor: gold }}
+                  min={0}
+                  max={20}
+                  step={1}
+                  display={`${Math.round(bgParallax * 100)}%`}
+                  onChange={(v) => store().setBgParallax(v / 100)}
                 />
               </div>
+
+              {/* Generator link */}
+              <a
+                href={GENERATOR_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs opacity-40 hover:opacity-70 transition-opacity mt-1"
+                style={{ color: gold }}
+              >
+                <ExternalLink size={11} />
+                Open pattern generator
+              </a>
+
+              {/* ── Sparkles section ────────────────────────────────────── */}
+              <SectionLabel gold={gold}>Sparkles</SectionLabel>
+
+              <div className="space-y-1 mb-3">
+                <ToggleRow
+                  gold={gold}
+                  active={sparkleEnabled}
+                  onClick={() => store().setSparkleEnabled(!sparkleEnabled)}
+                  icon={<Sparkles size={14} style={{ color: gold }} />}
+                >
+                  Gold sparkles
+                </ToggleRow>
+
+                <ToggleRow
+                  gold={gold}
+                  active={sparkleGlow}
+                  onClick={() => store().setSparkleGlow(!sparkleGlow)}
+                  icon={<Sun size={14} style={{ color: gold }} />}
+                >
+                  Central glow (always on)
+                </ToggleRow>
+              </div>
+
+              <div className="space-y-2">
+                <ControlSlider
+                  gold={gold}
+                  label="Brightness"
+                  value={Math.round(sparkleBrightness * 100)}
+                  min={10}
+                  max={200}
+                  step={10}
+                  display={`${Math.round(sparkleBrightness * 100)}%`}
+                  onChange={(v) => store().setSparkleBrightness(v / 100)}
+                />
+                <ControlSlider
+                  gold={gold}
+                  label="Speed"
+                  value={Math.round(sparkleSpeed * 100)}
+                  min={25}
+                  max={300}
+                  step={25}
+                  display={`${Math.round(sparkleSpeed * 100)}%`}
+                  onChange={(v) => store().setSparkleSpeed(v / 100)}
+                />
+                <ControlSlider
+                  gold={gold}
+                  label="Amount"
+                  value={sparkleAmount}
+                  min={5}
+                  max={60}
+                  step={5}
+                  display={String(sparkleAmount)}
+                  onChange={(v) => store().setSparkleAmount(v)}
+                />
+              </div>
+
+              <div className="h-6" />
             </div>
-          </Popover.Content>
-        </Popover.Portal>
-      </Popover.Root>
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
     </>
   );
 };

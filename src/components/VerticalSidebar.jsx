@@ -1,7 +1,6 @@
 import {
   Check,
   Copy,
-  Heart,
   LibraryBig,
   LogOut,
   Share2,
@@ -57,20 +56,6 @@ const VerticalSidebar = ({
         className={`fixed right-2 md:right-[25rem] top-1/2 -translate-y-1/2 z-[45] rounded-2xl backdrop-blur-xl border ${theme.border} py-2 px-1.5 flex flex-col items-center gap-1 ${darkMode ? 'bg-black/70' : 'bg-white/80'}`}
         style={{ width: '2.75rem' }}
       >
-        {/* Heart / Save button */}
-        <button
-          onClick={() => (isSaved ? onUnsave?.() : onSave?.())}
-          aria-label={isSaved ? 'Unsave poem' : 'Save poem'}
-          className={`${btnBase} ${btnHover}`}
-        >
-          <Heart
-            size={18}
-            style={
-              isSaved ? { fill: '#ef4444', stroke: '#ef4444' } : { fill: 'none', stroke: gold }
-            }
-          />
-        </button>
-
         {/* My Poems button */}
         <button
           onClick={onOpenSavedPoems}

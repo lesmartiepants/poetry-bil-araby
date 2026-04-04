@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } fro
 import useEmblaCarousel from 'embla-carousel-react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { transliterate } from '../utils/transliterate.js';
+import HighlightedVerse from './HighlightedVerse.jsx';
 
 /**
  * PoemCarousel — horizontal swipe through poems by the same poet.
@@ -33,6 +34,11 @@ const PoemCarousel = forwardRef(({
   POEM_META,
   DESIGN,
   onLoadMore,
+  // TTS highlight props — only used for the active slide
+  highlightStyle = 'none',
+  activeVersePairs = [],
+  wordRefs = [],
+  wordOffsets = [],
 }, ref) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     axis: 'x',
@@ -160,9 +166,15 @@ const PoemCarousel = forwardRef(({
       >
         <div className="flex items-start">
           {poems.map((poem, slideIdx) => {
-            const lines = poem.arabic ? poem.arabic.split('\n') : [];
-            const enLines = poem.english ? poem.english.split('\n') : [];
-            const versePairs = lines.map((ar, i) => ({ ar, en: enLines[i] || '' }));
+            const isActive = slideIdx === currentIndex;
+            const useHighlight = isActive && highlightStyle !== 'none' && activeVersePairs.length > 0;
+            const pairs = useHighlight
+              ? activeVersePairs
+              : (() => {
+                  const lines = poem.arabic ? poem.arabic.split('\n') : [];
+                  const enLines = poem.english ? poem.english.split('\n') : [];
+                  return lines.map((ar, i) => ({ ar, en: enLines[i] || '' }));
+                })();
 
             return (
               <div
@@ -170,20 +182,31 @@ const PoemCarousel = forwardRef(({
                 className="flex-shrink-0 w-full h-fit"
               >
                 <div className="px-4 md:px-20 py-2 text-center">
-                  <div className="flex flex-col gap-5 md:gap-7">
-                    {versePairs.map((pair, idx) => (
+                  <div className={`flex flex-col gap-5 md:gap-7${useHighlight ? ` tts-style-${highlightStyle}` : ''}`}>
+                    {pairs.map((pair, idx) => (
                       <div
                         key={`${poem.id}-${idx}`}
                         className="flex flex-col gap-0.5 verse-fade-up"
                         style={{ animationDelay: `${idx * 80}ms` }}
                       >
-                        <p
-                          dir="rtl"
-                          className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
-                          style={{ fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})` }}
-                        >
-                          {pair.ar}
-                        </p>
+                        {useHighlight ? (
+                          <HighlightedVerse
+                            text={pair.ar}
+                            wordRefs={wordRefs}
+                            wordOffset={wordOffsets[idx] ?? 0}
+                            verseIndex={idx}
+                            className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
+                            style={{ fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})` }}
+                          />
+                        ) : (
+                          <p
+                            dir="rtl"
+                            className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
+                            style={{ fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})` }}
+                          >
+                            {pair.ar}
+                          </p>
+                        )}
                         {showTransliteration && pair.ar && (
                           <p
                             dir="ltr"

@@ -58,6 +58,7 @@
     "tone": "^15.1.22",
     "vaul": "^1.1.2",
     "wouter": "^3.9.0",
+    "ws": "^8.20.0",
     "zustand": "^5.0.12"
   },
   "devDependencies": {

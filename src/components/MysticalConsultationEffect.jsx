@@ -4,11 +4,14 @@ const DEFAULT_SPARKLE_COLOR = '#c5a059';
 
 // Generates a small palette of shades around the given base hex colour
 function buildColorPalette(hex) {
+  // Fallback to default gold if hex is not a valid 6-digit hex string
+  const isValid = /^#[0-9A-Fa-f]{6}$/.test(hex);
+  const safeHex = isValid ? hex : DEFAULT_SPARKLE_COLOR;
   // Clamp helper
   const clamp = (v) => Math.max(0, Math.min(255, Math.round(v)));
-  const r = parseInt(hex.slice(1, 3), 16);
-  const g = parseInt(hex.slice(3, 5), 16);
-  const b = parseInt(hex.slice(5, 7), 16);
+  const r = parseInt(safeHex.slice(1, 3), 16);
+  const g = parseInt(safeHex.slice(3, 5), 16);
+  const b = parseInt(safeHex.slice(5, 7), 16);
   const toHex = (rv, gv, bv) =>
     `#${clamp(rv).toString(16).padStart(2, '0')}${clamp(gv).toString(16).padStart(2, '0')}${clamp(bv).toString(16).padStart(2, '0')}`;
   return [

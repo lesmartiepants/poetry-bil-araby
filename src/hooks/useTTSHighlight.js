@@ -142,6 +142,9 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
 
   // Start the rAF loop — called when isPlaying becomes true
   function startLoop() {
+    // One-shot scroll on first frame — ensures the active word is visible
+    // even if the user has scrolled away while paused.
+    let firstTick = true;
     function tick() {
       const elapsed = Date.now() / 1000 - playbackStartTime.value + pauseOffset.value;
 
@@ -175,14 +178,21 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
         if (newIndex >= 0) {
           const activeEl = wordRefs[newIndex]?.current;
           if (activeEl) {
-            const rect = activeEl.getBoundingClientRect();
-            const overflow = rect.bottom - window.innerHeight;
-            const now = Date.now();
-            if (overflow > 0 && now - lastScrollRef.current > 400) {
-              lastScrollRef.current = now;
-              const fontSize = parseFloat(getComputedStyle(activeEl).fontSize) || 28;
-              const lineHeight = fontSize * 2.2; // matches leading-[2.2]
-              window.scrollBy({ top: Math.min(overflow + lineHeight * 0.5, lineHeight * 2), behavior: 'smooth' });
+            if (firstTick) {
+              // On first tick (play/resume), center the active word in viewport
+              firstTick = false;
+              lastScrollRef.current = Date.now();
+              activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+              const rect = activeEl.getBoundingClientRect();
+              const overflow = rect.bottom - window.innerHeight;
+              const now = Date.now();
+              if (overflow > 0 && now - lastScrollRef.current > 400) {
+                lastScrollRef.current = now;
+                const fontSize = parseFloat(getComputedStyle(activeEl).fontSize) || 28;
+                const lineHeight = fontSize * 2.2; // matches leading-[2.2]
+                window.scrollBy({ top: Math.min(overflow + lineHeight * 0.5, lineHeight * 2), behavior: 'smooth' });
+              }
             }
           }
         }

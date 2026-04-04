@@ -1,6 +1,11 @@
 import { useRef, useEffect, useState, memo } from 'react';
 import { ISLAMIC_PATTERNS } from '../constants/islamicPatterns.js';
 
+// Maximum total polygon count before capping the tiling grid range.
+// Dense aperiodic tilings (e.g. Girih Inflation) have 200+ polygons per unit cell;
+// tiling them across a full viewport grid would produce 90K+ polygons and crash the browser.
+const MAX_TILING_POLYS = 30000;
+
 // ── Math helpers (ported from generate.html) ─────────────────────────────────
 
 function applyMatrix(a, b, tx, c, d, ty, px, py) {
@@ -167,12 +172,11 @@ function buildTilingPolygons(tiling, canvasW, canvasH, zoom = 1) {
 
   const margin = 3;
   // Cap total polygons to prevent crashes on dense aperiodic tilings (e.g. Girih Inflation)
-  const MAX_TOTAL_POLYS = 30000;
   let rangeI = Math.ceil(Math.max(canvasW, canvasH) / (t1Len * scale)) + margin;
   let rangeJ = Math.ceil(Math.max(canvasW, canvasH) / (t2Len * scale)) + margin;
   const cells = (2 * rangeI + 1) * (2 * rangeJ + 1);
-  if (cells * unitPolys.length > MAX_TOTAL_POLYS) {
-    const maxCells = Math.max(1, Math.floor(MAX_TOTAL_POLYS / unitPolys.length));
+  if (cells * unitPolys.length > MAX_TILING_POLYS) {
+    const maxCells = Math.max(1, Math.floor(MAX_TILING_POLYS / unitPolys.length));
     const rangeMax = Math.max(0, Math.floor((Math.sqrt(maxCells) - 1) / 2));
     rangeI = Math.min(rangeI, rangeMax);
     rangeJ = Math.min(rangeJ, rangeMax);

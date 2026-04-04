@@ -159,7 +159,7 @@ const TextSettingsPill = () => {
   const sparkleSpeed = useUIStore((s) => s.sparkleSpeed);
   const sparkleAmount = useUIStore((s) => s.sparkleAmount);
 
-  const store = useUIStore.getState;
+  const getStore = useUIStore.getState;
 
   const panelBg = darkMode ? 'bg-stone-950/97' : 'bg-white/97';
   const inputBg = darkMode ? 'bg-black/40' : 'bg-white/60';
@@ -230,7 +230,7 @@ const TextSettingsPill = () => {
                 <ToggleRow
                   gold={gold}
                   active={showTranslation}
-                  onClick={() => store().toggleTranslation()}
+                  onClick={() => getStore().toggleTranslation()}
                   icon={<Languages size={14} style={{ color: gold }} />}
                 >
                   Translation
@@ -239,7 +239,7 @@ const TextSettingsPill = () => {
                 <ToggleRow
                   gold={gold}
                   active={showTransliteration}
-                  onClick={() => store().toggleTransliteration()}
+                  onClick={() => getStore().toggleTransliteration()}
                   icon={<ALargeSmall size={14} style={{ color: gold }} />}
                 >
                   Romanize
@@ -255,7 +255,7 @@ const TextSettingsPill = () => {
                   type="single"
                   value={String(textSizeLevel)}
                   onValueChange={(v) => {
-                    if (v) store().setTextSize(Number(v));
+                    if (v) getStore().setTextSize(Number(v));
                   }}
                   className="flex gap-1"
                 >
@@ -281,7 +281,7 @@ const TextSettingsPill = () => {
                 <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
                   Font
                 </span>
-                <Select.Root value={currentFont} onValueChange={(v) => store().setFont(v)}>
+                <Select.Root value={currentFont} onValueChange={(v) => getStore().setFont(v)}>
                   <Select.Trigger
                     className={`w-full flex items-center justify-between rounded-xl px-3 py-2 border ${theme.border} ${inputBg} transition-all duration-200`}
                     style={{ color: gold }}
@@ -333,7 +333,7 @@ const TextSettingsPill = () => {
                 <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
                   Pattern
                 </span>
-                <Select.Root value={bgPattern} onValueChange={(v) => store().setBgPattern(v)}>
+                <Select.Root value={bgPattern} onValueChange={(v) => getStore().setBgPattern(v)}>
                   <Select.Trigger
                     className={`w-full flex items-center justify-between rounded-xl px-3 py-2 border ${theme.border} ${inputBg} transition-all duration-200`}
                     style={{ color: gold }}
@@ -389,7 +389,7 @@ const TextSettingsPill = () => {
                   {OPACITY_PRESETS.map(({ label, value }) => (
                     <button
                       key={label}
-                      onClick={() => store().setBgOpacity(value)}
+                      onClick={() => getStore().setBgOpacity(value)}
                       className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ${
                         Math.abs(bgOpacity - value) < 0.01
                           ? 'bg-gold/20 border-gold/40'
@@ -412,7 +412,7 @@ const TextSettingsPill = () => {
                   <input
                     type="color"
                     value={bgColor || defaultColor}
-                    onChange={(e) => store().setBgColor(e.target.value)}
+                    onChange={(e) => getStore().setBgColor(e.target.value)}
                     className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0.5 flex-shrink-0"
                     style={{ background: 'transparent' }}
                     title="Pick line colour"
@@ -423,7 +423,7 @@ const TextSettingsPill = () => {
                     onChange={(e) => {
                       const v = e.target.value;
                       setHexInput(v);
-                      if (/^#[0-9A-Fa-f]{6}$/.test(v)) store().setBgColor(v);
+                      if (/^#[0-9A-Fa-f]{6}$/.test(v)) getStore().setBgColor(v);
                     }}
                     className={`flex-1 rounded-xl px-2 py-1.5 text-xs font-mono border ${theme.border} min-w-0 ${inputBg}`}
                     style={{ color: gold }}
@@ -434,7 +434,7 @@ const TextSettingsPill = () => {
                   {bgColor && (
                     <button
                       onClick={() => {
-                        store().setBgColor('');
+                        getStore().setBgColor('');
                         setHexInput(defaultColor);
                       }}
                       className="text-sm opacity-40 hover:opacity-80 transition-opacity flex-shrink-0"
@@ -457,7 +457,7 @@ const TextSettingsPill = () => {
                   max={20}
                   step={1}
                   display={`${Math.round(bgParallax * 100)}%`}
-                  onChange={(v) => store().setBgParallax(v / 100)}
+                  onChange={(v) => getStore().setBgParallax(v / 100)}
                 />
               </div>
 
@@ -480,7 +480,7 @@ const TextSettingsPill = () => {
                 <ToggleRow
                   gold={gold}
                   active={sparkleEnabled}
-                  onClick={() => store().setSparkleEnabled(!sparkleEnabled)}
+                  onClick={() => getStore().setSparkleEnabled(!sparkleEnabled)}
                   icon={<Sparkles size={14} style={{ color: gold }} />}
                 >
                   Gold sparkles
@@ -489,7 +489,7 @@ const TextSettingsPill = () => {
                 <ToggleRow
                   gold={gold}
                   active={sparkleGlow}
-                  onClick={() => store().setSparkleGlow(!sparkleGlow)}
+                  onClick={() => getStore().setSparkleGlow(!sparkleGlow)}
                   icon={<Sun size={14} style={{ color: gold }} />}
                 >
                   Central glow (always on)
@@ -505,7 +505,7 @@ const TextSettingsPill = () => {
                   max={200}
                   step={10}
                   display={`${Math.round(sparkleBrightness * 100)}%`}
-                  onChange={(v) => store().setSparkleBrightness(v / 100)}
+                  onChange={(v) => getStore().setSparkleBrightness(v / 100)}
                 />
                 <ControlSlider
                   gold={gold}
@@ -515,7 +515,7 @@ const TextSettingsPill = () => {
                   max={300}
                   step={25}
                   display={`${Math.round(sparkleSpeed * 100)}%`}
-                  onChange={(v) => store().setSparkleSpeed(v / 100)}
+                  onChange={(v) => getStore().setSparkleSpeed(v / 100)}
                 />
                 <ControlSlider
                   gold={gold}
@@ -525,7 +525,7 @@ const TextSettingsPill = () => {
                   max={60}
                   step={5}
                   display={String(sparkleAmount)}
-                  onChange={(v) => store().setSparkleAmount(v)}
+                  onChange={(v) => getStore().setSparkleAmount(v)}
                 />
               </div>
 

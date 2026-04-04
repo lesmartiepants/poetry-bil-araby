@@ -79,9 +79,7 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
 
     // Guard for test environments where matchMedia is unavailable
     const prefersReduced =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      window?.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
 
     const resize = () => {
       const parent = canvas.parentElement;

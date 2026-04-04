@@ -292,113 +292,108 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       const apiStart = performance.now();
       let b64;
       let ttsModel;
+      let currentMode = ttsMode;
 
-      if (ttsMode === 'live') {
-        // ── Live API path — WebSocket TTS via server endpoint ──
-        // Delivery style goes in system instruction (not prepended to text) for Live API
-        const { liveVoice, liveTemperature } = useUIStore.getState();
-        ttsModel = 'Live 2.0';
-        addLog('Audio API', `[${ttsModel}] Using Live API WebSocket | voice: ${liveVoice} | temp: ${liveTemperature}`, 'info');
-        const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: getLiveContent(current),
-            voiceName: liveVoice,
-            temperature: liveTemperature,
-            systemInstruction: LIVE_SYSTEM_INSTRUCTION,
-          }),
-        });
+      // ── Try selected mode first; on any failure (429, 404, network, etc.)
+      //    fall back to the other mode once. This makes the app resilient when
+      //    one path is rate-limited or unavailable (e.g. Live route not deployed
+      //    on a given backend, or REST quota exhausted).
+      const MODES = ['live', 'rest'];
+      let modeIdx = MODES.indexOf(currentMode);
 
-        if (!liveRes.ok) {
-          const errorText = await liveRes.text();
-          addLog('Audio API Error', `[${ttsModel}] HTTP ${liveRes.status}: ${errorText.substring(0, 200)}`, 'error');
-          if (liveRes.status === 429) {
-            const msg = 'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.';
-            setError(msg);
-            toast.error(msg);
-            throw new Error('Rate limited (429)');
-          }
-          if (liveRes.status === 404) {
-            // Live endpoint not available on this backend — fall through to REST
-            addLog('Audio API', `[${ttsModel}] Live endpoint unavailable — falling back to REST`, 'warning');
-            ttsMode = 'rest';
-          } else {
-            throw new Error(`Live API returned ${liveRes.status}: ${liveRes.statusText}`);
-          }
-        }
+      while (modeIdx < MODES.length && !b64) {
+        const mode = MODES[modeIdx];
+        ttsModel = mode === 'live' ? 'Live 2.0' : API_MODELS.tts;
 
-        if (ttsMode === 'live') {
-          const liveData = await liveRes.json();
-          if (!liveData.audioData) {
-            throw new Error('Live API returned no audio data');
-          }
-          b64 = liveData.audioData;
-        }
-      }
-
-      if (ttsMode === 'rest') {
-        // ── REST API path — existing generateContent flow ──
-        // REST TTS does NOT support systemInstruction — delivery directions go in content block
-        const ttsContent = getTTSContent(current);
-        const requestBody = JSON.stringify({
-          contents: [{ parts: [{ text: ttsContent }] }],
-          generationConfig: {
-            responseModalities: TTS_CONFIG.responseModalities,
-            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName } } },
-          },
-        });
-        const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-        // 120s hard timeout — prevents indefinite hang when Render backend stalls
-        const ttsAbortController = new AbortController();
-        const ttsTimeoutId = setTimeout(() => ttsAbortController.abort(), 120_000);
-        const fetchOptions = {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: requestBody,
-          signal: ttsAbortController.signal,
-        };
-        let fallbackResult;
         try {
-          fallbackResult = await fetchTTSWithFallback(url, fetchOptions, {
-            addLog,
-            label: 'Audio API',
-          });
-        } finally {
-          clearTimeout(ttsTimeoutId);
-        }
-        const res = fallbackResult.res;
-        ttsModel = fallbackResult.model;
+          if (mode === 'live') {
+            // ── Live API path — WebSocket TTS via server endpoint ──
+            const { liveVoice, liveTemperature } = useUIStore.getState();
+            addLog('Audio API', `[${ttsModel}] Attempting | voice: ${liveVoice} | temp: ${liveTemperature}`, 'info');
+            const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: getLiveContent(current),
+                voiceName: liveVoice,
+                temperature: liveTemperature,
+                systemInstruction: LIVE_SYSTEM_INSTRUCTION,
+              }),
+            });
 
-        if (!res.ok) {
-          const errorText = await res.text();
-          addLog(
-            'Audio API Error',
-            `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
-            'error'
-          );
-          if (res.status === 429) {
-            const msg =
-              'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.';
-            setError(msg);
-            toast.error(msg);
-            throw new Error('Rate limited (429)');
+            if (!liveRes.ok) {
+              const errorText = await liveRes.text();
+              addLog('Audio API Error', `[${ttsModel}] HTTP ${liveRes.status}: ${errorText.substring(0, 200)}`, 'error');
+              if (liveRes.status === 429) {
+                addLog('Audio API', `[${ttsModel}] Rate-limited — falling back to REST`, 'warning');
+              } else if (liveRes.status === 404) {
+                addLog('Audio API', `[${ttsModel}] Live endpoint unavailable (404) — falling back to REST`, 'warning');
+              } else {
+                addLog('Audio API', `[${ttsModel}] Failed (${liveRes.status}) — falling back to REST`, 'warning');
+              }
+              throw new Error('Live mode failed');
+            }
+
+            const liveData = await liveRes.json();
+            if (!liveData.audioData) {
+              throw new Error('Live API returned no audio data');
+            }
+            b64 = liveData.audioData;
+            addLog('Audio API', `[${ttsModel}] Success via Live API`, 'success');
+          } else {
+            // ── REST API path — generateContent flow ──
+            const ttsContent = getTTSContent(current);
+            const requestBody = JSON.stringify({
+              contents: [{ parts: [{ text: ttsContent }] }],
+              generationConfig: {
+                responseModalities: TTS_CONFIG.responseModalities,
+                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName } } },
+              },
+            });
+            const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+            const ttsAbortController = new AbortController();
+            const ttsTimeoutId = setTimeout(() => ttsAbortController.abort(), 120_000);
+            let fallbackResult;
+            try {
+              fallbackResult = await fetchTTSWithFallback(
+                url,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: requestBody,
+                  signal: ttsAbortController.signal,
+                },
+                { addLog, label: 'Audio API' }
+              );
+            } finally {
+              clearTimeout(ttsTimeoutId);
+            }
+            const res = fallbackResult.res;
+            ttsModel = fallbackResult.model;
+
+            if (!res.ok) {
+              const errorText = await res.text();
+              addLog('Audio API Error', `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`, 'error');
+              if (res.status === 429) {
+                addLog('Audio API', `[${ttsModel}] Rate-limited — falling back to Live`, 'warning');
+              } else {
+                addLog('Audio API', `[${ttsModel}] Failed (${res.status}) — falling back to Live`, 'warning');
+              }
+              throw new Error('REST mode failed');
+            }
+
+            const data = await res.json();
+            if (!data.candidates || data.candidates.length === 0) {
+              throw new Error('Recitation failed — no audio candidates returned');
+            }
+            b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+            addLog('Audio API', `[${ttsModel}] Success via REST API`, 'success');
           }
-          throw new Error(`API returned ${res.status}: ${res.statusText}`);
+        } catch (modeError) {
+          addLog('Audio API', `[${ttsModel}] ${modeError.message} — trying next mode`, 'warning');
+          modeIdx++; // try the other mode
+          // Reset ttsModel label for the next attempt
         }
-
-        const data = await res.json();
-
-        if (!data.candidates || data.candidates.length === 0) {
-          addLog(
-            'Audio API Error',
-            `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
-            'error'
-          );
-          throw new Error('Recitation failed - no audio candidates returned');
-        }
-
-        b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       }
 
       const apiTime = performance.now() - apiStart;

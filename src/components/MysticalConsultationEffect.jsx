@@ -157,14 +157,16 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
           const cy = h * 0.5;
           const centerR = Math.min(w, h) * 0.25;
 
+          const speedMul = ctrl.sparkleSpeed;
+
           if (lsSparkles.length < LS_MAX_SPARKLES && Math.random() < 0.3) {
             lsSparkles.push(makeLsSparkle(w, h));
           }
 
           for (let i = lsSparkles.length - 1; i >= 0; i--) {
             const s = lsSparkles[i];
-            s.x += s.vx * ctrl.sparkleSpeed;
-            s.y += s.vy * ctrl.sparkleSpeed;
+            s.x += s.vx * speedMul;
+            s.y += s.vy * speedMul;
             s.life -= s.decay;
 
             if (s.x < -10) s.x = w + 10;

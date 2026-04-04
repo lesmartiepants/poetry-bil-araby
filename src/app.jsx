@@ -52,7 +52,11 @@ import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
 import { useModalStore } from './stores/modalStore';
 import { fetchPoem as fetchPoemAction } from './stores/actions/fetchPoem';
-import { togglePlay as togglePlayAction, dismissTTSProgress, abortPlay } from './stores/actions/togglePlay';
+import {
+  togglePlay as togglePlayAction,
+  dismissTTSProgress,
+  abortPlay,
+} from './stores/actions/togglePlay';
 import { analyzePoem as analyzePoemAction, cancelAnalysis } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
@@ -78,7 +82,13 @@ import './styles/app.css';
 import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
-import { useTTSHighlight, startPlayer, pauseOffset, playbackStartTime, isSeeking } from './hooks/useTTSHighlight.js';
+import {
+  useTTSHighlight,
+  startPlayer,
+  pauseOffset,
+  playbackStartTime,
+  isSeeking,
+} from './hooks/useTTSHighlight.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 
@@ -303,7 +313,18 @@ export default function DiwanApp() {
     const prev = prevIsInterpretingRef.current;
     prevIsInterpretingRef.current = isInterpreting;
     if (!prev && isInterpreting) {
-      toast.loading('Translating poem…', { id: 'translation-progress', duration: Infinity, icon: <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}><Rabbit size={16} /></motion.div> });
+      toast.loading('Translating poem…', {
+        id: 'translation-progress',
+        duration: Infinity,
+        icon: (
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
+          >
+            <Rabbit size={16} />
+          </motion.div>
+        ),
+      });
     } else if (prev && !isInterpreting) {
       if (interpretation) {
         toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });
@@ -480,7 +501,11 @@ export default function DiwanApp() {
           if (Array.isArray(restoredPoems) && restoredPoems.length > 0) {
             setCarouselPoems(restoredPoems);
             setCarouselIndex(targetIdx);
-            addLog('Init', `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`, 'success');
+            addLog(
+              'Init',
+              `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`,
+              'success'
+            );
           }
         }
       } catch {}
@@ -542,8 +567,6 @@ export default function DiwanApp() {
         addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
         setAutoExplainPending(true);
         if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
-
-
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(
@@ -595,12 +618,7 @@ export default function DiwanApp() {
   // When the carousel is active (user has swiped), explain the carousel poem, not the main poem.
   useEffect(() => {
     const poemToExplain = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
-    if (
-      autoExplainPending &&
-      poemToExplain?.id &&
-      !isFetching &&
-      !isInterpreting
-    ) {
+    if (autoExplainPending && poemToExplain?.id && !isFetching && !isInterpreting) {
       setAutoExplainPending(false);
       if (explainedPoemIds.current.has(poemToExplain.id)) return;
       // Always AI-translate carousel poems (even if they have a DB scholarly translation),
@@ -808,7 +826,7 @@ export default function DiwanApp() {
   // One ref per word — stable array, recreated only when word count changes
   const wordRefs = useMemo(
     () => Array.from({ length: allWords.length }, () => ({ current: null })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [allWords.length]
   );
 
@@ -1479,7 +1497,9 @@ export default function DiwanApp() {
                         isTogglingPlay.current = false;
                         pauseOffset.value = 0;
                         playbackStartTime.value = 0;
-                        document.querySelectorAll('.tts-active, .tts-past').forEach(el => el.classList.remove('tts-active', 'tts-past'));
+                        document
+                          .querySelectorAll('.tts-active, .tts-past')
+                          .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
                         dismissTTSProgress();
                         cancelAnalysis();
                         setInterpretation(null);
@@ -1488,7 +1508,11 @@ export default function DiwanApp() {
                         const newPoem = usePoemStore.getState().carouselPoems[idx];
                         if (FEATURES.logging && newPoem) {
                           const fromPoem = carouselPoems[carouselIndex];
-                          addLog('Carousel', `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`, 'user');
+                          addLog(
+                            'Carousel',
+                            `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                            'user'
+                          );
                         }
                         if (newPoem?.id) {
                           navigate('/poem/' + newPoem.id + window.location.search, {
@@ -1530,8 +1554,6 @@ export default function DiwanApp() {
                     />
                   )}
                 </div>
-
-
               </div>
             </div>
           </main>
@@ -1550,7 +1572,7 @@ export default function DiwanApp() {
             {highlightStyle !== 'none' && (
               <div className="mb-2 flex justify-center">
                 <AnimatePresence mode="wait">
-                  {(isPlaying || isGeneratingAudio || audioPlayer !== null) ? (
+                  {isPlaying || isGeneratingAudio || audioPlayer !== null ? (
                     <PlayControlsStrip
                       key="play-controls"
                       player={audioPlayer}
@@ -1593,95 +1615,97 @@ export default function DiwanApp() {
                 WebkitUserSelect: 'none',
               }}
             >
-              {highlightStyle === 'none' && <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                {isGeneratingAudio ? (
-                  <>
-                    <button
-                      disabled
-                      aria-label="Preparing audio"
-                      className="min-w-[46px] min-h-[46px] p-[11px] bg-gold/8 border border-gold/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
-                    >
-                      <div className="flex items-center justify-center gap-0.5 h-[21px]">
-                        <div
-                          className="w-[2px] h-[6px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[10px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.15s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[14px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.3s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[10px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.45s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[6px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.6s',
-                          }}
-                        />
-                      </div>
-                    </button>
-                    <span
-                      className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                      style={{ animation: 'shimmer 2s ease-in-out infinite' }}
-                    >
-                      Loading
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={togglePlay}
-                      aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                      style={{ willChange: 'transform' }}
-                      className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
-                    >
-                      {audioError ? (
-                        <Volume2 className={theme.error} size={21} />
-                      ) : isPlaying ? (
-                        <>
-                          <PulseGlowBars volumePulseRef={volumePulseRef} isPlaying={true} />
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
-                            <Pause fill={GOLD.gold} size={14} />
-                          </div>
-                        </>
-                      ) : audioUrl ? (
-                        <>
-                          <PulseGlowBars volumePulseRef={null} isPlaying={false} />
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-200 pointer-events-none">
-                            <Play fill={GOLD.gold} size={14} />
-                          </div>
-                        </>
-                      ) : (
-                        <Volume2 className={GOLD.goldText} size={21} />
-                      )}
-                    </button>
-                    <span
-                      className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                    >
-                      {isPlaying ? 'Playing' : audioUrl ? 'Paused' : 'Listen'}
-                    </span>
-                  </>
-                )}
-              </div>}
+              {highlightStyle === 'none' && (
+                <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                  {isGeneratingAudio ? (
+                    <>
+                      <button
+                        disabled
+                        aria-label="Preparing audio"
+                        className="min-w-[46px] min-h-[46px] p-[11px] bg-gold/8 border border-gold/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
+                      >
+                        <div className="flex items-center justify-center gap-0.5 h-[21px]">
+                          <div
+                            className="w-[2px] h-[6px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[10px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.15s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[14px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.3s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[10px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.45s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[6px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.6s',
+                            }}
+                          />
+                        </div>
+                      </button>
+                      <span
+                        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+                      >
+                        Loading
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={togglePlay}
+                        aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
+                        style={{ willChange: 'transform' }}
+                        className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
+                      >
+                        {audioError ? (
+                          <Volume2 className={theme.error} size={21} />
+                        ) : isPlaying ? (
+                          <>
+                            <PulseGlowBars volumePulseRef={volumePulseRef} isPlaying={true} />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
+                              <Pause fill={GOLD.gold} size={14} />
+                            </div>
+                          </>
+                        ) : audioUrl ? (
+                          <>
+                            <PulseGlowBars volumePulseRef={null} isPlaying={false} />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-200 pointer-events-none">
+                              <Play fill={GOLD.gold} size={14} />
+                            </div>
+                          </>
+                        ) : (
+                          <Volume2 className={GOLD.goldText} size={21} />
+                        )}
+                      </button>
+                      <span
+                        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      >
+                        {isPlaying ? 'Playing' : audioUrl ? 'Paused' : 'Listen'}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
 
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
@@ -1748,16 +1772,24 @@ export default function DiwanApp() {
 
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
-                  onClick={() => isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()}
+                  onClick={() =>
+                    isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
+                  }
                   aria-label={isPoemSaved(displayedPoem) ? 'Unsave poem' : 'Save poem'}
                   className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                 >
                   <Heart
                     size={21}
-                    style={isPoemSaved(displayedPoem) ? { fill: '#ef4444', stroke: '#ef4444' } : { fill: 'none', stroke: GOLD.gold }}
+                    style={
+                      isPoemSaved(displayedPoem)
+                        ? { fill: '#ef4444', stroke: '#ef4444' }
+                        : { fill: 'none', stroke: GOLD.gold }
+                    }
                   />
                 </button>
-                <span className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+                <span
+                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                >
                   {isPoemSaved(displayedPoem) ? 'Saved' : 'Save'}
                 </span>
               </div>

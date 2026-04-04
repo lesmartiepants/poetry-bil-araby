@@ -15,7 +15,8 @@ const MOCK_POEM = {
   title: 'On Ambition',
   titleArabic: 'في الهمة',
   arabic: 'على قدر أهل العزم تأتي العزائم\nوتأتي على قدر الكرام المكارم',
-  english: 'Resolve comes in proportion to the people of resolve\nAnd noble deeds come in proportion to the noble',
+  english:
+    'Resolve comes in proportion to the people of resolve\nAnd noble deeds come in proportion to the noble',
   tags: ['حكمة'],
   isFromDatabase: true,
 };
@@ -65,16 +66,20 @@ async function setupMocks(page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        candidates: [{
-          content: {
-            parts: [{
-              inlineData: {
-                mimeType: 'audio/L16;rate=24000',
-                data: silentB64,
-              },
-            }],
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  inlineData: {
+                    mimeType: 'audio/L16;rate=24000',
+                    data: silentB64,
+                  },
+                },
+              ],
+            },
           },
-        }],
+        ],
       }),
     });
   });
@@ -202,7 +207,10 @@ test.describe('TTS Word-Highlight Reader', () => {
     await page.locator('.tts-active').first().waitFor({ state: 'visible', timeout: 8000 });
 
     // Record which word index is active
-    const activeWordIndex = await page.locator('.tts-active').first().getAttribute('data-word-index');
+    const activeWordIndex = await page
+      .locator('.tts-active')
+      .first()
+      .getAttribute('data-word-index');
 
     // Pause
     const pauseBtn = page.locator('button[aria-label="Pause recitation"]');
@@ -214,7 +222,10 @@ test.describe('TTS Word-Highlight Reader', () => {
 
     // The resumed active word should be at or near the same index (not restart from 0)
     await page.locator('.tts-active').first().waitFor({ state: 'visible', timeout: 5000 });
-    const resumedWordIndex = await page.locator('.tts-active').first().getAttribute('data-word-index');
+    const resumedWordIndex = await page
+      .locator('.tts-active')
+      .first()
+      .getAttribute('data-word-index');
 
     // On resume, the word index should be >= what it was when paused (not reset to 0)
     if (activeWordIndex !== null && resumedWordIndex !== null) {
@@ -234,7 +245,9 @@ test.describe('TTS Word-Highlight Reader', () => {
     await page.locator('.tts-active').first().waitFor({ state: 'visible', timeout: 8000 });
 
     // At least one English line should have the tts-line-active class
-    await expect(page.locator('.tts-en-line.tts-line-active').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('.tts-en-line.tts-line-active').first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   // Flow 7: Play controls strip visible with prev/next/play-pause when highlight active

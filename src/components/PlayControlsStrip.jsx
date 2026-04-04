@@ -1,6 +1,12 @@
 import { motion } from 'framer-motion';
 import { SkipBack, Play, Pause, SkipForward, Loader2 } from 'lucide-react';
-import { startPlayer, pauseOffset, playbackStartTime, isSeeking, applyHighlightsOnce } from '../hooks/useTTSHighlight';
+import {
+  startPlayer,
+  pauseOffset,
+  playbackStartTime,
+  isSeeking,
+  applyHighlightsOnce,
+} from '../hooks/useTTSHighlight';
 import { useAudioStore } from '../stores/audioStore';
 import { useUIStore } from '../stores/uiStore';
 
@@ -32,14 +38,18 @@ const PlayControlsStrip = ({
     // Read live store state BEFORE stop() — the isPlaying prop is stale
     // (onstop fires and updates the store, but this closure captured the old prop)
     const wasPlaying = useAudioStore.getState().isPlaying;
-    useUIStore.getState().addLog('Playback', `⏩ Seek to ${offset.toFixed(2)}s | wasPlaying: ${wasPlaying}`, 'user');
+    useUIStore
+      .getState()
+      .addLog('Playback', `⏩ Seek to ${offset.toFixed(2)}s | wasPlaying: ${wasPlaying}`, 'user');
     isSeeking.value = true;
     if (wasPlaying) {
       // Set state BEFORE stop() — isPlaying=true when onstop fires means
       // the guard check will see isSeeking=true and return without clobbering.
       useAudioStore.getState().setPlaying(true);
     }
-    try { player.stop(); } catch {}
+    try {
+      player.stop();
+    } catch {}
     if (wasPlaying) {
       startPlayer(player, offset);
     } else {

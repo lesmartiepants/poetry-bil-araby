@@ -16,13 +16,18 @@ import {
 // Mock Vaul so its Portal renders inline in jsdom (no real DOM portals)
 vi.mock('vaul', () => ({
   Drawer: {
-    Root: ({ children, open, ...props }) => open ? <div data-testid="drawer-root">{children}</div> : null,
+    Root: ({ children, open, ...props }) =>
+      open ? <div data-testid="drawer-root">{children}</div> : null,
     Portal: ({ children }) => <div>{children}</div>,
     Overlay: (props) => <div data-testid="drawer-overlay" {...props} />,
     Content: ({ children, ...props }) => <div data-testid="drawer-content">{children}</div>,
     Handle: (props) => <div data-testid="drawer-handle" {...props} />,
     Close: ({ children }) => children,
-    Title: ({ children, className, ...props }) => <h2 className={className} {...props}>{children}</h2>,
+    Title: ({ children, className, ...props }) => (
+      <h2 className={className} {...props}>
+        {children}
+      </h2>
+    ),
   },
 }));
 
@@ -338,9 +343,12 @@ describe('DiwanApp', () => {
         await userEvent.click(screen.getByLabelText('Discover new poem'));
 
         // Auto-explain pre-fetches insight in background; open overlay to view it
-        await waitFor(() => expect(screen.getByLabelText('Explain poem meaning')).toBeInTheDocument(), {
-          timeout: 5000,
-        });
+        await waitFor(
+          () => expect(screen.getByLabelText('Explain poem meaning')).toBeInTheDocument(),
+          {
+            timeout: 5000,
+          }
+        );
         await userEvent.click(screen.getByLabelText('Explain poem meaning'));
         await waitFor(
           () => {
@@ -1114,6 +1122,4 @@ describe('DiwanApp', () => {
       expect(screen.queryByLabelText(/Account menu/)).toBeNull();
     });
   });
-
 });
-

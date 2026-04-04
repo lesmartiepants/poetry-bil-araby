@@ -53,9 +53,7 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ ac
       return () => window.removeEventListener('resize', resize);
     }
 
-    const particles = Array.from({ length: 50 }, () =>
-      makeParticle(canvas.width, canvas.height)
-    );
+    const particles = Array.from({ length: 50 }, () => makeParticle(canvas.width, canvas.height));
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);

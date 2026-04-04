@@ -22,11 +22,11 @@ const TextSettingsPill = () => {
   const highlightStyle = useUIStore((s) => s.highlightStyle);
 
   const HIGHLIGHT_STYLES = [
-    { value: 'none',        label: 'Off' },
-    { value: 'glow',        label: 'Glow' },
-    { value: 'underline',   label: 'Line' },
-    { value: 'pill',        label: 'Pill' },
-    { value: 'focus-blur',  label: 'Blur' },
+    { value: 'none', label: 'Off' },
+    { value: 'glow', label: 'Glow' },
+    { value: 'underline', label: 'Line' },
+    { value: 'pill', label: 'Pill' },
+    { value: 'focus-blur', label: 'Blur' },
   ];
 
   return (

@@ -9,9 +9,15 @@
 
 import { FEATURES } from '../constants/index.js';
 import { INSIGHTS_SYSTEM_PROMPT, getTTSContent } from '../prompts';
-import { API_MODELS, TTS_CONFIG, geminiTextFetch, fetchTTSWithFallback, canPrefetchTts } from './gemini.js';
+import {
+  API_MODELS,
+  TTS_CONFIG,
+  geminiTextFetch,
+  fetchTTSWithFallback,
+  canPrefetchTts,
+} from './gemini.js';
 import { CACHE_CONFIG, cacheOperations } from './cache.js';
-import { pcm16ToWav } from '../utils/audio.js';
+import { pcm16ToWav, pcm16ChunksToWav, wavDurationSec } from '../utils/audio.js';
 
 import { usePoemStore } from '../stores/poemStore';
 
@@ -125,6 +131,8 @@ export const prefetchManager = {
       }
       const { res, model: ttsModel } = fetchResult;
 
+      let blob = null;
+
       if (!res.ok) {
         const errorText = await res.text();
         if (res.status === 429 || res.status === 403) {
@@ -160,15 +168,11 @@ export const prefetchManager = {
 
       const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (b64) {
-        const blob = pcm16ToWav(b64);
+        blob = pcm16ToWav(b64);
         if (blob) {
-          // Calculate metrics
-          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
-          const samples = pcmBytes / 2;
-          const audioDuration = samples / 24000;
+          const audioDuration = wavDurationSec(blob.size);
           const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
 
-          // Cache the blob
           await cacheOperations.set(CACHE_CONFIG.stores.audio, poemId, {
             blob,
             metadata: {
@@ -178,7 +182,7 @@ export const prefetchManager = {
               duration: audioDuration,
               model: ttsModel,
             },
-          }, addLog);
+          });
 
           if (addLog)
             addLog(
@@ -275,10 +279,15 @@ export const prefetchManager = {
         const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
 
         // Cache the insights
-        await cacheOperations.set(CACHE_CONFIG.stores.insights, poemId, {
-          interpretation,
-          metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens },
-        }, addLog);
+        await cacheOperations.set(
+          CACHE_CONFIG.stores.insights,
+          poemId,
+          {
+            interpretation,
+            metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens },
+          },
+          addLog
+        );
 
         if (addLog)
           addLog(

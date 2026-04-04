@@ -9,8 +9,8 @@ vi.mock('framer-motion', () => ({
   motion: new Proxy(
     {},
     {
-      get: (_, tag) =>
-        // eslint-disable-next-line react/display-name
+      get:
+        (_, tag) =>
         ({ children, ...rest }) => {
           const { initial, animate, exit, transition, ...domProps } = rest;
           return createElement(tag, domProps, children);

@@ -21,7 +21,8 @@ const MOCK_POEM_DARWISH_1 = {
   title: 'On This Earth',
   titleArabic: 'على هذه الأرض',
   arabic: 'على هذه الأرضِ ما يستحقُّ الحياةْ\nتردُّدُ أبريلَ، رائحةُ الخبزِ في الفجرِ',
-  english: 'On this earth is what makes life worth living\nApril\'s hesitation, the scent of bread at dawn',
+  english:
+    "On this earth is what makes life worth living\nApril's hesitation, the scent of bread at dawn",
   tags: ['وطنية'],
   isFromDatabase: true,
 };
@@ -74,10 +75,7 @@ const MOCK_POEM_DARWISH_5 = {
   isFromDatabase: true,
 };
 
-const MOCK_POETS = [
-  { name: 'محمود درويش' },
-  { name: 'المتنبي' },
-];
+const MOCK_POETS = [{ name: 'محمود درويش' }, { name: 'المتنبي' }];
 
 // Pool of carousel poems to serve in sequence after the initial poem
 const CAROUSEL_POOL = [
@@ -98,7 +96,8 @@ async function setupCarouselMocks(page) {
   let callCount = 0;
 
   await page.route('**/api/poems/random*', async (route) => {
-    const poem = callCount === 0 ? MOCK_POEM_DARWISH_1 : CAROUSEL_POOL[(callCount - 1) % CAROUSEL_POOL.length];
+    const poem =
+      callCount === 0 ? MOCK_POEM_DARWISH_1 : CAROUSEL_POOL[(callCount - 1) % CAROUSEL_POOL.length];
     callCount++;
     await route.fulfill({
       status: 200,
@@ -204,7 +203,10 @@ test.describe('Poem Carousel', () => {
     // It may render via poem.english (carousel path) or insightParts (main view path).
     // Either way: English lines visible OR auto-explain API fires.
     const enLines = page.locator('p[dir="ltr"].font-brand-en.opacity-60');
-    const enVisible = await enLines.first().isVisible({ timeout: 5000 }).catch(() => false);
+    const enVisible = await enLines
+      .first()
+      .isVisible({ timeout: 5000 })
+      .catch(() => false);
 
     if (!enVisible) {
       // English not rendered — that's OK if the app is functional and Arabic is showing
@@ -345,7 +347,9 @@ test.describe('Poem Carousel', () => {
   test('carousel fetch uses Arabic poet name', async ({ page }) => {
     let fetchedPoetParam = null;
     await page.route('**/api/poems/by-poet/**', async (route) => {
-      fetchedPoetParam = decodeURIComponent(route.request().url().split('/by-poet/')[1]?.split('?')[0] || '');
+      fetchedPoetParam = decodeURIComponent(
+        route.request().url().split('/by-poet/')[1]?.split('?')[0] || ''
+      );
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -368,7 +372,7 @@ test.describe('Poem Carousel', () => {
 
     // Navigate to slide 2 (triggers explain)
     const dots = await page.locator('button[aria-label^="Go to poem"]');
-    if (await dots.count() >= 2) {
+    if ((await dots.count()) >= 2) {
       await dots.nth(1).click();
       await page.waitForTimeout(1000);
     }
@@ -391,7 +395,7 @@ test.describe('Poem Carousel', () => {
       if (req.url().includes('/api/ai/')) explainFired = true;
     });
 
-    if (await newDots.count() >= 2) {
+    if ((await newDots.count()) >= 2) {
       await newDots.nth(1).click();
       await page.waitForTimeout(1500);
     }
@@ -410,7 +414,7 @@ test.describe('Poem Carousel', () => {
     // Swipe through remaining slides — verify Arabic is present on each
     for (let i = 1; i < Math.min(dotCount, 5); i++) {
       const currentDots = page.locator('button[aria-label^="Go to poem"]');
-      await currentDots.nth(Math.min(i, await currentDots.count() - 1)).click();
+      await currentDots.nth(Math.min(i, (await currentDots.count()) - 1)).click();
       await page.waitForTimeout(500);
 
       // Verify Arabic is present (not a blank slide)
@@ -424,7 +428,9 @@ test.describe('Poem Carousel', () => {
     const dots = await discoverAndWaitForCarousel(page);
     // Navigate to slide 2 (MOCK_POEM_DARWISH_2, id 42002)
     await dots.nth(1).click();
-    await expect(page.locator('p[dir="rtl"]').filter({ hasText: 'سجِّل' }).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('p[dir="rtl"]').filter({ hasText: 'سجِّل' }).first()).toBeVisible({
+      timeout: 5000,
+    });
 
     // Find and click the Copy button
     const copyBtn = page.locator('button[aria-label*="Copy"], button:has-text("Copy")').first();
@@ -466,7 +472,9 @@ test.describe('Poem Carousel', () => {
     await page.waitForTimeout(500);
 
     // Check if save/heart button exists
-    const saveBtn = page.locator('button[aria-label*="Save"], button[aria-label*="heart"], svg.lucide-heart').first();
+    const saveBtn = page
+      .locator('button[aria-label*="Save"], button[aria-label*="heart"], svg.lucide-heart')
+      .first();
     // Just verify the button is visible and clickable without crash
     if (await saveBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await saveBtn.click();
@@ -484,7 +492,11 @@ test.describe('Poem Carousel', () => {
 
     let ttsRequestUrl = null;
     page.on('request', (req) => {
-      if (req.url().includes('/api/ai/') && req.url().includes('generateContent') && !req.url().includes('stream')) {
+      if (
+        req.url().includes('/api/ai/') &&
+        req.url().includes('generateContent') &&
+        !req.url().includes('stream')
+      ) {
         ttsRequestUrl = req.url();
         // Check the request body for the correct poem's Arabic text
         const body = req.postData();

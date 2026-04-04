@@ -1,12 +1,4 @@
-import {
-  Check,
-  Copy,
-  LibraryBig,
-  LogOut,
-  Share2,
-  ThumbsDown,
-  UserRound,
-} from 'lucide-react';
+import { Check, Copy, LibraryBig, LogOut, Share2, ThumbsDown, UserRound } from 'lucide-react';
 import { Popover } from 'radix-ui';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';

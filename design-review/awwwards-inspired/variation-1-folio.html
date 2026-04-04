@@ -73,10 +73,19 @@
       transition: none;
     }
 
+    /* When content overflows the viewport, switch from centered to top-aligned scrollable */
     .phase.active {
       opacity: 1;
       pointer-events: auto;
       z-index: 10;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Picker phases need top-alignment so CTA is always reachable by scrolling */
+    .phase.scrollable {
+      justify-content: flex-start;
+      padding: 3rem 0 2rem;
     }
 
     /* ============================================
@@ -310,6 +319,7 @@
       width: 100%;
       max-width: 680px;
       padding: 2rem;
+      padding-bottom: 5rem;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -883,7 +893,7 @@
   <!-- ════════════════════════════════════════════
        PHASE 3: MOOD PICKER
        ════════════════════════════════════════════ -->
-  <div class="phase" id="phase3" data-phase="3">
+  <div class="phase scrollable" id="phase3" data-phase="3">
     <div class="picker">
       <div class="picker-label">STEP 1 OF 3 — MOOD</div>
       <h2 class="picker-title">كيف تشعر الآن؟</h2>
@@ -896,7 +906,7 @@
   <!-- ════════════════════════════════════════════
        PHASE 4: ERA PICKER
        ════════════════════════════════════════════ -->
-  <div class="phase" id="phase4" data-phase="4">
+  <div class="phase scrollable" id="phase4" data-phase="4">
     <div class="picker">
       <div class="picker-label">STEP 2 OF 3 — ERA</div>
       <h2 class="picker-title">أي عصر يستهويك؟</h2>
@@ -909,7 +919,7 @@
   <!-- ════════════════════════════════════════════
        PHASE 5: TOPICS PICKER
        ════════════════════════════════════════════ -->
-  <div class="phase" id="phase5" data-phase="5">
+  <div class="phase scrollable" id="phase5" data-phase="5">
     <div class="picker">
       <div class="picker-label">STEP 3 OF 3 — TOPICS</div>
       <h2 class="picker-title">ما الذي يستهويك؟</h2>
@@ -920,14 +930,14 @@
         </div>
         <div class="topics-grid" id="topicsGrid"></div>
       </div>
-      <button class="picker-cta" id="topicsCta">أرني شعرًا</button>
+      <button class="picker-cta" id="topicsCta">تخطى</button>
     </div>
   </div>
 
   <!-- ════════════════════════════════════════════
        PHASE 6: RESULT
        ════════════════════════════════════════════ -->
-  <div class="phase" id="phase6" data-phase="6">
+  <div class="phase scrollable" id="phase6" data-phase="6">
     <div class="result-card" id="resultCard">
       <div style="text-align:center">
         <div class="result-match" id="resultMatch">
@@ -1135,9 +1145,9 @@
 
     function animateMoodPicker() {
       gsap.from('.mood-cell', {
-        opacity: 0, y: 30, scale: 0.9,
-        duration: 0.5, ease: 'back.out(1.5)',
-        stagger: { amount: 0.4, from: 'center' },
+        opacity: 0, y: 20, scale: 0.95,
+        duration: 0.4, ease: 'expo.out',
+        stagger: { amount: 0.3, grid: [3, 3], from: 'start' },
       });
     }
 
@@ -1496,7 +1506,7 @@
       });
       document.getElementById('moodCta').textContent = 'تخطى';
       document.getElementById('eraCta').textContent = 'تخطى';
-      document.getElementById('topicsCta').textContent = 'أرني شعرًا';
+      document.getElementById('topicsCta').textContent = 'تخطى';
       updateTopicLines();
       goToPhase(0);
       setTimeout(initSplash, 600);

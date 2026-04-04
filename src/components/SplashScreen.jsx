@@ -225,12 +225,6 @@ const SplashScreen = () => {
 
   const handleFinish = (e) => {
     e.stopPropagation();
-    try {
-      if (localStorage.getItem('hasSeenOnboarding')) {
-        handleDismiss();
-        return;
-      }
-    } catch {}
     setPhase(3);
   };
 
@@ -795,6 +789,41 @@ const SplashScreen = () => {
           ))}
         </div>
       )}
+
+      {/* Persistent skip-to-app button — visible on all phases */}
+      <button
+        onClick={handleDismiss}
+        data-testid="skip-to-app"
+        style={{
+          position: 'fixed',
+          bottom: '1.25rem',
+          right: '1.5rem',
+          zIndex: 80,
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '8px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          color: 'rgba(255,255,255,0.35)',
+          fontFamily: "'Tajawal', sans-serif",
+          fontSize: '0.75rem',
+          letterSpacing: '0.08em',
+          direction: 'rtl',
+          transition: 'color 0.2s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = 'rgba(255,255,255,0.35)';
+        }}
+        aria-label="Skip to app"
+      >
+        <span>تخطى</span>
+        <ArrowRight size={13} />
+      </button>
     </motion.div>
   );
 };

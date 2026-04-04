@@ -43,10 +43,7 @@ const MOCK_POEM = {
   isFromDatabase: true,
 };
 
-const MOCK_POETS = [
-  { name: 'المتنبي' },
-  { name: 'محمود درويش' },
-];
+const MOCK_POETS = [{ name: 'المتنبي' }, { name: 'محمود درويش' }];
 
 // ─── Route Mocks ────────────────────────────────────────────────────
 
@@ -85,8 +82,18 @@ async function setupRouteMocks(page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify([
-        'حب', 'حكمة', 'وطنية', 'رثاء', 'طبيعة', 'زهد',
-        'فخر', 'غزل', 'هجاء', 'مدح', 'حنين', 'تصوف',
+        'حب',
+        'حكمة',
+        'وطنية',
+        'رثاء',
+        'طبيعة',
+        'زهد',
+        'فخر',
+        'غزل',
+        'هجاء',
+        'مدح',
+        'حنين',
+        'تصوف',
       ]),
     });
   });
@@ -298,9 +305,7 @@ test.describe('Onboarding Flow', () => {
     await expect(page.locator('[data-testid="splash-screen"]')).not.toBeVisible({ timeout: 5000 });
 
     // Verify localStorage flag
-    const hasSeenOnboarding = await page.evaluate(() =>
-      localStorage.getItem('hasSeenOnboarding')
-    );
+    const hasSeenOnboarding = await page.evaluate(() => localStorage.getItem('hasSeenOnboarding'));
     expect(hasSeenOnboarding).toBe('true');
   });
 
@@ -322,9 +327,7 @@ test.describe('Onboarding Flow', () => {
     await expect(page.locator('[data-testid="splash-screen"]')).not.toBeVisible({ timeout: 5000 });
 
     // Verify preferences saved as JSON
-    const prefsRaw = await page.evaluate(() =>
-      localStorage.getItem('onboardingPrefs')
-    );
+    const prefsRaw = await page.evaluate(() => localStorage.getItem('onboardingPrefs'));
     expect(prefsRaw).toBeTruthy();
 
     const prefs = JSON.parse(prefsRaw);
@@ -346,7 +349,51 @@ test.describe('Onboarding Flow', () => {
     expect(new Date(prefs.completedAt).toISOString()).toBe(prefs.completedAt);
   });
 
-  // ── 10. Returning visitor skips onboarding entirely ────────────────
+  // ── 10. Skip-to-app helper button is visible and works ────────────
+
+  test('skip-to-app button is visible on splash screen', async ({ page }) => {
+    const splash = page.locator('[data-testid="splash-screen"]');
+    await expect(splash).toBeVisible({ timeout: 5000 });
+
+    const skipBtn = page.locator('[data-testid="skip-to-app"]');
+    await expect(skipBtn).toBeVisible({ timeout: 3000 });
+  });
+
+  test('skip-to-app button dismisses entire onboarding flow', async ({ page }) => {
+    const splash = page.locator('[data-testid="splash-screen"]');
+    await expect(splash).toBeVisible({ timeout: 5000 });
+
+    const skipBtn = page.locator('[data-testid="skip-to-app"]');
+    await expect(skipBtn).toBeVisible({ timeout: 3000 });
+    await skipBtn.click();
+
+    // Splash should be gone after clicking skip
+    await expect(splash).not.toBeVisible({ timeout: 5000 });
+  });
+
+  test('skip-to-app button is visible during picker phases', async ({ page }) => {
+    await advanceThroughKineticPhases(page);
+
+    // Mood picker should be visible
+    const moodPicker = page.locator('[data-testid="mood-picker"]');
+    await expect(moodPicker).toBeVisible({ timeout: 5000 });
+
+    // Skip-to-app button should still be present (global helper)
+    const skipBtn = page.locator('[data-testid="skip-to-app"]');
+    await expect(skipBtn).toBeVisible({ timeout: 3000 });
+  });
+
+  // ── 11. Continue always shows pickers (no early dismiss) ──────────
+
+  test('Continue on kinetic phase always advances to mood picker', async ({ page }) => {
+    await advanceThroughKineticPhases(page);
+
+    // Mood picker must appear — no skipping even if hasSeenOnboarding were set
+    const moodPicker = page.locator('[data-testid="mood-picker"]');
+    await expect(moodPicker).toBeVisible({ timeout: 5000 });
+  });
+
+  // ── 12. Returning visitor skips onboarding entirely ────────────────
 
   test('returning visitor skips onboarding', async ({ page }) => {
     // Pre-set hasSeenOnboarding BEFORE navigating

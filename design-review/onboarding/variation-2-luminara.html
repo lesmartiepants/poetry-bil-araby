@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>شِعر — Variation 2: Luminara</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;700&family=Tajawal:wght@200;300;400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── TOKENS ──────────────────────────────────────────────── */
+    :root {
+      --void:        #06060a;
+      --deep:        #0d0c14;
+      --surface:     #131220;
+      --gold:        #c9a96e;
+      --gold-soft:   rgba(201,169,110,.5);
+      --gold-trace:  rgba(201,169,110,.12);
+      --gold-glow:   rgba(201,169,110,.18);
+      --lapis:       #2a4f80;
+      --lapis-soft:  rgba(42,79,128,.4);
+      --text-bright: #f0e8d5;
+      --text-mid:    rgba(240,232,213,.6);
+      --text-dim:    rgba(240,232,213,.25);
+      --ease-slow:   cubic-bezier(0.25, 0.1, 0.25, 1);
+      --ease-luxe:   cubic-bezier(0.76, 0, 0.24, 1);
+    }
+
+    /* ── RESET ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100dvh;
+      overflow: hidden;
+      background: var(--void);
+      color: var(--text-bright);
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    /* ── STARFIELD ─────────────────────────────────────────────── */
+    #starfield {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── NEBULA GLOW ───────────────────────────────────────────── */
+    .nebula {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+      filter: blur(80px);
+      will-change: transform, opacity;
+    }
+    .nebula-1 {
+      width: 60vw; height: 60vw;
+      top: -20%; left: 20%;
+      background: radial-gradient(circle, rgba(42,79,128,.18) 0%, transparent 70%);
+      animation: nebulaFloat 25s ease-in-out infinite alternate;
+    }
+    .nebula-2 {
+      width: 50vw; height: 50vw;
+      bottom: -15%; right: -10%;
+      background: radial-gradient(circle, rgba(201,169,110,.10) 0%, transparent 70%);
+      animation: nebulaFloat 30s ease-in-out 10s infinite alternate-reverse;
+    }
+    @keyframes nebulaFloat {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(3%,5%) scale(1.08); }
+    }
+
+    /* ── PHASES ────────────────────────────────────────────────── */
+    .phase {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .phase.enter {
+      animation: phaseEnter 1.4s var(--ease-luxe) forwards;
+      pointer-events: all;
+    }
+    .phase.exit {
+      animation: phaseExit 0.8s var(--ease-luxe) forwards;
+      pointer-events: none;
+    }
+    @keyframes phaseEnter {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes phaseExit {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(-24px); }
+    }
+
+    /* ── SKIP ──────────────────────────────────────────────────── */
+    #skipBtn {
+      position: fixed;
+      bottom: 2.5rem;
+      left: 2rem;
+      z-index: 999;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      cursor: pointer;
+      padding: 0.5rem;
+      transition: color 0.5s;
+      opacity: 0;
+      animation: fadeUp 1s 3s forwards;
+    }
+    #skipBtn:hover { color: var(--gold-soft); }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── ISLAMIC STAR INTRO ────────────────────────────────────── */
+    #starIntro {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      pointer-events: none;
+    }
+    .star-svg {
+      opacity: 0;
+      animation: starReveal 3s var(--ease-luxe) 0.5s forwards;
+    }
+    @keyframes starReveal {
+      0%   { opacity: 0; transform: scale(0.3) rotate(-20deg); }
+      40%  { opacity: 0.8; transform: scale(1.05) rotate(0deg); }
+      100% { opacity: 0; transform: scale(2) rotate(15deg); }
+    }
+
+    /* ── PHASE 0: BRAND ────────────────────────────────────────── */
+    #p0 { padding: 2rem; }
+
+    .brand-container { text-align: center; }
+
+    .brand-word {
+      font-family: 'Amiri', serif;
+      font-size: clamp(7rem, 22vw, 18rem);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text-bright);
+      display: block;
+      opacity: 0;
+      animation: brandReveal 1.8s var(--ease-luxe) 2.8s forwards;
+    }
+    @keyframes brandReveal {
+      from { opacity: 0; letter-spacing: 0.3em; filter: blur(8px); }
+      to   { opacity: 1; letter-spacing: normal; filter: blur(0); }
+    }
+
+    .brand-line {
+      display: block;
+      width: 0;
+      height: 1px;
+      background: var(--gold-soft);
+      margin: 1.5rem auto;
+      animation: lineExpand 1.2s var(--ease-luxe) 4s forwards;
+    }
+    @keyframes lineExpand {
+      to { width: min(320px, 60vw); }
+    }
+
+    .brand-sub {
+      font-size: 0.7rem;
+      letter-spacing: 0.4em;
+      color: var(--gold);
+      text-transform: uppercase;
+      opacity: 0;
+      animation: fadeUp 1s var(--ease-luxe) 4.5s forwards;
+    }
+
+    .brand-cta {
+      margin-top: 4rem;
+      opacity: 0;
+      animation: fadeUp 1s var(--ease-luxe) 5s forwards;
+    }
+
+    /* ── BUTTONS ───────────────────────────────────────────────── */
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--gold-soft);
+      color: var(--text-bright);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 300;
+      letter-spacing: 0.2em;
+      padding: 0.9rem 3rem;
+      cursor: pointer;
+      transition: all 0.6s var(--ease-luxe);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-ghost::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.5s var(--ease-luxe);
+    }
+    .btn-ghost:hover { color: var(--void); border-color: var(--gold); }
+    .btn-ghost:hover::after { transform: scaleX(1); }
+    .btn-ghost span { position: relative; z-index: 1; }
+
+    .btn-solid {
+      background: var(--gold);
+      border: none;
+      color: var(--void);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      padding: 0.9rem 3rem;
+      cursor: pointer;
+      transition: background 0.4s, transform 0.3s;
+    }
+    .btn-solid:hover { background: var(--text-bright); transform: scale(0.98); }
+
+    /* ── PICKER SHARED ─────────────────────────────────────────── */
+    .picker-header { text-align: right; width: min(640px, 92vw); margin-bottom: 2rem; }
+    .picker-step {
+      font-size: 0.6rem;
+      letter-spacing: 0.35em;
+      color: var(--gold);
+      text-transform: uppercase;
+      font-weight: 300;
+      margin-bottom: 0.6rem;
+    }
+    .picker-q {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.8rem, 5vw, 3.2rem);
+      font-weight: 400;
+      line-height: 1.2;
+      color: var(--text-bright);
+      margin-bottom: 0.3rem;
+    }
+    .picker-hint {
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: var(--text-dim);
+      letter-spacing: 0.1em;
+    }
+
+    .picker-divider {
+      width: min(640px, 92vw);
+      height: 1px;
+      background: linear-gradient(90deg, var(--gold-trace), var(--gold-soft) 40%, var(--gold-soft) 60%, var(--gold-trace));
+      margin-bottom: 2rem;
+    }
+
+    .picker-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: min(640px, 92vw);
+      margin-top: 2.5rem;
+    }
+    .btn-back {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      padding: 0.5rem;
+      transition: color 0.4s;
+    }
+    .btn-back:hover { color: var(--gold); }
+
+    /* ── PHASE 1: MOOD ─────────────────────────────────────────── */
+    #p1 { padding: 2rem; }
+
+    .mood-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      width: min(640px, 92vw);
+    }
+    .mood-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--gold-trace);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: border-color 0.4s;
+    }
+    .mood-item.visible { opacity: 1; transform: translateY(0); transition: opacity 0.6s, transform 0.6s var(--ease-luxe), border-color 0.4s; }
+    .mood-item::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--gold-trace);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.5s var(--ease-luxe);
+    }
+    .mood-item:hover::before { transform: scaleX(1); transform-origin: left; }
+    .mood-item.selected { border-color: var(--gold-soft); }
+    .mood-item.selected .mood-check { opacity: 1; }
+    .mood-item.selected .mood-ar { color: var(--gold); }
+
+    .mood-ar {
+      font-family: 'Amiri', serif;
+      font-size: 1.5rem;
+      color: var(--text-bright);
+      position: relative;
+      z-index: 1;
+      transition: color 0.3s;
+    }
+    .mood-en-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+      font-family: 'Tajawal', sans-serif;
+    }
+    .mood-check {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      opacity: 0;
+      transition: opacity 0.3s;
+      position: relative;
+      z-index: 1;
+      margin-left: 1rem;
+    }
+
+    /* ── PHASE 2: ERA ──────────────────────────────────────────── */
+    #p2 { padding: 2rem; }
+
+    .era-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      width: min(640px, 92vw);
+    }
+
+    .era-item {
+      display: grid;
+      grid-template-columns: 1fr 3fr;
+      gap: 1.5rem;
+      padding: 1.2rem 0;
+      border-bottom: 1px solid var(--gold-trace);
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.5s, transform 0.5s var(--ease-luxe);
+    }
+    .era-item.visible { opacity: 1; transform: translateY(0); }
+    .era-item.selected .era-name-ar { color: var(--gold); }
+    .era-item.selected .era-dot { background: var(--gold); }
+
+    .era-period {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      color: var(--gold-soft);
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 300;
+      padding-top: 0.4rem;
+      text-align: left;
+    }
+    .era-body { position: relative; padding-right: 1rem; }
+    .era-dot {
+      position: absolute;
+      right: -0.4rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      border: 1px solid var(--gold-soft);
+      transition: background 0.4s, border-color 0.4s;
+    }
+    .era-name-ar {
+      font-family: 'Amiri', serif;
+      font-size: 1.5rem;
+      color: var(--text-bright);
+      display: block;
+      transition: color 0.3s;
+    }
+    .era-poets {
+      font-size: 0.62rem;
+      color: var(--text-dim);
+      letter-spacing: 0.08em;
+    }
+
+    /* ── PHASE 3: TOPICS ───────────────────────────────────────── */
+    #p3 { padding: 2rem; }
+
+    .topics-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      width: min(640px, 92vw);
+      align-content: flex-start;
+    }
+
+    .topic-tag {
+      padding: 0.45rem 1rem;
+      border: 1px solid var(--gold-trace);
+      color: var(--text-dim);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 300;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      border-radius: 0;
+      opacity: 0;
+      transition: color 0.4s, border-color 0.4s, background 0.4s;
+    }
+    .topic-tag.visible { opacity: 1; }
+    .topic-tag:hover { border-color: var(--gold-soft); color: var(--text-bright); }
+    .topic-tag.selected {
+      background: var(--gold-glow);
+      border-color: var(--gold-soft);
+      color: var(--gold);
+    }
+
+    /* ── PHASE 4: POEM REVEAL ──────────────────────────────────── */
+    #p4 { padding: 2rem; }
+
+    .reveal-scene {
+      text-align: center;
+      max-width: 560px;
+    }
+
+    .reveal-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.35em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeUp 1s 0.3s forwards;
+    }
+
+    .reveal-verse {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.4rem, 4vw, 2.2rem);
+      font-weight: 400;
+      line-height: 2;
+      color: var(--text-bright);
+      opacity: 0;
+      animation: fadeUp 1.5s 0.8s forwards;
+    }
+
+    .reveal-line {
+      width: 0;
+      height: 1px;
+      background: var(--gold-soft);
+      margin: 1.5rem auto;
+      animation: lineExpand 1s 2.2s forwards;
+    }
+
+    .reveal-poet {
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      opacity: 0;
+      animation: fadeUp 1s 2.5s forwards;
+    }
+
+    .reveal-cta {
+      margin-top: 3rem;
+      opacity: 0;
+      animation: fadeUp 1s 3.2s forwards;
+    }
+
+    /* ── PROGRESS DOTS ─────────────────────────────────────────── */
+    .phase-dots {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 990;
+      opacity: 0;
+      animation: fadeUp 1s 5.5s forwards;
+    }
+    .phase-dot {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--text-dim);
+      transition: background 0.4s, transform 0.4s;
+    }
+    .phase-dot.active { background: var(--gold); transform: scale(1.5); }
+  </style>
+</head>
+<body>
+
+<!-- Starfield canvas -->
+<canvas id="starfield"></canvas>
+
+<!-- Nebula glow -->
+<div class="nebula nebula-1"></div>
+<div class="nebula nebula-2"></div>
+
+<!-- Islamic star intro overlay -->
+<div id="starIntro">
+  <svg class="star-svg" width="120" height="120" viewBox="0 0 120 120" fill="none">
+    <!-- 8-pointed Islamic star -->
+    <polygon points="60,5 66,44 95,15 76,48 115,44 84,60 115,76 76,72 95,105 66,76 60,115 54,76 25,105 44,72 5,76 36,60 5,44 44,48 25,15 54,44"
+      fill="none" stroke="#c9a96e" stroke-width="1.2" opacity="0.8"/>
+    <circle cx="60" cy="60" r="8" fill="none" stroke="#c9a96e" stroke-width="1" opacity="0.6"/>
+  </svg>
+</div>
+
+<!-- Skip -->
+<button id="skipBtn" onclick="goTo(4)">تخطى ←</button>
+
+<!-- Progress dots -->
+<div class="phase-dots" id="phaseDots">
+  <div class="phase-dot" data-p="0"></div>
+  <div class="phase-dot" data-p="1"></div>
+  <div class="phase-dot" data-p="2"></div>
+  <div class="phase-dot" data-p="3"></div>
+  <div class="phase-dot" data-p="4"></div>
+</div>
+
+<!-- ══════════ PHASE 0: BRAND ══════════ -->
+<section class="phase" id="p0">
+  <div class="brand-container">
+    <span class="brand-word">شِعر</span>
+    <span class="brand-line"></span>
+    <span class="brand-sub">poetry in arabic · ديوان العرب</span>
+    <div class="brand-cta">
+      <button class="btn-ghost" onclick="goTo(1)"><span>ابدأ تجربتك</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ PHASE 1: MOOD ══════════ -->
+<section class="phase" id="p1">
+  <div class="picker-header">
+    <div class="picker-step">الخطوة ١ — المزاج</div>
+    <h2 class="picker-q">ما الذي يُلامس روحك الآن؟</h2>
+    <p class="picker-hint">اختر بحرية — لا قيود</p>
+  </div>
+  <div class="picker-divider"></div>
+
+  <div class="mood-list">
+    <div class="mood-item" data-m="joy">
+      <div>
+        <span class="mood-ar">فرح</span>
+      </div>
+      <span class="mood-en-label">Joy</span>
+      <span class="mood-check"></span>
+    </div>
+    <div class="mood-item" data-m="love">
+      <div><span class="mood-ar">حبّ</span></div>
+      <span class="mood-en-label">Love</span>
+      <span class="mood-check"></span>
+    </div>
+    <div class="mood-item" data-m="longing">
+      <div><span class="mood-ar">شوق</span></div>
+      <span class="mood-en-label">Longing</span>
+      <span class="mood-check"></span>
+    </div>
+    <div class="mood-item" data-m="sadness">
+      <div><span class="mood-ar">حزن</span></div>
+      <span class="mood-en-label">Sadness</span>
+      <span class="mood-check"></span>
+    </div>
+    <div class="mood-item" data-m="wonder">
+      <div><span class="mood-ar">دهشة</span></div>
+      <span class="mood-en-label">Wonder</span>
+      <span class="mood-check"></span>
+    </div>
+    <div class="mood-item" data-m="peace">
+      <div><span class="mood-ar">سكينة</span></div>
+      <span class="mood-en-label">Peace</span>
+      <span class="mood-check"></span>
+    </div>
+    <div class="mood-item" data-m="nostalgia">
+      <div><span class="mood-ar">حنين</span></div>
+      <span class="mood-en-label">Nostalgia</span>
+      <span class="mood-check"></span>
+    </div>
+    <div class="mood-item" data-m="pride">
+      <div><span class="mood-ar">فخر</span></div>
+      <span class="mood-en-label">Pride</span>
+      <span class="mood-check"></span>
+    </div>
+  </div>
+
+  <div class="picker-footer">
+    <button class="btn-back" onclick="goTo(0)">← رجوع</button>
+    <button class="btn-solid" onclick="goTo(2)">التالي ←</button>
+  </div>
+</section>
+
+<!-- ══════════ PHASE 2: ERA ══════════ -->
+<section class="phase" id="p2">
+  <div class="picker-header">
+    <div class="picker-step">الخطوة ٢ — الحقبة</div>
+    <h2 class="picker-q">أيّ زمنٍ يأسرك؟</h2>
+    <p class="picker-hint">اختر ما يُشعل خيالك</p>
+  </div>
+  <div class="picker-divider"></div>
+
+  <div class="era-list">
+    <div class="era-item" data-e="pre">
+      <div class="era-period">ما قبل ٦٢٢م</div>
+      <div class="era-body">
+        <div class="era-dot"></div>
+        <span class="era-name-ar">الجاهلية</span>
+        <span class="era-poets">امرؤ القيس · عنترة · المعلّقات</span>
+      </div>
+    </div>
+    <div class="era-item" data-e="umayyad">
+      <div class="era-period">٦٦١ – ٧٥٠م</div>
+      <div class="era-body">
+        <div class="era-dot"></div>
+        <span class="era-name-ar">الأموي</span>
+        <span class="era-poets">الفرزدق · جرير · الأخطل</span>
+      </div>
+    </div>
+    <div class="era-item" data-e="abbasid">
+      <div class="era-period">٧٥٠ – ١٢٥٨م</div>
+      <div class="era-body">
+        <div class="era-dot"></div>
+        <span class="era-name-ar">العبّاسي</span>
+        <span class="era-poets">المتنبي · أبو نواس · البحتري</span>
+      </div>
+    </div>
+    <div class="era-item" data-e="andalus">
+      <div class="era-period">٧١١ – ١٤٩٢م</div>
+      <div class="era-body">
+        <div class="era-dot"></div>
+        <span class="era-name-ar">الأندلسي</span>
+        <span class="era-poets">ابن زيدون · لسان الدين · ابن عربي</span>
+      </div>
+    </div>
+    <div class="era-item" data-e="modern">
+      <div class="era-period">١٩٠٠م – الآن</div>
+      <div class="era-body">
+        <div class="era-dot"></div>
+        <span class="era-name-ar">الحديث</span>
+        <span class="era-poets">نزار قباني · درويش · أدونيس</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="picker-footer">
+    <button class="btn-back" onclick="goTo(1)">← رجوع</button>
+    <button class="btn-solid" onclick="goTo(3)">التالي ←</button>
+  </div>
+</section>
+
+<!-- ══════════ PHASE 3: TOPICS ══════════ -->
+<section class="phase" id="p3">
+  <div class="picker-header">
+    <div class="picker-step">الخطوة ٣ — الموضوعات</div>
+    <h2 class="picker-q">ما الذي يُلهمك؟</h2>
+    <p class="picker-hint">اختر بلا حدود</p>
+  </div>
+  <div class="picker-divider"></div>
+
+  <div class="topics-cloud" id="topicsCloud">
+    <div class="topic-tag" data-t="love">الغزل</div>
+    <div class="topic-tag" data-t="wisdom">الحكمة</div>
+    <div class="topic-tag" data-t="homeland">الوطن</div>
+    <div class="topic-tag" data-t="nature">الطبيعة</div>
+    <div class="topic-tag" data-t="mysticism">التصوّف</div>
+    <div class="topic-tag" data-t="exile">الغربة</div>
+    <div class="topic-tag" data-t="praise">المدح</div>
+    <div class="topic-tag" data-t="elegy">الرثاء</div>
+    <div class="topic-tag" data-t="philosophy">الفلسفة</div>
+    <div class="topic-tag" data-t="sea">البحر</div>
+    <div class="topic-tag" data-t="freedom">الحرية</div>
+    <div class="topic-tag" data-t="women">المرأة</div>
+    <div class="topic-tag" data-t="chivalry">الفروسية</div>
+    <div class="topic-tag" data-t="wine">الخمريات</div>
+    <div class="topic-tag" data-t="children">الطفولة</div>
+    <div class="topic-tag" data-t="justice">العدل</div>
+    <div class="topic-tag" data-t="loss">الفراق</div>
+    <div class="topic-tag" data-t="desert">الصحراء</div>
+  </div>
+
+  <div class="picker-footer">
+    <button class="btn-back" onclick="goTo(2)">← رجوع</button>
+    <button class="btn-solid" onclick="goTo(4)">أرني شعراً ←</button>
+  </div>
+</section>
+
+<!-- ══════════ PHASE 4: POEM ══════════ -->
+<section class="phase" id="p4">
+  <div class="reveal-scene">
+    <div class="reveal-label">لأنك تحبّ: الوطن · الفلسفة</div>
+    <div class="reveal-verse">
+      على هذه الأرضِ ما يستحقُّ الحياةَ<br/>
+      تردُّدُ أبريلَ، رائحةُ الخبزِ في الفجرِ
+    </div>
+    <div class="reveal-line"></div>
+    <div class="reveal-poet">مَحمود دَرويش</div>
+    <div class="reveal-cta">
+      <button class="btn-ghost" onclick="alert('هذا نموذج تجريبي')">
+        <span>ادخل إلى الشعر</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ── STARFIELD ─────────────────────────────────────────────── */
+(function() {
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let W, H, stars = [];
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    createStars();
+  }
+
+  function createStars() {
+    stars = [];
+    const count = Math.floor((W * H) / 6000);
+    for (let i = 0; i < count; i++) {
+      stars.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        r: Math.random() * 1.2,
+        a: Math.random() * 0.7 + 0.1,
+        speed: Math.random() * 0.00008 + 0.00003,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    stars.forEach(s => {
+      const alpha = s.a * (0.5 + 0.5 * Math.sin(t * s.speed * 1000 + s.phase));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(240,232,213,${alpha})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  requestAnimationFrame(draw);
+})();
+
+/* ── PHASE NAVIGATION ─────────────────────────────────────── */
+let currentPhase = -1;
+const phases = ['p0','p1','p2','p3','p4'];
+
+function goTo(n) {
+  if (n === currentPhase) return;
+
+  // Exit current
+  if (currentPhase >= 0) {
+    const prev = document.getElementById(phases[currentPhase]);
+    prev.classList.remove('enter');
+    prev.classList.add('exit');
+    setTimeout(() => {
+      prev.classList.remove('exit');
+      prev.style.opacity = 0;
+    }, 800);
+  }
+
+  // Enter next
+  currentPhase = n;
+  setTimeout(() => {
+    const next = document.getElementById(phases[n]);
+    next.classList.add('enter');
+    updateDots();
+    initPhaseContent(n);
+  }, currentPhase > 0 ? 200 : 0);
+}
+
+function updateDots() {
+  document.querySelectorAll('.phase-dot').forEach(d => {
+    d.classList.toggle('active', parseInt(d.dataset.p) === currentPhase);
+  });
+}
+
+function initPhaseContent(n) {
+  if (n === 1) {
+    document.querySelectorAll('.mood-item').forEach((el, i) => {
+      el.classList.remove('visible');
+      el.style.transitionDelay = (i * 0.07) + 's';
+      setTimeout(() => el.classList.add('visible'), i * 70 + 100);
+      el.onclick = () => el.classList.toggle('selected');
+    });
+  }
+  if (n === 2) {
+    document.querySelectorAll('.era-item').forEach((el, i) => {
+      el.classList.remove('visible');
+      el.style.opacity = 0;
+      el.style.transform = 'translateY(10px)';
+      setTimeout(() => {
+        el.style.transition = `opacity 0.5s ${i*0.08}s ease, transform 0.5s ${i*0.08}s cubic-bezier(0.76,0,0.24,1)`;
+        el.style.opacity = 1;
+        el.style.transform = 'translateY(0)';
+        el.classList.add('visible');
+      }, i * 80 + 100);
+      el.onclick = () => el.classList.toggle('selected');
+    });
+  }
+  if (n === 3) {
+    document.querySelectorAll('.topic-tag').forEach((el, i) => {
+      el.classList.remove('visible');
+      el.style.opacity = 0;
+      setTimeout(() => {
+        el.style.transition = `opacity 0.4s ${i*0.03}s ease`;
+        el.style.opacity = 1;
+        el.classList.add('visible');
+      }, i * 35 + 100);
+      el.onclick = () => el.classList.toggle('selected');
+    });
+  }
+}
+
+// Boot: entry splash auto-starts after Islamic star animation
+setTimeout(() => goTo(0), 300);
+</script>
+</body>
+</html>

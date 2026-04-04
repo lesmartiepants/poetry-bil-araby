@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BRAND } from '../constants/design.js';
 import { useModalStore } from '../stores/modalStore';
 import MoodPicker from './onboarding/MoodPicker';
 import EraPicker from './onboarding/EraPicker';
+import SubEraPicker from './onboarding/SubEraPicker';
 import TopicsPicker from './onboarding/TopicsPicker';
 
 // ── Phase 0 (Ray-Tracing Splash) — all design/animation constants ──────────
@@ -50,19 +50,16 @@ const SplashScreen = () => {
       localStorage.setItem('hasSeenOnboarding', 'true');
     } catch {}
   };
-  // Phase: 0 = desert splash, 1 = kinetic step 0 (Arabic), 2 = kinetic step 1 (English + Continue), 3 = MoodPicker, 4 = EraPicker, 5 = TopicsPicker
+  // Phase: 0=ray splash, 1=MoodPicker, 2=EraPicker, 3=SubEraPicker, 4=TopicsPicker
   const [phase, setPhase] = useState(0);
   const [fadeState, setFadeState] = useState('in');
-  const canvasRef = useRef(null);
-  const animFrameRef = useRef(null);
-  const particlesRef = useRef([]);
-  const mouseRef = useRef({ x: 0, y: 0 });
   // Phase 0 ray-tracing refs
   const phase0WrapperRef = useRef(null);
   const dustCanvasRef = useRef(null);
   const phase0AnimRef = useRef(null);
   const [selectedMoods, setSelectedMoods] = useState([]);
-  const [selectedEras, setSelectedEras] = useState([]);
+  const [selectedEraPortals, setSelectedEraPortals] = useState([]);
+  const [selectedSubEras, setSelectedSubEras] = useState([]);
 
   // Phase 0: animated ray-tracing light sweep + floating dust particles
   useEffect(() => {
@@ -149,125 +146,6 @@ const SplashScreen = () => {
     };
   }, [isOpen, phase]);
 
-  // Particle system for kinetic walkthrough phases
-  useEffect(() => {
-    if (!isOpen || phase < 1) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const isMobile = window.innerWidth <= 768;
-    const particleCount = isMobile ? 150 : 500;
-    const particles = [];
-
-    for (let i = 0; i < particleCount; i++) {
-      const curve = Math.floor(Math.random() * 3);
-      const curves = [
-        { x: 0.7, y: 0.5, radius: 0.12 },
-        { x: 0.5, y: 0.5, radius: 0.1 },
-        { x: 0.3, y: 0.5, radius: 0.14 },
-      ];
-      const c = curves[curve];
-      const angle = Math.random() * Math.PI * 2;
-      const dist = Math.random() * c.radius;
-      const px = (c.x + Math.cos(angle) * dist) * canvas.width;
-      const py = (c.y + Math.sin(angle) * dist) * canvas.height;
-
-      particles.push({
-        x: px,
-        y: py,
-        originX: px,
-        originY: py,
-        vx: 0,
-        vy: 0,
-        radius: Math.random() * 1.5 + 0.5,
-        opacity: Math.random() * 0.4 + 0.4,
-        twinklePhase: Math.random() * Math.PI * 2,
-        twinkleSpeed: Math.random() * 0.02 + 0.01,
-      });
-    }
-    particlesRef.current = particles;
-
-    const handleMouseMove = (e) => {
-      mouseRef.current = { x: e.clientX, y: e.clientY };
-    };
-    const handleTouchMove = (e) => {
-      if (e.touches[0]) mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    };
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-
-    let running = true;
-    const animate = () => {
-      if (!running) return;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const mouse = mouseRef.current;
-
-      particles.forEach((p) => {
-        const dx = mouse.x - p.x;
-        const dy = mouse.y - p.y;
-        const d = Math.sqrt(dx * dx + dy * dy);
-        if (d < 120) {
-          const f = (120 - d) / 120;
-          p.vx -= (dx / d) * f * 0.8;
-          p.vy -= (dy / d) * f * 0.8;
-        }
-        p.vx += (p.originX - p.x) * 0.001;
-        p.vy += (p.originY - p.y) * 0.001;
-        p.vx *= 0.95;
-        p.vy *= 0.95;
-        p.x += p.vx;
-        p.y += p.vy;
-
-        p.twinklePhase += p.twinkleSpeed;
-        const twinkle = Math.sin(p.twinklePhase) * 0.3 + 0.7;
-        const fo = p.opacity * twinkle;
-
-        if (!isMobile) {
-          ctx.beginPath();
-          const g1 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
-          g1.addColorStop(0, `rgba(200, 220, 255, ${fo * 0.6})`);
-          g1.addColorStop(0.3, `rgba(180, 200, 255, ${fo * 0.3})`);
-          g1.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          ctx.fillStyle = g1;
-          ctx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
-          ctx.fill();
-        }
-
-        ctx.beginPath();
-        if (isMobile) {
-          ctx.fillStyle = `rgba(255, 255, 255, ${fo})`;
-        } else {
-          const g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-          g2.addColorStop(0, `rgba(255, 255, 255, ${fo})`);
-          g2.addColorStop(0.7, `rgba(240, 245, 255, ${fo * 0.5})`);
-          g2.addColorStop(1, 'rgba(255, 255, 255, 0)');
-          ctx.fillStyle = g2;
-        }
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fill();
-      });
-
-      animFrameRef.current = requestAnimationFrame(animate);
-    };
-    animate();
-
-    const handleResize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', handleResize, { passive: true });
-
-    return () => {
-      running = false;
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [isOpen, phase]);
-
   useEffect(() => {
     if (isOpen) {
       setFadeState('in');
@@ -291,31 +169,7 @@ const SplashScreen = () => {
     }
   };
 
-  const handleWalkthroughTap = (e) => {
-    if (e.target.closest('[data-splash-finish]')) return;
-    if (phase < 2) {
-      setPhase(phase + 1);
-    }
-  };
-
-  const handleFinish = (e) => {
-    e.stopPropagation();
-    try {
-      if (localStorage.getItem('hasSeenOnboarding')) {
-        handleDismiss();
-        return;
-      }
-    } catch {}
-    setPhase(3);
-  };
-
   if (!isOpen) return null;
-
-  // Reduced motion check
-  const prefersReducedMotion =
-    typeof window !== 'undefined' &&
-    window.matchMedia &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Injected keyframe styles
   const splashStyles = `
@@ -324,26 +178,7 @@ const SplashScreen = () => {
       from { opacity: 0; transform: translateY(40px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    @keyframes splashArabicReveal {
-      from { opacity: 0; transform: scale(0.9); filter: blur(8px); }
-      to { opacity: 1; transform: scale(1); filter: blur(0px); }
-    }
-    @keyframes splashArabicRevealMobile {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    @keyframes splashLetterReveal {
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes splashCountReveal {
-      from { opacity: 0; transform: translateY(20px) scale(0.95); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
   `;
-
-  const kineticStep = phase - 1; // 0, 1, or 2
-  const progressWidth = ((Math.max(kineticStep, 0) + 1) / 3) * 100 + '%';
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   // Single return — both phases always in the DOM, toggled by display.
   // This prevents React from unmounting/remounting the tree when phase changes,
@@ -535,270 +370,42 @@ const SplashScreen = () => {
         </div>
       </div>
 
-      {/* KINETIC WALKTHROUGH (phases 1-2) — hidden via display:none until phase >= 1 */}
-      <div
-        style={{
-          position: 'fixed',
-          inset: 0,
-          zIndex: 60,
-          background: '#000000',
-          display: phase >= 1 && phase <= 2 ? 'flex' : 'none',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          cursor: 'pointer',
-          overflow: 'hidden',
-          transition: 'opacity 0.6s ease',
-          opacity: fadeState === 'out' ? 0 : 1,
-        }}
-        onClick={handleWalkthroughTap}
-        role="dialog"
-        aria-label="Onboarding walkthrough"
-      >
-        {/* Particle canvas */}
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            pointerEvents: 'none',
-            zIndex: 1,
-            willChange: 'transform',
-            transform: 'translateZ(0)',
-          }}
-        />
-
-        {/* Kinetic stage */}
-        <div
-          style={{
-            position: 'relative',
-            zIndex: 2,
-            textAlign: 'center',
-            width: '100%',
-            maxWidth: '600px',
-            padding: '2rem',
-          }}
-        >
-          {/* Step 0: Arabic reveal — بالعربي */}
-          {kineticStep === 0 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '40vh',
-              }}
-              key="kinetic-0"
-            >
-              <div
-                style={{
-                  fontFamily: "'Reem Kufi', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 'clamp(3.5rem, 9vw, 6rem)',
-                  color: '#ffffff',
-                  direction: 'rtl',
-                  lineHeight: 1.2,
-                  marginBottom: '1.5rem',
-                  opacity: 0,
-                  animation: prefersReducedMotion
-                    ? 'splashFadeIn 0.01ms forwards'
-                    : isMobile
-                      ? 'splashArabicRevealMobile 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards'
-                      : 'splashArabicReveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
-                  willChange: 'transform, opacity, filter',
-                  backfaceVisibility: 'hidden',
-                  transform: 'translateZ(0)',
-                }}
-                lang="ar"
-                dir="rtl"
-              >
-                بالعربي
-              </div>
-              <div
-                style={{
-                  fontFamily: "'Tajawal', sans-serif",
-                  fontSize: '0.9375rem',
-                  color: '#666666',
-                  direction: 'rtl',
-                  opacity: 0,
-                  animation: prefersReducedMotion
-                    ? 'splashFadeIn 0.01ms forwards'
-                    : 'splashFadeIn 0.6s ease-out 0.7s forwards',
-                  willChange: 'opacity',
-                }}
-                lang="ar"
-                dir="rtl"
-              >
-                الشعر العربي بين يديك
-              </div>
-            </div>
-          )}
-
-          {/* Step 1: English letter-by-letter — poetry */}
-          {kineticStep === 1 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '40vh',
-              }}
-              key="kinetic-1"
-            >
-              <div
-                style={{
-                  fontFamily: "'Forum', cursive",
-                  fontSize: 'clamp(4rem, 10vw, 7rem)',
-                  textTransform: 'lowercase',
-                  letterSpacing: '-0.05em',
-                  color: '#ffffff',
-                  lineHeight: 1,
-                  marginBottom: '1.5rem',
-                }}
-              >
-                {'poetry'.split('').map((letter, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      display: 'inline-block',
-                      opacity: 0,
-                      transform: 'translateY(30px)',
-                      animation: prefersReducedMotion
-                        ? 'splashFadeIn 0.01ms forwards'
-                        : `splashLetterReveal ${isMobile ? '0.35s' : '0.5s'} cubic-bezier(0.16, 1, 0.3, 1) forwards`,
-                      animationDelay: `${0.1 + i * 0.08}s`,
-                      willChange: 'transform, opacity',
-                      backfaceVisibility: 'hidden',
-                    }}
-                  >
-                    {letter}
-                  </span>
-                ))}
-              </div>
-              <div
-                style={{
-                  fontSize: '0.8125rem',
-                  letterSpacing: '0.3em',
-                  textTransform: 'uppercase',
-                  color: '#555555',
-                  opacity: 0,
-                  animation: prefersReducedMotion
-                    ? 'splashFadeIn 0.01ms forwards'
-                    : 'splashFadeIn 0.6s ease-out 0.8s forwards',
-                  willChange: 'opacity',
-                }}
-              >
-                Where words become worlds
-              </div>
-              <button
-                data-splash-finish="true"
-                data-testid="kinetic-continue"
-                onClick={handleFinish}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '14px 40px',
-                  border: '1px solid #333333',
-                  borderRadius: '999px',
-                  background: 'transparent',
-                  color: '#ffffff',
-                  fontFamily: "'Tajawal', sans-serif",
-                  fontSize: '0.8125rem',
-                  fontWeight: 500,
-                  letterSpacing: '0.15em',
-                  cursor: 'pointer',
-                  transition: 'background 0.3s ease, border-color 0.3s ease',
-                  minHeight: '48px',
-                  marginTop: '2rem',
-                  opacity: 0,
-                  animation: prefersReducedMotion
-                    ? 'splashFadeIn 0.01ms forwards'
-                    : 'splashFadeIn 0.5s ease-out 1s forwards',
-                  willChange: 'opacity',
-                  backfaceVisibility: 'hidden',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                  e.currentTarget.style.borderColor = '#666666';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderColor = '#333333';
-                }}
-                aria-label="Continue to onboarding"
-              >
-                <span>التالي</span>
-                <ArrowRight size={16} />
-              </button>
-            </div>
-          )}
-        </div>
-
-        {/* Tap hint */}
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '3rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            fontSize: '0.65rem',
-            letterSpacing: '0.35em',
-            textTransform: 'uppercase',
-            color: '#333333',
-            zIndex: 5,
-          }}
-        >
-          Tap anywhere
-        </div>
-
-        {/* Progress bar */}
-        <div
-          style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            height: '2px',
-            background: 'rgba(255, 255, 255, 0.15)',
-            transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-            zIndex: 5,
-            width: progressWidth,
-            willChange: 'width',
-            transform: 'translateZ(0)',
-          }}
-        />
-      </div>
-
-      {/* ONBOARDING PHASES 3-5 — mood, era, topics pickers */}
+      {/* ONBOARDING PHASES 1-4 — mood, era, sub-era, topics pickers */}
       <AnimatePresence mode="wait">
-        {phase === 3 && (
+        {phase === 1 && (
           <MoodPicker
             key="mood"
             onNext={(moods) => {
               setSelectedMoods(moods);
+              setPhase(2);
+            }}
+          />
+        )}
+        {phase === 2 && (
+          <EraPicker
+            key="era"
+            onNext={(portals) => {
+              setSelectedEraPortals(portals);
+              setPhase(3);
+            }}
+          />
+        )}
+        {phase === 3 && (
+          <SubEraPicker
+            key="sub-era"
+            selectedPortals={selectedEraPortals}
+            onNext={(subEras) => {
+              setSelectedSubEras(subEras);
               setPhase(4);
             }}
           />
         )}
         {phase === 4 && (
-          <EraPicker
-            key="era"
-            onNext={(eras) => {
-              setSelectedEras(eras);
-              setPhase(5);
-            }}
-          />
-        )}
-        {phase === 5 && (
           <TopicsPicker
             key="topics"
             selectedMoods={selectedMoods}
-            selectedEras={selectedEras}
+            selectedEraPortals={selectedEraPortals}
+            selectedSubEras={selectedSubEras}
             onComplete={(prefs) => {
               useModalStore.getState().completeOnboarding(prefs);
             }}
@@ -806,8 +413,8 @@ const SplashScreen = () => {
         )}
       </AnimatePresence>
 
-      {/* Progress dots for phases 3-5 */}
-      {phase >= 3 && phase <= 5 && (
+      {/* Progress dots for phases 1-4 */}
+      {phase >= 1 && phase <= 4 && (
         <div
           style={{
             position: 'fixed',
@@ -819,7 +426,7 @@ const SplashScreen = () => {
             zIndex: 70,
           }}
         >
-          {[3, 4, 5].map((step) => (
+          {[1, 2, 3, 4].map((step) => (
             <div
               key={step}
               style={{

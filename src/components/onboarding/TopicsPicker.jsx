@@ -3,7 +3,60 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import gsap from 'gsap';
 
-const GOLD = '#c5a059';
+/* ============================================
+   TOPICS_CONFIG — all visual constants
+   ============================================ */
+const TOPICS_CONFIG = {
+  gold: '#c5a059',
+  goldDim: 'rgba(197,160,89,0.7)',
+  node: {
+    size: 44,
+    borderWidth: 1.5,
+    defaultBg: 'rgba(197,160,89,0.06)',
+    defaultBorder: 'rgba(197,160,89,0.25)',
+    hoverBorder: 'rgba(197,160,89,0.50)',
+    hoverShadow: '0 0 10px rgba(197,160,89,0.18)',
+    selectedBg: 'rgba(197,160,89,0.18)',
+    selectedBorder: 'rgba(197,160,89,0.9)',
+    selectedShadow: '0 0 14px rgba(197,160,89,0.45), 0 0 32px rgba(197,160,89,0.18)',
+    outerRingOffset: 6,
+  },
+  line: {
+    color: '#c5a059',
+    defaultOpacity: 0.08,
+    activeOpacity: 0.55,
+    defaultWidth: 1,
+    activeWidth: 1.5,
+    dashArray: '4 6',
+  },
+  particle: {
+    countMin: 12,
+    countMax: 20,
+    speedMin: 1.2,
+    speedMax: 4.0,
+    sizeMin: 1.5,
+    sizeMax: 4.0,
+    lifeDecay: 0.025,
+    friction: 0.93,
+    color: [197, 160, 89],
+  },
+  entrance: {
+    baseDelay: 0.4,
+    stagger: 0.055,
+    duration: 0.55,
+    ease: 'back.out(1.7)',
+  },
+  label: {
+    arFont: "'Reem Kufi', 'Tajawal', sans-serif",
+    arSize: '0.72rem',
+    enSize: '0.58rem',
+  },
+  counter: {
+    dotSize: 6,
+    maxSelections: 5,
+    minSelections: 1,
+  },
+};
 
 const TOPICS = [
   { slug: 'love',         name_ar: '\u0627\u0644\u062d\u0628',      name_en: 'Love',         color: '#e8647a' },
@@ -43,12 +96,109 @@ const CONNECTIONS = [
   [4, 8], [5, 8], [5, 6], [7, 9], [8, 10],
 ];
 
+/* ============================================
+   CSS Keyframes (injected once)
+   ============================================ */
+const KEYFRAMES_ID = '__topics-constellation-keyframes';
+
+function injectKeyframes() {
+  if (typeof document === 'undefined') return;
+  if (document.getElementById(KEYFRAMES_ID)) return;
+  const style = document.createElement('style');
+  style.id = KEYFRAMES_ID;
+  style.textContent = `
+@keyframes lineFlow { 0% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -40; } }
+@keyframes linePulse {
+  0%   { opacity: 0.08; stroke-width: 1px; }
+  40%  { opacity: 0.8;  stroke-width: 2.5px; }
+  100% { opacity: 0.55; stroke-width: 1.5px; }
+}
+`;
+  document.head.appendChild(style);
+}
+
+/* ============================================
+   Particle System
+   ============================================ */
+function createParticleSystem(canvas) {
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  let rafId = null;
+
+  function spawn(cx, cy) {
+    const { countMin, countMax, speedMin, speedMax, sizeMin, sizeMax, lifeDecay, color } = TOPICS_CONFIG.particle;
+    const count = countMin + Math.floor(Math.random() * (countMax - countMin + 1));
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = speedMin + Math.random() * (speedMax - speedMin);
+      const life = 0.7 + Math.random() * 0.5;
+      particles.push({
+        x: cx,
+        y: cy,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        size: sizeMin + Math.random() * (sizeMax - sizeMin),
+        life,
+        maxLife: life,
+        decay: lifeDecay + Math.random() * 0.01,
+        r: color[0], g: color[1], b: color[2],
+        alpha: 0.9 + Math.random() * 0.1,
+      });
+    }
+    if (!rafId) tick();
+  }
+
+  function tick() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const { friction } = TOPICS_CONFIG.particle;
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= friction;
+      p.vy *= friction;
+      p.life -= p.decay;
+      if (p.life <= 0) { particles.splice(i, 1); continue; }
+      const ratio = p.life / p.maxLife;
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(${p.r},${p.g},${p.b},${p.alpha * ratio})`;
+      ctx.arc(p.x, p.y, p.size * ratio, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (particles.length > 0) {
+      rafId = requestAnimationFrame(tick);
+    } else {
+      rafId = null;
+    }
+  }
+
+  function destroy() {
+    if (rafId) cancelAnimationFrame(rafId);
+    particles.length = 0;
+  }
+
+  return { spawn, destroy };
+}
+
+/* ============================================
+   TopicsPicker Component
+   ============================================ */
 const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = [] }) => {
   const [selected, setSelected] = useState(() => initialValue);
+  const [pulsingLines, setPulsingLines] = useState(new Set());
+  const [hoveredNode, setHoveredNode] = useState(null);
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
+  const nodeRefs = useRef([]);
+  const circleRefs = useRef([]);
+  const lineRefs = useRef(new Map());
+  const particleSystem = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Inject CSS keyframes
+  useEffect(() => { injectKeyframes(); }, []);
+
+  // Mobile check
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 768);
     check();
@@ -56,61 +206,105 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
     return () => window.removeEventListener('resize', check);
   }, []);
 
-  // Particle spray on selection
-  const spawnParticles = useCallback((x, y, color) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const count = 8 + Math.floor(Math.random() * 5);
-
-    for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.5;
-      const dist = 30 + Math.random() * 40;
-      const particle = { x, y, r: 2 + Math.random() * 3, opacity: 0.9 };
-
-      gsap.to(particle, {
-        x: x + Math.cos(angle) * dist,
-        y: y + Math.sin(angle) * dist,
-        r: 0.5,
-        opacity: 0,
-        duration: 0.5,
-        delay: i * 0.02,
-        ease: 'power2.out',
-        onUpdate: () => {
-          ctx.beginPath();
-          ctx.fillStyle = `${color}${Math.round(particle.opacity * 255).toString(16).padStart(2, '0')}`;
-          ctx.arc(particle.x, particle.y, particle.r, 0, Math.PI * 2);
-          ctx.fill();
-        },
-      });
-    }
-  }, []);
-
-  // Resize canvas
+  // Initialize particle system
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    particleSystem.current = createParticleSystem(canvas);
+    return () => { if (particleSystem.current) particleSystem.current.destroy(); };
+  }, []);
+
+  // Resize canvas to match container
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
     const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      const rect = container.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
     };
     resize();
     window.addEventListener('resize', resize, { passive: true });
     return () => window.removeEventListener('resize', resize);
   }, []);
 
-  const toggleTopic = (slug, color, event) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
+  // Reposition SVG lines on resize
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const updateLines = () => {
+      const rect = container.getBoundingClientRect();
+      lineRefs.current.forEach((lineEl, key) => {
+        const [a, b] = key.split('-').map(Number);
+        const pa = POSITIONS[a];
+        const pb = POSITIONS[b];
+        lineEl.setAttribute('x1', (pa.x / 100) * rect.width);
+        lineEl.setAttribute('y1', (pa.y / 100) * rect.height);
+        lineEl.setAttribute('x2', (pb.x / 100) * rect.width);
+        lineEl.setAttribute('y2', (pb.y / 100) * rect.height);
+      });
+    };
+    updateLines();
+    window.addEventListener('resize', updateLines, { passive: true });
+    return () => window.removeEventListener('resize', updateLines);
+  }, []);
 
-    setSelected((prev) => {
-      if (prev.includes(slug)) {
-        return prev.filter((s) => s !== slug);
-      }
-      spawnParticles(cx, cy, color);
-      return [...prev, slug];
+  // GSAP entrance animation for nodes
+  useEffect(() => {
+    const { baseDelay, stagger, duration, ease } = TOPICS_CONFIG.entrance;
+    nodeRefs.current.forEach((el, i) => {
+      if (!el) return;
+      gsap.fromTo(el,
+        { opacity: 0, y: 20, scale: 0.8 },
+        { opacity: 1, y: 0, scale: 1, duration, delay: baseDelay + i * stagger, ease }
+      );
     });
+  }, []);
+
+  const sprayParticles = useCallback((nodeIdx) => {
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas || !particleSystem.current) return;
+    const rect = container.getBoundingClientRect();
+    const pos = POSITIONS[nodeIdx];
+    const cx = (pos.x / 100) * rect.width;
+    const cy = (pos.y / 100) * rect.height;
+    particleSystem.current.spawn(cx, cy);
+  }, []);
+
+  const pulseConnectedLines = useCallback((nodeIdx) => {
+    const connectedKeys = CONNECTIONS
+      .filter(([a, b]) => a === nodeIdx || b === nodeIdx)
+      .map(([a, b]) => `${a}-${b}`);
+    setPulsingLines(new Set(connectedKeys));
+    setTimeout(() => setPulsingLines(new Set()), 700);
+  }, []);
+
+  const toggleTopic = (slug, idx) => {
+    const isCurrentlySelected = selected.includes(slug);
+    if (isCurrentlySelected) {
+      // Deselect — gentle scale-down
+      const circleEl = circleRefs.current[idx];
+      if (circleEl) {
+        gsap.to(circleEl, { scale: 1, duration: 0.25, ease: 'power2.out' });
+      }
+      setSelected((prev) => prev.filter((s) => s !== slug));
+    } else {
+      // Select — bounce keyframe animation
+      const circleEl = circleRefs.current[idx];
+      if (circleEl) {
+        gsap.fromTo(circleEl, { scale: 1.0 }, {
+          keyframes: [
+            { scale: 1.25, duration: 0.12, ease: 'power2.out' },
+            { scale: 1.0, duration: 0.22, ease: 'back.out(2.5)' },
+          ],
+        });
+      }
+      sprayParticles(idx);
+      pulseConnectedLines(idx);
+      setSelected((prev) => [...prev, slug]);
+    }
   };
 
   const handleComplete = () => {
@@ -121,9 +315,17 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
     });
   };
 
-  // Get connections for a given node index
-  const getNodeConnections = (idx) =>
-    CONNECTIONS.filter(([a, b]) => a === idx || b === idx);
+  // Determine line state
+  const getLineState = (a, b) => {
+    const aSelected = selected.includes(TOPICS[a].slug);
+    const bSelected = selected.includes(TOPICS[b].slug);
+    const key = `${a}-${b}`;
+    const isPulsing = pulsingLines.has(key);
+    const bothSelected = aSelected && bSelected;
+    return { bothSelected, isPulsing };
+  };
+
+  const { gold, goldDim, node: nodeConfig, line: lineConfig, label: labelConfig, counter: counterConfig } = TOPICS_CONFIG;
 
   return (
     <motion.div
@@ -143,28 +345,14 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
         overflow: 'auto',
       }}
     >
-      {/* Particle canvas */}
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          pointerEvents: 'none',
-          zIndex: 0,
-        }}
-      />
-
-      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '600px', padding: '1.5rem 1rem' }}>
+      <div style={{ position: 'relative', zIndex: 1, width: '100%', maxWidth: '600px', padding: '1.5rem 1rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '1rem', paddingTop: '1rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '1rem', paddingTop: '1rem', flexShrink: 0 }}>
           <h2
             style={{
               fontFamily: "'Tajawal', sans-serif",
               fontSize: 'clamp(1.25rem, 3.5vw, 1.75rem)',
-              color: GOLD,
+              color: gold,
               marginBottom: '0.5rem',
               direction: 'rtl',
             }}
@@ -175,84 +363,102 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
           </h2>
         </div>
 
-        {/* Constellation / Grid */}
+        {/* Constellation Stage */}
         <div
           ref={containerRef}
-          style={
-            isMobile
-              ? {
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  justifyContent: 'center',
-                  gap: '0.75rem',
-                  padding: '1rem',
-                }
-              : {
-                  position: 'relative',
-                  width: '100%',
-                  height: '500px',
-                }
-          }
+          style={{
+            position: 'relative',
+            width: '100%',
+            flex: 1,
+            minHeight: isMobile ? '380px' : '420px',
+          }}
         >
-          {/* SVG connection lines (desktop only) */}
-          {!isMobile && (
-            <svg
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                pointerEvents: 'none',
-              }}
-              viewBox="0 0 100 100"
-              preserveAspectRatio="none"
-            >
-              {CONNECTIONS.map(([a, b], i) => {
-                const pa = POSITIONS[a];
-                const pb = POSITIONS[b];
-                const aSelected = selected.includes(TOPICS[a].slug);
-                const bSelected = selected.includes(TOPICS[b].slug);
-                const active = aSelected || bSelected;
+          {/* Particle canvas — absolute inside container */}
+          <canvas
+            ref={canvasRef}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              zIndex: 2,
+            }}
+          />
 
-                return (
-                  <line
-                    key={i}
-                    x1={pa.x}
-                    y1={pa.y}
-                    x2={pb.x}
-                    y2={pb.y}
-                    stroke={active ? 'rgba(197,160,89,0.35)' : 'rgba(255,255,255,0.06)'}
-                    strokeWidth={active ? '0.3' : '0.15'}
-                    style={{
-                      transition: 'stroke 0.3s ease, stroke-width 0.3s ease',
-                    }}
-                  />
-                );
-              })}
-            </svg>
-          )}
+          {/* SVG Connection Lines */}
+          <svg
+            style={{
+              position: 'absolute',
+              inset: 0,
+              width: '100%',
+              height: '100%',
+              pointerEvents: 'none',
+              overflow: 'visible',
+            }}
+          >
+            {CONNECTIONS.map(([a, b]) => {
+              const key = `${a}-${b}`;
+              const { bothSelected, isPulsing } = getLineState(a, b);
+              const pa = POSITIONS[a];
+              const pb = POSITIONS[b];
 
-          {/* Topic nodes */}
+              let lineStyle = {};
+              let strokeDasharray = lineConfig.dashArray;
+              let opacity = lineConfig.defaultOpacity;
+              let strokeWidth = lineConfig.defaultWidth;
+
+              if (bothSelected) {
+                strokeDasharray = 'none';
+                opacity = lineConfig.activeOpacity;
+                strokeWidth = lineConfig.activeWidth;
+                lineStyle = {
+                  animation: 'lineFlow 2s linear infinite',
+                };
+              } else if (isPulsing) {
+                lineStyle = {
+                  animation: 'linePulse 0.6s ease-out forwards',
+                };
+                strokeDasharray = lineConfig.dashArray;
+                strokeWidth = lineConfig.defaultWidth;
+              }
+
+              return (
+                <line
+                  key={key}
+                  ref={(el) => { if (el) lineRefs.current.set(key, el); }}
+                  x1={`${pa.x}%`}
+                  y1={`${pa.y}%`}
+                  x2={`${pb.x}%`}
+                  y2={`${pb.y}%`}
+                  stroke={lineConfig.color}
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={strokeDasharray}
+                  opacity={opacity}
+                  style={{
+                    transition: bothSelected ? 'none' : 'opacity 0.3s ease, stroke-width 0.3s ease',
+                    ...lineStyle,
+                  }}
+                />
+              );
+            })}
+          </svg>
+
+          {/* Topic Nodes */}
           {TOPICS.map((topic, idx) => {
             const isSelected = selected.includes(topic.slug);
+            const isHovered = hoveredNode === idx;
             const pos = POSITIONS[idx];
 
-            const nodeStyle = isMobile
-              ? {
-                  width: 'calc(33.33% - 0.5rem)',
-                  minWidth: '90px',
-                  padding: '1rem 0.5rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: 'transparent',
-                  border: 'none',
-                  cursor: 'pointer',
-                  position: 'relative',
-                }
-              : {
+            return (
+              <button
+                key={topic.slug}
+                data-testid="topic-node"
+                ref={(el) => { nodeRefs.current[idx] = el; }}
+                onClick={() => toggleTopic(topic.slug, idx)}
+                onMouseEnter={() => setHoveredNode(idx)}
+                onMouseLeave={() => setHoveredNode(null)}
+                style={{
                   position: 'absolute',
                   left: `${pos.x}%`,
                   top: `${pos.y}%`,
@@ -260,58 +466,71 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '2px',
+                  gap: '5px',
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  padding: '0.75rem',
-                };
-
-            return (
-              <button
-                key={topic.slug}
-                data-testid="topic-node"
-                onClick={(e) => toggleTopic(topic.slug, topic.color, e)}
-                style={nodeStyle}
+                  padding: '10px',
+                  margin: '-10px',
+                  zIndex: 3,
+                  opacity: 0, // GSAP will animate this in
+                  borderRadius: '50%',
+                }}
                 aria-pressed={isSelected}
                 aria-label={`${topic.name_ar} \u2014 ${topic.name_en}`}
               >
-                {/* Glow ring */}
+                {/* Circle with Arabic text inside */}
                 <div
+                  ref={(el) => { circleRefs.current[idx] = el; }}
                   style={{
-                    width: isMobile ? '52px' : '56px',
-                    height: isMobile ? '52px' : '56px',
+                    width: `${nodeConfig.size}px`,
+                    height: `${nodeConfig.size}px`,
                     borderRadius: '50%',
-                    border: `2px solid ${isSelected ? topic.color : 'rgba(255,255,255,0.12)'}`,
-                    boxShadow: isSelected ? `0 0 16px ${topic.color}44, 0 0 32px ${topic.color}22` : 'none',
+                    border: `${nodeConfig.borderWidth}px solid ${isSelected ? nodeConfig.selectedBorder : (isHovered ? nodeConfig.hoverBorder : nodeConfig.defaultBorder)}`,
+                    background: isSelected ? nodeConfig.selectedBg : nodeConfig.defaultBg,
+                    boxShadow: isSelected ? nodeConfig.selectedShadow : (isHovered ? nodeConfig.hoverShadow : 'none'),
+                    transition: 'background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    transition: 'all 0.25s ease',
-                    background: isSelected ? `${topic.color}11` : 'transparent',
+                    position: 'relative',
+                    willChange: 'transform',
                   }}
                 >
+                  {/* Arabic label inside circle */}
                   <span
                     style={{
-                      fontFamily: "'Tajawal', sans-serif",
-                      fontSize: isMobile ? '0.875rem' : '1rem',
-                      fontWeight: 600,
-                      color: isSelected ? '#ffffff' : 'rgba(255,255,255,0.65)',
+                      fontFamily: labelConfig.arFont,
+                      fontSize: labelConfig.arSize,
+                      fontWeight: 700,
+                      color: isSelected ? gold : 'rgba(255,255,255,0.85)',
                       direction: 'rtl',
-                      transition: 'color 0.2s',
+                      transition: 'color 0.2s ease',
+                      lineHeight: 1,
+                      textAlign: 'center',
+                      pointerEvents: 'none',
+                      userSelect: 'none',
                     }}
                     lang="ar"
                   >
                     {topic.name_ar}
                   </span>
                 </div>
+                {/* English label below */}
                 <span
                   style={{
-                    fontSize: '0.625rem',
-                    color: isSelected ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)',
+                    fontSize: labelConfig.enSize,
+                    color: isSelected ? goldDim : 'rgba(255,255,255,0.25)',
                     letterSpacing: '0.04em',
-                    transition: 'color 0.2s',
-                    marginTop: '2px',
+                    transition: 'color 0.2s ease',
+                    lineHeight: 1,
+                    textAlign: 'center',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    maxWidth: '70px',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
                   }}
                 >
                   {topic.name_en}
@@ -321,40 +540,84 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
           })}
         </div>
 
-        {/* CTA */}
-        <div style={{ textAlign: 'center', marginTop: isMobile ? '1.5rem' : '2rem', paddingBottom: '2rem' }}>
+        {/* Bottom bar: counter + CTA */}
+        <div style={{
+          flexShrink: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          padding: isMobile ? '0 24px 48px' : '0 24px 32px',
+          gap: '12px',
+        }}>
+          {/* Counter row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span
+              style={{
+                fontFamily: "'Tajawal', sans-serif",
+                fontSize: '0.8rem',
+                color: selected.length >= counterConfig.minSelections ? goldDim : 'rgba(255,255,255,0.4)',
+                transition: 'color 0.3s ease',
+                direction: 'rtl',
+              }}
+              lang="ar"
+            >
+              {selected.length === 0
+                ? '\u0627\u062e\u062a\u0631 \u0645\u0648\u0636\u0648\u0639\u064b\u0627 \u0648\u0627\u062d\u062f\u064b\u0627 \u0639\u0644\u0649 \u0627\u0644\u0623\u0642\u0644'
+                : `${selected.length} \u0645\u0646 ${counterConfig.maxSelections} \u0645\u0648\u0627\u0636\u064a\u0639 \u0645\u062e\u062a\u0627\u0631\u0629`}
+            </span>
+            {/* Counter dots */}
+            <div style={{ display: 'flex', gap: '4px', direction: 'ltr' }}>
+              {Array.from({ length: counterConfig.maxSelections }, (_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: `${counterConfig.dotSize}px`,
+                    height: `${counterConfig.dotSize}px`,
+                    borderRadius: '50%',
+                    border: `1px solid ${nodeConfig.defaultBorder}`,
+                    background: i < selected.length ? gold : 'transparent',
+                    transition: 'background 0.2s ease',
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* CTA button */}
           <button
             data-testid="show-poetry-btn"
             onClick={handleComplete}
             style={{
-              opacity: selected.length >= 1 ? 1 : 0.5,
+              opacity: selected.length >= counterConfig.minSelections ? 1 : 0,
+              pointerEvents: selected.length >= counterConfig.minSelections ? 'auto' : 'none',
+              transform: selected.length >= counterConfig.minSelections ? 'translateY(0)' : 'translateY(8px)',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
               padding: '14px 40px',
-              border: `1px solid ${GOLD}`,
+              border: `1px solid ${gold}`,
               borderRadius: '999px',
-              background: `${GOLD}15`,
-              color: GOLD,
+              background: `${gold}15`,
+              color: gold,
               fontFamily: "'Tajawal', sans-serif",
               fontSize: '1rem',
               fontWeight: 600,
               cursor: 'pointer',
-              transition: 'background 0.3s ease, transform 0.2s ease, opacity 0.2s ease',
+              transition: 'background 0.3s ease, transform 0.3s ease, opacity 0.3s ease',
               minHeight: '52px',
               direction: 'rtl',
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = `${GOLD}33`;
+              e.currentTarget.style.background = `${gold}33`;
               e.currentTarget.style.transform = 'scale(1.02)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = `${GOLD}15`;
-              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.background = `${gold}15`;
+              e.currentTarget.style.transform = selected.length >= counterConfig.minSelections ? 'scale(1)' : 'translateY(8px)';
             }}
-            aria-label={selected.length >= 1 ? '\u0623\u0631\u0646\u064a \u0634\u0639\u0631\u064b\u0627' : '\u062a\u062e\u0637\u0649'}
+            aria-label={selected.length >= counterConfig.minSelections ? '\u0623\u0631\u0646\u064a \u0634\u0639\u0631\u064b\u0627' : '\u062a\u062e\u0637\u0649'}
           >
-            <span>{selected.length >= 1 ? '\u0623\u0631\u0646\u064a \u0634\u0639\u0631\u064b\u0627' : '\u062a\u062e\u0637\u0649'}</span>
+            <span>{selected.length >= counterConfig.minSelections ? '\u0623\u0631\u0646\u064a \u0634\u0639\u0631\u064b\u0627' : '\u062a\u062e\u0637\u0649'}</span>
             <ArrowRight size={18} />
           </button>
         </div>

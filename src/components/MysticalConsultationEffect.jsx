@@ -26,11 +26,10 @@ function makeParticle(width, height) {
   };
 }
 
-const PARALLAX_FACTOR = 0.3;
-
 const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
   active,
   scrollY = 0,
+  parallaxFactor = 0.05,
 }) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
@@ -141,7 +140,7 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
       className="absolute inset-0 pointer-events-none z-10"
       style={{
         mixBlendMode: 'screen',
-        transform: `translateY(${-(scrollY * PARALLAX_FACTOR).toFixed(1)}px)`,
+        transform: `translateY(${-(scrollY * parallaxFactor).toFixed(1)}px)`,
         willChange: 'transform',
       }}
     />

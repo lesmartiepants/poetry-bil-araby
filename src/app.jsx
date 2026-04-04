@@ -178,6 +178,9 @@ export default function DiwanApp() {
   const currentFont = useUIStore((s) => s.font);
   const setCurrentFont = useUIStore((s) => s.setFont);
   const ratchetMode = useUIStore((s) => s.ratchetMode);
+  const bgOpacity = useUIStore((s) => s.bgOpacity);
+  const bgColor = useUIStore((s) => s.bgColor);
+  const bgParallax = useUIStore((s) => s.bgParallax);
   // ── Audio store (Zustand) ──
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const setIsPlaying = useAudioStore((s) => s.setPlaying);
@@ -1281,8 +1284,19 @@ export default function DiwanApp() {
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
           {/* Squoctogon irregular tiling background — exact design from geometric-explorer */}
-          <SquoctogonBackground darkMode={darkMode} scrollY={bgScrollY} />
-          <MysticalConsultationEffect active={isInterpreting} theme={theme} scrollY={bgScrollY} />
+          <SquoctogonBackground
+            darkMode={darkMode}
+            scrollY={bgScrollY}
+            opacityScale={bgOpacity}
+            colorOverride={bgColor}
+            parallaxFactor={bgParallax}
+          />
+          <MysticalConsultationEffect
+            active={isInterpreting}
+            theme={theme}
+            scrollY={bgScrollY}
+            parallaxFactor={bgParallax}
+          />
 
           <main
             ref={mainScrollRef}

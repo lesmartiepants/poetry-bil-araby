@@ -359,14 +359,19 @@ function computeSvgPath(w, h) {
   return parts.join(' ');
 }
 
-const PARALLAX_FACTOR = 0.3; // background drifts at 30% of scroll speed
 // Extra pattern height generated below the viewport so the tiling never
 // disappears as the SVG is translated upward during parallax scrolling.
 // Buffer = 2× viewport height → covers up to scrollY ≈ 6.7× viewport before
 // the pattern edge would ever be reached.
 const PARALLAX_BUFFER_MULTIPLIER = 2;
 
-const SquoctogonBackground = memo(function SquoctogonBackground({ darkMode, scrollY = 0 }) {
+const SquoctogonBackground = memo(function SquoctogonBackground({
+  darkMode,
+  scrollY = 0,
+  opacityScale = 1,
+  colorOverride = '',
+  parallaxFactor = 0.05,
+}) {
   const svgRef = useRef(null);
   const [pathData, setPathData] = useState('');
   const [svgHeight, setSvgHeight] = useState(0);
@@ -386,20 +391,25 @@ const SquoctogonBackground = memo(function SquoctogonBackground({ darkMode, scro
 
     compute();
 
-    const ro = new ResizeObserver(compute);
+    let ro;
     const parent = svgRef.current?.parentElement;
-    if (parent) ro.observe(parent);
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(compute);
+      if (parent) ro.observe(parent);
+    }
     window.addEventListener('resize', compute);
 
     return () => {
-      ro.disconnect();
+      if (ro) ro.disconnect();
       window.removeEventListener('resize', compute);
     };
   }, []);
 
-  const strokeColor = darkMode ? '#4a7cc9' : '#2e5090';
-  const strokeOpacity = darkMode ? 0.154 : 0.105;
-  const parallaxY = -(scrollY * PARALLAX_FACTOR);
+  const baseStrokeColor = darkMode ? '#4a7cc9' : '#2e5090';
+  const baseStrokeOpacity = darkMode ? 0.154 : 0.105;
+  const strokeColor = colorOverride || baseStrokeColor;
+  const strokeOpacity = Math.min(1, Math.max(0, baseStrokeOpacity * opacityScale));
+  const parallaxY = -(scrollY * parallaxFactor);
 
   return (
     <svg

@@ -31,6 +31,7 @@ const initialState = {
   bgPattern: 'Squoctogon', // currently-selected pattern from generator favorites
   // Sparkle / particle controls
   sparkleEnabled: true, // show gold sparkle particles
+  sparkleMode: 'particles', // 'particles' = gold ambient, 'ray-tracing' = L&S white rays
   sparkleGlow: false, // show central radial glow permanently (not just during insight)
   sparkleBrightness: 1.0, // opacity multiplier for particles
   sparkleSpeed: 1.0, // speed multiplier for particles
@@ -59,6 +60,7 @@ export const useUIStore = create((set, get) => ({
   setBgParallax: (bgParallax) => set({ bgParallax }),
   setBgPattern: (bgPattern) => set({ bgPattern }),
   setSparkleEnabled: (sparkleEnabled) => set({ sparkleEnabled }),
+  setSparkleMode: (sparkleMode) => set({ sparkleMode }),
   setSparkleGlow: (sparkleGlow) => set({ sparkleGlow }),
   setSparkleBrightness: (sparkleBrightness) => set({ sparkleBrightness }),
   setSparkleSpeed: (sparkleSpeed) => set({ sparkleSpeed }),

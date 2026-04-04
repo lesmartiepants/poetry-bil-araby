@@ -7,6 +7,9 @@ const AMBIENT_COUNT = 35;
 const ACTIVE_COUNT = 60;
 const REDUCED_MOTION_OPACITY = 0.08;
 
+// L&S ray-tracing mode: original maxSparkles from design-review/e2e/gen-3/ls2-ray-tracing.html
+const LS_MAX_SPARKLES = 120;
+
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -26,6 +29,22 @@ function makeParticle(width, height) {
   };
 }
 
+// L&S sparkle particle factory — exact algorithm from ls2-ray-tracing.html
+function makeLsSparkle(width, height) {
+  return {
+    x: Math.random() * width,
+    y: Math.random() * height,
+    vx: (Math.random() - 0.5) * 0.35,
+    vy: -0.1 - Math.random() * 0.3,
+    size: 0.4 + Math.random() * 1.6,
+    life: 0.7 + Math.random() * 0.3,
+    decay: 0.001 + Math.random() * 0.004,
+    flickerPhase: Math.random() * Math.PI * 2,
+    flickerSpeed: 1.5 + Math.random() * 3,
+    warmth: Math.random(),
+  };
+}
+
 // Re-draws the static radial glow used for prefers-reduced-motion and as ambient glow
 function drawStaticGlow(ctx, canvas, opacity) {
   const cx = canvas.width / 2;
@@ -41,6 +60,7 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
   active,
   // Sparkle controls (from uiStore)
   sparkleEnabled = true,
+  sparkleMode = 'particles', // 'particles' | 'ray-tracing'
   sparkleGlow = false,
   sparkleBrightness = 1.0,
   sparkleSpeed = 1.0,
@@ -52,6 +72,7 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
   const activeRef = useRef(active);
   const ctrlRef = useRef({
     sparkleEnabled,
+    sparkleMode,
     sparkleGlow,
     sparkleBrightness,
     sparkleSpeed,
@@ -65,12 +86,13 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
   useEffect(() => {
     ctrlRef.current = {
       sparkleEnabled,
+      sparkleMode,
       sparkleGlow,
       sparkleBrightness,
       sparkleSpeed,
       sparkleAmount,
     };
-  }, [sparkleEnabled, sparkleGlow, sparkleBrightness, sparkleSpeed, sparkleAmount]);
+  }, [sparkleEnabled, sparkleMode, sparkleGlow, sparkleBrightness, sparkleSpeed, sparkleAmount]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -103,60 +125,125 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
       makeParticle(canvas.width, canvas.height)
     );
 
+    // Spawn-and-die pool for L&S ray-tracing mode
+    const lsSparkles = [];
+
     const animate = () => {
       const isActive = activeRef.current;
       const ctrl = ctrlRef.current;
+      const w = canvas.width;
+      const h = canvas.height;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, w, h);
 
       // Central radial glow — during insight mode OR when sparkleGlow toggle is on
       if (isActive || ctrl.sparkleGlow) {
         const glowOpacity = isActive ? 0.09 : 0.06;
-        const cx = canvas.width / 2;
-        const cy = canvas.height / 2;
-        const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, canvas.width * 0.35);
+        const cx = w / 2;
+        const cy = h / 2;
+        const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 0.35);
         glow.addColorStop(0, `rgba(197,160,89,${glowOpacity})`);
         glow.addColorStop(0.5, `rgba(197,160,89,${glowOpacity * 0.44})`);
         glow.addColorStop(1, 'rgba(197,160,89,0)');
         ctx.fillStyle = glow;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillRect(0, 0, w, h);
       }
 
       if (ctrl.sparkleEnabled) {
-        const visibleCount = isActive ? ACTIVE_COUNT : Math.min(ACTIVE_COUNT, ctrl.sparkleAmount);
-        const maxOpacity = Math.min(1, (isActive ? 0.9 : 0.5) * ctrl.sparkleBrightness);
-        const speedMul = ctrl.sparkleSpeed;
+        if (ctrl.sparkleMode === 'ray-tracing') {
+          // L&S ray-tracing algorithm — exact port from ls2-ray-tracing.html
+          const now = Date.now() * 0.001;
+          const cx = w * 0.5;
+          const cy = h * 0.5;
+          const centerR = Math.min(w, h) * 0.25;
 
-        for (let i = 0; i < visibleCount; i++) {
-          const p = particles[i];
-          p.x += p.speedX * speedMul;
-          p.y += p.speedY * speedMul;
-
-          // Wrap at edges
-          if (p.y < -5) {
-            p.y = canvas.height + 5;
-            p.x = Math.random() * canvas.width;
+          if (lsSparkles.length < LS_MAX_SPARKLES && Math.random() < 0.3) {
+            lsSparkles.push(makeLsSparkle(w, h));
           }
-          if (p.x < -5) p.x = canvas.width + 5;
-          if (p.x > canvas.width + 5) p.x = -5;
 
-          const alpha = Math.min(p.opacity, maxOpacity);
-          const drawSize = p.size;
-          const rgb = hexToRgb(p.color);
+          for (let i = lsSparkles.length - 1; i >= 0; i--) {
+            const s = lsSparkles[i];
+            s.x += s.vx * ctrl.sparkleSpeed;
+            s.y += s.vy * ctrl.sparkleSpeed;
+            s.life -= s.decay;
 
-          // Outer glow halo
-          if (drawSize > 1.2) {
+            if (s.x < -10) s.x = w + 10;
+            if (s.x > w + 10) s.x = -10;
+            if (s.life <= 0 || s.y < -20 || s.y > h + 20) {
+              lsSparkles.splice(i, 1);
+              continue;
+            }
+
+            const flicker = 0.4 + 0.6 * Math.sin(now * s.flickerSpeed + s.flickerPhase);
+            const alpha = s.life * (0.25 + flicker * 0.75) * ctrl.sparkleBrightness;
+
+            const dx = s.x - cx;
+            const dy = s.y - cy;
+            const distFromCenter = Math.sqrt(dx * dx + dy * dy);
+            let dimFactor;
+            if (distFromCenter < centerR) {
+              dimFactor = 0.08 + (distFromCenter / centerR) * 0.27;
+            } else {
+              const edgeDist = Math.min(w, h) * 0.5;
+              dimFactor = 0.35 + Math.min((distFromCenter - centerR) / edgeDist, 1.0) * 0.65;
+            }
+
+            const r = 255;
+            const g = Math.round(245 - s.warmth * 40);
+            const b = Math.round(220 - s.warmth * 100);
+
+            ctx.save();
+            ctx.globalAlpha = alpha * dimFactor;
+            ctx.shadowColor = `rgba(${r},${g},${b},0.5)`;
+            ctx.shadowBlur = 4 + flicker * 8;
+            ctx.fillStyle = `rgba(${r},${g},${b},1)`;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, drawSize * 3.5, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(${rgb},${alpha * 0.12})`;
+            ctx.arc(s.x, s.y, s.size * (0.5 + s.life * 0.5), 0, Math.PI * 2);
+            ctx.fill();
+
+            if (flicker > 0.75) {
+              ctx.globalAlpha = alpha * dimFactor * 0.5 * ((flicker - 0.75) / 0.25);
+              ctx.shadowBlur = 12 + flicker * 6;
+              ctx.beginPath();
+              ctx.arc(s.x, s.y, s.size * 0.25, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.restore();
+          }
+        } else {
+          // Particles mode (gold ambient/insight)
+          const visibleCount = isActive ? ACTIVE_COUNT : Math.min(ACTIVE_COUNT, ctrl.sparkleAmount);
+          const maxOpacity = Math.min(1, (isActive ? 0.9 : 0.5) * ctrl.sparkleBrightness);
+          const speedMul = ctrl.sparkleSpeed;
+
+          for (let i = 0; i < visibleCount; i++) {
+            const p = particles[i];
+            p.x += p.speedX * speedMul;
+            p.y += p.speedY * speedMul;
+
+            if (p.y < -5) {
+              p.y = h + 5;
+              p.x = Math.random() * w;
+            }
+            if (p.x < -5) p.x = w + 5;
+            if (p.x > w + 5) p.x = -5;
+
+            const alpha = Math.min(p.opacity, maxOpacity);
+            const drawSize = p.size;
+            const rgb = hexToRgb(p.color);
+
+            if (drawSize > 1.2) {
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, drawSize * 3.5, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(${rgb},${alpha * 0.12})`;
+              ctx.fill();
+            }
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, drawSize, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${rgb},${alpha})`;
             ctx.fill();
           }
-
-          // Core particle
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, drawSize, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${rgb},${alpha})`;
-          ctx.fill();
         }
       }
 

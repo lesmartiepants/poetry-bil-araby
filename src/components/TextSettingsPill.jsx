@@ -11,6 +11,7 @@ import {
   Sparkles,
   Sun,
   Zap,
+  Wand2,
 } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
@@ -131,6 +132,8 @@ function ControlSlider({ gold, label, value, min, max, step, display, onChange }
 
 const TextSettingsPill = () => {
   const [open, setOpen] = useState(false);
+  // Track active snap point to position the custom backdrop correctly
+  const [activeSnap, setActiveSnap] = useState(0.22);
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
   const gold = theme.gold;
@@ -154,6 +157,7 @@ const TextSettingsPill = () => {
 
   // Sparkle settings
   const sparkleEnabled = useUIStore((s) => s.sparkleEnabled);
+  const sparkleMode = useUIStore((s) => s.sparkleMode);
   const sparkleGlow = useUIStore((s) => s.sparkleGlow);
   const sparkleBrightness = useUIStore((s) => s.sparkleBrightness);
   const sparkleSpeed = useUIStore((s) => s.sparkleSpeed);
@@ -164,19 +168,37 @@ const TextSettingsPill = () => {
   const panelBg = darkMode ? 'bg-stone-950/97' : 'bg-white/97';
   const inputBg = darkMode ? 'bg-black/40' : 'bg-white/60';
 
+  const handleClose = () => {
+    setOpen(false);
+    setActiveSnap(0.22);
+  };
+
   return (
     <>
-      <style>{`
-        [data-vaul-drawer] { touch-action: none; }
-      `}</style>
+      {/* Custom backdrop: dims area above the drawer and closes on tap.
+          Uses modal={false} on Drawer.Root so poem remains scrollable beneath. */}
+      {open && (
+        <div
+          className="fixed inset-x-0 top-0 bg-black/25 z-40"
+          style={{ height: `${(1 - activeSnap) * 100}vh` }}
+          onClick={handleClose}
+        />
+      )}
 
       <Drawer.Root
         open={open}
-        onOpenChange={setOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) handleClose();
+          else setOpen(true);
+        }}
         snapPoints={[0.22, 0.45, 0.92]}
-        activeSnapPoint={open ? undefined : 0.22}
-        dismissible={false}
-        direction="bottom"
+        activeSnapPoint={activeSnap}
+        setActiveSnapPoint={(snap) => {
+          // null means user dragged below lowest snap — close the drawer
+          if (snap === null) handleClose();
+          else setActiveSnap(snap);
+        }}
+        modal={false}
       >
         <Drawer.Trigger asChild>
           <button
@@ -191,12 +213,10 @@ const TextSettingsPill = () => {
         </Drawer.Trigger>
 
         <Drawer.Portal>
-          {/* Overlay — does NOT close drawer (dismissible=false) */}
-          <Drawer.Overlay className="fixed inset-0 bg-black/30 z-40" />
-
+          {/* No Drawer.Overlay — custom backdrop above handles dim + click-to-close */}
           <Drawer.Content
             className={`fixed bottom-0 left-0 right-0 ${panelBg} backdrop-blur-2xl border-t ${theme.border} rounded-t-3xl z-50 flex flex-col`}
-            style={{ maxHeight: '92vh' }}
+            style={{ height: '92vh' }}
           >
             {/* Drag handle */}
             <div className="flex justify-center pt-3 pb-1">
@@ -213,7 +233,7 @@ const TextSettingsPill = () => {
               </Drawer.Title>
               <button
                 aria-label="Close settings"
-                onClick={() => setOpen(false)}
+                onClick={() => handleClose()}
                 className="w-7 h-7 flex items-center justify-center rounded-full opacity-40 hover:opacity-80 transition-opacity"
                 style={{ color: gold }}
               >
@@ -496,38 +516,74 @@ const TextSettingsPill = () => {
                 </ToggleRow>
               </div>
 
-              <div className="space-y-2">
-                <ControlSlider
-                  gold={gold}
-                  label="Brightness"
-                  value={Math.round(sparkleBrightness * 100)}
-                  min={10}
-                  max={200}
-                  step={10}
-                  display={`${Math.round(sparkleBrightness * 100)}%`}
-                  onChange={(v) => getStore().setSparkleBrightness(v / 100)}
-                />
-                <ControlSlider
-                  gold={gold}
-                  label="Speed"
-                  value={Math.round(sparkleSpeed * 100)}
-                  min={25}
-                  max={300}
-                  step={25}
-                  display={`${Math.round(sparkleSpeed * 100)}%`}
-                  onChange={(v) => getStore().setSparkleSpeed(v / 100)}
-                />
-                <ControlSlider
-                  gold={gold}
-                  label="Amount"
-                  value={sparkleAmount}
-                  min={5}
-                  max={60}
-                  step={5}
-                  display={String(sparkleAmount)}
-                  onChange={(v) => getStore().setSparkleAmount(v)}
-                />
+              {/* Sparkle mode toggle */}
+              <div className="mb-3">
+                <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
+                  Animation style
+                </span>
+                <div className="flex gap-1.5">
+                  <button
+                    onClick={() => getStore().setSparkleMode('particles')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${
+                      sparkleMode === 'particles'
+                        ? 'bg-gold/20 border-gold/40'
+                        : 'opacity-50 hover:opacity-80 border-transparent'
+                    }`}
+                    style={{ color: gold }}
+                  >
+                    <Sparkles size={11} />
+                    Gold
+                  </button>
+                  <button
+                    onClick={() => getStore().setSparkleMode('ray-tracing')}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${
+                      sparkleMode === 'ray-tracing'
+                        ? 'bg-gold/20 border-gold/40'
+                        : 'opacity-50 hover:opacity-80 border-transparent'
+                    }`}
+                    style={{ color: gold }}
+                  >
+                    <Wand2 size={11} />
+                    L&amp;S Rays
+                  </button>
+                </div>
               </div>
+
+              {/* Particle controls (hidden in L&S ray-tracing mode) */}
+              {sparkleMode === 'particles' && (
+                <div className="space-y-2">
+                  <ControlSlider
+                    gold={gold}
+                    label="Brightness"
+                    value={Math.round(sparkleBrightness * 100)}
+                    min={10}
+                    max={200}
+                    step={10}
+                    display={`${Math.round(sparkleBrightness * 100)}%`}
+                    onChange={(v) => getStore().setSparkleBrightness(v / 100)}
+                  />
+                  <ControlSlider
+                    gold={gold}
+                    label="Speed"
+                    value={Math.round(sparkleSpeed * 100)}
+                    min={25}
+                    max={300}
+                    step={25}
+                    display={`${Math.round(sparkleSpeed * 100)}%`}
+                    onChange={(v) => getStore().setSparkleSpeed(v / 100)}
+                  />
+                  <ControlSlider
+                    gold={gold}
+                    label="Amount"
+                    value={sparkleAmount}
+                    min={5}
+                    max={60}
+                    step={5}
+                    display={String(sparkleAmount)}
+                    onChange={(v) => getStore().setSparkleAmount(v)}
+                  />
+                </div>
+              )}
 
               <div className="h-6" />
             </div>

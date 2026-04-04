@@ -652,6 +652,46 @@ const CATALOG = [
           { id: 'e2e-v3-surge', name: 'Variation 3 — Surge', philosophy: 'Electric lapis energy — kinetic spring physics on every reveal', file: 'onboarding/variation-3-surge.html', desc: 'NeedNap-inspired: blueprint grid background, lapis scanning line, spring-bounce reveals (30–55ms stagger), streak-dot progress bar, neon lapis glow on selection, near-black palette', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' }
         ],
         feedback: {}
+      },
+      { id: 'e2e-onb-e2e', name: 'Onboarding E2E Flows v1', source: 'feature/onboarding-sprint', description: 'Full end-to-end onboarding flow prototypes — three early directions before the Awwwards sprint',
+        options: [
+          { id: 'e2e-onb-e2e-1', name: 'E2E Flow 1', philosophy: 'Seamless flow — desert splash into preference pickers', file: 'onboarding/onboarding-e2e-1.html', desc: 'Full E2E onboarding flow, option 1', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-e2e-2', name: 'E2E Flow 2', philosophy: 'Cinematic flow — cumulative atmosphere layers', file: 'onboarding/onboarding-e2e-2.html', desc: 'Full E2E onboarding flow, option 2', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-e2e-3', name: 'E2E Flow 3', philosophy: 'Minimal flow — fast, clean grid layout', file: 'onboarding/onboarding-e2e-3.html', desc: 'Full E2E onboarding flow, option 3', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' }
+        ],
+        feedback: {}
+      },
+      { id: 'e2e-onb-screens', name: 'Onboarding Final Screens', source: 'feature/onboarding-sprint', description: 'Individual screens from the chosen onboarding direction — brand reveal, pickers, backgrounds, exit transition',
+        options: [
+          { id: 'e2e-onb-brand', name: 'Brand Reveal', philosophy: 'Desert into Arabic letters into "شِعر" — the brand unfolds', file: 'onboarding/brand-reveal.html', desc: 'Brand reveal splash screen prototype', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-mood', name: 'Mood Picker', philosophy: 'Pick an emotion to seed the first poem', file: 'onboarding/mood-picker.html', desc: 'Mood selection screen', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-era', name: 'Era Picker', philosophy: 'Choose a poetic era — classical to contemporary', file: 'onboarding/era-picker.html', desc: 'Era / time period selection screen', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-theme', name: 'Theme Picker', philosophy: 'Choose thematic topics to seed your feed', file: 'onboarding/theme-picker.html', desc: 'Theme / topic selection screen', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-exit', name: 'Exit Transition', philosophy: 'The flow dissolves into the poem view', file: 'onboarding/exit-transition.html', desc: 'Exit / outro transition screen', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-bg3', name: 'Background 3 — Muqarnas', philosophy: 'Diamond depth grid with breathing animation', file: 'onboarding/bg-option-3.html', desc: 'Poem view background: diamond muqarnas grid, depth illusion, breathing animation', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-bg4', name: 'Background 4 — Star & Cross (Lapis Only)', philosophy: 'Khatam octagram in pure lapis — no gold', file: 'onboarding/bg-option-4.html', desc: 'Poem view background: star & cross tile, lapis only, gold removed', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' }
+        ],
+        feedback: {}
+      },
+      { id: 'e2e-onb-archive', name: 'Onboarding Archive', source: 'feature/onboarding-sprint', description: 'Archived iteration screens — A/B/C variants for mood pickers, brand reveals, era pickers, backgrounds and exit transitions',
+        options: [
+          { id: 'e2e-arch-brand-a', name: 'Brand Reveal A', philosophy: 'First brand reveal direction — variant A', file: 'onboarding/archive/brand-reveal-a.html', desc: 'Archive: brand reveal variant A', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-brand-b', name: 'Brand Reveal B', philosophy: 'Second brand reveal direction — variant B', file: 'onboarding/archive/brand-reveal-b.html', desc: 'Archive: brand reveal variant B', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-mood-a', name: 'Mood Picker A', philosophy: 'First mood picker iteration', file: 'onboarding/archive/mood-picker-a.html', desc: 'Archive: mood picker variant A', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-mood-b', name: 'Mood Picker B', philosophy: 'Second mood picker iteration', file: 'onboarding/archive/mood-picker-b.html', desc: 'Archive: mood picker variant B', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-mood-c', name: 'Mood Picker C', philosophy: 'Third mood picker iteration', file: 'onboarding/archive/mood-picker-c.html', desc: 'Archive: mood picker variant C', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-mood-c1', name: 'Mood Picker C1 — Pill', philosophy: 'Pill chip variant of mood picker C', file: 'onboarding/archive/mood-picker-c1-pill.html', desc: 'Archive: mood picker C1 pill chip variant', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-mood-c2', name: 'Mood Picker C2 — White', philosophy: 'Light/white variant of mood picker C', file: 'onboarding/archive/mood-picker-c2-white.html', desc: 'Archive: mood picker C2 white/light variant', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-era-a', name: 'Era Picker A', philosophy: 'First era picker iteration', file: 'onboarding/archive/era-picker-a.html', desc: 'Archive: era picker variant A', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-era-b', name: 'Era Picker B', philosophy: 'Second era picker iteration', file: 'onboarding/archive/era-picker-b.html', desc: 'Archive: era picker variant B', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-theme-a', name: 'Theme Picker A', philosophy: 'First theme picker iteration', file: 'onboarding/archive/theme-picker-a.html', desc: 'Archive: theme picker variant A', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-theme-b', name: 'Theme Picker B', philosophy: 'Second theme picker iteration', file: 'onboarding/archive/theme-picker-b.html', desc: 'Archive: theme picker variant B', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-exit-a', name: 'Exit Transition A', philosophy: 'First exit transition direction', file: 'onboarding/archive/exit-transition-a.html', desc: 'Archive: exit transition variant A', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-exit-b', name: 'Exit Transition B', philosophy: 'Second exit transition direction', file: 'onboarding/archive/exit-transition-b.html', desc: 'Archive: exit transition variant B', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-bg1', name: 'Background 1 — Star & Cross', philosophy: 'Khatam octagram: lapis outer, gold mid, alternating inner', file: 'onboarding/archive/backgrounds/bg-option-1.html', desc: 'Archive: background option 1 — star & cross tile', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-bg2', name: 'Background 2 — Molded Panel', philosophy: 'Carved stucco arabesque with 3D relief and shadow layers', file: 'onboarding/archive/backgrounds/bg-option-2.html', desc: 'Archive: background option 2 — molded arabesque panel', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' }
+        ],
+        feedback: {}
       }
     ]
   }

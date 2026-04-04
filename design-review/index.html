@@ -255,8 +255,11 @@
     .comment-trigger-compact svg{width:18px;height:18px}
     .comment-trigger-compact.has-text{color:var(--accent);border-color:rgba(212,168,75,.3)}
     /* Mobile top info bar */
-    .mobile-info-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:150;padding:6px 14px;background:linear-gradient(to bottom,rgba(9,9,11,.92) 60%,transparent);pointer-events:none}
-    .mib-phil{font-size:9px;font-style:italic;color:rgba(212,168,75,.45);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mobile-info-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:150;padding:6px 14px;background:linear-gradient(to bottom,rgba(9,9,11,.92) 60%,transparent);pointer-events:none;gap:8px;align-items:center}
+    .mobile-info-bar a{pointer-events:auto}
+    .mib-back{font-size:11px;color:var(--accent);text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;opacity:.7;transition:opacity .15s}
+    .mib-back:hover{opacity:1}
+    .mib-phil{font-size:9px;font-style:italic;color:rgba(212,168,75,.45);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
     .dock-sync{margin-left:4px;display:flex;align-items:center}
     /* Mobile accordion overlay */
     .mobile-acc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250;display:none;align-items:flex-end}
@@ -349,6 +352,8 @@
 <div class="app">
   <!-- Toolbar -->
   <div class="toolbar">
+    <a class="nav-btn" id="backToApp" href="../" title="Back to app" style="text-decoration:none;gap:4px"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>App</a>
+    <div class="tb-sep"></div>
     <button class="acc-toggle" id="accToggle" onclick="toggleAccordion()" title="Browse all designs">
       <span id="accToggleLabel">Browse Designs</span>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
@@ -373,6 +378,7 @@
 
   <!-- Mobile top info bar -->
   <div class="mobile-info-bar" id="mobileInfoBar">
+    <a class="mib-back" href="../" title="Back to app"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>App</a>
     <div class="mib-phil" id="mibPhil"></div>
   </div>
 

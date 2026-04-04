@@ -8,5 +8,5 @@ export const FEATURES = {
   database: true, // Enable database poem source (requires backend server running)
   onboarding: true, // Show kinetic walkthrough + preference pickers on every visit (skip-to-app button always visible)
   forceOnboarding: false, // (legacy — no-op; onboarding now always shows when enabled above)
-  designReview: false, // Show design review shortcut icon (still accessible via /design-review URL)
+  designReview: true, // Show design review shortcut icon (still accessible via /design-review URL)
 };

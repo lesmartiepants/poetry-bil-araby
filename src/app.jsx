@@ -835,7 +835,6 @@ export default function DiwanApp() {
   // One ref per word — stable array, recreated only when word count changes
   const wordRefs = useMemo(
     () => Array.from({ length: allWords.length }, () => ({ current: null })),
-
     [allWords.length]
   );
 
@@ -1878,8 +1877,8 @@ export default function DiwanApp() {
                 <button
                   onClick={togglePlay}
                   aria-label={isPlaying ? 'Pause recitation' : 'Listen to poem'}
-                  className={`px-7 py-2.5 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide transition-all duration-150`}
-                  style={{ boxShadow: '0 4px 32px rgba(0,0,0,0.45)', backdropFilter: 'blur(12px)' }}
+                  className={`px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 transition-all duration-150`}
+                  style={{ boxShadow: '0 4px 32px rgba(0,0,0,0.45)' }}
                 >
                   {isPlaying ? 'Pause' : 'Listen'}
                 </button>

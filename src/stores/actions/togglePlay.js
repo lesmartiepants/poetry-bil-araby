@@ -379,85 +379,102 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               throw new Error('Live mode failed');
             }
 
-            // Server now streams PCM chunks via SSE — read and collect them
-            const reader = liveRes.body.getReader();
-            const decoder = new TextDecoder();
-            const livePcmChunks = [];
-            let sseBuffer = '';
-            let firstLiveChunkMs = null;
+            // Detect response format: new SSE streaming or old JSON blob
+            const liveContentType = liveRes.headers.get('content-type') || '';
+            if (liveContentType.includes('text/event-stream')) {
+              // ── New SSE streaming format — read audio chunks as they arrive ──
+              const reader = liveRes.body.getReader();
+              const decoder = new TextDecoder();
+              const livePcmChunks = [];
+              let sseBuffer = '';
+              let firstLiveChunkMs = null;
 
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              sseBuffer += decoder.decode(value, { stream: true });
-              const lines = sseBuffer.split('\n');
-              sseBuffer = lines.pop() || '';
-              for (const line of lines) {
-                if (!line.startsWith('data: ')) continue;
-                const payload = line.slice(6).trim();
-                if (payload === '[DONE]') break;
-                try {
-                  const parsed = JSON.parse(payload);
-                  if (parsed.error) throw new Error(`Live API error: ${parsed.error}`);
-                  if (parsed.b64) {
-                    if (firstLiveChunkMs === null) {
-                      firstLiveChunkMs = performance.now() - liveT0;
-                      addLog(
-                        'Audio API',
-                        `[${ttsModel}] ← First chunk (${firstLiveChunkMs.toFixed(0)}ms) | Streaming...`,
-                        'info'
-                      );
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                sseBuffer += decoder.decode(value, { stream: true });
+                const lines = sseBuffer.split('\n');
+                sseBuffer = lines.pop() || '';
+                for (const line of lines) {
+                  if (!line.startsWith('data: ')) continue;
+                  const payload = line.slice(6).trim();
+                  if (payload === '[DONE]') break;
+                  try {
+                    const parsed = JSON.parse(payload);
+                    if (parsed.error) throw new Error(`Live API error: ${parsed.error}`);
+                    if (parsed.b64) {
+                      if (firstLiveChunkMs === null) {
+                        firstLiveChunkMs = performance.now() - liveT0;
+                        addLog(
+                          'Audio API',
+                          `[${ttsModel}] ← First chunk (${firstLiveChunkMs.toFixed(0)}ms) | Streaming...`,
+                          'info'
+                        );
+                      }
+                      livePcmChunks.push(parsed.b64);
                     }
-                    livePcmChunks.push(parsed.b64);
+                  } catch (parseErr) {
+                    addLog(
+                      'Audio API',
+                      `[${ttsModel}] SSE parse error: ${parseErr.message}`,
+                      'warning'
+                    );
                   }
-                } catch (parseErr) {
-                  addLog(
-                    'Audio API',
-                    `[${ttsModel}] SSE parse error: ${parseErr.message}`,
-                    'warning'
-                  );
                 }
               }
-            }
-            // Flush any remaining SSE buffer after the stream closes
-            if (sseBuffer.startsWith('data: ')) {
-              const payload = sseBuffer.slice(6).trim();
-              if (payload && payload !== '[DONE]') {
-                try {
-                  const parsed = JSON.parse(payload);
-                  if (parsed.b64) livePcmChunks.push(parsed.b64);
-                } catch {}
+              // Flush any remaining SSE buffer after the stream closes
+              if (sseBuffer.startsWith('data: ')) {
+                const payload = sseBuffer.slice(6).trim();
+                if (payload && payload !== '[DONE]') {
+                  try {
+                    const parsed = JSON.parse(payload);
+                    if (parsed.b64) livePcmChunks.push(parsed.b64);
+                  } catch {}
+                }
               }
+
+              if (!livePcmChunks.length) {
+                throw new Error('Live API returned no audio chunks');
+              }
+
+              // Concatenate raw PCM16 chunks into a single base64 string.
+              // (Do NOT build a WAV blob here — downstream pcm16ToWav() adds the WAV header.)
+              const decoded = livePcmChunks.map((c) =>
+                Uint8Array.from(atob(c), (x) => x.charCodeAt(0))
+              );
+              const totalLen = decoded.reduce((sum, a) => sum + a.length, 0);
+              const combined = new Uint8Array(totalLen);
+              let byteOffset = 0;
+              for (const arr of decoded) {
+                combined.set(arr, byteOffset);
+                byteOffset += arr.length;
+              }
+              let liveBinary = '';
+              for (let i = 0; i < combined.length; i++)
+                liveBinary += String.fromCharCode(combined[i]);
+              b64 = btoa(liveBinary);
+
+              const liveApiMs = performance.now() - liveT0;
+              addLog(
+                'Audio API',
+                `[${ttsModel}] ✓ Live SSE complete | TTFA: ${((firstLiveChunkMs || 0) / 1000).toFixed(2)}s | Total: ${(liveApiMs / 1000).toFixed(2)}s | ${livePcmChunks.length} chunks | ${(combined.length / 1024).toFixed(1)}KB PCM`,
+                'success'
+              );
+            } else {
+              // ── Old JSON format — backend returns { audioData: "base64..." } ──
+              const liveData = await liveRes.json();
+              if (!liveData.audioData) {
+                throw new Error('Live API returned no audio data');
+              }
+              b64 = liveData.audioData;
+              const liveApiMs = performance.now() - liveT0;
+              addLog(
+                'Audio API',
+                `[${ttsModel}] ✓ Live API complete (JSON) | Total: ${(liveApiMs / 1000).toFixed(2)}s`,
+                'success'
+              );
             }
-
-            if (!livePcmChunks.length) {
-              throw new Error('Live API returned no audio chunks');
-            }
-
-            // Assemble all PCM chunks into a WAV blob
-            const liveBlob = pcm16ChunksToWav(livePcmChunks);
-            if (!liveBlob) throw new Error('Live API audio assembly failed');
-
-            // Store as combined b64 for the downstream blob conversion
-            const liveApiMs = performance.now() - liveT0;
-            addLog(
-              'Audio API',
-              `[${ttsModel}] ✓ Live SSE complete | TTFA: ${(firstLiveChunkMs / 1000).toFixed(2)}s | Total: ${(liveApiMs / 1000).toFixed(2)}s | ${livePcmChunks.length} chunks | ${(liveBlob.size / 1024).toFixed(1)}KB`,
-              'success'
-            );
-
-            // Convert blob back to b64 so the shared downstream b64→WAV path handles caching & playback
-            const liveArrBuf = await liveBlob.arrayBuffer();
-            const liveUint8 = new Uint8Array(liveArrBuf);
-            let liveBinary = '';
-            for (let i = 0; i < liveUint8.length; i++)
-              liveBinary += String.fromCharCode(liveUint8[i]);
-            b64 = btoa(liveBinary);
-            addLog(
-              'Audio API',
-              `[${ttsModel}] Success via Live SSE | ${livePcmChunks.length} chunks → WAV`,
-              'success'
-            );
+            addLog('Audio API', `[${ttsModel}] Success via Live API`, 'success');
           } else {
             // ── REST API path — generateContent flow ──
             const ttsContent = getTTSContent(current);

@@ -1531,17 +1531,7 @@ export default function DiwanApp() {
                   )}
                 </div>
 
-                <div className="flex justify-center gap-3 mt-2 mb-4">
-                  {Array.isArray(current?.tags) &&
-                    current.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                </div>
+
               </div>
             </div>
           </main>

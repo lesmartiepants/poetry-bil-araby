@@ -646,6 +646,22 @@ const CATALOG = [
         feedback: {}
       }
     ]
+  },
+  // ═══════════════════════════════════════════════════════════════
+  // AWWWARDS-INSPIRED — premium animation-driven designs
+  // Inspired by meetsansara.com, neednap.net, AW-2025-Portfolio
+  // ═══════════════════════════════════════════════════════════════
+  {
+    component: 'Awwwards-Inspired',
+    id: 'awwwards',
+    categories: [
+      { id: 'awwwards-scroll-motion', name: 'Scroll & Motion', source: 'PR #441', description: 'GSAP + Lenis scroll-driven animation explorations — inspired by AntoineW/AW-2025-Portfolio Work section, meetsansara.com, neednap.net',
+        options: [
+          { id: 'awwwards-scroll-odyssey', name: '01 Scroll Odyssey', philosophy: 'Poetry as a journey — horizontal scroll gallery with GSAP ScrollTrigger + Lenis smooth scroll, clip-path reveals, staggered Arabic text, canvas particles', file: 'awwwards-inspired/01-scroll-odyssey.html', desc: 'GSAP ScrollTrigger + Lenis: horizontal-scroll poem gallery (6 cards), splash → hero word-reveal → pinned horizontal gallery → full-screen featured verse → poet grid → closing. Canvas ambient particles with mouse repulsion, scroll progress bar, theme toggle.', generation: 9, iteration: 1, source_branch: 'copilot/design-variations-review', source_pr: '#441' }
+        ],
+        feedback: {}
+      }
+    ]
   }
 ];
 
@@ -673,7 +689,8 @@ const SECTION_FILTERS = [
   { id: 'main-app', label: 'Main App', short: 'App' },
   { id: 'vc', label: 'Vertical Controls', short: 'VC' },
   { id: 'auth', label: 'Auth', short: 'Auth' },
-  { id: 'branding', label: 'Branding', short: 'Brand' }
+  { id: 'branding', label: 'Branding', short: 'Brand' },
+  { id: 'awwwards', label: 'Awwwards', short: 'Aww' }
 ];
 try { const sf = localStorage.getItem('design-review-section-filter'); if (sf && SECTION_FILTERS.some(f => f.id === sf)) sectionFilter = sf; } catch {}
 
@@ -851,6 +868,7 @@ function buildFlatList() {
   CATALOG.forEach((comp, ci) => {
     if (sectionFilter === 'auth' && comp.id !== 'auth') return;
     if (sectionFilter === 'branding' && comp.id !== 'branding') return;
+    if (sectionFilter === 'awwwards' && comp.id !== 'awwwards') return;
     if (sectionFilter === 'vc' && comp.id !== 'e2e') return;
     if ((sectionFilter === 'e2e' || sectionFilter === 'onboarding' || sectionFilter === 'main-app') && comp.id !== 'e2e') return;
     comp.categories.forEach((cat, cati) =>

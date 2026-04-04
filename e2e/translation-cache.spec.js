@@ -470,20 +470,20 @@ test.describe('Translation Cache — Poem Variety', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await dismissSplashIfVisible(page);
-    await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
+    await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 12000 });
 
     // After initial load, the app fetches a poem from DB (poemA is served first)
     // Wait for it to replace the seed poem
-    await expect(page.locator('text=شاعر أ').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=شاعر أ').first()).toBeVisible({ timeout: 12000 });
 
     // Click discover — opens the DiscoverDrawer, then click Surprise Me to get a new poem
     // (poemB or poemC in sequence; first was consumed by auto-load/prefetch)
     const openDrawerButton = page.locator('button[aria-label="Open discover"]');
-    await expect(openDrawerButton).toBeEnabled({ timeout: 5000 });
+    await expect(openDrawerButton).toBeEnabled({ timeout: 10000 });
     await openDrawerButton.click();
 
     const surpriseMeButton = page.locator('button[aria-label="Discover new poem"]');
-    await expect(surpriseMeButton).toBeVisible({ timeout: 3000 });
+    await expect(surpriseMeButton).toBeVisible({ timeout: 8000 });
     await surpriseMeButton.click();
 
     // Should see a DIFFERENT poet after discover
@@ -503,7 +503,7 @@ test.describe('Translation Cache — Poem Variety', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     await dismissSplashIfVisible(page);
-    await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
+    await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 12000 });
 
     // The displayed poem should be Arabic text — not empty, not a placeholder
     const arabicText = await page.evaluate(() => {

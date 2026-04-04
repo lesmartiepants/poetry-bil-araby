@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { toast } from 'sonner';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   Play,
   Pause,
@@ -13,6 +13,8 @@ import {
   Paintbrush,
   Check,
   X,
+  Rabbit,
+  Heart,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -50,10 +52,13 @@ import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
 import { useModalStore } from './stores/modalStore';
 import { fetchPoem as fetchPoemAction } from './stores/actions/fetchPoem';
-import { togglePlay as togglePlayAction } from './stores/actions/togglePlay';
-import { analyzePoem as analyzePoemAction } from './stores/actions/analyzePoem';
+import {
+  togglePlay as togglePlayAction,
+  dismissTTSProgress,
+  abortPlay,
+} from './stores/actions/togglePlay';
+import { analyzePoem as analyzePoemAction, cancelAnalysis } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
-import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
 import { pcm16ToWav } from './utils/audio.js';
 import {
@@ -74,7 +79,16 @@ import {
   pingHealth,
 } from './services/database.js';
 import './styles/app.css';
+import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
+import { computeWordTimings } from './utils/wordTiming.js';
+import {
+  useTTSHighlight,
+  startPlayer,
+  pauseOffset,
+  playbackStartTime,
+  isSeeking,
+} from './hooks/useTTSHighlight.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 
@@ -89,6 +103,7 @@ import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
+import PlayControlsStrip from './components/PlayControlsStrip.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -184,8 +199,11 @@ export default function DiwanApp() {
   const setAudioUrl = useAudioStore((s) => s.setUrl);
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
+  const audioPlayer = useAudioStore((s) => s.player);
+  const highlightStyle = useUIStore((s) => s.highlightStyle);
   const hasAutoLoaded = useRef(false);
   const longPressTimer = useRef(null);
+  const pendingSaveHandled = useRef(false);
   const logs = useUIStore((s) => s.logs);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const showCopySuccess = useModalStore((s) => s.copyToast);
@@ -231,7 +249,7 @@ export default function DiwanApp() {
     const nextIdx = (currentIdx + 1) % FONTS.length;
     setCurrentFont(FONTS[nextIdx].id);
     track('font_changed', { font: FONTS[nextIdx].id });
-    addLog('Font', `Switched to ${FONTS[nextIdx].label}`, 'info');
+    addLog('Font', `Switched to ${FONTS[nextIdx].label}`, 'user');
   };
 
   const TEXT_SIZES = [
@@ -255,6 +273,30 @@ export default function DiwanApp() {
 
   const addLog = useUIStore.getState().addLog;
 
+  // Log every time the displayed Arabic poem changes on screen
+  useEffect(() => {
+    if (!displayedPoem?.id) return;
+    const source = carouselPoems.length > 0 ? `carousel[${carouselIndex}]` : 'main';
+    const chars = displayedPoem.arabic?.length || 0;
+    addLog(
+      'Render',
+      `Arabic poem shown: ${displayedPoem.poet} — ${displayedPoem.title} | id: ${displayedPoem.id} | ${chars} chars | source: ${source}`,
+      'info'
+    );
+  }, [displayedPoem?.id]);
+
+  // Log when a translation appears or is cleared on screen (not every streaming chunk)
+  const prevInterpretationRef = useRef(null);
+  useEffect(() => {
+    const prev = prevInterpretationRef.current;
+    prevInterpretationRef.current = interpretation;
+    if (!prev && interpretation) {
+      addLog('Render', `Translation appeared | poem id: ${displayedPoem?.id ?? 'unknown'}`, 'info');
+    } else if (prev && !interpretation) {
+      addLog('Render', `Translation cleared | poem id: ${displayedPoem?.id ?? 'unknown'}`, 'info');
+    }
+  }, [interpretation]);
+
   // Track poem view time (emit 'view' event after 3s on same poem)
   useEffect(() => {
     if (!current?.id || !user) return;
@@ -264,6 +306,33 @@ export default function DiwanApp() {
     }, 3000);
     return () => clearTimeout(timer);
   }, [current?.id, user]);
+
+  // Show a loading toast while the translation is streaming, dismiss when done
+  const prevIsInterpretingRef = useRef(false);
+  useEffect(() => {
+    const prev = prevIsInterpretingRef.current;
+    prevIsInterpretingRef.current = isInterpreting;
+    if (!prev && isInterpreting) {
+      toast.loading('Translating poem…', {
+        id: 'translation-progress',
+        duration: Infinity,
+        icon: (
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
+          >
+            <Rabbit size={16} />
+          </motion.div>
+        ),
+      });
+    } else if (prev && !isInterpreting) {
+      if (interpretation) {
+        toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });
+      } else {
+        toast.dismiss('translation-progress');
+      }
+    }
+  }, [isInterpreting]);
 
   useEffect(() => {
     if (selectedCategory !== 'All') {
@@ -326,6 +395,12 @@ export default function DiwanApp() {
     // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).
     if (selectedCategory !== 'All' && current.poetArabic !== selectedCategory) return;
 
+    // If returning from OAuth, pendingCarouselPoems is still in sessionStorage at this point
+    // (hasAutoLoaded runs after this effect). Skip populate — hasAutoLoaded will restore it.
+    try {
+      if (sessionStorage.getItem('pendingCarouselPoems')) return;
+    } catch {}
+
     let cancelled = false;
     clearCarouselPoems();
     explainedPoemIds.current.clear();
@@ -362,7 +437,7 @@ export default function DiwanApp() {
   useEffect(() => {
     if (!interpretation || carouselPoems.length === 0) return;
 
-    const parts = parseInsight(interpretation);
+    const parts = parseInsight(interpretation, addLog);
     const translation = parts?.poeticTranslation;
     if (!translation) return;
 
@@ -385,6 +460,11 @@ export default function DiwanApp() {
     // During streaming, interpretation grows chunk by chunk. Always update if the
     // new translation is longer — this ensures the final complete translation lands
     // on the carousel poem, not just the first partial streaming chunk.
+    // Only write poem.english after streaming completes — patching on every chunk
+    // causes unnecessary re-renders and makes the Arabic verse animation replay
+    // each time Embla reacts to the slide height changing.
+    if (isInterpreting) return;
+
     const existing = carouselPoems[targetIdx].english || '';
     if (existing.length >= translation.length) return;
 
@@ -408,6 +488,41 @@ export default function DiwanApp() {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
 
+      // Restore carousel position unconditionally — pendingCarouselPoems is only written
+      // before an OAuth redirect, so it's safe to read-and-clear on every load.
+      try {
+        const rawPoems = sessionStorage.getItem('pendingCarouselPoems');
+        const rawIdx = sessionStorage.getItem('pendingCarouselIndex');
+        sessionStorage.removeItem('pendingCarouselPoems');
+        sessionStorage.removeItem('pendingCarouselIndex');
+        if (rawPoems) {
+          const restoredPoems = JSON.parse(rawPoems);
+          const targetIdx = rawIdx ? parseInt(rawIdx, 10) : 0;
+          if (Array.isArray(restoredPoems) && restoredPoems.length > 0) {
+            setCarouselPoems(restoredPoems);
+            setCarouselIndex(targetIdx);
+            addLog(
+              'Init',
+              `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`,
+              'success'
+            );
+          }
+        }
+      } catch {}
+
+      // Restore pre-OAuth debug logs unconditionally — pendingLogs is only written
+      // before an OAuth redirect, so it's safe to read-and-clear on every load.
+      try {
+        const savedLogs = sessionStorage.getItem('pendingLogs');
+        if (savedLogs) {
+          sessionStorage.removeItem('pendingLogs');
+          const parsed = JSON.parse(savedLogs);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            useUIStore.setState((s) => ({ logs: [...parsed, ...s.logs] }));
+          }
+        }
+      } catch {}
+
       // Deep link: restore poet filter from URL
       if (queryParams.poet && !routeParams?.id) {
         setSelectedCategory(queryParams.poet);
@@ -417,7 +532,7 @@ export default function DiwanApp() {
       if (routeParams?.id && useDatabase) {
         const poemId = routeParams.id;
         track('deep_link_loaded', { poemId });
-        addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'info');
+        addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'request');
         fetchPoemById(poemId)
           .then((poem) => {
             setPoems([poem]);
@@ -473,14 +588,16 @@ export default function DiwanApp() {
     }
   }, []);
 
-  // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
+  // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up.
+  // Guard against multiple rapid onAuthStateChange fires (INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, etc.)
   useEffect(() => {
-    if (!user) return;
+    if (!user || pendingSaveHandled.current) return;
     let stashed;
     try {
       stashed = sessionStorage.getItem('pendingSavePoem');
     } catch {}
     if (!stashed) return;
+    pendingSaveHandled.current = true;
     sessionStorage.removeItem('pendingSavePoem');
     try {
       const poem = JSON.parse(stashed);
@@ -501,16 +618,12 @@ export default function DiwanApp() {
   // When the carousel is active (user has swiped), explain the carousel poem, not the main poem.
   useEffect(() => {
     const poemToExplain = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
-    if (
-      autoExplainPending &&
-      poemToExplain?.id &&
-      !isFetching &&
-      !isInterpreting &&
-      !interpretation
-    ) {
+    if (autoExplainPending && poemToExplain?.id && !isFetching && !isInterpreting) {
       setAutoExplainPending(false);
       if (explainedPoemIds.current.has(poemToExplain.id)) return;
-      if (ratchetMode || !poemToExplain?.cachedTranslation) {
+      // Always AI-translate carousel poems (even if they have a DB scholarly translation),
+      // so every swiped poem gets the same high-quality AI rendering.
+      if (ratchetMode || !poemToExplain?.cachedTranslation || carouselPoems.length > 0) {
         explainedPoemIds.current.add(poemToExplain.id);
         // Set the carousel target ref so the patching effect can match by ID.
         // When carouselPoems is empty (initial explain fires before carousel populates),
@@ -518,6 +631,7 @@ export default function DiwanApp() {
         if (carouselPoems.length > 0) {
           carouselExplainTargetId.current = poemToExplain.id;
         }
+        setInterpretation(null);
         analyzePoemAction({ current: poemToExplain, addLog, track });
       }
     }
@@ -618,7 +732,7 @@ export default function DiwanApp() {
       try {
         const poets = await fetchPoets();
         setDynamicPoets(poets);
-        addLog('Poets', `Loaded ${poets.length} poets from API`, 'info');
+        addLog('Poets', `Loaded ${poets.length} poets from API`, 'success');
       } catch {
         addLog('Poets', 'Failed to fetch poets from API', 'warn');
       } finally {
@@ -655,7 +769,7 @@ export default function DiwanApp() {
         };
       }
     }
-    return parseInsight(interpretation);
+    return parseInsight(interpretation, addLog);
   }, [
     interpretation,
     cachedTranslation,
@@ -663,6 +777,7 @@ export default function DiwanApp() {
     cachedAuthorBio,
     ratchetMode,
     displayedPoem?.arabic,
+    addLog,
   ]);
 
   const versePairs = useMemo(() => {
@@ -677,17 +792,71 @@ export default function DiwanApp() {
     return pairs;
   }, [displayedPoem, insightParts]);
 
+  // ── TTS highlight: word list and per-verse offsets ──
+  const { allWords, wordOffsets } = useMemo(() => {
+    const allWords = [];
+    const wordOffsets = [];
+    versePairs.forEach((pair) => {
+      wordOffsets.push(allWords.length);
+      const words = (pair.ar || '').split(/\s+/).filter(Boolean);
+      words.forEach((w) => allWords.push(w));
+    });
+    return { allWords, wordOffsets };
+  }, [versePairs]);
+
+  // Estimate total audio duration from the player buffer (0 when no audio loaded)
+  const audioDuration = useMemo(() => {
+    if (audioPlayer?.buffer?.duration) return audioPlayer.buffer.duration;
+    return 0;
+  }, [audioPlayer]);
+
+  // When no audio is loaded, use a character-weighted simulated duration (~650ms/word)
+  const effectiveDuration = audioDuration || allWords.length * 0.65;
+
+  const wordTimings = useMemo(
+    () => computeWordTimings(allWords, effectiveDuration),
+    [allWords, effectiveDuration]
+  );
+
+  // Per-verse start times — first word of each verse's timing.start
+  const verseStartTimes = useMemo(() => {
+    return wordOffsets.map((offset) => wordTimings[offset]?.start ?? 0);
+  }, [wordOffsets, wordTimings]);
+
+  // One ref per word — stable array, recreated only when word count changes
+  const wordRefs = useMemo(
+    () => Array.from({ length: allWords.length }, () => ({ current: null })),
+
+    [allWords.length]
+  );
+
+  // Container ref — useTTSHighlight also needs to know which verse is active
+  // for the English line tts-line-active treatment (managed below via rAF).
+
+  const [currentVerseIndex, setCurrentVerseIndex] = useState(0);
+
+  useTTSHighlight({
+    wordRefs,
+    timings: wordTimings,
+    totalDuration: effectiveDuration,
+    wordOffsets,
+    onVerseChange: setCurrentVerseIndex,
+  });
+
   // pcm16ToWav imported from ./utils/audio.js (used directly below)
 
-  // Wire Tone.Player end-of-playback — watch audioStore for player changes
+  // Wire Tone.Player end-of-playback — audioPlayer is a reactive selector (line 193)
   useEffect(() => {
-    const player = useAudioStore.getState().player;
-    if (player) {
-      player.onstop = () => {
+    if (audioPlayer) {
+      audioPlayer.onstop = () => {
+        if (isSeeking.value) {
+          isSeeking.value = false;
+          return;
+        }
         useAudioStore.getState().setPlaying(false);
       };
     }
-  }, [useAudioStore.getState().player]);
+  }, [audioPlayer]);
 
   // Volume detection for pulse & glow effect
   useVolumeDetection({
@@ -705,7 +874,15 @@ export default function DiwanApp() {
   const togglePlay = () =>
     togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track });
 
-  const handleAnalyze = () => analyzePoemAction({ current: displayedPoem, addLog, track });
+  const handleAnalyze = () => {
+    // When in carousel mode, record which poem we're explaining so the patching
+    // effect (line ~418) can stamp the arriving translation onto the right slide
+    // instead of falling back to carouselPoems[0].
+    if (carouselPoems.length > 0 && displayedPoem?.id) {
+      carouselExplainTargetId.current = displayedPoem.id;
+    }
+    analyzePoemAction({ current: displayedPoem, addLog, track });
+  };
 
   const handleFetch = () => fetchPoemAction({ addLog, track, emitEvent, navigate, markPoemSeen });
 
@@ -738,7 +915,7 @@ export default function DiwanApp() {
     addLog(
       'UI Event',
       `📋 Copy button clicked | Poem: ${displayedPoem?.poet} - ${displayedPoem?.title}`,
-      'info'
+      'user'
     );
 
     const englishText = insightParts?.poeticTranslation || displayedPoem?.english || '';
@@ -766,7 +943,7 @@ export default function DiwanApp() {
   };
 
   const handleShare = async () => {
-    addLog('UI Event', 'Share button clicked', 'info');
+    addLog('UI Event', 'Share button clicked', 'user');
     track('poem_shared', { poet: displayedPoem?.poet });
 
     // Open the share card modal for visual sharing
@@ -783,9 +960,21 @@ export default function DiwanApp() {
     // Stash current poem so it survives the OAuth page redirect
     if (current) {
       try {
-        sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
+        sessionStorage.setItem('pendingSavePoem', JSON.stringify(displayedPoem || current));
+        const { carouselPoems: cp, carouselIndex: ci } = usePoemStore.getState();
+        if (cp.length > 0) {
+          sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp));
+          sessionStorage.setItem('pendingCarouselIndex', String(ci));
+        }
       } catch {}
     }
+    // Save logs before OAuth redirect so they persist after page reload
+    try {
+      const currentLogs = useUIStore.getState().logs;
+      if (currentLogs?.length > 0) {
+        sessionStorage.setItem('pendingLogs', JSON.stringify(currentLogs.slice(-100)));
+      }
+    } catch {}
     const { error } = await signInWithGoogle();
     if (error) {
       addLog('Auth Error', error.message, 'error');
@@ -801,9 +990,21 @@ export default function DiwanApp() {
     // Stash current poem so it survives the OAuth page redirect
     if (current) {
       try {
-        sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
+        sessionStorage.setItem('pendingSavePoem', JSON.stringify(displayedPoem || current));
+        const { carouselPoems: cp, carouselIndex: ci } = usePoemStore.getState();
+        if (cp.length > 0) {
+          sessionStorage.setItem('pendingCarouselPoems', JSON.stringify(cp));
+          sessionStorage.setItem('pendingCarouselIndex', String(ci));
+        }
       } catch {}
     }
+    // Save logs before OAuth redirect so they persist after page reload
+    try {
+      const currentLogs = useUIStore.getState().logs;
+      if (currentLogs?.length > 0) {
+        sessionStorage.setItem('pendingLogs', JSON.stringify(currentLogs.slice(-100)));
+      }
+    } catch {}
     const { error } = await signInWithApple();
     if (error) {
       addLog('Auth Error', error.message, 'error');
@@ -865,7 +1066,7 @@ export default function DiwanApp() {
     addLog(
       'UI Event',
       `👎 Flag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
-      'info'
+      'user'
     );
 
     if (!user) {
@@ -874,7 +1075,7 @@ export default function DiwanApp() {
       return;
     }
 
-    addLog('Downvote', `→ Sending downvote to Supabase | poem_id: ${current?.id}`, 'info');
+    addLog('Downvote', `→ Sending downvote to Supabase | poem_id: ${current?.id}`, 'request');
     const { error } = await downvotePoem(current);
     if (error) {
       addLog('Downvote Error', `✗ Failed: ${error.message}`, 'error');
@@ -894,9 +1095,9 @@ export default function DiwanApp() {
     addLog(
       'UI Event',
       `👍 Unflag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
-      'info'
+      'user'
     );
-    addLog('Undownvote', `→ Removing downvote from Supabase | poem_id: ${current?.id}`, 'info');
+    addLog('Undownvote', `→ Removing downvote from Supabase | poem_id: ${current?.id}`, 'request');
 
     const { error } = await undownvotePoem(current?.id);
     if (error) {
@@ -951,7 +1152,7 @@ export default function DiwanApp() {
     const newTheme = darkMode ? 'light' : 'dark';
     track('theme_changed', { theme: newTheme });
     setDarkMode(!darkMode);
-    addLog('Theme', `Switched to ${newTheme} mode`, 'info');
+    addLog('Theme', `Switched to ${newTheme} mode`, 'user');
   };
   const handleToggleTheme = handleToggleDarkMode;
 
@@ -965,7 +1166,7 @@ export default function DiwanApp() {
   };
 
   const handleToggleTranslation = (showTranslation) => {
-    addLog('Translation', `Translation ${showTranslation ? 'shown' : 'hidden'}`, 'info');
+    addLog('Translation', `Translation ${showTranslation ? 'shown' : 'hidden'}`, 'user');
   };
 
   const handleToggleTransliteration = (showTransliteration) => {
@@ -977,15 +1178,15 @@ export default function DiwanApp() {
   };
 
   const handleTextSizeChange = (level) => {
-    addLog('TextSize', `Text size changed to level ${level}`, 'info');
+    addLog('TextSize', `Text size changed to level ${level}`, 'user');
   };
 
   const handleKeyboardShortcut = (key, action) => {
-    addLog('Keyboard', `Shortcut: ${key} → ${action}`, 'info');
+    addLog('Keyboard', `Shortcut: ${key} → ${action}`, 'user');
   };
 
   const handleSplashDismissed = () => {
-    addLog('Splash', 'Splash screen dismissed', 'info');
+    addLog('Splash', 'Splash screen dismissed', 'user');
   };
 
   const handleSplashShown = () => {
@@ -1005,6 +1206,7 @@ export default function DiwanApp() {
     setAudioUrl(null);
 
     // Clear any stuck loading states when poem changes
+    dismissTTSProgress();
     setIsGeneratingAudio(false);
     setIsInterpreting(false);
     setAudioError(null);
@@ -1023,19 +1225,24 @@ export default function DiwanApp() {
     addLog(
       'Navigation',
       `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id} | Tags: ${tagsType} - ${tagsContent}`,
-      'info'
+      'user'
     );
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes
-  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (100 RPD per model, free tier)
+  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (flash: ~100 RPD, pro: 50 RPD on Tier 1)
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
 
-    // Prefetch current poem audio after 2s (only if user lingers on this poem)
+    // Warm up the backend immediately so it's awake by the time prefetch fires at 2s.
+    // Render free tier cold starts take up to ~15s; this ping starts the wake-up clock.
+    pingHealth().catch(() => {});
+
+    // Prefetch current poem audio after 500ms (backend warmup ping fires first, so Render
+    // is already waking up — no need for the old 2s conservative delay)
     const prefetchCurrentAudio = setTimeout(() => {
       prefetchManager.prefetchAudio(current.id, current, addLog);
-    }, 2000);
+    }, 500);
 
     // Prefetch current poem insights after 5s (only if user stays)
     const prefetchCurrentInsights = setTimeout(() => {
@@ -1272,42 +1479,41 @@ export default function DiwanApp() {
                 </div>
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
-                  {carouselPoems.length > 0 ? (
+                  {carouselPoems.length > 0 && (
                     <PoemCarousel
                       ref={carouselRef}
                       poems={carouselPoems}
                       currentIndex={carouselIndex}
-                      onSlideChange={(idx) => {
+                      onSlideChange={(idx, direction) => {
                         setCarouselIndex(idx);
-                        // Pause audio when browsing via carousel and clear the stale URL
-                        // so the next play request generates audio for the new poem instead
-                        // of resuming the previous poem's cached blob URL.
+                        // Stop audio and reset TTS state when navigating poems
                         const { player: activePlayer, resetAudio } = useAudioStore.getState();
                         if (activePlayer && activePlayer.state === 'started') {
                           activePlayer.stop();
                         }
-                        // Revoke the blob URL before clearing so the browser can free the
-                        // underlying audio buffer (prevents memory leaks during long sessions).
                         if (audioUrl) URL.revokeObjectURL(audioUrl);
+                        abortPlay();
                         resetAudio();
-                        // Clear stale interpretation from the previous poem so versePairs
-                        // doesn't flash the old translation while the new one loads.
+                        isTogglingPlay.current = false;
+                        pauseOffset.value = 0;
+                        playbackStartTime.value = 0;
+                        document
+                          .querySelectorAll('.tts-active, .tts-past')
+                          .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
+                        dismissTTSProgress();
+                        cancelAnalysis();
                         setInterpretation(null);
                         carouselExplainTargetId.current = null;
-                        // Show translation for the new poem by default
                         setShowTranslation(true);
-                        // Auto-explain via autoExplainPending (single explain path).
-                        // This avoids the race where carousel-populate and autoExplainPending
-                        // both fire analyzePoemAction and fight over interpretation state.
-                        const newPoem = carouselPoems[idx];
+                        const newPoem = usePoemStore.getState().carouselPoems[idx];
                         if (FEATURES.logging && newPoem) {
+                          const fromPoem = carouselPoems[carouselIndex];
                           addLog(
-                            'Navigation',
-                            `Carousel → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ID: ${newPoem.id}`,
-                            'info'
+                            'Carousel',
+                            `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                            'user'
                           );
                         }
-                        // Update URL to reflect the currently displayed poem
                         if (newPoem?.id) {
                           navigate('/poem/' + newPoem.id + window.location.search, {
                             replace: true,
@@ -1316,7 +1522,6 @@ export default function DiwanApp() {
                         }
                         if (
                           newPoem &&
-                          !newPoem.cachedTranslation &&
                           !newPoem.english &&
                           !explainedPoemIds.current.has(newPoem.id)
                         ) {
@@ -1342,65 +1547,12 @@ export default function DiwanApp() {
                               addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
                           });
                       }}
+                      highlightStyle={highlightStyle}
+                      activeVersePairs={versePairs}
+                      wordRefs={wordRefs}
+                      wordOffsets={wordOffsets}
                     />
-                  ) : (
-                    <div className="px-4 md:px-20 py-2 text-center">
-                      <div className="flex flex-col gap-5 md:gap-7">
-                        {versePairs.map((pair, idx) => (
-                          <div
-                            key={`${current?.id}-${idx}`}
-                            className="flex flex-col gap-0.5 verse-fade-up"
-                            style={{ animationDelay: `${idx * 80}ms` }}
-                          >
-                            <p
-                              dir="rtl"
-                              className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
-                              style={{
-                                fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})`,
-                              }}
-                            >
-                              {pair.ar}
-                            </p>
-                            {showTransliteration && pair.ar && (
-                              <p
-                                dir="ltr"
-                                className={`font-brand-en italic opacity-50 ${DESIGN.anim}`}
-                                style={{
-                                  fontSize: `calc(${POEM_META.verseTranslitSize} * ${textScale})`,
-                                }}
-                              >
-                                {transliterate(pair.ar)}
-                              </p>
-                            )}
-                            {showTranslation && pair.en && (
-                              <p
-                                dir="ltr"
-                                className={`font-brand-en italic opacity-60 ${DESIGN.anim} mx-auto`}
-                                style={{
-                                  fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
-                                  maxWidth: '90%',
-                                }}
-                              >
-                                {pair.en}
-                              </p>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
                   )}
-                </div>
-
-                <div className="flex justify-center gap-3 mt-2 mb-4">
-                  {Array.isArray(current?.tags) &&
-                    current.tags.slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
-                      >
-                        {tag}
-                      </span>
-                    ))}
                 </div>
               </div>
             </div>
@@ -1416,6 +1568,43 @@ export default function DiwanApp() {
           />
 
           <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom">
+            {/* Highlight mode: Listen (one-shot) → PlayControlsStrip (exclusive) */}
+            {highlightStyle !== 'none' && (
+              <div className="mb-2 flex justify-center">
+                <AnimatePresence mode="wait">
+                  {isPlaying || isGeneratingAudio || audioPlayer !== null ? (
+                    <PlayControlsStrip
+                      key="play-controls"
+                      player={audioPlayer}
+                      isPlaying={isPlaying}
+                      isLoading={isGeneratingAudio}
+                      verseStartTimes={verseStartTimes}
+                      currentVerseIndex={currentVerseIndex}
+                      onPlayPause={togglePlay}
+                      wordRefs={wordRefs}
+                      wordOffsets={wordOffsets}
+                      timings={wordTimings}
+                      totalDuration={effectiveDuration}
+                      onVerseChange={setCurrentVerseIndex}
+                    />
+                  ) : (
+                    <motion.button
+                      key="listen-trigger"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ duration: 0.2, ease: 'easeOut' }}
+                      onClick={togglePlay}
+                      aria-label="Start recitation"
+                      className={`px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 transition-all duration-150`}
+                      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+                    >
+                      Listen
+                    </motion.button>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
             <div
               ref={controlBarRef}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${DESIGN.glass} ${theme.border} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
@@ -1426,94 +1615,104 @@ export default function DiwanApp() {
                 WebkitUserSelect: 'none',
               }}
             >
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                {isGeneratingAudio ? (
-                  <>
-                    <button
-                      disabled
-                      aria-label="Preparing audio"
-                      className="min-w-[46px] min-h-[46px] p-[11px] bg-gold/8 border border-gold/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
-                    >
-                      <div className="flex items-center justify-center gap-0.5 h-[21px]">
-                        <div
-                          className="w-[2px] h-[6px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[10px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.15s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[14px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.3s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[10px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.45s',
-                          }}
-                        />
-                        <div
-                          className="w-[2px] h-[6px] bg-gold rounded-full"
-                          style={{
-                            animation: 'wave 1.2s ease-in-out infinite',
-                            animationDelay: '0.6s',
-                          }}
-                        />
-                      </div>
-                    </button>
-                    <span
-                      className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                      style={{ animation: 'shimmer 2s ease-in-out infinite' }}
-                    >
-                      Loading
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      onClick={togglePlay}
-                      aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                      style={{ willChange: 'transform' }}
-                      className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
-                    >
-                      {audioError ? (
-                        <Volume2 className={theme.error} size={21} />
-                      ) : isPlaying ? (
-                        <>
-                          <PulseGlowBars volumePulseRef={volumePulseRef} />
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
-                            <Pause fill={GOLD.gold} size={14} />
-                          </div>
-                        </>
-                      ) : (
-                        <Volume2 className={GOLD.goldText} size={21} />
-                      )}
-                    </button>
-                    <span
-                      className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                    >
-                      {isPlaying ? 'Playing' : 'Listen'}
-                    </span>
-                  </>
-                )}
-              </div>
+              {highlightStyle === 'none' && (
+                <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                  {isGeneratingAudio ? (
+                    <>
+                      <button
+                        disabled
+                        aria-label="Preparing audio"
+                        className="min-w-[46px] min-h-[46px] p-[11px] bg-gold/8 border border-gold/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
+                      >
+                        <div className="flex items-center justify-center gap-0.5 h-[21px]">
+                          <div
+                            className="w-[2px] h-[6px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[10px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.15s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[14px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.3s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[10px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.45s',
+                            }}
+                          />
+                          <div
+                            className="w-[2px] h-[6px] bg-gold rounded-full"
+                            style={{
+                              animation: 'wave 1.2s ease-in-out infinite',
+                              animationDelay: '0.6s',
+                            }}
+                          />
+                        </div>
+                      </button>
+                      <span
+                        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+                      >
+                        Loading
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={togglePlay}
+                        aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
+                        style={{ willChange: 'transform' }}
+                        className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
+                      >
+                        {audioError ? (
+                          <Volume2 className={theme.error} size={21} />
+                        ) : isPlaying ? (
+                          <>
+                            <PulseGlowBars volumePulseRef={volumePulseRef} isPlaying={true} />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
+                              <Pause fill={GOLD.gold} size={14} />
+                            </div>
+                          </>
+                        ) : audioUrl ? (
+                          <>
+                            <PulseGlowBars volumePulseRef={null} isPlaying={false} />
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-200 pointer-events-none">
+                              <Play fill={GOLD.gold} size={14} />
+                            </div>
+                          </>
+                        ) : (
+                          <Volume2 className={GOLD.goldText} size={21} />
+                        )}
+                      </button>
+                      <span
+                        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      >
+                        {isPlaying ? 'Playing' : audioUrl ? 'Paused' : 'Listen'}
+                      </span>
+                    </>
+                  )}
+                </div>
+              )}
 
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
                   onClick={() => {
                     setFireTapped(true);
                     setTimeout(() => setFireTapped(false), 400);
+                    dismissTTSProgress();
                     setDiscoverDrawerOpen(true);
                   }}
                   onTouchStart={() => {
@@ -1568,6 +1767,30 @@ export default function DiwanApp() {
                   className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                 >
                   Discover
+                </span>
+              </div>
+
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                <button
+                  onClick={() =>
+                    isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
+                  }
+                  aria-label={isPoemSaved(displayedPoem) ? 'Unsave poem' : 'Save poem'}
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                >
+                  <Heart
+                    size={21}
+                    style={
+                      isPoemSaved(displayedPoem)
+                        ? { fill: '#ef4444', stroke: '#ef4444' }
+                        : { fill: 'none', stroke: GOLD.gold }
+                    }
+                  />
+                </button>
+                <span
+                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                >
+                  {isPoemSaved(displayedPoem) ? 'Saved' : 'Save'}
                 </span>
               </div>
 

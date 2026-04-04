@@ -188,7 +188,11 @@ test.describe('User Flows', () => {
     });
 
     // Click the ThemeToggle button directly (no expand or settings gear needed)
-    const themeBtn = page.locator('button[aria-label="Switch to light mode"], button[aria-label="Switch to dark mode"]').first();
+    const themeBtn = page
+      .locator(
+        'button[aria-label="Switch to light mode"], button[aria-label="Switch to dark mode"]'
+      )
+      .first();
     await expect(themeBtn).toBeVisible({ timeout: 3000 });
     await themeBtn.click();
 
@@ -214,11 +218,14 @@ test.describe('User Flows', () => {
     await textSettingsBtn.click();
     await page.waitForTimeout(300);
 
-    const fontBtn = page.locator('button[title^="Font:"]').first();
-    await expect(fontBtn).toBeVisible({ timeout: 2000 });
-    await fontBtn.click();
+    const fontTrigger = page.locator('button[aria-label="Select font"]').first();
+    await expect(fontTrigger).toBeVisible({ timeout: 2000 });
+    await fontTrigger.click();
 
-    // After cycling, Alexandria should be the active font (Amiri → Alexandria)
+    // Select Alexandria from the dropdown
+    await page.getByText('الإسكندرية').click();
+
+    // After selecting, Alexandria should be the active font
     await expect(page.locator('.font-alexandria').first()).toBeVisible({ timeout: 3000 });
   });
 
@@ -230,7 +237,9 @@ test.describe('User Flows', () => {
     await openDrawerBtn.click();
 
     // Wait for drawer to render with poet options
-    const dropdownBtn = page.locator('[data-testid="poet-picker-button"]:has-text("المتنبي")').first();
+    const dropdownBtn = page
+      .locator('[data-testid="poet-picker-button"]:has-text("المتنبي")')
+      .first();
     await expect(dropdownBtn).toBeVisible({ timeout: 3000 });
 
     // Wait for drawer slide-in animation to finish

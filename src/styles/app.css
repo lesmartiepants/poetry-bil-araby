@@ -1,6 +1,8 @@
 /* App-level utility styles extracted from inline <style> block in app.jsx */
 
-.arabic-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.arabic-shadow {
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
 
 .gold-foil-text {
   background: var(--gold-foil);
@@ -9,33 +11,73 @@
   background-clip: text;
   color: transparent;
 }
-.custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--gold-structural); border-radius: 10px; }
-.bg-radial-gradient { background: radial-gradient(circle, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%); }
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--gold-structural);
+  border-radius: 10px;
+}
+.bg-radial-gradient {
+  background: radial-gradient(
+    circle,
+    var(--tw-gradient-from) 0%,
+    var(--tw-gradient-via) 50%,
+    var(--tw-gradient-to) 100%
+  );
+}
 
-.safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+.safe-bottom {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
 
-.font-amiri { font-family: 'Amiri', serif; }
-.font-alexandria { font-family: 'Alexandria', sans-serif; }
-.font-messiri { font-family: 'El Messiri', sans-serif; }
-.font-lalezar { font-family: 'Lalezar', cursive; }
-.font-rakkas { font-family: 'Rakkas', cursive; }
-.font-fustat { font-family: 'Fustat', serif; }
-.font-kufam { font-family: 'Kufam', sans-serif; }
-.font-katibeh { font-family: 'Katibeh', cursive; }
+.font-amiri {
+  font-family: 'Amiri', serif;
+}
+.font-alexandria {
+  font-family: 'Alexandria', sans-serif;
+}
+.font-messiri {
+  font-family: 'El Messiri', sans-serif;
+}
+.font-lalezar {
+  font-family: 'Lalezar', cursive;
+}
+.font-rakkas {
+  font-family: 'Rakkas', cursive;
+}
+.font-fustat {
+  font-family: 'Fustat', serif;
+}
+.font-kufam {
+  font-family: 'Kufam', sans-serif;
+}
+.font-katibeh {
+  font-family: 'Katibeh', cursive;
+}
 
 .header-luminescence {
   text-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .poem-meta-fade {
@@ -44,6 +86,22 @@
 
 .verse-fade-up {
   animation: fadeUp 0.4s ease-out both;
+}
+
+/* English inline translation slides in left-to-right, one line at a time */
+@keyframes inlineFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 0.6;
+    transform: translateX(0);
+  }
+}
+
+.inline-fade-in {
+  animation: inlineFadeIn 0.55s ease-out forwards;
 }
 
 .minimal-frame {
@@ -79,89 +137,185 @@
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 @keyframes discoverShuffle {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(-15deg); }
-  75% { transform: rotate(15deg); }
-  100% { transform: rotate(0deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-15deg);
+  }
+  75% {
+    transform: rotate(15deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
 .discover-btn:hover .discover-icon {
   animation: discoverShuffle 0.5s ease-in-out;
 }
 
 @keyframes insightsDrawerIn {
-  from { transform: translateY(100%); }
-  to   { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes poetPickerIn {
-  0%   { opacity: 0; transform: translate(-50%, 16px) scale(0.9); }
-  60%  { opacity: 1; transform: translate(-50%, -4px) scale(1.02); }
-  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 16px) scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -4px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
 }
 @keyframes poetPickerOut {
-  0%   { opacity: 1; transform: translate(-50%, 0) scale(1); }
-  40%  { opacity: 0.8; transform: translate(-50%, -3px) scale(1.01); }
-  100% { opacity: 0; transform: translate(-50%, 20px) scale(0.9); }
+  0% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+  40% {
+    opacity: 0.8;
+    transform: translate(-50%, -3px) scale(1.01);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.9);
+  }
 }
 
 @keyframes wave {
-  0%, 100% { transform: scaleY(0.3); }
-  50% { transform: scaleY(1); }
+  0%,
+  100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
 }
 
 @keyframes shimmer {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes wave-organic-1 {
-  0% { height: 10px; }
-  25% { height: 18px; }
-  50% { height: 24px; }
-  75% { height: 14px; }
-  100% { height: 10px; }
+  0% {
+    height: 10px;
+  }
+  25% {
+    height: 18px;
+  }
+  50% {
+    height: 24px;
+  }
+  75% {
+    height: 14px;
+  }
+  100% {
+    height: 10px;
+  }
 }
 
 @keyframes wave-organic-2 {
-  0% { height: 12px; }
-  30% { height: 20px; }
-  60% { height: 22px; }
-  80% { height: 16px; }
-  100% { height: 12px; }
+  0% {
+    height: 12px;
+  }
+  30% {
+    height: 20px;
+  }
+  60% {
+    height: 22px;
+  }
+  80% {
+    height: 16px;
+  }
+  100% {
+    height: 12px;
+  }
 }
 
 @keyframes wave-organic-3 {
-  0% { height: 14px; }
-  20% { height: 24px; }
-  55% { height: 18px; }
-  85% { height: 20px; }
-  100% { height: 14px; }
+  0% {
+    height: 14px;
+  }
+  20% {
+    height: 24px;
+  }
+  55% {
+    height: 18px;
+  }
+  85% {
+    height: 20px;
+  }
+  100% {
+    height: 14px;
+  }
 }
 
 @keyframes wave-organic-4 {
-  0% { height: 11px; }
-  35% { height: 19px; }
-  65% { height: 23px; }
-  90% { height: 15px; }
-  100% { height: 11px; }
+  0% {
+    height: 11px;
+  }
+  35% {
+    height: 19px;
+  }
+  65% {
+    height: 23px;
+  }
+  90% {
+    height: 15px;
+  }
+  100% {
+    height: 11px;
+  }
 }
 
 @keyframes wave-organic-5 {
-  0% { height: 10px; }
-  28% { height: 17px; }
-  58% { height: 21px; }
-  88% { height: 13px; }
-  100% { height: 10px; }
+  0% {
+    height: 10px;
+  }
+  28% {
+    height: 17px;
+  }
+  58% {
+    height: 21px;
+  }
+  88% {
+    height: 13px;
+  }
+  100% {
+    height: 10px;
+  }
 }
 
 .volume-pulse-active .bar-with-glow {
-  box-shadow: 0 0 8px rgba(197, 160, 89, 0.6),
-              0 0 4px rgba(197, 160, 89, 0.4);
+  box-shadow:
+    0 0 8px rgba(197, 160, 89, 0.6),
+    0 0 4px rgba(197, 160, 89, 0.4);
 }
 
 .bar-with-glow {
@@ -169,28 +323,44 @@
 }
 
 @keyframes ratchetGlow {
-  0%, 100% {
-    box-shadow: inset 0 0 80px rgba(249,115,22,0.15), inset 0 0 160px rgba(239,68,68,0.08);
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 80px rgba(249, 115, 22, 0.15),
+      inset 0 0 160px rgba(239, 68, 68, 0.08);
   }
   50% {
-    box-shadow: inset 0 0 120px rgba(249,115,22,0.3), inset 0 0 240px rgba(239,68,68,0.18);
+    box-shadow:
+      inset 0 0 120px rgba(249, 115, 22, 0.3),
+      inset 0 0 240px rgba(239, 68, 68, 0.18);
   }
 }
 
 @keyframes fireTapFlash {
-  0%   { background: rgba(255,140,30,0);    transform: scale(1); }
-  20%  { background: rgba(255,140,30,0.22); transform: scale(1.1); }
-  100% { background: rgba(255,140,30,0);    transform: scale(1); }
+  0% {
+    background: rgba(255, 140, 30, 0);
+    transform: scale(1);
+  }
+  20% {
+    background: rgba(255, 140, 30, 0.22);
+    transform: scale(1.1);
+  }
+  100% {
+    background: rgba(255, 140, 30, 0);
+    transform: scale(1);
+  }
 }
-.fire-tap { animation: fireTapFlash 0.42s ease-out forwards; }
+.fire-tap {
+  animation: fireTapFlash 0.42s ease-out forwards;
+}
 
 /* ============================================
    Sonner toast overrides — gold glass design language
    ============================================ */
 
 [data-sonner-toaster] [data-sonner-toast] {
-  --normal-bg: rgba(12,12,14,0.88);
-  --normal-border: rgba(197,160,89,0.25);
+  --normal-bg: rgba(12, 12, 14, 0.88);
+  --normal-border: rgba(197, 160, 89, 0.25);
 }
 
 /* Default/success toast title in gold */
@@ -202,31 +372,79 @@
 
 /* Description text (poet name) in muted warm italic */
 [data-sonner-toast] [data-description] {
-  color: rgba(212,200,168,0.88);
+  color: rgba(212, 200, 168, 0.88);
   font-style: italic;
 }
 
 /* Error toast — subtle red accent, keep glass bg */
-[data-sonner-toast][data-type="error"] {
-  border-color: rgba(239,68,68,0.3) !important;
+[data-sonner-toast][data-type='error'] {
+  border-color: rgba(239, 68, 68, 0.3) !important;
 }
-[data-sonner-toast][data-type="error"] [data-title] {
+[data-sonner-toast][data-type='error'] [data-title] {
   color: #fca5a5;
 }
 
 /* Gold glow entrance animation */
-[data-sonner-toast][data-mounted="true"] {
+[data-sonner-toast][data-mounted='true'] {
   animation: toastGlow 0.6s ease-out;
 }
 
 @keyframes toastGlow {
-  0%   { box-shadow: 0 0 0 rgba(197,160,89,0),    0 0  0 rgba(0,0,0,0); }
-  50%  { box-shadow: 0 0 20px rgba(197,160,89,0.15), 0 4px 16px rgba(0,0,0,0.4); }
-  100% { box-shadow: 0 0 40px rgba(197,160,89,0.08), 0 8px 32px rgba(0,0,0,0.6); }
+  0% {
+    box-shadow:
+      0 0 0 rgba(197, 160, 89, 0),
+      0 0 0 rgba(0, 0, 0, 0);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(197, 160, 89, 0.15),
+      0 4px 16px rgba(0, 0, 0, 0.4);
+  }
+  100% {
+    box-shadow:
+      0 0 40px rgba(197, 160, 89, 0.08),
+      0 8px 32px rgba(0, 0, 0, 0.6);
+  }
 }
 
-@keyframes breathe { 0%,100% { opacity: 0.35; } 50% { opacity: 0.8; } }
-.font-fell { font-family: 'IM Fell English', serif; }
+/* Loading toast — subtle gold pulse on border */
+[data-sonner-toast][data-type='loading'] {
+  border-color: rgba(197, 160, 89, 0.35) !important;
+  animation:
+    toastGlow 0.6s ease-out,
+    loadingPulse 2s ease-in-out infinite 0.6s;
+}
+
+@keyframes loadingPulse {
+  0%,
+  100% {
+    border-color: rgba(197, 160, 89, 0.25);
+  }
+  50% {
+    border-color: rgba(197, 160, 89, 0.5);
+  }
+}
+
+/* Success toast — brief gold flash */
+[data-sonner-toast][data-type='success'] {
+  border-color: rgba(197, 160, 89, 0.5) !important;
+}
+[data-sonner-toast][data-type='success'] [data-title] {
+  color: var(--gold);
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+.font-fell {
+  font-family: 'IM Fell English', serif;
+}
 .gold-foil-text {
   background: var(--gold-foil);
   -webkit-background-clip: text;

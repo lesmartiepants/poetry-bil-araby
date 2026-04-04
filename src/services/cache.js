@@ -61,9 +61,10 @@ export const cacheOperations = {
    * Get an item from cache with expiry check.
    * @param {string} storeName - Name of the object store
    * @param {string|number} poemId - ID of the poem
+   * @param {Function} [addLog] - Optional structured logging function
    * @returns {Promise<Object|null>} Cached data or null if expired/missing
    */
-  async get(storeName, poemId) {
+  async get(storeName, poemId, addLog) {
     if (!FEATURES.caching) return null;
 
     try {
@@ -106,7 +107,8 @@ export const cacheOperations = {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Cache get error:', error);
+      if (addLog) addLog('Cache', `Get error: ${error.message}`, 'error');
+      else console.error('Cache get error:', error);
       return null;
     }
   },
@@ -116,9 +118,10 @@ export const cacheOperations = {
    * @param {string} storeName - Name of the object store
    * @param {string|number} poemId - ID of the poem
    * @param {Object} data - Data to cache (will be wrapped with poemId and timestamp)
+   * @param {Function} [addLog] - Optional structured logging function
    * @returns {Promise<boolean>} Success status
    */
-  async set(storeName, poemId, data) {
+  async set(storeName, poemId, data, addLog) {
     if (!FEATURES.caching) return false;
 
     try {
@@ -139,7 +142,8 @@ export const cacheOperations = {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Cache set error:', error);
+      if (addLog) addLog('Cache', `Set error: ${error.message}`, 'error');
+      else console.error('Cache set error:', error);
       return false;
     }
   },
@@ -148,9 +152,10 @@ export const cacheOperations = {
    * Delete an item from cache.
    * @param {string} storeName - Name of the object store
    * @param {string|number} poemId - ID of the poem
+   * @param {Function} [addLog] - Optional structured logging function
    * @returns {Promise<boolean>} Success status
    */
-  async delete(storeName, poemId) {
+  async delete(storeName, poemId, addLog) {
     if (!FEATURES.caching) return false;
 
     try {
@@ -166,7 +171,8 @@ export const cacheOperations = {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Cache delete error:', error);
+      if (addLog) addLog('Cache', `Delete error: ${error.message}`, 'error');
+      else console.error('Cache delete error:', error);
       return false;
     }
   },
@@ -174,9 +180,10 @@ export const cacheOperations = {
   /**
    * Clear all items from a store.
    * @param {string} storeName - Name of the object store
+   * @param {Function} [addLog] - Optional structured logging function
    * @returns {Promise<boolean>} Success status
    */
-  async clear(storeName) {
+  async clear(storeName, addLog) {
     if (!FEATURES.caching) return false;
 
     try {
@@ -192,7 +199,8 @@ export const cacheOperations = {
         request.onerror = () => reject(request.error);
       });
     } catch (error) {
-      console.error('Cache clear error:', error);
+      if (addLog) addLog('Cache', `Clear error: ${error.message}`, 'error');
+      else console.error('Cache clear error:', error);
       return false;
     }
   },

@@ -18,8 +18,6 @@ function makeParticle(width, height) {
     speedX: (Math.random() - 0.5) * 0.25,
     opacity: Math.random() * 0.55 + 0.2,
     color: GOLD_COLORS[Math.floor(Math.random() * GOLD_COLORS.length)],
-    sparkleTimer: Math.random() * 200,
-    sparkleInterval: Math.random() * 150 + 100,
   };
 }
 
@@ -55,9 +53,7 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ ac
       return () => window.removeEventListener('resize', resize);
     }
 
-    const particles = Array.from({ length: 50 }, () =>
-      makeParticle(canvas.width, canvas.height)
-    );
+    const particles = Array.from({ length: 50 }, () => makeParticle(canvas.width, canvas.height));
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -75,7 +71,6 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ ac
       for (const p of particles) {
         p.x += p.speedX;
         p.y += p.speedY;
-        p.sparkleTimer++;
 
         // Wrap at edges
         if (p.y < -5) {
@@ -85,19 +80,12 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ ac
         if (p.x < -5) p.x = canvas.width + 5;
         if (p.x > canvas.width + 5) p.x = -5;
 
-        // Sparkle flash
-        const isSparkle = p.sparkleTimer > p.sparkleInterval;
-        if (isSparkle) {
-          p.sparkleTimer = 0;
-          p.sparkleInterval = Math.random() * 150 + 100;
-        }
-
-        const alpha = isSparkle ? Math.min(p.opacity + 0.45, 1) : p.opacity;
-        const drawSize = isSparkle ? p.size * 2.2 : p.size;
+        const alpha = p.opacity;
+        const drawSize = p.size;
         const rgb = hexToRgb(p.color);
 
         // Outer glow halo
-        if (drawSize > 1.2 || isSparkle) {
+        if (drawSize > 1.2) {
           ctx.beginPath();
           ctx.arc(p.x, p.y, drawSize * 3.5, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(${rgb},${alpha * 0.12})`;
@@ -109,14 +97,6 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ ac
         ctx.arc(p.x, p.y, drawSize, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(${rgb},${alpha})`;
         ctx.fill();
-
-        // Bright center highlight on sparkle
-        if (isSparkle) {
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, drawSize * 0.45, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255,240,190,${alpha * 0.7})`;
-          ctx.fill();
-        }
       }
 
       animRef.current = requestAnimationFrame(animate);

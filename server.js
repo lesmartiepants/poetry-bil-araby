@@ -24,9 +24,12 @@ import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
+import { readFileSync } from 'fs';
+import WebSocket from 'ws';
 
 const { Pool } = pg;
 const app = express();
+const _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
 const PORT = process.env.PORT || 3001;
 const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
 const LOG_DEBUG = process.env.LOG_DEBUG === 'true'; // verbose DB debug, off by default
@@ -241,7 +244,9 @@ app.use(
       if (!origin) return callback(null, true);
       const allowed = [
         'http://localhost:5173',
+        'http://localhost:5174',
         'http://localhost:3001',
+        'http://localhost:8080',
         'https://poetry-bil-araby.vercel.app',
       ];
       // Allow Vercel preview deployments (poetry-bil-araby-*.vercel.app)
@@ -636,7 +641,10 @@ app.get(
       if (poem.cached_explanation) formattedPoem.cachedExplanation = poem.cached_explanation;
       if (poem.cached_author_bio) formattedPoem.cachedAuthorBio = poem.cached_author_bio;
 
-      log.info('Poems', `By ID: ${id}, poet=${poem.poet}${poem.cached_translation ? ', has_translation' : ''}`);
+      log.info(
+        'Poems',
+        `By ID: ${id}, poet=${poem.poet}${poem.cached_translation ? ', has_translation' : ''}`
+      );
       res.json(formattedPoem);
     } catch (error) {
       Sentry.captureException(error);
@@ -930,6 +938,139 @@ app.post('/api/ai/:model/:action', async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// GEMINI LIVE API — WebSocket TTS with SSE streaming to client
+// ═══════════════════════════════════════════════════════════════
+app.post('/api/ai/live-tts', async (req, res) => {
+  const WS_TIMEOUT = 60000;
+
+  try {
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
+    }
+    const { text, voiceName, systemInstruction, temperature } = req.body || {};
+    if (!text || typeof text !== 'string' || !text.trim()) {
+      return res.status(400).json({ error: 'Missing or empty "text" field' });
+    }
+
+    const voice = voiceName || 'Fenrir';
+    log.info('Live TTS', `Starting SSE stream | text: ${text.length} chars | voice: ${voice}`);
+
+    // Set SSE headers so the client can read audio chunks as they arrive
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    req.on('close', () => {
+      res.end();
+    });
+
+    const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
+
+    await new Promise((resolve, reject) => {
+      let settled = false;
+      let chunkCount = 0;
+      const timeout = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          ws.close();
+          reject(new Error('Live TTS timed out after 60s'));
+        }
+      }, WS_TIMEOUT);
+
+      const ws = new WebSocket(wsUrl);
+
+      ws.on('open', () => {
+        const setupMsg = {
+          setup: {
+            model: 'models/gemini-3.1-flash-live-preview',
+            generationConfig: {
+              responseModalities: ['AUDIO'],
+              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
+              ...(temperature != null ? { temperature: parseFloat(temperature) } : {}),
+            },
+            systemInstruction: {
+              parts: [
+                {
+                  text:
+                    systemInstruction ||
+                    'You are a text-to-speech reader. Read aloud the exact text provided by the user, word for word, with no additions, commentary, questions, or paraphrasing. Do not respond conversationally. Only speak the text as given.',
+                },
+              ],
+            },
+          },
+        };
+        ws.send(JSON.stringify(setupMsg));
+      });
+
+      ws.on('message', (raw) => {
+        try {
+          const msg = JSON.parse(raw.toString());
+          if (msg.setupComplete) {
+            ws.send(JSON.stringify({ realtimeInput: { text } }));
+            return;
+          }
+          if (msg.serverContent?.modelTurn?.parts) {
+            for (const part of msg.serverContent.modelTurn.parts) {
+              if (part.inlineData?.data && !res.writableEnded) {
+                // Stream each PCM chunk to the client as an SSE data event
+                res.write(`data: ${JSON.stringify({ b64: part.inlineData.data })}\n\n`);
+                chunkCount++;
+              }
+            }
+          }
+          if (msg.serverContent?.turnComplete) {
+            if (!settled) {
+              settled = true;
+              clearTimeout(timeout);
+              ws.close();
+              if (!res.writableEnded) {
+                res.write(`data: [DONE]\n\n`);
+                res.end();
+              }
+              log.info('Live TTS', `SSE stream complete | ${chunkCount} chunks sent`);
+              resolve();
+            }
+          }
+        } catch (e) {
+          log.error('Live TTS', `Parse error: ${e.message}`);
+        }
+      });
+
+      ws.on('error', (err) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          reject(err);
+        }
+      });
+
+      ws.on('close', (code, reason) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          if (chunkCount > 0) {
+            if (!res.writableEnded) {
+              res.write(`data: [DONE]\n\n`);
+              res.end();
+            }
+            resolve();
+          } else {
+            reject(new Error(`WebSocket closed before any audio: code=${code} reason=${reason}`));
+          }
+        }
+      });
+    });
+  } catch (error) {
+    log.error('Live TTS', `Failed: ${error.message}`);
+    if (!res.headersSent) {
+      res.status(500).json({ error: `Live TTS failed: ${error.message}` });
+    } else if (!res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+      res.end();
+    }
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
 // DESIGN REVIEW API
 // ═══════════════════════════════════════════════════════════════
 
@@ -945,6 +1086,15 @@ async function designTablesExist() {
 
 // ── OG Image: SVG-based share card for social link previews ─────────────
 // GET /api/poems/:id/og-image — returns an SVG image for Open Graph previews
+// TTS Lab — dev-only experiment page (relaxed CSP for inline scripts)
+app.get('/tts-lab', (_req, res) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; media-src blob:"
+  );
+  res.type('html').send(_labHtml);
+});
+
 app.get(
   '/api/poems/:id/og-image',
   [param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'), validate],

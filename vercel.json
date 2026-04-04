@@ -26,7 +26,12 @@
   ],
   "rewrites": [
     { "source": "/design-review/(.*)", "destination": "/design-review/$1" },
+    {
+      "source": "/geometric-explorer",
+      "destination": "/design-review/islamic-patterns/generate.html"
+    },
     { "source": "/api/og/:id", "destination": "/api/og/[id]" },
+    { "source": "/tts-lab", "destination": "https://poetry-bil-araby-2mb0.onrender.com/tts-lab" },
     { "source": "/((?!design-review|api/).*)", "destination": "/index.html" }
   ]
 }

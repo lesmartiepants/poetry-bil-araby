@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TTS Highlight Styles — قافية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold:       #C9A84C;
+    --gold-dim:   rgba(201,168,76,0.22);
+    --gold-glow:  rgba(201,168,76,0.55);
+    --gold-block: rgba(201,168,76,0.13);
+    --bg:         #0D1117;
+    --bg-card:    #131A22;
+    --border:     rgba(201,168,76,0.15);
+    --text:       rgba(255,255,255,0.92);
+    --text-dim:   rgba(255,255,255,0.18);
+    --text-mid:   rgba(255,255,255,0.45);
+    --text-muted: rgba(255,255,255,0.5);
+    --font-ar:    'Amiri', serif;
+    --font-ui:    'Inter', sans-serif;
+  }
+
+  html, body { background: var(--bg); color: var(--text); font-family: var(--font-ui); min-height: 100vh; }
+
+  /* ── Page ─────────────────────────────────────────────────────── */
+  .page { max-width: 1040px; margin: 0 auto; padding: 44px 20px 80px; }
+
+  .page-header { text-align: center; margin-bottom: 40px; direction: ltr; }
+  .page-title  { font-size: 0.75rem; font-weight: 500; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; }
+  .page-sub    { font-size: 0.72rem; color: var(--text-muted); }
+
+  /* ── Grid: 3 cols desktop, 2 tablet, 1 mobile ────────────────── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 760px) { .grid { grid-template-columns: repeat(2,1fr); } }
+  @media (max-width: 480px) { .grid { grid-template-columns: 1fr; } }
+
+  /* ── Card ─────────────────────────────────────────────────────── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 16px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .card-header { display: flex; align-items: flex-start; gap: 9px; direction: ltr; }
+  .badge {
+    width: 26px; height: 26px; border-radius: 5px; flex-shrink: 0;
+    background: rgba(201,168,76,0.1); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; font-weight: 700; color: var(--gold);
+    margin-top: 1px;
+  }
+  .style-name { font-size: 0.78rem; font-weight: 500; color: var(--text); }
+  .style-desc { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+
+  /* ── Poem ─────────────────────────────────────────────────────── */
+  .poem { display: flex; flex-direction: column; gap: 14px; flex: 1; }
+  .verse { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+
+  .ar-line {
+    font-family: var(--font-ar);
+    font-size: 1.3rem;
+    text-align: center;
+    direction: rtl;
+    width: 100%;
+  }
+
+  /* English translation line */
+  .en-line {
+    font-family: var(--font-ui);
+    font-size: 0.67rem;
+    font-style: italic;
+    color: var(--text-muted);
+    text-align: center;
+    direction: ltr;
+    padding: 1px 6px;
+    border-radius: 3px;
+    transition: color 0.35s ease, background 0.35s ease, border-color 0.35s ease;
+    border-left: 2px solid transparent;
+  }
+  .en-line.en-active {
+    color: rgba(255,255,255,0.82);
+    background: var(--gold-block);
+    border-left-color: rgba(201,168,76,0.45);
+  }
+
+  /* ── Progress pip ─────────────────────────────────────────────── */
+  .card-foot { display: flex; align-items: center; gap: 8px; direction: ltr; }
+  .pip-track { flex: 1; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .pip-fill  { height: 100%; background: var(--gold); width: 0%; transition: width 0.12s linear; }
+  .pip-lbl   { font-size: 0.6rem; color: var(--text-muted); white-space: nowrap; }
+
+  /* ══════════════════════════════════════════════════════════════
+     A — Word Glow  (gold text + gold aura)
+  ══════════════════════════════════════════════════════════════ */
+  #card-a .ar-line { line-height: 2.1; }
+  .gw { display: inline; color: var(--text-dim); transition: color .25s ease, text-shadow .25s ease; }
+  .gw.past    { color: var(--text-mid); }
+  .gw.current {
+    color: var(--gold);
+    text-shadow: 0 0 8px var(--gold), 0 0 22px var(--gold-glow), 0 0 40px rgba(201,168,76,0.18);
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     B — Underline Flow
+  ══════════════════════════════════════════════════════════════ */
+  #card-b .ar-line { line-height: 2.3; }
+  .uf { display: inline; color: var(--text-dim); padding-bottom: 3px; border-bottom: 2px solid transparent; transition: border-color .2s ease, color .2s ease; }
+  .uf.past    { color: var(--text-mid); border-bottom-color: var(--gold-dim); }
+  .uf.current { color: var(--text); border-bottom-color: var(--gold); filter: drop-shadow(0 2px 5px rgba(201,168,76,0.5)); }
+
+  /* ══════════════════════════════════════════════════════════════
+     D — Progressive Reveal
+  ══════════════════════════════════════════════════════════════ */
+  #card-d .ar-line { line-height: 2.1; }
+  .pr { display: inline; color: rgba(255,255,255,0.06); transition: color .35s ease, text-shadow .35s ease; }
+  .pr.past    { color: var(--text-mid); }
+  .pr.current { color: var(--text); text-shadow: 0 0 6px rgba(201,168,76,0.35); }
+
+  /* ══════════════════════════════════════════════════════════════
+     G — Focus Blur  (line-level, not word-level)
+  ══════════════════════════════════════════════════════════════ */
+  #card-g .ar-line { line-height: 2.1; }
+  #card-g .verse   { transition: filter .4s ease, opacity .4s ease; }
+  #card-g .verse.line-inactive { filter: blur(2px); opacity: 0.18; }
+  #card-g .verse.line-active   { filter: none;      opacity: 1; }
+  #card-g .verse.line-active .ar-line { color: var(--text); }
+  #card-g .verse.line-active .ar-line::after {
+    content: '';
+    display: block;
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(201,168,76,0.4), transparent);
+    margin-top: 2px;
+  }
+
+  /* ══════════════════════════════════════════════════════════════
+     I — Gold Pill
+  ══════════════════════════════════════════════════════════════ */
+  #card-i .ar-line { line-height: 2.3; }
+  .qw { display: inline-block; padding: 2px 6px; border-radius: 4px; border: 1px solid transparent; margin: 2px; color: var(--text-dim); transition: all .2s ease; }
+  .qw.past    { border-color: var(--gold-dim); color: var(--text-mid); }
+  .qw.current { background: var(--gold); color: #1a1a1a; box-shadow: 0 0 12px var(--gold-glow); font-weight: 600; }
+
+  /* ══════════════════════════════════════════════════════════════
+     J — Gold Pill Natural  (inline, box-shadow spread)
+  ══════════════════════════════════════════════════════════════ */
+  #card-j .ar-line { line-height: 3.2; }
+  .qn { display: inline; border-radius: 4px; padding: .22em 0 .1em; -webkit-box-decoration-break: clone; box-decoration-break: clone; color: var(--text-dim); transition: background .2s ease, color .2s ease, box-shadow .2s ease; }
+  .qn.past    { color: var(--text-mid); }
+  .qn.current { background: var(--gold); color: #1a1a1a; box-shadow: 5px 0 0 var(--gold), -5px 0 0 var(--gold), 0 0 12px var(--gold-glow); font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-header">
+    <div class="page-title">Highlight Style Options — قافية</div>
+    <div class="page-sub">6 candidates · demo loops automatically · English line activates with each verse</div>
+  </div>
+
+  <div class="grid">
+
+    <div class="card" id="card-a">
+      <div class="card-header"><div class="badge">A</div><div><div class="style-name">Word Glow</div><div class="style-desc">Gold text + aura on current word</div></div></div>
+      <div class="poem" id="poem-a"></div>
+      <div class="card-foot"><div class="pip-track"><div class="pip-fill" id="pip-a"></div></div><div class="pip-lbl" id="lbl-a">—</div></div>
+    </div>
+
+    <div class="card" id="card-b">
+      <div class="card-header"><div class="badge">B</div><div><div class="style-name">Underline Flow</div><div class="style-desc">Gold underline sweeps forward</div></div></div>
+      <div class="poem" id="poem-b"></div>
+      <div class="card-foot"><div class="pip-track"><div class="pip-fill" id="pip-b"></div></div><div class="pip-lbl" id="lbl-b">—</div></div>
+    </div>
+
+    <div class="card" id="card-d">
+      <div class="card-header"><div class="badge">D</div><div><div class="style-name">Progressive Reveal</div><div class="style-desc">Words materialise as spoken</div></div></div>
+      <div class="poem" id="poem-d"></div>
+      <div class="card-foot"><div class="pip-track"><div class="pip-fill" id="pip-d"></div></div><div class="pip-lbl" id="lbl-d">—</div></div>
+    </div>
+
+    <div class="card" id="card-g">
+      <div class="card-header"><div class="badge">G</div><div><div class="style-name">Focus Blur</div><div class="style-desc">Active verse in focus · others recede</div></div></div>
+      <div class="poem" id="poem-g"></div>
+      <div class="card-foot"><div class="pip-track"><div class="pip-fill" id="pip-g"></div></div><div class="pip-lbl" id="lbl-g">—</div></div>
+    </div>
+
+    <div class="card" id="card-i">
+      <div class="card-header"><div class="badge">I</div><div><div class="style-name">Gold Pill</div><div class="style-desc">Solid gold background block</div></div></div>
+      <div class="poem" id="poem-i"></div>
+      <div class="card-foot"><div class="pip-track"><div class="pip-fill" id="pip-i"></div></div><div class="pip-lbl" id="lbl-i">—</div></div>
+    </div>
+
+    <div class="card" id="card-j">
+      <div class="card-header"><div class="badge">J</div><div><div class="style-name">Gold Pill Natural</div><div class="style-desc">Inline pill · natural Arabic spacing</div></div></div>
+      <div class="poem" id="poem-j"></div>
+      <div class="card-foot"><div class="pip-track"><div class="pip-fill" id="pip-j"></div></div><div class="pip-lbl" id="lbl-j">—</div></div>
+    </div>
+
+  </div>
+</div>
+<script>
+// ── Poem data ──────────────────────────────────────────────────────────────
+const VERSES = [
+  { ar: 'قِفَا نَبْكِ مِن ذِكرَى حَبِيبٍ وَمَنزِلِ',  en: 'Stop — let us weep for the memory of a beloved and her abode' },
+  { ar: 'بِسِقطِ اللِّوَى بَينَ الدَّخُولِ فَحَومَلِ', en: 'at the edge of the sands between Al-Dakhul and Hawmal' },
+  { ar: 'فَتُوضِحَ فَالمِقرَاةِ لَم يَعفُ رَسمُهَا',   en: 'at Tawdih and al-Miqrat, whose traces were not erased' },
+  { ar: 'لِمَا نَسَجَتهَا مِن جَنُوبٍ وَشَمأَلِ',      en: 'by the weaving of the south wind and the north' },
+];
+
+const MS_PER_WORD = 640;   // simulated recitation pace
+const GAP_MS      = 900;   // pause at end of loop before restart
+
+// ── Style definitions (word-level panels) ─────────────────────────────────
+const WORD_STYLES = [
+  { id: 'a', cls: 'gw', past: 'past', cur: 'current' },
+  { id: 'b', cls: 'uf', past: 'past', cur: 'current' },
+  { id: 'd', cls: 'pr', past: 'past', cur: 'current' },
+  { id: 'i', cls: 'qw', past: 'past', cur: 'current' },
+  { id: 'j', cls: 'qn', past: 'past', cur: 'current' },
+];
+
+// ── Build word-level poem DOM ──────────────────────────────────────────────
+function buildWordPoem(panelId, cls) {
+  const container = document.getElementById('poem-' + panelId);
+  container.innerHTML = '';
+  const allWords = []; // { span, verseIdx }
+
+  VERSES.forEach((verse, vi) => {
+    const verseEl = document.createElement('div');
+    verseEl.className = 'verse';
+
+    const arLine = document.createElement('div');
+    arLine.className = 'ar-line';
+    arLine.setAttribute('dir', 'rtl');
+
+    const enLine = document.createElement('div');
+    enLine.className = 'en-line';
+    enLine.dataset.vi = vi;
+    enLine.textContent = verse.en;
+
+    verse.ar.split(/\s+/).filter(Boolean).forEach(w => {
+      const span = document.createElement('span');
+      span.className = cls;
+      span.textContent = w + '\u200f ';
+      arLine.appendChild(span);
+      allWords.push({ span, verseIdx: vi });
+    });
+
+    verseEl.appendChild(arLine);
+    verseEl.appendChild(enLine);
+    container.appendChild(verseEl);
+  });
+
+  return allWords;
+}
+
+// ── Build line-level poem DOM (Panel G) ───────────────────────────────────
+function buildLinePoem(panelId) {
+  const container = document.getElementById('poem-' + panelId);
+  container.innerHTML = '';
+
+  VERSES.forEach((verse, vi) => {
+    const verseEl = document.createElement('div');
+    verseEl.className = 'verse line-inactive';
+    verseEl.dataset.vi = vi;
+
+    const arLine = document.createElement('div');
+    arLine.className = 'ar-line';
+    arLine.setAttribute('dir', 'rtl');
+    arLine.textContent = verse.ar;
+
+    const enLine = document.createElement('div');
+    enLine.className = 'en-line';
+    enLine.dataset.vi = vi;
+    enLine.textContent = verse.en;
+
+    verseEl.appendChild(arLine);
+    verseEl.appendChild(enLine);
+    container.appendChild(verseEl);
+  });
+}
+
+// ── State ─────────────────────────────────────────────────────────────────
+const panels = {};
+
+WORD_STYLES.forEach(s => {
+  panels[s.id] = { type: 'word', style: s, words: buildWordPoem(s.id, s.cls), curIdx: -1, startTs: null, rafId: null };
+});
+
+buildLinePoem('g');
+panels['g'] = { type: 'line', curVerseIdx: -1, startTs: null, rafId: null,
+  verses: Array.from(document.querySelectorAll('#poem-g .verse')) };
+
+// ── Word-level tick ────────────────────────────────────────────────────────
+function tickWord(id, ts) {
+  const p = panels[id];
+  if (!p.startTs) p.startTs = ts;
+
+  const total = p.words.length;
+  const loopMs = total * MS_PER_WORD + GAP_MS;
+  const elapsed = (ts - p.startTs) % loopMs;
+  const wordIdx = Math.min(Math.floor(elapsed / MS_PER_WORD), total);
+
+  if (wordIdx !== p.curIdx) {
+    p.curIdx = wordIdx;
+    const { cls, past, cur } = p.style;
+
+    p.words.forEach(({ span }, i) => {
+      span.className = i < wordIdx ? `${cls} ${past}` : i === wordIdx ? `${cls} ${cur}` : cls;
+    });
+
+    // Active verse for English highlight
+    const activeVi = wordIdx < total ? p.words[wordIdx]?.verseIdx : p.words[total - 1]?.verseIdx;
+    document.querySelectorAll(`#poem-${id} .en-line`).forEach(el => {
+      el.classList.toggle('en-active', parseInt(el.dataset.vi) === activeVi);
+    });
+
+    // Progress pip
+    const pct = Math.min((elapsed / (total * MS_PER_WORD)) * 100, 100);
+    document.getElementById('pip-' + id).style.width = pct + '%';
+    const w = Math.min(wordIdx + 1, total);
+    document.getElementById('lbl-' + id).textContent = `${w} / ${total}`;
+  }
+
+  p.rafId = requestAnimationFrame(t => tickWord(id, t));
+}
+
+// ── Line-level tick (Panel G) ──────────────────────────────────────────────
+const WORDS_PER_VERSE = VERSES.map(v => v.ar.split(/\s+/).filter(Boolean).length);
+const TOTAL_WORDS = WORDS_PER_VERSE.reduce((a,b) => a+b, 0);
+
+function tickLine(ts) {
+  const p = panels['g'];
+  if (!p.startTs) p.startTs = ts;
+
+  const loopMs = TOTAL_WORDS * MS_PER_WORD + GAP_MS;
+  const elapsed = (ts - p.startTs) % loopMs;
+  const wordIdx = Math.min(Math.floor(elapsed / MS_PER_WORD), TOTAL_WORDS);
+
+  // Map word index → verse index
+  let verseIdx = 0, acc = 0;
+  for (let i = 0; i < WORDS_PER_VERSE.length; i++) {
+    acc += WORDS_PER_VERSE[i];
+    if (wordIdx < acc) { verseIdx = i; break; }
+    verseIdx = i;
+  }
+
+  if (verseIdx !== p.curVerseIdx) {
+    p.curVerseIdx = verseIdx;
+    p.verses.forEach((el, i) => {
+      el.className = 'verse ' + (i === verseIdx ? 'line-active' : 'line-inactive');
+      el.querySelector('.en-line').classList.toggle('en-active', i === verseIdx);
+    });
+  }
+
+  const pct = Math.min((elapsed / (TOTAL_WORDS * MS_PER_WORD)) * 100, 100);
+  document.getElementById('pip-g').style.width = pct + '%';
+  document.getElementById('lbl-g').textContent = `verse ${verseIdx + 1} / ${VERSES.length}`;
+
+  panels['g'].rafId = requestAnimationFrame(tickLine);
+}
+
+// ── Start all panels with stagger ─────────────────────────────────────────
+['a','b','d','i','j'].forEach((id, idx) => {
+  setTimeout(() => {
+    panels[id].rafId = requestAnimationFrame(t => tickWord(id, t));
+  }, idx * 200);
+});
+setTimeout(() => {
+  panels['g'].rafId = requestAnimationFrame(tickLine);
+}, 2 * 200); // same stagger slot as D
+</script>
+</body>
+</html>

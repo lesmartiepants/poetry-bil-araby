@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TTS Highlighting Styles — Arabic Poetry</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0D1117;
+      --bg-panel: #161B22;
+      --bg-panel-hover: #1C2330;
+      --border: #30363D;
+      --gold: #C9A84C;
+      --gold-dim: rgba(201, 168, 76, 0.15);
+      --gold-glow: 0 0 12px #C9A84C;
+      --teal: #4CC9C9;
+      --text: #E6EDF3;
+      --text-dim: rgba(230, 237, 243, 0.4);
+      --text-muted: rgba(230, 237, 243, 0.6);
+      --font-arabic: 'Amiri', serif;
+      --font-ui: 'Inter', sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    /* ─── Header ─── */
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+      direction: ltr;
+      margin-bottom: 8px;
+    }
+    .poem-meta {
+      font-family: var(--font-arabic);
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+    }
+    .poem-meta .title-ar { color: var(--text); font-weight: 700; }
+    .poem-meta .poet-en { font-family: var(--font-ui); font-size: 0.85rem; direction: ltr; }
+
+    /* ─── Controls ─── */
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      direction: ltr;
+    }
+    .btn {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-family: var(--font-ui);
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .btn:hover { background: var(--bg-panel-hover); border-color: var(--gold); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn.primary { border-color: var(--gold); color: var(--gold); }
+    .btn.primary:hover { background: var(--gold-dim); }
+    .btn.demo { border-color: var(--teal); color: var(--teal); }
+    .btn.demo:hover { background: rgba(76, 201, 201, 0.12); }
+    .btn.demo.active { background: rgba(76, 201, 201, 0.18); }
+
+    /* ─── Status + Progress ─── */
+    .status-bar {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      direction: ltr;
+      min-height: 20px;
+    }
+    .progress-wrap {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      height: 4px;
+      margin: 0 auto 6px;
+      max-width: 600px;
+      overflow: hidden;
+      direction: ltr;
+    }
+    .progress-bar {
+      height: 100%;
+      background: var(--gold);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .progress-bar.indeterminate {
+      /* slow crawl animation while waiting for API */
+      animation: crawl 18s linear forwards;
+    }
+    @keyframes crawl {
+      0%   { width: 0%; }
+      60%  { width: 72%; }
+      85%  { width: 80%; }
+      100% { width: 83%; }
+    }
+    .time-display {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      direction: ltr;
+      margin-bottom: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ─── 2-up panel view ─── */
+    #panels-container {
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .panel {
+      flex: 1 1 0;
+      min-height: 360px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel.hidden { display: none; }
+
+    /* ─── Pair nav ─── */
+    .pair-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pair-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      min-width: 40px;
+      text-align: center;
+      direction: ltr;
+    }
+    .panel-header {
+      direction: ltr;
+      margin-bottom: 14px;
+      display: flex; align-items: baseline; gap: 8px;
+    }
+    .panel-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+    .panel-name {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .poem-text {
+      font-family: var(--font-arabic);
+      font-size: 0.95rem;
+      line-height: 2.0;
+      flex: 1;
+      text-align: center;
+    }
+    .panel-footer {
+      direction: ltr;
+      margin-top: 12px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      padding-top: 8px;
+    }
+    .accuracy-badge {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-right: 6px;
+    }
+    .acc-high { background: rgba(76, 201, 76, 0.2); color: #4CC94C; }
+    .acc-med  { background: rgba(201, 168, 76, 0.2); color: var(--gold); }
+
+    /* ─── Panel A: Word Glow ─── */
+    #panel-a .word {
+      display: inline;
+      transition: color 0.15s, text-shadow 0.15s, opacity 0.15s;
+    }
+    #panel-a .word.past    { opacity: 0.4; color: var(--text); text-shadow: none; }
+    #panel-a .word.current { color: var(--gold); text-shadow: var(--gold-glow); opacity: 1; }
+    #panel-a .word.future  { opacity: 1; color: var(--text); text-shadow: none; }
+
+    /* ─── Panel B: Underline Flow ─── */
+    #panel-b .word {
+      display: inline;
+      border-bottom: 2px solid transparent;
+      transition: border-color 0.15s, transform 0.15s, color 0.15s;
+      display: inline-block;
+    }
+    #panel-b .word.current {
+      border-bottom: 3px solid var(--teal);
+      transform: scale(1.05);
+      color: var(--teal);
+    }
+    #panel-b .word.past { opacity: 0.5; border-bottom-color: transparent; }
+
+    /* ─── Panel D: Progressive Reveal ─── */
+    @keyframes goldPulse {
+      0%   { color: var(--gold); text-shadow: var(--gold-glow); }
+      60%  { color: var(--gold); text-shadow: 0 0 20px #C9A84C, 0 0 4px #fff; }
+      100% { color: var(--text); text-shadow: none; }
+    }
+    #panel-d .word {
+      display: inline;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    #panel-d .word.revealed  { opacity: 1; color: var(--text); }
+    #panel-d .word.revealing { opacity: 1; animation: goldPulse 0.6s ease-out forwards; }
+
+    /* ─── Verse Pair layout ─── */
+    .verse-pair {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 1.2em;
+      align-items: center;
+    }
+    .ar-line {
+      direction: rtl;
+      text-align: center;
+    }
+
+    /* ─── English gradient block (all panels) ─── */
+    .en-line {
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      font-style: italic;
+      direction: ltr;
+      text-align: center;
+      margin-bottom: 4px;
+      color: rgba(255,255,255,0.35);
+      border-radius: 3px;
+      padding: 1px 4px;
+      transition: background 0.4s ease, color 0.3s ease;
+    }
+    .en-line.en-active {
+      color: white;
+      background: linear-gradient(to right, rgba(201,168,76,0.15) 0%, transparent 100%);
+    }
+    .en-line.en-past {
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ─── Panel A: English karaoke block override ─── */
+    #panel-a .en-line.en-active {
+      background: rgba(201,168,76,0.18);
+      border-left: 3px solid #C9A84C;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 0 3px 3px 0;
+      transition: all 0.3s ease;
+    }
+    #panel-a .en-line.en-past {
+      color: rgba(255,255,255,0.35);
+      padding: 2px 8px;
+      border-left: 3px solid transparent;
+    }
+
+    /* ─── Panel I: Gold Pill ─── */
+    .qw-word {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      transition: all 200ms ease;
+      margin: 2px;
+      font-family: var(--font-arabic);
+    }
+    .qw-word.qw-current {
+      background: #C9A84C;
+      color: #1a1a1a;
+      box-shadow: 0 0 12px rgba(201,168,76,0.5);
+      font-weight: 600;
+      -webkit-text-fill-color: #1a1a1a;
+    }
+    .qw-word.qw-past {
+      border-color: rgba(201,168,76,0.3);
+      color: rgba(255,255,255,0.5);
+    }
+
+    /* ─── Panel J: Gold Pill Natural ─── */
+    #panel-j .ar-line {
+      line-height: 3.2;  /* pre-allocate vertical room so tashkeel fits within pill */
+    }
+    .qn-word {
+      display: inline;
+      border-radius: 3px;
+      /* vertical padding only — pre-allocates tashkeel space, no horizontal gap between words */
+      padding: 0.22em 0 0.1em;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+      transition: background 200ms ease, color 200ms ease, box-shadow 200ms ease;
+    }
+    .qn-word.qn-current {
+      background: #C9A84C;
+      color: #1a1a1a;
+      /* lateral spread shadows extend gold left+right without affecting word spacing */
+      box-shadow: 5px 0 0 #C9A84C, -5px 0 0 #C9A84C, 0 0 12px rgba(201,168,76,0.6);
+      font-weight: 600;
+    }
+    .qn-word.qn-past {
+      color: rgba(255,255,255,0.45);
+    }
+
+    /* ─── Panel G: Focus Blur ─── */
+    #panel-g .line-block {
+      display: block;
+      margin-bottom: 6px;
+      transition: opacity 0.3s ease, filter 0.3s ease, transform 0.3s ease, background 0.3s ease;
+      border-radius: 4px;
+      padding: 2px 6px;
+      text-align: center;
+    }
+    #panel-g .line-block.line-active {
+      opacity: 1;
+      filter: none;
+      transform: scale(1.03);
+      background: radial-gradient(ellipse, rgba(201,168,76,0.08) 0%, transparent 70%);
+      color: #C9A84C;
+      text-shadow: 0 0 20px rgba(201,168,76,0.4);
+    }
+    #panel-g .line-block.line-inactive {
+      opacity: 0.3;
+      filter: blur(2px);
+      transform: scale(1);
+    }
+
+    /* ─── Console Log ─── */
+    .console-wrap {
+      max-width: 1200px;
+      margin: 20px auto 0;
+    }
+    .console-toggle {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      direction: ltr;
+      margin-bottom: 4px;
+      user-select: none;
+    }
+    .console-toggle:hover { color: var(--text); }
+    #console-log {
+      background: #0A0E13;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.7rem;
+      color: #7EE787;
+      max-height: 120px;
+      overflow-y: auto;
+      direction: ltr;
+      display: none;
+    }
+    #console-log.open { display: block; }
+    #console-log .log-error { color: #FF7B72; }
+    #console-log .log-warn  { color: #F0C27F; }
+    #console-log .log-info  { color: var(--teal); }
+  </style>
+</head>
+<body>
+
+<!-- ─── Header ─── -->
+<div class="header">
+  <h1>TTS Highlighting Styles</h1>
+  <div id="poem-meta" class="poem-meta">
+    <span class="title-ar" id="meta-title-ar">...</span>
+    <span> — </span>
+    <span id="meta-poet-ar"></span>
+    <br>
+    <span class="poet-en" id="meta-poet-en"></span>
+  </div>
+</div>
+
+<!-- ─── Controls ─── -->
+<div class="controls">
+  <button class="btn primary" id="btn-play" disabled>▶ Play</button>
+  <button class="btn demo" id="btn-demo">▶ Demo Mode</button>
+  <button class="btn" id="btn-restart" disabled>⏮ Restart</button>
+  <div class="pair-nav">
+    <button class="btn" id="btn-prev-pair">← Prev</button>
+    <span class="pair-label" id="pair-label">1 / 5</span>
+    <button class="btn" id="btn-next-pair">Next →</button>
+  </div>
+  <button class="btn" id="btn-new-poem">Next Poem →</button>
+</div>
+
+<div class="status-bar" id="status">Loading poem...</div>
+<div class="progress-wrap"><div class="progress-bar" id="progress-bar"></div></div>
+<div class="time-display" id="time-display">0:00 / 0:00</div>
+
+<!-- ─── All Panels (horizontal scroll) ─── -->
+<div id="panels-container">
+
+  <!-- Panel A -->
+  <div class="panel" id="panel-a">
+    <div class="panel-header">
+      <span class="panel-label">A</span>
+      <span class="panel-name">Word Glow</span>
+    </div>
+    <div class="poem-text" id="text-a"></div>
+    <div class="panel-footer">
+      <span class="accuracy-badge acc-high">HIGH</span>
+      Per-word gold glow highlight · past words dimmed · rAF + char-weight timing
+    </div>
+  </div>
+
+  <!-- Panel B -->
+  <div class="panel" id="panel-b">
+    <div class="panel-header">
+      <span class="panel-label">B</span>
+      <span class="panel-name">Underline Flow</span>
+    </div>
+    <div class="poem-text" id="text-b"></div>
+    <div class="panel-footer">
+      <span class="accuracy-badge acc-high">HIGH</span>
+      Teal underline + scale · smooth CSS transitions · per-word precision
+    </div>
+  </div>
+
+  <!-- Panel D -->
+  <div class="panel" id="panel-d">
+    <div class="panel-header">
+      <span class="panel-label">D</span>
+      <span class="panel-name">Progressive Reveal</span>
+    </div>
+    <div class="poem-text" id="text-d"></div>
+    <div class="panel-footer">
+      <span class="accuracy-badge acc-high">HIGH</span>
+      Words fade in permanently · current word gold-pulses · poem "unfolds"
+    </div>
+  </div>
+
+  <!-- Panel G -->
+  <div class="panel" id="panel-g">
+    <div class="panel-header">
+      <span class="panel-label">G</span>
+      <span class="panel-name">Focus Blur</span>
+    </div>
+    <div class="poem-text" id="text-g"></div>
+    <div class="panel-footer">
+      <span class="accuracy-badge acc-high">HIGH</span>
+      Active line sharp + scale 1.03 · all others blur(2px) + opacity 0.3 · radial gold bg on active
+    </div>
+  </div>
+
+  <!-- Panel I -->
+  <div class="panel" id="panel-i">
+    <div class="panel-header">
+      <span class="panel-label">I</span>
+      <span class="panel-name">Gold Pill</span>
+    </div>
+    <div class="poem-text" id="text-i"></div>
+    <div class="panel-footer">
+      <span class="accuracy-badge acc-high">HIGH</span>
+      Gold Pill — Quran.com style · current word gold badge · past words subtle border
+    </div>
+  </div>
+
+  <!-- Panel J -->
+  <div class="panel" id="panel-j">
+    <div class="panel-header">
+      <span class="panel-label">J</span>
+      <span class="panel-name">Gold Pill Natural</span>
+    </div>
+    <div class="poem-text" id="text-j"></div>
+    <div class="panel-footer">
+      <span class="accuracy-badge acc-high">HIGH</span>
+      Gold Pill Natural — inline display · no spacing distortion · minimal gold tint on current word
+    </div>
+  </div>
+
+</div>
+
+<!-- ─── Console ─── -->
+<div class="console-wrap">
+  <div class="console-toggle" id="console-toggle" onclick="toggleConsole()">▶ debug log (click to expand)</div>
+  <div id="console-log"></div>
+</div>
+
+<script>
+// ─── Config ───────────────────────────────────────────────────────────────────
+const API_BASE = 'http://localhost:3001';
+const TTS_MODEL_PRIMARY  = 'gemini-2.5-pro-preview-tts';
+const TTS_MODEL_FALLBACK = 'gemini-2.5-flash-preview-tts';
+const SAMPLE_RATE = 24000;
+const TTS_PROMPT = `أنت امرؤ القيس بن حُجر، الملك الضليل وشاعر العرب الأول. تقف أمام قبيلتك في مجلس شعر بصحراء نجد. النار تتقد، والحضور مُصغون. قُم وألقِ معلقتك — القصيدة التي خلّدت اسمك عبر الأجيال. هذه قصيدتك أنت، ألمك أنت، ذكرياتك أنت. ألقِها بسلطان الملوك وعاطفة الشعراء.`;
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let currentPoem = null;
+let decodedBuffer = null;
+let audioDuration = 0;
+let words = [];
+let wordStartTimes = [];
+let lines = [];          // array of { words: [...], startTime, endTime }
+let enLines = [];        // per-line English translations (may be empty strings)
+let rafId = null;
+
+// Web Audio API
+let audioContext = null;
+let source = null;
+let pauseOffset = 0;
+let startTime = null;
+let isPlaying = false;
+
+// ─── Logging ─────────────────────────────────────────────────────────────────
+function log(level, ...args) {
+  const msg = args.join(' ');
+  const el = document.getElementById('console-log');
+  const line = document.createElement('div');
+  line.className = level === 'error' ? 'log-error' : level === 'warn' ? 'log-warn' : 'log-info';
+  const ts = new Date().toLocaleTimeString('en', { hour12: false });
+  line.textContent = `[${ts}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+  console[level](...args);
+}
+function toggleConsole() {
+  const el = document.getElementById('console-log');
+  const toggle = document.getElementById('console-toggle');
+  el.classList.toggle('open');
+  toggle.textContent = el.classList.contains('open')
+    ? '▼ debug log (click to collapse)'
+    : '▶ debug log (click to expand)';
+}
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function setStatus(msg) {
+  document.getElementById('status').textContent = msg;
+}
+function setProgress(pct, { indeterminate = false } = {}) {
+  const bar = document.getElementById('progress-bar');
+  if (indeterminate) {
+    bar.style.width = '0%';
+    bar.classList.add('indeterminate');
+  } else {
+    bar.classList.remove('indeterminate');
+    // Force reflow so transition fires even if going backwards to 0
+    bar.getBoundingClientRect();
+    bar.style.width = `${pct}%`;
+  }
+}
+function setStep(msg, pct, opts) {
+  setStatus(msg);
+  setProgress(pct, opts);
+}
+function fmtTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function pcm16ToWav(base64, rate = 24000) {
+  try {
+    const cleanedBase64 = base64.replace(/\s/g, '');
+    const bin = atob(cleanedBase64);
+    const buf = new ArrayBuffer(bin.length);
+    const view = new DataView(buf);
+    for (let i = 0; i < bin.length; i++) view.setUint8(i, bin.charCodeAt(i));
+    const samples = new Int16Array(buf);
+    const wavBuf = new ArrayBuffer(44 + samples.length * 2);
+    const wavView = new DataView(wavBuf);
+    const s = (o, str) => { for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i)); };
+    s(0, 'RIFF');
+    wavView.setUint32(4, 36 + samples.length * 2, true);
+    s(8, 'WAVE');
+    s(12, 'fmt ');
+    wavView.setUint32(16, 16, true);
+    wavView.setUint16(20, 1, true);
+    wavView.setUint16(22, 1, true);
+    wavView.setUint32(24, rate, true);
+    wavView.setUint32(28, rate * 2, true);
+    wavView.setUint16(32, 2, true);
+    wavView.setUint16(34, 16, true);
+    s(36, 'data');
+    wavView.setUint32(40, samples.length * 2, true);
+    new Int16Array(wavBuf, 44).set(samples);
+    return new Blob([wavBuf], { type: 'audio/wav' });
+  } catch (e) { return null; }
+}
+
+// ─── Poem Loading ─────────────────────────────────────────────────────────────
+const PRESET_POEM_IDS = [4943, 36905, 42256, 4882, 81694, 85707, 43012, 5209, 68850, 77797];
+let presetIndex = 0;
+
+async function loadPoem() {
+  stopAudio(true);
+  setStatus('Loading poem...');
+  document.getElementById('btn-play').disabled = true;
+  document.getElementById('btn-restart').disabled = true;
+  clearPanels();
+
+  try {
+    const id = PRESET_POEM_IDS[presetIndex % PRESET_POEM_IDS.length];
+    presetIndex++;
+    const res = await fetch(`${API_BASE}/api/poems/${id}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const poem = await res.json();
+    currentPoem = poem;
+    log('info', `Poem loaded: "${currentPoem.titleArabic || currentPoem.title}" by ${currentPoem.poetArabic || currentPoem.poet}`);
+
+    // Update meta
+    document.getElementById('meta-title-ar').textContent =
+      currentPoem.titleArabic || currentPoem.title || 'قصيدة';
+    document.getElementById('meta-poet-ar').textContent =
+      currentPoem.poetArabic || currentPoem.poet || '';
+    document.getElementById('meta-poet-en').textContent =
+      currentPoem.poet ? `— ${currentPoem.poet}` : '';
+
+    // Build per-line English translations
+    const rawArLines = currentPoem.arabic.split('*').map(l => l.trim()).filter(Boolean);
+    let translationLines = [];
+    if (currentPoem.cachedTranslation) {
+      translationLines = currentPoem.cachedTranslation.split('*').map(l => l.trim()).filter(Boolean);
+    }
+    enLines = rawArLines.map((_, i) => translationLines[i] || '');
+
+    buildPanels(currentPoem.arabic);
+    await generateAudio(currentPoem.arabic);
+  } catch (err) {
+    log('error', 'Failed to load poem:', err.message);
+    setStatus(`Error loading poem: ${err.message}. Check that the backend is running on port 3001.`);
+  }
+}
+
+// ─── Panel Building ───────────────────────────────────────────────────────────
+const MAX_DISPLAY_LINES = 4;
+
+function buildPanels(arabicText) {
+  // Split text into lines, then words — compute ALL for timing
+  const rawLines = arabicText.split('*').map(l => l.trim()).filter(Boolean);
+  words = [];
+  lines = [];
+
+  rawLines.forEach(line => {
+    const lineWords = line.trim().split(/\s+/).filter(Boolean);
+    if (lineWords.length === 0) return;
+    const lineStart = words.length;
+    words.push(...lineWords);
+    lines.push({ words: lineWords, wordStart: lineStart });
+  });
+
+  // Limit DOM render to first 4 lines; timing runs over all words
+  lines = lines.slice(0, MAX_DISPLAY_LINES);
+  enLines = enLines.slice(0, MAX_DISPLAY_LINES);
+
+  buildPanelA();
+  buildPanelB();
+  buildPanelD();
+  buildPanelG();
+  buildPanelI();
+  buildPanelJ();
+}
+
+function makeVersePair(li) {
+  const pair = document.createElement('div');
+  pair.className = 'verse-pair';
+  pair.dataset.lineIdx = li;
+  const arLine = document.createElement('div');
+  arLine.className = 'ar-line';
+  arLine.setAttribute('dir', 'rtl');
+  pair.appendChild(arLine);
+  if (enLines[li]) {
+    const enLine = document.createElement('div');
+    enLine.className = 'en-line';
+    enLine.setAttribute('dir', 'ltr');
+    enLine.dataset.lineIdx = li;
+    enLine.textContent = enLines[li];
+    pair.appendChild(enLine);
+  }
+  return { pair, arLine };
+}
+
+function buildPanelA() {
+  const container = document.getElementById('text-a');
+  container.innerHTML = '';
+  lines.forEach((line, li) => {
+    const { pair, arLine } = makeVersePair(li);
+    line.words.forEach((w, wi) => {
+      const span = document.createElement('span');
+      span.className = 'word future';
+      span.dataset.idx = line.wordStart + wi;
+      span.textContent = w + ' ';
+      arLine.appendChild(span);
+    });
+    container.appendChild(pair);
+  });
+}
+
+function buildPanelB() {
+  const container = document.getElementById('text-b');
+  container.innerHTML = '';
+  lines.forEach((line, li) => {
+    const { pair, arLine } = makeVersePair(li);
+    line.words.forEach((w, wi) => {
+      const span = document.createElement('span');
+      span.className = 'word future';
+      span.dataset.idx = line.wordStart + wi;
+      span.textContent = w;
+      arLine.appendChild(span);
+      arLine.appendChild(document.createTextNode(' '));
+    });
+    container.appendChild(pair);
+  });
+}
+
+function buildPanelD() {
+  const container = document.getElementById('text-d');
+  container.innerHTML = '';
+  lines.forEach((line, li) => {
+    const { pair, arLine } = makeVersePair(li);
+    line.words.forEach((w, wi) => {
+      const span = document.createElement('span');
+      span.className = 'word';
+      span.dataset.idx = line.wordStart + wi;
+      span.textContent = w + ' ';
+      arLine.appendChild(span);
+    });
+    container.appendChild(pair);
+  });
+}
+
+function buildPanelG() {
+  const container = document.getElementById('text-g');
+  container.innerHTML = '';
+  lines.forEach((line, li) => {
+    const { pair, arLine } = makeVersePair(li);
+    const lineBlock = document.createElement('div');
+    lineBlock.className = 'line-block line-inactive';
+    lineBlock.dataset.lineIdx = li;
+    lineBlock.textContent = line.words.join(' ');
+    arLine.appendChild(lineBlock);
+    container.appendChild(pair);
+  });
+}
+
+
+function buildPanelI() {
+  const container = document.getElementById('text-i');
+  container.innerHTML = '';
+  lines.forEach((line, li) => {
+    const { pair, arLine } = makeVersePair(li);
+    line.words.forEach((w, wi) => {
+      const span = document.createElement('span');
+      span.className = 'qw-word';
+      span.dataset.idx = line.wordStart + wi;
+      span.textContent = w;
+      arLine.appendChild(span);
+    });
+    container.appendChild(pair);
+  });
+}
+
+function buildPanelJ() {
+  const container = document.getElementById('text-j');
+  container.innerHTML = '';
+  lines.forEach((line, li) => {
+    const { pair, arLine } = makeVersePair(li);
+    line.words.forEach((w, wi) => {
+      const span = document.createElement('span');
+      span.className = 'qn-word';
+      span.dataset.idx = line.wordStart + wi;
+      span.textContent = w + ' ';
+      arLine.appendChild(span);
+    });
+    container.appendChild(pair);
+  });
+}
+
+function clearPanels() {
+  ['text-a','text-b','text-d','text-g','text-i','text-j'].forEach(id => {
+    document.getElementById(id).innerHTML = '';
+  });
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('time-display').textContent = '0:00 / 0:00';
+  words = [];
+  lines = [];
+  enLines = [];
+  wordStartTimes = [];
+  audioDuration = 0;
+  decodedBuffer = null;
+  // Reset demo state
+  demoRunning = false;
+  demoPausedOffset = 0;
+  fakeDuration = 0;
+  if (demoRafId) { cancelAnimationFrame(demoRafId); demoRafId = null; }
+  document.getElementById('btn-demo').textContent = '▶ Demo Mode';
+  document.getElementById('btn-demo').classList.remove('active');
+}
+
+// ─── IndexedDB Audio Cache (mirrors prod app: poetry-cache-v1 / audio-cache) ──
+function openAudioCache() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('poetry-cache-v1', 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('audio-cache')) db.createObjectStore('audio-cache');
+      if (!db.objectStoreNames.contains('insights-cache')) db.createObjectStore('insights-cache');
+      if (!db.objectStoreNames.contains('poems-cache')) db.createObjectStore('poems-cache');
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function getCachedAudio(poemId) {
+  try {
+    const db = await openAudioCache();
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction('audio-cache', 'readonly');
+      const req = tx.objectStore('audio-cache').get(poemId);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  } catch { return null; }
+}
+async function setCachedAudio(poemId, blob) {
+  try {
+    const db = await openAudioCache();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction('audio-cache', 'readwrite');
+      const req = tx.objectStore('audio-cache').put({ blob, timestamp: Date.now() }, poemId);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
+    });
+  } catch (e) { log('warn', 'Cache write failed:', e.message); }
+}
+
+// ─── TTS Generation ───────────────────────────────────────────────────────────
+async function generateAudio(arabicText, useModel = TTS_MODEL_PRIMARY) {
+  // ── Check prod-compatible IndexedDB cache first ──
+  const poemId = currentPoem?.id;
+  setStep('Checking audio cache...', 5);
+  if (poemId) {
+    const cached = await getCachedAudio(poemId);
+    if (cached?.blob) {
+      log('info', `Audio served from cache (poem ${poemId})`);
+      setStep('Decoding cached audio...', 60);
+      if (!audioContext) audioContext = new AudioContext();
+      decodedBuffer = await audioContext.decodeAudioData(await cached.blob.arrayBuffer());
+      audioDuration = decodedBuffer.duration;
+      setStep('Building word timing...', 90);
+      buildWordTiming();
+      setStep(`Ready — press Play  (${fmtTime(audioDuration)} · from cache)`, 100);
+      document.getElementById('btn-play').disabled = false;
+      document.getElementById('btn-restart').disabled = false;
+      document.getElementById('time-display').textContent = `0:00 / ${fmtTime(audioDuration)}`;
+      return;
+    }
+  }
+
+  const modelLabel = useModel === TTS_MODEL_PRIMARY ? 'gemini-2.5-pro-tts' : 'gemini-2.5-flash-tts';
+  setStep(`Sending request to ${modelLabel}...`, 0, { indeterminate: true });
+  log('info', `Calling TTS with model: ${useModel}`);
+
+  const body = {
+    contents: [{ parts: [{ text: `${TTS_PROMPT}\nابدأ:\n${arabicText}` }] }],
+    generationConfig: {
+      responseModalities: ['AUDIO'],
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Fenrir' } } }
+    }
+  };
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/api/ai/${useModel}/generateContent`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+    );
+
+    if (res.status === 429 && useModel === TTS_MODEL_PRIMARY) {
+      log('warn', 'Primary model rate-limited, falling back to flash-tts...');
+      setStep('Rate limited — switching to fallback model...', 0, { indeterminate: true });
+      return generateAudio(arabicText, TTS_MODEL_FALLBACK);
+    }
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errText.slice(0, 200)}`);
+    }
+
+    setStep('Response received — parsing audio data...', 85);
+    const data = await res.json();
+    const base64 = data?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!base64) throw new Error('No audio data in response');
+
+    const kb = Math.round(base64.length / 1024);
+    log('info', `Audio data received (${kb}KB base64)`);
+    setStep(`Converting PCM → WAV  (${kb}KB)...`, 90);
+
+    // Calculate duration from PCM bytes
+    const pcmBytes = atob(base64.replace(/\s/g, '')).length;
+    audioDuration = (pcmBytes / 2) / SAMPLE_RATE;
+    log('info', `Audio duration: ${fmtTime(audioDuration)}`);
+
+    // Decode WAV
+    const wavBlob = pcm16ToWav(base64, SAMPLE_RATE);
+    if (!wavBlob) throw new Error('Failed to convert PCM to WAV');
+
+    setStep('Decoding audio buffer...', 94);
+    if (!audioContext) audioContext = new AudioContext();
+    decodedBuffer = await audioContext.decodeAudioData(await wavBlob.arrayBuffer());
+
+    // Cache for future use (same key as prod app)
+    if (poemId) { setStep('Caching audio...', 97); await setCachedAudio(poemId, wavBlob); }
+
+    // Build word timing
+    setStep('Building word timing...', 99);
+    buildWordTiming();
+
+    setStep(`Ready — press Play  (${fmtTime(audioDuration)})`, 100);
+    document.getElementById('btn-play').disabled = false;
+    document.getElementById('btn-restart').disabled = false;
+    document.getElementById('time-display').textContent = `0:00 / ${fmtTime(audioDuration)}`;
+
+  } catch (err) {
+    log('error', 'TTS failed:', err.message);
+    setStep(`Failed: ${err.message}`, 0);
+    // Show retry button in status
+    const statusEl = document.getElementById('status');
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'btn';
+    retryBtn.textContent = 'Retry';
+    retryBtn.style.marginLeft = '10px';
+    retryBtn.style.fontSize = '0.75rem';
+    retryBtn.style.padding = '4px 12px';
+    retryBtn.onclick = () => generateAudio(currentPoem.arabic);
+    statusEl.appendChild(retryBtn);
+  }
+}
+
+// ─── Word Timing ──────────────────────────────────────────────────────────────
+function buildWordTiming() {
+  const charCounts = words.map(w => Math.max(w.length, 1));
+  const total = charCounts.reduce((a, b) => a + b, 0);
+  const wordDurations = charCounts.map(c => (c / total) * audioDuration);
+  wordStartTimes = [];
+  let acc = 0;
+  wordDurations.forEach(d => { wordStartTimes.push(acc); acc += d; });
+
+  // Build line timing from word timing
+  lines.forEach(line => {
+    const firstWordIdx = line.wordStart;
+    const lastWordIdx  = line.wordStart + line.words.length - 1;
+    line.startTime = wordStartTimes[firstWordIdx] ?? 0;
+    line.endTime   = lastWordIdx + 1 < wordStartTimes.length
+      ? wordStartTimes[lastWordIdx + 1]
+      : audioDuration;
+  });
+
+  log('info', `Word timing built for ${words.length} words, ${lines.length} lines`);
+}
+
+// ─── Audio Playback ───────────────────────────────────────────────────────────
+async function play() {
+  if (!decodedBuffer) return;
+
+  // Resume context first (may be suspended on first user interaction)
+  if (audioContext.state === 'suspended') {
+    await audioContext.resume();
+  }
+
+  // Stop any existing source before creating a new one
+  if (source) { try { source.stop(); } catch(_) {} source = null; }
+
+  source = audioContext.createBufferSource();
+  source.buffer = decodedBuffer;
+  source.connect(audioContext.destination);
+  source.start(0, pauseOffset);
+  startTime = audioContext.currentTime - pauseOffset;
+  isPlaying = true;
+
+  source.onended = () => {
+    if (isPlaying) {
+      isPlaying = false;
+      document.getElementById('btn-play').textContent = '▶ Play';
+      setStatus('Playback complete — press Play to replay');
+      pauseOffset = 0;
+      updateHighlights(audioDuration); // highlight last state
+      document.getElementById('progress-bar').style.width = '100%';
+    }
+  };
+
+  document.getElementById('btn-play').textContent = '⏸ Pause';
+  requestAnimationFrame(tick);
+}
+
+async function pause() {
+  if (!audioContext || audioContext.state === 'closed') return;
+  pauseOffset = audioContext.currentTime - startTime;
+  await audioContext.suspend();
+  isPlaying = false;
+  document.getElementById('btn-play').textContent = '▶ Play';
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+}
+
+function stopAudio(resetOffset = false) {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  if (source) { try { source.stop(); } catch(_) {} source = null; }
+  if (audioContext && audioContext.state !== 'closed') {
+    audioContext.resume().catch(() => {});
+  }
+  isPlaying = false;
+  if (resetOffset) pauseOffset = 0;
+  document.getElementById('btn-play').textContent = '▶ Play';
+}
+
+async function restart() {
+  // Stop demo if running
+  if (demoRunning) {
+    demoRunning = false;
+    demoPausedOffset = 0;
+    if (demoRafId) { cancelAnimationFrame(demoRafId); demoRafId = null; }
+    document.getElementById('btn-demo').textContent = '▶ Demo Mode';
+    document.getElementById('btn-demo').classList.remove('active');
+  }
+  stopAudio(false);
+  pauseOffset = 0;
+  resetHighlights();
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('time-display').textContent = `0:00 / ${fmtTime(audioDuration)}`;
+  setStatus('Ready — press Play');
+}
+
+// ─── rAF Tick ─────────────────────────────────────────────────────────────────
+function tick() {
+  if (!isPlaying || !audioContext) return;
+
+  const elapsed = audioContext.currentTime - startTime;
+  const clamped = Math.min(elapsed, audioDuration);
+
+  // Progress bar
+  const pct = audioDuration > 0 ? (clamped / audioDuration) * 100 : 0;
+  document.getElementById('progress-bar').style.width = `${pct}%`;
+  document.getElementById('time-display').textContent =
+    `${fmtTime(clamped)} / ${fmtTime(audioDuration)}`;
+
+  updateHighlights(elapsed);
+
+  if (elapsed < audioDuration) {
+    rafId = requestAnimationFrame(tick);
+  }
+}
+
+// ─── Highlight Logic ──────────────────────────────────────────────────────────
+function visiblePanelSet() {
+  const lo = pairIndex * 2;
+  const hi = lo + 1;
+  return new Set([PANEL_IDS[lo], PANEL_IDS[hi]].filter(Boolean));
+}
+
+function updateHighlights(elapsed) {
+  const visible = visiblePanelSet();
+
+  // Find current word index
+  let currentWordIdx = wordStartTimes.length - 1;
+  for (let i = wordStartTimes.length - 1; i >= 0; i--) {
+    if (elapsed >= wordStartTimes[i]) { currentWordIdx = i; break; }
+    if (i === 0 && elapsed < wordStartTimes[0]) currentWordIdx = -1;
+  }
+
+  // Line index needed by multiple panels — compute once
+  const currentLineIdx = lines.findLastIndex(
+    (line) => elapsed >= line.startTime
+  );
+
+  // Panel A: Word Glow
+  if (visible.has('panel-a')) {
+    const spansA = document.querySelectorAll('#text-a .word');
+    spansA.forEach((span, i) => {
+      if (i < currentWordIdx)       span.className = 'word past';
+      else if (i === currentWordIdx) span.className = 'word current';
+      else                           span.className = 'word future';
+    });
+  }
+
+  // Panel B: Underline Flow
+  if (visible.has('panel-b')) {
+    const spansB = document.querySelectorAll('#text-b .word');
+    spansB.forEach((span, i) => {
+      if (i < currentWordIdx)       span.className = 'word past';
+      else if (i === currentWordIdx) span.className = 'word current';
+      else                           span.className = 'word future';
+    });
+  }
+
+  // Panel D: Progressive Reveal
+  if (visible.has('panel-d')) {
+    const spansD = document.querySelectorAll('#panel-d .word');
+    spansD.forEach((span, i) => {
+      if (i < currentWordIdx) {
+        if (!span.classList.contains('revealed')) {
+          span.classList.remove('revealing');
+          span.classList.add('revealed');
+        }
+      } else if (i === currentWordIdx) {
+        if (!span.classList.contains('revealed') && !span.classList.contains('revealing')) {
+          span.classList.add('revealing');
+          setTimeout(() => {
+            span.classList.remove('revealing');
+            span.classList.add('revealed');
+          }, 600);
+        }
+      }
+    });
+  }
+
+  // English gradient block — visible panels only
+  const enPanelMap = {
+    'panel-a': 'text-a', 'panel-b': 'text-b', 'panel-d': 'text-d',
+    'panel-g': 'text-g', 'panel-i': 'text-i',
+    'panel-j': 'text-j'
+  };
+  Object.entries(enPanelMap).forEach(([pid, tid]) => {
+    if (!visible.has(pid)) return;
+    document.querySelectorAll(`#${tid} .en-line`).forEach(el => {
+      const li = parseInt(el.dataset.lineIdx, 10);
+      if (li === currentLineIdx) {
+        el.className = 'en-line en-active';
+      } else if (li < currentLineIdx) {
+        el.className = 'en-line en-past';
+      } else {
+        el.className = 'en-line';
+      }
+    });
+  });
+
+  // Panel G: Focus Blur
+  if (visible.has('panel-g')) {
+    const lineBlocksG = document.querySelectorAll('#text-g .line-block');
+    lineBlocksG.forEach((block, li) => {
+      if (li === currentLineIdx) block.className = 'line-block line-active';
+      else                       block.className = 'line-block line-inactive';
+    });
+  }
+
+
+  // Panel I: Gold Pill
+  if (visible.has('panel-i')) {
+    const spansI = document.querySelectorAll('#text-i .qw-word');
+    spansI.forEach((span, i) => {
+      if (i < currentWordIdx)       span.className = 'qw-word qw-past';
+      else if (i === currentWordIdx) span.className = 'qw-word qw-current';
+      else                           span.className = 'qw-word';
+    });
+  }
+
+  // Panel J: Gold Pill Natural
+  if (visible.has('panel-j')) {
+    const spansJ = document.querySelectorAll('#text-j .qn-word');
+    spansJ.forEach((span, i) => {
+      if (i < currentWordIdx)       span.className = 'qn-word qn-past';
+      else if (i === currentWordIdx) span.className = 'qn-word qn-current';
+      else                           span.className = 'qn-word';
+    });
+  }
+}
+
+function resetHighlights() {
+  document.querySelectorAll('#text-a .word').forEach(s => s.className = 'word future');
+  document.querySelectorAll('#text-b .word').forEach(s => s.className = 'word future');
+  document.querySelectorAll('#panel-d .word').forEach(s => {
+    s.classList.remove('revealing', 'revealed');
+  });
+  document.querySelectorAll('#text-g .line-block').forEach(s => s.className = 'line-block line-inactive');
+  document.querySelectorAll('#text-i .qw-word').forEach(s => s.className = 'qw-word');
+  document.querySelectorAll('#text-j .qn-word').forEach(s => s.className = 'qn-word');
+  ['text-a','text-b','text-d','text-g','text-h','text-i','text-j'].forEach(tid => {
+    document.querySelectorAll(`#${tid} .en-line`).forEach(s => s.className = 'en-line');
+  });
+}
+
+// ─── Demo Mode ────────────────────────────────────────────────────────────────
+const DEMO_FALLBACK_VERSE = 'قِفَا نَبْكِ مِنْ ذِكْرَى حَبِيبٍ وَمَنْزِلِ';
+
+let demoStartWallTime = null;
+let demoPausedOffset = 0;
+let demoRunning = false;
+let demoRafId = null;
+let fakeDuration = 0;
+
+function getDemoElapsed() {
+  if (!demoRunning) return demoPausedOffset;
+  return demoPausedOffset + (performance.now() - demoStartWallTime) / 1000;
+}
+
+function startDemo() {
+  // If no poem loaded yet, use fallback verse
+  if (words.length === 0) {
+    enLines = DEMO_FALLBACK_VERSE.split('*').map(() => '');
+    buildPanels(DEMO_FALLBACK_VERSE);
+    document.getElementById('meta-title-ar').textContent = 'المعلقة';
+    document.getElementById('meta-poet-ar').textContent = 'امرؤ القيس';
+    document.getElementById('meta-poet-en').textContent = '— Imru al-Qays';
+  }
+
+  fakeDuration = words.length * 0.4;
+  buildWordTiming(); // uses fakeDuration via audioDuration reassignment below
+  audioDuration = fakeDuration;
+  buildWordTimingForDemo();
+
+  demoStartWallTime = performance.now();
+  demoPausedOffset = 0;
+  demoRunning = true;
+
+  document.getElementById('btn-demo').textContent = '⏸ Demo Mode';
+  document.getElementById('btn-demo').classList.add('active');
+  document.getElementById('time-display').textContent = `0:00 / ${fmtTime(fakeDuration)}`;
+  setStatus('Playing (Demo)');
+
+  demoRafId = requestAnimationFrame(demoTick);
+}
+
+function pauseDemo() {
+  demoPausedOffset = getDemoElapsed();
+  demoRunning = false;
+  if (demoRafId) { cancelAnimationFrame(demoRafId); demoRafId = null; }
+  document.getElementById('btn-demo').textContent = '▶ Demo Mode';
+  document.getElementById('btn-demo').classList.remove('active');
+  setStatus('Paused (Demo)');
+}
+
+function resumeDemo() {
+  demoStartWallTime = performance.now();
+  demoRunning = true;
+  document.getElementById('btn-demo').textContent = '⏸ Demo Mode';
+  document.getElementById('btn-demo').classList.add('active');
+  setStatus('Playing (Demo)');
+  demoRafId = requestAnimationFrame(demoTick);
+}
+
+function stopDemo() {
+  demoRunning = false;
+  demoPausedOffset = 0;
+  if (demoRafId) { cancelAnimationFrame(demoRafId); demoRafId = null; }
+  document.getElementById('btn-demo').textContent = '▶ Demo Mode';
+  document.getElementById('btn-demo').classList.remove('active');
+  resetHighlights();
+  document.getElementById('progress-bar').style.width = '0%';
+  document.getElementById('time-display').textContent = '0:00 / 0:00';
+  setStatus('Ready');
+}
+
+function buildWordTimingForDemo() {
+  // Rebuild timing using fakeDuration (audioDuration already set above)
+  const charCounts = words.map(w => Math.max(w.length, 1));
+  const total = charCounts.reduce((a, b) => a + b, 0);
+  const wordDurations = charCounts.map(c => (c / total) * fakeDuration);
+  wordStartTimes = [];
+  let acc = 0;
+  wordDurations.forEach(d => { wordStartTimes.push(acc); acc += d; });
+
+  lines.forEach(line => {
+    const firstWordIdx = line.wordStart;
+    const lastWordIdx  = line.wordStart + line.words.length - 1;
+    line.startTime = wordStartTimes[firstWordIdx] ?? 0;
+    line.endTime   = lastWordIdx + 1 < wordStartTimes.length
+      ? wordStartTimes[lastWordIdx + 1]
+      : fakeDuration;
+  });
+}
+
+function demoTick() {
+  if (!demoRunning) return;
+  const elapsed = getDemoElapsed();
+  const clamped = Math.min(elapsed, fakeDuration);
+
+  const pct = fakeDuration > 0 ? (clamped / fakeDuration) * 100 : 0;
+  document.getElementById('progress-bar').style.width = `${pct}%`;
+  document.getElementById('time-display').textContent =
+    `${fmtTime(clamped)} / ${fmtTime(fakeDuration)}`;
+
+  updateHighlights(elapsed);
+
+  if (elapsed < fakeDuration) {
+    demoRafId = requestAnimationFrame(demoTick);
+  } else {
+    stopDemo();
+  }
+}
+
+// ─── Event Wiring ─────────────────────────────────────────────────────────────
+document.getElementById('btn-play').addEventListener('click', async () => {
+  if (!decodedBuffer) return;
+  if (isPlaying) await pause();
+  else await play();
+});
+
+document.getElementById('btn-demo').addEventListener('click', () => {
+  if (isPlaying) { pause(); }
+  stopDemo();
+  startDemo();
+});
+
+document.getElementById('btn-restart').addEventListener('click', restart);
+
+document.getElementById('btn-new-poem').addEventListener('click', loadPoem);
+
+// ─── Pair Navigation ──────────────────────────────────────────────────────────
+const PANEL_IDS = ['panel-a','panel-b','panel-d','panel-g','panel-i','panel-j'];
+let pairIndex = 0;
+
+function totalPairs() { return Math.ceil(PANEL_IDS.length / 2); }
+
+function showPair(idx) {
+  stopDemo();
+  const total = totalPairs();
+  pairIndex = Math.max(0, Math.min(idx, total - 1));
+  const lo = pairIndex * 2;
+  const hi = lo + 1;
+  PANEL_IDS.forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (i === lo || i === hi) {
+      el.classList.remove('hidden');
+      // Last pair with single panel: full width
+      if (i === lo && hi >= PANEL_IDS.length) {
+        el.style.maxWidth = '50%';
+      } else {
+        el.style.maxWidth = '';
+      }
+    } else {
+      el.classList.add('hidden');
+    }
+  });
+  document.getElementById('pair-label').textContent = `${pairIndex + 1} / ${total}`;
+  document.getElementById('btn-prev-pair').disabled = pairIndex === 0;
+  document.getElementById('btn-next-pair').disabled = pairIndex === total - 1;
+}
+
+document.getElementById('btn-prev-pair').addEventListener('click', () => showPair(pairIndex - 1));
+document.getElementById('btn-next-pair').addEventListener('click', () => showPair(pairIndex + 1));
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+showPair(0);
+loadPoem();
+</script>
+</body>
+</html>

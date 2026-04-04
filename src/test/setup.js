@@ -54,6 +54,54 @@ afterEach(() => {
     sessionStorage.clear();
 });
 
+// Mock HTMLCanvasElement.getContext so canvas-based components (MysticalConsultationEffect,
+// ShareCardModal/shareCardDesigns) don't crash in jsdom.
+// jsdom does not implement canvas 2D rendering; without this mock any canvas method call
+// throws and leaves pending React work that corrupts subsequent tests.
+const mockCanvas2DContext = {
+  clearRect: vi.fn(),
+  fillRect: vi.fn(),
+  strokeRect: vi.fn(),
+  beginPath: vi.fn(),
+  closePath: vi.fn(),
+  moveTo: vi.fn(),
+  lineTo: vi.fn(),
+  quadraticCurveTo: vi.fn(),
+  bezierCurveTo: vi.fn(),
+  arc: vi.fn(),
+  ellipse: vi.fn(),
+  fill: vi.fn(),
+  stroke: vi.fn(),
+  fillText: vi.fn(),
+  save: vi.fn(),
+  restore: vi.fn(),
+  translate: vi.fn(),
+  rotate: vi.fn(),
+  scale: vi.fn(),
+  setLineDash: vi.fn(),
+  createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
+  createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
+  measureText: vi.fn(() => ({ width: 100 })),
+  get fillStyle() {
+    return '';
+  },
+  set fillStyle(_) {},
+  get strokeStyle() {
+    return '';
+  },
+  set strokeStyle(_) {},
+  lineWidth: 1,
+  font: '',
+  textAlign: '',
+  textBaseline: '',
+  direction: '',
+  globalAlpha: 1,
+  shadowColor: '',
+  shadowBlur: 0,
+  letterSpacing: '',
+};
+HTMLCanvasElement.prototype.getContext = vi.fn(() => mockCanvas2DContext);
+
 // Mock Web Audio API
 global.Audio = class MockAudio {
   constructor() {

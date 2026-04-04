@@ -429,7 +429,13 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
                   try {
                     const parsed = JSON.parse(payload);
                     if (parsed.b64) livePcmChunks.push(parsed.b64);
-                  } catch {}
+                  } catch (flushErr) {
+                    addLog(
+                      'Audio API',
+                      `[${ttsModel}] SSE buffer flush error: ${flushErr.message}`,
+                      'warning'
+                    );
+                  }
                 }
               }
 
@@ -449,15 +455,20 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
                 combined.set(arr, byteOffset);
                 byteOffset += arr.length;
               }
+              // Build base64 in 64KB chunks to avoid call-stack overflow on large buffers
+              const CHUNK = 65536;
               let liveBinary = '';
-              for (let i = 0; i < combined.length; i++)
-                liveBinary += String.fromCharCode(combined[i]);
+              for (let i = 0; i < combined.length; i += CHUNK) {
+                liveBinary += String.fromCharCode(...combined.subarray(i, i + CHUNK));
+              }
               b64 = btoa(liveBinary);
 
               const liveApiMs = performance.now() - liveT0;
+              const ttfaStr =
+                firstLiveChunkMs != null ? `${(firstLiveChunkMs / 1000).toFixed(2)}s` : 'n/a';
               addLog(
                 'Audio API',
-                `[${ttsModel}] ✓ Live SSE complete | TTFA: ${((firstLiveChunkMs || 0) / 1000).toFixed(2)}s | Total: ${(liveApiMs / 1000).toFixed(2)}s | ${livePcmChunks.length} chunks | ${(combined.length / 1024).toFixed(1)}KB PCM`,
+                `[${ttsModel}] ✓ Live SSE complete | TTFA: ${ttfaStr} | Total: ${(liveApiMs / 1000).toFixed(2)}s | ${livePcmChunks.length} chunks | ${(combined.length / 1024).toFixed(1)}KB PCM`,
                 'success'
               );
             } else {

@@ -81,6 +81,7 @@ import { computeWordTimings } from './utils/wordTiming.js';
 import { useTTSHighlight, startPlayer, pauseOffset, playbackStartTime, isSeeking } from './hooks/useTTSHighlight.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
+import SquoctogonBackground from './components/SquoctogonBackground.jsx';
 
 import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
@@ -140,6 +141,7 @@ export default function DiwanApp() {
   const volumePulseRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(0);
+  const [bgScrollY, setBgScrollY] = useState(0);
   const [fireTapped, setFireTapped] = useState(false);
 
   // ── Poem store (Zustand) ──
@@ -303,7 +305,18 @@ export default function DiwanApp() {
     const prev = prevIsInterpretingRef.current;
     prevIsInterpretingRef.current = isInterpreting;
     if (!prev && isInterpreting) {
-      toast.loading('Translating poem…', { id: 'translation-progress', duration: Infinity, icon: <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}><Rabbit size={16} /></motion.div> });
+      toast.loading('Translating poem…', {
+        id: 'translation-progress',
+        duration: Infinity,
+        icon: (
+          <motion.div
+            animate={{ y: [0, -5, 0] }}
+            transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
+          >
+            <Rabbit size={16} />
+          </motion.div>
+        ),
+      });
     } else if (prev && !isInterpreting) {
       if (interpretation) {
         toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });
@@ -480,7 +493,11 @@ export default function DiwanApp() {
           if (Array.isArray(restoredPoems) && restoredPoems.length > 0) {
             setCarouselPoems(restoredPoems);
             setCarouselIndex(targetIdx);
-            addLog('Init', `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`, 'success');
+            addLog(
+              'Init',
+              `Restored carousel: ${restoredPoems.length} poems, index ${targetIdx}`,
+              'success'
+            );
           }
         }
       } catch {}
@@ -542,8 +559,6 @@ export default function DiwanApp() {
         addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
         setAutoExplainPending(true);
         if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
-
-
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(
@@ -595,12 +610,7 @@ export default function DiwanApp() {
   // When the carousel is active (user has swiped), explain the carousel poem, not the main poem.
   useEffect(() => {
     const poemToExplain = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
-    if (
-      autoExplainPending &&
-      poemToExplain?.id &&
-      !isFetching &&
-      !isInterpreting
-    ) {
+    if (autoExplainPending && poemToExplain?.id && !isFetching && !isInterpreting) {
       setAutoExplainPending(false);
       if (explainedPoemIds.current.has(poemToExplain.id)) return;
       // Always AI-translate carousel poems (even if they have a DB scholarly translation),
@@ -703,8 +713,10 @@ export default function DiwanApp() {
   }, []);
 
   const handleScroll = (e) => {
-    const progress = Math.min(1, e.target.scrollTop / 120);
+    const scrollTop = e.target.scrollTop;
+    const progress = Math.min(1, scrollTop / 120);
     setHeaderOpacity(progress);
+    setBgScrollY(scrollTop);
   };
 
   // Fetch dynamic poet list from API when discover drawer first opens
@@ -1338,14 +1350,9 @@ export default function DiwanApp() {
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.03]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3C/svg%3E")`,
-              backgroundSize: '60px 60px',
-            }}
-          />
-          <MysticalConsultationEffect active={isInterpreting} theme={theme} />
+          {/* Squoctogon irregular tiling background — exact design from geometric-explorer */}
+          <SquoctogonBackground darkMode={darkMode} scrollY={bgScrollY} />
+          <MysticalConsultationEffect active={isInterpreting} theme={theme} scrollY={bgScrollY} />
 
           <main
             ref={mainScrollRef}
@@ -1488,7 +1495,11 @@ export default function DiwanApp() {
                         const newPoem = usePoemStore.getState().carouselPoems[idx];
                         if (FEATURES.logging && newPoem) {
                           const fromPoem = carouselPoems[carouselIndex];
-                          addLog('Carousel', `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`, 'user');
+                          addLog(
+                            'Carousel',
+                            `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                            'user'
+                          );
                         }
                         if (newPoem?.id) {
                           navigate('/poem/' + newPoem.id + window.location.search, {

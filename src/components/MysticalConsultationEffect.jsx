@@ -2,6 +2,11 @@ import { useRef, useEffect, memo } from 'react';
 
 const GOLD_COLORS = ['#c5a059', '#D4B463', '#E2C67A', '#B8922E', '#c5a059'];
 
+// Ambient mode: fewer particles, gentler opacity cap
+const AMBIENT_COUNT = 35;
+const ACTIVE_COUNT = 60;
+const REDUCED_MOTION_OPACITY = 0.08;
+
 function hexToRgb(hex) {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
@@ -21,13 +26,22 @@ function makeParticle(width, height) {
   };
 }
 
-const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ active }) {
+const PARALLAX_FACTOR = 0.3;
+
+const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
+  active,
+  scrollY = 0,
+}) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
+  // Track latest active value inside the rAF loop without restarting the loop
+  const activeRef = useRef(active);
 
   useEffect(() => {
-    if (!active) return;
+    activeRef.current = active;
+  }, [active]);
 
+  useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -43,34 +57,43 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ ac
     window.addEventListener('resize', resize);
 
     if (prefersReduced) {
+      // Static subtle glow for reduced-motion users
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
       const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, canvas.width * 0.4);
-      grad.addColorStop(0, 'rgba(197,160,89,0.15)');
+      grad.addColorStop(0, `rgba(197,160,89,${REDUCED_MOTION_OPACITY})`);
       grad.addColorStop(1, 'rgba(197,160,89,0)');
       ctx.fillStyle = grad;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       return () => window.removeEventListener('resize', resize);
     }
 
-    const particles = Array.from({ length: 50 }, () =>
+    // Pre-allocate the full particle pool; ambient mode just renders a subset
+    const particles = Array.from({ length: ACTIVE_COUNT }, () =>
       makeParticle(canvas.width, canvas.height)
     );
 
     const animate = () => {
+      const isActive = activeRef.current;
+      const visibleCount = isActive ? ACTIVE_COUNT : AMBIENT_COUNT;
+      const maxOpacity = isActive ? 0.9 : 0.5;
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Central radial glow
-      const cx = canvas.width / 2;
-      const cy = canvas.height / 2;
-      const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, canvas.width * 0.35);
-      glow.addColorStop(0, 'rgba(197,160,89,0.09)');
-      glow.addColorStop(0.5, 'rgba(197,160,89,0.04)');
-      glow.addColorStop(1, 'rgba(197,160,89,0)');
-      ctx.fillStyle = glow;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      // Central radial glow — only during insight mode
+      if (isActive) {
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, canvas.width * 0.35);
+        glow.addColorStop(0, 'rgba(197,160,89,0.09)');
+        glow.addColorStop(0.5, 'rgba(197,160,89,0.04)');
+        glow.addColorStop(1, 'rgba(197,160,89,0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
 
-      for (const p of particles) {
+      for (let i = 0; i < visibleCount; i++) {
+        const p = particles[i];
         p.x += p.speedX;
         p.y += p.speedY;
 
@@ -82,7 +105,7 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ ac
         if (p.x < -5) p.x = canvas.width + 5;
         if (p.x > canvas.width + 5) p.x = -5;
 
-        const alpha = p.opacity;
+        const alpha = Math.min(p.opacity, maxOpacity);
         const drawSize = p.size;
         const rgb = hexToRgb(p.color);
 
@@ -110,15 +133,17 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({ ac
       if (animRef.current) cancelAnimationFrame(animRef.current);
       window.removeEventListener('resize', resize);
     };
-  }, [active]);
-
-  if (!active) return null;
+  }, []); // Single animation loop — active changes tracked via activeRef
 
   return (
     <canvas
       ref={canvasRef}
       className="absolute inset-0 pointer-events-none z-10"
-      style={{ mixBlendMode: 'screen' }}
+      style={{
+        mixBlendMode: 'screen',
+        transform: `translateY(${-(scrollY * PARALLAX_FACTOR).toFixed(1)}px)`,
+        willChange: 'transform',
+      }}
     />
   );
 });

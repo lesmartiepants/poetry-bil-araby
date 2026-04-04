@@ -36,52 +36,15 @@ async function gotoWithBypass(page, path = '/') {
 
 /** Dismiss all overlays: splash screen + onboarding walkthrough. */
 async function dismissAllOverlays(page) {
-  // 1. Dismiss "Welcome to Poetry Bil-Araby" splash screen
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const welcomeSplash = page.locator('[role="dialog"][aria-label="Welcome to Poetry Bil-Araby"]');
-    if (await welcomeSplash.isVisible({ timeout: 1500 }).catch(() => false)) {
-      // Click the splash or any button inside it to dismiss
-      try {
-        const splashBtn = welcomeSplash.locator('button').first();
-        if (await splashBtn.isVisible({ timeout: 500 }).catch(() => false)) {
-          await splashBtn.click({ timeout: 2000 });
-        } else {
-          await welcomeSplash.click({ force: true });
-        }
-      } catch {
-        // Button may have been detached during animation — try force click
-        try {
-          await page.mouse.click(100, 100);
-        } catch {
-          /* noop */
-        }
-      }
-      await page.waitForTimeout(500);
-    } else {
-      break;
+  // Click the persistent skip-to-app button if visible
+  try {
+    const skipBtn = page.locator('[data-testid="skip-to-app"]');
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click();
+      await skipBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
-  }
-
-  // 2. Dismiss "Onboarding walkthrough" dialog (multi-step)
-  for (let step = 0; step < 10; step++) {
-    const onboarding = page.locator('[role="dialog"][aria-label="Onboarding walkthrough"]');
-    if (!(await onboarding.isVisible({ timeout: 1000 }).catch(() => false))) break;
-    const btn = onboarding.locator('button').last();
-    if (await btn.isVisible({ timeout: 500 }).catch(() => false)) {
-      await btn.click();
-      await page.waitForTimeout(400);
-    } else {
-      // Try clicking outside the dialog to dismiss
-      await page.mouse.click(10, 10);
-      await page.waitForTimeout(400);
-    }
-  }
-
-  // 3. Final catch-all: click away any remaining overlay
-  const anyDialog = page.locator('[role="dialog"]').first();
-  if (await anyDialog.isVisible({ timeout: 500 }).catch(() => false)) {
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
+  } catch {
+    /* noop */
   }
 }
 
@@ -105,14 +68,9 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
     page.on('console', (msg) => consoleLogs.push(`[${msg.type()}] ${msg.text()}`));
     page.on('pageerror', (err) => consoleLogs.push(`[PAGE_ERROR] ${err.message}`));
 
-    // Pre-set localStorage to skip onboarding/splash screens
-    // Navigate first to set the origin, then inject localStorage
+    // Navigate to app, then dismiss any splash overlay
     await gotoWithBypass(page);
-    await page.evaluate(() => {
-      localStorage.setItem('hasSeenOnboarding', 'true');
-      localStorage.setItem('hasSeenSplash', 'true');
-    });
-    // Reload to pick up localStorage values
+    // Reload to ensure clean state
     await page.reload({ waitUntil: 'domcontentloaded' });
   });
 

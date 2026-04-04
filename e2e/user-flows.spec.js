@@ -88,17 +88,13 @@ async function setupRouteMocks(page, { poem = MOCK_POEM_DARWISH } = {}) {
 test.describe('User Flows', () => {
   test.beforeEach(async ({ page }) => {
     await setupRouteMocks(page);
-    // Skip splash/onboarding so tests can interact with the main app
-    await page.addInitScript(() => {
-      localStorage.setItem('hasSeenOnboarding', 'true');
-    });
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-    // Dismiss splash screen if visible (click "Enter" button)
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await enterBtn.click();
-      await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
+    // Dismiss splash screen via skip button
+    const skipBtn = page.locator('[data-testid="skip-to-app"]');
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click();
+      await skipBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
   });
@@ -188,7 +184,11 @@ test.describe('User Flows', () => {
     });
 
     // Click the ThemeToggle button directly (no expand or settings gear needed)
-    const themeBtn = page.locator('button[aria-label="Switch to light mode"], button[aria-label="Switch to dark mode"]').first();
+    const themeBtn = page
+      .locator(
+        'button[aria-label="Switch to light mode"], button[aria-label="Switch to dark mode"]'
+      )
+      .first();
     await expect(themeBtn).toBeVisible({ timeout: 3000 });
     await themeBtn.click();
 
@@ -230,7 +230,9 @@ test.describe('User Flows', () => {
     await openDrawerBtn.click();
 
     // Wait for drawer to render with poet options
-    const dropdownBtn = page.locator('[data-testid="poet-picker-button"]:has-text("المتنبي")').first();
+    const dropdownBtn = page
+      .locator('[data-testid="poet-picker-button"]:has-text("المتنبي")')
+      .first();
     await expect(dropdownBtn).toBeVisible({ timeout: 3000 });
 
     // Wait for drawer slide-in animation to finish
@@ -369,16 +371,13 @@ test.describe('Mobile viewport sidebar', () => {
   test('mobile viewport shows VerticalSidebar with Settings', async ({ page }) => {
     await page.route('**/api/**', (route) => route.abort());
     await page.route('**/api/ai/**', (route) => route.abort());
-    await page.addInitScript(() => {
-      localStorage.setItem('hasSeenOnboarding', 'true');
-    });
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await enterBtn.click();
-      await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
+    const skipBtn = page.locator('[data-testid="skip-to-app"]');
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click();
+      await skipBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
 
@@ -389,15 +388,12 @@ test.describe('Mobile viewport sidebar', () => {
   // #17 — Flag NOT in VerticalSidebar on mobile
   test('mobile VerticalSidebar does not contain ThumbsDown', async ({ page }) => {
     await setupRouteMocks(page);
-    await page.addInitScript(() => {
-      localStorage.setItem('hasSeenOnboarding', 'true');
-    });
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await enterBtn.click();
-      await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
+    const skipBtn = page.locator('[data-testid="skip-to-app"]');
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click();
+      await skipBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
 

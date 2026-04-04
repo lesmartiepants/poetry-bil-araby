@@ -2,21 +2,11 @@ import { create } from 'zustand';
 import { FEATURES } from '../constants/features';
 
 function computeOnboarding() {
-  if (!FEATURES.onboarding) return false;
-  if (FEATURES.forceOnboarding) return true;
-  try {
-    return !localStorage.getItem('hasSeenOnboarding');
-  } catch {
-    return false;
-  }
+  return FEATURES.onboarding;
 }
 
 function computeSplash() {
-  try {
-    return !localStorage.getItem('hasSeenOnboarding');
-  } catch {
-    return true;
-  }
+  return true;
 }
 
 const initialState = {
@@ -57,10 +47,13 @@ export const useModalStore = create((set) => ({
   completeOnboarding: (prefs) => {
     try {
       localStorage.setItem('hasSeenOnboarding', 'true');
-      localStorage.setItem('onboardingPrefs', JSON.stringify({
-        ...prefs,
-        completedAt: new Date().toISOString(),
-      }));
+      localStorage.setItem(
+        'onboardingPrefs',
+        JSON.stringify({
+          ...prefs,
+          completedAt: new Date().toISOString(),
+        })
+      );
     } catch {}
     set({ splash: false, onboarding: false });
   },
@@ -76,7 +69,9 @@ export const useModalStore = create((set) => ({
   closePrefsDrawer: () => set({ prefsDrawer: false }),
 
   resetPreferences: () => {
-    try { localStorage.removeItem('onboardingPrefs'); } catch {}
+    try {
+      localStorage.removeItem('onboardingPrefs');
+    } catch {}
     set({ onboarding: false });
   },
 

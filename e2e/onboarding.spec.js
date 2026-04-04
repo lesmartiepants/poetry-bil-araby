@@ -393,22 +393,29 @@ test.describe('Onboarding Flow', () => {
     await expect(moodPicker).toBeVisible({ timeout: 5000 });
   });
 
-  // ── 12. Returning visitor skips onboarding entirely ────────────────
+  // ── 12. Returning visitor: splash always shows, skip button dismisses ──
 
-  test('returning visitor skips onboarding', async ({ page }) => {
-    // Pre-set hasSeenOnboarding BEFORE navigating
+  test('returning visitor sees splash and can skip via helper button', async ({ page }) => {
+    // Even with hasSeenOnboarding set, splash always appears now
     await page.addInitScript(() => {
       localStorage.setItem('hasSeenOnboarding', 'true');
     });
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // Should NOT see splash screen
+    // Splash should still be visible (always shows now)
     const splash = page.locator('[data-testid="splash-screen"]');
-    // Give a moment for splash to potentially appear, then assert it didn't
-    await expect(splash).not.toBeVisible({ timeout: 3000 });
+    await expect(splash).toBeVisible({ timeout: 5000 });
 
-    // Poem content should be visible instead
+    // Skip-to-app button should be present
+    const skipBtn = page.locator('[data-testid="skip-to-app"]');
+    await expect(skipBtn).toBeVisible({ timeout: 3000 });
+    await skipBtn.click();
+
+    // Splash should be gone after clicking skip
+    await expect(splash).not.toBeVisible({ timeout: 5000 });
+
+    // Poem content should be visible
     await expect(page.locator('[dir="rtl"]').first()).toBeVisible({ timeout: 10000 });
   });
 });

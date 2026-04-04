@@ -141,21 +141,14 @@ async function setupMocks(
 
 /** Dismiss the splash screen if visible. Call after page.goto('/') + waitForLoadState. */
 async function dismissSplashIfVisible(page) {
-  const enterBtn = page.locator('button[aria-label="Enter the app"]');
-  if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await enterBtn.click();
-    await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
+  const skipBtn = page.locator('[data-testid="skip-to-app"]');
+  if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await skipBtn.click();
+    await skipBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
   }
 }
 
 // ─── Tests ──────────────────────────────────────────────────────────
-
-// Skip onboarding walkthrough for all tests
-test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => {
-    localStorage.setItem('hasSeenOnboarding', 'true');
-  });
-});
 
 test.describe('Translation Cache — Instant Load', () => {
   test('first paint shows Arabic text immediately with no loading spinner', async ({ page }) => {

@@ -2,18 +2,12 @@ import { test, expect } from '@playwright/test';
 
 // Helper: dismiss splash/onboarding
 async function dismissOnboarding(page) {
-  // Click through splash screen if present
   try {
-    const splash = page.locator('[data-testid="splash-screen"]').first();
-    if (await splash.isVisible({ timeout: 2000 })) {
-      await page.click('body');
-      await page.waitForTimeout(500);
+    const skipBtn = page.locator('[data-testid="skip-to-app"]');
+    if (await skipBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+      await skipBtn.click();
+      await skipBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
-  } catch {}
-  // Dismiss any onboarding overlays
-  try {
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
   } catch {}
 }
 
@@ -29,10 +23,7 @@ const MOCK_POEM = {
   isFromDatabase: true,
 };
 
-const MOCK_POETS = [
-  { name: 'محمود درويش' },
-  { name: 'المتنبي' },
-];
+const MOCK_POETS = [{ name: 'محمود درويش' }, { name: 'المتنبي' }];
 
 async function setupMocks(page) {
   await page.route('**/api/poems/random*', async (route) => {
@@ -64,9 +55,6 @@ async function setupMocks(page) {
 test.describe('Insight Overlay', () => {
   test.beforeEach(async ({ page }) => {
     await setupMocks(page);
-    await page.addInitScript(() => {
-      localStorage.setItem('hasSeenOnboarding', 'true');
-    });
     await page.goto('http://localhost:5173');
     await dismissOnboarding(page);
     // Wait for app to render
@@ -89,7 +77,9 @@ test.describe('Insight Overlay', () => {
       await explainBtn.click();
     }
     // Loading text should appear (may be brief)
-    const loadingOrContent = page.locator('text=Consulting').or(page.locator('text=Poetic Insight'));
+    const loadingOrContent = page
+      .locator('text=Consulting')
+      .or(page.locator('text=Poetic Insight'));
     await expect(loadingOrContent.first()).toBeVisible({ timeout: 10000 });
   });
 

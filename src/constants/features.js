@@ -6,7 +6,7 @@ export const FEATURES = {
   streaming: true, // Enable streaming insights (progressive rendering)
   prefetching: true, // Enable smart prefetching (rate-limited to avoid API issues)
   database: true, // Enable database poem source (requires backend server running)
-  onboarding: true, // Show kinetic walkthrough (phases 1-3) on first visit
-  forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
+  onboarding: true, // Show kinetic walkthrough + preference pickers on every visit (skip-to-app button always visible)
+  forceOnboarding: false, // (legacy — no-op; onboarding now always shows when enabled above)
   designReview: false, // Show design review shortcut icon (still accessible via /design-review URL)
 };

@@ -19,14 +19,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 // If they live inside app.jsx, tests will import from there.
 
 /**
- * Expected API:
+ * Expected API (updated behavior — onboarding always shows):
  *   completeOnboarding({ moods, eras, topics }) → void
  *     - Sets localStorage 'hasSeenOnboarding' = 'true'
  *     - Sets localStorage 'onboardingPrefs' = JSON.stringify({ moods, eras, topics, completedAt })
  *
  *   shouldShowOnboarding() → boolean
- *     - Returns true if localStorage 'hasSeenOnboarding' is NOT 'true'
- *     - Returns false if 'hasSeenOnboarding' === 'true'
+ *     - Always returns true when FEATURES.onboarding is enabled
+ *     - 'hasSeenOnboarding' is written for preference access but no longer gates the flow
  */
 
 // ─── Test Data ──────────────────────────────────────────────────────
@@ -49,24 +49,28 @@ describe('Onboarding Preferences', () => {
       // Fresh localStorage — no 'hasSeenOnboarding' key
       const result = localStorage.getItem('hasSeenOnboarding');
       expect(result).toBeNull();
-      // shouldShowOnboarding() should return true
-      // This will be replaced with actual function call once implemented:
-      const shouldShow = result !== 'true';
+      // shouldShowOnboarding() always returns true when FEATURES.onboarding is enabled
+      const shouldShow = true;
       expect(shouldShow).toBe(true);
     });
 
-    it('returns false when hasSeenOnboarding is set', () => {
+    it('returns true even when hasSeenOnboarding is set (onboarding always shows now)', () => {
       localStorage.setItem('hasSeenOnboarding', 'true');
       const result = localStorage.getItem('hasSeenOnboarding');
-      const shouldShow = result !== 'true';
-      expect(shouldShow).toBe(false);
+      // hasSeenOnboarding is stored for preference access, but no longer gates onboarding
+      expect(result).toBe('true');
+      // Onboarding still shows — skip button is the exit mechanism
+      const shouldShow = true;
+      expect(shouldShow).toBe(true);
     });
 
     it('returns true for non-"true" values', () => {
       // Edge case: value is set but not exactly 'true'
       localStorage.setItem('hasSeenOnboarding', 'false');
       const result = localStorage.getItem('hasSeenOnboarding');
-      const shouldShow = result !== 'true';
+      expect(result).toBe('false');
+      // shouldShowOnboarding() always returns true
+      const shouldShow = true;
       expect(shouldShow).toBe(true);
     });
   });

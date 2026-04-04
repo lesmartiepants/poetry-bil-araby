@@ -160,10 +160,10 @@ export default function DiwanApp() {
   const [headerOpacity, setHeaderOpacity] = useState(0);
   const [fireTapped, setFireTapped] = useState(false);
 
-  // Zen idle mode — hides chrome after 4s of inactivity, leaving only the poem,
+  // Zen idle mode — hides chrome after 2s of inactivity, leaving only the poem,
   // the settings controls (Aa / sun icon), and a gentle floating listen button.
   // Only deliberate taps/clicks wake the chrome back — scroll is ignored.
-  const { isIdle } = useIdleTimer(4_000, [listenButtonIdleRef, themeToggleRef, textSettingsRef]);
+  const { isIdle } = useIdleTimer(2_000, [listenButtonIdleRef, themeToggleRef, textSettingsRef]);
 
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);

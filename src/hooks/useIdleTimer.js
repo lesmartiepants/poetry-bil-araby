@@ -10,11 +10,11 @@ import { useState, useEffect, useRef, useCallback } from 'react';
  * or the floating listen button) will NOT reset the timer so those controls stay
  * interactive without waking the chrome UI.
  *
- * @param {number} delay - Milliseconds of inactivity before `isIdle` becomes true (default: 4000)
+ * @param {number} delay - Milliseconds of inactivity before `isIdle` becomes true (default: 2000)
  * @param {React.RefObject|React.RefObject[]|null} [excludeRefs] - Ref(s) whose events are ignored
  * @returns {{ isIdle: boolean }}
  */
-export function useIdleTimer(delay = 4_000, excludeRefs = null) {
+export function useIdleTimer(delay = 2_000, excludeRefs = null) {
   const [isIdle, setIsIdle] = useState(false);
   const timerRef = useRef(null);
 

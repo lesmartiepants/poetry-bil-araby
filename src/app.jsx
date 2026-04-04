@@ -188,6 +188,7 @@ export default function DiwanApp() {
   const sparkleBrightness = useUIStore((s) => s.sparkleBrightness);
   const sparkleSpeed = useUIStore((s) => s.sparkleSpeed);
   const sparkleAmount = useUIStore((s) => s.sparkleAmount);
+  const sparkleColor = useUIStore((s) => s.sparkleColor);
   // ── Audio store (Zustand) ──
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const setIsPlaying = useAudioStore((s) => s.setPlaying);
@@ -1298,6 +1299,7 @@ export default function DiwanApp() {
             colorOverride={bgColor}
             parallaxFactor={bgParallax}
             patternName={bgPattern}
+            topThirdOnly
           />
           <MysticalConsultationEffect
             active={isInterpreting}
@@ -1307,6 +1309,7 @@ export default function DiwanApp() {
             sparkleBrightness={sparkleBrightness}
             sparkleSpeed={sparkleSpeed}
             sparkleAmount={sparkleAmount}
+            sparkleColor={sparkleColor}
           />
 
           <main

@@ -237,7 +237,11 @@ function computeSvgPath(tiling, w, h) {
 // the pattern edge would ever be reached.
 const PARALLAX_BUFFER_MULTIPLIER = 2;
 
-const DEFAULT_PATTERN = 'Squoctogon';
+// When topThirdOnly is true, the SVG only covers the top 40% of the viewport
+// (the 33% visible area plus a 7% buffer) and fades out via a CSS mask gradient.
+const TOP_THIRD_HEIGHT_FACTOR = 0.5; // generate pattern up to 50% of vh
+
+const DEFAULT_PATTERN = 'Penrose Monster';
 
 const SquoctogonBackground = memo(function SquoctogonBackground({
   darkMode,
@@ -246,6 +250,7 @@ const SquoctogonBackground = memo(function SquoctogonBackground({
   colorOverride = '',
   parallaxFactor = 0.05,
   patternName = DEFAULT_PATTERN,
+  topThirdOnly = false,
 }) {
   const svgRef = useRef(null);
   const [pathData, setPathData] = useState('');
@@ -258,10 +263,17 @@ const SquoctogonBackground = memo(function SquoctogonBackground({
       const w = parent?.offsetWidth || window.innerWidth || 800;
       const h = parent?.offsetHeight || window.innerHeight || 600;
       if (w > 0 && h > 0) {
-        // Generate pattern for a taller canvas so parallax never reveals a blank edge
-        const tallH = h * (1 + PARALLAX_BUFFER_MULTIPLIER);
-        setPathData(computeSvgPath(tiling, w, tallH));
-        setSvgHeight(tallH);
+        if (topThirdOnly) {
+          // Only render the top portion; gradient mask handles the fade
+          const partialH = h * TOP_THIRD_HEIGHT_FACTOR;
+          setPathData(computeSvgPath(tiling, w, partialH));
+          setSvgHeight(partialH);
+        } else {
+          // Generate pattern for a taller canvas so parallax never reveals a blank edge
+          const tallH = h * (1 + PARALLAX_BUFFER_MULTIPLIER);
+          setPathData(computeSvgPath(tiling, w, tallH));
+          setSvgHeight(tallH);
+        }
       }
     };
 
@@ -279,7 +291,7 @@ const SquoctogonBackground = memo(function SquoctogonBackground({
       if (ro) ro.disconnect();
       window.removeEventListener('resize', compute);
     };
-  }, [patternName]);
+  }, [patternName, topThirdOnly]);
 
   const baseStrokeColor = darkMode ? '#4a7cc9' : '#2e5090';
   const baseStrokeOpacity = darkMode ? 0.154 : 0.105;
@@ -301,6 +313,13 @@ const SquoctogonBackground = memo(function SquoctogonBackground({
         height: svgHeight > 0 ? svgHeight : '100%',
         transform: `translateY(${parallaxY.toFixed(1)}px)`,
         willChange: 'transform',
+        // Fade the pattern to transparent at the bottom edge (top-third mode)
+        maskImage: topThirdOnly
+          ? 'linear-gradient(to bottom, black 0%, black 55%, transparent 100%)'
+          : undefined,
+        WebkitMaskImage: topThirdOnly
+          ? 'linear-gradient(to bottom, black 0%, black 55%, transparent 100%)'
+          : undefined,
       }}
       xmlns="http://www.w3.org/2000/svg"
     >

@@ -1,6 +1,24 @@
 import { useRef, useEffect, memo } from 'react';
 
-const GOLD_COLORS = ['#c5a059', '#D4B463', '#E2C67A', '#B8922E', '#c5a059'];
+const DEFAULT_SPARKLE_COLOR = '#c5a059';
+
+// Generates a small palette of shades around the given base hex colour
+function buildColorPalette(hex) {
+  // Clamp helper
+  const clamp = (v) => Math.max(0, Math.min(255, Math.round(v)));
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  const toHex = (rv, gv, bv) =>
+    `#${clamp(rv).toString(16).padStart(2, '0')}${clamp(gv).toString(16).padStart(2, '0')}${clamp(bv).toString(16).padStart(2, '0')}`;
+  return [
+    toHex(r, g, b),
+    toHex(r + 15, g + 14, b + 10),
+    toHex(r + 28, g + 26, b + 18),
+    toHex(r - 11, g - 12, b - 8),
+    toHex(r, g, b),
+  ];
+}
 
 // Ambient mode: fewer particles, gentler opacity cap
 const AMBIENT_COUNT = 35;
@@ -17,7 +35,7 @@ function hexToRgb(hex) {
   return `${r},${g},${b}`;
 }
 
-function makeParticle(width, height) {
+function makeParticle(width, height, colors) {
   return {
     x: Math.random() * width,
     y: Math.random() * height,
@@ -25,7 +43,7 @@ function makeParticle(width, height) {
     speedY: -(Math.random() * 0.35 + 0.08),
     speedX: (Math.random() - 0.5) * 0.25,
     opacity: Math.random() * 0.55 + 0.2,
-    color: GOLD_COLORS[Math.floor(Math.random() * GOLD_COLORS.length)],
+    color: colors[Math.floor(Math.random() * colors.length)],
   };
 }
 
@@ -65,6 +83,7 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
   sparkleBrightness = 1.0,
   sparkleSpeed = 1.0,
   sparkleAmount = AMBIENT_COUNT,
+  sparkleColor = DEFAULT_SPARKLE_COLOR,
 }) {
   const canvasRef = useRef(null);
   const animRef = useRef(null);
@@ -77,6 +96,7 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
     sparkleBrightness,
     sparkleSpeed,
     sparkleAmount,
+    sparkleColor,
   });
 
   useEffect(() => {
@@ -91,8 +111,9 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
       sparkleBrightness,
       sparkleSpeed,
       sparkleAmount,
+      sparkleColor,
     };
-  }, [sparkleEnabled, sparkleMode, sparkleGlow, sparkleBrightness, sparkleSpeed, sparkleAmount]);
+  }, [sparkleEnabled, sparkleMode, sparkleGlow, sparkleBrightness, sparkleSpeed, sparkleAmount, sparkleColor]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -121,8 +142,9 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
     }
 
     // Pre-allocate the full particle pool; ambient mode just renders a subset
+    const currentColors = buildColorPalette(ctrlRef.current.sparkleColor || DEFAULT_SPARKLE_COLOR);
     const particles = Array.from({ length: ACTIVE_COUNT }, () =>
-      makeParticle(canvas.width, canvas.height)
+      makeParticle(canvas.width, canvas.height, currentColors)
     );
 
     // Spawn-and-die pool for L&S ray-tracing mode
@@ -141,10 +163,11 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
         const glowOpacity = isActive ? 0.09 : 0.06;
         const cx = w / 2;
         const cy = h / 2;
+        const glowRgb = hexToRgb(ctrl.sparkleColor || DEFAULT_SPARKLE_COLOR);
         const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 0.35);
-        glow.addColorStop(0, `rgba(197,160,89,${glowOpacity})`);
-        glow.addColorStop(0.5, `rgba(197,160,89,${glowOpacity * 0.44})`);
-        glow.addColorStop(1, 'rgba(197,160,89,0)');
+        glow.addColorStop(0, `rgba(${glowRgb},${glowOpacity})`);
+        glow.addColorStop(0.5, `rgba(${glowRgb},${glowOpacity * 0.44})`);
+        glow.addColorStop(1, `rgba(${glowRgb},0)`);
         ctx.fillStyle = glow;
         ctx.fillRect(0, 0, w, h);
       }
@@ -226,6 +249,9 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
             if (p.y < -5) {
               p.y = h + 5;
               p.x = Math.random() * w;
+              // Re-colour respawned particle with current colour setting
+              const palette = buildColorPalette(ctrl.sparkleColor || DEFAULT_SPARKLE_COLOR);
+              p.color = palette[Math.floor(Math.random() * palette.length)];
             }
             if (p.x < -5) p.x = w + 5;
             if (p.x > w + 5) p.x = -5;

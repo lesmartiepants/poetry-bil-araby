@@ -10,8 +10,6 @@ import {
   X,
   Sparkles,
   Sun,
-  Zap,
-  Wand2,
 } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
@@ -157,11 +155,12 @@ const TextSettingsPill = () => {
 
   // Sparkle settings
   const sparkleEnabled = useUIStore((s) => s.sparkleEnabled);
-  const sparkleMode = useUIStore((s) => s.sparkleMode);
   const sparkleGlow = useUIStore((s) => s.sparkleGlow);
-  const sparkleBrightness = useUIStore((s) => s.sparkleBrightness);
-  const sparkleSpeed = useUIStore((s) => s.sparkleSpeed);
-  const sparkleAmount = useUIStore((s) => s.sparkleAmount);
+  const sparkleColor = useUIStore((s) => s.sparkleColor);
+  const [sparkleHexInput, setSparkleHexInput] = useState(sparkleColor || '#c5a059');
+  useEffect(() => {
+    setSparkleHexInput(sparkleColor || '#c5a059');
+  }, [sparkleColor]);
 
   const getStore = useUIStore.getState;
 
@@ -516,74 +515,49 @@ const TextSettingsPill = () => {
                 </ToggleRow>
               </div>
 
-              {/* Sparkle mode toggle */}
+              {/* Sparkle colour picker */}
               <div className="mb-3">
                 <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
-                  Animation style
+                  Sparkle colour
                 </span>
-                <div className="flex gap-1.5">
-                  <button
-                    onClick={() => getStore().setSparkleMode('particles')}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${
-                      sparkleMode === 'particles'
-                        ? 'bg-gold/20 border-gold/40'
-                        : 'opacity-50 hover:opacity-80 border-transparent'
-                    }`}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={sparkleColor || '#c5a059'}
+                    onChange={(e) => getStore().setSparkleColor(e.target.value)}
+                    className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0.5 flex-shrink-0"
+                    style={{ background: 'transparent' }}
+                    title="Pick sparkle colour"
+                  />
+                  <input
+                    type="text"
+                    value={sparkleHexInput}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setSparkleHexInput(v);
+                      if (/^#[0-9A-Fa-f]{6}$/.test(v)) getStore().setSparkleColor(v);
+                    }}
+                    className={`flex-1 rounded-xl px-2 py-1.5 text-xs font-mono border ${theme.border} min-w-0 ${inputBg}`}
                     style={{ color: gold }}
-                  >
-                    <Sparkles size={11} />
-                    Gold
-                  </button>
-                  <button
-                    onClick={() => getStore().setSparkleMode('ray-tracing')}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-200 border ${
-                      sparkleMode === 'ray-tracing'
-                        ? 'bg-gold/20 border-gold/40'
-                        : 'opacity-50 hover:opacity-80 border-transparent'
-                    }`}
-                    style={{ color: gold }}
-                  >
-                    <Wand2 size={11} />
-                    L&amp;S Rays
-                  </button>
+                    maxLength={7}
+                    placeholder="#c5a059"
+                    spellCheck={false}
+                  />
+                  {sparkleColor && sparkleColor !== '#c5a059' && (
+                    <button
+                      onClick={() => {
+                        getStore().setSparkleColor('#c5a059');
+                        setSparkleHexInput('#c5a059');
+                      }}
+                      className="text-sm opacity-40 hover:opacity-80 transition-opacity flex-shrink-0"
+                      style={{ color: gold }}
+                      title="Reset to gold"
+                    >
+                      ↺
+                    </button>
+                  )}
                 </div>
               </div>
-
-              {/* Particle controls (hidden in L&S ray-tracing mode) */}
-              {sparkleMode === 'particles' && (
-                <div className="space-y-2">
-                  <ControlSlider
-                    gold={gold}
-                    label="Brightness"
-                    value={Math.round(sparkleBrightness * 100)}
-                    min={10}
-                    max={200}
-                    step={10}
-                    display={`${Math.round(sparkleBrightness * 100)}%`}
-                    onChange={(v) => getStore().setSparkleBrightness(v / 100)}
-                  />
-                  <ControlSlider
-                    gold={gold}
-                    label="Speed"
-                    value={Math.round(sparkleSpeed * 100)}
-                    min={25}
-                    max={300}
-                    step={25}
-                    display={`${Math.round(sparkleSpeed * 100)}%`}
-                    onChange={(v) => getStore().setSparkleSpeed(v / 100)}
-                  />
-                  <ControlSlider
-                    gold={gold}
-                    label="Amount"
-                    value={sparkleAmount}
-                    min={5}
-                    max={60}
-                    step={5}
-                    display={String(sparkleAmount)}
-                    onChange={(v) => getStore().setSparkleAmount(v)}
-                  />
-                </div>
-              )}
 
               <div className="h-6" />
             </div>

@@ -28,7 +28,7 @@ const initialState = {
   bgOpacity: 1.0, // multiplier for stroke opacity (1.0 = theme default)
   bgColor: '', // hex override for line colour; '' = use theme default
   bgParallax: 0.08, // parallax drift factor (0.08 = 8% of scroll speed)
-  bgPattern: 'Squoctogon', // currently-selected pattern from generator favorites
+  bgPattern: 'Penrose Monster', // currently-selected pattern from generator favorites
   // Sparkle / particle controls
   sparkleEnabled: true, // show gold sparkle particles
   sparkleMode: 'particles', // 'particles' = gold ambient, 'ray-tracing' = L&S white rays
@@ -36,6 +36,7 @@ const initialState = {
   sparkleBrightness: 1.0, // opacity multiplier for particles
   sparkleSpeed: 1.0, // speed multiplier for particles
   sparkleAmount: 35, // ambient particle count (insight always uses ACTIVE_COUNT=60)
+  sparkleColor: '#c5a059', // base color for particles (gold by default)
   cacheStats: {
     audioHits: 0,
     audioMisses: 0,
@@ -65,6 +66,7 @@ export const useUIStore = create((set, get) => ({
   setSparkleBrightness: (sparkleBrightness) => set({ sparkleBrightness }),
   setSparkleSpeed: (sparkleSpeed) => set({ sparkleSpeed }),
   setSparkleAmount: (sparkleAmount) => set({ sparkleAmount }),
+  setSparkleColor: (sparkleColor) => set({ sparkleColor }),
 
   cycleFont: () =>
     set((s) => {

@@ -1,284 +1,266 @@
-# 🏆 Awwwards-Inspired Design Variations
+# 🏆 Awwwards-Inspired Onboarding Design Variations
 
-> 10 design concepts for Poetry بالعربي, inspired by [meetsansara.com](https://www.meetsansara.com), [neednap.net](https://neednap.net/en/), and [AntoineW/AW-2025-Portfolio](https://github.com/AntoineW/AW-2025-Portfolio).
+> 10 onboarding flow designs for Poetry بالعربي that leverage the **tag system** (62 tags, 6 types).
+> Inspired by [meetsansara.com](https://www.meetsansara.com), [neednap.net](https://neednap.net/en/), and [AntoineW/AW-2025-Portfolio](https://github.com/AntoineW/AW-2025-Portfolio).
+
+## Tag System Reference
+
+The onboarding flow drives poem discovery via **3 pickers** mapped to the tag taxonomy:
+
+| Picker | Tag Types | Count | Purpose |
+|--------|-----------|-------|---------|
+| **Mood** | `emotion` | 9 | فرح، كآبة، غضب، أمل، يأس، دهشة، فخر، وحدة، حنين |
+| **Era** | `period` | 8 | الجاهلية → المعاصر (classical + modern portals) |
+| **Topics** | `theme` | 12 | الحب، الشوق، الحزن، الطبيعة، الوطن، الروحانية، الحكمة، الحرية، الحرب، البحر، الخمر، المديح |
+
+**Flow**: Splash → Arabic Reveal → English Reveal → Mood → Era → Topics → Tagged Poem
 
 ---
 
-## Design 1: "Scroll Odyssey" ✅ BUILT
+## Design 1: "Folio" ✅ BUILT
 
-**Philosophy:** Poetry as a journey — each verse reveals through scroll-driven cinematics, inspired by AW-2025's Work section.
+**Inspiration:** AW-2025-Portfolio typographic approach — clip-path reveals, split-text, editorial precision.
 
 **Key Features:**
-- Lenis smooth scrolling with GSAP ScrollTrigger
-- Horizontal scroll-linked poem gallery (pinned section, scroll → horizontal translate)
-- Clip-path reveal animations on poem cards
-- Staggered Arabic character animations (SplitText-inspired)
-- Canvas-based ambient ink particles
-- Splash → scroll-driven onboarding → immersive main app
+- Clip-path curtain reveals for each letter of "شِعر" in splash
+- Film-grain Canvas noise overlay
+- Magazine-editorial 3×3 mood grid with ink blot selection particles
+- Timeline era picker with golden-rule vertical connectors
+- Constellation-style topic map with SVG connection lines
+- Tag-filtered poem result with "لأنك تحب" match indicator
 
-**Libraries:**
-- `GSAP 3.12` (ScrollTrigger, DrawSVGPlugin concepts)
-- `Lenis 1.1` (smooth scroll)
-- Vanilla Canvas API (particles)
-- CSS clip-path + custom easing
+**Libraries:** GSAP 3.12, Vanilla Canvas (film grain + particles)
 
 **Specs:**
-- Dark theme (#0a0a0b) with gold accents (#C5A059)
-- Amiri for poetry, Tajawal for UI, Inter for controls
-- 100vh pinned sections with scrub-linked timelines
-- Mobile: vertical scroll fallback, touch-optimized
-- Performance: requestAnimationFrame loop, will-change hints
+- Deep ink (#0a0a0f) + gold foil (#C5A059) palette
+- Amiri for Arabic poetry, Reem Kufi for brand, Inter for labels
+- Clip-path `inset()` transitions between phases
+- 5-phase flow with bottom progress dots
+- Skip button ("تخطى") persistent on all phases
 
 ---
 
-## Design 2: "Kinetic Qasida"
+## Design 2: "Luminara"
 
-**Philosophy:** Text IS the interface — letters dance, scatter, and reform. Inspired by AW-2025's Hero character animations + neednap.net's dynamic motion.
+**Inspiration:** meetsansara.com — editorial luxury, generous whitespace, slow elegant transitions.
 
 **Key Features:**
-- Individual letter-level animations (random scatter/reform on tick)
-- Hover-triggered text explosions that reveal poem meaning
-- Mouse-follow displacement field on Arabic glyphs
-- Magnetic cursor that pulls nearby letters
-- Poem transitions via letter morph (crossfade at character level)
+- Animated Canvas starfield splash with nebula glow blobs
+- Islamic 8-pointed star SVG intro that expands and fades
+- Soft 1.4s `ease-luxe` phase transitions (custom cubic-bezier)
+- Elegant list-style pickers — each tag is a full-width row with Arabic label, English subtitle, and color dot
+- Mood tags show as floating orbs with gentle parallax
+- Era tags displayed as a horizontal scroll timeline with soft gradients
+- Topics shown as editorial cards with large Arabic type
 
-**Libraries:**
-- `GSAP 3.12` (SplitText, MorphSVGPlugin)
-- `Matter.js` or custom physics (letter collision)
-- CSS `font-variation-settings` for weight animation
-- WebGL fragment shader (displacement field)
+**Libraries:** GSAP 3.12, Canvas 2D (starfield), CSS custom easing
 
 **Specs:**
-- Monochrome (#000/#fff) with gold (#C5A059) accent on active letters
-- Reem Kufi for titles (variable weight 100-900)
-- 60fps letter physics with spatial hashing
-- Touch: tap-to-scatter, swipe-to-reform
+- Near-black (#08080c) with warm cream (#F5F0E8) text, gold accents
+- Slow transitions: 1.2–1.8s for every phase change
+- Full-width list items (no grid) — one tag per row, generous padding
+- Star SVG morphs between 8-pointed star and circle
 
 ---
 
-## Design 3: "Loom & Weave"
+## Design 3: "Surge"
 
-**Philosophy:** Poetry woven like fabric — verses interlace on scroll. Inspired by meetsansara.com's fluid transitions.
+**Inspiration:** neednap.net — kinetic energy, electric motion, blueprint aesthetic.
 
 **Key Features:**
-- SVG path weaving animation (verses follow Bézier paths)
-- Scroll-linked loom effect: lines of poetry cross and interweave
-- Thread-pull interaction: drag a verse to unravel its meaning
-- Warp/weft grid that distorts on hover
-- Fabric texture generated via Canvas noise
+- Blueprint CSS grid background with electric lapis (#4F7CAC) scanning line
+- Spring-bounce tag cell reveals staggered at 30–55ms intervals
+- Streak-dot progress bar that pulses between phases
+- Neon lapis glow on selected mood/topic states
+- Mood tags as bouncing capsules with spring physics
+- Era tags as horizontal cards with timeline ruler behind
+- Topics as hexagonal grid cells with electric selection pulse
 
-**Libraries:**
-- `GSAP 3.12` (MotionPathPlugin, ScrollTrigger)
-- `SVG.js` for path manipulation
-- Canvas 2D (Perlin noise texture)
-- CSS Grid + transforms for loom layout
+**Libraries:** GSAP 3.12 (spring ease, stagger), CSS Grid
 
 **Specs:**
-- Warm linen base (#F5F0E8), charcoal text (#1a1a1a), gold thread (#C5A059)
-- Amiri Quran for woven text (high legibility at angles)
-- Responsive: 2-column weave → single column on mobile
-- Intersection Observer for lazy thread animation
+- Dark blueprint (#0d1117) with electric lapis (#4F7CAC) and gold sparks
+- Fast transitions: 0.4–0.6s with spring overshoot
+- Mono-weight Inter for all labels, Amiri for Arabic
+- Blueprint grid lines visible behind all phases
 
 ---
 
-## Design 4: "Desert Parallax Cinema"
+## Design 4: "Desert Mirage"
 
-**Philosophy:** An infinite desert scroll where poems emerge like mirages. Inspired by AW-2025's depth layering.
+**Inspiration:** Parallax desert journey — each tag category is a layer in the landscape.
 
 **Key Features:**
-- Multi-layer parallax (6+ layers: stars, distant dunes, mid dunes, near sand, foreground)
-- Poems float in as heat-shimmer distortions (CSS filter + GSAP)
-- Day/night cycle driven by scroll position
-- Sand particle system (Canvas) that responds to scroll velocity
-- Ambient wind sound that increases with scroll speed
+- Multi-layer parallax dune splash (6 layers of sand + stars)
+- Mood picker: emotions float as heat-shimmer distortions above sand
+- Era picker: eras embedded in rock strata layers (geological timeline)
+- Topic picker: oasis nodes scattered across desert map
+- Day/night gradient shifts per phase (deep blue → sunset → sand)
+- Sand particle Canvas that responds to user interaction
 
-**Libraries:**
-- `GSAP 3.12` (ScrollTrigger with scrub)
-- `Lenis` (smooth parallax base)
-- Canvas 2D (sand particles, star field)
-- Web Audio API (ambient wind)
-- CSS backdrop-filter for heat shimmer
+**Libraries:** GSAP 3.12 (ScrollTrigger parallax), Canvas 2D (sand + stars)
 
 **Specs:**
-- Gradient: deep blue (#0B1120) → sunset (#FF6B35) → sand (#E8D5B7) based on scroll
-- Amiri for floating poems, Tajawal for navigation
-- 100vh per "scene", 10+ scenes for full journey
-- GPU-accelerated: translate3d for all parallax layers
+- Gradient palette: #0B1120 (night) → #FF6B35 (sunset) → #E8D5B7 (sand)
+- Amiri for floating desert text, Tajawal for waypoint labels
+- Each phase is a "waypoint" in the desert journey
+- Vertical scroll drives horizontal parallax
 
 ---
 
-## Design 5: "Ink Drop Studio"
+## Design 5: "Ink Bloom"
 
-**Philosophy:** Every poem starts with a single drop of ink that blooms into words. Inspired by neednap.net's clean, dynamic feel.
+**Inspiration:** Japanese ink-wash minimalism meets Arabic calligraphy.
 
 **Key Features:**
-- WebGL ink drop simulation (fluid dynamics)
-- Click anywhere → ink drops → spreads → forms Arabic text
-- Real-time ink pooling with surface tension physics
-- Typography emerges from fluid (mask reveal via fluid simulation)
-- Minimalist white canvas that gradually fills with poetry
+- Click-to-bloom ink drop selection mechanic
+- Each mood/topic is a calligraphic form that bleeds when selected
+- Era picker as horizontal ink scroll that unrolls progressively
+- Minimalist white canvas that fills with selected tag ink marks
+- Final poem appears from the accumulated ink pattern
+- No borders, no cards — pure typography on white
 
-**Libraries:**
-- `WebGL 2.0` (fluid simulation shader)
-- `GSAP 3.12` (timeline orchestration)
-- Custom GLSL shaders (Navier-Stokes simplified)
-- `Lenis` for scroll sections
+**Libraries:** Canvas 2D (ink simulation), GSAP 3.12
 
 **Specs:**
-- Pure white (#FFFFFF) canvas with deep black (#000000) ink
-- Calligraphy-weight Amiri (700) for formed text
-- 60fps fluid simulation (256×256 grid → upscaled)
-- Touch: multi-touch ink drops, pinch to zoom poem
+- Pure white (#FFFFFF) with deep sumi ink (#000000)
+- Gold (#C5A059) only for the "Continue" action
+- Amiri at calligraphic weight (700) for all Arabic
+- Selection state = ink opacity (0.3 → 1.0)
 
 ---
 
-## Design 6: "Constellation Diwan"
+## Design 6: "Constellation"
 
-**Philosophy:** Poems are stars — each verse a point of light in an infinite sky. Connect them to reveal qaṣīda.
+**Inspiration:** Star chart navigation — tags are celestial bodies.
 
 **Key Features:**
-- Three.js star field with poem nodes
-- Click star → verse expands with golden connecting lines
-- Constellation patterns form when related poems are selected
-- Zoom into star → full poem view with radial layout
-- Galaxy rotation on idle, parallax on mouse move
+- Three.js or Canvas star field background for all phases
+- Mood picker: 9 emotion stars in a constellation pattern
+- Connecting SVG lines form between selected moods
+- Era picker: eras as planets along an orbital timeline
+- Topic picker: 12 topic stars with magnitude (brightness) indicating popularity
+- Selected tags form a unique "taste constellation" shown on result screen
 
-**Libraries:**
-- `Three.js r160` (star field, raycasting)
-- `GSAP 3.12` (camera transitions, text reveals)
-- `Lenis` (scroll-to-zoom mapping)
-- Custom shaders (star glow, bloom)
+**Libraries:** Three.js r160 or Canvas 2D, GSAP 3.12
 
 **Specs:**
 - Deep space (#050510) with warm starlight (#FFE5B4)
 - Gold (#C5A059) for active constellation lines
-- 10,000+ star particles with LOD
-- Mobile: gyroscope parallax, tap-to-select
+- Each tag has a visual "magnitude" (size/brightness)
+- Mouse parallax on star field, gyroscope on mobile
 
 ---
 
-## Design 7: "Bauhaus Qafiya"
+## Design 7: "Bauhaus Grid"
 
-**Philosophy:** Swiss/Bauhaus grid meets Arabic poetry — geometric precision with lyrical soul.
+**Inspiration:** Swiss/Bauhaus design — pure geometric precision with Arabic soul.
 
 **Key Features:**
-- Strict 12-column grid with mathematical poem placement
-- Rotate/skew transitions between poems (pure CSS transforms)
-- Monospaced Arabic numerals as design element
-- Color blocks that shift based on poem mood (warm/cool/neutral)
-- Grid lines animate on scroll (DrawSVG-style)
+- Strict 12-column grid for all picker layouts
+- Color-block mood cells (each emotion gets its color from tag data)
+- Timeline era picker using grid rows with typographic numbering
+- Topic tiles as colored rectangles with monospace indices
+- Geometric transitions: rotate/skew between phases
+- No rounded corners — all sharp 90° angles
 
-**Libraries:**
-- `GSAP 3.12` (ScrollTrigger, Flip)
-- CSS Grid + subgrid
-- SVG for grid line animations
-- `Lenis` for smooth section snapping
+**Libraries:** GSAP 3.12 (Flip), CSS Grid + subgrid
 
 **Specs:**
-- Primary: #000000, Accent: #FF0000 + #FFD700
-- Noto Kufi Arabic (geometric sans) for headers
-- 8px base grid, everything snaps to multiples
-- Print-ready: supports @media print
+- Black (#000000) + red (#FF0000) + gold (#FFD700)
+- Noto Kufi Arabic for geometric sans headers
+- 8px grid baseline, mathematical spacing
+- Each tag cell is exactly color-coded from tag taxonomy
 
 ---
 
-## Design 8: "Breath & Pause"
+## Design 8: "Breath"
 
-**Philosophy:** Poetry needs silence — this design breathes. Inspired by meetsansara.com's meditative pacing.
+**Inspiration:** meetsansara.com's meditative pacing — poetry needs silence.
 
 **Key Features:**
-- Timed reveals: text appears word-by-word with breathing rhythm
-- Pulsing background that syncs with reading speed
-- Scroll-linked opacity: past verses fade, current verse glows
-- Minimal controls appear only when needed (fade on inactivity)
-- Sound design: subtle tonal shifts per verse
+- Breathing rhythm: elements appear/fade with 4-second inhale/exhale cycle
+- One tag revealed at a time (swipe/tap to advance)
+- Mood picker: each emotion fills the full viewport, one at a time
+- Era picker: subtle timeline that grows from center
+- Topic picker: words appear letter-by-letter with breathing cadence
+- Ambient tonal shift per tag selection (CSS hue-rotate on background)
 
-**Libraries:**
-- `GSAP 3.12` (stagger, timeline)
-- `Tone.js` (generative ambient audio)
-- `Lenis` (scroll with inertia)
-- CSS `animation-delay` chains
+**Libraries:** GSAP 3.12 (stagger), CSS animation-delay chains
 
 **Specs:**
 - Warm dark (#0F0F0F) with cream text (#F5F0E8)
-- Single poem per viewport (100vh per verse)
-- 4-second breathing cycle animation on background
+- Single tag per viewport for mood/era, grid for topics
 - Haptic feedback on mobile (Vibration API)
+- Transitions: 1.5s fade with ease-in-out-sine
 
 ---
 
-## Design 9: "Mosaic Reveal"
+## Design 9: "Mosaic"
 
-**Philosophy:** Each poem is a tile in an infinite Islamic mosaic — tap to expand, scroll to explore.
+**Inspiration:** Islamic geometric patterns — tags as tessellation tiles.
 
 **Key Features:**
-- Voronoi/Islamic tessellation that fills viewport
-- Each tile contains a poem snippet; expand on click (GSAP Flip)
-- Scroll → mosaic shifts/rotates revealing new tiles
-- Geometric pattern transitions (clip-path polygon morphing)
-- Tile colors derived from poem sentiment
+- Islamic tessellation layout fills viewport with tag tiles
+- Each mood/topic is an octagonal or hexagonal tile
+- Selection: tile glows and rotates slightly inward
+- Era picker: tiles arranged chronologically along a horizontal band
+- Connected tiles share edges (related tags = adjacent tiles)
+- Final pattern formed by selected tags becomes a unique geometric composition
 
-**Libraries:**
-- `GSAP 3.12` (Flip, ScrollTrigger)
-- `d3-voronoi` or custom tessellation
-- CSS clip-path for polygon masks
-- `Lenis` for smooth tile scrolling
+**Libraries:** GSAP 3.12 (Flip), CSS clip-path polygon, SVG tessellation
 
 **Specs:**
 - Islamic blue (#1B4B73) + gold (#C5A059) + ivory (#FFFFF0)
-- Hexagonal/octagonal grid system
-- Each tile 200-400px, responsive reflow
-- Touch: pinch to zoom mosaic, long-press to save
+- Octagonal tiles with 4px gold stroke on selection
+- Responsive: fewer tiles on mobile, same visual density
+- CSS clip-path: polygon() for tile masks
 
 ---
 
-## Design 10: "Vertical Cinema"
+## Design 10: "Cinema"
 
-**Philosophy:** Full-screen vertical film reel — poems scroll like cinema credits with dramatic lighting.
+**Inspiration:** Full-screen vertical film reel — tags as cinematic credits.
 
 **Key Features:**
-- Full-viewport text with cinematic letterboxing
-- Scroll-driven camera dolly (Z-axis depth movement via scale)
-- Light beam effect that scans across text on scroll
-- Film grain overlay (Canvas noise)
-- Dramatic pause points where scroll "sticks" (ScrollTrigger snap)
+- Cinematic letterboxing (16:9 bars top/bottom)
+- Each mood appears as a full-screen title card with dramatic typography
+- Era picker: dates scroll like film credits
+- Topic picker: words fly in from edges with motion blur
+- Film grain Canvas overlay on all phases
+- Dramatic pause/snap points between tag categories
 
-**Libraries:**
-- `GSAP 3.12` (ScrollTrigger with snap, scrub)
-- `Lenis` (butter-smooth momentum)
-- Canvas 2D (film grain, light ray)
-- CSS perspective + translateZ
+**Libraries:** GSAP 3.12 (snap, ScrollTrigger), Canvas 2D (film grain)
 
 **Specs:**
-- Cinematic black (#000000) with warm light (#FFE5B4 spotlight)
-- Amiri at 8vw (massive, cinematic scale)
-- 16:9 letterboxing with gold (#C5A059) bars
-- Snap points every 100vh for dramatic pause
-- Mobile: portrait-optimized, full-bleed text
+- Cinematic black (#000000) with warm spotlight (#FFE5B4)
+- Amiri at 8vw scale (massive, cinematic)
+- 16:9 gold (#C5A059) letterbox bars
+- Snap points every 100vh for dramatic pacing
 
 ---
 
 ## Comparison Matrix
 
-| # | Design | Motion Complexity | Libraries | Arabic Focus | Mobile | Build Time |
-|---|--------|------------------|-----------|-------------|--------|------------|
-| 1 | Scroll Odyssey | ★★★★☆ | GSAP, Lenis, Canvas | ★★★★★ | ★★★★☆ | 8h |
-| 2 | Kinetic Qasida | ★★★★★ | GSAP, Matter.js, WebGL | ★★★★★ | ★★★☆☆ | 16h |
-| 3 | Loom & Weave | ★★★★☆ | GSAP, SVG.js, Canvas | ★★★☆☆ | ★★★☆☆ | 12h |
-| 4 | Desert Parallax | ★★★★☆ | GSAP, Lenis, Canvas, Web Audio | ★★★★☆ | ★★★★☆ | 10h |
-| 5 | Ink Drop Studio | ★★★★★ | WebGL, GSAP | ★★★★★ | ★★☆☆☆ | 20h |
-| 6 | Constellation | ★★★★★ | Three.js, GSAP | ★★★★☆ | ★★★☆☆ | 16h |
-| 7 | Bauhaus Qafiya | ★★★☆☆ | GSAP, CSS Grid | ★★★★☆ | ★★★★★ | 6h |
-| 8 | Breath & Pause | ★★★☆☆ | GSAP, Tone.js, Lenis | ★★★★★ | ★★★★★ | 8h |
-| 9 | Mosaic Reveal | ★★★★☆ | GSAP, d3, CSS clip-path | ★★★★☆ | ★★★★☆ | 12h |
-| 10 | Vertical Cinema | ★★★★☆ | GSAP, Lenis, Canvas | ★★★★★ | ★★★★★ | 8h |
+| # | Design | Visual Style | Tag Integration | Motion | Mobile | Build Effort |
+|---|--------|-------------|----------------|--------|--------|-------------|
+| 1 | Folio | Editorial/typographic | ★★★★★ | ★★★★☆ | ★★★★☆ | Medium |
+| 2 | Luminara | Luxury/minimal | ★★★★★ | ★★★☆☆ | ★★★★★ | Medium |
+| 3 | Surge | Electric/kinetic | ★★★★★ | ★★★★★ | ★★★★☆ | Medium |
+| 4 | Desert Mirage | Parallax/landscape | ★★★★☆ | ★★★★☆ | ★★★☆☆ | High |
+| 5 | Ink Bloom | Calligraphic/zen | ★★★★☆ | ★★★★☆ | ★★★☆☆ | High |
+| 6 | Constellation | Celestial/space | ★★★★★ | ★★★★★ | ★★★☆☆ | High |
+| 7 | Bauhaus Grid | Geometric/Swiss | ★★★★★ | ★★★☆☆ | ★★★★★ | Low |
+| 8 | Breath | Meditative/slow | ★★★★☆ | ★★★☆☆ | ★★★★★ | Low |
+| 9 | Mosaic | Islamic/geometric | ★★★★★ | ★★★★☆ | ★★★★☆ | High |
+| 10 | Cinema | Film/dramatic | ★★★★☆ | ★★★★★ | ★★★★★ | Medium |
 
 ---
 
 ## Recommended Build Order
 
-1. **Scroll Odyssey** (built first — core patterns reusable)
-2. **Vertical Cinema** (shares GSAP+Lenis stack)
-3. **Breath & Pause** (minimal, high impact)
-4. **Desert Parallax** (extends parallax patterns)
-5. **Bauhaus Qafiya** (CSS Grid showcase)
+1. **Folio** ← built (editorial typography, core patterns)
+2. **Surge** (kinetic energy, reuses GSAP patterns)
+3. **Luminara** (luxury feel, slow transitions)
+4. **Bauhaus Grid** (CSS Grid showcase, fastest build)
+5. **Cinema** (dramatic, shares GSAP+Canvas stack)

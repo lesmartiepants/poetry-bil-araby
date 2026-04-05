@@ -1650,7 +1650,7 @@ export default function DiwanApp() {
           style={{ left: 8, bottom: 8 }}
         >
           <a
-            href="/design-review"
+            href={`${import.meta.env.BASE_URL}design-review/`}
             className="w-[44px] h-[44px] flex items-center justify-center no-underline"
             title="Design Review"
             aria-label="Open design review"

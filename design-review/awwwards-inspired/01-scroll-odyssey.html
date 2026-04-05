@@ -1,0 +1,1578 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Odyssey — رحلة القصيدة</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&family=Inter:wght@300;400;500;600&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- GSAP + ScrollTrigger -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Lenis Smooth Scroll -->
+  <script src="https://unpkg.com/lenis@1.1.18/dist/lenis.min.js"></script>
+
+  <style>
+    /* ============================================
+       CSS RESET + CUSTOM PROPERTIES
+       ============================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-deep: #0a0a0b;
+      --bg-surface: #111113;
+      --bg-card: #18181b;
+      --bg-card-hover: #1f1f23;
+
+      --gold: #C5A059;
+      --gold-light: #D4B87A;
+      --gold-dim: rgba(197, 160, 89, 0.15);
+      --gold-glow: rgba(197, 160, 89, 0.35);
+
+      --text-primary: #fafafa;
+      --text-secondary: #a1a1aa;
+      --text-muted: #52525b;
+
+      --border: rgba(255, 255, 255, 0.06);
+      --border-gold: rgba(197, 160, 89, 0.3);
+
+      --font-poem: 'Amiri', serif;
+      --font-ui: 'Tajawal', sans-serif;
+      --font-brand: 'Reem Kufi', sans-serif;
+      --font-mono: 'Inter', system-ui, sans-serif;
+
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out-expo: cubic-bezier(0.87, 0, 0.13, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    html {
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg-deep);
+      overflow-x: hidden;
+    }
+
+    /* ============================================
+       SPLASH SCREEN
+       ============================================ */
+    .splash {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-deep);
+      overflow: hidden;
+    }
+
+    .splash__canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .splash__brand {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+    }
+
+    .splash__title {
+      font-family: var(--font-brand);
+      font-size: clamp(2rem, 6vw, 4.5rem);
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.02em;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .splash__subtitle {
+      font-family: var(--font-mono);
+      font-size: clamp(0.75rem, 1.5vw, 1rem);
+      color: var(--text-muted);
+      margin-top: 1rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateY(20px);
+      direction: ltr;
+    }
+
+    .splash__line {
+      width: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 1.5rem auto 0;
+    }
+
+    .splash__scroll-hint {
+      position: absolute;
+      bottom: 3rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      opacity: 0;
+    }
+
+    .splash__scroll-text {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      direction: ltr;
+    }
+
+    .splash__scroll-line {
+      width: 1px;
+      height: 40px;
+      background: var(--gold);
+      transform-origin: top;
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes scrollPulse {
+      0%, 100% { scaleY: 0; opacity: 0; }
+      50% { scaleY: 1; opacity: 1; }
+    }
+
+    /* ============================================
+       GLOBAL LAYOUT
+       ============================================ */
+    .main-content {
+      opacity: 0;
+    }
+
+    section {
+      position: relative;
+    }
+
+    /* ============================================
+       SECTION: HERO
+       ============================================ */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero__bg-lines {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .hero__line {
+      position: absolute;
+      width: 1px;
+      height: 100%;
+      background: linear-gradient(180deg, transparent, var(--border), transparent);
+      opacity: 0;
+    }
+
+    .hero__content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 900px;
+    }
+
+    .hero__label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--gold);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 2rem;
+      opacity: 0;
+      direction: ltr;
+    }
+
+    .hero__title {
+      font-family: var(--font-poem);
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--text-primary);
+      margin-bottom: 1.5rem;
+    }
+
+    .hero__title .word {
+      display: inline-block;
+      overflow: hidden;
+    }
+
+    .hero__title .word-inner {
+      display: inline-block;
+      transform: translateY(120%);
+    }
+
+    .hero__verse {
+      font-family: var(--font-poem);
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      color: var(--text-secondary);
+      line-height: 2;
+      max-width: 600px;
+      margin: 0 auto;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .hero__divider {
+      width: 60px;
+      height: 1px;
+      background: var(--gold);
+      margin: 2rem auto;
+      transform: scaleX(0);
+    }
+
+    .hero__poet {
+      font-family: var(--font-ui);
+      font-size: 0.875rem;
+      color: var(--gold);
+      opacity: 0;
+    }
+
+    /* ============================================
+       SECTION: HORIZONTAL SCROLL GALLERY
+       ============================================ */
+    .gallery {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gallery__pin {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .gallery__track {
+      display: flex;
+      gap: 3rem;
+      padding: 0 10vw;
+      will-change: transform;
+    }
+
+    .gallery__header {
+      position: absolute;
+      top: 3rem;
+      right: 3rem;
+      z-index: 10;
+    }
+
+    .gallery__section-label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--gold);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      direction: ltr;
+    }
+
+    .gallery__counter {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      direction: ltr;
+    }
+
+    .gallery__progress {
+      position: absolute;
+      bottom: 3rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 200px;
+      height: 1px;
+      background: var(--border);
+      z-index: 10;
+    }
+
+    .gallery__progress-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--gold);
+      transform-origin: left;
+    }
+
+    /* Poem Card */
+    .poem-card {
+      flex-shrink: 0;
+      width: clamp(320px, 40vw, 500px);
+      min-height: 70vh;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      padding: clamp(2rem, 4vw, 3rem);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      cursor: default;
+      transition: border-color 0.6s ease, background 0.6s ease;
+    }
+
+    .poem-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, var(--gold-dim), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .poem-card:hover {
+      border-color: var(--border-gold);
+      background: var(--bg-card-hover);
+    }
+
+    .poem-card:hover::before {
+      opacity: 1;
+    }
+
+    .poem-card__index {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.2em;
+      margin-bottom: 2rem;
+      direction: ltr;
+    }
+
+    .poem-card__era {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--gold);
+      letter-spacing: 0.15em;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      direction: ltr;
+      opacity: 0.7;
+    }
+
+    .poem-card__title {
+      font-family: var(--font-poem);
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      color: var(--gold-light);
+      margin-bottom: 1.5rem;
+      line-height: 1.4;
+    }
+
+    .poem-card__verses {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1.25rem;
+    }
+
+    .poem-card__verse {
+      font-family: var(--font-poem);
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      color: var(--text-primary);
+      line-height: 2;
+      position: relative;
+      padding-right: 1rem;
+    }
+
+    .poem-card__verse::before {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 0;
+      background: var(--gold);
+      border-radius: 2px;
+      transition: height 0.4s var(--ease-out-expo);
+    }
+
+    .poem-card:hover .poem-card__verse::before {
+      height: 100%;
+    }
+
+    .poem-card__poet {
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .poem-card__poet-name {
+      color: var(--gold);
+      font-weight: 500;
+    }
+
+    /* ============================================
+       SECTION: FEATURED POEM (Full-Screen)
+       ============================================ */
+    .featured {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .featured__bg {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, rgba(197, 160, 89, 0.05), transparent 70%);
+    }
+
+    .featured__content {
+      position: relative;
+      z-index: 2;
+      max-width: 800px;
+      text-align: center;
+    }
+
+    .featured__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--gold);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 3rem;
+      direction: ltr;
+    }
+
+    .featured__verse-group {
+      margin-bottom: 3rem;
+    }
+
+    .featured__hemistich {
+      font-family: var(--font-poem);
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700;
+      line-height: 1.8;
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+
+    .featured__hemistich-inner {
+      display: block;
+      transform: translateY(110%);
+    }
+
+    .featured__separator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .featured__sep-line {
+      width: 40px;
+      height: 1px;
+      background: var(--gold);
+      transform: scaleX(0);
+    }
+
+    .featured__sep-dot {
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--gold);
+      transform: scale(0);
+    }
+
+    .featured__poet-block {
+      margin-top: 3rem;
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .featured__poet-name {
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      color: var(--gold);
+      font-weight: 500;
+    }
+
+    .featured__poet-era {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      direction: ltr;
+    }
+
+    /* ============================================
+       SECTION: POET GRID
+       ============================================ */
+    .poets {
+      min-height: 100vh;
+      padding: 8rem 2rem;
+      position: relative;
+    }
+
+    .poets__header {
+      text-align: center;
+      margin-bottom: 6rem;
+    }
+
+    .poets__label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--gold);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      direction: ltr;
+    }
+
+    .poets__title {
+      font-family: var(--font-poem);
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .poets__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .poet-tile {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.5s var(--ease-out-expo);
+    }
+
+    .poet-tile::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.6s var(--ease-out-expo);
+    }
+
+    .poet-tile:hover {
+      border-color: var(--border-gold);
+      transform: translateY(-4px);
+    }
+
+    .poet-tile:hover::after {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+
+    .poet-tile__name {
+      font-family: var(--font-poem);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gold-light);
+      margin-bottom: 0.5rem;
+    }
+
+    .poet-tile__era {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      margin-bottom: 1rem;
+      direction: ltr;
+    }
+
+    .poet-tile__excerpt {
+      font-family: var(--font-poem);
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.9;
+    }
+
+    .poet-tile__count {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+      direction: ltr;
+    }
+
+    /* ============================================
+       SECTION: CLOSING
+       ============================================ */
+    .closing {
+      min-height: 60vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .closing__verse {
+      font-family: var(--font-poem);
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      color: var(--text-secondary);
+      line-height: 2;
+      max-width: 600px;
+      opacity: 0;
+      transform: translateY(30px);
+    }
+
+    .closing__brand {
+      margin-top: 4rem;
+      opacity: 0;
+    }
+
+    .closing__brand-text {
+      font-family: var(--font-brand);
+      font-size: 1.5rem;
+      color: var(--gold);
+    }
+
+    .closing__brand-sub {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-muted);
+      letter-spacing: 0.3em;
+      margin-top: 0.5rem;
+      text-transform: uppercase;
+      direction: ltr;
+    }
+
+    /* ============================================
+       NAVIGATION / CONTROLS
+       ============================================ */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      mix-blend-mode: difference;
+    }
+
+    .nav__brand {
+      font-family: var(--font-brand);
+      font-size: 1rem;
+      color: var(--text-primary);
+      pointer-events: auto;
+      opacity: 0;
+    }
+
+    .nav__controls {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+      pointer-events: auto;
+      opacity: 0;
+    }
+
+    .nav__link {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      transition: color 0.3s ease;
+      direction: ltr;
+    }
+
+    .nav__link:hover { color: var(--gold); }
+
+    /* ============================================
+       THEME TOGGLE
+       ============================================ */
+    .theme-toggle {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: var(--bg-surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      transition: all 0.3s ease;
+      opacity: 0;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .theme-toggle svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Light theme */
+    [data-theme="light"] {
+      --bg-deep: #fafaf9;
+      --bg-surface: #f5f5f4;
+      --bg-card: #ffffff;
+      --bg-card-hover: #fafaf9;
+      --text-primary: #0c0a09;
+      --text-secondary: #57534e;
+      --text-muted: #a8a29e;
+      --border: rgba(0, 0, 0, 0.08);
+      --border-gold: rgba(197, 160, 89, 0.4);
+      --gold-dim: rgba(197, 160, 89, 0.08);
+    }
+
+    /* ============================================
+       AMBIENT CANVAS
+       ============================================ */
+    .ambient-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 768px) {
+      .gallery__track { gap: 1.5rem; padding: 0 5vw; }
+      .poem-card { width: 85vw; min-height: 60vh; }
+      .nav { padding: 1rem 1.25rem; }
+      .poets__grid { grid-template-columns: 1fr; }
+    }
+
+    /* ============================================
+       SCROLL PROGRESS BAR
+       ============================================ */
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      z-index: 200;
+      background: transparent;
+    }
+
+    .scroll-progress__bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--gold), var(--gold-light));
+      transform-origin: left;
+    }
+  </style>
+</head>
+
+<body data-theme="dark">
+
+  <!-- Scroll Progress -->
+  <div class="scroll-progress">
+    <div class="scroll-progress__bar" id="scrollProgressBar"></div>
+  </div>
+
+  <!-- Ambient Particle Canvas -->
+  <canvas class="ambient-canvas" id="ambientCanvas"></canvas>
+
+  <!-- ════════════════════════════════
+       SPLASH SCREEN
+       ════════════════════════════════ -->
+  <div class="splash" id="splash">
+    <canvas class="splash__canvas" id="splashCanvas"></canvas>
+    <div class="splash__brand">
+      <h1 class="splash__title">شعر بالعربي</h1>
+      <div class="splash__line" id="splashLine"></div>
+      <p class="splash__subtitle">Poetry Bil-Araby</p>
+    </div>
+    <div class="splash__scroll-hint" id="scrollHint">
+      <span class="splash__scroll-text">Scroll to explore</span>
+      <div class="splash__scroll-line"></div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════
+       NAVIGATION
+       ════════════════════════════════ -->
+  <nav class="nav" id="nav">
+    <div class="nav__brand">شعر بالعربي</div>
+    <div class="nav__controls">
+      <a href="#poems" class="nav__link">Poems</a>
+      <a href="#poets" class="nav__link">Poets</a>
+    </div>
+  </nav>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+    </svg>
+  </button>
+
+  <!-- ════════════════════════════════
+       MAIN CONTENT
+       ════════════════════════════════ -->
+  <div class="main-content" id="mainContent">
+
+    <!-- HERO SECTION -->
+    <section class="hero" id="hero">
+      <div class="hero__bg-lines" id="heroLines"></div>
+      <div class="hero__content">
+        <div class="hero__label" id="heroLabel">SCROLL ODYSSEY — DESIGN 01</div>
+        <h2 class="hero__title" id="heroTitle">
+          أنا البحرُ في أحشائِهِ الدُرُّ كامِنٌ
+        </h2>
+        <div class="hero__divider" id="heroDivider"></div>
+        <p class="hero__verse" id="heroVerse">
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </p>
+        <div class="hero__poet" id="heroPoet">— أحمد شوقي</div>
+      </div>
+    </section>
+
+    <!-- HORIZONTAL SCROLL GALLERY -->
+    <section class="gallery" id="poems">
+      <div class="gallery__header">
+        <div class="gallery__section-label">COLLECTION</div>
+        <div class="gallery__counter" id="galleryCounter">01 / 06</div>
+      </div>
+
+      <div class="gallery__progress">
+        <div class="gallery__progress-bar" id="galleryProgressBar"></div>
+      </div>
+
+      <div class="gallery__pin" id="galleryPin">
+        <div class="gallery__track" id="galleryTrack">
+
+          <!-- Card 1 -->
+          <article class="poem-card" data-card="1">
+            <div class="poem-card__index">001</div>
+            <div class="poem-card__era">PRE-ISLAMIC · JAHILIYYA</div>
+            <h3 class="poem-card__title">مُعَلَّقَة امرئ القيس</h3>
+            <div class="poem-card__verses">
+              <p class="poem-card__verse">قِفا نَبكِ مِن ذِكرى حَبيبٍ وَمَنزِلِ</p>
+              <p class="poem-card__verse">بِسِقطِ اللِّوى بَينَ الدَّخولِ فَحَومَلِ</p>
+              <p class="poem-card__verse">فَتوضِحَ فَالمِقراةِ لَم يَعفُ رَسمُها</p>
+              <p class="poem-card__verse">لِما نَسَجَتها مِن جَنوبٍ وَشَمأَلِ</p>
+            </div>
+            <div class="poem-card__poet">
+              <span class="poem-card__poet-name">امرؤ القيس</span> · المعلقات
+            </div>
+          </article>
+
+          <!-- Card 2 -->
+          <article class="poem-card" data-card="2">
+            <div class="poem-card__index">002</div>
+            <div class="poem-card__era">ABBASID · 9TH CENTURY</div>
+            <h3 class="poem-card__title">إرادة الحياة</h3>
+            <div class="poem-card__verses">
+              <p class="poem-card__verse">إِذا الشَعبُ يَوماً أَرادَ الحَياةَ</p>
+              <p class="poem-card__verse">فَلا بُدَّ أَن يَستَجيبَ القَدَر</p>
+              <p class="poem-card__verse">وَلا بُدَّ لِلَّيلِ أَن يَنجَلي</p>
+              <p class="poem-card__verse">وَلا بُدَّ لِلقَيدِ أَن يَنكَسِر</p>
+            </div>
+            <div class="poem-card__poet">
+              <span class="poem-card__poet-name">أبو القاسم الشابي</span> · تونس
+            </div>
+          </article>
+
+          <!-- Card 3 -->
+          <article class="poem-card" data-card="3">
+            <div class="poem-card__index">003</div>
+            <div class="poem-card__era">MODERN · 20TH CENTURY</div>
+            <h3 class="poem-card__title">أنشودة المطر</h3>
+            <div class="poem-card__verses">
+              <p class="poem-card__verse">عَيناكِ غابَتا نَخيلٍ ساعَةَ السَحَر</p>
+              <p class="poem-card__verse">أَو شُرفَتانِ راحَ يَنأى عَنهُما القَمَر</p>
+              <p class="poem-card__verse">عَيناكِ حينَ تَبسِمانِ تُورِقُ الكُرومُ</p>
+              <p class="poem-card__verse">وَتَرقُصُ الأَضواءُ كَالأَقمارِ في نَهَر</p>
+            </div>
+            <div class="poem-card__poet">
+              <span class="poem-card__poet-name">بدر شاكر السيّاب</span> · العراق
+            </div>
+          </article>
+
+          <!-- Card 4 -->
+          <article class="poem-card" data-card="4">
+            <div class="poem-card__index">004</div>
+            <div class="poem-card__era">CONTEMPORARY · LOVE POETRY</div>
+            <h3 class="poem-card__title">قصائد حب</h3>
+            <div class="poem-card__verses">
+              <p class="poem-card__verse">أُحِبُّكِ جِدّاً وأَعرِفُ أَنَّ الطَريقَ</p>
+              <p class="poem-card__verse">إِلى المُستَحيلِ طَريقٌ طَويلُ</p>
+              <p class="poem-card__verse">وَأَعرِفُ أَنَّكِ سِتُّ النِساءِ</p>
+              <p class="poem-card__verse">وَلا شَيءَ في العِشقِ يُشبِهُ شَيّا</p>
+            </div>
+            <div class="poem-card__poet">
+              <span class="poem-card__poet-name">نزار قباني</span> · سوريا
+            </div>
+          </article>
+
+          <!-- Card 5 -->
+          <article class="poem-card" data-card="5">
+            <div class="poem-card__index">005</div>
+            <div class="poem-card__era">ANDALUSIAN · MEDIEVAL</div>
+            <h3 class="poem-card__title">نونية ابن زيدون</h3>
+            <div class="poem-card__verses">
+              <p class="poem-card__verse">أَضحى التَنائي بَديلاً مِن تَدانينا</p>
+              <p class="poem-card__verse">وَنابَ عَن طيبِ لُقيانا تَجافينا</p>
+              <p class="poem-card__verse">بِنتُم وَبِنّا فَما ابتَلَّت جَوانِحُنا</p>
+              <p class="poem-card__verse">شَوقاً إِلَيكُم وَلا جَفَّت مَآقينا</p>
+            </div>
+            <div class="poem-card__poet">
+              <span class="poem-card__poet-name">ابن زيدون</span> · الأندلس
+            </div>
+          </article>
+
+          <!-- Card 6 -->
+          <article class="poem-card" data-card="6">
+            <div class="poem-card__index">006</div>
+            <div class="poem-card__era">MODERN · RESISTANCE POETRY</div>
+            <h3 class="poem-card__title">سجّل أنا عربي</h3>
+            <div class="poem-card__verses">
+              <p class="poem-card__verse">سَجِّل أَنا عَرَبِيّ</p>
+              <p class="poem-card__verse">وَرَقَمُ بِطاقَتي خَمسونَ أَلف</p>
+              <p class="poem-card__verse">وَأَطفالي ثَمانِيَة</p>
+              <p class="poem-card__verse">وَتاسِعُهُم سَيَأتي بَعدَ صَيف</p>
+            </div>
+            <div class="poem-card__poet">
+              <span class="poem-card__poet-name">محمود درويش</span> · فلسطين
+            </div>
+          </article>
+
+        </div><!-- .gallery__track -->
+      </div><!-- .gallery__pin -->
+    </section>
+
+    <!-- FEATURED POEM (Full-Screen Reveal) -->
+    <section class="featured" id="featured">
+      <div class="featured__bg"></div>
+      <div class="featured__content">
+        <div class="featured__label" id="featuredLabel">FEATURED VERSE</div>
+
+        <div class="featured__verse-group">
+          <div class="featured__hemistich">
+            <span class="featured__hemistich-inner" id="hem1">وَلَيسَ الذِئبُ يَأكُلُ لَحمَ ذِئبٍ</span>
+          </div>
+          <div class="featured__separator">
+            <div class="featured__sep-line" id="sepLine1"></div>
+            <div class="featured__sep-dot" id="sepDot"></div>
+            <div class="featured__sep-line" id="sepLine2"></div>
+          </div>
+          <div class="featured__hemistich">
+            <span class="featured__hemistich-inner" id="hem2">وَيَأكُلُ بَعضُنا بَعضاً عِيانا</span>
+          </div>
+        </div>
+
+        <div class="featured__poet-block" id="featuredPoet">
+          <div class="featured__poet-name">المتنبي</div>
+          <div class="featured__poet-era">ABBASID ERA · 915–965 CE</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- POET GRID -->
+    <section class="poets" id="poets">
+      <div class="poets__header">
+        <div class="poets__label" id="poetsLabel">EXPLORE BY POET</div>
+        <h2 class="poets__title" id="poetsTitle">شعراء الديوان</h2>
+      </div>
+
+      <div class="poets__grid" id="poetsGrid">
+        <div class="poet-tile">
+          <div class="poet-tile__name">المتنبي</div>
+          <div class="poet-tile__era">915–965 CE · ABBASID</div>
+          <p class="poet-tile__excerpt">أَنا الَّذي نَظَرَ الأَعمى إِلى أَدَبي</p>
+          <div class="poet-tile__count">1,247 POEMS</div>
+        </div>
+        <div class="poet-tile">
+          <div class="poet-tile__name">نزار قباني</div>
+          <div class="poet-tile__era">1923–1998 · MODERN</div>
+          <p class="poet-tile__excerpt">عَلَّمتِني كَيفَ تَمطُرُ الدُنيا</p>
+          <div class="poet-tile__count">892 POEMS</div>
+        </div>
+        <div class="poet-tile">
+          <div class="poet-tile__name">محمود درويش</div>
+          <div class="poet-tile__era">1941–2008 · CONTEMPORARY</div>
+          <p class="poet-tile__excerpt">عَلى هَذِهِ الأَرضِ ما يَستَحِقُّ الحَياة</p>
+          <div class="poet-tile__count">756 POEMS</div>
+        </div>
+        <div class="poet-tile">
+          <div class="poet-tile__name">أحمد شوقي</div>
+          <div class="poet-tile__era">1868–1932 · MODERN</div>
+          <p class="poet-tile__excerpt">قُم لِلمُعَلِّمِ وَفِّهِ التَبجيلا</p>
+          <div class="poet-tile__count">1,103 POEMS</div>
+        </div>
+        <div class="poet-tile">
+          <div class="poet-tile__name">أبو الطيّب</div>
+          <div class="poet-tile__era">ABBASID · IRAQ</div>
+          <p class="poet-tile__excerpt">خُذِ الكِتابَ بِقُوَّةٍ مِن يَمينِهِ</p>
+          <div class="poet-tile__count">634 POEMS</div>
+        </div>
+        <div class="poet-tile">
+          <div class="poet-tile__name">الخنساء</div>
+          <div class="poet-tile__era">575–645 CE · PRE-ISLAMIC</div>
+          <p class="poet-tile__excerpt">أَعَينَيَّ جودا وَلا تَجمُدا</p>
+          <div class="poet-tile__count">312 POEMS</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CLOSING -->
+    <section class="closing" id="closing">
+      <p class="closing__verse" id="closingVerse">
+        وَفي الشِعرِ بابٌ لِكُلِّ امرِئٍ<br>
+        يَفتَحُهُ بِالقَلبِ لا بِاليَدِ
+      </p>
+      <div class="closing__brand" id="closingBrand">
+        <div class="closing__brand-text">شعر بالعربي</div>
+        <div class="closing__brand-sub">Poetry Bil-Araby · 2025</div>
+      </div>
+    </section>
+
+  </div><!-- .main-content -->
+
+  <!-- ════════════════════════════════════════════════════
+       JAVASCRIPT — GSAP + Lenis Orchestration
+       ════════════════════════════════════════════════════ -->
+  <script>
+    // Register GSAP plugins
+    gsap.registerPlugin(ScrollTrigger);
+
+    // ─── SPLASH PARTICLES (Canvas) ──────────────────────────
+    (function initSplashParticles() {
+      const canvas = document.getElementById('splashCanvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      let animId;
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      class Particle {
+        constructor() {
+          this.reset();
+        }
+        reset() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.size = Math.random() * 1.5 + 0.5;
+          this.speedX = (Math.random() - 0.5) * 0.3;
+          this.speedY = (Math.random() - 0.5) * 0.3;
+          this.opacity = Math.random() * 0.5 + 0.1;
+          this.life = Math.random() * 200 + 100;
+          this.maxLife = this.life;
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          this.life--;
+          if (this.life <= 0) this.reset();
+        }
+        draw() {
+          const alpha = (this.life / this.maxLife) * this.opacity;
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(197, 160, 89, ${alpha})`;
+          ctx.fill();
+        }
+      }
+
+      function init() {
+        resize();
+        const count = Math.min(80, Math.floor(canvas.width * canvas.height / 15000));
+        particles = Array.from({ length: count }, () => new Particle());
+      }
+
+      function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
+        animId = requestAnimationFrame(animate);
+      }
+
+      init();
+      animate();
+      window.addEventListener('resize', () => { resize(); });
+
+      // Expose cleanup
+      window.__splashParticles = { stop: () => cancelAnimationFrame(animId) };
+    })();
+
+    // ─── AMBIENT PARTICLES (Background) ─────────────────────
+    (function initAmbientParticles() {
+      const canvas = document.getElementById('ambientCanvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+      let mouse = { x: 0, y: 0 };
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      class FloatingParticle {
+        constructor() {
+          this.x = Math.random() * canvas.width;
+          this.y = Math.random() * canvas.height;
+          this.baseSize = Math.random() * 1.2 + 0.3;
+          this.size = this.baseSize;
+          this.speedX = (Math.random() - 0.5) * 0.15;
+          this.speedY = (Math.random() - 0.5) * 0.15;
+          this.opacity = Math.random() * 0.3 + 0.05;
+          this.phase = Math.random() * Math.PI * 2;
+        }
+        update(time) {
+          this.x += this.speedX + Math.sin(time * 0.001 + this.phase) * 0.1;
+          this.y += this.speedY + Math.cos(time * 0.001 + this.phase) * 0.1;
+
+          // Wrap around
+          if (this.x < -10) this.x = canvas.width + 10;
+          if (this.x > canvas.width + 10) this.x = -10;
+          if (this.y < -10) this.y = canvas.height + 10;
+          if (this.y > canvas.height + 10) this.y = -10;
+
+          // Mouse repulsion
+          const dx = this.x - mouse.x;
+          const dy = this.y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 150) {
+            const force = (150 - dist) / 150;
+            this.x += (dx / dist) * force * 2;
+            this.y += (dy / dist) * force * 2;
+          }
+
+          this.size = this.baseSize + Math.sin(time * 0.002 + this.phase) * 0.3;
+        }
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, Math.max(0.1, this.size), 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(197, 160, 89, ${this.opacity})`;
+          ctx.fill();
+        }
+      }
+
+      function init() {
+        resize();
+        const count = Math.min(50, Math.floor(canvas.width * canvas.height / 25000));
+        particles = Array.from({ length: count }, () => new FloatingParticle());
+      }
+
+      function animate(time) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => { p.update(time); p.draw(); });
+        requestAnimationFrame(animate);
+      }
+
+      init();
+      requestAnimationFrame(animate);
+      window.addEventListener('resize', resize);
+      window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+    })();
+
+    // ─── LENIS SMOOTH SCROLL ────────────────────────────────
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      smoothWheel: true,
+    });
+
+    function raf(time) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+
+    // Sync Lenis with GSAP ScrollTrigger
+    lenis.on('scroll', ScrollTrigger.update);
+    gsap.ticker.add((time) => { lenis.raf(time * 1000); });
+    gsap.ticker.lagSmoothing(0);
+
+    // ─── SCROLL PROGRESS BAR ────────────────────────────────
+    gsap.to('#scrollProgressBar', {
+      width: '100%',
+      ease: 'none',
+      scrollTrigger: {
+        trigger: document.body,
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 0.3,
+      }
+    });
+
+    // ─── SPLASH ANIMATION ───────────────────────────────────
+    function playSplashIntro() {
+      const tl = gsap.timeline({
+        onComplete: () => {
+          // Enable scrolling after splash
+          lenis.start();
+          initMainAnimations();
+        }
+      });
+
+      // Initially disable scroll
+      lenis.stop();
+
+      tl.to('.splash__title', {
+        opacity: 1,
+        y: 0,
+        duration: 1.2,
+        ease: 'expo.out',
+      }, 0.5);
+
+      tl.to('#splashLine', {
+        width: '120px',
+        duration: 0.8,
+        ease: 'expo.out',
+      }, 1.2);
+
+      tl.to('.splash__subtitle', {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'expo.out',
+      }, 1.5);
+
+      tl.to('#scrollHint', {
+        opacity: 1,
+        duration: 0.6,
+        ease: 'power2.out',
+      }, 2.2);
+
+      // Wait, then transition out
+      tl.to('.splash', {
+        clipPath: 'polygon(0 0, 100% 0, 100% 0%, 0 0%)',
+        duration: 1.2,
+        ease: 'expo.inOut',
+      }, 4);
+
+      tl.to('.main-content', {
+        opacity: 1,
+        duration: 0.6,
+      }, 4.5);
+
+      tl.call(() => {
+        document.getElementById('splash').style.display = 'none';
+        if (window.__splashParticles) window.__splashParticles.stop();
+      });
+    }
+
+    // ─── HERO SECTION ANIMATIONS ────────────────────────────
+    function animateHero() {
+      // Background lines
+      const linesContainer = document.getElementById('heroLines');
+      for (let i = 0; i < 5; i++) {
+        const line = document.createElement('div');
+        line.className = 'hero__line';
+        line.style.left = `${20 + i * 15}%`;
+        linesContainer.appendChild(line);
+
+        gsap.to(line, {
+          opacity: 0.3,
+          duration: 1.5,
+          delay: i * 0.15,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: '.hero',
+            start: 'top 80%',
+            end: 'bottom 20%',
+            toggleActions: 'play reverse play reverse',
+          }
+        });
+      }
+
+      // Title — word-by-word reveal
+      const titleEl = document.getElementById('heroTitle');
+      const words = titleEl.textContent.trim().split(/\s+/);
+      titleEl.innerHTML = words.map(w =>
+        `<span class="word"><span class="word-inner">${w}</span></span> `
+      ).join('');
+
+      gsap.to('.hero .word-inner', {
+        y: 0,
+        duration: 1.2,
+        ease: 'expo.out',
+        stagger: 0.08,
+        scrollTrigger: {
+          trigger: '.hero',
+          start: 'top 60%',
+        }
+      });
+
+      // Label
+      gsap.to('#heroLabel', {
+        opacity: 1,
+        duration: 0.8,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: '.hero', start: 'top 60%' }
+      });
+
+      // Divider
+      gsap.to('#heroDivider', {
+        scaleX: 1,
+        duration: 0.8,
+        ease: 'expo.out',
+        scrollTrigger: { trigger: '.hero', start: 'top 40%' }
+      });
+
+      // Verse
+      gsap.to('#heroVerse', {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        ease: 'expo.out',
+        scrollTrigger: { trigger: '.hero', start: 'top 40%' }
+      });
+
+      // Poet
+      gsap.to('#heroPoet', {
+        opacity: 1,
+        duration: 0.6,
+        delay: 0.3,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: '.hero', start: 'top 30%' }
+      });
+    }
+
+    // ─── HORIZONTAL GALLERY ─────────────────────────────────
+    function animateGallery() {
+      const track = document.getElementById('galleryTrack');
+      const cards = track.querySelectorAll('.poem-card');
+      const totalWidth = track.scrollWidth - window.innerWidth;
+
+      // Pin the gallery and scrub horizontal scroll
+      const galleryTween = gsap.to(track, {
+        x: () => -totalWidth,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: '.gallery',
+          pin: '#galleryPin',
+          start: 'top top',
+          end: () => `+=${totalWidth}`,
+          scrub: 1,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            // Update progress bar
+            gsap.set('#galleryProgressBar', { width: `${self.progress * 100}%` });
+
+            // Update counter
+            const cardIndex = Math.min(
+              cards.length,
+              Math.floor(self.progress * cards.length) + 1
+            );
+            document.getElementById('galleryCounter').textContent =
+              `${String(cardIndex).padStart(2, '0')} / ${String(cards.length).padStart(2, '0')}`;
+          }
+        }
+      });
+
+      // Card reveal animations
+      cards.forEach((card, i) => {
+        gsap.from(card, {
+          opacity: 0,
+          y: 60,
+          rotateY: -5,
+          duration: 1,
+          ease: 'expo.out',
+          scrollTrigger: {
+            trigger: card,
+            containerAnimation: galleryTween,
+            start: 'left 80%',
+            toggleActions: 'play none none reverse',
+          }
+        });
+      });
+    }
+
+    // ─── FEATURED POEM ──────────────────────────────────────
+    function animateFeatured() {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.featured',
+          start: 'top 60%',
+          end: 'center center',
+          scrub: false,
+        }
+      });
+
+      tl.to('#featuredLabel', {
+        opacity: 1,
+        duration: 0.6,
+        ease: 'power2.out',
+      }, 0);
+
+      tl.to('#hem1', {
+        y: 0,
+        duration: 1.2,
+        ease: 'expo.out',
+      }, 0.3);
+
+      tl.to(['#sepLine1', '#sepLine2'], {
+        scaleX: 1,
+        duration: 0.6,
+        ease: 'expo.out',
+        stagger: 0.1,
+      }, 0.8);
+
+      tl.to('#sepDot', {
+        scale: 1,
+        duration: 0.4,
+        ease: 'spring',
+      }, 0.9);
+
+      tl.to('#hem2', {
+        y: 0,
+        duration: 1.2,
+        ease: 'expo.out',
+      }, 1);
+
+      tl.to('#featuredPoet', {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'expo.out',
+      }, 1.5);
+    }
+
+    // ─── POET GRID ──────────────────────────────────────────
+    function animatePoets() {
+      gsap.to('#poetsLabel', {
+        opacity: 1,
+        duration: 0.6,
+        scrollTrigger: { trigger: '.poets__header', start: 'top 70%' }
+      });
+
+      gsap.from('#poetsTitle', {
+        opacity: 0,
+        y: 40,
+        duration: 1,
+        ease: 'expo.out',
+        scrollTrigger: { trigger: '.poets__header', start: 'top 70%' }
+      });
+
+      const tiles = document.querySelectorAll('.poet-tile');
+      tiles.forEach((tile, i) => {
+        gsap.from(tile, {
+          opacity: 0,
+          y: 50,
+          duration: 0.8,
+          delay: i * 0.1,
+          ease: 'expo.out',
+          scrollTrigger: {
+            trigger: tile,
+            start: 'top 85%',
+          }
+        });
+      });
+    }
+
+    // ─── CLOSING ────────────────────────────────────────────
+    function animateClosing() {
+      gsap.to('#closingVerse', {
+        opacity: 1,
+        y: 0,
+        duration: 1.2,
+        ease: 'expo.out',
+        scrollTrigger: { trigger: '.closing', start: 'top 60%' }
+      });
+
+      gsap.to('#closingBrand', {
+        opacity: 1,
+        duration: 0.8,
+        delay: 0.5,
+        ease: 'power2.out',
+        scrollTrigger: { trigger: '.closing', start: 'top 60%' }
+      });
+    }
+
+    // ─── NAV ────────────────────────────────────────────────
+    function animateNav() {
+      gsap.to(['.nav__brand', '.nav__controls', '.theme-toggle'], {
+        opacity: 1,
+        duration: 0.6,
+        stagger: 0.1,
+        delay: 0.3,
+      });
+    }
+
+    // ─── INIT ALL MAIN ANIMATIONS ───────────────────────────
+    function initMainAnimations() {
+      animateNav();
+      animateHero();
+      animateGallery();
+      animateFeatured();
+      animatePoets();
+      animateClosing();
+      ScrollTrigger.refresh();
+    }
+
+    // ─── THEME TOGGLE ───────────────────────────────────────
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      const body = document.body;
+      const current = body.getAttribute('data-theme');
+      body.setAttribute('data-theme', current === 'dark' ? 'light' : 'dark');
+    });
+
+    // ─── KICK IT OFF ────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', playSplashIntro);
+  </script>
+
+</body>
+</html>

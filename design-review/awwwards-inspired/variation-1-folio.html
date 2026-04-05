@@ -480,77 +480,124 @@
     }
 
     /* ============================================
-       PHASE 4: ERA PICKER (Timeline)
+       PHASE 4: ERA PICKER (3D Helix)
        ============================================ */
     .era-container {
       width: 100%;
-      max-width: 500px;
-    }
-
-    .era-portal-label {
-      font-family: var(--font-mono);
-      font-size: 0.55rem;
-      color: var(--text-3);
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      margin-bottom: 0.75rem;
-      padding-right: 1.5rem;
-      direction: ltr;
-    }
-
-    .era-timeline {
+      max-width: 600px;
       position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      padding-right: 1.5rem;
+      height: 340px;
+      perspective: 900px;
+      overflow: hidden;
+      cursor: grab;
     }
 
-    .era-timeline::before {
+    .era-container:active {
+      cursor: grabbing;
+    }
+
+    /* Invisible overlay captures scroll/drag, passes clicks via JS */
+    .helix-interaction-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      touch-action: pan-x;
+    }
+
+    /* Central axis line */
+    .era-container::before {
       content: '';
       position: absolute;
-      right: 0;
+      left: 50%;
       top: 0;
-      width: 2px;
-      height: 100%;
-      background: linear-gradient(180deg, var(--border), var(--gold-dim), var(--border));
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(180deg, transparent 10%, var(--gold-dim) 35%, var(--gold) 50%, var(--gold-dim) 65%, transparent 90%);
+      z-index: 0;
+      transform: translateX(-50%);
     }
 
-    .era-item {
-      position: relative;
+    /* Focus indicator — horizontal bar at center */
+    .helix-focus-bar {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 280px;
+      height: 80px;
+      border: 1px solid var(--border-gold);
+      border-radius: 1rem;
+      background: rgba(197, 160, 89, 0.04);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .helix-drum {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      transform-style: preserve-3d;
+      transform: translate(-50%, -50%) rotateX(0deg);
+      /* GSAP drives this rotateX */
+    }
+
+    .era-card {
+      position: absolute;
+      width: 260px;
+      left: -130px;
+      top: -36px;
+      height: 72px;
       display: flex;
       align-items: center;
-      gap: 1rem;
-      padding: 0.9rem 0;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 0 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
       cursor: pointer;
-      transition: all 0.3s ease;
       user-select: none;
       -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.35s ease, background 0.35s ease;
+      backface-visibility: hidden;
     }
 
-    .era-item:hover .era-ar { color: var(--gold-light); }
+    .era-card:hover {
+      border-color: var(--border-gold);
+    }
 
-    .era-item.selected .era-ar { color: var(--gold); }
+    .era-card.selected {
+      border-color: var(--gold);
+      background: var(--bg-card-selected);
+    }
+
+    .era-card.in-focus {
+      z-index: 5;
+    }
 
     .era-dot {
-      position: absolute;
-      right: -1.5rem;
-      top: 50%;
-      transform: translate(50%, -50%);
       width: 10px;
       height: 10px;
+      min-width: 10px;
       border-radius: 50%;
       border: 2px solid var(--text-3);
       background: var(--bg);
       transition: all 0.3s var(--ease-expo);
-      z-index: 2;
     }
 
-    .era-item.selected .era-dot {
+    .era-card.selected .era-dot {
       border-color: var(--gold);
       background: var(--gold);
       box-shadow: 0 0 10px var(--gold-glow);
-      transform: translate(50%, -50%) scale(1.3);
+      transform: scale(1.3);
+    }
+
+    .era-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
     }
 
     .era-ar {
@@ -561,6 +608,8 @@
       transition: color 0.3s ease;
     }
 
+    .era-card.selected .era-ar { color: var(--gold); }
+
     .era-en {
       font-family: var(--font-mono);
       font-size: 0.6rem;
@@ -569,14 +618,56 @@
       direction: ltr;
     }
 
-    .era-divider {
-      height: 1.5rem;
+    .era-section-badge {
+      position: absolute;
+      top: -8px;
+      right: 12px;
+      font-family: var(--font-mono);
+      font-size: 0.45rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: var(--bg-surface);
+      padding: 0 0.4rem;
+      z-index: 2;
     }
 
-    .era-section-gap {
-      margin: 1.5rem 0 1rem;
-      border-top: 1px solid var(--border);
-      padding-top: 1rem;
+    /* Scroll hint */
+    .helix-hint {
+      position: absolute;
+      bottom: 0.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      color: var(--text-3);
+      text-transform: uppercase;
+      direction: ltr;
+      opacity: 0.6;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: opacity 0.4s ease;
+    }
+
+    .helix-hint.hidden { opacity: 0; }
+
+    .helix-hint-arrow {
+      display: inline-block;
+      animation: helix-bob 1.2s ease-in-out infinite;
+    }
+
+    @keyframes helix-bob {
+      0%, 100% { transform: translateY(-2px); }
+      50% { transform: translateY(2px); }
+    }
+
+    @media (max-width: 480px) {
+      .era-container { height: 300px; }
+      .era-card { width: 220px; left: -110px; height: 64px; padding: 0 1rem; }
+      .helix-focus-bar { width: 240px; height: 72px; }
+      .era-ar { font-size: 1rem; }
     }
 
     /* ============================================
@@ -904,14 +995,21 @@
   </div>
 
   <!-- ════════════════════════════════════════════
-       PHASE 4: ERA PICKER
+       PHASE 4: ERA PICKER (Helix)
        ════════════════════════════════════════════ -->
   <div class="phase scrollable" id="phase4" data-phase="4">
     <div class="picker">
       <div class="picker-label">STEP 2 OF 3 — ERA</div>
       <h2 class="picker-title">أي عصر يستهويك؟</h2>
-      <p class="picker-subtitle">اختر الحقبة الزمنية</p>
-      <div class="era-container" id="eraContainer"></div>
+      <p class="picker-subtitle">أدر الحلزون لاختيار الحقبة</p>
+      <div class="era-container" id="eraContainer">
+        <div class="helix-focus-bar"></div>
+        <div class="helix-drum" id="helixDrum"></div>
+        <div class="helix-hint" id="helixHint">
+          <span class="helix-hint-arrow">↕</span> scroll to explore
+        </div>
+        <div class="helix-interaction-layer" id="helixInteractionLayer"></div>
+      </div>
       <button class="picker-cta" id="eraCta">تخطى</button>
     </div>
   </div>
@@ -1152,11 +1250,13 @@
     }
 
     function animateEraPicker() {
-      gsap.from('.era-item', {
-        opacity: 0, x: 20,
-        duration: 0.4, ease: 'expo.out',
-        stagger: 0.06,
+      gsap.fromTo('#helixDrum', { opacity: 0 }, { opacity: 1, duration: 0.8, ease: 'expo.out' });
+      gsap.from('.era-card', {
+        opacity: 0, scale: 0.8,
+        duration: 0.5, ease: 'back.out(1.4)',
+        stagger: 0.07,
       });
+      gsap.from('.helix-hint', { opacity: 0, y: 10, duration: 0.5, delay: 0.6, ease: 'expo.out' });
     }
 
     function animateTopicsPicker() {
@@ -1220,56 +1320,184 @@
       });
     })();
 
-    /* ─── BUILD PHASE 4: ERA TIMELINE ────────────────────── */
-    (function buildEraTimeline() {
-      const container = document.getElementById('eraContainer');
+    /* ─── BUILD PHASE 4: ERA HELIX ─────────────────────────── */
+    const ALL_ERAS = [...CLASSICAL_ERAS, ...MODERN_ERAS];
+    const ERA_COUNT = ALL_ERAS.length; // 8
+    const HELIX_RADIUS = 220;       // cylinder radius in px
+    const HELIX_ANGLE_STEP = 360 / ERA_COUNT; // 45° per item
+    let helixRotation = 0;          // current rotateX in degrees
+    let helixInteracted = false;
 
-      // Classical
-      const classicalLabel = document.createElement('div');
-      classicalLabel.className = 'era-portal-label';
-      classicalLabel.textContent = 'CLASSICAL';
-      container.appendChild(classicalLabel);
+    (function buildHelixEras() {
+      const drum = document.getElementById('helixDrum');
 
-      const classicalTimeline = document.createElement('div');
-      classicalTimeline.className = 'era-timeline';
-      CLASSICAL_ERAS.forEach(era => {
-        classicalTimeline.appendChild(createEraItem(era));
+      ALL_ERAS.forEach((era, i) => {
+        const angle = i * HELIX_ANGLE_STEP;
+        const card = document.createElement('div');
+        card.className = 'era-card';
+        card.dataset.slug = era.slug;
+        card.dataset.index = i;
+
+        // Position on the cylinder surface
+        card.style.transform =
+          `rotateX(${angle}deg) translateZ(${HELIX_RADIUS}px)`;
+
+        // Classical / Modern badge on first of each group
+        let badge = '';
+        if (i === 0) badge = '<span class="era-section-badge">CLASSICAL</span>';
+        if (i === CLASSICAL_ERAS.length) badge = '<span class="era-section-badge">MODERN</span>';
+
+        card.innerHTML = `
+          ${badge}
+          <div class="era-dot"></div>
+          <div class="era-text">
+            <div class="era-ar">${era.name_ar}</div>
+            <div class="era-en">${era.name_en}</div>
+          </div>
+        `;
+        card.addEventListener('click', () => {
+          toggleSelection('eras', era.slug, card, '#eraCta');
+        });
+        drum.appendChild(card);
       });
-      container.appendChild(classicalTimeline);
 
-      // Gap
-      const gap = document.createElement('div');
-      gap.className = 'era-section-gap';
-      container.appendChild(gap);
-
-      // Modern
-      const modernLabel = document.createElement('div');
-      modernLabel.className = 'era-portal-label';
-      modernLabel.textContent = 'MODERN';
-      container.appendChild(modernLabel);
-
-      const modernTimeline = document.createElement('div');
-      modernTimeline.className = 'era-timeline';
-      MODERN_ERAS.forEach(era => {
-        modernTimeline.appendChild(createEraItem(era));
-      });
-      container.appendChild(modernTimeline);
+      updateHelixFocus();
     })();
 
-    function createEraItem(era) {
-      const item = document.createElement('div');
-      item.className = 'era-item';
-      item.dataset.slug = era.slug;
-      item.innerHTML = `
-        <div class="era-dot"></div>
-        <div>
-          <div class="era-ar">${era.name_ar}</div>
-          <div class="era-en">${era.name_en}</div>
-        </div>
-      `;
-      item.addEventListener('click', () => toggleSelection('eras', era.slug, item, '#eraCta'));
-      return item;
+    /* Helix rotation driven by scroll/wheel/touch on interaction layer */
+    const helixLayer = document.getElementById('helixInteractionLayer');
+
+    function updateHelixFocus() {
+      const drum = document.getElementById('helixDrum');
+      if (!drum) return;
+
+      if (typeof gsap !== 'undefined') {
+        gsap.to(drum, {
+          rotateX: -helixRotation,
+          duration: 0.6,
+          ease: 'expo.out',
+          overwrite: true,
+        });
+      } else {
+        drum.style.transform =
+          `translate(-50%, -50%) rotateX(${-helixRotation}deg)`;
+      }
+
+      // Determine which card is closest to front (0°)
+      const cards = drum.querySelectorAll('.era-card');
+      cards.forEach(card => {
+        const idx = parseInt(card.dataset.index);
+        const cardAngle = idx * HELIX_ANGLE_STEP;
+        let delta = ((helixRotation - cardAngle) % 360 + 540) % 360 - 180;
+        const absDelta = Math.abs(delta);
+
+        card.classList.toggle('in-focus', absDelta < HELIX_ANGLE_STEP * 0.6);
+
+        // Opacity falloff for cards not near front
+        const opacity = Math.max(0, 1 - absDelta / 120);
+        card.style.opacity = opacity;
+      });
     }
+
+    function snapHelixToNearest() {
+      const snapped = Math.round(helixRotation / HELIX_ANGLE_STEP) * HELIX_ANGLE_STEP;
+      // Clamp to valid range
+      helixRotation = Math.max(0, Math.min(snapped, (ERA_COUNT - 1) * HELIX_ANGLE_STEP));
+      updateHelixFocus();
+    }
+
+    function getFocusedCard() {
+      return document.querySelector('.era-card.in-focus');
+    }
+
+    function dismissHint() {
+      if (!helixInteracted) {
+        helixInteracted = true;
+        document.getElementById('helixHint')?.classList.add('hidden');
+      }
+    }
+
+    /* Wheel on interaction layer */
+    helixLayer.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      dismissHint();
+      helixRotation += e.deltaY > 0 ? HELIX_ANGLE_STEP : -HELIX_ANGLE_STEP;
+      helixRotation = Math.max(0, Math.min(helixRotation, (ERA_COUNT - 1) * HELIX_ANGLE_STEP));
+      updateHelixFocus();
+    }, { passive: false });
+
+    /* Touch drag on interaction layer */
+    (function initHelixTouch() {
+      let startY = 0;
+      let startRot = 0;
+      let dragging = false;
+      let moved = false;
+
+      helixLayer.addEventListener('touchstart', (e) => {
+        dragging = true;
+        moved = false;
+        startY = e.touches[0].clientY;
+        startRot = helixRotation;
+        dismissHint();
+      }, { passive: true });
+
+      helixLayer.addEventListener('touchmove', (e) => {
+        if (!dragging) return;
+        e.preventDefault();
+        moved = true;
+        const dy = startY - e.touches[0].clientY;
+        helixRotation = startRot + (dy / 80) * HELIX_ANGLE_STEP;
+        helixRotation = Math.max(0, Math.min(helixRotation, (ERA_COUNT - 1) * HELIX_ANGLE_STEP));
+        updateHelixFocus();
+      }, { passive: false });
+
+      helixLayer.addEventListener('touchend', () => {
+        dragging = false;
+        snapHelixToNearest();
+        // Tap (no drag) = click the focused card
+        if (!moved) {
+          const card = getFocusedCard();
+          if (card) card.click();
+        }
+      });
+    })();
+
+    /* Mouse drag on interaction layer */
+    (function initHelixMouse() {
+      let startY = 0;
+      let startRot = 0;
+      let dragging = false;
+      let moved = false;
+
+      helixLayer.addEventListener('mousedown', (e) => {
+        dragging = true;
+        moved = false;
+        startY = e.clientY;
+        startRot = helixRotation;
+        dismissHint();
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        moved = true;
+        const dy = startY - e.clientY;
+        helixRotation = startRot + (dy / 80) * HELIX_ANGLE_STEP;
+        helixRotation = Math.max(0, Math.min(helixRotation, (ERA_COUNT - 1) * HELIX_ANGLE_STEP));
+        updateHelixFocus();
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (dragging) {
+          dragging = false;
+          snapHelixToNearest();
+          // Simple click (no drag) = click the focused card
+          if (!moved) {
+            const card = getFocusedCard();
+            if (card) card.click();
+          }
+        }
+      });
+    })();
 
     /* ─── BUILD PHASE 5: TOPICS ──────────────────────────── */
     (function buildTopics() {
@@ -1507,6 +1735,10 @@
       document.getElementById('moodCta').textContent = 'تخطى';
       document.getElementById('eraCta').textContent = 'تخطى';
       document.getElementById('topicsCta').textContent = 'تخطى';
+      helixRotation = 0;
+      helixInteracted = false;
+      document.getElementById('helixHint')?.classList.remove('hidden');
+      updateHelixFocus();
       updateTopicLines();
       goToPhase(0);
       setTimeout(initSplash, 600);

@@ -237,9 +237,9 @@ function computeSvgPath(tiling, w, h) {
 // the pattern edge would ever be reached.
 const PARALLAX_BUFFER_MULTIPLIER = 2;
 
-// When topThirdOnly is true, the SVG only covers the top 50% of the viewport
+// When topThirdOnly is true, the SVG only covers the top 30% of the viewport
 // (the ~33% visible band plus fade buffer) and fades out via a CSS mask gradient.
-const TOP_THIRD_HEIGHT_FACTOR = 0.5; // generate pattern up to 50% of vh
+const TOP_THIRD_HEIGHT_FACTOR = 0.3; // generate pattern up to 30% of vh
 
 const DEFAULT_PATTERN = 'Penrose Monster';
 

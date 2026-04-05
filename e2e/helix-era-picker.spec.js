@@ -277,7 +277,7 @@ test.describe('Helix Era Picker — Opacity Falloff', () => {
       .evaluate((el) => parseFloat(el.style.opacity));
 
     expect(opacity0).toBe(1);
-    // Card at 135° delta should have significant falloff (1 - 135/120 = <0)
+    // Card at 135° delta → 1 - 135/120 = -0.125, clamped to 0
     expect(opacity3).toBeLessThan(0.1);
   });
 
@@ -396,9 +396,9 @@ test.describe('Helix Era Picker — Snap to Nearest', () => {
     });
     await page.waitForTimeout(700);
 
-    // Should snap to nearest: 0° or 45°; 25 rounds to 45° (closer to 1 step)
+    // Should snap to nearest: Math.round(25/45) = 1 → 1*45 = 45
     const rotation = await page.evaluate(() => helixRotation);
-    expect(rotation).toBe(45); // 25/45 rounds to 1 → 1*45 = 45
+    expect(rotation).toBe(45);
   });
 
   test('helix snaps to 0 when slightly above it', async ({ page }) => {
@@ -411,7 +411,7 @@ test.describe('Helix Era Picker — Snap to Nearest', () => {
     await page.waitForTimeout(700);
 
     const rotation = await page.evaluate(() => helixRotation);
-    expect(rotation).toBe(0); // 20/45 rounds to 0 → 0*45 = 0
+    expect(rotation).toBe(0); // Math.round(20/45) = 0 → 0*45 = 0
   });
 
   test('snap clamps to max rotation', async ({ page }) => {

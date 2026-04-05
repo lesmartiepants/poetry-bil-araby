@@ -1325,6 +1325,9 @@
     const ERA_COUNT = ALL_ERAS.length; // 8
     const HELIX_RADIUS = 220;       // cylinder radius in px
     const HELIX_ANGLE_STEP = 360 / ERA_COUNT; // 45° per item
+    const HELIX_DRAG_SENSITIVITY = 80; // px of drag per angle step
+    const HELIX_FOCUS_THRESHOLD = 0.6; // fraction of angle step for in-focus
+    const HELIX_OPACITY_RANGE = 120;   // degrees over which opacity fades to 0
     let helixRotation = 0;          // current rotateX in degrees
     let helixInteracted = false;
 
@@ -1391,10 +1394,10 @@
         let delta = ((helixRotation - cardAngle) % 360 + 540) % 360 - 180;
         const absDelta = Math.abs(delta);
 
-        card.classList.toggle('in-focus', absDelta < HELIX_ANGLE_STEP * 0.6);
+        card.classList.toggle('in-focus', absDelta < HELIX_ANGLE_STEP * HELIX_FOCUS_THRESHOLD);
 
         // Opacity falloff for cards not near front
-        const opacity = Math.max(0, 1 - absDelta / 120);
+        const opacity = Math.max(0, 1 - absDelta / HELIX_OPACITY_RANGE);
         card.style.opacity = opacity;
       });
     }
@@ -1446,7 +1449,7 @@
         e.preventDefault();
         moved = true;
         const dy = startY - e.touches[0].clientY;
-        helixRotation = startRot + (dy / 80) * HELIX_ANGLE_STEP;
+        helixRotation = startRot + (dy / HELIX_DRAG_SENSITIVITY) * HELIX_ANGLE_STEP;
         helixRotation = Math.max(0, Math.min(helixRotation, (ERA_COUNT - 1) * HELIX_ANGLE_STEP));
         updateHelixFocus();
       }, { passive: false });
@@ -1481,7 +1484,7 @@
         if (!dragging) return;
         moved = true;
         const dy = startY - e.clientY;
-        helixRotation = startRot + (dy / 80) * HELIX_ANGLE_STEP;
+        helixRotation = startRot + (dy / HELIX_DRAG_SENSITIVITY) * HELIX_ANGLE_STEP;
         helixRotation = Math.max(0, Math.min(helixRotation, (ERA_COUNT - 1) * HELIX_ANGLE_STEP));
         updateHelixFocus();
       });

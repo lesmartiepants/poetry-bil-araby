@@ -28,7 +28,7 @@ const initialState = {
   bgOpacity: 1.0, // multiplier for stroke opacity (1.0 = theme default)
   bgColor: '', // hex override for line colour; '' = use theme default
   bgParallax: 0.08, // parallax drift factor (0.08 = 8% of scroll speed)
-  bgPattern: 'Penrose Monster', // currently-selected pattern from generator favorites
+  bgPattern: '8.5', // currently-selected pattern from generator favorites
   // Sparkle / particle controls
   sparkleEnabled: true, // show gold sparkle particles
   sparkleMode: 'particles', // 'particles' = gold ambient, 'ray-tracing' = L&S white rays

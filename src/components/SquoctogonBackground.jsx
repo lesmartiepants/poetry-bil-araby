@@ -241,7 +241,7 @@ const PARALLAX_BUFFER_MULTIPLIER = 2;
 // (the ~33% visible band plus fade buffer) and fades out via a CSS mask gradient.
 const TOP_THIRD_HEIGHT_FACTOR = 0.3; // generate pattern up to 30% of vh
 
-const DEFAULT_PATTERN = 'Penrose Monster';
+const DEFAULT_PATTERN = '8.5';
 
 const SquoctogonBackground = memo(function SquoctogonBackground({
   darkMode,

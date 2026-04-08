@@ -78,7 +78,7 @@ function drawStaticGlow(ctx, canvas, opacity) {
 }
 
 // Sparkles float in the "air" — halfway between background and text in depth.
-// Background drifts at bgParallax (default 8%), sparkles at half that (4%).
+// Half of default bgParallax (0.08) to position sparkles between background and foreground.
 const SPARKLE_PARALLAX_FACTOR = 0.04;
 
 const MysticalConsultationEffect = memo(function MysticalConsultationEffect({

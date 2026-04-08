@@ -77,8 +77,13 @@ function drawStaticGlow(ctx, canvas, opacity) {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
+// Sparkles float in the "air" — halfway between background and text in depth.
+// Background drifts at bgParallax (default 8%), sparkles at half that (4%).
+const SPARKLE_PARALLAX_FACTOR = 0.04;
+
 const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
   active,
+  scrollY = 0,
   // Sparkle controls (from uiStore)
   sparkleEnabled = true,
   sparkleMode = 'particles', // 'particles' | 'ray-tracing'
@@ -116,7 +121,15 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
       sparkleAmount,
       sparkleColor,
     };
-  }, [sparkleEnabled, sparkleMode, sparkleGlow, sparkleBrightness, sparkleSpeed, sparkleAmount, sparkleColor]);
+  }, [
+    sparkleEnabled,
+    sparkleMode,
+    sparkleGlow,
+    sparkleBrightness,
+    sparkleSpeed,
+    sparkleAmount,
+    sparkleColor,
+  ]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -289,12 +302,17 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
     };
   }, []); // Single animation loop — live values tracked via refs
 
-  // Canvas is fixed — does not move with scroll (no parallax on sparkles)
+  // Sparkles drift at SPARKLE_PARALLAX_FACTOR × scroll speed — floats between
+  // the SVG background (slowest) and the text (fastest), creating mid-air depth.
   return (
     <canvas
       ref={canvasRef}
       className="absolute inset-0 pointer-events-none z-10"
-      style={{ mixBlendMode: 'screen' }}
+      style={{
+        mixBlendMode: 'screen',
+        transform: `translateY(${-scrollY * SPARKLE_PARALLAX_FACTOR}px)`,
+        willChange: 'transform',
+      }}
     />
   );
 });

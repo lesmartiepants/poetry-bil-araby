@@ -25,14 +25,14 @@ const initialState = {
   logs: [],
   headerOpacity: 0,
   // Background settings
-  bgOpacity: 1.0, // multiplier for stroke opacity (1.0 = theme default)
+  bgOpacity: 1.55, // multiplier for stroke opacity (1.55 = 155% of theme default)
   bgColor: '', // hex override for line colour; '' = use theme default
   bgParallax: 0.08, // parallax drift factor (0.08 = 8% of scroll speed)
   bgPattern: '8.5', // currently-selected pattern from generator favorites
   // Sparkle / particle controls
   sparkleEnabled: true, // show gold sparkle particles
   sparkleMode: 'particles', // 'particles' = gold ambient, 'ray-tracing' = L&S white rays
-  sparkleGlow: false, // show central radial glow permanently (not just during insight)
+  sparkleGlow: true, // central radial glow is permanently on
   sparkleBrightness: 1.0, // opacity multiplier for particles
   sparkleSpeed: 1.0, // speed multiplier for particles
   sparkleAmount: 35, // ambient particle count (insight always uses ACTIVE_COUNT=60)

@@ -1303,6 +1303,7 @@ export default function DiwanApp() {
           />
           <MysticalConsultationEffect
             active={isInterpreting}
+            scrollY={bgScrollY}
             sparkleEnabled={sparkleEnabled}
             sparkleMode={sparkleMode}
             sparkleGlow={sparkleGlow}

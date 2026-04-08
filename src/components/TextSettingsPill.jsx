@@ -1,5 +1,5 @@
 import { Popover, ToggleGroup, Select } from 'radix-ui';
-import { Languages, ALargeSmall, ChevronDown, Check } from 'lucide-react';
+import { Languages, ALargeSmall, ChevronDown, Check, Palette, Hexagon } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
@@ -22,11 +22,11 @@ const TextSettingsPill = () => {
   const highlightStyle = useUIStore((s) => s.highlightStyle);
 
   const HIGHLIGHT_STYLES = [
-    { value: 'none',        label: 'Off' },
-    { value: 'glow',        label: 'Glow' },
-    { value: 'underline',   label: 'Line' },
-    { value: 'pill',        label: 'Pill' },
-    { value: 'focus-blur',  label: 'Blur' },
+    { value: 'none', label: 'Off' },
+    { value: 'glow', label: 'Glow' },
+    { value: 'underline', label: 'Line' },
+    { value: 'pill', label: 'Pill' },
+    { value: 'focus-blur', label: 'Blur' },
   ];
 
   return (
@@ -230,6 +230,31 @@ const TextSettingsPill = () => {
                   </ToggleGroup.Item>
                 ))}
               </ToggleGroup.Root>
+            </div>
+
+            {/* Row 6: Design Links */}
+            <div
+              className="mt-3 pt-3"
+              style={{
+                borderTop: `1px solid ${darkMode ? 'rgba(197,160,89,0.15)' : 'rgba(197,160,89,0.25)'}`,
+              }}
+            >
+              <a
+                href="/design-review"
+                className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 opacity-60 hover:opacity-100 border border-transparent hover:border-gold/30`}
+                style={{ color: gold, textDecoration: 'none' }}
+              >
+                <Palette size={14} style={{ color: gold }} />
+                <span>Design Review</span>
+              </a>
+              <a
+                href="/geometric-explorer"
+                className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 mt-1 opacity-60 hover:opacity-100 border border-transparent hover:border-gold/30`}
+                style={{ color: gold, textDecoration: 'none' }}
+              >
+                <Hexagon size={14} style={{ color: gold }} />
+                <span>Geometric Explorer</span>
+              </a>
             </div>
           </Popover.Content>
         </Popover.Portal>

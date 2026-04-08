@@ -366,7 +366,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               } else if (liveRes.status === 404) {
                 addLog(
                   'Audio API',
-                  `[${ttsModel}] Live endpoint unavailable (404) — falling back to REST`,
+                  `[${ttsModel}] Live endpoint unavailable (404) — endpoint may not be deployed on this backend yet`,
                   'warning'
                 );
               } else {
@@ -489,6 +489,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           } else {
             // ── REST API path — generateContent flow ──
             const ttsContent = getTTSContent(current);
+            addLog('Audio API', `[REST] Attempting | model: ${API_MODELS.tts}`, 'info');
             const requestBody = JSON.stringify({
               contents: [{ parts: [{ text: ttsContent }] }],
               generationConfig: {
@@ -546,7 +547,17 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             addLog('Audio API', `[${ttsModel}] Success via REST API`, 'success');
           }
         } catch (modeError) {
-          addLog('Audio API', `[${ttsModel}] ${modeError.message} — trying next mode`, 'warning');
+          const nextMode = MODES[modeIdx + 1];
+          const nextModeLabel =
+            nextMode === 'live'
+              ? 'Live 2.0'
+              : nextMode === 'rest'
+                ? `REST (${API_MODELS.tts})`
+                : null;
+          const suffix = nextModeLabel
+            ? ` — switching to ${nextModeLabel}`
+            : ' — no more modes to try';
+          addLog('Audio API', `[${ttsModel}] ${modeError.message}${suffix}`, 'warning');
           modeIdx++; // try the other mode
           // Reset ttsModel label for the next attempt
         }

@@ -241,8 +241,6 @@ const TextSettingsPill = () => {
             >
               <a
                 href="/design-review"
-                target="_blank"
-                rel="noopener noreferrer"
                 className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 opacity-60 hover:opacity-100 border border-transparent hover:border-gold/30`}
                 style={{ color: gold, textDecoration: 'none' }}
               >
@@ -251,8 +249,6 @@ const TextSettingsPill = () => {
               </a>
               <a
                 href="/geometric-explorer"
-                target="_blank"
-                rel="noopener noreferrer"
                 className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 mt-1 opacity-60 hover:opacity-100 border border-transparent hover:border-gold/30`}
                 style={{ color: gold, textDecoration: 'none' }}
               >

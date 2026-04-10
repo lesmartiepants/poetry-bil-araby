@@ -6,33 +6,26 @@ import { resolve } from 'path';
 const DESIGN_DIR = resolve('./design-review');
 const OUT_DIR = resolve('./design-review/audit-screenshots');
 
-// 23 E2E flows + 3 logos + 2 auth = 28 total
+// 14 E2E flows + 3 logos = 17 total
 const E2E_FILES = [
-  // Set New (8)
-  'e2e/gen-3/zen1-refined.html',
+  // Set New (5)
   'e2e/gen-3/zen2-haiku.html',
   'e2e/gen-3/pf2-gold-mystical.html',
   'e2e/gen-3/ls1-chiaroscuro.html',
-  'e2e/gen-3/ls2-ray-tracing.html',
   'e2e/gen-3/pf1-calligraphic.html',
   'e2e/gen-3/pf3-ink-constellation.html',
   'e2e/gen-3/codex-spine-story.html',
-  // Set 78ab (5)
-  'e2e/gen-1/e2e-a1-gold-orbit-story.html',
+  // Set 78ab (4)
   'e2e/gen-1/e2e-a2-paper-photon.html',
   'e2e/gen-1/e2e-a8-deco-discovery.html',
   'e2e/gen-1/e2e-b8-ritual-spotlight-hybrid.html',
   'e2e/gen-1/e2e-b10-signature-blend.html',
-  // Set c0cf-A (4)
+  // Set c0cf-A (3)
   'e2e/gen-2a/02-zen-manuscript.html',
   'e2e/gen-2a/04-desert-poet.html',
-  'e2e/gen-2a/07-scroll-keeper.html',
   'e2e/gen-2a/09-mosaic-discovery.html',
-  // Set c0cf-B (6)
-  'e2e/gen-2b/01-particle-scroll.html',
+  // Set c0cf-B (4)
   'e2e/gen-2b/04-neumorphic-warmth.html',
-  'e2e/gen-2b/05-scroll-codex.html',
-  'e2e/gen-2b/07-particle-neumorphic.html',
   'e2e/gen-2b/08-zen-spotlight.html',
   'e2e/gen-2b/09-scandinavian-scroll.html',
 ];
@@ -41,8 +34,6 @@ const STATIC_FILES = [
   'branding/logo-option-1-canonical.html',
   'branding/logo-option-2-gold-accent.html',
   'branding/logo-option-4-minimal.html',
-  'auth/e2e-auth-sso-flow.html',
-  'auth/e2e-auth-signout-flow.html',
 ];
 
 // CLI arg for batch selection: node screenshot-audit.mjs [batch]

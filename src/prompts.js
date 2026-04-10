@@ -123,3 +123,32 @@ const TTS_DELIVERY = `اقرأ هذه القصيدة العربية الكلاس
  * @returns {string} Delivery directions followed by the poem as transcript
  */
 export const getTTSContent = (poem) => `${TTS_DELIVERY}\n${poem.arabic}`;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LIVE API PROMPTS  (Gemini Live / BidiGenerateContent)
+//
+// Live API supports a separate systemInstruction field.
+// The text payload is ONLY the raw arabic poem — no prefix.
+// Delivery style lives entirely in the system instruction below.
+//
+// Do NOT use for REST TTS — that model ignores systemInstruction and
+// requires everything in one content block (see getTTSContent above).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * System instruction for Gemini Live API recitation.
+ * Masculine Arabic poet persona — authoritative, audible breaths, heavy delivery.
+ */
+export const LIVE_SYSTEM_INSTRUCTION =
+  'You are a masculine Arabic speaker, reciting Arabic poetry. You don\'t slow down unnecessarily ' +
+  'and do this with the authority of a poet that is well practiced. It flows, and sounds serious. ' +
+  'Even when you read this quicker, you take breaths that are audible. It\'s like you\'re pausing ' +
+  'to think about what you\'re going to say, then it comes out heavy and hard.\n\n' +
+  'اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. ' +
+  'أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية.';
+
+/**
+ * Text payload for Live API — raw arabic only, no delivery prefix.
+ * The system instruction handles all performance guidance.
+ */
+export const getLiveContent = (poem) => poem.arabic;

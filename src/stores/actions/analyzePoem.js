@@ -9,6 +9,17 @@ import { geminiTextFetch } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
 import { saveTranslation } from '../../services/database.js';
 
+/** Monotonically increasing token — incremented by cancelAnalysis() on each swipe. */
+let _analysisGeneration = 0;
+
+/**
+ * Cancel any in-flight poem analysis (streaming stops on next chunk boundary).
+ * Call this when the user swipes to a new carousel poem.
+ */
+export function cancelAnalysis() {
+  _analysisGeneration++;
+}
+
 /**
  * Analyze a poem — check cache, stream insights from Gemini, cache results.
  *
@@ -19,6 +30,7 @@ import { saveTranslation } from '../../services/database.js';
  * @param {Function} [options.retryFn] - Function to call for retries (defaults to self)
  */
 export async function analyzePoem({ current, addLog, track, retryFn }) {
+  const myGeneration = ++_analysisGeneration;
   const { interpretation, isInterpreting, setInterpretation, setInterpreting } =
     usePoemStore.getState();
   const ratchetMode = useUIStore.getState().ratchetMode;
@@ -200,6 +212,12 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
                     `← First chunk received (${firstChunkTime.toFixed(0)}ms) | Streaming...`,
                     'info'
                   );
+                }
+                // Bail if the user swiped to a new poem while we were streaming
+                if (_analysisGeneration !== myGeneration) {
+                  reader.cancel();
+                  setInterpreting(false);
+                  return;
                 }
                 chunkCount++;
                 accumulatedText += text;

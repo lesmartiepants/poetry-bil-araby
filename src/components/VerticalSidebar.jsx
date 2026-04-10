@@ -1,13 +1,5 @@
-import {
-  Check,
-  Copy,
-  Heart,
-  LibraryBig,
-  LogOut,
-  Share2,
-  ThumbsDown,
-  UserRound,
-} from 'lucide-react';
+import { Check, Copy, LibraryBig, LogOut, Share2, ThumbsDown, UserRound } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Popover } from 'radix-ui';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
@@ -27,6 +19,7 @@ const VerticalSidebar = ({
   isDownvoted,
   onUnflag,
   user,
+  isIdle,
 }) => {
   const showCopySuccess = useModalStore((s) => s.copyToast);
   const showShareSuccess = useModalStore((s) => s.shareToast);
@@ -53,24 +46,17 @@ const VerticalSidebar = ({
         }
       `}</style>
 
-      <div
-        className={`fixed right-2 md:right-[25rem] top-1/2 -translate-y-1/2 z-[45] rounded-2xl backdrop-blur-xl border ${theme.border} py-2 px-1.5 flex flex-col items-center gap-1 ${darkMode ? 'bg-black/70' : 'bg-white/80'}`}
-        style={{ width: '2.75rem' }}
+      <motion.div
+        className={`fixed right-2 md:right-[25rem] z-[45] rounded-2xl backdrop-blur-xl border ${theme.border} py-2 px-1.5 flex flex-col items-center gap-1 ${darkMode ? 'bg-black/70' : 'bg-white/80'}`}
+        style={{ width: '2.75rem', top: '50%', pointerEvents: isIdle ? 'none' : 'auto' }}
+        initial={{ y: '-50%' }}
+        animate={isIdle ? { opacity: 0, x: 32, y: '-50%' } : { opacity: 1, x: 0, y: '-50%' }}
+        transition={
+          isIdle
+            ? { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.05 }
+            : { type: 'spring', stiffness: 280, damping: 26 }
+        }
       >
-        {/* Heart / Save button */}
-        <button
-          onClick={() => (isSaved ? onUnsave?.() : onSave?.())}
-          aria-label={isSaved ? 'Unsave poem' : 'Save poem'}
-          className={`${btnBase} ${btnHover}`}
-        >
-          <Heart
-            size={18}
-            style={
-              isSaved ? { fill: '#ef4444', stroke: '#ef4444' } : { fill: 'none', stroke: gold }
-            }
-          />
-        </button>
-
         {/* My Poems button */}
         <button
           onClick={onOpenSavedPoems}
@@ -176,7 +162,7 @@ const VerticalSidebar = ({
             <UserRound style={{ color: gold }} size={18} />
           </button>
         )}
-      </div>
+      </motion.div>
     </>
   );
 };

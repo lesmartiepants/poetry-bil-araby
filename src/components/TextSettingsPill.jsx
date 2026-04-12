@@ -126,6 +126,16 @@ const TextSettingsPill = () => {
     setSparkleHexInput(sparkleColor || '#c5a059');
   }, [sparkleColor]);
 
+  const highlightStyle = useUIStore((s) => s.highlightStyle);
+
+  const HIGHLIGHT_STYLES = [
+    { value: 'none',        label: 'Off' },
+    { value: 'glow',        label: 'Glow' },
+    { value: 'underline',   label: 'Line' },
+    { value: 'pill',        label: 'Pill' },
+    { value: 'focus-blur',  label: 'Blur' },
+  ];
+
   const getStore = useUIStore.getState;
 
   const panelBg = darkMode ? 'bg-stone-950/95' : 'bg-white/95';
@@ -292,6 +302,43 @@ const TextSettingsPill = () => {
                   </Select.Content>
                 </Select.Portal>
               </Select.Root>
+            </div>
+
+            {/* Row 5: Highlight Style */}
+            <div className="mt-3">
+              <span
+                className="text-xs uppercase tracking-wider opacity-60 mb-1.5 block"
+                style={{ color: gold }}
+              >
+                Highlight
+              </span>
+              <ToggleGroup.Root
+                type="single"
+                value={highlightStyle}
+                onValueChange={(v) => {
+                  if (v) {
+                    useUIStore.getState().setHighlightStyle(v);
+                    useUIStore.getState().addLog('UI', `Highlight style: ${v}`, 'user');
+                  }
+                }}
+                className="flex gap-1 flex-wrap"
+              >
+                {HIGHLIGHT_STYLES.map((s) => (
+                  <ToggleGroup.Item
+                    key={s.value}
+                    value={s.value}
+                    data-highlight-style={s.value === 'none' ? 'off' : s.value}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ${
+                      highlightStyle === s.value
+                        ? 'bg-gold/20 border-gold/40'
+                        : 'opacity-50 hover:opacity-80 border-transparent'
+                    }`}
+                    style={{ color: gold }}
+                  >
+                    {s.label}
+                  </ToggleGroup.Item>
+                ))}
+              </ToggleGroup.Root>
             </div>
 
             {/* ── Background section ──────────────────────────────────── */}

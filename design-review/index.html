@@ -561,19 +561,6 @@ const CATALOG = [
       }
     ]
   },
-  {
-    component: 'Auth & Login',
-    id: 'auth',
-    categories: [
-      { id: 'auth-e2e', name: 'Auth E2E Flows', source: 'PR #129', description: 'Complete sign-in and sign-out guided flows with pulsing glow overlay',
-        options: [
-          { id: 'auth-e2e-sso', name: 'SSO Sign-In Flow', philosophy: 'Heart \u2192 Tooltip \u2192 Auth Modal (Google/Apple/Email) \u2192 Signed In \u2192 Save Poem', file: 'auth/e2e-auth-sso-flow.html', desc: 'Guided tap overlay: heart → tooltip → auth modal (Google/Apple/Email) → signed-in → save poem', generation: 5 },
-          { id: 'auth-e2e-signout', name: 'Sign-Out Flow', philosophy: 'Sign-Out \u2192 Confirmation \u2192 Signed Out \u2192 Re-Auth Cycle', file: 'auth/e2e-auth-signout-flow.html', desc: 'Guided tap overlay: sign-out → confirmation → signed-out → re-auth cycle', generation: 5 }
-        ],
-        feedback: {}
-      }
-    ]
-  },
   // ═══════════════════════════════════════════════════════════════
   // E2E FLOWS — complete app mockups (splash + walkthrough + main app)
   // Organized by design philosophy category
@@ -594,9 +581,6 @@ const CATALOG = [
       { id: 'e2e-ink', name: 'Ink & Parchment', source: 'PR #65/#129', description: 'Manuscripts, codex, and calligraphy \u2014 the physical act of writing and reading',
         options: [
           { id: 'e2e-g2a-02', name: '02 Zen Manuscript', philosophy: 'Ink drop splash \u2192 zen walkthrough \u2192 water reflection main app', file: 'e2e/gen-2a/02-zen-manuscript.html', desc: 'Full E2E: ink drop splash (auto-advance), zen ink-wash onboarding (3 steps), water reflection main app with floating poem card, ripple canvas, stone controls', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' },
-          { id: 'e2e-g2a-07', name: '07 Scroll Keeper', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/gen-2a/07-scroll-keeper.html', desc: 'Scroll-Animated Manuscript: sticky-centered unroll, easeOutBack spring reveals, parallax arabesques, gold progress line, fade-out transitions', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
-          { id: 'e2e-g2b-05', name: '05 Scroll Codex', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/gen-2b/05-scroll-codex.html', desc: 'Codex/Book: open book pages, visible binding, page tab controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2b-05-vc', name: '05 Scroll Codex (VC)', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/gen-2b/05-scroll-codex-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-pf1', name: 'PF1 Calligraphic', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/gen-3/pf1-calligraphic.html', desc: 'Kinetic Typography: words ARE the interface, scrolling text ticker controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g3-codex', name: 'Codex Spine Story', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/gen-3/codex-spine-story.html', desc: 'Medieval Codex: leather spine, page turns, bookmark ribbon controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
         ],
@@ -605,8 +589,6 @@ const CATALOG = [
       { id: 'e2e-breath', name: 'Breath & Stillness', source: 'PR #64/#65/#129/Round 3', description: 'Zen, emptiness, and Nordic quiet \u2014 contemplation between the lines',
         options: [
           { id: 'e2e-g1-b8', name: 'B8 Ritual Spotlight', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/gen-1/e2e-b8-ritual-spotlight-hybrid.html', desc: 'Japanese Ma: vast emptiness, poem floats alone, tap-to-reveal controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-zen1', name: 'Zen 1 Refined', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/gen-3/zen1-refined.html', desc: 'Wabi-Sabi: imperfect beauty, single-dot controls revealing one action at a time', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-zen1-scroll', name: 'Zen 1 Scroll Tabs VC', philosophy: 'Manuscript bookmarks unfurl to reveal controls \u2014 tactile and organic', file: 'e2e/gen-3/zen1-scroll-tabs-vc.html', desc: 'Scroll Tabs: manuscript bookmark tabs protruding from right edge with cascade reveal', generation: 6, iteration: 8, source_branch: 'feature/design-sprint-refinement-r367', source_pr: '' },
           { id: 'e2e-g3-zen2', name: 'Zen 2 Haiku', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/gen-3/zen2-haiku.html', desc: 'Muji Minimalism: barely-there thin circles, visible only after first touch', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g2b-09', name: '09 Scandinavian Scroll', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/gen-2b/09-scandinavian-scroll.html', desc: 'Nordic Minimal: extreme whitespace, birch-thin lines, ultra-thin dot controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g2b-08', name: '08 Zen Spotlight', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/gen-2b/08-zen-spotlight.html', desc: 'Hourglass/Time: hourglass frame, sand grain text reveal, timeline scrubber controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
@@ -615,25 +597,16 @@ const CATALOG = [
       },
       { id: 'e2e-light', name: 'Light & Atmosphere', source: 'PR #64/#129/Round 3', description: 'Frosted glass, cinematic shadow, and stark contrast \u2014 mood and luminance',
         options: [
-          { id: 'e2e-g1-a1', name: 'A1 Gold Orbit', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/gen-1/e2e-a1-gold-orbit-story.html', desc: 'Glassmorphism: gold orbits, frosted glass onboarding, unique controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g1-a2', name: 'A2 Paper Photon', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/gen-1/e2e-a2-paper-photon.html', desc: 'Editorial/Magazine: full-bleed typography, magazine spreads, text menu controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g3-ls1', name: 'L&S 1 Chiaroscuro', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/gen-3/ls1-chiaroscuro.html', desc: 'Cinematic Chiaroscuro: dramatic light/shadow, shadow-edge illuminating controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-ls1-vc', name: 'L&S 1 Chiaroscuro (VC)', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/gen-3/ls1-chiaroscuro-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-g3-ls2', name: 'L&S 2 Ray Tracing', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/gen-3/ls2-ray-tracing.html', desc: 'Light Architecture: converging light rays, vertical beam controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g3-pf3', name: 'PF3 Ink Constellation', philosophy: 'Zodiac constellations form in the void as you walk through poetry', file: 'e2e/gen-3/pf3-ink-constellation.html', desc: 'Living Constellation: real zodiac formations (Aries/Taurus/Orion), converge-to-tap transitions, constellation lines, dim star-field aesthetic', generation: 6, iteration: 9, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
-          { id: 'e2e-g3-pf4', name: 'PF4 Ink Tilt Splash', philosophy: '3D tilt card splash meets living constellation onboarding', file: 'e2e/gen-3/pf4-ink-tilt-splash.html', desc: '3D Tilt Card: perspective mouse-tracking splash with glassmorphism, zodiac constellation onboarding, parallax depth', generation: 6, iteration: 1, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' }
         ],
         feedback: {}
       },
       { id: 'e2e-touch', name: 'Touch & Texture', source: 'PR #64/#65/#129', description: 'Organic forms, particles, and pressed surfaces \u2014 poetry you can almost feel',
         options: [
           { id: 'e2e-g1-b10', name: 'B10 Signature Blend', philosophy: 'Verses flow through organic shapes like water over river stones', file: 'e2e/gen-1/e2e-b10-signature-blend.html', desc: 'Organic/Biomorphic: flowing blob containers, organic wave controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g1-b10-vc', name: 'B10 Signature Blend (VC)', philosophy: 'Verses flow through organic shapes like water over river stones', file: 'e2e/gen-1/e2e-b10-signature-blend-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-g2b-01', name: '01 Particle Scroll', philosophy: 'Letters dissolve into particles \u2014 poetry as elemental matter', file: 'e2e/gen-2b/01-particle-scroll.html', desc: 'Particle Physics: text made of particles, physics-driven scroll, tap-burst controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2b-01-vc', name: '01 Particle Scroll (VC)', philosophy: 'Letters dissolve into particles \u2014 poetry as elemental matter', file: 'e2e/gen-2b/01-particle-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2b-04', name: '04 Neumorphic Warmth', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/gen-2b/04-neumorphic-warmth.html', desc: 'Neumorphic Depth: centered onboarding, floating warm orbs, press-in/rise-out shadow transitions, progress dots below card, zero-jitter GPU compositing', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
-          { id: 'e2e-g2b-04-vc', name: '04 Neumorphic Warmth (VC)', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/gen-2b/04-neumorphic-warmth-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-g2b-07', name: '07 Particle Neumorphic', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/gen-2b/07-particle-neumorphic.html', desc: 'Particle Fusion: hybrid particle + soft depth, orbiting particle controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
         ],
         feedback: {}
       },
@@ -641,7 +614,6 @@ const CATALOG = [
         options: [
           { id: 'e2e-g4-hscroll', name: '01 Horizontal Scroll Reveal', philosophy: 'Vertical scroll input drives a horizontal poetry journey — inspired by 45r.jp indigo storytelling', file: 'e2e/gen-4/01-horizontal-scroll-reveal.html', desc: 'Horizontal Scroll: lerp scroll engine, multi-layer parallax (0.2x/0.5x/1.5x), line-by-line verse reveal, background color interpolation, nav dots, keyboard navigation', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' },
           { id: 'e2e-g4-clippath', name: '02 Depth Clip-Path Reveal', philosophy: 'Geometric masks expand to reveal each poem — 8-pointed star, Islamic arch, and circle forms', file: 'e2e/gen-4/02-depth-clippath-reveal.html', desc: 'Clip-Path Reveals: CSS clip-path driven by scroll progress, IntersectionObserver, 5-layer z-depth parallax, CSS-only floating particles, color chapter transitions', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' },
-          { id: 'e2e-g4-threejs', name: '03 Three.js 3D Chambers', philosophy: 'Fly through geometric chambers where each poem lives in its own architectural space', file: 'e2e/gen-4/03-threejs-3d-chambers.html', desc: 'Three.js r128 WebGL: CatmullRomCurve3 camera path, CanvasTexture Arabic text, wireframe tunnel geometry, 4 particle systems (930+ particles), dynamic fog, vignette + film grain overlays', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' }
         ],
         feedback: {}
       }

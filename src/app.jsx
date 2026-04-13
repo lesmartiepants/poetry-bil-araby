@@ -92,6 +92,7 @@ import {
 import { useIdleTimer } from './hooks/useIdleTimer.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
+import SquoctogonBackground from './components/SquoctogonBackground.jsx';
 
 import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
@@ -158,6 +159,7 @@ export default function DiwanApp() {
   const textSettingsRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(0);
+  const [bgScrollY, setBgScrollY] = useState(0);
   const [fireTapped, setFireTapped] = useState(false);
 
   // Zen idle mode — hides chrome after 2s of inactivity, leaving only the poem,
@@ -203,6 +205,17 @@ export default function DiwanApp() {
   const currentFont = useUIStore((s) => s.font);
   const setCurrentFont = useUIStore((s) => s.setFont);
   const ratchetMode = useUIStore((s) => s.ratchetMode);
+  const bgOpacity = useUIStore((s) => s.bgOpacity);
+  const bgColor = useUIStore((s) => s.bgColor);
+  const bgParallax = useUIStore((s) => s.bgParallax);
+  const bgPattern = useUIStore((s) => s.bgPattern);
+  const sparkleEnabled = useUIStore((s) => s.sparkleEnabled);
+  const sparkleMode = useUIStore((s) => s.sparkleMode);
+  const sparkleGlow = useUIStore((s) => s.sparkleGlow);
+  const sparkleBrightness = useUIStore((s) => s.sparkleBrightness);
+  const sparkleSpeed = useUIStore((s) => s.sparkleSpeed);
+  const sparkleAmount = useUIStore((s) => s.sparkleAmount);
+  const sparkleColor = useUIStore((s) => s.sparkleColor);
   // ── Audio store (Zustand) ──
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const setIsPlaying = useAudioStore((s) => s.setPlaying);
@@ -734,8 +747,10 @@ export default function DiwanApp() {
   }, []);
 
   const handleScroll = (e) => {
-    const progress = Math.min(1, e.target.scrollTop / 120);
+    const scrollTop = e.target.scrollTop;
+    const progress = Math.min(1, scrollTop / 120);
     setHeaderOpacity(progress);
+    setBgScrollY(scrollTop);
   };
 
   // Fetch dynamic poet list from API when discover drawer first opens
@@ -1375,14 +1390,27 @@ export default function DiwanApp() {
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.03]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3C/svg%3E")`,
-              backgroundSize: '60px 60px',
-            }}
+          {/* Islamic pattern tiling background — from geometric-explorer catalog */}
+          <SquoctogonBackground
+            darkMode={darkMode}
+            scrollY={bgScrollY}
+            opacityScale={bgOpacity}
+            colorOverride={bgColor}
+            parallaxFactor={bgParallax}
+            patternName={bgPattern}
+            topThirdOnly
           />
-          <MysticalConsultationEffect active={isInterpreting} theme={theme} />
+          <MysticalConsultationEffect
+            active={isInterpreting}
+            scrollY={bgScrollY}
+            sparkleEnabled={sparkleEnabled}
+            sparkleMode={sparkleMode}
+            sparkleGlow={sparkleGlow}
+            sparkleBrightness={sparkleBrightness}
+            sparkleSpeed={sparkleSpeed}
+            sparkleAmount={sparkleAmount}
+            sparkleColor={sparkleColor}
+          />
 
           <main
             ref={mainScrollRef}

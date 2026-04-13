@@ -404,7 +404,8 @@ export default function DiwanApp() {
       }
 
       // Deep link detection via wouter route match: /poem/:id
-      if (routeParams?.id && useDatabase) {
+      // Skip if splash screen is showing (onboarding takes priority)
+      if (routeParams?.id && useDatabase && !showSplash) {
         const poemId = routeParams.id;
         track('deep_link_loaded', { poemId });
         addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'info');

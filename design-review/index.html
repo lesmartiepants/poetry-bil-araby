@@ -255,8 +255,11 @@
     .comment-trigger-compact svg{width:18px;height:18px}
     .comment-trigger-compact.has-text{color:var(--accent);border-color:rgba(212,168,75,.3)}
     /* Mobile top info bar */
-    .mobile-info-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:150;padding:6px 14px;background:linear-gradient(to bottom,rgba(9,9,11,.92) 60%,transparent);pointer-events:none}
-    .mib-phil{font-size:9px;font-style:italic;color:rgba(212,168,75,.45);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mobile-info-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:150;padding:6px 14px;background:linear-gradient(to bottom,rgba(9,9,11,.92) 60%,transparent);pointer-events:none;gap:8px;align-items:center}
+    .mobile-info-bar a{pointer-events:auto}
+    .mib-back{font-size:11px;color:var(--accent);text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;gap:3px;opacity:.7;transition:opacity .15s}
+    .mib-back:hover{opacity:1}
+    .mib-phil{font-size:9px;font-style:italic;color:rgba(212,168,75,.45);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
     .dock-sync{margin-left:4px;display:flex;align-items:center}
     /* Mobile accordion overlay */
     .mobile-acc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250;display:none;align-items:flex-end}
@@ -349,6 +352,8 @@
 <div class="app">
   <!-- Toolbar -->
   <div class="toolbar">
+    <a class="nav-btn" id="backToApp" href="../" title="Back to app" style="text-decoration:none;gap:4px"><svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>App</a>
+    <div class="tb-sep"></div>
     <button class="acc-toggle" id="accToggle" onclick="toggleAccordion()" title="Browse all designs">
       <span id="accToggleLabel">Browse Designs</span>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
@@ -373,6 +378,7 @@
 
   <!-- Mobile top info bar -->
   <div class="mobile-info-bar" id="mobileInfoBar">
+    <a class="mib-back" href="../" title="Back to app"><svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>App</a>
     <div class="mib-phil" id="mibPhil"></div>
   </div>
 
@@ -616,6 +622,71 @@ const CATALOG = [
           { id: 'e2e-g4-clippath', name: '02 Depth Clip-Path Reveal', philosophy: 'Geometric masks expand to reveal each poem — 8-pointed star, Islamic arch, and circle forms', file: 'e2e/gen-4/02-depth-clippath-reveal.html', desc: 'Clip-Path Reveals: CSS clip-path driven by scroll progress, IntersectionObserver, 5-layer z-depth parallax, CSS-only floating particles, color chapter transitions', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' },
         ],
         feedback: {}
+      },
+      { id: 'e2e-awwwards', name: 'Awwwards v2 — Preference Flow', source: 'PR #262', description: 'Three award-quality onboarding flows with preference pickers — Folio typographic, Luminara editorial luxury, Surge kinetic energy',
+        options: [
+          { id: 'e2e-v1-folio', name: 'Variation 1 — Folio', philosophy: 'Gold foil on deep ink — typography as the only ornament', file: 'onboarding/variation-1-folio.html', desc: 'AW-Portfolio inspired: clip-path curtain letter reveals, film-grain noise overlay, magazine editorial mood grid, gold timeline era list, 5-phase preference picker flow', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-v2-luminara', name: 'Variation 2 — Luminara', philosophy: 'Starfield and nebula glow — luxury editorial in the cosmos', file: 'onboarding/variation-2-luminara.html', desc: 'Sansara-inspired: canvas starfield, Islamic 8-pt star intro SVG, nebula glow blobs, 1.4s ease-luxe phase transitions, elegant list-style preference pickers, generous whitespace', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-v3-surge', name: 'Variation 3 — Surge', philosophy: 'Electric lapis energy — kinetic spring physics on every reveal', file: 'onboarding/variation-3-surge.html', desc: 'NeedNap-inspired: blueprint grid background, lapis scanning line, spring-bounce reveals (30–55ms stagger), streak-dot progress bar, neon lapis glow on selection, near-black palette', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' }
+        ],
+        feedback: {}
+      },
+      { id: 'e2e-onb-e2e', name: 'Onboarding E2E Flows v1', source: 'feature/onboarding-sprint', description: 'Full end-to-end onboarding flow prototypes — three early directions before the Awwwards sprint',
+        options: [
+          { id: 'e2e-onb-e2e-1', name: 'E2E Flow 1', philosophy: 'Seamless flow — desert splash into preference pickers', file: 'onboarding/onboarding-e2e-1.html', desc: 'Full E2E onboarding flow, option 1', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-e2e-2', name: 'E2E Flow 2', philosophy: 'Cinematic flow — cumulative atmosphere layers', file: 'onboarding/onboarding-e2e-2.html', desc: 'Full E2E onboarding flow, option 2', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-e2e-3', name: 'E2E Flow 3', philosophy: 'Minimal flow — fast, clean grid layout', file: 'onboarding/onboarding-e2e-3.html', desc: 'Full E2E onboarding flow, option 3', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' }
+        ],
+        feedback: {}
+      },
+      { id: 'e2e-onb-screens', name: 'Onboarding Final Screens', source: 'feature/onboarding-sprint', description: 'Individual screens from the chosen onboarding direction — brand reveal, pickers, backgrounds, exit transition',
+        options: [
+          { id: 'e2e-onb-brand', name: 'Brand Reveal', philosophy: 'Desert into Arabic letters into "شِعر" — the brand unfolds', file: 'onboarding/brand-reveal.html', desc: 'Brand reveal splash screen prototype', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-mood', name: 'Mood Picker', philosophy: 'Pick an emotion to seed the first poem', file: 'onboarding/mood-picker.html', desc: 'Mood selection screen', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-era', name: 'Era Picker', philosophy: 'Choose a poetic era — classical to contemporary', file: 'onboarding/era-picker.html', desc: 'Era / time period selection screen', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-theme', name: 'Theme Picker', philosophy: 'Choose thematic topics to seed your feed', file: 'onboarding/theme-picker.html', desc: 'Theme / topic selection screen', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-exit', name: 'Exit Transition', philosophy: 'The flow dissolves into the poem view', file: 'onboarding/exit-transition.html', desc: 'Exit / outro transition screen', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-bg3', name: 'Background 3 — Muqarnas', philosophy: 'Diamond depth grid with breathing animation', file: 'onboarding/bg-option-3.html', desc: 'Poem view background: diamond muqarnas grid, depth illusion, breathing animation', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-onb-bg4', name: 'Background 4 — Star & Cross (Lapis Only)', philosophy: 'Khatam octagram in pure lapis — no gold', file: 'onboarding/bg-option-4.html', desc: 'Poem view background: star & cross tile, lapis only, gold removed', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' }
+        ],
+        feedback: {}
+      },
+      { id: 'e2e-onb-archive', name: 'Onboarding Archive', source: 'feature/onboarding-sprint', description: 'Archived iteration screens — A/B/C variants for mood pickers, brand reveals, era pickers, backgrounds and exit transitions',
+        options: [
+          { id: 'e2e-arch-brand-a', name: 'Brand Reveal A', philosophy: 'First brand reveal direction — variant A', file: 'onboarding/archive/brand-reveal-a.html', desc: 'Archive: brand reveal variant A', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-brand-b', name: 'Brand Reveal B', philosophy: 'Second brand reveal direction — variant B', file: 'onboarding/archive/brand-reveal-b.html', desc: 'Archive: brand reveal variant B', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-mood-a', name: 'Mood Picker A', philosophy: 'First mood picker iteration', file: 'onboarding/archive/mood-picker-a.html', desc: 'Archive: mood picker variant A', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-mood-b', name: 'Mood Picker B', philosophy: 'Second mood picker iteration', file: 'onboarding/archive/mood-picker-b.html', desc: 'Archive: mood picker variant B', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-mood-c', name: 'Mood Picker C', philosophy: 'Third mood picker iteration', file: 'onboarding/archive/mood-picker-c.html', desc: 'Archive: mood picker variant C', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-mood-c1', name: 'Mood Picker C1 — Pill', philosophy: 'Pill chip variant of mood picker C', file: 'onboarding/archive/mood-picker-c1-pill.html', desc: 'Archive: mood picker C1 pill chip variant', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-mood-c2', name: 'Mood Picker C2 — White', philosophy: 'Light/white variant of mood picker C', file: 'onboarding/archive/mood-picker-c2-white.html', desc: 'Archive: mood picker C2 white/light variant', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-era-a', name: 'Era Picker A', philosophy: 'First era picker iteration', file: 'onboarding/archive/era-picker-a.html', desc: 'Archive: era picker variant A', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-era-b', name: 'Era Picker B', philosophy: 'Second era picker iteration', file: 'onboarding/archive/era-picker-b.html', desc: 'Archive: era picker variant B', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-theme-a', name: 'Theme Picker A', philosophy: 'First theme picker iteration', file: 'onboarding/archive/theme-picker-a.html', desc: 'Archive: theme picker variant A', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-theme-b', name: 'Theme Picker B', philosophy: 'Second theme picker iteration', file: 'onboarding/archive/theme-picker-b.html', desc: 'Archive: theme picker variant B', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-exit-a', name: 'Exit Transition A', philosophy: 'First exit transition direction', file: 'onboarding/archive/exit-transition-a.html', desc: 'Archive: exit transition variant A', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-exit-b', name: 'Exit Transition B', philosophy: 'Second exit transition direction', file: 'onboarding/archive/exit-transition-b.html', desc: 'Archive: exit transition variant B', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-bg1', name: 'Background 1 — Star & Cross', philosophy: 'Khatam octagram: lapis outer, gold mid, alternating inner', file: 'onboarding/archive/backgrounds/bg-option-1.html', desc: 'Archive: background option 1 — star & cross tile', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' },
+          { id: 'e2e-arch-bg2', name: 'Background 2 — Molded Panel', philosophy: 'Carved stucco arabesque with 3D relief and shadow layers', file: 'onboarding/archive/backgrounds/bg-option-2.html', desc: 'Archive: background option 2 — molded arabesque panel', generation: 8, iteration: 1, source_branch: 'feature/onboarding-sprint', source_pr: '#262' }
+        ],
+        feedback: {}
+      }
+    ]
+  },
+  // ═══════════════════════════════════════════════════════════════
+  // AWWWARDS-INSPIRED — premium onboarding flows with tag system
+  // Inspired by meetsansara.com, neednap.net, AW-2025-Portfolio
+  // ═══════════════════════════════════════════════════════════════
+  {
+    component: 'Awwwards-Inspired',
+    id: 'awwwards',
+    categories: [
+      { id: 'awwwards-onboarding', name: 'Onboarding + Tag System', source: 'PR #441', description: 'Complete 5-phase onboarding flows leveraging the 62-tag taxonomy (emotion/period/theme pickers) — inspired by AW-2025-Portfolio, meetsansara.com, neednap.net',
+        options: [
+          { id: 'awwwards-folio', name: 'Variation 1 — Folio', philosophy: 'Deep ink + gold foil palette. Clip-path curtain reveals, film-grain noise overlay, magazine-editorial mood grid, timeline era list with golden rule connectors, constellation topic map', file: 'awwwards-inspired/variation-1-folio.html', desc: 'Full 5-phase onboarding: splash clip-path reveal → kinetic Arabic letter-by-letter → kinetic English → 3×3 mood picker (9 emotions) → golden-rule era timeline (8 periods) → constellation topic map (12 themes) → tagged poem result with "لأنك تحب" indicator. GSAP animations, film grain canvas, skip button on all phases.', generation: 9, iteration: 1, source_branch: 'copilot/design-variations-review', source_pr: '#441' },
+          { id: 'awwwards-scroll-odyssey', name: 'Scroll Odyssey (Gallery)', philosophy: 'Poetry as a journey — horizontal scroll gallery with GSAP ScrollTrigger + Lenis smooth scroll, clip-path reveals, staggered Arabic text, canvas particles', file: 'awwwards-inspired/01-scroll-odyssey.html', desc: 'GSAP ScrollTrigger + Lenis: horizontal-scroll poem gallery (6 cards), splash → hero word-reveal → pinned horizontal gallery → full-screen featured verse → poet grid → closing. Canvas ambient particles with mouse repulsion.', generation: 9, iteration: 1, source_branch: 'copilot/design-variations-review', source_pr: '#441' }
+        ],
+        feedback: {}
       }
     ]
   }
@@ -645,7 +716,8 @@ const SECTION_FILTERS = [
   { id: 'main-app', label: 'Main App', short: 'App' },
   { id: 'vc', label: 'Vertical Controls', short: 'VC' },
   { id: 'auth', label: 'Auth', short: 'Auth' },
-  { id: 'branding', label: 'Branding', short: 'Brand' }
+  { id: 'branding', label: 'Branding', short: 'Brand' },
+  { id: 'awwwards', label: 'Awwwards', short: 'Aww' }
 ];
 try { const sf = localStorage.getItem('design-review-section-filter'); if (sf && SECTION_FILTERS.some(f => f.id === sf)) sectionFilter = sf; } catch {}
 
@@ -823,6 +895,7 @@ function buildFlatList() {
   CATALOG.forEach((comp, ci) => {
     if (sectionFilter === 'auth' && comp.id !== 'auth') return;
     if (sectionFilter === 'branding' && comp.id !== 'branding') return;
+    if (sectionFilter === 'awwwards' && comp.id !== 'awwwards') return;
     if (sectionFilter === 'vc' && comp.id !== 'e2e') return;
     if ((sectionFilter === 'e2e' || sectionFilter === 'onboarding' || sectionFilter === 'main-app') && comp.id !== 'e2e') return;
     comp.categories.forEach((cat, cati) =>

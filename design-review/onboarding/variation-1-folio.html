@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>شِعر — Variation 1: Folio</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;700&family=Tajawal:wght@300;400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── TOKENS ───────────────────────────────────────────────── */
+    :root {
+      --ink:          #0a0806;
+      --parchment:    #f2ead8;
+      --gold:         #c5a059;
+      --gold-dim:     rgba(197,160,89,.38);
+      --gold-trace:   rgba(197,160,89,.10);
+      --lapis:        #1f4e7a;
+      --lapis-bright: #2e6dab;
+      --text-body:    #1c160e;
+      --text-muted:   rgba(28,22,14,.45);
+      --ease-expo:    cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-back:    cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* ── RESET ────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; }
+    body {
+      background: var(--ink);
+      color: var(--parchment);
+      font-family: 'Tajawal', sans-serif;
+      overflow: hidden;
+      height: 100dvh;
+      width: 100%;
+    }
+
+    /* ── PHASE SYSTEM ─────────────────────────────────────────── */
+    .phase {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+      transition: opacity 0.5s var(--ease-expo);
+    }
+    .phase.active {
+      opacity: 1;
+      pointer-events: all;
+      z-index: 10;
+    }
+
+    /* ── CLIP-PATH REVEAL ──────────────────────────────────────── */
+    @keyframes revealRight {
+      from { clip-path: inset(0 100% 0 0); }
+      to   { clip-path: inset(0 0% 0 0); }
+    }
+    @keyframes revealLeft {
+      from { clip-path: inset(0 0 0 100%); }
+      to   { clip-path: inset(0 0 0 0%); }
+    }
+    @keyframes revealUp {
+      from { clip-path: inset(100% 0 0 0); }
+      to   { clip-path: inset(0 0 0 0); }
+    }
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(40px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes grain {
+      0%, 100% { transform: translate(0, 0); }
+      10% { transform: translate(-1%, -2%); }
+      30% { transform: translate(2%, 1%); }
+      50% { transform: translate(-1%, 2%); }
+      70% { transform: translate(1%, -1%); }
+      90% { transform: translate(-2%, 1%); }
+    }
+
+    /* ── GRAIN OVERLAY ─────────────────────────────────────────── */
+    .grain {
+      position: fixed;
+      inset: -20%;
+      width: 140%;
+      height: 140%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+      background-size: 128px 128px;
+      opacity: 0.028;
+      pointer-events: none;
+      z-index: 9999;
+      animation: grain 0.6s steps(1) infinite;
+      mix-blend-mode: overlay;
+    }
+
+    /* ── SKIP BUTTON ───────────────────────────────────────────── */
+    .skip-btn {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      z-index: 9998;
+      background: none;
+      border: none;
+      color: rgba(242,234,216,.35);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      padding: 0.5rem 0.75rem;
+      transition: color 0.3s;
+      animation: fadeIn 1.5s 2s both;
+    }
+    .skip-btn:hover { color: var(--gold); }
+    .skip-btn::before {
+      content: '→ ';
+      font-family: sans-serif;
+    }
+
+    /* ── PHASE 0: ENTRY ────────────────────────────────────────── */
+    #p0 { background: var(--ink); }
+
+    .entry-word {
+      position: relative;
+      font-family: 'Amiri', serif;
+      font-size: clamp(9rem, 25vw, 22rem);
+      font-weight: 700;
+      line-height: 0.85;
+      color: var(--parchment);
+      text-align: center;
+      display: flex;
+      gap: 0.02em;
+    }
+
+    .entry-letter {
+      display: inline-block;
+      clip-path: inset(0 0 100% 0);
+      opacity: 0;
+    }
+    .entry-letter.revealed {
+      animation: revealUp 0.9s var(--ease-expo) forwards;
+      opacity: 1;
+    }
+
+    .entry-tagline {
+      position: absolute;
+      bottom: -2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      text-transform: uppercase;
+      opacity: 0;
+      white-space: nowrap;
+    }
+
+    .entry-line {
+      position: absolute;
+      bottom: -1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 1px;
+      background: var(--gold-dim);
+      transition: width 0.8s var(--ease-expo) 0.5s;
+    }
+
+    .entry-cta {
+      margin-top: 5rem;
+      opacity: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .cta-btn {
+      background: none;
+      border: 1px solid var(--gold-dim);
+      color: var(--parchment);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      padding: 0.85rem 3rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: color 0.4s, border-color 0.4s;
+    }
+    .cta-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--gold);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.4s var(--ease-expo);
+    }
+    .cta-btn:hover::before { transform: scaleX(1); transform-origin: left; }
+    .cta-btn:hover { color: var(--ink); border-color: var(--gold); }
+    .cta-btn span { position: relative; z-index: 1; }
+
+    .cta-sub {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+    }
+
+    /* ── SHARED PICKER HEADER ──────────────────────────────────── */
+    .picker-step {
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+      font-family: 'Tajawal', sans-serif;
+    }
+    .picker-title {
+      font-family: 'Amiri', serif;
+      font-size: clamp(2rem, 6vw, 4rem);
+      font-weight: 400;
+      color: var(--parchment);
+      margin-bottom: 0.25rem;
+      line-height: 1.1;
+    }
+    .picker-sub {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      letter-spacing: 0.08em;
+    }
+    .picker-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 700px;
+      margin-top: 2.5rem;
+    }
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--gold-dim);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      padding: 0.5rem;
+      transition: color 0.3s;
+    }
+    .nav-btn:hover { color: var(--gold); }
+    .nav-next {
+      background: var(--gold);
+      color: var(--ink);
+      padding: 0.7rem 2.5rem;
+      border: none;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      transition: background 0.3s, transform 0.2s;
+    }
+    .nav-next:hover { background: var(--parchment); transform: translateX(-3px); }
+
+    /* ── PHASE 1: MOOD PICKER ──────────────────────────────────── */
+    #p1 { background: var(--ink); padding: 2rem; }
+
+    .mood-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      width: min(700px, 95vw);
+      background: var(--gold-trace);
+      border: 1px solid var(--gold-trace);
+    }
+    @media (max-width: 600px) {
+      .mood-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .mood-card {
+      background: var(--ink);
+      padding: 1.8rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      clip-path: inset(100% 0 0 0);
+      transition: background 0.35s;
+    }
+    .mood-card.animate-in {
+      animation: revealUp 0.7s var(--ease-expo) forwards;
+    }
+    .mood-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--gold);
+      opacity: 0;
+      transition: opacity 0.35s;
+    }
+    .mood-card:hover::after, .mood-card.selected::after { opacity: 1; }
+    .mood-card:hover .mood-ar, .mood-card.selected .mood-ar { color: var(--ink); }
+    .mood-card:hover .mood-en, .mood-card.selected .mood-en { color: rgba(10,8,6,.55); }
+    .mood-ar, .mood-en { position: relative; z-index: 1; transition: color 0.35s; }
+    .mood-ar {
+      font-family: 'Amiri', serif;
+      font-size: 1.6rem;
+      color: var(--parchment);
+      display: block;
+      margin-bottom: 0.3rem;
+    }
+    .mood-en {
+      font-size: 0.6rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: block;
+    }
+
+    /* ── PHASE 2: ERA PICKER ───────────────────────────────────── */
+    #p2 { background: var(--ink); padding: 2rem; }
+
+    .era-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      width: min(700px, 95vw);
+      position: relative;
+    }
+    .era-timeline::before {
+      content: '';
+      position: absolute;
+      right: calc(100% - 3px);
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: var(--gold-trace);
+    }
+
+    .era-row {
+      display: flex;
+      align-items: stretch;
+      gap: 2rem;
+      padding: 0.8rem 0;
+      cursor: pointer;
+      position: relative;
+      opacity: 0;
+      transform: translateX(20px);
+      transition: opacity 0.4s, transform 0.4s;
+    }
+    .era-row.animate-in {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .era-row::before {
+      content: '';
+      position: absolute;
+      right: -3.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      border: 1px solid var(--gold-dim);
+      background: var(--ink);
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .era-row:hover::before, .era-row.selected::before {
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+
+    .era-years {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.65rem;
+      color: var(--gold);
+      letter-spacing: 0.1em;
+      min-width: 90px;
+      padding-top: 0.2rem;
+      text-align: left;
+    }
+    .era-content { flex: 1; }
+    .era-name-ar {
+      font-family: 'Amiri', serif;
+      font-size: 1.5rem;
+      color: var(--parchment);
+      display: block;
+      transition: color 0.3s;
+    }
+    .era-name-en {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+    .era-row:hover .era-name-ar, .era-row.selected .era-name-ar { color: var(--gold); }
+
+    .era-divider {
+      width: 100%;
+      height: 1px;
+      background: var(--gold-trace);
+      margin: 0;
+    }
+
+    /* ── PHASE 3: TOPICS PICKER ────────────────────────────────── */
+    #p3 { background: var(--ink); padding: 2rem; }
+
+    .topics-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      width: min(700px, 95vw);
+      justify-content: flex-start;
+    }
+
+    .topic-chip {
+      padding: 0.5rem 1.2rem;
+      border: 1px solid var(--gold-trace);
+      background: transparent;
+      color: var(--text-muted);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.85rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(15px);
+      transition: color 0.3s, border-color 0.3s, background 0.3s;
+    }
+    .topic-chip.animate-in {
+      animation: riseIn 0.5s var(--ease-expo) forwards;
+    }
+    .topic-chip:hover {
+      border-color: var(--gold);
+      color: var(--parchment);
+    }
+    .topic-chip.selected {
+      background: var(--gold);
+      border-color: var(--gold);
+      color: var(--ink);
+    }
+
+    /* ── PHASE 4: OUTRO ────────────────────────────────────────── */
+    #p4 { background: var(--ink); }
+
+    .outro-poem {
+      max-width: 540px;
+      text-align: center;
+      padding: 2rem;
+    }
+    .outro-verse {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.4rem, 4vw, 2rem);
+      font-weight: 400;
+      line-height: 1.8;
+      color: var(--parchment);
+      opacity: 0;
+    }
+    .outro-verse.revealed {
+      animation: riseIn 1.2s var(--ease-expo) 0.3s forwards;
+    }
+    .outro-poet {
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      opacity: 0;
+    }
+    .outro-poet.revealed {
+      animation: fadeIn 1s 1.5s forwards;
+    }
+    .outro-tag {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      letter-spacing: 0.15em;
+      opacity: 0;
+    }
+    .outro-tag.revealed { animation: fadeIn 1s 2s forwards; }
+
+    .outro-enter {
+      margin-top: 3rem;
+      opacity: 0;
+      animation: riseIn 0.8s var(--ease-expo) 2.5s forwards;
+    }
+
+    /* ── PROGRESS BAR ──────────────────────────────────────────── */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 2px;
+      height: 0%;
+      background: var(--gold);
+      z-index: 9990;
+      transition: height 0.6s var(--ease-expo);
+    }
+
+    /* ── PHASE NUMBER ──────────────────────────────────────────── */
+    .phase-indicator {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 9990;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .phase-indicator.visible { opacity: 0.7; }
+
+    /* ── DECORATIVE LINES ──────────────────────────────────────── */
+    .deco-rule {
+      width: min(700px, 95vw);
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dim) 30%, var(--gold-dim) 70%, transparent);
+      margin: 0.5rem 0 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="progress-bar" id="progress"></div>
+<div class="phase-indicator" id="phaseNum">خطوة ١ / ٤</div>
+
+<!-- SKIP -->
+<button class="skip-btn" id="skipBtn" onclick="goToPhase(4)">تخطى</button>
+
+<!-- ═══════════════════════════════════════════════════
+     PHASE 0 — ENTRY
+════════════════════════════════════════════════════ -->
+<section class="phase active" id="p0">
+  <div style="position:relative; text-align:center;">
+    <div class="entry-word" id="entryWord">
+      <span class="entry-letter" data-delay="0">ش</span>
+      <span class="entry-letter" data-delay="120">ِع</span>
+      <span class="entry-letter" data-delay="240">ر</span>
+    </div>
+    <div class="entry-line" id="entryLine"></div>
+    <div class="entry-tagline" id="entryTagline">عالَمٌ من الشعر العربي</div>
+  </div>
+  <div class="entry-cta" id="entryCta">
+    <button class="cta-btn" onclick="goToPhase(1)">
+      <span>ابدأ رحلتك</span>
+    </button>
+    <span class="cta-sub">اخترْ ما يُعجبك</span>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     PHASE 1 — MOOD
+════════════════════════════════════════════════════ -->
+<section class="phase" id="p1">
+  <div style="width:min(700px,95vw);text-align:right;">
+    <div class="picker-step">الخطوة ١ من ٣</div>
+    <h2 class="picker-title">ما الذي تبحث عنه اليوم؟</h2>
+    <p class="picker-sub">اختر كل ما يُعبّر عن مزاجك — بلا حدود</p>
+    <div class="deco-rule"></div>
+  </div>
+
+  <div class="mood-grid" id="moodGrid">
+    <div class="mood-card" data-mood="joy">
+      <span class="mood-ar">فَرَح</span><span class="mood-en">Joy</span>
+    </div>
+    <div class="mood-card" data-mood="longing">
+      <span class="mood-ar">شَوق</span><span class="mood-en">Longing</span>
+    </div>
+    <div class="mood-card" data-mood="pride">
+      <span class="mood-ar">فَخر</span><span class="mood-en">Pride</span>
+    </div>
+    <div class="mood-card" data-mood="sadness">
+      <span class="mood-ar">حُزن</span><span class="mood-en">Sadness</span>
+    </div>
+    <div class="mood-card" data-mood="love">
+      <span class="mood-ar">حُبّ</span><span class="mood-en">Love</span>
+    </div>
+    <div class="mood-card" data-mood="wonder">
+      <span class="mood-ar">دَهشة</span><span class="mood-en">Wonder</span>
+    </div>
+    <div class="mood-card" data-mood="calm">
+      <span class="mood-ar">هُدوء</span><span class="mood-en">Calm</span>
+    </div>
+    <div class="mood-card" data-mood="nostalgia">
+      <span class="mood-ar">حَنين</span><span class="mood-en">Nostalgia</span>
+    </div>
+  </div>
+
+  <div class="picker-nav">
+    <button class="nav-btn" onclick="goToPhase(0)">← رجوع</button>
+    <button class="nav-next" id="moodNext" onclick="goToPhase(2)">التالي →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     PHASE 2 — ERA
+════════════════════════════════════════════════════ -->
+<section class="phase" id="p2">
+  <div style="width:min(700px,95vw);text-align:right;padding-right:4rem;">
+    <div class="picker-step">الخطوة ٢ من ٣</div>
+    <h2 class="picker-title">أيُّ عصرٍ يُسحرك؟</h2>
+    <p class="picker-sub">اختر عصراً أو أكثر</p>
+    <div class="deco-rule"></div>
+  </div>
+
+  <div class="era-timeline" id="eraTimeline" style="padding-right:3.5rem;">
+    <div class="era-row" data-era="pre-islamic">
+      <div class="era-years">ما قبل ٦٢٢م</div>
+      <div class="era-content">
+        <span class="era-name-ar">الجاهلية</span>
+        <span class="era-name-en">Pre-Islamic · امرؤ القيس · عنترة</span>
+      </div>
+    </div>
+    <div class="era-divider"></div>
+    <div class="era-row" data-era="umayyad">
+      <div class="era-years">٦٦١–٧٥٠م</div>
+      <div class="era-content">
+        <span class="era-name-ar">الأمويون</span>
+        <span class="era-name-en">Umayyad · الفرزدق · جرير</span>
+      </div>
+    </div>
+    <div class="era-divider"></div>
+    <div class="era-row" data-era="abbasid">
+      <div class="era-years">٧٥٠–١٢٥٨م</div>
+      <div class="era-content">
+        <span class="era-name-ar">العبّاسيون</span>
+        <span class="era-name-en">Abbasid · المتنبي · أبو نواس</span>
+      </div>
+    </div>
+    <div class="era-divider"></div>
+    <div class="era-row" data-era="modern">
+      <div class="era-years">١٩٠٠م–</div>
+      <div class="era-content">
+        <span class="era-name-ar">الحديث</span>
+        <span class="era-name-en">Modern · نزار · درويش · أدونيس</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="picker-nav">
+    <button class="nav-btn" onclick="goToPhase(1)">← رجوع</button>
+    <button class="nav-next" onclick="goToPhase(3)">التالي →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     PHASE 3 — TOPICS
+════════════════════════════════════════════════════ -->
+<section class="phase" id="p3">
+  <div style="width:min(700px,95vw);text-align:right;">
+    <div class="picker-step">الخطوة ٣ من ٣</div>
+    <h2 class="picker-title">ما يستهويك من الموضوعات</h2>
+    <p class="picker-sub">اختر ما يُلهمك</p>
+    <div class="deco-rule"></div>
+  </div>
+
+  <div class="topics-wrap" id="topicsWrap">
+    <div class="topic-chip" data-topic="love">الغزل</div>
+    <div class="topic-chip" data-topic="wisdom">الحكمة</div>
+    <div class="topic-chip" data-topic="homeland">الوطن</div>
+    <div class="topic-chip" data-topic="nature">الطبيعة</div>
+    <div class="topic-chip" data-topic="praise">المدح</div>
+    <div class="topic-chip" data-topic="elegy">الرثاء</div>
+    <div class="topic-chip" data-topic="war">الفروسية</div>
+    <div class="topic-chip" data-topic="exile">الغربة</div>
+    <div class="topic-chip" data-topic="mysticism">التصوّف</div>
+    <div class="topic-chip" data-topic="philosophy">الفلسفة</div>
+    <div class="topic-chip" data-topic="women">المرأة</div>
+    <div class="topic-chip" data-topic="wine">الخمريات</div>
+    <div class="topic-chip" data-topic="sea">البحر</div>
+    <div class="topic-chip" data-topic="freedom">الحرية</div>
+    <div class="topic-chip" data-topic="children">الطفولة</div>
+    <div class="topic-chip" data-topic="justice">العدل</div>
+  </div>
+
+  <div class="picker-nav">
+    <button class="nav-btn" onclick="goToPhase(2)">← رجوع</button>
+    <button class="nav-next" onclick="goToPhase(4)">أرني شعراً →</button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════
+     PHASE 4 — POEM REVEAL
+════════════════════════════════════════════════════ -->
+<section class="phase" id="p4">
+  <div class="outro-poem">
+    <div class="outro-verse" id="outroVerse">
+      على هذه الأرضِ ما يستحقُّ الحياةَ<br>
+      تردُّدُ أبريلَ، رائحةُ الخبزِ في الفجرِ
+    </div>
+    <div class="outro-poet" id="outroPoet">— مَحمود دَرويش</div>
+    <div class="outro-tag" id="outroTag">لأنك تحبّ: الوطن · الفلسفة</div>
+    <div class="outro-enter">
+      <button class="cta-btn" onclick="alert('تمّت! هذا نموذج تجريبي')">
+        <span>ادخل إلى الشعر</span>
+      </button>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ─── STATE ──────────────────────────────────────────────── */
+let currentPhase = 0;
+const totalPickerPhases = 4; // 0-4
+
+/* ─── NAVIGATION ─────────────────────────────────────────── */
+function goToPhase(n) {
+  const prev = document.getElementById('p' + currentPhase);
+  const next = document.getElementById('p' + n);
+  if (!next) return;
+
+  prev.classList.remove('active');
+  next.classList.add('active');
+  currentPhase = n;
+
+  updateProgress();
+  updatePhaseIndicator();
+  initPhase(n);
+}
+
+function updateProgress() {
+  const pct = (currentPhase / 4) * 100;
+  document.getElementById('progress').style.height = pct + '%';
+}
+
+function updatePhaseIndicator() {
+  const el = document.getElementById('phaseNum');
+  if (currentPhase === 0) {
+    el.classList.remove('visible');
+    return;
+  }
+  const nums = ['', '١', '٢', '٣', '٤'];
+  el.textContent = `خطوة ${nums[currentPhase]} / ٤`;
+  el.classList.add('visible');
+}
+
+/* ─── PHASE INIT ─────────────────────────────────────────── */
+function initPhase(n) {
+  if (n === 0) initEntry();
+  if (n === 1) initMood();
+  if (n === 2) initEra();
+  if (n === 3) initTopics();
+  if (n === 4) initOutro();
+}
+
+/* ─── PHASE 0: ENTRY ─────────────────────────────────────── */
+(function initEntry() {
+  const letters = document.querySelectorAll('.entry-letter');
+  letters.forEach((l, i) => {
+    const delay = parseInt(l.dataset.delay || 0, 10);
+    setTimeout(() => {
+      l.classList.add('revealed');
+    }, 400 + delay);
+  });
+
+  setTimeout(() => {
+    const line = document.getElementById('entryLine');
+    if (line) line.style.width = '80%';
+  }, 900);
+
+  setTimeout(() => {
+    const tag = document.getElementById('entryTagline');
+    if (tag) {
+      tag.style.transition = 'opacity 0.8s ease';
+      tag.style.opacity = '0.6';
+    }
+  }, 1100);
+
+  setTimeout(() => {
+    const cta = document.getElementById('entryCta');
+    if (cta) {
+      cta.style.transition = 'opacity 0.8s ease, transform 0.8s cubic-bezier(0.16,1,0.3,1)';
+      cta.style.transform = 'translateY(0)';
+      cta.style.opacity = '1';
+    }
+  }, 1400);
+})();
+
+/* ─── PHASE 1: MOOD ──────────────────────────────────────── */
+function initMood() {
+  const cards = document.querySelectorAll('.mood-card');
+  cards.forEach((c, i) => {
+    c.style.clipPath = 'inset(100% 0 0 0)';
+    c.classList.remove('animate-in');
+
+    setTimeout(() => {
+      c.style.animation = 'none';
+      c.offsetHeight; // reflow
+      c.style.animationDelay = '0s';
+      c.classList.add('animate-in');
+    }, i * 70 + 100);
+
+    c.addEventListener('click', () => {
+      c.classList.toggle('selected');
+    });
+  });
+}
+
+/* ─── PHASE 2: ERA ───────────────────────────────────────── */
+function initEra() {
+  const rows = document.querySelectorAll('.era-row');
+  rows.forEach((r, i) => {
+    r.style.opacity = '0';
+    r.style.transform = 'translateX(20px)';
+    r.classList.remove('animate-in');
+
+    setTimeout(() => {
+      r.style.transition = `opacity 0.5s ${i * 0.08 + 0.1}s cubic-bezier(0.16,1,0.3,1), transform 0.5s ${i * 0.08 + 0.1}s cubic-bezier(0.16,1,0.3,1)`;
+      r.style.opacity = '1';
+      r.style.transform = 'translateX(0)';
+    }, i * 80 + 100);
+
+    r.addEventListener('click', () => {
+      r.classList.toggle('selected');
+    });
+  });
+}
+
+/* ─── PHASE 3: TOPICS ────────────────────────────────────── */
+function initTopics() {
+  const chips = document.querySelectorAll('.topic-chip');
+  chips.forEach((c, i) => {
+    c.style.opacity = '0';
+    c.style.transform = 'translateY(15px)';
+    c.classList.remove('animate-in');
+
+    setTimeout(() => {
+      c.style.transition = `opacity 0.4s ${i * 0.04}s ease, transform 0.4s ${i * 0.04}s cubic-bezier(0.16,1,0.3,1)`;
+      c.style.opacity = '1';
+      c.style.transform = 'translateY(0)';
+    }, i * 40 + 100);
+
+    c.addEventListener('click', () => {
+      c.classList.toggle('selected');
+    });
+  });
+}
+
+/* ─── PHASE 4: OUTRO ─────────────────────────────────────── */
+function initOutro() {
+  ['outroVerse', 'outroPoet', 'outroTag'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.classList.remove('revealed');
+      void el.offsetWidth;
+      el.classList.add('revealed');
+    }
+  });
+}
+</script>
+</body>
+</html>

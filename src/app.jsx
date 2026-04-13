@@ -59,6 +59,7 @@ import {
 } from './stores/actions/togglePlay';
 import { analyzePoem as analyzePoemAction, cancelAnalysis } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
+import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
 import { pcm16ToWav } from './utils/audio.js';
 import {
@@ -99,6 +100,7 @@ const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
+import PreferencesDrawer from './components/PreferencesDrawer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
@@ -297,6 +299,15 @@ export default function DiwanApp() {
   // When the carousel is active, show the poem the user has swiped to
   const displayedPoem = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
 
+  const getOnboardingPrefs = () => {
+    try {
+      const raw = localStorage.getItem('onboardingPrefs');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  };
+
   const addLog = useUIStore.getState().addLog;
 
   // Log every time the displayed Arabic poem changes on screen
@@ -416,6 +427,10 @@ export default function DiwanApp() {
     const targetPoet = selectedCategory !== 'All' ? selectedCategory : current?.poetArabic; // Arabic name for API compatibility
 
     if (!targetPoet || !current?.id) return;
+
+    // Seed poems are not in the DB — fetchPoemsByPoet would fail or return wrong results.
+    // Skip carousel population entirely for seed poems.
+    if (current?.isSeedPoem) return;
 
     // For poet-selected mode, wait for matching poem before populating.
     // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).
@@ -606,7 +621,57 @@ export default function DiwanApp() {
       } else {
         // No cached translation — queue auto-explain and fetch from DB
         setAutoExplainPending(true);
-        handleFetch();
+
+        // Seed the first poem with onboarding tag preferences (one-time per session)
+        if (sessionStorage.getItem('prefSeedDone')) {
+          handleFetch();
+          return;
+        }
+        sessionStorage.setItem('prefSeedDone', '1');
+        const prefs = getOnboardingPrefs();
+        if (useDatabase && prefs?.topics?.length) {
+          const tags = prefs.topics.join(',');
+          addLog('Discovery', `First poem seeded with tags: ${tags}`, 'info');
+
+          fetch(`${apiUrl}/api/poems/random?tags=${encodeURIComponent(tags)}`)
+            .then((res) => {
+              if (!res.ok) throw new Error(`Tag fetch returned ${res.status}`);
+              return res.json();
+            })
+            .then((poem) => {
+              const normalized = {
+                ...poem,
+                arabic: poem.arabic?.replace(/\*/g, '\n'),
+                isFromDatabase: true,
+                isPreferenceSeeded: true,
+              };
+              const rawTranslation =
+                poem.cachedTranslation || poem.cached_translation || poem.english || '';
+              if (rawTranslation) {
+                normalized.english = rawTranslation.replace(/\*/g, '\n');
+                normalized.cachedTranslation = normalized.english;
+              }
+              setPoems((prev) => [normalized, ...prev]);
+              setCurrentIndex(0);
+              navigate('/poem/' + poem.id + window.location.search, { replace: true });
+              addLog(
+                'Discovery',
+                `Tag-seeded poem loaded: ${poem.poet} — ${poem.title}`,
+                'success'
+              );
+            })
+            .catch(() => {
+              // Fallback: tags not available or no matching poems — use normal fetch
+              addLog(
+                'Discovery',
+                'Tag-seeded fetch failed, falling back to normal discovery',
+                'warn'
+              );
+              handleFetch();
+            });
+        } else {
+          handleFetch();
+        }
       }
 
       // Background: pre-fetch next visit's poem
@@ -1601,6 +1666,61 @@ export default function DiwanApp() {
                     />
                   )}
                 </div>
+
+                <div className="flex flex-col items-center mt-2 mb-4">
+                  {displayedPoem?.isPreferenceSeeded &&
+                    (() => {
+                      try {
+                        const prefs = JSON.parse(localStorage.getItem('onboardingPrefs') || '{}');
+                        const matched = (prefs.topics || []).filter((t) =>
+                          (displayedPoem.tags || []).includes(t)
+                        );
+                        if (matched.length === 0) return null;
+                        return (
+                          <div
+                            style={{
+                              fontSize: '0.7rem',
+                              color: 'rgba(197,160,89,0.7)',
+                              marginBottom: '6px',
+                              direction: 'rtl',
+                              fontFamily: "'Tajawal', sans-serif",
+                            }}
+                          >
+                            لأنك تحب: {matched.join(' • ')}
+                          </div>
+                        );
+                      } catch {
+                        return null;
+                      }
+                    })()}
+                  <div className="flex justify-center gap-3">
+                    {Array.isArray(displayedPoem?.tags) &&
+                      displayedPoem.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                  </div>
+                  <button
+                    onClick={() => useModalStore.getState().openPrefsDrawer()}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'rgba(197,160,89,0.4)',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      fontFamily: "'Tajawal', sans-serif",
+                      direction: 'rtl',
+                      padding: '4px 0',
+                      display: 'block',
+                    }}
+                  >
+                    تعديل الذوق
+                  </button>
+                </div>
               </div>
             </div>
           </main>
@@ -1974,7 +2094,7 @@ export default function DiwanApp() {
           style={{ left: 8, bottom: 8 }}
         >
           <a
-            href="/design-review"
+            href={`${import.meta.env.BASE_URL}design-review/`}
             className="w-[44px] h-[44px] flex items-center justify-center no-underline"
             title="Design Review"
             aria-label="Open design review"
@@ -2046,6 +2166,9 @@ export default function DiwanApp() {
 
       {/* Keyboard Shortcut Help */}
       <AnimatePresence>{showShortcutHelp && <ShortcutHelp key="shortcut-help" />}</AnimatePresence>
+
+      {/* Preferences Drawer */}
+      <PreferencesDrawer />
     </div>
   );
 }

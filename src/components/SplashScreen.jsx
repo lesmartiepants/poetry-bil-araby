@@ -1,10 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { Feather, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { BRAND } from '../constants/design.js';
 import { THEME, GOLD } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
+import MoodPicker from './onboarding/MoodPicker';
+import EraPicker from './onboarding/EraPicker';
+import TopicsPicker from './onboarding/TopicsPicker';
 
 const SplashScreen = () => {
   const isOpen = useModalStore((s) => s.splash);
@@ -17,7 +20,7 @@ const SplashScreen = () => {
       localStorage.setItem('hasSeenOnboarding', 'true');
     } catch {}
   };
-  // Phase: 0 = desert splash, 1 = kinetic step 0 (Arabic), 2 = kinetic step 1 (English), 3 = kinetic step 2 (count)
+  // Phase: 0 = desert splash, 1 = kinetic step 0 (Arabic), 2 = kinetic step 1 (English + Continue), 3 = MoodPicker, 4 = EraPicker, 5 = TopicsPicker
   const [phase, setPhase] = useState(0);
   const [fadeState, setFadeState] = useState('in');
   const starsRef = useRef(null);
@@ -26,6 +29,8 @@ const SplashScreen = () => {
   const particlesRef = useRef([]);
   const mouseRef = useRef({ x: 0, y: 0 });
   const [starsGenerated, setStarsGenerated] = useState(false);
+  const [selectedMoods, setSelectedMoods] = useState([]);
+  const [selectedEras, setSelectedEras] = useState([]);
 
   const isDark = theme === THEME.dark;
 
@@ -213,14 +218,14 @@ const SplashScreen = () => {
 
   const handleWalkthroughTap = (e) => {
     if (e.target.closest('[data-splash-finish]')) return;
-    if (phase < 3) {
+    if (phase < 2) {
       setPhase(phase + 1);
     }
   };
 
   const handleFinish = (e) => {
     e.stopPropagation();
-    handleDismiss();
+    setPhase(3);
   };
 
   if (!isOpen) return null;
@@ -336,6 +341,7 @@ const SplashScreen = () => {
   // which avoids removeChild errors from imperatively-added star DOM nodes.
   return (
     <motion.div
+      data-testid="splash-screen"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.6 }}
@@ -485,14 +491,14 @@ const SplashScreen = () => {
         </button>
       </div>
 
-      {/* KINETIC WALKTHROUGH (phases 1-3) — hidden via display:none until phase >= 1 */}
+      {/* KINETIC WALKTHROUGH (phases 1-2) — hidden via display:none until phase >= 1 */}
       <div
         style={{
           position: 'fixed',
           inset: 0,
           zIndex: 60,
           background: '#000000',
-          display: phase >= 1 ? 'flex' : 'none',
+          display: phase >= 1 && phase <= 2 ? 'flex' : 'none',
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
@@ -645,59 +651,9 @@ const SplashScreen = () => {
               >
                 Where words become worlds
               </div>
-            </div>
-          )}
-
-          {/* Step 2: Count + Explore */}
-          {kineticStep === 2 && (
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: '40vh',
-              }}
-              key="kinetic-2"
-            >
-              <div
-                style={{
-                  fontFamily: "'Forum', cursive",
-                  fontSize: 'clamp(2.5rem, 7vw, 4.5rem)',
-                  color: '#ffffff',
-                  letterSpacing: '-0.02em',
-                  marginBottom: '1rem',
-                  opacity: 0,
-                  animation: prefersReducedMotion
-                    ? 'splashFadeIn 0.01ms forwards'
-                    : 'splashCountReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
-                  willChange: 'transform, opacity',
-                  backfaceVisibility: 'hidden',
-                }}
-              >
-                84,000 verses await
-              </div>
-              <div
-                style={{
-                  fontFamily: "'Reem Kufi', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
-                  color: '#888888',
-                  direction: 'rtl',
-                  marginBottom: '2rem',
-                  opacity: 0,
-                  animation: prefersReducedMotion
-                    ? 'splashFadeIn 0.01ms forwards'
-                    : 'splashFadeIn 0.5s ease-out 0.6s forwards',
-                  willChange: 'opacity',
-                }}
-                lang="ar"
-                dir="rtl"
-              >
-                أكثر من 84,000 بيت بانتظارك
-              </div>
               <button
                 data-splash-finish="true"
+                data-testid="kinetic-continue"
                 onClick={handleFinish}
                 style={{
                   display: 'inline-flex',
@@ -712,10 +668,10 @@ const SplashScreen = () => {
                   fontSize: '0.8125rem',
                   fontWeight: 500,
                   letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
                   cursor: 'pointer',
                   transition: 'background 0.3s ease, border-color 0.3s ease',
                   minHeight: '48px',
+                  marginTop: '2rem',
                   opacity: 0,
                   animation: prefersReducedMotion
                     ? 'splashFadeIn 0.01ms forwards'
@@ -731,9 +687,9 @@ const SplashScreen = () => {
                   e.currentTarget.style.background = 'transparent';
                   e.currentTarget.style.borderColor = '#333333';
                 }}
-                aria-label="Start exploring"
+                aria-label="Continue to onboarding"
               >
-                <span>Explore</span>
+                <span>التالي</span>
                 <ArrowRight size={16} />
               </button>
             </div>
@@ -773,6 +729,101 @@ const SplashScreen = () => {
           }}
         />
       </div>
+
+      {/* ONBOARDING PHASES 3-5 — mood, era, topics pickers */}
+      <AnimatePresence mode="wait">
+        {phase === 3 && (
+          <MoodPicker
+            key="mood"
+            onNext={(moods) => {
+              setSelectedMoods(moods);
+              setPhase(4);
+            }}
+          />
+        )}
+        {phase === 4 && (
+          <EraPicker
+            key="era"
+            onNext={(eras) => {
+              setSelectedEras(eras);
+              setPhase(5);
+            }}
+          />
+        )}
+        {phase === 5 && (
+          <TopicsPicker
+            key="topics"
+            selectedMoods={selectedMoods}
+            selectedEras={selectedEras}
+            onComplete={(prefs) => {
+              useModalStore.getState().completeOnboarding(prefs);
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Progress dots for phases 3-5 */}
+      {phase >= 3 && phase <= 5 && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '2rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            display: 'flex',
+            gap: '8px',
+            zIndex: 70,
+          }}
+        >
+          {[3, 4, 5].map((step) => (
+            <div
+              key={step}
+              style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                background: phase >= step ? '#c5a059' : 'rgba(255,255,255,0.2)',
+                transition: 'background 0.3s ease',
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Persistent skip-to-app button — visible on all phases */}
+      <button
+        onClick={handleDismiss}
+        data-testid="skip-to-app"
+        style={{
+          position: 'fixed',
+          bottom: '1.25rem',
+          right: '1.5rem',
+          zIndex: 80,
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          padding: '8px 12px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          color: 'rgba(255,255,255,0.35)',
+          fontFamily: "'Tajawal', sans-serif",
+          fontSize: '0.75rem',
+          letterSpacing: '0.08em',
+          direction: 'rtl',
+          transition: 'color 0.2s ease',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.color = 'rgba(255,255,255,0.35)';
+        }}
+        aria-label="Skip to app"
+      >
+        <span>تخطى</span>
+        <ArrowRight size={13} />
+      </button>
     </motion.div>
   );
 };

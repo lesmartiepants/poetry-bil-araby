@@ -2,21 +2,11 @@ import { create } from 'zustand';
 import { FEATURES } from '../constants/features';
 
 function computeOnboarding() {
-  if (!FEATURES.onboarding) return false;
-  if (FEATURES.forceOnboarding) return true;
-  try {
-    return !localStorage.getItem('hasSeenOnboarding');
-  } catch {
-    return false;
-  }
+  return FEATURES.onboarding;
 }
 
 function computeSplash() {
-  try {
-    return !localStorage.getItem('hasSeenOnboarding');
-  } catch {
-    return true;
-  }
+  return true;
 }
 
 const initialState = {
@@ -26,6 +16,7 @@ const initialState = {
   splash: computeSplash(),
   insightsDrawer: false,
   discoverDrawer: false,
+  prefsDrawer: false,
   shortcutHelp: false,
   poetPicker: false,
   poetPickerClosing: false,
@@ -53,12 +44,36 @@ export const useModalStore = create((set) => ({
 
   dismissSplash: () => set({ splash: false }),
 
+  completeOnboarding: (prefs) => {
+    try {
+      localStorage.setItem('hasSeenOnboarding', 'true');
+      localStorage.setItem(
+        'onboardingPrefs',
+        JSON.stringify({
+          ...prefs,
+          completedAt: new Date().toISOString(),
+        })
+      );
+    } catch {}
+    set({ splash: false, onboarding: false });
+  },
+
   toggleInsightsDrawer: () => set((s) => ({ insightsDrawer: !s.insightsDrawer })),
   setInsightsDrawer: (open) => set({ insightsDrawer: open }),
 
   openDiscoverDrawer: () => set({ discoverDrawer: true }),
   closeDiscoverDrawer: () => set({ discoverDrawer: false }),
   setDiscoverDrawer: (open) => set({ discoverDrawer: open }),
+
+  openPrefsDrawer: () => set({ prefsDrawer: true }),
+  closePrefsDrawer: () => set({ prefsDrawer: false }),
+
+  resetPreferences: () => {
+    try {
+      localStorage.removeItem('onboardingPrefs');
+    } catch {}
+    set({ onboarding: false });
+  },
 
   toggleShortcutHelp: () => set((s) => ({ shortcutHelp: !s.shortcutHelp })),
   closeShortcutHelp: () => set({ shortcutHelp: false }),

@@ -6,9 +6,10 @@ import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
 import { FEATURES } from '../../constants/features';
 import { useAudioStore } from '../audioStore';
+import { startPlayer, recordPause, pauseOffset } from '../../hooks/useTTSHighlight.js';
 import { usePoemStore } from '../poemStore';
 import { useUIStore } from '../uiStore';
-import { getTTSContent } from '../../prompts';
+import { getTTSContent, LIVE_SYSTEM_INSTRUCTION, getLiveContent } from '../../prompts';
 import { API_MODELS, TTS_CONFIG, fetchTTSWithFallback } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
 import { pcm16ToWav } from '../../utils/audio.js';
@@ -103,6 +104,17 @@ function createProgressToast(estimatedSeconds, arabicText) {
   return { dismiss };
 }
 
+/** Monotonically increasing token — incremented by abortPlay() on each swipe. */
+let _currentPlayId = 0;
+
+/**
+ * Invalidate any in-flight togglePlay so it won't start playback after a swipe.
+ * Call this alongside resetAudio() in the carousel swipe handlers.
+ */
+export function abortPlay() {
+  _currentPlayId++;
+}
+
 /** Module-level ref to the active progress toast's dismiss function. */
 let _activeProgressDismiss = null;
 
@@ -153,7 +165,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     setPlayer,
   } = useAudioStore.getState();
 
-  if (isTogglingPlay.current) {
+  if (isTogglingPlay.current || isGenerating) {
     addLog('Audio', 'Play toggle already in progress — skipping', 'info');
     return;
   }
@@ -167,6 +179,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
   // PAUSE — Tone.Player uses stop() rather than pause()
   if (isPlaying) {
+    recordPause();
     if (existingPlayer) {
       existingPlayer.stop();
     }
@@ -184,7 +197,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       // Unlock AudioContext after user gesture (handles iOS autoplay policy)
       await toneStart();
       const player = await createPlayerReady(audioUrl);
-      player.start();
+      startPlayer(player, pauseOffset.value);
       setPlayer(player);
       setPlaying(true);
     } catch (e) {
@@ -202,6 +215,8 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
   setGenerating(true);
 
+  const playId = ++_currentPlayId;
+
   const doGenerate = async () => {
     // CHECK CACHE
     if (FEATURES.caching && current?.id) {
@@ -218,12 +233,19 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         );
         useUIStore.getState().incrementCacheStat('audioHits');
 
+        // Guard: swipe may have called abortPlay() + resetAudio() while we awaited the cache
+        if (_currentPlayId !== playId) {
+          setGenerating(false);
+          isTogglingPlay.current = false;
+          return;
+        }
+
         const u = URL.createObjectURL(cached.blob);
         setUrl(u);
 
         try {
           const player = await createPlayerReady(u);
-          player.start();
+          startPlayer(player, 0);
           setPlayer(player);
           setPlaying(true);
         } catch (err) {
@@ -250,21 +272,13 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     // Mark in-flight
     usePoemStore.getState().addActiveAudio(current?.id);
 
-    const ttsContent = getTTSContent(current);
-    const requestBody = JSON.stringify({
-      contents: [{ parts: [{ text: ttsContent }] }],
-      generationConfig: {
-        responseModalities: TTS_CONFIG.responseModalities,
-        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName } } },
-      },
-    });
-    const requestSize = new Blob([requestBody]).size;
-    const estimatedTokens = Math.ceil(ttsContent.length / 4);
+    let ttsMode = useUIStore.getState().ttsMode;
     const arabicTextChars = current?.arabic?.length || 0;
 
+    const modelLabel = ttsMode === 'live' ? 'Live 2.0' : API_MODELS.tts;
     addLog(
       'Audio API',
-      `→ Starting generation | Model: ${API_MODELS.tts} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
+      `→ Starting generation | Model: ${modelLabel} | ${arabicTextChars} chars Arabic`,
       'request'
     );
     setError(null);
@@ -276,47 +290,113 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
     try {
       const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-      const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      };
-      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
-        addLog,
-        label: 'Audio API',
-      });
+      let b64;
+      let ttsModel;
+      let currentMode = ttsMode;
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        addLog(
-          'Audio API Error',
-          `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
-          'error'
-        );
-        if (res.status === 429) {
-          const msg =
-            'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.';
-          setError(msg);
-          toast.error(msg);
-          throw new Error('Rate limited (429)');
+      // ── Try selected mode first; on any failure (429, 404, network, etc.)
+      //    fall back to the other mode once. This makes the app resilient when
+      //    one path is rate-limited or unavailable (e.g. Live route not deployed
+      //    on a given backend, or REST quota exhausted).
+      const MODES = ['live', 'rest'];
+      let modeIdx = MODES.indexOf(currentMode);
+
+      while (modeIdx < MODES.length && !b64) {
+        const mode = MODES[modeIdx];
+        ttsModel = mode === 'live' ? 'Live 2.0' : API_MODELS.tts;
+
+        try {
+          if (mode === 'live') {
+            // ── Live API path — WebSocket TTS via server endpoint ──
+            const { liveVoice, liveTemperature } = useUIStore.getState();
+            addLog('Audio API', `[${ttsModel}] Attempting | voice: ${liveVoice} | temp: ${liveTemperature}`, 'info');
+            const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                text: getLiveContent(current),
+                voiceName: liveVoice,
+                temperature: liveTemperature,
+                systemInstruction: LIVE_SYSTEM_INSTRUCTION,
+              }),
+            });
+
+            if (!liveRes.ok) {
+              const errorText = await liveRes.text();
+              addLog('Audio API Error', `[${ttsModel}] HTTP ${liveRes.status}: ${errorText.substring(0, 200)}`, 'error');
+              if (liveRes.status === 429) {
+                addLog('Audio API', `[${ttsModel}] Rate-limited — falling back to REST`, 'warning');
+              } else if (liveRes.status === 404) {
+                addLog('Audio API', `[${ttsModel}] Live endpoint unavailable (404) — falling back to REST`, 'warning');
+              } else {
+                addLog('Audio API', `[${ttsModel}] Failed (${liveRes.status}) — falling back to REST`, 'warning');
+              }
+              throw new Error('Live mode failed');
+            }
+
+            const liveData = await liveRes.json();
+            if (!liveData.audioData) {
+              throw new Error('Live API returned no audio data');
+            }
+            b64 = liveData.audioData;
+            addLog('Audio API', `[${ttsModel}] Success via Live API`, 'success');
+          } else {
+            // ── REST API path — generateContent flow ──
+            const ttsContent = getTTSContent(current);
+            const requestBody = JSON.stringify({
+              contents: [{ parts: [{ text: ttsContent }] }],
+              generationConfig: {
+                responseModalities: TTS_CONFIG.responseModalities,
+                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName } } },
+              },
+            });
+            const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+            const ttsAbortController = new AbortController();
+            const ttsTimeoutId = setTimeout(() => ttsAbortController.abort(), 120_000);
+            let fallbackResult;
+            try {
+              fallbackResult = await fetchTTSWithFallback(
+                url,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: requestBody,
+                  signal: ttsAbortController.signal,
+                },
+                { addLog, label: 'Audio API' }
+              );
+            } finally {
+              clearTimeout(ttsTimeoutId);
+            }
+            const res = fallbackResult.res;
+            ttsModel = fallbackResult.model;
+
+            if (!res.ok) {
+              const errorText = await res.text();
+              addLog('Audio API Error', `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`, 'error');
+              if (res.status === 429) {
+                addLog('Audio API', `[${ttsModel}] Rate-limited — falling back to Live`, 'warning');
+              } else {
+                addLog('Audio API', `[${ttsModel}] Failed (${res.status}) — falling back to Live`, 'warning');
+              }
+              throw new Error('REST mode failed');
+            }
+
+            const data = await res.json();
+            if (!data.candidates || data.candidates.length === 0) {
+              throw new Error('Recitation failed — no audio candidates returned');
+            }
+            b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+            addLog('Audio API', `[${ttsModel}] Success via REST API`, 'success');
+          }
+        } catch (modeError) {
+          addLog('Audio API', `[${ttsModel}] ${modeError.message} — trying next mode`, 'warning');
+          modeIdx++; // try the other mode
+          // Reset ttsModel label for the next attempt
         }
-        throw new Error(`API returned ${res.status}: ${res.statusText}`);
       }
 
-      const data = await res.json();
       const apiTime = performance.now() - apiStart;
-
-      if (!data.candidates || data.candidates.length === 0) {
-        addLog(
-          'Audio API Error',
-          `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
-          'error'
-        );
-        throw new Error('Recitation failed - no audio candidates returned');
-      }
-
-      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (b64) {
         const conversionStart = performance.now();
         const blob = pcm16ToWav(b64);
@@ -328,6 +408,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           const pcmBytes = atob(b64.replace(/\s/g, '')).length;
           const samples = pcmBytes / 2;
           const audioDuration = samples / 24000;
+          const estimatedTokens = Math.ceil(arabicTextChars / 4);
           const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
           const totalTime = apiTime + conversionTime;
 
@@ -342,12 +423,18 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             'success'
           );
 
+          // Guard: user may have swiped to a new poem while audio was generating
+          if (_currentPlayId !== playId) {
+            progress.dismiss();
+            return;
+          }
+
           const u = URL.createObjectURL(blob);
           setUrl(u);
 
           try {
             const player = await createPlayerReady(u);
-            player.start();
+            startPlayer(player, 0);
             setPlayer(player);
             setPlaying(true);
             progress.dismiss('Recitation ready');
@@ -420,12 +507,18 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             `✓ Background audio generation completed${cached.metadata?.model ? ` [${cached.metadata.model}]` : ''} - playing from cache`,
             'success'
           );
+          // Guard: user may have swiped away while we were waiting for the prefetch
+          if (_currentPlayId !== playId) {
+            pollProgress.dismiss();
+            setGenerating(false);
+            return;
+          }
           const u = URL.createObjectURL(cached.blob);
           setUrl(u);
 
           try {
             const player = await createPlayerReady(u);
-            player.start();
+            startPlayer(player, 0);
             setPlayer(player);
             setPlaying(true);
             pollProgress.dismiss('Recitation ready');
@@ -465,12 +558,17 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id, addLog);
           if (finalCheck?.blob) {
             addLog('Audio', '✓ Audio completed after extended wait - playing now', 'success');
+            if (_currentPlayId !== playId) {
+              pollProgress.dismiss();
+              setGenerating(false);
+              return;
+            }
             const u = URL.createObjectURL(finalCheck.blob);
             setUrl(u);
 
             try {
               const player = await createPlayerReady(u);
-              player.start();
+              startPlayer(player, 0);
               setPlayer(player);
               setPlaying(true);
               pollProgress.dismiss('Recitation ready');

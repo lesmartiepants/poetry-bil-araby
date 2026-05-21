@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bug, X, Trash2, Zap, Radio, Wifi } from 'lucide-react';
+import { Bug, X, Copy, Check, Zap, Radio, Wifi } from 'lucide-react';
 import Sentry from '../sentry.js';
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
@@ -33,7 +33,18 @@ const DebugPanel = ({ controlBarRef }) => {
   const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const [bugError, setBugError] = useState('');
   const [lastViewedCount, setLastViewedCount] = useState(0);
+  const [copied, setCopied] = useState(false);
   const scrollRef = useRef(null);
+
+  const handleCopyLogs = () => {
+    const text = logs
+      .map((log) => `[${log.time}] ${(log.type ?? 'info').toUpperCase()} [${log.label ?? ''}] ${log.msg ?? ''}`)
+      .join('\n');
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => {});
+  };
   const btnPos = { right: 8, bottom: 52 };
   const panelRight = 68; // clears sidebar (right:8 + ~52px wide + 8px gap)
 
@@ -195,11 +206,12 @@ const DebugPanel = ({ controlBarRef }) => {
           </span>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={onClear}
+              onClick={handleCopyLogs}
               className="p-1 transition-colors text-gold/30 hover:text-gold/70"
-              title="Clear logs"
+              title="Copy logs to clipboard"
+              aria-label="Copy all logs to clipboard"
             >
-              <Trash2 size={11} />
+              {copied ? <Check size={11} /> : <Copy size={11} />}
             </button>
             <button
               onClick={() => setPanelOpen(false)}

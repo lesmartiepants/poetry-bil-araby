@@ -8,7 +8,7 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  * API Model Endpoints
  * Text model list is built dynamically by discoverTextModels(); textDefaults is the fallback
  * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
- * TTS defaults to flash (100 RPD, cheaper) with pro as fallback (50 RPD).
+ * TTS defaults to flash (higher quota) with pro as fallback; see TTS_RPD_LIMITS for quotas.
  */
 export const API_MODELS = {
   tts: 'gemini-2.5-flash-preview-tts',

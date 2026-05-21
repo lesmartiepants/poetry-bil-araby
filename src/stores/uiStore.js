@@ -17,7 +17,7 @@ export const CATEGORY_MAP = {
 const initialState = {
   darkMode: true,
   font: 'Amiri',
-  textSize: 1, // 0=S, 1=M, 2=L, 3=XL
+  textSize: 2, // 0=S, 1=M, 2=L, 3=XL
   showTranslation: true,
   showTransliteration: false,
   showDebugLogs: FEATURES.debug,

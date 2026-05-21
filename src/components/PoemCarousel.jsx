@@ -260,7 +260,7 @@ const PoemCarousel = forwardRef(
                               dir="ltr"
                               className={`font-brand-en inline-fade-in mx-auto`}
                               style={{
-                                fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
+                                fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale} * 0.85)`,
                                 maxWidth: '90%',
                                 animationDelay: `${idx * 120}ms`,
                               }}

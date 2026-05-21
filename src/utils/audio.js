@@ -1,4 +1,37 @@
 /**
+ * Minimal 46-byte WAV: mono, 16-bit PCM, 24 kHz, 1 silent sample.
+ * Used to promote the iOS audio session from "ambient" to "playback" mode.
+ */
+const SILENT_WAV_BASE64 = 'UklGRiYAAABXQVZFZm10IBAAAAABAAEAwF0AAIC7AAACABAAZGF0YQIAAAAAAA==';
+
+/**
+ * Transition the iOS audio session from "ambient" (silenced by the hardware
+ * mute/silent switch) to "playback" (ignores the silent switch) by playing a
+ * silent <audio> element during a user gesture.
+ *
+ * On iOS, the Web Audio API (and Tone.js) defaults to the "ambient" session
+ * category, which is muted by the iPhone silent switch. Playing any sound
+ * through an HTMLAudioElement during a user gesture promotes the session to
+ * "playback", after which Web Audio API output is also heard regardless of
+ * the switch position.
+ *
+ * Safe to call in non-browser environments (SSR / unit tests) — no-ops silently.
+ */
+export function unlockAudioForIOS() {
+  if (typeof document === 'undefined') return;
+  try {
+    const audio = document.createElement('audio');
+    audio.src = `data:audio/wav;base64,${SILENT_WAV_BASE64}`;
+    // Use near-zero (not zero) volume: iOS requires a non-muted, non-zero-volume element
+    // to promote the audio session from "ambient" to "playback".
+    audio.volume = 0.001;
+    audio.play().catch(() => {});
+  } catch (_) {
+    // Ignore errors from restricted environments or missing user gesture
+  }
+}
+
+/**
  * Convert raw PCM16 base64 audio data to a WAV Blob.
  * @param {string} base64 - Base64-encoded PCM16 data
  * @param {number} rate   - Sample rate (default 24000)

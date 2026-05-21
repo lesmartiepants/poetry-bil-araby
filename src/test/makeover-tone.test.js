@@ -89,4 +89,46 @@ describe('WS4: Tone.js integration', () => {
       expect(content).toMatch(/setError/);
     });
   });
+
+  describe('iOS silent switch bypass', () => {
+    it('audio.js exports unlockAudioForIOS', () => {
+      const content = fs.readFileSync(path.join(SRC, 'utils/audio.js'), 'utf-8');
+      expect(content).toMatch(/export\s+function\s+unlockAudioForIOS/);
+    });
+
+    it('audio.js contains a silent WAV base64 constant', () => {
+      const content = fs.readFileSync(path.join(SRC, 'utils/audio.js'), 'utf-8');
+      expect(content).toMatch(/SILENT_WAV_BASE64/);
+    });
+
+    it('togglePlay.js imports unlockAudioForIOS from utils/audio', () => {
+      const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
+      expect(content).toMatch(/unlockAudioForIOS/);
+    });
+
+    it('togglePlay.js calls unlockAudioForIOS before toneStart in generate path', () => {
+      const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
+      // Collect positions of all unlockAudioForIOS() and toneStart() calls
+      const unlockPositions = [];
+      const toneStartPositions = [];
+      let pos = 0;
+      while ((pos = content.indexOf('unlockAudioForIOS()', pos)) !== -1) {
+        unlockPositions.push(pos);
+        pos++;
+      }
+      pos = 0;
+      while ((pos = content.indexOf('await toneStart()', pos)) !== -1) {
+        toneStartPositions.push(pos);
+        pos++;
+      }
+      // Both the RESUME path and the GENERATE path must have an unlock before toneStart
+      expect(unlockPositions.length).toBeGreaterThanOrEqual(2);
+      expect(toneStartPositions.length).toBeGreaterThanOrEqual(2);
+      // Each toneStart must be preceded by an unlockAudioForIOS in the same block
+      for (const toneIdx of toneStartPositions) {
+        const precedingUnlock = unlockPositions.some((u) => u < toneIdx);
+        expect(precedingUnlock).toBe(true);
+      }
+    });
+  });
 });

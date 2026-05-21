@@ -12,7 +12,7 @@ import { useUIStore } from '../uiStore';
 import { getTTSContent, LIVE_SYSTEM_INSTRUCTION, getLiveContent } from '../../prompts';
 import { API_MODELS, TTS_CONFIG, fetchTTSWithFallback } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
-import { pcm16ToWav } from '../../utils/audio.js';
+import { pcm16ToWav, unlockAudioForIOS } from '../../utils/audio.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -218,7 +218,9 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   // Re-creating the player from the cached URL is cheaper than storing raw PCM buffers.
   if (audioUrl) {
     try {
-      // Unlock AudioContext after user gesture (handles iOS autoplay policy)
+      // Bypass iOS silent switch by promoting audio session to "playback" mode,
+      // then unlock the AudioContext after the user gesture.
+      unlockAudioForIOS();
       await toneStart();
       const player = await createPlayerReady(audioUrl);
       startPlayer(player, pauseOffset.value);
@@ -233,8 +235,12 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     return;
   }
 
-  // iOS Safari / browser autoplay unlock — Tone.start() resumes the AudioContext
-  // after a user gesture, replacing the old mute/play/pause trick on the raw Audio element.
+  // iOS silent switch bypass + AudioContext unlock after user gesture.
+  // unlockAudioForIOS() promotes the iOS audio session from "ambient" (muted by
+  // the hardware silent switch) to "playback" (ignores the switch), so that the
+  // Tone.js Web Audio output is audible even when the iPhone ringer is off.
+  // Tone.start() (toneStart) then resumes the AudioContext after the user gesture.
+  unlockAudioForIOS();
   await toneStart();
 
   setGenerating(true);

@@ -33,14 +33,6 @@ const TEXT_SIZES = [
   { label: 'XL', multiplier: 1.3 },
 ];
 
-// Preset opacity values (shown as buttons instead of a slider)
-const OPACITY_PRESETS = [
-  { label: '30%', value: 0.3 },
-  { label: '40%', value: 0.4 },
-  { label: '65%', value: 0.65 },
-  { label: '155%', value: 1.55 },
-];
-
 // ── Section label ─────────────────────────────────────────────────────────────
 function SectionLabel({ gold, children }) {
   return (
@@ -108,7 +100,6 @@ const TextSettingsPill = () => {
   const currentFont = useUIStore((s) => s.font);
 
   // Background settings
-  const bgOpacity = useUIStore((s) => s.bgOpacity);
   const bgColor = useUIStore((s) => s.bgColor);
   const bgParallax = useUIStore((s) => s.bgParallax);
   const bgPattern = useUIStore((s) => s.bgPattern);
@@ -129,11 +120,11 @@ const TextSettingsPill = () => {
   const highlightStyle = useUIStore((s) => s.highlightStyle);
 
   const HIGHLIGHT_STYLES = [
-    { value: 'none',        label: 'Off' },
-    { value: 'glow',        label: 'Glow' },
-    { value: 'underline',   label: 'Line' },
-    { value: 'pill',        label: 'Pill' },
-    { value: 'focus-blur',  label: 'Blur' },
+    { value: 'none', label: 'Off' },
+    { value: 'glow', label: 'Glow' },
+    { value: 'underline', label: 'Line' },
+    { value: 'pill', label: 'Pill' },
+    { value: 'focus-blur', label: 'Blur' },
   ];
 
   const getStore = useUIStore.getState;
@@ -389,34 +380,6 @@ const TextSettingsPill = () => {
                   </Select.Content>
                 </Select.Portal>
               </Select.Root>
-            </div>
-
-            {/* Opacity presets */}
-            <div className="mb-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs opacity-50" style={{ color: gold }}>
-                  Opacity
-                </span>
-                <span className="text-xs opacity-60 font-mono" style={{ color: gold }}>
-                  {Math.round(bgOpacity * 100)}%
-                </span>
-              </div>
-              <div className="flex gap-1.5">
-                {OPACITY_PRESETS.map(({ label, value }) => (
-                  <button
-                    key={label}
-                    onClick={() => getStore().setBgOpacity(value)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ${
-                      Math.abs(bgOpacity - value) < 0.01
-                        ? 'bg-gold/20 border-gold/40'
-                        : 'opacity-50 hover:opacity-80 border-transparent'
-                    }`}
-                    style={{ color: gold }}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
             </div>
 
             {/* Colour picker */}

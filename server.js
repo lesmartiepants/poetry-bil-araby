@@ -354,11 +354,22 @@ app.get(
   [
     query('poet').optional().trim().isLength({ max: 100 }).withMessage('Poet name too long'),
     query('exclude').optional().trim().isLength({ max: 2000 }).withMessage('Exclude list too long'),
+    query('tags').optional().trim().isLength({ max: 500 }).withMessage('Tags list too long'),
     validate,
   ],
   async (req, res) => {
     try {
-      const { poet, exclude } = req.query;
+      const { poet, exclude, tags: tagsParam } = req.query;
+
+      // Parse and validate tags param (comma-separated slugs, max 20)
+      let tagSlugs = [];
+      if (tagsParam) {
+        tagSlugs = tagsParam
+          .split(',')
+          .map((s) => s.trim().toLowerCase())
+          .filter((s) => s.length > 0 && s.length <= 50)
+          .slice(0, 20);
+      }
 
       // Parse and validate exclude param (comma-separated integer IDs, max 200)
       let excludeIds = [];
@@ -407,6 +418,16 @@ app.get(
         paramIndex++;
       }
 
+      // Add tags filter using subquery on poem_tags + tags tables
+      if (tagSlugs.length > 0) {
+        const hasWhere = query.includes('WHERE');
+        query += hasWhere
+          ? ` AND p.id IN (SELECT pt.poem_id FROM poem_tags pt JOIN tags tg ON tg.id = pt.tag_id WHERE tg.slug = ANY($${paramIndex}::text[]))`
+          : ` WHERE p.id IN (SELECT pt.poem_id FROM poem_tags pt JOIN tags tg ON tg.id = pt.tag_id WHERE tg.slug = ANY($${paramIndex}::text[]))`;
+        params.push(tagSlugs);
+        paramIndex++;
+      }
+
       query += ' ORDER BY RANDOM() LIMIT 1';
 
       let result = await pool.query(query, params);
@@ -432,19 +453,32 @@ app.get(
         JOIN themes t ON p.theme_id = t.id
       `;
         const fallbackParams = [];
+        let fbParamIndex = 1;
         if (poet && poet !== 'All') {
-          fallbackQuery += ` WHERE po.name = $1 ${servingFilters()}`;
+          fallbackQuery += ` WHERE po.name = $${fbParamIndex} ${servingFilters()}`;
           fallbackParams.push(poet);
+          fbParamIndex++;
         } else {
           const qf = servingFilters();
           if (qf) fallbackQuery += ` WHERE 1=1 ${qf}`;
+        }
+        // Preserve tags filter in fallback (only exclude is dropped)
+        if (tagSlugs.length > 0) {
+          const hasWhere = fallbackQuery.includes('WHERE');
+          fallbackQuery += hasWhere
+            ? ` AND p.id IN (SELECT pt.poem_id FROM poem_tags pt JOIN tags tg ON tg.id = pt.tag_id WHERE tg.slug = ANY($${fbParamIndex}::text[]))`
+            : ` WHERE p.id IN (SELECT pt.poem_id FROM poem_tags pt JOIN tags tg ON tg.id = pt.tag_id WHERE tg.slug = ANY($${fbParamIndex}::text[]))`;
+          fallbackParams.push(tagSlugs);
+          fbParamIndex++;
         }
         fallbackQuery += ' ORDER BY RANDOM() LIMIT 1';
         result = await pool.query(fallbackQuery, fallbackParams);
       }
 
       if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'No poems found' });
+        const errorMsg =
+          tagSlugs.length > 0 ? 'No poems found for requested tags' : 'No poems found';
+        return res.status(404).json({ error: errorMsg });
       }
 
       const poem = result.rows[0];
@@ -550,6 +584,21 @@ app.get('/api/poets', async (req, res) => {
   }
 });
 
+// Get all tags
+app.get('/api/tags', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, slug, name_ar, name_en, tag_type, color, display_order FROM public.tags ORDER BY tag_type, display_order'
+    );
+    log.info('Tags', `Returned ${result.rows.length} tags`);
+    res.json(result.rows);
+  } catch (error) {
+    Sentry.captureException(error);
+    log.error('Tags', `Error fetching tags: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Search poems
 app.get(
   '/api/poems/search',
@@ -641,7 +690,10 @@ app.get(
       if (poem.cached_explanation) formattedPoem.cachedExplanation = poem.cached_explanation;
       if (poem.cached_author_bio) formattedPoem.cachedAuthorBio = poem.cached_author_bio;
 
-      log.info('Poems', `By ID: ${id}, poet=${poem.poet}${poem.cached_translation ? ', has_translation' : ''}`);
+      log.info(
+        'Poems',
+        `By ID: ${id}, poet=${poem.poet}${poem.cached_translation ? ', has_translation' : ''}`
+      );
       res.json(formattedPoem);
     } catch (error) {
       Sentry.captureException(error);
@@ -958,7 +1010,11 @@ app.post('/api/ai/live-tts', async (req, res) => {
       const chunks = [];
       let settled = false;
       const timeout = setTimeout(() => {
-        if (!settled) { settled = true; ws.close(); reject(new Error('Live TTS timed out after 60s')); }
+        if (!settled) {
+          settled = true;
+          ws.close();
+          reject(new Error('Live TTS timed out after 60s'));
+        }
       }, WS_TIMEOUT);
 
       const ws = new WebSocket(wsUrl);
@@ -970,12 +1026,18 @@ app.post('/api/ai/live-tts', async (req, res) => {
             generationConfig: {
               responseModalities: ['AUDIO'],
               speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
-              ...(temperature != null ? { temperature: parseFloat(temperature) } : {})
+              ...(temperature != null ? { temperature: parseFloat(temperature) } : {}),
             },
             systemInstruction: {
-              parts: [{ text: systemInstruction || 'You are a text-to-speech reader. Read aloud the exact text provided by the user, word for word, with no additions, commentary, questions, or paraphrasing. Do not respond conversationally. Only speak the text as given.' }]
-            }
-          }
+              parts: [
+                {
+                  text:
+                    systemInstruction ||
+                    'You are a text-to-speech reader. Read aloud the exact text provided by the user, word for word, with no additions, commentary, questions, or paraphrasing. Do not respond conversationally. Only speak the text as given.',
+                },
+              ],
+            },
+          },
         };
         ws.send(JSON.stringify(setupMsg));
       });
@@ -993,7 +1055,12 @@ app.post('/api/ai/live-tts', async (req, res) => {
             }
           }
           if (msg.serverContent?.turnComplete) {
-            if (!settled) { settled = true; clearTimeout(timeout); ws.close(); resolve(chunks); }
+            if (!settled) {
+              settled = true;
+              clearTimeout(timeout);
+              ws.close();
+              resolve(chunks);
+            }
           }
         } catch (e) {
           log.error('Live TTS', `Parse error: ${e.message}`);
@@ -1001,12 +1068,17 @@ app.post('/api/ai/live-tts', async (req, res) => {
       });
 
       ws.on('error', (err) => {
-        if (!settled) { settled = true; clearTimeout(timeout); reject(err); }
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          reject(err);
+        }
       });
 
       ws.on('close', (code, reason) => {
         if (!settled) {
-          settled = true; clearTimeout(timeout);
+          settled = true;
+          clearTimeout(timeout);
           if (chunks.length > 0) resolve(chunks);
           else reject(new Error(`WebSocket closed: code=${code} reason=${reason}`));
         }
@@ -1019,11 +1091,13 @@ app.post('/api/ai/live-tts', async (req, res) => {
 
     // Decode each base64 chunk to binary, concat, re-encode.
     // Simple string join is wrong when chunks have base64 padding ('=') in the middle.
-    const combined = Buffer.concat(audioChunks.map(b64 => Buffer.from(b64, 'base64')));
+    const combined = Buffer.concat(audioChunks.map((b64) => Buffer.from(b64, 'base64')));
     const combinedBase64 = combined.toString('base64');
-    log.info('Live TTS', `Complete | ${audioChunks.length} chunks | ${combined.length} bytes | ${combinedBase64.length} b64 chars`);
+    log.info(
+      'Live TTS',
+      `Complete | ${audioChunks.length} chunks | ${combined.length} bytes | ${combinedBase64.length} b64 chars`
+    );
     res.json({ audioData: combinedBase64 });
-
   } catch (error) {
     log.error('Live TTS', `Failed: ${error.message}`);
     res.status(500).json({ error: `Live TTS failed: ${error.message}` });
@@ -1048,7 +1122,8 @@ async function designTablesExist() {
 // GET /api/poems/:id/og-image — returns an SVG image for Open Graph previews
 // TTS Lab — dev-only experiment page (relaxed CSP for inline scripts)
 app.get('/tts-lab', (_req, res) => {
-  res.setHeader('Content-Security-Policy',
+  res.setHeader(
+    'Content-Security-Policy',
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; media-src blob:"
   );
   res.type('html').send(_labHtml);

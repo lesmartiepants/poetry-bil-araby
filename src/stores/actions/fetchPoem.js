@@ -118,7 +118,20 @@ async function fetchFromDatabase({
     addLog('Discovery DB', `Excluding ${seenIds.length} recently seen poems`, 'info');
   }
 
-  const newPoem = await fetchRandomPoem({ poet, excludeIds: seenIds });
+  let tags = [];
+  if (!poet) {
+    try {
+      const raw = localStorage.getItem('onboardingPrefs');
+      if (raw) {
+        const prefs = JSON.parse(raw);
+        if (Array.isArray(prefs.topics) && prefs.topics.length > 0) {
+          tags = prefs.topics;
+        }
+      }
+    } catch {}
+  }
+
+  const newPoem = await fetchRandomPoem({ poet, excludeIds: seenIds, tags });
   const apiTime = performance.now() - apiStart;
 
   markPoemSeen(newPoem.id);

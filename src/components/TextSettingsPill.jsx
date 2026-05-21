@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Popover, ToggleGroup, Select } from 'radix-ui';
-import { Languages, ALargeSmall, ChevronDown, Check, ExternalLink, Sparkles, Palette, Hexagon } from 'lucide-react';
+import {
+  Languages,
+  ALargeSmall,
+  ChevronDown,
+  Check,
+  ExternalLink,
+  Sparkles,
+  Palette,
+  Hexagon,
+} from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
@@ -174,8 +183,8 @@ const TextSettingsPill = () => {
             side="left"
             align="start"
             sideOffset={8}
-            className={`rounded-2xl p-4 w-72 backdrop-blur-xl border ${theme.border} ${panelBg} overflow-y-auto`}
-            style={{ zIndex: 46, maxHeight: '90vh' }}
+            className={`rounded-2xl p-4 w-72 backdrop-blur-xl border ${theme.border} ${panelBg}`}
+            style={{ zIndex: 46, maxHeight: '80vh', overflowY: 'auto' }}
           >
             {/* ── Text section ───────────────────────────────────────── */}
             {/* Row 1: Translation Toggle */}

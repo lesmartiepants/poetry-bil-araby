@@ -8,10 +8,11 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  * API Model Endpoints
  * Text model list is built dynamically by discoverTextModels(); textDefaults is the fallback
  * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
+ * TTS defaults to flash (100 RPD, cheaper) with pro as fallback (50 RPD).
  */
 export const API_MODELS = {
-  tts: 'gemini-2.5-pro-preview-tts',
-  ttsFallback: 'gemini-2.5-flash-preview-tts',
+  tts: 'gemini-2.5-flash-preview-tts',
+  ttsFallback: 'gemini-2.5-pro-preview-tts',
   textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
 };
 
@@ -77,7 +78,9 @@ export const recordTtsRequest = (model) => {
   const data = loadRpdCounts();
   data.models[model] = (data.models[model] || 0) + 1;
   data.date = getPacificDateStr();
-  try { localStorage.setItem(RPD_STORAGE_KEY, JSON.stringify(data)); } catch {}
+  try {
+    localStorage.setItem(RPD_STORAGE_KEY, JSON.stringify(data));
+  } catch {}
   return data.models[model];
 };
 
@@ -229,7 +232,11 @@ export const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS'
     recordTtsRequest(fallbackModel);
     const res = await fetch(fallbackUrl, options);
     if (addLog)
-      addLog(label, `${fallbackModel}: ${res.status} (${((performance.now() - t) / 1000).toFixed(1)}s)`, res.ok ? 'success' : 'warning');
+      addLog(
+        label,
+        `${fallbackModel}: ${res.status} (${((performance.now() - t) / 1000).toFixed(1)}s)`,
+        res.ok ? 'success' : 'warning'
+      );
     return { res, model: fallbackModel };
   }
 

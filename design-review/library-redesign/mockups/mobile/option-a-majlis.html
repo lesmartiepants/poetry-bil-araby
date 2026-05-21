@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library Redesign · Mobile · Option A — Majlis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:wght@400;500&family=Forum&family=Fustat:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_mobile.css">
+<style>
+  /* ── Mobile A: Majlis (full-screen reader sheet) ────────── */
+  .a-app {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    background:
+      radial-gradient(circle at 50% -10%, rgba(197,160,89,0.10) 0%, transparent 50%),
+      var(--bg-dark);
+    color: var(--txt-dark);
+  }
+  body.theme-light .a-app {
+    background:
+      radial-gradient(circle at 50% -10%, rgba(197,160,89,0.10) 0%, transparent 50%),
+      var(--bg-light);
+    color: var(--txt-light);
+  }
+
+  /* Top app bar — minimal, full-width, big title that scales on scroll */
+  .a-bar {
+    padding: calc(var(--safe-top) + 8px) 20px 6px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .a-bar .icon-btn {
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--txt-dark); opacity: 0.85;
+    background: transparent; border: none; cursor: pointer;
+  }
+  body.theme-light .a-bar .icon-btn { color: var(--txt-light); }
+  .a-bar-title {
+    font-family: 'Tajawal', sans-serif; font-weight: 500;
+    font-size: 13px; letter-spacing: 0.04em;
+    color: var(--txt-dark-dim); text-align: center;
+  }
+  body.theme-light .a-bar-title { color: var(--txt-light-dim); }
+
+  /* Hero header — large gold display title, eyebrow, subtitle, count chip */
+  .a-hero {
+    padding: 18px 24px 22px;
+    text-align: center;
+  }
+  .a-eyebrow {
+    font-family: 'Forum', serif;
+    font-size: 11px; letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--gold); opacity: 0.85;
+    margin-bottom: 10px;
+  }
+  .a-title {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 700;
+    font-size: 38px; line-height: 1.05;
+    color: var(--gold);
+    text-shadow: 0 0 32px rgba(197,160,89,0.25);
+    direction: rtl;
+  }
+  body.theme-light .a-title { text-shadow: none; }
+  .a-subtitle {
+    font-family: 'Bodoni Moda', serif; font-style: italic;
+    font-size: 12px; letter-spacing: 0.02em;
+    color: var(--txt-dark-dim);
+    margin-top: 8px;
+  }
+  body.theme-light .a-subtitle { color: var(--txt-light-dim); }
+  .a-count {
+    display: inline-flex; align-items: center; gap: 6px;
+    margin-top: 14px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: rgba(197,160,89,0.10);
+    border: 1px solid rgba(197,160,89,0.25);
+    font-family: 'Bodoni Moda', serif; font-style: italic;
+    font-size: 11px; color: var(--gold);
+  }
+  .a-count .dot { width: 3px; height: 3px; background: var(--gold); border-radius: 50%; opacity: 0.6; }
+
+  /* Search + chip row */
+  .a-search-row {
+    padding: 4px 16px 12px;
+  }
+  .a-search {
+    display: flex; align-items: center; gap: 9px;
+    padding: 11px 14px;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-dark);
+  }
+  body.theme-light .a-search { background: rgba(0,0,0,0.03); border-color: var(--border-light); }
+  .a-search input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: inherit;
+    font-family: 'Tajawal', sans-serif; font-size: 14px;
+  }
+  .a-search input::placeholder { color: var(--txt-dark-mute); }
+  body.theme-light .a-search input::placeholder { color: var(--txt-light-mute); }
+  .a-chips {
+    display: flex; gap: 6px; padding: 12px 16px 4px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+  }
+  .a-chip {
+    flex: 0 0 auto;
+    padding: 7px 14px;
+    border-radius: 999px;
+    background: transparent;
+    border: 1px solid var(--border-dark);
+    color: var(--txt-dark-dim);
+    font-family: 'Tajawal', sans-serif; font-size: 12px;
+    white-space: nowrap;
+  }
+  body.theme-light .a-chip { border-color: var(--border-light); color: var(--txt-light-dim); }
+  .a-chip.active {
+    background: rgba(197,160,89,0.12);
+    border-color: rgba(197,160,89,0.45);
+    color: var(--gold);
+  }
+
+  /* Card list */
+  .a-list {
+    flex: 1; overflow-y: auto;
+    padding: 14px 16px calc(var(--safe-bottom) + 60px);
+    display: flex; flex-direction: column; gap: 14px;
+  }
+
+  .leaf {
+    position: relative;
+    padding: 18px 18px 14px;
+    border-radius: 18px;
+    background: linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid var(--border-dark);
+  }
+  body.theme-light .leaf {
+    background: linear-gradient(160deg, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.55) 100%);
+    border-color: var(--border-light);
+  }
+  .leaf::before {
+    content: ''; position: absolute; top: 0; left: 18px; right: 18px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-soft), transparent);
+  }
+  .leaf-num {
+    font-family: 'Bodoni Moda', serif; font-style: italic;
+    font-size: 11px; color: var(--gold); opacity: 0.7;
+    margin-bottom: 4px;
+  }
+  .leaf-title {
+    font-family: 'Reem Kufi', sans-serif; font-weight: 600;
+    font-size: 21px; line-height: 1.3;
+    color: var(--gold); direction: rtl;
+  }
+  .leaf-poet {
+    font-family: 'Fustat', sans-serif;
+    font-size: 13px; color: #D4D0C8; opacity: 0.78;
+    margin-top: 2px; direction: rtl;
+  }
+  body.theme-light .leaf-poet { color: #6B5C3E; }
+  .leaf-rule {
+    width: 44px; height: 1px;
+    background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
+    margin: 12px 0;
+  }
+  .leaf-excerpt {
+    font-family: 'Amiri', serif;
+    font-size: 15px; line-height: 1.95;
+    direction: rtl;
+    color: var(--txt-dark); opacity: 0.86;
+  }
+  body.theme-light .leaf-excerpt { color: var(--txt-light); opacity: 0.9; }
+  .leaf-foot {
+    margin-top: 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-family: 'Tajawal', sans-serif; font-size: 11px;
+    color: var(--txt-dark-mute);
+  }
+  body.theme-light .leaf-foot { color: var(--txt-light-mute); }
+  .leaf-tag {
+    padding: 2px 8px;
+    background: rgba(197,160,89,0.10);
+    color: var(--gold); opacity: 0.9;
+    border-radius: 4px;
+    font-family: 'Tajawal', sans-serif; font-size: 10px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Swipe-revealed action behind a card (for the demo "swipe-to-remove" state) */
+  .leaf-swipe {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    background: linear-gradient(90deg, transparent 0%, transparent 60%, #b91c1c 60%, #ef4444 100%);
+  }
+  .leaf-swipe .leaf {
+    transform: translateX(-72px);
+    transition: transform 240ms cubic-bezier(.2,.8,.2,1);
+  }
+  .leaf-swipe::after {
+    content: '';
+    position: absolute; top: 0; right: 22px; bottom: 0;
+    width: 28px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'><path d='M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6'/></svg>");
+    background-repeat: no-repeat; background-position: center; background-size: 22px;
+    opacity: 0.95;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .leaf-swipe .label {
+    position: absolute;
+    top: 50%; right: 14px;
+    transform: translateY(-50%);
+    color: white; font-family: 'SF Pro Display', system-ui, sans-serif;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.05em;
+    margin-top: 18px;
+  }
+
+  /* Bottom tab bar (iOS-style) */
+  .tab-bar {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 8px 24px calc(var(--safe-bottom) + 6px);
+    background: rgba(12, 12, 14, 0.78);
+    backdrop-filter: blur(28px) saturate(160%);
+    border-top: 1px solid var(--border-dark);
+    display: flex; align-items: center; justify-content: space-around;
+    z-index: 30;
+  }
+  body.theme-light .tab-bar {
+    background: rgba(253, 252, 248, 0.78);
+    border-top-color: var(--border-light);
+  }
+  .tab {
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    color: var(--txt-dark-mute);
+    font-family: 'SF Pro Display', system-ui, sans-serif;
+    font-size: 10px; font-weight: 500;
+    flex: 1;
+  }
+  body.theme-light .tab { color: var(--txt-light-mute); }
+  .tab.active { color: var(--gold); }
+</style>
+</head>
+<body class="theme-dark">
+<div class="iphone">
+  <div class="annotation"><strong>Mobile · Option A · Majlis</strong> &nbsp;·&nbsp; iOS reader-style sheet · swipe-to-remove</div>
+  <div class="iphone-screen">
+    <div class="dynamic-island"></div>
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <span class="indicators">
+        <!-- signal -->
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="3" width="3" height="8" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+        <!-- wifi -->
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 11a1.4 1.4 0 1 0 0-2.8 1.4 1.4 0 0 0 0 2.8z"/><path d="M2.5 6.5a7 7 0 0 1 10 0l-1.4 1.4a5 5 0 0 0-7.2 0L2.5 6.5z"/><path d="M0 3.7a10.5 10.5 0 0 1 15 0l-1.4 1.4a8.5 8.5 0 0 0-12.2 0L0 3.7z"/></svg>
+        <!-- battery -->
+        <svg width="27" height="11" viewBox="0 0 27 11" fill="none"><rect x="0.5" y="0.5" width="22" height="10" rx="2.5" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="7" rx="1.2" fill="currentColor"/><rect x="24" y="3.5" width="2" height="4" rx="0.8" fill="currentColor" opacity="0.5"/></svg>
+      </span>
+    </div>
+
+    <div class="a-app">
+      <header class="a-bar">
+        <button class="icon-btn" aria-label="Back">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <span class="a-bar-title">Library · المكتبة</span>
+        <button class="icon-btn" aria-label="More">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="6" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="12" cy="18" r="1.2"/></svg>
+        </button>
+      </header>
+
+      <section class="a-hero">
+        <div class="a-eyebrow">My Majlis · مَجلِسي</div>
+        <h1 class="a-title">قَصائِدي المَحفوظَة</h1>
+        <p class="a-subtitle">A private majlis of poems you've kept close</p>
+        <div class="a-count">
+          <span>12 poems</span><span class="dot"></span>
+          <span>4 poets</span><span class="dot"></span>
+          <span>2h ago</span>
+        </div>
+      </section>
+
+      <div class="a-search-row">
+        <div class="a-search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input placeholder="Search saved · ابحث في قصائدك" />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.45"><path d="M3 6h18M7 12h10M10 18h4"/></svg>
+        </div>
+      </div>
+
+      <div class="a-chips">
+        <span class="a-chip active">All · الكل</span>
+        <span class="a-chip">Recent</span>
+        <span class="a-chip">المتنبي</span>
+        <span class="a-chip">ابن الرومي</span>
+        <span class="a-chip">نزار قبّاني</span>
+        <span class="a-chip">+5</span>
+      </div>
+
+      <div class="a-list">
+        <!-- Card 1: standard -->
+        <article class="leaf">
+          <div class="leaf-num">i.</div>
+          <div class="leaf-title">عَلى قَدرِ أَهلِ العَزمِ</div>
+          <div class="leaf-poet">المُتنبِّي</div>
+          <div class="leaf-rule"></div>
+          <div class="leaf-excerpt">عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ&nbsp;·&nbsp;وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ</div>
+          <div class="leaf-foot"><span>Saved 2h ago</span><span class="leaf-tag">المديح</span></div>
+        </article>
+
+        <!-- Card 2: showing the swipe-to-remove gesture mid-action -->
+        <div class="leaf-swipe">
+          <span class="label">Remove</span>
+          <article class="leaf">
+            <div class="leaf-num">ii.</div>
+            <div class="leaf-title">أَعَزُّ مَكان</div>
+            <div class="leaf-poet">أَبو الطَيِّب</div>
+            <div class="leaf-rule"></div>
+            <div class="leaf-excerpt">أَعَزُّ مَكانٍ في الدُّنى سَرجُ سابِحٍ&nbsp;·&nbsp;وَخَيرُ جَليسٍ في الزَّمانِ كِتابُ</div>
+            <div class="leaf-foot"><span>Yesterday</span><span class="leaf-tag">الحكمة</span></div>
+          </article>
+        </div>
+
+        <!-- Card 3 -->
+        <article class="leaf">
+          <div class="leaf-num">iii.</div>
+          <div class="leaf-title">وَطَني</div>
+          <div class="leaf-poet">ابنُ الرّومي</div>
+          <div class="leaf-rule"></div>
+          <div class="leaf-excerpt">وَلي وَطَنٌ آلَيتُ أَلَّا أَبيعَهُ&nbsp;·&nbsp;وَأَلَّا أَرى غَيري لَهُ الدَّهرَ مالِكا</div>
+          <div class="leaf-foot"><span>3 days ago</span><span class="leaf-tag">الوطن</span></div>
+        </article>
+      </div>
+
+      <!-- Bottom tab bar -->
+      <nav class="tab-bar">
+        <div class="tab">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12 12 3l9 9M5 10v10h14V10"/></svg>
+          Today
+        </div>
+        <div class="tab active">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+          Library
+        </div>
+        <div class="tab">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          Search
+        </div>
+        <div class="tab">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>
+          Me
+        </div>
+      </nav>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+</div>
+</body>
+</html>

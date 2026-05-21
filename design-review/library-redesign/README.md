@@ -50,7 +50,15 @@ diacritics. Hover surfaces three round actions (read · share · remove).
 | :---: | :---: |
 | ![Option A — dark](screenshots/option-a-majlis-dark.png) | ![Option A — light](screenshots/option-a-majlis-light.png) |
 
-**Mockup:** [`mockups/option-a-majlis.html`](mockups/option-a-majlis.html)
+**Mockup:** [`mockups/option-a-majlis.html`](mockups/option-a-majlis.html) · 📱 [`mockups/mobile/option-a-majlis.html`](mockups/mobile/option-a-majlis.html)
+
+**📱 Mobile (iPhone 14 Pro · 390 × 844 · 3× DPI)**
+
+Full-screen reader sheet with iOS chrome — Dynamic Island, status bar, bottom tab bar — and a **swipe-to-remove** gesture revealed on a card. Hero uses the project's largest `Reem Kufi` display size, a Bodoni italic count chip, and horizontally-scrolling poet/recency chips. RTL-first.
+
+| Dark | Light |
+| :---: | :---: |
+| ![Option A — mobile dark](screenshots/mobile/option-a-majlis-dark.png) | ![Option A — mobile light](screenshots/mobile/option-a-majlis-light.png) |
 
 **Key elements**
 - Header with eyebrow `MY LIBRARY · مَجلِسي`, large gold `Reem Kufi` Arabic
@@ -86,7 +94,15 @@ user enters multi-select, exposing **Export · Share · Remove** as bulk actions
 | :---: | :---: |
 | ![Option B — dark](screenshots/option-b-diwan-grid-dark.png) | ![Option B — light](screenshots/option-b-diwan-grid-light.png) |
 
-**Mockup:** [`mockups/option-b-diwan-grid.html`](mockups/option-b-diwan-grid.html)
+**Mockup:** [`mockups/option-b-diwan-grid.html`](mockups/option-b-diwan-grid.html) · 📱 [`mockups/mobile/option-b-diwan-grid.html`](mockups/mobile/option-b-diwan-grid.html)
+
+**📱 Mobile (iPhone 14 Pro · 390 × 844 · 3× DPI)**
+
+2-column tile mosaic with a **sticky search header** that stays glassy on scroll, horizontally-scrolling poet chips, and a real **multi-select state** — the bottom tab bar morphs into a contextual action bar (Export · Share · Pin · Remove) the moment the user taps a tile's checkbox. Selected tiles get a lapis border + tinted background. iOS-native pattern.
+
+| Dark | Light |
+| :---: | :---: |
+| ![Option B — mobile dark](screenshots/mobile/option-b-diwan-grid-dark.png) | ![Option B — mobile light](screenshots/mobile/option-b-diwan-grid-light.png) |
 
 **Key elements**
 - Header with `قَصائِدي · MY DIWAN · 12 saved` pill, plus grid/list view
@@ -125,7 +141,15 @@ horizontal scroll strip at the top.
 | :---: | :---: |
 | ![Option C — dark](screenshots/option-c-khazana-dark.png) | ![Option C — light](screenshots/option-c-khazana-light.png) |
 
-**Mockup:** [`mockups/option-c-khazana.html`](mockups/option-c-khazana.html)
+**Mockup:** [`mockups/option-c-khazana.html`](mockups/option-c-khazana.html) · 📱 [`mockups/mobile/option-c-khazana.html`](mockups/mobile/option-c-khazana.html)
+
+**📱 Mobile (iPhone 14 Pro · 390 × 844 · 3× DPI)**
+
+This is where Khazana feels most native. The library is a **bottom sheet** with a drag-handle and three snap points (peek / half / full); the currently-reading poem stays softly visible behind a scrim. Pinned cards live in a horizontal scroll strip; rows are grouped *Today · This week · Earlier*. A row demos **iOS-style trailing swipe actions** (`Pin` blue, `Remove` red).
+
+| Dark | Light |
+| :---: | :---: |
+| ![Option C — mobile dark](screenshots/mobile/option-c-khazana-dark.png) | ![Option C — mobile light](screenshots/mobile/option-c-khazana-light.png) |
 
 **Key elements**
 - 440px right drawer, leaving the active poem dimmed at 45% behind it.
@@ -138,6 +162,22 @@ horizontal scroll strip at the top.
 - Each row is a single line (poet/title/excerpt truncated) with a 4px
   gold marker bar at the start; hover or focus reveals inline
   `Read · Pin · Remove` chip actions.
+
+---
+
+## 📱 Mobile gallery — three options at a glance
+
+![Mobile trio — A · B · C](screenshots/mobile/trio-dark.png)
+
+| | A · Majlis | B · Diwan Grid | C · Khazana |
+| :--- | :---: | :---: | :---: |
+| Sheet style | Full-screen page | Full-screen page | Bottom sheet w/ snap points |
+| Primary list | 1-col card stack | 2-col mosaic | Time-grouped rows |
+| Per-item gesture | Swipe-to-remove | Tap → checkbox | iOS trailing actions (Pin · Remove) |
+| Bulk actions | — | ✅ contextual action bar | — |
+| Pinned strip | — | featured tile | ✅ horizontal scroll |
+| Reader-flow preserved | tab bar | tab bar | ✅ poem visible behind sheet |
+| Native feel | reader app | photos / collections | iOS Maps / Apple Music |
 
 ---
 
@@ -175,10 +215,15 @@ the main poem view.
 ## 🔍 How to view the mockups locally
 
 ```bash
-# From the repo root
+# Desktop (1280 × 1000)
 open design-review/library-redesign/mockups/option-a-majlis.html
 open design-review/library-redesign/mockups/option-b-diwan-grid.html
 open design-review/library-redesign/mockups/option-c-khazana.html
+
+# Mobile (renders an iPhone frame)
+open design-review/library-redesign/mockups/mobile/option-a-majlis.html
+open design-review/library-redesign/mockups/mobile/option-b-diwan-grid.html
+open design-review/library-redesign/mockups/mobile/option-c-khazana.html
 ```
 
 Toggle the body class between `theme-dark` and `theme-light` in DevTools to

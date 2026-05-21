@@ -1,81 +1,88 @@
 <!--
   Paste-ready PR comment.
   Copy everything BELOW the line and paste into the PR comment box.
-  The image URLs point to raw.githubusercontent.com on this branch,
-  so they will render once this commit is pushed.
+  Image URLs point to raw.githubusercontent.com on this branch and will render
+  once this commit is on the remote.
 -->
 
-# 🎨 Library redesign — three design options
+# 🎨 Library redesign — three design options · **mobile-first**
 
-The "library feature" in this app is the **Saved Poems** modal (`src/components/auth/SavedPoemsView.jsx` — *قصائدي المحفوظة / My Saved Poems*). Below are three alternative design directions for it. All mockups are static HTML using the project's existing tokens (gold `#C5A059`, lapis `#4A7CC9`, glass surfaces, `rounded-2xl`, `Reem Kufi` / `Amiri` / `Fustat` / `Bodoni Moda` / `Forum` / `Tajawal`). **No production code is changed in this PR.**
+The "library feature" in this app is the **Saved Poems** modal (`src/components/auth/SavedPoemsView.jsx` — *قصائدي المحفوظة / My Saved Poems*). Below are three alternative directions, each delivered as a high-fidelity static mockup on **iPhone 14 Pro** (390 × 844, 3× DPI) and on desktop. All mockups use the project's existing tokens (gold `#C5A059`, lapis `#4A7CC9`, glass surfaces, `Reem Kufi` / `Amiri` / `Fustat` / `Bodoni Moda` / `Forum` / `Tajawal`). **No production code is changed.**
 
-Full write-up, source, and light-mode shots: [`design-review/library-redesign/`](https://github.com/lesmartiepants/poetry-bil-araby/tree/copilot/redesign-library-feature/design-review/library-redesign).
+Full source + light variants + desktop shots: [`design-review/library-redesign/`](https://github.com/lesmartiepants/poetry-bil-araby/tree/copilot/redesign-library-feature/design-review/library-redesign).
+
+![Mobile trio — A · B · C side-by-side](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/mobile/trio-dark.png)
 
 ---
 
-## ✨ Option A — *Majlis* · مَجلِس
-**Editorial card stack — gold hairlines, serif-heavy.** A quiet, library-of-rare-books direction. Each saved poem is a "leaf" with a Roman numeral, a gold `Reem Kufi` Arabic title, the poet in `Fustat`, a 60px gold rule, then an `Amiri` excerpt. Hover reveals a *read · share · remove* triad.
+## 📱 Option A — *Majlis* · مَجلِس
+**iOS reader-style sheet · swipe-to-remove.** A quiet, library-of-rare-books feel. Big gold display title in `Reem Kufi`, italic `Bodoni Moda` subtitle, horizontally-scrolling poet/recency chips. Each saved poem is a "leaf" with Roman numeral, Arabic title, gold rule, and an `Amiri` excerpt; swiping left reveals a destructive **Remove** action (mid-gesture in the screenshot). Bottom tab bar uses Apple-style icon + caption with the `Library` tab in gold.
 
-✅ Lowest cost; matches the editorial DNA of the existing poem view.
-⚠️ One column, no grouping or bulk actions — less "collection-like".
+✅ Most reading-focused; lowest implementation cost.
+⚠️ One column, no grouping or bulk actions.
 
-![Option A — Majlis (dark)](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/option-a-majlis-dark.png)
+| Dark | Light |
+| :---: | :---: |
+| ![Option A — mobile dark](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/mobile/option-a-majlis-dark.png) | ![Option A — mobile light](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/mobile/option-a-majlis-light.png) |
 
-<details><summary>Light mode</summary>
+<details><summary>🖥️ Desktop variant</summary>
 
-![Option A — Majlis (light)](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/option-a-majlis-light.png)
+![Option A — desktop dark](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/option-a-majlis-dark.png)
 
 </details>
 
 ---
 
-## 🧱 Option B — *Diwan Grid* · ديوان
-**Mosaic tile board · multi-select · search & sort.** A 3-column tile mosaic with one featured tile, a real search, poet-filter chips, a sort dropdown, and a lapis selection bar that exposes **Export · Share · Remove** for bulk actions.
+## 📱 Option B — *Diwan Grid* · ديوان
+**2-column mosaic · sticky search · multi-select bottom action bar.** A glassy header with `قَصائِدي · 12 / MY DIWAN`, persistent search + sort dropdown, and horizontally-scrolling poet chips. Tapping a tile's checkbox enters **selection mode**: a lapis bar shows `2 selected · Done` and the bottom tab bar morphs into a contextual action bar with **Export · Share · Pin · Remove** (Remove in destructive red). Selected tiles get a lapis border and tinted background.
 
-✅ Scales to many poems; adds the most missing capabilities (search, sort, multi-select, export).
-⚠️ Highest implementation cost; less reading-focused.
+✅ Scales gracefully to many poems; richest feature set; most native iOS multi-select pattern (Photos / Files).
+⚠️ Highest implementation cost; smaller per-poem reading area.
 
-![Option B — Diwan Grid (dark)](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/option-b-diwan-grid-dark.png)
+| Dark | Light |
+| :---: | :---: |
+| ![Option B — mobile dark](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/mobile/option-b-diwan-grid-dark.png) | ![Option B — mobile light](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/mobile/option-b-diwan-grid-light.png) |
 
-<details><summary>Light mode</summary>
+<details><summary>🖥️ Desktop variant</summary>
 
-![Option B — Diwan Grid (light)](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/option-b-diwan-grid-light.png)
-
-</details>
-
----
-
-## 🗝️ Option C — *Khazana* · خَزانَة
-**Right-side drawer · timeline grouping · pinned favourites.** Slides in from the right and leaves the current poem visible behind a soft scrim, so the reader never loses their place. Pinned favourites live in a horizontal strip; the rest are grouped by *Today · This week · Earlier*. Hover reveals inline `Read · Pin · Remove` chips per row.
-
-✅ Best for the reading flow; pinning + time grouping feel like a real personal treasury.
-⚠️ Drawer pattern is new to the app and needs careful mobile work.
-
-![Option C — Khazana (dark)](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/option-c-khazana-dark.png)
-
-<details><summary>Light mode</summary>
-
-![Option C — Khazana (light)](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/option-c-khazana-light.png)
+![Option B — desktop dark](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/option-b-diwan-grid-dark.png)
 
 </details>
 
 ---
 
-### At a glance
+## 📱 Option C — *Khazana* · خَزانَة
+**Native bottom sheet · half-snap · iOS swipe actions.** This is where Khazana feels most native. The library is a **bottom sheet** with a drag-handle and three snap points (peek / half / full); the currently-reading poem (here المتنبي · الكبر) stays softly visible behind the scrim so the user never loses their place. Pinned cards sit in a horizontal scroll strip with gold borders. Rows are grouped `Today · This week · Earlier` with `Forum`-serif uppercase labels. A row mid-screen demos **iOS trailing swipe actions** (blue **Pin**, red **Remove**), exactly like Mail / Messages.
 
-| Capability                  | A · Majlis | B · Diwan Grid | C · Khazana |
-| --------------------------- | :--------: | :------------: | :---------: |
-| Search                      | ✅         | ✅             | ✅          |
-| Poet/category filter        | chips      | chips + sort   | search only |
-| Time grouping               | —          | sort           | ✅ sections |
-| Pinned / favourites         | —          | featured tile  | ✅ strip    |
-| Multi-select & bulk actions | —          | ✅             | —           |
-| Reading-flow preserved      | modal      | modal          | ✅ drawer   |
-| Implementation cost         | 🟢 low     | 🟠 high        | 🟡 medium   |
-| Mobile fit                  | 🟡 ok      | 🟠 needs reflow | 🟢 native pattern |
+✅ Best reading flow; pinning + time grouping = real personal treasury; sheet pattern is deeply iOS-native.
+⚠️ Sheet snap-points are new to the app; require careful gesture wiring.
+
+| Dark | Light |
+| :---: | :---: |
+| ![Option C — mobile dark](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/mobile/option-c-khazana-dark.png) | ![Option C — mobile light](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/mobile/option-c-khazana-light.png) |
+
+<details><summary>🖥️ Desktop variant</summary>
+
+![Option C — desktop dark](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/copilot/redesign-library-feature/design-review/library-redesign/screenshots/option-c-khazana-dark.png)
+
+</details>
+
+---
+
+### Mobile-pattern matrix
+
+| | A · Majlis | B · Diwan Grid | C · Khazana |
+| :--- | :---: | :---: | :---: |
+| Sheet style | Full-screen page | Full-screen page | Bottom sheet · 3 snap points |
+| Primary list | 1-col card stack | 2-col mosaic | Time-grouped rows |
+| Per-item gesture | Swipe-to-remove | Tap → checkbox | iOS trailing (Pin · Remove) |
+| Bulk actions | — | ✅ contextual action bar | — |
+| Pinned strip | — | featured tile | ✅ horizontal scroll |
+| Reader-flow preserved | tab bar | tab bar | ✅ poem visible behind sheet |
+| Native iOS analogue | Apple News / Books | Photos / Files multi-select | Apple Music / Maps |
 
 ### Recommendation
-- **If we ship one:** Option C (Khazana) as the primary, with Option B's bulk actions layered in once a user has > ~10 saved poems.
-- **If we want the smallest diff:** Option A (Majlis) — it's a near drop-in replacement for the current `SavedPoemsView` and brings typography in line with the main poem view.
+- **Ship one:** Option **C** (Khazana) as the primary on mobile — the bottom-sheet pattern is the most native and uniquely preserves the reading flow. Layer in Option **B**'s contextual action bar once a user has > ~10 saved poems.
+- **Smallest diff:** Option **A** (Majlis) — a near drop-in replacement for the current `SavedPoemsView` that brings typography in line with the main poem view.
 
-cc reviewers — happy to iterate on whichever direction resonates.
+cc reviewers — happy to iterate on whichever direction resonates. Tap the dark/light toggles in your favourite mockup HTML to preview the alternate palette.

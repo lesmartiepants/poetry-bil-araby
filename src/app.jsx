@@ -82,6 +82,7 @@ import './styles/app.css';
 import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
+import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -841,10 +842,39 @@ export default function DiwanApp() {
   // When no audio is loaded, use a character-weighted simulated duration (~650ms/word)
   const effectiveDuration = audioDuration || allWords.length * 0.65;
 
-  const wordTimings = useMemo(
-    () => computeWordTimings(allWords, effectiveDuration),
-    [allWords, effectiveDuration]
+  // Build per-verse word groups — needed for VAD boundary alignment
+  const verseWords = useMemo(
+    () =>
+      wordOffsets.map((startIdx, v) => {
+        const endIdx = v + 1 < wordOffsets.length ? wordOffsets[v + 1] : allWords.length;
+        return allWords.slice(startIdx, endIdx);
+      }),
+    [allWords, wordOffsets]
   );
+
+  const wordTimings = useMemo(() => {
+    // When actual audio is loaded, derive timings from the waveform (VAD alignment).
+    // This is far more accurate than character-count estimation because it uses the
+    // real pauses between verses detected in the audio signal.
+    if (audioPlayer?.buffer?.loaded) {
+      try {
+        const vadTimings = computeWordTimingsFromAudio(audioPlayer.buffer, verseWords);
+        if (vadTimings && vadTimings.length === allWords.length) {
+          if (FEATURES.logging) {
+            console.log(
+              `[WordTiming] VAD timings computed for ${vadTimings.length} words from audio buffer`
+            );
+          }
+          return vadTimings;
+        }
+      } catch (err) {
+        if (FEATURES.logging)
+          console.warn('[WordTiming] VAD failed, falling back to char-weighted:', err.message);
+      }
+    }
+    // Fallback: character-count proportional distribution (used pre-audio or on VAD failure)
+    return computeWordTimings(allWords, effectiveDuration);
+  }, [audioPlayer, verseWords, allWords, effectiveDuration]);
 
   // Per-verse start times — first word of each verse's timing.start
   const verseStartTimes = useMemo(() => {

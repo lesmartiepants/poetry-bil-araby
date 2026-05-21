@@ -48,9 +48,9 @@ diacritics. Hover surfaces three round actions (read · share · remove).
 
 | Dark | Light |
 | :---: | :---: |
-| ![Option A — dark](../design-review/library-redesign/screenshots/option-a-majlis-dark.png) | ![Option A — light](../design-review/library-redesign/screenshots/option-a-majlis-light.png) |
+| ![Option A — dark](screenshots/option-a-majlis-dark.png) | ![Option A — light](screenshots/option-a-majlis-light.png) |
 
-**Mockup:** [`design-review/library-redesign/mockups/option-a-majlis.html`](../design-review/library-redesign/mockups/option-a-majlis.html)
+**Mockup:** [`mockups/option-a-majlis.html`](mockups/option-a-majlis.html)
 
 **Key elements**
 - Header with eyebrow `MY LIBRARY · مَجلِسي`, large gold `Reem Kufi` Arabic
@@ -84,9 +84,9 @@ user enters multi-select, exposing **Export · Share · Remove** as bulk actions
 
 | Dark | Light |
 | :---: | :---: |
-| ![Option B — dark](../design-review/library-redesign/screenshots/option-b-diwan-grid-dark.png) | ![Option B — light](../design-review/library-redesign/screenshots/option-b-diwan-grid-light.png) |
+| ![Option B — dark](screenshots/option-b-diwan-grid-dark.png) | ![Option B — light](screenshots/option-b-diwan-grid-light.png) |
 
-**Mockup:** [`design-review/library-redesign/mockups/option-b-diwan-grid.html`](../design-review/library-redesign/mockups/option-b-diwan-grid.html)
+**Mockup:** [`mockups/option-b-diwan-grid.html`](mockups/option-b-diwan-grid.html)
 
 **Key elements**
 - Header with `قَصائِدي · MY DIWAN · 12 saved` pill, plus grid/list view
@@ -123,9 +123,9 @@ horizontal scroll strip at the top.
 
 | Dark | Light |
 | :---: | :---: |
-| ![Option C — dark](../design-review/library-redesign/screenshots/option-c-khazana-dark.png) | ![Option C — light](../design-review/library-redesign/screenshots/option-c-khazana-light.png) |
+| ![Option C — dark](screenshots/option-c-khazana-dark.png) | ![Option C — light](screenshots/option-c-khazana-light.png) |
 
-**Mockup:** [`design-review/library-redesign/mockups/option-c-khazana.html`](../design-review/library-redesign/mockups/option-c-khazana.html)
+**Mockup:** [`mockups/option-c-khazana.html`](mockups/option-c-khazana.html)
 
 **Key elements**
 - 440px right drawer, leaving the active poem dimmed at 45% behind it.

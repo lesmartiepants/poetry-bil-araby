@@ -49,6 +49,10 @@ screenshots/
 design-review/screenshots/
 design-review/audit-screenshots/
 
+# Allow committed design proposal artifacts (e.g., redesign mockups + screenshots)
+!design-review/library-redesign/
+!design-review/library-redesign/**
+
 # Large database files - manage separately
 supabase/migrations/*_import_poetry.sql
 supabase/migrations/*.sql.skip

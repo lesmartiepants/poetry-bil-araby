@@ -46,14 +46,24 @@ const TTS_LOADING_MESSAGES = [
 function createProgressToast(estimatedSeconds, arabicText) {
   const toastId = `tts-progress-${Date.now()}`;
   const startTime = Date.now();
-  const lineCount = arabicText ? arabicText.split('\n').filter(l => l.trim()).length : 0;
-  const lineInfo = lineCount > 0 ? `Preparing ${lineCount} line${lineCount !== 1 ? 's' : ''}` : 'Preparing recitation';
+  const lineCount = arabicText ? arabicText.split('\n').filter((l) => l.trim()).length : 0;
+  const lineInfo =
+    lineCount > 0
+      ? `Preparing ${lineCount} line${lineCount !== 1 ? 's' : ''}`
+      : 'Preparing recitation';
 
   toast.loading(`Recitation ready in ${estimatedSeconds}s`, {
     id: toastId,
     description: lineInfo,
     duration: Infinity,
-    icon: createElement(motion.div, { animate: { y: [0, -5, 0] }, transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' } }, createElement(Rabbit, { size: 16 })),
+    icon: createElement(
+      motion.div,
+      {
+        animate: { y: [0, -5, 0] },
+        transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
+      },
+      createElement(Rabbit, { size: 16 })
+    ),
   });
 
   const interval = setInterval(() => {
@@ -74,14 +84,28 @@ function createProgressToast(estimatedSeconds, arabicText) {
         id: toastId,
         description: subtitle,
         duration: Infinity,
-        icon: createElement(motion.div, { animate: { y: [0, -5, 0] }, transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' } }, createElement(Rabbit, { size: 16 })),
+        icon: createElement(
+          motion.div,
+          {
+            animate: { y: [0, -5, 0] },
+            transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
+          },
+          createElement(Rabbit, { size: 16 })
+        ),
       });
     } else {
       toast.loading('Almost ready...', {
         id: toastId,
         description: subtitle,
         duration: Infinity,
-        icon: createElement(motion.div, { animate: { y: [0, -5, 0] }, transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' } }, createElement(Rabbit, { size: 16 })),
+        icon: createElement(
+          motion.div,
+          {
+            animate: { y: [0, -5, 0] },
+            transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
+          },
+          createElement(Rabbit, { size: 16 })
+        ),
       });
     }
   }, 1000);
@@ -275,7 +299,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     let ttsMode = useUIStore.getState().ttsMode;
     const arabicTextChars = current?.arabic?.length || 0;
 
-    const modelLabel = ttsMode === 'live' ? 'Live 2.0' : API_MODELS.tts;
+    const modelLabel = ttsMode === 'live' ? 'Live 3.1' : API_MODELS.tts;
     addLog(
       'Audio API',
       `→ Starting generation | Model: ${modelLabel} | ${arabicTextChars} chars Arabic`,
@@ -286,30 +310,38 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     // Show progress toast with estimated countdown
     const estSeconds = estimateTTSSeconds(arabicTextChars);
     const progress = createProgressToast(estSeconds, current?.arabic);
-    addLog('Audio', `Estimated generation time: ~${estSeconds}s for ${arabicTextChars} Arabic chars`, 'info');
+    addLog(
+      'Audio',
+      `Estimated generation time: ~${estSeconds}s for ${arabicTextChars} Arabic chars`,
+      'info'
+    );
 
     try {
       const apiStart = performance.now();
       let b64;
       let ttsModel;
-      let currentMode = ttsMode;
 
       // ── Try selected mode first; on any failure (429, 404, network, etc.)
       //    fall back to the other mode once. This makes the app resilient when
       //    one path is rate-limited or unavailable (e.g. Live route not deployed
       //    on a given backend, or REST quota exhausted).
-      const MODES = ['live', 'rest'];
-      let modeIdx = MODES.indexOf(currentMode);
+      // Order modes so the selected one is always tried first (index 0).
+      const MODES = ttsMode === 'live' ? ['live', 'rest'] : ['rest', 'live'];
+      let modeIdx = 0;
 
       while (modeIdx < MODES.length && !b64) {
         const mode = MODES[modeIdx];
-        ttsModel = mode === 'live' ? 'Live 2.0' : API_MODELS.tts;
+        ttsModel = mode === 'live' ? 'Live 3.1' : API_MODELS.tts;
 
         try {
           if (mode === 'live') {
             // ── Live API path — WebSocket TTS via server endpoint ──
             const { liveVoice, liveTemperature } = useUIStore.getState();
-            addLog('Audio API', `[${ttsModel}] Attempting | voice: ${liveVoice} | temp: ${liveTemperature}`, 'info');
+            addLog(
+              'Audio API',
+              `[${ttsModel}] Attempting | voice: ${liveVoice} | temp: ${liveTemperature}`,
+              'info'
+            );
             const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -323,13 +355,25 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
             if (!liveRes.ok) {
               const errorText = await liveRes.text();
-              addLog('Audio API Error', `[${ttsModel}] HTTP ${liveRes.status}: ${errorText.substring(0, 200)}`, 'error');
+              addLog(
+                'Audio API Error',
+                `[${ttsModel}] HTTP ${liveRes.status}: ${errorText.substring(0, 200)}`,
+                'error'
+              );
               if (liveRes.status === 429) {
                 addLog('Audio API', `[${ttsModel}] Rate-limited — falling back to REST`, 'warning');
               } else if (liveRes.status === 404) {
-                addLog('Audio API', `[${ttsModel}] Live endpoint unavailable (404) — falling back to REST`, 'warning');
+                addLog(
+                  'Audio API',
+                  `[${ttsModel}] Live endpoint unavailable (404) — falling back to REST`,
+                  'warning'
+                );
               } else {
-                addLog('Audio API', `[${ttsModel}] Failed (${liveRes.status}) — falling back to REST`, 'warning');
+                addLog(
+                  'Audio API',
+                  `[${ttsModel}] Failed (${liveRes.status}) — falling back to REST`,
+                  'warning'
+                );
               }
               throw new Error('Live mode failed');
             }
@@ -347,7 +391,9 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               contents: [{ parts: [{ text: ttsContent }] }],
               generationConfig: {
                 responseModalities: TTS_CONFIG.responseModalities,
-                speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName } } },
+                speechConfig: {
+                  voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName } },
+                },
               },
             });
             const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
@@ -373,11 +419,19 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
             if (!res.ok) {
               const errorText = await res.text();
-              addLog('Audio API Error', `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`, 'error');
+              addLog(
+                'Audio API Error',
+                `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
+                'error'
+              );
               if (res.status === 429) {
                 addLog('Audio API', `[${ttsModel}] Rate-limited — falling back to Live`, 'warning');
               } else {
-                addLog('Audio API', `[${ttsModel}] Failed (${res.status}) — falling back to Live`, 'warning');
+                addLog(
+                  'Audio API',
+                  `[${ttsModel}] Failed (${res.status}) — falling back to Live`,
+                  'warning'
+                );
               }
               throw new Error('REST mode failed');
             }
@@ -397,77 +451,86 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       }
 
       const apiTime = performance.now() - apiStart;
-      if (b64) {
-        const conversionStart = performance.now();
-        const blob = pcm16ToWav(b64);
-        const conversionTime = performance.now() - conversionStart;
+      if (!b64) {
+        throw new Error('Recitation failed — no audio data returned from any available source');
+      }
 
-        if (blob) {
-          const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
-          const audioSizeKB = (blob.size / 1024).toFixed(1);
-          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
-          const samples = pcmBytes / 2;
-          const audioDuration = samples / 24000;
-          const estimatedTokens = Math.ceil(arabicTextChars / 4);
-          const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
-          const totalTime = apiTime + conversionTime;
+      const conversionStart = performance.now();
+      const blob = pcm16ToWav(b64);
+      const conversionTime = performance.now() - conversionStart;
 
-          addLog(
-            'Audio API',
-            `✓ [${ttsModel}] Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
-            'success'
-          );
-          addLog(
-            'Audio Metrics',
-            `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
-            'success'
-          );
+      if (!blob) {
+        throw new Error('Recitation failed — audio data could not be decoded');
+      }
 
-          // Guard: user may have swiped to a new poem while audio was generating
-          if (_currentPlayId !== playId) {
-            progress.dismiss();
-            return;
-          }
+      const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+      const audioSizeKB = (blob.size / 1024).toFixed(1);
+      const pcmBytes = atob(b64.replace(/\s/g, '')).length;
+      const samples = pcmBytes / 2;
+      const audioDuration = samples / 24000;
+      const estimatedTokens = Math.ceil(arabicTextChars / 4);
+      const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
+      const totalTime = apiTime + conversionTime;
 
-          const u = URL.createObjectURL(blob);
-          setUrl(u);
+      addLog(
+        'Audio API',
+        `✓ [${ttsModel}] Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
+        'success'
+      );
+      addLog(
+        'Audio Metrics',
+        `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
+        'success'
+      );
 
-          try {
-            const player = await createPlayerReady(u);
-            startPlayer(player, 0);
-            setPlayer(player);
-            setPlaying(true);
-            progress.dismiss('Recitation ready');
-          } catch (err) {
-            if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
-            const msg = `Playback failed: ${err.message}`;
-            addLog('Audio', msg, 'error');
-            progress.dismiss();
-            setError(msg);
-            toast.error(msg);
-          }
+      // Guard: user may have swiped to a new poem while audio was generating
+      if (_currentPlayId !== playId) {
+        progress.dismiss();
+        return;
+      }
 
-          // Cache
-          if (FEATURES.caching && current?.id) {
-            const cacheStart = performance.now();
-            await cacheOperations.set(CACHE_CONFIG.stores.audio, current.id, {
-              blob,
-              metadata: {
-                poet: current.poet,
-                title: current.title,
-                size: blob.size,
-                duration: audioDuration,
-                model: ttsModel,
-              },
-            }, addLog);
-            const cacheTime = performance.now() - cacheStart;
-            addLog(
-              'Audio Cache',
-              `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`,
-              'success'
-            );
-          }
-        }
+      const u = URL.createObjectURL(blob);
+      setUrl(u);
+
+      try {
+        const player = await createPlayerReady(u);
+        startPlayer(player, 0);
+        setPlayer(player);
+        setPlaying(true);
+        progress.dismiss('Recitation ready');
+      } catch (err) {
+        if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+        const msg = `Playback failed: ${err.message}`;
+        addLog('Audio', msg, 'error');
+        progress.dismiss();
+        setError(msg);
+        toast.error(msg);
+      }
+
+      // Cache
+      if (FEATURES.caching && current?.id) {
+        const cacheStart = performance.now();
+        await cacheOperations.set(
+          CACHE_CONFIG.stores.audio,
+          current.id,
+          {
+            blob,
+            metadata: {
+              poet: current.poet,
+              title: current.title,
+              size: blob.size,
+              duration: audioDuration,
+              model: ttsModel,
+            },
+          },
+          addLog
+        );
+        const cacheTime = performance.now() - cacheStart;
+        addLog(
+          'Audio Cache',
+          `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`,
+          'success'
+        );
       }
     } catch (e) {
       progress.dismiss();
@@ -555,7 +618,11 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           'info'
         );
         setTimeout(async () => {
-          const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id, addLog);
+          const finalCheck = await cacheOperations.get(
+            CACHE_CONFIG.stores.audio,
+            current.id,
+            addLog
+          );
           if (finalCheck?.blob) {
             addLog('Audio', '✓ Audio completed after extended wait - playing now', 'success');
             if (_currentPlayId !== playId) {

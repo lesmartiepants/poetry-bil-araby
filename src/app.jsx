@@ -1550,6 +1550,14 @@ export default function DiwanApp() {
                         dismissTTSProgress();
                         cancelAnalysis();
                         setInterpretation(null);
+                        // If an analysis was in-flight and got cancelled, un-mark it so
+                        // swiping back to that poem will re-trigger its translation.
+                        if (
+                          carouselExplainTargetId.current &&
+                          usePoemStore.getState().isInterpreting
+                        ) {
+                          explainedPoemIds.current.delete(carouselExplainTargetId.current);
+                        }
                         carouselExplainTargetId.current = null;
                         setShowTranslation(true);
                         const newPoem = usePoemStore.getState().carouselPoems[idx];
@@ -1567,17 +1575,18 @@ export default function DiwanApp() {
                           });
                           updateOGMetaTags(newPoem);
                         }
-                        if (
-                          newPoem &&
-                          !newPoem.english &&
-                          !explainedPoemIds.current.has(newPoem.id)
-                        ) {
+                        if (newPoem && !newPoem.english) {
+                          // Always (re-)queue translation for poems without one — this handles
+                          // the case where a previous analysis was cancelled mid-stream, leaving
+                          // the poem with no translation and its ID stuck in explainedPoemIds.
+                          explainedPoemIds.current.delete(newPoem.id);
                           setAutoExplainPending(true);
                         }
                       }}
                       darkMode={darkMode}
                       showTranslation={showTranslation}
                       showTransliteration={showTransliteration}
+                      isTranslating={isInterpreting || autoExplainPending}
                       textScale={textScale}
                       currentFontClass={currentFontClass}
                       POEM_META={POEM_META}

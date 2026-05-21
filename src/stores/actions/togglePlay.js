@@ -32,7 +32,7 @@ const TTS_LOADING_MESSAGES = [
   'The poet is getting ready',
   'Wise voice awakening',
   'Summoning the muse',
-  'Warming up the oud strings',
+  'The poet steadies their breath',
   'The majlis is gathering',
   'Ink drying on the qasida',
 ];

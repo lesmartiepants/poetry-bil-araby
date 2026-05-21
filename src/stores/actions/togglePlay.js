@@ -299,10 +299,15 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     let ttsMode = useUIStore.getState().ttsMode;
     const arabicTextChars = current?.arabic?.length || 0;
 
+    const { liveVoice: _liveVoice, liveTemperature: _liveTemp } = useUIStore.getState();
     const modelLabel = ttsMode === 'live' ? 'Live 2.0' : API_MODELS.tts;
+    const voiceLabel =
+      ttsMode === 'live'
+        ? ` | voice: ${_liveVoice} | temp: ${_liveTemp}`
+        : ` | voice: ${TTS_CONFIG.voiceName}`;
     addLog(
       'Audio API',
-      `→ Starting generation | Model: ${modelLabel} | ${arabicTextChars} chars Arabic`,
+      `→ Starting generation | Model: ${modelLabel}${voiceLabel} | ${arabicTextChars} chars Arabic`,
       'request'
     );
     setError(null);
@@ -661,7 +666,21 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
   // Check if request already in flight — poll until it completes
   if (usePoemStore.getState().hasActiveAudio(current?.id)) {
-    addLog('Audio', 'Audio generation already in progress - waiting for completion', 'info');
+    const {
+      ttsMode: waitMode,
+      liveVoice: waitVoice,
+      liveTemperature: waitTemp,
+    } = useUIStore.getState();
+    const waitModelLabel = waitMode === 'live' ? 'Live 2.0' : API_MODELS.tts;
+    const waitVoiceLabel =
+      waitMode === 'live'
+        ? ` | voice: ${waitVoice} | temp: ${waitTemp}`
+        : ` | voice: ${TTS_CONFIG.voiceName}`;
+    addLog(
+      'Audio',
+      `Audio generation already in progress — waiting | Model: ${waitModelLabel}${waitVoiceLabel}`,
+      'info'
+    );
 
     // Show progress toast while waiting for in-flight prefetch
     const pollEstSeconds = estimateTTSSeconds(current?.arabic?.length || 0);

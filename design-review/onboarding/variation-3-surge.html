@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>شِعر — Variation 3: Surge</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&family=Tajawal:wght@300;400;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ── TOKENS ──────────────────────────────────────────────── */
+    :root {
+      --black:       #050508;
+      --deep:        #090911;
+      --surface:     #0f0f1c;
+      --panel:       #141428;
+      --lapis:       #2563a8;
+      --lapis-neon:  #3b82f6;
+      --lapis-glow:  rgba(59,130,246,.25);
+      --lapis-trace: rgba(59,130,246,.08);
+      --gold:        #c9a96e;
+      --gold-dim:    rgba(201,169,110,.5);
+      --white:       #f0ede8;
+      --white-dim:   rgba(240,237,232,.55);
+      --white-trace: rgba(240,237,232,.08);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-sharp:  cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-expo:   cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ── RESET ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100dvh;
+      overflow: hidden;
+      background: var(--black);
+      color: var(--white);
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    /* ── GRID BG ─────────────────────────────────────────────── */
+    .grid-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      background-image:
+        linear-gradient(var(--lapis-trace) 1px, transparent 1px),
+        linear-gradient(90deg, var(--lapis-trace) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 80%);
+    }
+
+    /* ── ELECTRIC LINE ───────────────────────────────────────── */
+    .electric-line {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 2px;
+      height: 100%;
+      background: linear-gradient(180deg, transparent, var(--lapis-neon), transparent);
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.3;
+      animation: scanLine 4s ease-in-out infinite;
+    }
+    @keyframes scanLine {
+      0%   { left: -2px; opacity: 0; }
+      10%  { opacity: 0.4; }
+      90%  { opacity: 0.4; }
+      100% { left: 100%; opacity: 0; }
+    }
+
+    /* ── CORNER MARKS ────────────────────────────────────────── */
+    .corner {
+      position: fixed;
+      width: 24px;
+      height: 24px;
+      z-index: 990;
+      opacity: 0.4;
+    }
+    .corner::before, .corner::after {
+      content: '';
+      position: absolute;
+      background: var(--lapis-neon);
+    }
+    .corner::before { width: 100%; height: 1px; top: 0; }
+    .corner::after  { width: 1px; height: 100%; top: 0; }
+    .corner-tl { top: 1.5rem; right: 1.5rem; }
+    .corner-tl::after { right: 0; }
+    .corner-br { bottom: 1.5rem; left: 1.5rem; }
+    .corner-br::before { bottom: 0; top: auto; }
+    .corner-br::after  { left: 0; right: auto; bottom: 0; top: auto; }
+
+    /* ── PHASE SYSTEM ────────────────────────────────────────── */
+    .phase {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+    .phase.in {
+      animation: phaseIn 0.45s var(--ease-expo) forwards;
+      pointer-events: all;
+    }
+    .phase.out-up {
+      animation: phaseOutUp 0.35s var(--ease-sharp) forwards;
+      pointer-events: none;
+    }
+    .phase.out-down {
+      animation: phaseOutDown 0.35s var(--ease-sharp) forwards;
+      pointer-events: none;
+    }
+    @keyframes phaseIn {
+      from { opacity: 0; transform: translateY(32px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes phaseOutUp {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to   { opacity: 0; transform: translateY(-32px) scale(0.98); }
+    }
+    @keyframes phaseOutDown {
+      from { opacity: 1; transform: translateY(0); }
+      to   { opacity: 0; transform: translateY(32px); }
+    }
+
+    /* ── SKIP ────────────────────────────────────────────────── */
+    #skipBtn {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 1.5rem;
+      z-index: 999;
+      background: none;
+      border: 1px solid var(--lapis-trace);
+      color: var(--white-dim);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      padding: 0.4rem 0.9rem;
+      transition: border-color 0.25s, color 0.25s;
+    }
+    #skipBtn:hover { border-color: var(--lapis-neon); color: var(--white); }
+
+    /* ── PHASE 0: SPLASH ─────────────────────────────────────── */
+    #p0 { gap: 0; }
+
+    .splash-meta {
+      font-size: 0.62rem;
+      letter-spacing: 0.4em;
+      color: var(--lapis-neon);
+      text-transform: uppercase;
+      font-weight: 400;
+      opacity: 0;
+      animation: popUp 0.5s var(--ease-spring) 0.4s forwards;
+      margin-bottom: 0.8rem;
+    }
+
+    .splash-word {
+      font-family: 'Amiri', serif;
+      font-size: clamp(10rem, 30vw, 26rem);
+      font-weight: 700;
+      line-height: 0.85;
+      color: var(--white);
+      position: relative;
+      display: inline-block;
+    }
+    .splash-word::after {
+      content: attr(data-text);
+      position: absolute;
+      inset: 0;
+      color: var(--lapis-neon);
+      clip-path: inset(0 100% 0 0);
+      animation: glitchReveal 0.8s var(--ease-expo) 0.2s forwards;
+      mix-blend-mode: screen;
+    }
+    @keyframes glitchReveal {
+      0%   { clip-path: inset(0 100% 0 0); filter: blur(4px); }
+      50%  { clip-path: inset(0 20% 0 0); filter: blur(1px); }
+      100% { clip-path: inset(0 0 0 0); filter: blur(0); opacity: 0; }
+    }
+
+    .splash-chars {
+      display: flex;
+      gap: 0;
+    }
+    .s-char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(-40px) rotate(-5deg);
+    }
+    .s-char.pop {
+      animation: charPop 0.5s var(--ease-spring) forwards;
+    }
+    @keyframes charPop {
+      to { opacity: 1; transform: translateY(0) rotate(0deg); }
+    }
+
+    .splash-verse {
+      font-family: 'Amiri', serif;
+      font-size: clamp(0.9rem, 2.5vw, 1.15rem);
+      color: var(--white-dim);
+      letter-spacing: 0.05em;
+      margin-top: 1.5rem;
+      opacity: 0;
+      animation: popUp 0.6s var(--ease-expo) 1.2s forwards;
+    }
+
+    .splash-cta {
+      margin-top: 2.5rem;
+      opacity: 0;
+      animation: popUp 0.5s var(--ease-spring) 1.8s forwards;
+    }
+
+    @keyframes popUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .btn-electric {
+      background: var(--lapis);
+      border: none;
+      color: var(--white);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 0.85rem 2.8rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: background 0.25s;
+    }
+    .btn-electric::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--lapis-neon);
+      transform: scaleX(0);
+      transform-origin: right;
+      transition: transform 0.3s var(--ease-expo);
+    }
+    .btn-electric:hover::before { transform: scaleX(1); transform-origin: left; }
+    .btn-electric span { position: relative; z-index: 1; }
+    .btn-electric:hover { background: var(--lapis); }
+
+    .btn-line {
+      background: none;
+      border: 1px solid var(--lapis-neon);
+      color: var(--lapis-neon);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      padding: 0.75rem 2.2rem;
+      cursor: pointer;
+      transition: background 0.25s, color 0.25s;
+    }
+    .btn-line:hover { background: var(--lapis-neon); color: var(--black); }
+
+    /* ── PICKER COMMON ───────────────────────────────────────── */
+    .picker-wrap {
+      width: min(720px, 95vw);
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .picker-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+    .picker-badge {
+      font-size: 0.58rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--lapis-neon);
+      border: 1px solid var(--lapis-neon);
+      padding: 0.2rem 0.6rem;
+    }
+    .picker-prog {
+      font-size: 0.6rem;
+      color: var(--white-dim);
+      letter-spacing: 0.1em;
+    }
+
+    .picker-title {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: clamp(1.8rem, 5vw, 3rem);
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 0.3rem;
+      line-height: 1.1;
+    }
+    .picker-hint {
+      font-size: 0.75rem;
+      color: var(--white-dim);
+      margin-bottom: 1.5rem;
+      font-weight: 300;
+    }
+
+    .picker-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--white-trace);
+    }
+    .btn-back {
+      background: none;
+      border: none;
+      color: var(--white-dim);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      transition: color 0.2s;
+    }
+    .btn-back:hover { color: var(--white); }
+
+    /* ── PHASE 1: MOOD GRID ──────────────────────────────────── */
+    #p1 { padding: 1.5rem; }
+
+    .mood-surge-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1px;
+      background: var(--white-trace);
+      width: min(720px, 95vw);
+    }
+    @media (max-width: 540px) {
+      .mood-surge-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .mood-surge-cell {
+      background: var(--deep);
+      padding: 1.8rem 0.8rem;
+      text-align: center;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transition: background 0.2s;
+    }
+    .mood-surge-cell.fire {
+      animation: cellFire 0.4s var(--ease-spring) forwards;
+    }
+    @keyframes cellFire {
+      0%   { opacity: 0; transform: scale(0.85); }
+      60%  { opacity: 1; transform: scale(1.04); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .mood-surge-cell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, var(--lapis) 0%, var(--lapis-neon) 100%);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .mood-surge-cell:hover::before { opacity: 0.15; }
+    .mood-surge-cell.sel::before   { opacity: 1; }
+    .mood-surge-cell.sel .msc-ar   { color: var(--white); }
+    .mood-surge-cell.sel .msc-en   { color: rgba(255,255,255,.6); }
+    .mood-surge-cell.sel { box-shadow: inset 0 0 0 1px var(--lapis-neon); }
+
+    .msc-ar {
+      font-family: 'Amiri', serif;
+      font-size: 1.8rem;
+      color: var(--white);
+      display: block;
+      position: relative;
+      z-index: 1;
+      transition: color 0.2s;
+    }
+    .msc-en {
+      font-size: 0.58rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--white-dim);
+      display: block;
+      position: relative;
+      z-index: 1;
+      margin-top: 0.3rem;
+    }
+
+    /* ── PHASE 2: ERA SURGE ──────────────────────────────────── */
+    #p2 { padding: 1.5rem; }
+
+    .era-surge-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: var(--white-trace);
+      width: min(720px, 95vw);
+    }
+
+    .era-surge-row {
+      background: var(--deep);
+      padding: 1rem 1.5rem;
+      display: grid;
+      grid-template-columns: 120px 1fr auto;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transition: background 0.2s;
+    }
+    .era-surge-row.fire {
+      animation: cellFire 0.3s var(--ease-spring) forwards;
+    }
+    .era-surge-row::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, var(--lapis-glow), transparent);
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .era-surge-row:hover::before  { opacity: 1; }
+    .era-surge-row.sel { background: var(--surface); box-shadow: inset 2px 0 0 var(--lapis-neon); }
+    .era-surge-row.sel .esr-name-ar { color: var(--lapis-neon); }
+
+    .esr-years {
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      color: var(--lapis-neon);
+      font-family: 'Tajawal', sans-serif;
+      position: relative;
+      z-index: 1;
+    }
+    .esr-content { position: relative; z-index: 1; }
+    .esr-name-ar {
+      font-family: 'Amiri', serif;
+      font-size: 1.6rem;
+      color: var(--white);
+      display: block;
+      transition: color 0.2s;
+    }
+    .esr-poets {
+      font-size: 0.62rem;
+      color: var(--white-dim);
+      letter-spacing: 0.05em;
+    }
+    .esr-check {
+      width: 14px; height: 14px;
+      border: 1px solid var(--white-trace);
+      position: relative;
+      z-index: 1;
+      flex-shrink: 0;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .era-surge-row.sel .esr-check {
+      background: var(--lapis-neon);
+      border-color: var(--lapis-neon);
+    }
+
+    /* ── PHASE 3: TOPICS SURGE ───────────────────────────────── */
+    #p3 { padding: 1.5rem; }
+
+    .topics-surge-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      width: min(720px, 95vw);
+    }
+
+    .topic-surge-tag {
+      padding: 0.5rem 1.1rem;
+      border: 1px solid var(--white-trace);
+      color: var(--white-dim);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.82rem;
+      cursor: pointer;
+      opacity: 0;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .topic-surge-tag.fire {
+      animation: tagBounce 0.35s var(--ease-spring) forwards;
+    }
+    @keyframes tagBounce {
+      0%   { opacity: 0; transform: scale(0.7) translateY(10px); }
+      60%  { opacity: 1; transform: scale(1.05) translateY(-2px); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .topic-surge-tag:hover { border-color: var(--lapis-neon); color: var(--white); }
+    .topic-surge-tag.sel {
+      background: var(--lapis);
+      border-color: var(--lapis-neon);
+      color: var(--white);
+      box-shadow: 0 0 12px var(--lapis-glow);
+    }
+
+    /* ── PHASE 4: POEM SURGE ─────────────────────────────────── */
+    #p4 { padding: 2rem; }
+
+    .poem-surge-scene {
+      text-align: center;
+      max-width: 600px;
+    }
+
+    .psb {
+      display: inline-block;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--lapis-neon);
+      border: 1px solid var(--lapis-neon);
+      padding: 0.25rem 0.8rem;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: popUp 0.4s var(--ease-spring) 0.1s forwards;
+    }
+
+    .pst {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.5rem, 4.5vw, 2.4rem);
+      font-weight: 400;
+      line-height: 2;
+      color: var(--white);
+      opacity: 0;
+      animation: popUp 0.6s var(--ease-expo) 0.4s forwards;
+    }
+
+    .psp {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+      opacity: 0;
+      animation: popUp 0.5s var(--ease-expo) 1s forwards;
+    }
+    .psp-line {
+      flex: 1;
+      max-width: 80px;
+      height: 1px;
+      background: var(--gold-dim);
+    }
+    .psp-name {
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+      text-transform: uppercase;
+    }
+
+    .psc {
+      margin-top: 2.5rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      opacity: 0;
+      animation: popUp 0.5s var(--ease-spring) 1.6s forwards;
+    }
+
+    /* ── STREAK COUNTER ──────────────────────────────────────── */
+    .streak-counter {
+      position: fixed;
+      top: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 4px;
+      z-index: 990;
+    }
+    .streak-dot {
+      width: 24px;
+      height: 2px;
+      background: var(--white-trace);
+      transition: background 0.3s, width 0.3s;
+    }
+    .streak-dot.done { background: var(--lapis-neon); }
+    .streak-dot.active { background: var(--white); width: 36px; }
+  </style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="electric-line"></div>
+<div class="corner corner-tl"></div>
+<div class="corner corner-br"></div>
+
+<button id="skipBtn" onclick="go(4)">تخطى ←</button>
+
+<div class="streak-counter" id="streakCounter">
+  <div class="streak-dot active" data-p="0"></div>
+  <div class="streak-dot" data-p="1"></div>
+  <div class="streak-dot" data-p="2"></div>
+  <div class="streak-dot" data-p="3"></div>
+  <div class="streak-dot" data-p="4"></div>
+</div>
+
+<!-- ═══════ PHASE 0: SPLASH ═══════ -->
+<section class="phase in" id="p0">
+  <div class="splash-meta">شعر بالعربي · ٨٤٠٠٠ قصيدة</div>
+  <div class="splash-chars" id="splashChars">
+    <span class="s-char" data-d="0">ش</span>
+    <span class="s-char" data-d="80">ِع</span>
+    <span class="s-char" data-d="160">ر</span>
+  </div>
+  <div class="splash-verse">اكتشف الشعر العربي على مزاجك</div>
+  <div class="splash-cta">
+    <button class="btn-electric" onclick="go(1)"><span>← ابدأ</span></button>
+  </div>
+</section>
+
+<!-- ═══════ PHASE 1: MOOD ═══════ -->
+<section class="phase" id="p1">
+  <div class="picker-wrap">
+    <div class="picker-bar">
+      <div class="picker-badge">المزاج</div>
+      <div class="picker-prog">خطوة ١ / ٣</div>
+    </div>
+    <h2 class="picker-title">ما مزاجك الآن؟</h2>
+    <p class="picker-hint">اختر كل ما يعكس حالتك</p>
+    <div class="mood-surge-grid" id="moodGrid">
+      <div class="mood-surge-cell" data-m="joy"><span class="msc-ar">فرح</span><span class="msc-en">Joy</span></div>
+      <div class="mood-surge-cell" data-m="love"><span class="msc-ar">حبّ</span><span class="msc-en">Love</span></div>
+      <div class="mood-surge-cell" data-m="longing"><span class="msc-ar">شوق</span><span class="msc-en">Longing</span></div>
+      <div class="mood-surge-cell" data-m="pride"><span class="msc-ar">فخر</span><span class="msc-en">Pride</span></div>
+      <div class="mood-surge-cell" data-m="sadness"><span class="msc-ar">حزن</span><span class="msc-en">Sadness</span></div>
+      <div class="mood-surge-cell" data-m="wonder"><span class="msc-ar">دهشة</span><span class="msc-en">Wonder</span></div>
+      <div class="mood-surge-cell" data-m="calm"><span class="msc-ar">هدوء</span><span class="msc-en">Calm</span></div>
+      <div class="mood-surge-cell" data-m="nostalgia"><span class="msc-ar">حنين</span><span class="msc-en">Nostalgia</span></div>
+    </div>
+    <div class="picker-actions">
+      <button class="btn-back" onclick="go(0)">← رجوع</button>
+      <button class="btn-electric" onclick="go(2)"><span>التالي ←</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ PHASE 2: ERA ═══════ -->
+<section class="phase" id="p2">
+  <div class="picker-wrap">
+    <div class="picker-bar">
+      <div class="picker-badge">الحقبة</div>
+      <div class="picker-prog">خطوة ٢ / ٣</div>
+    </div>
+    <h2 class="picker-title">أيّ عصر يأسرك؟</h2>
+    <p class="picker-hint">اختر حقبة واحدة أو أكثر</p>
+    <div class="era-surge-list" id="eraList">
+      <div class="era-surge-row" data-e="pre">
+        <div class="esr-years">قبل ٦٢٢م</div>
+        <div class="esr-content">
+          <span class="esr-name-ar">الجاهلية</span>
+          <span class="esr-poets">امرؤ القيس · عنترة · زهير</span>
+        </div>
+        <div class="esr-check"></div>
+      </div>
+      <div class="era-surge-row" data-e="umayyad">
+        <div class="esr-years">٦٦١–٧٥٠م</div>
+        <div class="esr-content">
+          <span class="esr-name-ar">الأمويون</span>
+          <span class="esr-poets">الفرزدق · جرير · الأخطل</span>
+        </div>
+        <div class="esr-check"></div>
+      </div>
+      <div class="era-surge-row" data-e="abbasid">
+        <div class="esr-years">٧٥٠–١٢٥٨م</div>
+        <div class="esr-content">
+          <span class="esr-name-ar">العبّاسيون</span>
+          <span class="esr-poets">المتنبي · أبو نواس · البحتري</span>
+        </div>
+        <div class="esr-check"></div>
+      </div>
+      <div class="era-surge-row" data-e="andalus">
+        <div class="esr-years">٧١١–١٤٩٢م</div>
+        <div class="esr-content">
+          <span class="esr-name-ar">الأندلسيون</span>
+          <span class="esr-poets">ابن زيدون · ابن عربي · لسان الدين</span>
+        </div>
+        <div class="esr-check"></div>
+      </div>
+      <div class="era-surge-row" data-e="modern">
+        <div class="esr-years">١٩٠٠م–الآن</div>
+        <div class="esr-content">
+          <span class="esr-name-ar">الحديث</span>
+          <span class="esr-poets">نزار · درويش · أدونيس</span>
+        </div>
+        <div class="esr-check"></div>
+      </div>
+    </div>
+    <div class="picker-actions">
+      <button class="btn-back" onclick="go(1)">← رجوع</button>
+      <button class="btn-electric" onclick="go(3)"><span>التالي ←</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ PHASE 3: TOPICS ═══════ -->
+<section class="phase" id="p3">
+  <div class="picker-wrap">
+    <div class="picker-bar">
+      <div class="picker-badge">الموضوعات</div>
+      <div class="picker-prog">خطوة ٣ / ٣</div>
+    </div>
+    <h2 class="picker-title">ما يُلهمك؟</h2>
+    <p class="picker-hint">اختر ما تريد</p>
+    <div class="topics-surge-wrap" id="topicsWrap">
+      <div class="topic-surge-tag" data-t="love">الغزل</div>
+      <div class="topic-surge-tag" data-t="wisdom">الحكمة</div>
+      <div class="topic-surge-tag" data-t="homeland">الوطن</div>
+      <div class="topic-surge-tag" data-t="nature">الطبيعة</div>
+      <div class="topic-surge-tag" data-t="mysticism">التصوّف</div>
+      <div class="topic-surge-tag" data-t="exile">الغربة</div>
+      <div class="topic-surge-tag" data-t="praise">المدح</div>
+      <div class="topic-surge-tag" data-t="elegy">الرثاء</div>
+      <div class="topic-surge-tag" data-t="philosophy">الفلسفة</div>
+      <div class="topic-surge-tag" data-t="chivalry">الفروسية</div>
+      <div class="topic-surge-tag" data-t="sea">البحر</div>
+      <div class="topic-surge-tag" data-t="freedom">الحرية</div>
+      <div class="topic-surge-tag" data-t="women">المرأة</div>
+      <div class="topic-surge-tag" data-t="wine">الخمريات</div>
+      <div class="topic-surge-tag" data-t="desert">الصحراء</div>
+      <div class="topic-surge-tag" data-t="loss">الفراق</div>
+      <div class="topic-surge-tag" data-t="time">الزمن</div>
+      <div class="topic-surge-tag" data-t="children">الطفولة</div>
+    </div>
+    <div class="picker-actions">
+      <button class="btn-back" onclick="go(2)">← رجوع</button>
+      <button class="btn-electric" onclick="go(4)"><span>أرني شعراً ←</span></button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════ PHASE 4: POEM ═══════ -->
+<section class="phase" id="p4">
+  <div class="poem-surge-scene">
+    <div class="psb">لأنك تحبّ · الوطن · الفلسفة</div>
+    <div class="pst">
+      على هذه الأرضِ ما يستحقُّ الحياةَ<br/>
+      تردُّدُ أبريلَ، رائحةُ الخبزِ في الفجرِ
+    </div>
+    <div class="psp">
+      <div class="psp-line"></div>
+      <div class="psp-name">مَحمود دَرويش</div>
+      <div class="psp-line"></div>
+    </div>
+    <div class="psc">
+      <button class="btn-line" onclick="alert('هذا نموذج تجريبي')">ادخل إلى الشعر</button>
+      <button class="btn-electric" onclick="go(1)"><span>← أعد الاختيار</span></button>
+    </div>
+  </div>
+</section>
+
+<script>
+/* ── SPLASH CHARS ─────────────────────────────────────────── */
+document.querySelectorAll('.s-char').forEach(c => {
+  setTimeout(() => c.classList.add('pop'), parseInt(c.dataset.d) + 300);
+});
+
+/* ── NAVIGATION ───────────────────────────────────────────── */
+let cur = 0;
+const phases = ['p0','p1','p2','p3','p4'];
+
+function go(n) {
+  if (n === cur) return;
+  const dir = n > cur ? 'out-up' : 'out-down';
+  const prev = document.getElementById(phases[cur]);
+
+  // Exit prev
+  prev.classList.remove('in');
+  prev.classList.add(dir);
+  setTimeout(() => {
+    prev.classList.remove(dir);
+    prev.style.opacity = 0;
+    prev.style.pointerEvents = 'none';
+  }, 350);
+
+  // Enter next
+  const next = document.getElementById(phases[n]);
+  cur = n;
+  updateStreak();
+  setTimeout(() => {
+    next.style.opacity = '';
+    next.style.pointerEvents = '';
+    next.classList.add('in');
+    onEnter(n);
+  }, 120);
+}
+
+function updateStreak() {
+  document.querySelectorAll('.streak-dot').forEach(d => {
+    const p = parseInt(d.dataset.p);
+    d.classList.remove('done', 'active');
+    if (p < cur)  d.classList.add('done');
+    if (p === cur) d.classList.add('active');
+  });
+}
+
+function onEnter(n) {
+  if (n === 1) {
+    document.querySelectorAll('.mood-surge-cell').forEach((c, i) => {
+      c.classList.remove('fire');
+      c.style.opacity = 0;
+      void c.offsetWidth;
+      setTimeout(() => c.classList.add('fire'), i * 45 + 60);
+      c.onclick = () => c.classList.toggle('sel');
+    });
+  }
+  if (n === 2) {
+    document.querySelectorAll('.era-surge-row').forEach((r, i) => {
+      r.classList.remove('fire');
+      r.style.opacity = 0;
+      void r.offsetWidth;
+      setTimeout(() => r.classList.add('fire'), i * 55 + 60);
+      r.onclick = () => r.classList.toggle('sel');
+    });
+  }
+  if (n === 3) {
+    document.querySelectorAll('.topic-surge-tag').forEach((t, i) => {
+      t.classList.remove('fire');
+      t.style.opacity = 0;
+      void t.offsetWidth;
+      setTimeout(() => t.classList.add('fire'), i * 30 + 60);
+      t.onclick = () => t.classList.toggle('sel');
+    });
+  }
+}
+</script>
+</body>
+</html>

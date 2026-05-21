@@ -677,6 +677,38 @@ describe('Backend API Server', () => {
         expect(response.status).not.toBe(400);
       });
     });
+
+    describe('POST /api/ai/live-tts', () => {
+      it('should return 503 when no API key configured', async () => {
+        const response = await request(app)
+          .post('/api/ai/live-tts')
+          .send({ text: 'مرحبا' })
+          .expect(503);
+
+        expect(response.body.error).toContain('unavailable');
+      });
+
+      it('should return 400 when text field is missing', async () => {
+        const response = await request(app).post('/api/ai/live-tts').send({}).expect(400);
+
+        expect(response.body.error).toContain('text');
+      });
+
+      it('should return 400 when text field is empty', async () => {
+        const response = await request(app)
+          .post('/api/ai/live-tts')
+          .send({ text: '   ' })
+          .expect(400);
+
+        expect(response.body.error).toContain('text');
+      });
+
+      it('should return 400 when text is not a string', async () => {
+        const response = await request(app).post('/api/ai/live-tts').send({ text: 42 }).expect(400);
+
+        expect(response.body.error).toContain('text');
+      });
+    });
   });
 
   describe('Input Validation', () => {

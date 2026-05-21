@@ -860,10 +860,11 @@ export default function DiwanApp() {
       try {
         const vadTimings = computeWordTimingsFromAudio(audioPlayer.buffer, verseWords);
         if (vadTimings && vadTimings.length === allWords.length) {
-          if (FEATURES.logging)
+          if (FEATURES.logging) {
             console.log(
               `[WordTiming] VAD timings computed for ${vadTimings.length} words from audio buffer`
             );
+          }
           return vadTimings;
         }
       } catch (err) {

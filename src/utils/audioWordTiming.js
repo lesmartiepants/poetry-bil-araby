@@ -137,7 +137,7 @@ function distributeWordsInSegment(words, segStart, segEnd) {
  * Compute accurate word timings from a ToneAudioBuffer using VAD alignment.
  *
  * Algorithm:
- * 1. Analyse the audio waveform to detect silence regions.
+ * 1. Analyze the audio waveform to detect silence regions.
  * 2. Pick the (numVerses − 1) longest internal silences as verse boundaries.
  * 3. Within each detected verse segment, distribute words with the improved
  *    minimum-floor + char-weighted algorithm.
@@ -158,6 +158,9 @@ export function computeWordTimingsFromAudio(toneBuffer, verseWords) {
   let sampleRate;
   let totalDuration;
   try {
+    // ToneAudioBuffer exposes getChannelData() directly; plain AudioBuffer also has it.
+    // The .get() path unwraps a ToneAudioBuffer to its inner AudioBuffer in Tone.js v14-,
+    // where getChannelData was not forwarded on the wrapper object.
     channelData =
       typeof toneBuffer.getChannelData === 'function'
         ? toneBuffer.getChannelData(0)

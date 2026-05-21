@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { computeWordTimingsFromAudio } from '../utils/audioWordTiming.js';
 
+// Tolerance below the 100ms minimum-floor constant to account for floating-point rounding
+const MIN_WORD_DURATION_S = 0.1;
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /**
@@ -189,7 +192,7 @@ describe('computeWordTimingsFromAudio', () => {
     const timings = computeWordTimingsFromAudio(makeMockBuffer(data), verseWords);
     expect(timings).not.toBeNull();
     for (const t of timings) {
-      expect(t.end - t.start).toBeGreaterThanOrEqual(0.095); // 100ms floor with float tolerance
+      expect(t.end - t.start).toBeGreaterThanOrEqual(MIN_WORD_DURATION_S - 0.005); // float tolerance
     }
   });
 

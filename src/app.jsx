@@ -105,7 +105,8 @@ import VerticalSidebar from './components/VerticalSidebar.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
-import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
+import LibraryHost from './components/auth/library-v2/LibraryHost.jsx';
+import LibraryTesterBar from './components/auth/library-v2/LibraryTesterBar.jsx';
 import PlayControlsStrip from './components/PlayControlsStrip.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -1994,8 +1995,10 @@ export default function DiwanApp() {
         )}
       </AnimatePresence>
 
-      {/* Saved Poems View */}
-      <SavedPoemsView
+      {/* Saved Poems View — routed through LibraryHost so the v2 tester
+          (?lib=a|b|c|0) can swap variants live.  Falls back to the original
+          when ?lib=0 or no variant is set. */}
+      <LibraryHost
         isOpen={showSavedPoems}
         onClose={() => setShowSavedPoems(false)}
         savedPoems={savedPoems}
@@ -2003,7 +2006,15 @@ export default function DiwanApp() {
         onUnsavePoem={handleUnsavePoemFromList}
         theme={theme}
         currentFontClass={currentFontClass}
+        darkMode={darkMode}
+        currentPoem={current}
       />
+
+      {/* Library v2 — TEMPORARY tester bar (top center). Flip
+          FEATURES.libraryV2Tester off in src/constants/features.js to hide. */}
+      {FEATURES.libraryV2Tester && (
+        <LibraryTesterBar darkMode={darkMode} onOpenLibrary={handleOpenSavedPoems} />
+      )}
 
       {/* Design Review + Bug — stacked bottom-left utility buttons */}
       {FEATURES.designReview && (

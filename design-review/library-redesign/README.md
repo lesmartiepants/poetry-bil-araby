@@ -11,6 +11,44 @@
 
 ---
 
+## 🧪 v2 — live in-app tester (real React, switch on the fly)
+
+All three directions are now also implemented as **real, switchable React
+components** wired into the running app. A temporary glass pill at the top of
+the screen lets you flip between the original Saved Poems view and v2 options
+A · B · C without rebuilding.
+
+| URL param | Variant |
+| --- | --- |
+| `?lib=0` | Original (legacy `SavedPoemsView`) |
+| `?lib=a` | **A · Majlis** — full-screen reader sheet, swipe-to-remove |
+| `?lib=b` | **B · Diwan Grid** — 2/3/4-col mosaic, multi-select bottom action bar |
+| `?lib=c` | **C · Khazana** — bottom sheet w/ snap points, time groups, iOS swipe actions |
+| `?libDemo=1` | Use 8 sample saved poems (Mutanabbi, Darwish, Qabbani…) so you can evaluate the variants even when nothing is saved |
+
+The chosen variant is also stored in `localStorage` so a refresh keeps your
+selection. The tester bar lives behind `FEATURES.libraryV2Tester`
+(`src/constants/features.js`); flip it to `false` to hide before final ship.
+
+Source:
+
+```
+src/components/auth/library-v2/
+├── LibraryHost.jsx                       routes ?lib= to the right variant
+├── LibraryTesterBar.jsx                  the temporary top-of-app switcher
+├── SavedPoemsView_A_Majlis.jsx           ⭐ user's preferred direction
+├── SavedPoemsView_B_DiwanGrid.jsx
+├── SavedPoemsView_C_Khazana.jsx
+├── demoSavedPoems.js                     8 sample poems for visual testing
+└── utils.js                              shared helpers (formatRelative, …)
+```
+
+When a final direction is chosen, this whole `library-v2/` folder can be
+removed and the chosen variant promoted into `SavedPoemsView.jsx` as the new
+default — all of the wiring lives in `LibraryHost.jsx`.
+
+---
+
 ## 🧭 What today's library looks like (baseline)
 
 A centered modal (max-width `2xl`) showing a flat list of saved poems. Each row

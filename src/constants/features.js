@@ -9,4 +9,5 @@ export const FEATURES = {
   onboarding: true, // Show kinetic walkthrough (phases 1-3) on first visit
   forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
   designReview: false, // Show design review shortcut icon (still accessible via /design-review URL)
+  libraryV2Tester: true, // TEMP: show tester bar + enable v2 Saved-Poems variants (?lib=a|b|c|0). Flip OFF before final ship.
 };

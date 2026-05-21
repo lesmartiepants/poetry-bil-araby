@@ -74,7 +74,7 @@ const PoemCarousel = forwardRef(
       const node = slideRefs.current[currentIndex];
       if (!node) return;
       const ro = new ResizeObserver((entries) => {
-        setActiveHeight(entries[0].contentRect.height);
+        if (entries.length > 0) setActiveHeight(entries[0].contentRect.height);
       });
       ro.observe(node);
       // Measure immediately so there's no flash of the wrong height on slide change
@@ -147,6 +147,10 @@ const PoemCarousel = forwardRef(
       if (emblaApi) emblaApi.reInit();
     }, [emblaApi, poems.length]);
 
+    const setSlideRef = useCallback((el, slideIdx) => {
+      slideRefs.current[slideIdx] = el;
+    }, []);
+
     const goldColor = '#c5a059';
 
     return (
@@ -205,9 +209,7 @@ const PoemCarousel = forwardRef(
               return (
                 <div
                   key={poem.id ?? slideIdx}
-                  ref={(el) => {
-                    slideRefs.current[slideIdx] = el;
-                  }}
+                  ref={(el) => setSlideRef(el, slideIdx)}
                   className="flex-shrink-0 w-full h-fit"
                 >
                   <div className="px-4 md:px-20 py-2 text-center">

@@ -1586,7 +1586,6 @@ export default function DiwanApp() {
                       darkMode={darkMode}
                       showTranslation={showTranslation}
                       showTransliteration={showTransliteration}
-                      isTranslating={isInterpreting || autoExplainPending}
                       textScale={textScale}
                       currentFontClass={currentFontClass}
                       POEM_META={POEM_META}

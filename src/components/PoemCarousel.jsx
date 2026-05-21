@@ -14,7 +14,6 @@ import HighlightedVerse from './HighlightedVerse.jsx';
  *   darkMode      {boolean}  — theme flag
  *   showTranslation     {boolean}
  *   showTransliteration {boolean}
- *   isTranslating {boolean}  — true while an AI translation is in-flight for the active poem
  *   textScale     {number}   — multiplier from TEXT_SIZES
  *   currentFontClass {string} — CSS class for Arabic font
  *   POEM_META     {Object}   — typography constants
@@ -32,7 +31,6 @@ const PoemCarousel = forwardRef(
       darkMode,
       showTranslation,
       showTransliteration,
-      isTranslating = false,
       textScale,
       currentFontClass,
       POEM_META,
@@ -270,22 +268,6 @@ const PoemCarousel = forwardRef(
                               {pair.en}
                             </p>
                           )}
-                          {showTranslation &&
-                            !pair.en &&
-                            isActive &&
-                            isTranslating &&
-                            idx === 0 && (
-                              <span
-                                dir="ltr"
-                                className="font-brand-en opacity-30 mx-auto"
-                                style={{
-                                  fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
-                                }}
-                                aria-label="Translation loading"
-                              >
-                                · · ·
-                              </span>
-                            )}
                         </div>
                       ))}
                     </div>

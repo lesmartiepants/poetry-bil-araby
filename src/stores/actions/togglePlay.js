@@ -337,16 +337,18 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           if (mode === 'live') {
             // ── Live API path — WebSocket TTS via server endpoint ──
             const { liveVoice, liveTemperature } = useUIStore.getState();
+            const liveText = getLiveContent(current);
             addLog(
               'Audio API',
-              `[${ttsModel}] Attempting | voice: ${liveVoice} | temp: ${liveTemperature}`,
-              'info'
+              `[${ttsModel}] Live request → voice: ${liveVoice} | temp: ${liveTemperature} | ${liveText.length} chars`,
+              'request'
             );
+            const liveStart = performance.now();
             const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                text: getLiveContent(current),
+                text: liveText,
                 voiceName: liveVoice,
                 temperature: liveTemperature,
                 systemInstruction: LIVE_SYSTEM_INSTRUCTION,
@@ -383,7 +385,13 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               throw new Error('Live API returned no audio data');
             }
             b64 = liveData.audioData;
-            addLog('Audio API', `[${ttsModel}] Success via Live API`, 'success');
+            const liveDuration = ((performance.now() - liveStart) / 1000).toFixed(2);
+            const liveSizeKB = Math.round((b64.length * 0.75) / 1024);
+            addLog(
+              'Audio API',
+              `[${ttsModel}] ✓ Complete | ${liveDuration}s | ~${liveSizeKB}KB PCM | voice: ${liveVoice}`,
+              'success'
+            );
           } else {
             // ── REST API path — generateContent flow ──
             const ttsContent = getTTSContent(current);

@@ -329,12 +329,12 @@ describe('Utility Functions', () => {
       dark: {
         bg: 'bg-[#0c0c0e]',
         text: 'text-stone-200',
-        accent: 'text-indigo-400',
+        accent: 'text-lapis-light',
       },
       light: {
         bg: 'bg-[#FDFCF8]',
         text: 'text-stone-800',
-        accent: 'text-indigo-600',
+        accent: 'text-lapis',
       },
     };
 

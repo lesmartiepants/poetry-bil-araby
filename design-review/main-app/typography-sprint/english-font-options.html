@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>English Font Options — Arabic Poetry App</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600&family=Cormorant+Garamond:wght@400;500;600&family=Josefin+Sans:wght@300;400;600&family=EB+Garamond:wght@400;500;600&family=Spectral:wght@400;500;600&family=Italiana&family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&family=Tenor+Sans&family=Lora:wght@400;500&family=Raleway:wght@300;400&family=Reem+Kufi:wght@700&family=Fustat:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #07070a;
+      color: #D4D0C8;
+      font-family: system-ui, sans-serif;
+      padding: 3rem 1.5rem 5rem;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    header h1 {
+      font-family: 'Reem Kufi', serif;
+      font-size: clamp(1.2rem, 3vw, 1.6rem);
+      color: #C9A84C;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: rgba(212, 208, 200, 0.5);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.75rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    @media (max-width: 680px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Last card centered only when it's alone in a row (odd total = 9) — handled per count */
+
+    .card {
+      background: #0c0c0e;
+      border: 1px solid rgba(201, 168, 76, 0.14);
+      border-radius: 12px;
+      padding: 2rem 2rem 2.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.055) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    /* Font label */
+    .font-label {
+      margin-bottom: 1.5rem;
+    }
+
+    .font-name {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #C9A84C;
+      margin-bottom: 0.25rem;
+    }
+
+    .font-desc {
+      font-size: 0.72rem;
+      color: rgba(212, 208, 200, 0.45);
+      letter-spacing: 0.04em;
+    }
+
+    /* Poem meta block */
+    .poem-meta {
+      text-align: center;
+      flex: 1;
+    }
+
+    .arabic-title {
+      font-family: 'Reem Kufi', serif;
+      font-weight: 700;
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      color: #C9A84C;
+      line-height: 1.25;
+      direction: rtl;
+    }
+
+    .arabic-poet {
+      font-family: 'Fustat', sans-serif;
+      font-weight: 500;
+      font-size: clamp(1.15rem, 2.5vw, 1.45rem);
+      color: #D4D0C8;
+      margin-top: 0.3rem;
+      direction: rtl;
+    }
+
+    .gold-rule {
+      display: block;
+      height: 1px;
+      background: rgba(201, 168, 76, 0.2);
+      width: 80%;
+      max-width: 320px;
+      margin: 0.8rem auto 0;
+    }
+
+    .english-line {
+      font-style: normal;
+      font-weight: 400;
+      font-size: clamp(0.95rem, 1.7vw, 1.1rem);
+      color: rgba(212, 200, 168, 0.88);
+      margin-top: 0.5rem;
+      letter-spacing: 0.015em;
+      line-height: 1.4;
+    }
+
+    /* Specimen line */
+    .specimen-wrap {
+      margin-top: 1.6rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid rgba(201, 168, 76, 0.09);
+    }
+
+    .specimen-label {
+      font-size: 0.62rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(212, 208, 200, 0.3);
+      margin-bottom: 0.45rem;
+    }
+
+    .specimen-text {
+      font-style: normal;
+      font-weight: 400;
+      font-size: clamp(1.35rem, 2.8vw, 1.7rem);
+      color: rgba(201, 168, 76, 0.55);
+      letter-spacing: 0.04em;
+      line-height: 1.3;
+    }
+
+    /* Per-font families */
+    .font-cinzel         .english-line,
+    .font-cinzel         .specimen-text { font-family: 'Cinzel', serif; }
+
+    .font-cormorant      .english-line,
+    .font-cormorant      .specimen-text { font-family: 'Cormorant Garamond', serif; }
+
+    .font-josefin        .english-line,
+    .font-josefin        .specimen-text { font-family: 'Josefin Sans', sans-serif; }
+
+    .font-eb-garamond    .english-line,
+    .font-eb-garamond    .specimen-text { font-family: 'EB Garamond', serif; }
+
+    .font-spectral       .english-line,
+    .font-spectral       .specimen-text { font-family: 'Spectral', serif; }
+
+    .font-italiana       .english-line,
+    .font-italiana       .specimen-text { font-family: 'Italiana', serif; }
+
+    .font-bodoni         .english-line,
+    .font-bodoni         .specimen-text { font-family: 'Bodoni Moda', serif; }
+
+    .font-tenor          .english-line,
+    .font-tenor          .specimen-text { font-family: 'Tenor Sans', sans-serif; }
+
+    .font-lora           .english-line,
+    .font-lora           .specimen-text { font-family: 'Lora', serif; }
+
+    .font-raleway        .english-line,
+    .font-raleway        .specimen-text { font-family: 'Raleway', sans-serif; }
+
+    /* Italiana — very tall, size down slightly */
+    .font-italiana .english-line  { font-size: clamp(0.85rem, 1.5vw, 1rem); }
+    .font-italiana .specimen-text { font-size: clamp(1.2rem, 2.5vw, 1.5rem); }
+
+    /* Bodoni Moda — extreme contrast, size up */
+    .font-bodoni .english-line  { font-size: clamp(1rem, 1.8vw, 1.15rem); }
+    .font-bodoni .specimen-text { font-size: clamp(1.4rem, 2.8vw, 1.8rem); }
+
+    /* Raleway — light weight, wider tracking */
+    .font-raleway .english-line  { font-weight: 300; letter-spacing: 0.07em; }
+    .font-raleway .specimen-text { font-weight: 300; letter-spacing: 0.1em; }
+
+    /* Cormorant looks better a touch larger */
+    .font-cormorant .english-line {
+      font-size: clamp(1.05rem, 1.9vw, 1.25rem);
+    }
+
+    .font-cormorant .specimen-text {
+      font-size: clamp(1.5rem, 3vw, 1.95rem);
+    }
+
+    /* Josefin is a light-weight face — use 300 weight for elegance */
+    .font-josefin .english-line {
+      font-weight: 300;
+      letter-spacing: 0.06em;
+      font-size: clamp(0.85rem, 1.5vw, 1rem);
+    }
+
+    .font-josefin .specimen-text {
+      font-weight: 300;
+      letter-spacing: 0.1em;
+    }
+
+    /* Number badge */
+    .badge {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      width: 1.6rem;
+      height: 1.6rem;
+      border-radius: 50%;
+      background: rgba(201, 168, 76, 0.1);
+      border: 1px solid rgba(201, 168, 76, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      color: rgba(201, 168, 76, 0.7);
+      font-variant-numeric: tabular-nums;
+      font-weight: 600;
+      letter-spacing: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>English Font Options</h1>
+    <p>Transliteration line · Arabic poetry app · March 2025</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- 1. Cinzel -->
+    <div class="card font-cinzel">
+      <span class="badge">1</span>
+      <div class="font-label">
+        <div class="font-name">Cinzel</div>
+        <div class="font-desc">Roman inscriptional capitals — classical gravitas</div>
+      </div>
+      <div class="poem-meta">
+        <div class="arabic-title">أساسات الفضيلة</div>
+        <div class="arabic-poet">علي بن أبي طالب</div>
+        <span class="gold-rule"></span>
+        <div class="english-line">Ali ibn Abi Talib — Foundations of Virtue</div>
+        <div class="specimen-wrap">
+          <div class="specimen-label">Specimen</div>
+          <div class="specimen-text">ABCDEFabcdef 0123</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Cormorant Garamond -->
+    <div class="card font-cormorant">
+      <span class="badge">2</span>
+      <div class="font-label">
+        <div class="font-name">Cormorant Garamond</div>
+        <div class="font-desc">High-contrast delicate serif — editorial luxury</div>
+      </div>
+      <div class="poem-meta">
+        <div class="arabic-title">أساسات الفضيلة</div>
+        <div class="arabic-poet">علي بن أبي طالب</div>
+        <span class="gold-rule"></span>
+        <div class="english-line">Ali ibn Abi Talib — Foundations of Virtue</div>
+        <div class="specimen-wrap">
+          <div class="specimen-label">Specimen</div>
+          <div class="specimen-text">ABCDEFabcdef 0123</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Bodoni Moda -->
+    <div class="card font-bodoni">
+      <span class="badge">3</span>
+      <div class="font-label">
+        <div class="font-name">Bodoni Moda</div>
+        <div class="font-desc">Extreme contrast Bodoni — luxurious and bold</div>
+      </div>
+      <div class="poem-meta">
+        <div class="arabic-title">أساسات الفضيلة</div>
+        <div class="arabic-poet">علي بن أبي طالب</div>
+        <span class="gold-rule"></span>
+        <div class="english-line">Ali ibn Abi Talib — Foundations of Virtue</div>
+        <div class="specimen-wrap">
+          <div class="specimen-label">Specimen</div>
+          <div class="specimen-text">ABCDEFabcdef 0123</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. Raleway -->
+    <div class="card font-raleway">
+      <span class="badge">4</span>
+      <div class="font-label">
+        <div class="font-name">Raleway</div>
+        <div class="font-desc">Art deco geometric sans — elegant, thin and airy</div>
+      </div>
+      <div class="poem-meta">
+        <div class="arabic-title">أساسات الفضيلة</div>
+        <div class="arabic-poet">علي بن أبي طالب</div>
+        <span class="gold-rule"></span>
+        <div class="english-line">Ali ibn Abi Talib — Foundations of Virtue</div>
+        <div class="specimen-wrap">
+          <div class="specimen-label">Specimen</div>
+          <div class="specimen-text">ABCDEFabcdef 0123</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</body>
+</html>

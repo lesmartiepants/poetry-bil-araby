@@ -358,13 +358,13 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
         {/* Header */}
         <div className="relative px-5 pb-3 pt-1 flex-shrink-0">
           <h3
-            className="font-brand-en font-bold text-[15px] leading-none"
+            className="font-brand-en font-bold text-[0.9375rem] leading-none"
             style={{ color: 'var(--gold)' }}
           >
             Discover a Poem
           </h3>
           <p
-            className="font-brand-en text-[10px] uppercase tracking-[0.15em] mt-0.5"
+            className="font-brand-en text-[0.625rem] uppercase tracking-[0.15em] mt-0.5"
             style={{ color: 'var(--gold)', opacity: 0.55 }}
           >
             Featured Poets
@@ -420,7 +420,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   }}
                 >
                   <div
-                    className="font-bold text-[13px] truncate w-full text-right"
+                    className="font-bold text-[0.8125rem] truncate w-full text-right"
                     dir="rtl"
                     style={{
                       fontFamily: "'Reem Kufi', sans-serif",
@@ -430,7 +430,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     كل الشعراء
                   </div>
                   <div
-                    className="font-brand-en text-[10px] mt-0.5 truncate w-full text-right"
+                    className="font-brand-en text-[0.625rem] mt-0.5 truncate w-full text-right"
                     style={{
                       opacity: selectedCategory === 'All' ? 0.75 : 0.6,
                       color: selectedCategory === 'All' ? 'var(--gold)' : subTextColor,
@@ -462,7 +462,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     }}
                   >
                     <div
-                      className="font-bold text-[13px] truncate w-full text-right"
+                      className="font-bold text-[0.8125rem] truncate w-full text-right"
                       dir="rtl"
                       style={{
                         fontFamily: "'Reem Kufi', sans-serif",
@@ -472,7 +472,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                       {cat.labelAr}
                     </div>
                     <div
-                      className="font-brand-en text-[10px] mt-0.5 truncate w-full text-right"
+                      className="font-brand-en text-[0.625rem] mt-0.5 truncate w-full text-right"
                       style={{
                         opacity: selectedCategory === cat.id ? 0.75 : 0.6,
                         color: selectedCategory === cat.id ? 'var(--gold)' : subTextColor,
@@ -525,7 +525,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   }}
                 >
                   <span
-                    className="font-brand-en font-bold text-[13px] uppercase"
+                    className="font-brand-en font-bold text-[0.8125rem] uppercase"
                     style={{
                       color: '#2c1a04',
                       textShadow: '0 1px 2px rgba(255,248,180,0.5)',
@@ -553,7 +553,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   onChange={(e) => setPoetSearch(e.target.value)}
                   placeholder="Search poets..."
                   aria-label="Search poets"
-                  className="w-full rounded-xl pl-8 pr-16 py-1.5 text-[14px] font-tajawal transition-colors focus:outline-none"
+                  className="w-full rounded-xl pl-8 pr-16 py-1.5 text-[0.875rem] font-tajawal transition-colors focus:outline-none"
                   style={{
                     background: 'rgba(197,160,89,0.06)',
                     border: '1px solid rgba(197,160,89,0.18)',
@@ -563,7 +563,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                 {/* Arabic hint — right side, shown only when input is empty */}
                 {!poetSearch && (
                   <span
-                    className="absolute right-3 text-[13px] font-tajawal pointer-events-none"
+                    className="absolute right-3 text-[0.8125rem] font-tajawal pointer-events-none"
                     dir="rtl"
                     style={{ color: 'var(--gold)', opacity: 0.28 }}
                   >
@@ -621,7 +621,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1 mr-3">
                           <span
-                            className="font-brand-en text-[12px] font-semibold truncate"
+                            className="font-brand-en text-[0.75rem] font-semibold truncate"
                             style={{
                               opacity: selectedCategory === cat.id ? 0.85 : 0.65,
                               color: selectedCategory === cat.id ? 'var(--gold)' : subTextColor,
@@ -631,7 +631,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                           </span>
                         </div>
                         <div
-                          className="font-bold text-[14px] flex-shrink-0"
+                          className="font-bold text-[0.875rem] flex-shrink-0"
                           dir="rtl"
                           style={{
                             fontFamily: "'Reem Kufi', sans-serif",
@@ -667,7 +667,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1 mr-3">
                           <span
-                            className="font-brand-en text-[12px] font-semibold truncate"
+                            className="font-brand-en text-[0.75rem] font-semibold truncate"
                             style={{
                               opacity: selectedCategory === p.id ? 0.85 : 0.65,
                               color: selectedCategory === p.id ? 'var(--gold)' : subTextColor,
@@ -677,7 +677,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                           </span>
                           {p.poemCount > 0 && (
                             <span
-                              className="font-brand-en text-[9px] flex-shrink-0"
+                              className="font-brand-en text-[0.5625rem] flex-shrink-0"
                               style={{ color: 'var(--gold)', opacity: 0.4 }}
                             >
                               {p.poemCount.toLocaleString()}
@@ -685,7 +685,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                           )}
                         </div>
                         <div
-                          className="font-bold text-[14px] flex-shrink-0"
+                          className="font-bold text-[0.875rem] flex-shrink-0"
                           dir="rtl"
                           style={{
                             fontFamily: "'Reem Kufi', sans-serif",
@@ -705,14 +705,14 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   filteredPoetList.all.length === 0 && (
                     <div className="px-4 py-6 text-center space-y-1">
                       <span
-                        className="block text-[13px] font-tajawal"
+                        className="block text-[0.8125rem] font-tajawal"
                         dir="rtl"
                         style={{ opacity: 0.4 }}
                       >
                         لا نتائج
                       </span>
                       <span
-                        className="block text-[11px] font-brand-en"
+                        className="block text-[0.6875rem] font-brand-en"
                         style={{ opacity: 0.4, color: subTextColor }}
                       >
                         No matching poets
@@ -733,7 +733,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     onSelectPoet('All');
                     onClose();
                   }}
-                  className="flex items-center gap-1.5 text-[10px] font-brand-en transition-opacity"
+                  className="flex items-center gap-1.5 text-[0.625rem] font-brand-en transition-opacity"
                   style={{ color: 'var(--gold)', opacity: 0.45 }}
                 >
                   <X size={10} />

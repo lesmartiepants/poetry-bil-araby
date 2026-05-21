@@ -9,6 +9,17 @@ import { geminiTextFetch } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
 import { saveTranslation } from '../../services/database.js';
 
+/** Monotonically increasing token — incremented by cancelAnalysis() on each swipe. */
+let _analysisGeneration = 0;
+
+/**
+ * Cancel any in-flight poem analysis (streaming stops on next chunk boundary).
+ * Call this when the user swipes to a new carousel poem.
+ */
+export function cancelAnalysis() {
+  _analysisGeneration++;
+}
+
 /**
  * Analyze a poem — check cache, stream insights from Gemini, cache results.
  *
@@ -19,6 +30,7 @@ import { saveTranslation } from '../../services/database.js';
  * @param {Function} [options.retryFn] - Function to call for retries (defaults to self)
  */
 export async function analyzePoem({ current, addLog, track, retryFn }) {
+  const myGeneration = ++_analysisGeneration;
   const { interpretation, isInterpreting, setInterpretation, setInterpreting } =
     usePoemStore.getState();
   const ratchetMode = useUIStore.getState().ratchetMode;
@@ -26,7 +38,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
   addLog(
     'UI Event',
     `🔍 Dive In button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
-    'info'
+    'user'
   );
 
   if (interpretation || isInterpreting) return;
@@ -43,7 +55,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
         clearInterval(pollInterval);
         usePoemStore.getState().removePollingInterval(pollInterval);
 
-        const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
+        const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id, addLog);
         if (cached?.interpretation) {
           addLog(
             'Insights',
@@ -51,6 +63,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
             'success'
           );
           setInterpretation(cached.interpretation);
+          useModalStore.getState().showToast('insight');
+          setTimeout(() => useModalStore.getState().hideToast('insight'), 1500);
         } else {
           addLog('Insights', 'Background insights generation failed - retrying', 'info');
           const retry = retryFn || (() => analyzePoem({ current, addLog, track, retryFn }));
@@ -73,7 +87,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
           'info'
         );
         setTimeout(async () => {
-          const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
+          const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id, addLog);
           if (finalCheck?.interpretation) {
             addLog(
               'Insights',
@@ -99,7 +113,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
   // CHECK CACHE (skip for ratchet mode — different prompt style)
   if (FEATURES.caching && current?.id && !ratchetMode) {
     const cacheStart = performance.now();
-    const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
+    const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id, addLog);
     const cacheTime = performance.now() - cacheStart;
 
     if (cached?.interpretation) {
@@ -113,6 +127,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       useUIStore.getState().incrementCacheStat('insightsHits');
       setInterpretation(cached.interpretation);
       setInterpreting(false);
+      useModalStore.getState().showToast('insight');
+      setTimeout(() => useModalStore.getState().hideToast('insight'), 1500);
       usePoemStore.getState().removeActiveInsight(current?.id);
       return;
     } else {
@@ -132,7 +148,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
   try {
     if (FEATURES.streaming) {
       const poetInfo = current?.poet ? ` by ${current.poet}` : '';
-      const promptText = `Deep Analysis of${poetInfo}:\n\n${current?.arabic}`;
+      const arabicLineCount = (current?.arabic || '').split('\n').filter(l => l.trim()).length;
+      const promptText = `Deep Analysis of${poetInfo}:\n\n${current?.arabic}\n\n[CRITICAL: This poem has exactly ${arabicLineCount} Arabic lines. You MUST produce exactly ${arabicLineCount} English lines in the POEM section. One line per Arabic line, no exceptions.]`;
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
       ]).size;
@@ -146,7 +163,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       addLog(
         'Insights API',
         `→ Starting streaming${ratchetMode ? ' [Ratchet Mode]' : ''} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars} chars (${arabicTextChars} Arabic + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
-        'info'
+        'request'
       );
 
       setInterpretation('');
@@ -158,6 +175,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       const insightsStreamBody = JSON.stringify({
         contents: [{ parts: [{ text: promptText }] }],
         systemInstruction: { parts: [{ text: activeSystemPrompt }] },
+        generationConfig: { maxOutputTokens: 8192 },
       });
       const res = await geminiTextFetch(
         'streamGenerateContent',
@@ -195,6 +213,12 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
                     'info'
                   );
                 }
+                // Bail if the user swiped to a new poem while we were streaming
+                if (_analysisGeneration !== myGeneration) {
+                  reader.cancel();
+                  setInterpreting(false);
+                  return;
+                }
                 chunkCount++;
                 accumulatedText += text;
                 setInterpretation(accumulatedText);
@@ -224,13 +248,16 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
         'success'
       );
     } else {
-      addLog('Insights', `Analyzing poem...${ratchetMode ? ' [Ratchet Mode]' : ''}`, 'info');
+      addLog('Insights', `Analyzing poem...${ratchetMode ? ' [Ratchet Mode]' : ''}`, 'request');
       const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
+      const arabicLineCount = (current?.arabic || '').split('\n').filter(l => l.trim()).length;
+      const promptText = `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}\n\n[CRITICAL: This poem has exactly ${arabicLineCount} Arabic lines. You MUST produce exactly ${arabicLineCount} English lines in the POEM section. One line per Arabic line, no exceptions.]`;
       const insightsFallbackBody = JSON.stringify({
         contents: [
-          { parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] },
+          { parts: [{ text: promptText }] },
         ],
         systemInstruction: { parts: [{ text: activeSystemPrompt }] },
+        generationConfig: { maxOutputTokens: 8192 },
       });
       const res = await geminiTextFetch(
         'generateContent',
@@ -255,7 +282,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
           charCount: insightText.length,
           tokens: Math.ceil(insightText.length / 4),
         },
-      });
+      }, addLog);
       const cacheTime = performance.now() - cacheStart;
       const elapsedTime = apiStartTime
         ? ((performance.now() - apiStartTime) / 1000).toFixed(1)
@@ -269,13 +296,24 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
 
     // Save translation to DB
     if (current?.isFromDatabase && current?.id && insightText) {
-      const parts = parseInsight(insightText);
+      const parts = parseInsight(insightText, addLog);
       if (parts?.poeticTranslation) {
-        saveTranslation(current.id, {
-          translation: parts.poeticTranslation.replace(/\n/g, '*'),
-          explanation: parts.depth || null,
-          authorBio: parts.author || null,
-        });
+        const arabicLines = (current?.arabic || '').split('\n').filter(l => l.trim());
+        const englishLines = parts.poeticTranslation.split('\n').filter(l => l.trim());
+        const translation = parts.poeticTranslation;
+        if (englishLines.length < arabicLines.length) {
+          addLog(
+            'Translation',
+            `⚠ Line count mismatch: ${arabicLines.length} Arabic vs ${englishLines.length} English — skipping DB cache to avoid persisting incomplete translation`,
+            'warning'
+          );
+        } else {
+          saveTranslation(current.id, {
+            translation: translation.replace(/\n/g, '*'),
+            explanation: parts.depth || null,
+            authorBio: parts.author || null,
+          });
+        }
       }
     }
 

@@ -26,6 +26,9 @@ const AuthModal = ({ onSignInWithGoogle }) => {
       onClick={onClose}
     >
       <motion.div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Sign in"
         className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -82,7 +85,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
               border: '1px solid rgba(197,160,89,0.3)',
               color: '#D4C8B0',
               fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif",
-              fontSize: '14px',
+              fontSize: '0.875rem',
               fontWeight: 500,
               letterSpacing: '0.01em',
             }}
@@ -109,7 +112,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
           </button>
 
           <p
-            className="mt-5 text-center text-[10px] text-stone-600"
+            className="mt-5 text-center text-[0.625rem] text-stone-600"
             style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" }}
           >
             By signing in, you agree to our Terms of Service

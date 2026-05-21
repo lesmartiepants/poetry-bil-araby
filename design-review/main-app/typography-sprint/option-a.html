@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option A — Geometric Hierarchy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Forum&family=Reem+Kufi:wght@400;500;700&family=Fustat:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* ============================================
+       DESIGN TOKENS — Option A: Geometric Hierarchy
+       Philosophy: Two different Arabic type voices
+       (geometric Kufic for display, humanist serif
+       for poet attribution) with a clearly labeled
+       English line treated as a metadata tag, not prose.
+       ============================================ */
+    :root {
+      /* Palette */
+      --bg:               #0c0c0e;
+      --surface:          #131316;
+      --text-primary:     #e7e5e4;
+      --text-secondary:   #d4d0c8;
+      --text-muted:       #a8a29e;
+      --text-very-muted:  rgba(168,162,158,0.55);
+      --gold:             #c9a84c;
+      --gold-glow:        rgba(201,168,76,0.22);
+      --gold-rule:        rgba(201,168,76,0.28);
+      --divider:          rgba(255,255,255,0.07);
+
+      /* Typography — Arabic */
+      --font-title-ar:    'Reem Kufi', sans-serif;   /* brand / geometric Kufic */
+      --font-poet-ar:     'Fustat', serif;            /* humanist Arabic serif — secondary */
+      --font-body-ar:     'Amiri', serif;             /* classic naskh for verses */
+
+      /* Typography — Latin */
+      --font-label-en:    'Forum', serif;             /* brand English — used as a LABEL here */
+      --font-body-en:     'Forum', serif;             /* same family, but styled differently */
+
+      /* Sizing */
+      --size-title-ar:    clamp(1.6rem, 4vw, 2.3rem);
+      --size-poet-ar:     clamp(1.15rem, 2.5vw, 1.45rem);
+      --size-label-en:    clamp(0.65rem, 1.2vw, 0.78rem);
+      --size-verse-ar:    clamp(1.35rem, 2.5vw, 1.7rem);
+      --size-verse-en:    clamp(1.05rem, 1.8vw, 1.2rem);
+
+      /* Motion */
+      --ease-out-expo:    cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quart:   cubic-bezier(.4, 0, .2, 1);
+      --dur-major:        0.7s;
+      --dur-content:      0.38s;
+
+      /* Spacing */
+      --space-xs:  4px;
+      --space-sm:  8px;
+      --space-md:  16px;
+      --space-lg:  24px;
+      --space-xl:  40px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-body-ar);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    /* ── Shell ────────────────────────────────────── */
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-xl) var(--space-md);
+    }
+
+    /* ── Annotation system ────────────────────────── */
+    .annotation {
+      position: relative;
+    }
+    .annotation-label {
+      position: absolute;
+      right: calc(100% + 14px);
+      top: 50%;
+      transform: translateY(-50%);
+      white-space: nowrap;
+      font-family: 'Forum', serif;
+      font-size: 0.62rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.55;
+      text-align: right;
+      direction: ltr;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .annotation-label::after {
+      content: '';
+      display: block;
+      width: 18px;
+      height: 1px;
+      background: var(--gold);
+      opacity: 0.4;
+      flex-shrink: 0;
+    }
+
+    /* ── Poem meta block ────────────────────────────── */
+    .poem-meta {
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+      padding: 0 60px; /* space for annotation labels */
+      animation: fadeIn var(--dur-major) var(--ease-out-expo) both;
+    }
+
+    /* LINE 1: Arabic title — Reem Kufi (brand font) */
+    .title-arabic {
+      font-family: var(--font-title-ar);
+      font-weight: 700;
+      font-size: var(--size-title-ar);
+      color: var(--gold);
+      line-height: 1.35;
+      letter-spacing: 0.03em;
+      text-shadow: 0 0 40px var(--gold-glow), 0 0 12px rgba(201,168,76,0.1);
+    }
+
+    /* LINE 2: Arabic poet name — Fustat (humanist serif, clearly secondary) */
+    .poet-arabic {
+      font-family: var(--font-poet-ar);
+      font-weight: 500;
+      font-size: var(--size-poet-ar);
+      color: var(--text-secondary);
+      line-height: 1.4;
+      margin-top: 0.45rem;
+      letter-spacing: 0.01em;
+    }
+
+    /* LINE 3: English combined line — Forum as a METADATA TAG
+       Key differentiators from body translation:
+         • UPPERCASE + wide tracking  → reads as a label, not prose
+         • Smaller than body text     → clearly subordinate
+         • Gold tint (not stone-400)  → anchors it to the title, not the body
+         • NOT italic                 → body translations are italic; this is not
+    */
+    .label-english {
+      font-family: var(--font-label-en);
+      font-size: var(--size-label-en);
+      font-weight: 400;
+      font-style: normal;   /* intentionally not italic */
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.6;
+      margin-top: 0.85rem;
+      direction: ltr;
+    }
+
+    /* Separator */
+    .meta-rule {
+      width: 36px;
+      height: 1px;
+      background: var(--gold-rule);
+      margin: var(--space-md) auto;
+    }
+
+    /* ── Verses ─────────────────────────────────────── */
+    .verse-list {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-xl);
+      text-align: center;
+      padding: 0 var(--space-md);
+    }
+
+    .verse {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      animation: fadeUp var(--dur-content) var(--ease-out-expo) both;
+    }
+    .verse:nth-child(1) { animation-delay: 0.1s; }
+    .verse:nth-child(2) { animation-delay: 0.18s; }
+    .verse:nth-child(3) { animation-delay: 0.26s; }
+
+    /* Arabic verse — Amiri naskh, unchanged from current */
+    .verse-arabic {
+      font-family: var(--font-body-ar);
+      font-size: var(--size-verse-ar);
+      font-weight: 400;
+      color: var(--text-primary);
+      line-height: 2.1;
+      direction: rtl;
+    }
+
+    /* English translation — Forum ITALIC, opacity-60
+       This is what the English label line must NOT look like */
+    .verse-english {
+      font-family: var(--font-body-en);
+      font-size: var(--size-verse-en);
+      font-style: italic;
+      color: var(--text-primary);
+      opacity: 0.6;
+      line-height: 1.6;
+      direction: ltr;
+      max-width: 90%;
+      margin: 0 auto;
+    }
+
+    /* ── Keyframes ──────────────────────────────────── */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Sprint header ──────────────────────────────── */
+    .sprint-header {
+      width: 100%;
+      max-width: 740px;
+      margin-bottom: var(--space-xl);
+      padding-bottom: var(--space-md);
+      border-bottom: 1px solid var(--divider);
+      direction: ltr;
+      text-align: left;
+    }
+    .sprint-tag {
+      font-family: 'Forum', serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.7;
+    }
+    .sprint-title {
+      font-family: 'Forum', serif;
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .sprint-desc {
+      font-family: 'Forum', serif;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      line-height: 1.6;
+    }
+
+    /* ── Comparison block ───────────────────────────── */
+    .comparison {
+      width: 100%;
+      max-width: 740px;
+      margin-top: 56px;
+      padding-top: var(--space-lg);
+      border-top: 1px solid var(--divider);
+      direction: ltr;
+    }
+    .comparison-title {
+      font-family: 'Forum', serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: var(--space-md);
+    }
+    .comparison-row {
+      display: flex;
+      gap: var(--space-md);
+      margin-bottom: var(--space-sm);
+      align-items: baseline;
+    }
+    .comparison-key {
+      font-family: 'Forum', serif;
+      font-size: 0.72rem;
+      color: var(--gold);
+      opacity: 0.7;
+      width: 120px;
+      flex-shrink: 0;
+      letter-spacing: 0.05em;
+    }
+    .comparison-val {
+      font-family: 'Forum', serif;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Sprint context header -->
+  <div class="sprint-header" dir="ltr">
+    <div class="sprint-tag">Typography Sprint — Option A</div>
+    <div class="sprint-title">Geometric Hierarchy</div>
+    <div class="sprint-desc">
+      Arabic title: Reem Kufi (brand geometric Kufic, weight 700) — same font as the بالعربي wordmark, establishing brand coherence.<br>
+      Arabic poet: Fustat (humanist Arabic serif) — clearly secondary via smaller size, lighter weight, and cool-grey color.<br>
+      English line: Forum uppercase + wide tracking + gold tint — reads as a metadata tag, not prose. Structurally opposite to the italic Forum body translations below.
+    </div>
+  </div>
+
+  <!-- Poem meta -->
+  <div class="poem-meta" dir="rtl">
+
+    <!-- LINE 1: Arabic title -->
+    <div class="annotation">
+      <div class="annotation-label" style="top: 50%;">
+        Reem Kufi 700 — brand font
+      </div>
+      <div class="title-arabic">ألا عللاني قبل نوح النوائح</div>
+    </div>
+
+    <!-- LINE 2: Arabic poet name -->
+    <div class="annotation" style="margin-top: 0.45rem;">
+      <div class="annotation-label" style="top: 50%;">
+        Fustat 500 — humanist serif
+      </div>
+      <div class="poet-arabic">أبو الطمحان القيني</div>
+    </div>
+
+    <!-- LINE 3: English combined line -->
+    <div class="annotation" style="margin-top: 0.85rem;">
+      <div class="annotation-label" style="top: 50%;">
+        Forum — uppercase tag, not italic
+      </div>
+      <div class="label-english" dir="ltr">
+        Abu al-Tamhan al-Qayni &nbsp;·&nbsp; Relieve Me Before the Mourners Weep
+      </div>
+    </div>
+
+    <div class="meta-rule"></div>
+  </div>
+
+  <!-- Verses with English translations (the thing the English line must NOT resemble) -->
+  <div class="verse-list" dir="rtl">
+
+    <div class="verse">
+      <div class="verse-arabic">ألا عللاني قبل نوح النوائح</div>
+      <div class="verse-english" dir="ltr">
+        Relieve me before the mourners begin their weeping
+      </div>
+    </div>
+
+    <div class="verse">
+      <div class="verse-arabic">وقبل ارتقاء النفس فوق الجوانح</div>
+      <div class="verse-english" dir="ltr">
+        And before the soul ascends above the ribs
+      </div>
+    </div>
+
+    <div class="verse">
+      <div class="verse-arabic">وقبل غدٍ يا لهف نفسي على غدٍ</div>
+      <div class="verse-english" dir="ltr">
+        And before tomorrow — O how my soul longs for tomorrow
+      </div>
+    </div>
+
+    <div class="verse">
+      <div class="verse-arabic">إذا راح أصحابي ولست برائح</div>
+      <div class="verse-english" dir="ltr">
+        When my companions depart and I am not among those who go
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Annotation comparison block -->
+  <div class="comparison">
+    <div class="comparison-title">Contrast Rationale — Why the English Line Reads as a Label</div>
+    <div class="comparison-row">
+      <div class="comparison-key">English title line</div>
+      <div class="comparison-val">Forum · uppercase · tracking 0.18em · gold 60% · NOT italic · 0.65–0.78rem</div>
+    </div>
+    <div class="comparison-row">
+      <div class="comparison-key">Body translation</div>
+      <div class="comparison-val">Forum · sentence case · tracking normal · stone-200 opacity-60 · italic · 1.05–1.2rem</div>
+    </div>
+    <div class="comparison-row">
+      <div class="comparison-key">Differentiators</div>
+      <div class="comparison-val">Case + tracking + color family + size + italic/non-italic — five axes of contrast applied simultaneously</div>
+    </div>
+    <div class="comparison-row">
+      <div class="comparison-key">Arabic title vs poet</div>
+      <div class="comparison-val">Reem Kufi (geometric) vs Fustat (humanist) — contrasting skeleton structures, not just weight</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

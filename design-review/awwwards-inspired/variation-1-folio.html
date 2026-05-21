@@ -1,0 +1,1761 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Folio — تجربة الشعر بالعربي</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&family=Inter:wght@300;400;500;600&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* ============================================
+       RESET + CUSTOM PROPERTIES
+       ============================================ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg: #0a0a0f;
+      --bg-surface: #111116;
+      --bg-card: #18181e;
+      --bg-card-hover: #1e1e26;
+      --bg-card-selected: #1a1a24;
+
+      --gold: #C5A059;
+      --gold-light: #D4B87A;
+      --gold-dim: rgba(197, 160, 89, 0.12);
+      --gold-glow: rgba(197, 160, 89, 0.25);
+
+      --text: #fafafa;
+      --text-2: #a1a1aa;
+      --text-3: #52525b;
+
+      --border: rgba(255, 255, 255, 0.06);
+      --border-gold: rgba(197, 160, 89, 0.3);
+
+      --font-poem: 'Amiri', serif;
+      --font-ui: 'Tajawal', sans-serif;
+      --font-brand: 'Reem Kufi', sans-serif;
+      --font-mono: 'Inter', system-ui, sans-serif;
+
+      --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-out: cubic-bezier(0.87, 0, 0.13, 1);
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ============================================
+       PHASE CONTAINER
+       ============================================ */
+    .phase {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 1;
+      transition: none;
+    }
+
+    /* When content overflows the viewport, switch from centered to top-aligned scrollable */
+    .phase.active {
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 10;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* Picker phases need top-alignment so CTA is always reachable by scrolling */
+    .phase.scrollable {
+      justify-content: flex-start;
+      padding: 3rem 0 2rem;
+    }
+
+    /* ============================================
+       FILM GRAIN CANVAS
+       ============================================ */
+    #grainCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.04;
+      mix-blend-mode: overlay;
+    }
+
+    /* ============================================
+       PROGRESS DOTS
+       ============================================ */
+    .progress-dots {
+      position: fixed;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.5rem;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+
+    .progress-dots.visible { opacity: 1; }
+
+    .progress-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-3);
+      transition: all 0.4s var(--ease-expo);
+    }
+
+    .progress-dot.active {
+      background: var(--gold);
+      width: 20px;
+      border-radius: 3px;
+    }
+
+    .progress-dot.done {
+      background: var(--gold-light);
+    }
+
+    /* ============================================
+       SKIP BUTTON
+       ============================================ */
+    .skip-btn {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      z-index: 100;
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-3);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 2rem;
+      padding: 0.5rem 1.25rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      direction: rtl;
+    }
+
+    .skip-btn:hover {
+      color: var(--text-2);
+      border-color: var(--text-3);
+    }
+
+    /* ============================================
+       PHASE 0: SPLASH
+       ============================================ */
+    .splash-brand {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .splash-arabic {
+      font-family: var(--font-brand);
+      font-size: clamp(3rem, 10vw, 7rem);
+      font-weight: 700;
+      color: var(--gold);
+      opacity: 0;
+      clip-path: inset(0 100% 0 0);
+    }
+
+    .splash-english {
+      font-family: var(--font-mono);
+      font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+      font-weight: 300;
+      color: var(--text-3);
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      margin-top: 0.75rem;
+      opacity: 0;
+      direction: ltr;
+    }
+
+    .splash-line {
+      width: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 1.5rem auto 0;
+    }
+
+    .splash-enter {
+      margin-top: 3rem;
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--gold);
+      background: var(--gold-dim);
+      border: 1px solid var(--border-gold);
+      border-radius: 2rem;
+      padding: 0.75rem 2.5rem;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    }
+
+    .splash-enter:hover {
+      background: rgba(197, 160, 89, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--gold-dim);
+    }
+
+    /* ============================================
+       PHASE 1: KINETIC ARABIC
+       ============================================ */
+    .kinetic-arabic {
+      font-family: var(--font-brand);
+      font-size: clamp(4rem, 14vw, 10rem);
+      font-weight: 700;
+      color: var(--gold);
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .kinetic-arabic .letter {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(80px) rotateX(-90deg);
+    }
+
+    .kinetic-sub {
+      font-family: var(--font-poem);
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      color: var(--text-2);
+      text-align: center;
+      margin-top: 1.5rem;
+      opacity: 0;
+    }
+
+    .kinetic-tap {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-3);
+      letter-spacing: 0.2em;
+      text-align: center;
+      margin-top: 3rem;
+      opacity: 0;
+      direction: ltr;
+    }
+
+    /* ============================================
+       PHASE 2: KINETIC ENGLISH
+       ============================================ */
+    .kinetic-english {
+      font-family: var(--font-mono);
+      font-size: clamp(3rem, 10vw, 7rem);
+      font-weight: 300;
+      color: var(--text);
+      text-align: center;
+      direction: ltr;
+      letter-spacing: 0.1em;
+    }
+
+    .kinetic-english .letter {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(60px);
+    }
+
+    .kinetic-english-sub {
+      font-family: var(--font-mono);
+      font-size: clamp(0.8rem, 1.5vw, 1rem);
+      font-weight: 300;
+      color: var(--text-3);
+      text-align: center;
+      margin-top: 1rem;
+      opacity: 0;
+      direction: ltr;
+      letter-spacing: 0.15em;
+    }
+
+    .kinetic-continue {
+      margin-top: 3rem;
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--gold);
+      background: var(--gold-dim);
+      border: 1px solid var(--border-gold);
+      border-radius: 2rem;
+      padding: 0.75rem 2.5rem;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+    }
+
+    .kinetic-continue:hover {
+      background: rgba(197, 160, 89, 0.2);
+    }
+
+    /* ============================================
+       PICKER SHARED STYLES
+       ============================================ */
+    .picker {
+      width: 100%;
+      max-width: 680px;
+      padding: 2rem;
+      padding-bottom: 5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .picker-label {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--gold);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+      direction: ltr;
+    }
+
+    .picker-title {
+      font-family: var(--font-poem);
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .picker-subtitle {
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      color: var(--text-3);
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .picker-cta {
+      margin-top: 2rem;
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--gold);
+      background: var(--gold-dim);
+      border: 1px solid var(--border-gold);
+      border-radius: 2rem;
+      padding: 0.75rem 2.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 160px;
+      text-align: center;
+    }
+
+    .picker-cta:hover {
+      background: rgba(197, 160, 89, 0.2);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px var(--gold-dim);
+    }
+
+    .picker-cta.has-selection {
+      background: var(--gold);
+      color: var(--bg);
+      border-color: var(--gold);
+    }
+
+    .picker-cta.has-selection:hover {
+      background: var(--gold-light);
+      box-shadow: 0 6px 24px var(--gold-glow);
+    }
+
+    /* ============================================
+       PHASE 3: MOOD PICKER (3×3 Grid)
+       ============================================ */
+    .mood-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    .mood-cell {
+      position: relative;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.25rem 0.75rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.4s var(--ease-expo);
+      overflow: hidden;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .mood-cell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, var(--cell-color, var(--gold-dim)), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .mood-cell:hover {
+      border-color: var(--border-gold);
+      transform: translateY(-2px);
+    }
+
+    .mood-cell.selected {
+      border-color: var(--gold);
+      background: var(--bg-card-selected);
+    }
+
+    .mood-cell.selected::before {
+      opacity: 0.3;
+    }
+
+    .mood-cell.selected::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--gold);
+    }
+
+    .mood-ar {
+      font-family: var(--font-poem);
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text);
+      position: relative;
+      z-index: 1;
+      margin-bottom: 0.25rem;
+    }
+
+    .mood-en {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-3);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+      direction: ltr;
+    }
+
+    .mood-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      margin: 0.5rem auto 0;
+      position: relative;
+      z-index: 1;
+      transition: transform 0.3s var(--ease-expo);
+    }
+
+    .mood-cell.selected .mood-dot {
+      transform: scale(1.8);
+      box-shadow: 0 0 12px var(--cell-color, var(--gold));
+    }
+
+    /* ============================================
+       PHASE 4: ERA PICKER (3D Helix)
+       ============================================ */
+    .era-container {
+      width: 100%;
+      max-width: 600px;
+      position: relative;
+      height: 340px;
+      perspective: 900px;
+      overflow: hidden;
+      cursor: grab;
+    }
+
+    .era-container:active {
+      cursor: grabbing;
+    }
+
+    /* Invisible overlay captures scroll/drag, passes clicks via JS */
+    .helix-interaction-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      touch-action: pan-x;
+    }
+
+    /* Central axis line */
+    .era-container::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(180deg, transparent 10%, var(--gold-dim) 35%, var(--gold) 50%, var(--gold-dim) 65%, transparent 90%);
+      z-index: 0;
+      transform: translateX(-50%);
+    }
+
+    /* Focus indicator — horizontal bar at center */
+    .helix-focus-bar {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 280px;
+      height: 80px;
+      border: 1px solid var(--border-gold);
+      border-radius: 1rem;
+      background: rgba(197, 160, 89, 0.04);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .helix-drum {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      transform-style: preserve-3d;
+      transform: translate(-50%, -50%) rotateX(0deg);
+      /* GSAP drives this rotateX */
+    }
+
+    .era-card {
+      position: absolute;
+      width: 260px;
+      left: -130px;
+      top: -36px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      padding: 0 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: border-color 0.35s ease, background 0.35s ease;
+      backface-visibility: hidden;
+    }
+
+    .era-card:hover {
+      border-color: var(--border-gold);
+    }
+
+    .era-card.selected {
+      border-color: var(--gold);
+      background: var(--bg-card-selected);
+    }
+
+    .era-card.in-focus {
+      z-index: 5;
+    }
+
+    .era-dot {
+      width: 10px;
+      height: 10px;
+      min-width: 10px;
+      border-radius: 50%;
+      border: 2px solid var(--text-3);
+      background: var(--bg);
+      transition: all 0.3s var(--ease-expo);
+    }
+
+    .era-card.selected .era-dot {
+      border-color: var(--gold);
+      background: var(--gold);
+      box-shadow: 0 0 10px var(--gold-glow);
+      transform: scale(1.3);
+    }
+
+    .era-text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .era-ar {
+      font-family: var(--font-poem);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-2);
+      transition: color 0.3s ease;
+    }
+
+    .era-card.selected .era-ar { color: var(--gold); }
+
+    .era-en {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--text-3);
+      letter-spacing: 0.1em;
+      direction: ltr;
+    }
+
+    .era-section-badge {
+      position: absolute;
+      top: -8px;
+      right: 12px;
+      font-family: var(--font-mono);
+      font-size: 0.45rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      background: var(--bg-surface);
+      padding: 0 0.4rem;
+      z-index: 2;
+    }
+
+    /* Scroll hint */
+    .helix-hint {
+      position: absolute;
+      bottom: 0.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: var(--font-mono);
+      font-size: 0.55rem;
+      letter-spacing: 0.15em;
+      color: var(--text-3);
+      text-transform: uppercase;
+      direction: ltr;
+      opacity: 0.6;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: opacity 0.4s ease;
+    }
+
+    .helix-hint.hidden { opacity: 0; }
+
+    .helix-hint-arrow {
+      display: inline-block;
+      animation: helix-bob 1.2s ease-in-out infinite;
+    }
+
+    @keyframes helix-bob {
+      0%, 100% { transform: translateY(-2px); }
+      50% { transform: translateY(2px); }
+    }
+
+    @media (max-width: 480px) {
+      .era-container { height: 300px; }
+      .era-card { width: 220px; left: -110px; height: 64px; padding: 0 1rem; }
+      .helix-focus-bar { width: 240px; height: 72px; }
+      .era-ar { font-size: 1rem; }
+    }
+
+    /* ============================================
+       PHASE 5: TOPICS PICKER (Constellation)
+       ============================================ */
+    .topics-container {
+      width: 100%;
+      max-width: 580px;
+      position: relative;
+    }
+
+    /* Desktop: constellation layout */
+    .topics-constellation {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4/3;
+      min-height: 380px;
+    }
+
+    .topics-constellation svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .topic-node {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.4s var(--ease-expo);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      z-index: 2;
+    }
+
+    .topic-node:hover { transform: translate(-50%, -50%) scale(1.1); }
+
+    .topic-ring {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.4rem;
+      background: var(--bg-card);
+      transition: all 0.4s var(--ease-expo);
+      position: relative;
+    }
+
+    .topic-ring::after {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 50%;
+      border: 1px solid transparent;
+      transition: border-color 0.4s ease;
+    }
+
+    .topic-node.selected .topic-ring {
+      border-color: var(--node-color, var(--gold));
+      background: var(--bg-card-selected);
+      box-shadow: 0 0 20px rgba(var(--node-color-rgb, 197, 160, 89), 0.3);
+    }
+
+    .topic-node.selected .topic-ring::after {
+      border-color: var(--node-color, var(--gold));
+      opacity: 0.4;
+    }
+
+    .topic-ring-inner {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      transition: all 0.4s var(--ease-expo);
+    }
+
+    .topic-node.selected .topic-ring-inner {
+      transform: scale(1.5);
+      box-shadow: 0 0 8px currentColor;
+    }
+
+    .topic-ar {
+      font-family: var(--font-poem);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-2);
+      transition: color 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .topic-node.selected .topic-ar {
+      color: var(--text);
+    }
+
+    .topic-en {
+      font-family: var(--font-mono);
+      font-size: 0.5rem;
+      color: var(--text-3);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      direction: ltr;
+    }
+
+    /* Mobile: 3-column grid fallback */
+    .topics-grid {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+    }
+
+    .topics-grid .topic-cell {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1rem 0.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s var(--ease-expo);
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .topics-grid .topic-cell.selected {
+      border-color: var(--gold);
+      background: var(--bg-card-selected);
+    }
+
+    .topics-grid .topic-cell .topic-ar {
+      font-size: 0.95rem;
+      margin-bottom: 0.2rem;
+    }
+
+    @media (max-width: 640px) {
+      .topics-constellation { display: none; }
+      .topics-grid { display: grid; }
+    }
+
+    /* ============================================
+       PHASE 6: RESULT (Tagged Poem)
+       ============================================ */
+    .result-card {
+      max-width: 560px;
+      width: 100%;
+      padding: 2rem;
+    }
+
+    .result-match {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-ui);
+      font-size: 0.75rem;
+      color: var(--gold);
+      background: var(--gold-dim);
+      border: 1px solid var(--border-gold);
+      border-radius: 2rem;
+      padding: 0.4rem 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .result-match-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    .result-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+
+    .result-tag {
+      font-family: var(--font-ui);
+      font-size: 0.65rem;
+      font-weight: 500;
+      padding: 0.25rem 0.75rem;
+      border-radius: 1rem;
+      border: 1px solid var(--border);
+    }
+
+    .result-poem-title {
+      font-family: var(--font-poem);
+      font-size: clamp(1.25rem, 3vw, 1.75rem);
+      font-weight: 700;
+      color: var(--gold-light);
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-poet {
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      color: var(--text-3);
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .result-verses {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      padding: 1.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+    }
+
+    .result-verse {
+      font-family: var(--font-poem);
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      color: var(--text);
+      line-height: 2;
+      text-align: center;
+    }
+
+    .result-divider {
+      width: 40px;
+      height: 1px;
+      background: var(--gold);
+      margin: 0 auto;
+    }
+
+    .result-cta {
+      margin-top: 2rem;
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: var(--bg);
+      background: var(--gold);
+      border: none;
+      border-radius: 2rem;
+      padding: 0.8rem 2.5rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .result-cta:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px var(--gold-glow);
+    }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 480px) {
+      .mood-grid { gap: 0.5rem; }
+      .mood-cell { padding: 1rem 0.5rem; }
+      .mood-ar { font-size: 1.1rem; }
+      .picker { padding: 1.5rem 1rem; }
+      .topic-ring { width: 44px; height: 44px; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Film Grain Overlay -->
+  <canvas id="grainCanvas"></canvas>
+
+  <!-- Progress Dots -->
+  <div class="progress-dots" id="progressDots">
+    <div class="progress-dot" data-phase="0"></div>
+    <div class="progress-dot" data-phase="1"></div>
+    <div class="progress-dot" data-phase="2"></div>
+    <div class="progress-dot" data-phase="3"></div>
+    <div class="progress-dot" data-phase="4"></div>
+    <div class="progress-dot" data-phase="5"></div>
+    <div class="progress-dot" data-phase="6"></div>
+  </div>
+
+  <!-- Skip Button -->
+  <button class="skip-btn" id="skipBtn" data-testid="skip-to-app" aria-label="تخطى التسجيل">تخطى ←</button>
+
+  <!-- ════════════════════════════════════════════
+       PHASE 0: SPLASH
+       ════════════════════════════════════════════ -->
+  <div class="phase active" id="phase0" data-phase="0">
+    <div class="splash-brand">
+      <div class="splash-arabic" id="splashArabic">شِعر بالعربي</div>
+      <div class="splash-line" id="splashLine"></div>
+      <div class="splash-english" id="splashEnglish">Poetry Bil-Araby</div>
+      <button class="splash-enter" id="splashEnter" aria-label="Enter">ادخل</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       PHASE 1: KINETIC ARABIC
+       ════════════════════════════════════════════ -->
+  <div class="phase" id="phase1" data-phase="1">
+    <div class="kinetic-arabic" id="kineticArabic"></div>
+    <div class="kinetic-sub" id="kineticSub">الشعر العربي بين يديك</div>
+    <div class="kinetic-tap" id="kineticTap">TAP ANYWHERE TO CONTINUE</div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       PHASE 2: KINETIC ENGLISH
+       ════════════════════════════════════════════ -->
+  <div class="phase" id="phase2" data-phase="2">
+    <div class="kinetic-english" id="kineticEnglish"></div>
+    <div class="kinetic-english-sub" id="kineticEnglishSub">Where words become worlds</div>
+    <button class="kinetic-continue" id="kineticContinue">التالي</button>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       PHASE 3: MOOD PICKER
+       ════════════════════════════════════════════ -->
+  <div class="phase scrollable" id="phase3" data-phase="3">
+    <div class="picker">
+      <div class="picker-label">STEP 1 OF 3 — MOOD</div>
+      <h2 class="picker-title">كيف تشعر الآن؟</h2>
+      <p class="picker-subtitle">اختر ما يناسب مزاجك</p>
+      <div class="mood-grid" id="moodGrid"></div>
+      <button class="picker-cta" id="moodCta">تخطى</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       PHASE 4: ERA PICKER (Helix)
+       ════════════════════════════════════════════ -->
+  <div class="phase scrollable" id="phase4" data-phase="4">
+    <div class="picker">
+      <div class="picker-label">STEP 2 OF 3 — ERA</div>
+      <h2 class="picker-title">أي عصر يستهويك؟</h2>
+      <p class="picker-subtitle">أدر الحلزون لاختيار الحقبة</p>
+      <div class="era-container" id="eraContainer">
+        <div class="helix-focus-bar"></div>
+        <div class="helix-drum" id="helixDrum"></div>
+        <div class="helix-hint" id="helixHint">
+          <span class="helix-hint-arrow">↕</span> scroll to explore
+        </div>
+        <div class="helix-interaction-layer" id="helixInteractionLayer"></div>
+      </div>
+      <button class="picker-cta" id="eraCta">تخطى</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       PHASE 5: TOPICS PICKER
+       ════════════════════════════════════════════ -->
+  <div class="phase scrollable" id="phase5" data-phase="5">
+    <div class="picker">
+      <div class="picker-label">STEP 3 OF 3 — TOPICS</div>
+      <h2 class="picker-title">ما الذي يستهويك؟</h2>
+      <p class="picker-subtitle">اختر المواضيع التي تحبها</p>
+      <div class="topics-container">
+        <div class="topics-constellation" id="topicsConstellation">
+          <svg id="topicsSvg" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+        <div class="topics-grid" id="topicsGrid"></div>
+      </div>
+      <button class="picker-cta" id="topicsCta">تخطى</button>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════
+       PHASE 6: RESULT
+       ════════════════════════════════════════════ -->
+  <div class="phase scrollable" id="phase6" data-phase="6">
+    <div class="result-card" id="resultCard">
+      <div style="text-align:center">
+        <div class="result-match" id="resultMatch">
+          <span class="result-match-dot"></span>
+          <span id="resultMatchText">لأنك تحب: الحب، الحكمة</span>
+        </div>
+      </div>
+      <div class="result-tags" id="resultTags"></div>
+      <div class="result-poem-title" id="resultTitle">مُعَلَّقَة امرئ القيس</div>
+      <div class="result-poet" id="resultPoet">امرؤ القيس · الجاهلية</div>
+      <div class="result-verses" id="resultVerses">
+        <p class="result-verse">قِفا نَبكِ مِن ذِكرى حَبيبٍ وَمَنزِلِ</p>
+        <div class="result-divider"></div>
+        <p class="result-verse">بِسِقطِ اللِّوى بَينَ الدَّخولِ فَحَومَلِ</p>
+        <div class="result-divider"></div>
+        <p class="result-verse">فَتوضِحَ فَالمِقراةِ لَم يَعفُ رَسمُها</p>
+        <div class="result-divider"></div>
+        <p class="result-verse">لِما نَسَجَتها مِن جَنوبٍ وَشَمأَلِ</p>
+      </div>
+      <div style="text-align:center">
+        <button class="result-cta" id="resultCta">استكشف المزيد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════
+       JAVASCRIPT
+       ════════════════════════════════════════════════════════ -->
+  <script>
+    /* ─── TAG DATA (from PR #441 taxonomy) ──────────────── */
+    const MOODS = [
+      { slug: 'joy',        name_ar: 'فرح',   name_en: 'Joy',        color: '#c5a059' },
+      { slug: 'melancholy', name_ar: 'كآبة',  name_en: 'Melancholy', color: '#1E3A6E' },
+      { slug: 'anger',      name_ar: 'غضب',   name_en: 'Anger',      color: '#8B2500' },
+      { slug: 'hope',       name_ar: 'أمل',   name_en: 'Hope',       color: '#4A7C59' },
+      { slug: 'despair',    name_ar: 'يأس',   name_en: 'Despair',    color: '#4A4A4A' },
+      { slug: 'wonder',     name_ar: 'دهشة',  name_en: 'Wonder',     color: '#6A4C93' },
+      { slug: 'pride',      name_ar: 'فخر',   name_en: 'Pride',      color: '#B8860B' },
+      { slug: 'loneliness', name_ar: 'وحدة',  name_en: 'Loneliness', color: '#2E3A5F' },
+      { slug: 'nostalgia',  name_ar: 'حنين',  name_en: 'Nostalgia',  color: '#8B7355' },
+    ];
+
+    const CLASSICAL_ERAS = [
+      { slug: 'pre-islamic',  name_ar: 'ما قبل الإسلام', name_en: 'Pre-Islamic',   color: '#92400e' },
+      { slug: 'early-islamic', name_ar: 'صدر الإسلام',    name_en: 'Early Islamic', color: '#166534' },
+      { slug: 'umayyad',      name_ar: 'أموي',            name_en: 'Umayyad',       color: '#1e3a5f' },
+      { slug: 'abbasid',      name_ar: 'عباسي',           name_en: 'Abbasid',       color: '#4a044e' },
+      { slug: 'andalusian',   name_ar: 'أندلسي',          name_en: 'Andalusian',    color: '#713f12' },
+      { slug: 'ottoman',      name_ar: 'عثماني',           name_en: 'Ottoman',       color: '#134e4a' },
+    ];
+
+    const MODERN_ERAS = [
+      { slug: 'modern',       name_ar: 'حديث',  name_en: 'Modern (1900–1970)', color: '#1e293b' },
+      { slug: 'contemporary', name_ar: 'معاصر', name_en: 'Contemporary',       color: '#0f172a' },
+    ];
+
+    const TOPICS = [
+      { slug: 'love',         name_ar: 'الحب',      name_en: 'Love',         color: '#e8647a' },
+      { slug: 'longing',      name_ar: 'الشوق',     name_en: 'Longing',      color: '#c084fc' },
+      { slug: 'grief',        name_ar: 'الحزن',     name_en: 'Grief',        color: '#94a3b8' },
+      { slug: 'nature',       name_ar: 'الطبيعة',   name_en: 'Nature',       color: '#4ade80' },
+      { slug: 'homeland',     name_ar: 'الوطن',     name_en: 'Homeland',     color: '#22c55e' },
+      { slug: 'spirituality', name_ar: 'الروحانية', name_en: 'Spirituality', color: '#818cf8' },
+      { slug: 'wisdom',       name_ar: 'الحكمة',    name_en: 'Wisdom',       color: '#38bdf8' },
+      { slug: 'freedom',      name_ar: 'الحرية',    name_en: 'Freedom',      color: '#f59e0b' },
+      { slug: 'war',          name_ar: 'الحرب',     name_en: 'War',          color: '#ef4444' },
+      { slug: 'sea',          name_ar: 'البحر',     name_en: 'Sea',          color: '#0ea5e9' },
+      { slug: 'wine',         name_ar: 'الخمر',     name_en: 'Wine',         color: '#a16207' },
+      { slug: 'praise',       name_ar: 'المديح',    name_en: 'Praise',       color: '#c5a059' },
+    ];
+
+    const TOPIC_POSITIONS = [
+      { x: 20, y: 15 }, { x: 50, y: 8 },  { x: 78, y: 18 },
+      { x: 10, y: 40 }, { x: 38, y: 32 }, { x: 65, y: 30 },
+      { x: 85, y: 45 }, { x: 25, y: 62 }, { x: 55, y: 58 },
+      { x: 15, y: 78 }, { x: 72, y: 72 }, { x: 42, y: 85 },
+    ];
+
+    /* Poem results mapped to topics */
+    const POEMS = {
+      love: { title: 'قصائد حب', poet: 'نزار قباني', era: 'معاصر',
+        verses: ['أُحِبُّكِ جِدّاً وأَعرِفُ أَنَّ الطَريقَ', 'إِلى المُستَحيلِ طَريقٌ طَويلُ', 'وَأَعرِفُ أَنَّكِ سِتُّ النِساءِ', 'وَلا شَيءَ في العِشقِ يُشبِهُ شَيّا'] },
+      wisdom: { title: 'حكمة المتنبي', poet: 'المتنبي', era: 'عباسي',
+        verses: ['عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ', 'وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ', 'وَتَعظُمُ في عَينِ الصَغيرِ صِغارُها', 'وَتَصغُرُ في عَينِ العَظيمِ العَظائِمُ'] },
+      homeland: { title: 'سجّل أنا عربي', poet: 'محمود درويش', era: 'معاصر',
+        verses: ['سَجِّل أَنا عَرَبِيّ', 'وَرَقَمُ بِطاقَتي خَمسونَ أَلف', 'وَأَطفالي ثَمانِيَة', 'وَتاسِعُهُم سَيَأتي بَعدَ صَيف'] },
+      nature: { title: 'أنشودة المطر', poet: 'بدر شاكر السيّاب', era: 'حديث',
+        verses: ['عَيناكِ غابَتا نَخيلٍ ساعَةَ السَحَر', 'أَو شُرفَتانِ راحَ يَنأى عَنهُما القَمَر', 'عَيناكِ حينَ تَبسِمانِ تُورِقُ الكُرومُ', 'وَتَرقُصُ الأَضواءُ كَالأَقمارِ في نَهَر'] },
+      default: { title: 'مُعَلَّقَة امرئ القيس', poet: 'امرؤ القيس', era: 'الجاهلية',
+        verses: ['قِفا نَبكِ مِن ذِكرى حَبيبٍ وَمَنزِلِ', 'بِسِقطِ اللِّوى بَينَ الدَّخولِ فَحَومَلِ', 'فَتوضِحَ فَالمِقراةِ لَم يَعفُ رَسمُها', 'لِما نَسَجَتها مِن جَنوبٍ وَشَمأَلِ'] },
+    };
+
+    /* ─── STATE ──────────────────────────────────────────── */
+    let currentPhase = 0;
+    const selections = { moods: [], eras: [], topics: [] };
+
+    /* ─── FILM GRAIN ─────────────────────────────────────── */
+    (function initGrain() {
+      const c = document.getElementById('grainCanvas');
+      const ctx = c.getContext('2d');
+      function resize() { c.width = window.innerWidth; c.height = window.innerHeight; }
+      resize();
+      window.addEventListener('resize', resize);
+
+      function draw() {
+        const d = ctx.createImageData(c.width, c.height);
+        const buf = d.data;
+        for (let i = 0; i < buf.length; i += 4) {
+          const v = Math.random() * 255;
+          buf[i] = buf[i + 1] = buf[i + 2] = v;
+          buf[i + 3] = 255;
+        }
+        ctx.putImageData(d, 0, 0);
+        requestAnimationFrame(draw);
+      }
+      draw();
+    })();
+
+    /* ─── NAVIGATION ─────────────────────────────────────── */
+    function goToPhase(n) {
+      const prev = document.getElementById('phase' + currentPhase);
+      const next = document.getElementById('phase' + n);
+      if (!prev || !next) return;
+
+      // GSAP transition
+      if (typeof gsap !== 'undefined') {
+        gsap.to(prev, {
+          opacity: 0,
+          duration: 0.5,
+          ease: 'power2.inOut',
+          onComplete: () => {
+            prev.classList.remove('active');
+            next.classList.add('active');
+            gsap.fromTo(next,
+              { opacity: 0 },
+              { opacity: 1, duration: 0.6, ease: 'power2.out',
+                onComplete: () => animatePhase(n)
+              }
+            );
+          }
+        });
+      } else {
+        // Fallback without GSAP
+        prev.classList.remove('active');
+        prev.style.opacity = '0';
+        next.classList.add('active');
+        next.style.opacity = '1';
+        animatePhase(n);
+      }
+
+      currentPhase = n;
+      updateProgressDots();
+    }
+
+    function updateProgressDots() {
+      const dots = document.querySelectorAll('.progress-dot');
+      const container = document.getElementById('progressDots');
+      container.classList.toggle('visible', currentPhase > 0);
+
+      dots.forEach((dot, i) => {
+        dot.classList.remove('active', 'done');
+        if (i === currentPhase) dot.classList.add('active');
+        else if (i < currentPhase) dot.classList.add('done');
+      });
+    }
+
+    function skipAll() {
+      goToPhase(6);
+      showResult();
+    }
+
+    /* ─── PHASE ANIMATIONS ───────────────────────────────── */
+    function animatePhase(n) {
+      if (typeof gsap === 'undefined') return;
+
+      switch (n) {
+        case 1: animateKineticArabic(); break;
+        case 2: animateKineticEnglish(); break;
+        case 3: animateMoodPicker(); break;
+        case 4: animateEraPicker(); break;
+        case 5: animateTopicsPicker(); break;
+        case 6: animateResult(); break;
+      }
+    }
+
+    function animateKineticArabic() {
+      gsap.to('.kinetic-arabic .letter', {
+        opacity: 1, y: 0, rotateX: 0,
+        duration: 0.8, ease: 'back.out(1.7)',
+        stagger: 0.08,
+      });
+      gsap.to('#kineticSub', { opacity: 1, duration: 0.6, delay: 0.8, ease: 'power2.out' });
+      gsap.to('#kineticTap', { opacity: 1, duration: 0.4, delay: 1.2, ease: 'power2.out' });
+    }
+
+    function animateKineticEnglish() {
+      gsap.to('.kinetic-english .letter', {
+        opacity: 1, y: 0,
+        duration: 0.5, ease: 'expo.out',
+        stagger: 0.06,
+      });
+      gsap.to('#kineticEnglishSub', { opacity: 1, duration: 0.6, delay: 0.5, ease: 'power2.out' });
+      gsap.to('#kineticContinue', { opacity: 1, y: 0, duration: 0.6, delay: 0.8, ease: 'expo.out' });
+    }
+
+    function animateMoodPicker() {
+      gsap.from('.mood-cell', {
+        opacity: 0, y: 20, scale: 0.95,
+        duration: 0.4, ease: 'expo.out',
+        stagger: { amount: 0.3, grid: [3, 3], from: 'start' },
+      });
+    }
+
+    function animateEraPicker() {
+      gsap.fromTo('#helixDrum', { opacity: 0 }, { opacity: 1, duration: 0.8, ease: 'expo.out' });
+      gsap.from('.era-card', {
+        opacity: 0, scale: 0.8,
+        duration: 0.5, ease: 'back.out(1.4)',
+        stagger: 0.07,
+      });
+      gsap.from('.helix-hint', { opacity: 0, y: 10, duration: 0.5, delay: 0.6, ease: 'expo.out' });
+    }
+
+    function animateTopicsPicker() {
+      gsap.from('.topic-node, .topics-grid .topic-cell', {
+        opacity: 0, scale: 0.5,
+        duration: 0.5, ease: 'back.out(2)',
+        stagger: { amount: 0.5, from: 'random' },
+      });
+    }
+
+    function animateResult() {
+      const tl = gsap.timeline();
+      tl.from('#resultMatch', { opacity: 0, y: -10, duration: 0.5, ease: 'expo.out' }, 0);
+      tl.from('.result-tag', { opacity: 0, scale: 0.8, duration: 0.3, stagger: 0.05, ease: 'back.out(2)' }, 0.2);
+      tl.from('#resultTitle', { opacity: 0, y: 20, duration: 0.6, ease: 'expo.out' }, 0.4);
+      tl.from('#resultPoet', { opacity: 0, duration: 0.4, ease: 'power2.out' }, 0.6);
+      tl.from('.result-verse', { opacity: 0, y: 15, duration: 0.5, stagger: 0.1, ease: 'expo.out' }, 0.7);
+      tl.from('.result-divider', { scaleX: 0, duration: 0.4, stagger: 0.1, ease: 'expo.out' }, 0.8);
+      tl.from('#resultCta', { opacity: 0, y: 20, duration: 0.5, ease: 'expo.out' }, 1.2);
+    }
+
+    /* ─── BUILD PHASE 1: KINETIC ARABIC ──────────────────── */
+    (function buildKineticArabic() {
+      const letters = 'بالعربي'.split('');
+      const container = document.getElementById('kineticArabic');
+      letters.forEach(l => {
+        const span = document.createElement('span');
+        span.className = 'letter';
+        span.textContent = l;
+        container.appendChild(span);
+      });
+    })();
+
+    /* ─── BUILD PHASE 2: KINETIC ENGLISH ─────────────────── */
+    (function buildKineticEnglish() {
+      const letters = 'poetry'.split('');
+      const container = document.getElementById('kineticEnglish');
+      letters.forEach(l => {
+        const span = document.createElement('span');
+        span.className = 'letter';
+        span.textContent = l;
+        container.appendChild(span);
+      });
+    })();
+
+    /* ─── BUILD PHASE 3: MOOD GRID ───────────────────────── */
+    (function buildMoodGrid() {
+      const grid = document.getElementById('moodGrid');
+      MOODS.forEach(mood => {
+        const cell = document.createElement('div');
+        cell.className = 'mood-cell';
+        cell.style.setProperty('--cell-color', mood.color + '40');
+        cell.dataset.slug = mood.slug;
+        cell.innerHTML = `
+          <div class="mood-ar">${mood.name_ar}</div>
+          <div class="mood-en">${mood.name_en}</div>
+          <div class="mood-dot" style="background:${mood.color}"></div>
+        `;
+        cell.addEventListener('click', () => toggleSelection('moods', mood.slug, cell, '#moodCta'));
+        grid.appendChild(cell);
+      });
+    })();
+
+    /* ─── BUILD PHASE 4: ERA HELIX ─────────────────────────── */
+    const ALL_ERAS = [...CLASSICAL_ERAS, ...MODERN_ERAS];
+    const ERA_COUNT = ALL_ERAS.length; // 8
+    const HELIX_RADIUS = 220;       // cylinder radius in px
+    const HELIX_ANGLE_STEP = 360 / ERA_COUNT; // 45° per item
+    const HELIX_DRAG_SENSITIVITY = 80; // px of drag per angle step
+    const HELIX_FOCUS_THRESHOLD = 0.6; // fraction of angle step for in-focus
+    const HELIX_OPACITY_RANGE = 120;   // degrees over which opacity fades to 0
+    let helixRotation = 0;          // current rotateX in degrees
+    let helixInteracted = false;
+
+    (function buildHelixEras() {
+      const drum = document.getElementById('helixDrum');
+
+      ALL_ERAS.forEach((era, i) => {
+        const angle = i * HELIX_ANGLE_STEP;
+        const card = document.createElement('div');
+        card.className = 'era-card';
+        card.dataset.slug = era.slug;
+        card.dataset.index = i;
+
+        // Position on the cylinder surface
+        card.style.transform =
+          `rotateX(${angle}deg) translateZ(${HELIX_RADIUS}px)`;
+
+        // Classical / Modern badge on first of each group
+        let badge = '';
+        if (i === 0) badge = '<span class="era-section-badge">CLASSICAL</span>';
+        if (i === CLASSICAL_ERAS.length) badge = '<span class="era-section-badge">MODERN</span>';
+
+        card.innerHTML = `
+          ${badge}
+          <div class="era-dot"></div>
+          <div class="era-text">
+            <div class="era-ar">${era.name_ar}</div>
+            <div class="era-en">${era.name_en}</div>
+          </div>
+        `;
+        card.addEventListener('click', () => {
+          toggleSelection('eras', era.slug, card, '#eraCta');
+        });
+        drum.appendChild(card);
+      });
+
+      updateHelixFocus();
+    })();
+
+    /* Helix rotation driven by scroll/wheel/touch on interaction layer */
+    const helixLayer = document.getElementById('helixInteractionLayer');
+
+    function updateHelixFocus() {
+      const drum = document.getElementById('helixDrum');
+      if (!drum) return;
+
+      if (typeof gsap !== 'undefined') {
+        gsap.to(drum, {
+          rotateX: -helixRotation,
+          duration: 0.6,
+          ease: 'expo.out',
+          overwrite: true,
+        });
+      } else {
+        drum.style.transform =
+          `translate(-50%, -50%) rotateX(${-helixRotation}deg)`;
+      }
+
+      // Determine which card is closest to front (0°)
+      const cards = drum.querySelectorAll('.era-card');
+      cards.forEach(card => {
+        const idx = parseInt(card.dataset.index);
+        const cardAngle = idx * HELIX_ANGLE_STEP;
+        let delta = ((helixRotation - cardAngle) % 360 + 540) % 360 - 180;
+        const absDelta = Math.abs(delta);
+
+        card.classList.toggle('in-focus', absDelta < HELIX_ANGLE_STEP * HELIX_FOCUS_THRESHOLD);
+
+        // Opacity falloff for cards not near front
+        const opacity = Math.max(0, 1 - absDelta / HELIX_OPACITY_RANGE);
+        card.style.opacity = opacity;
+      });
+    }
+
+    function snapHelixToNearest() {
+      const snapped = Math.round(helixRotation / HELIX_ANGLE_STEP) * HELIX_ANGLE_STEP;
+      // Clamp to valid range
+      helixRotation = Math.max(0, Math.min(snapped, (ERA_COUNT - 1) * HELIX_ANGLE_STEP));
+      updateHelixFocus();
+    }
+
+    function getFocusedCard() {
+      return document.querySelector('.era-card.in-focus');
+    }
+
+    function dismissHint() {
+      if (!helixInteracted) {
+        helixInteracted = true;
+        document.getElementById('helixHint')?.classList.add('hidden');
+      }
+    }
+
+    /* Wheel on interaction layer */
+    helixLayer.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      dismissHint();
+      helixRotation += e.deltaY > 0 ? HELIX_ANGLE_STEP : -HELIX_ANGLE_STEP;
+      helixRotation = Math.max(0, Math.min(helixRotation, (ERA_COUNT - 1) * HELIX_ANGLE_STEP));
+      updateHelixFocus();
+    }, { passive: false });
+
+    /* Touch drag on interaction layer */
+    (function initHelixTouch() {
+      let startY = 0;
+      let startRot = 0;
+      let dragging = false;
+      let moved = false;
+
+      helixLayer.addEventListener('touchstart', (e) => {
+        dragging = true;
+        moved = false;
+        startY = e.touches[0].clientY;
+        startRot = helixRotation;
+        dismissHint();
+      }, { passive: true });
+
+      helixLayer.addEventListener('touchmove', (e) => {
+        if (!dragging) return;
+        e.preventDefault();
+        moved = true;
+        const dy = startY - e.touches[0].clientY;
+        helixRotation = startRot + (dy / HELIX_DRAG_SENSITIVITY) * HELIX_ANGLE_STEP;
+        helixRotation = Math.max(0, Math.min(helixRotation, (ERA_COUNT - 1) * HELIX_ANGLE_STEP));
+        updateHelixFocus();
+      }, { passive: false });
+
+      helixLayer.addEventListener('touchend', () => {
+        dragging = false;
+        snapHelixToNearest();
+        // Tap (no drag) = click the focused card
+        if (!moved) {
+          const card = getFocusedCard();
+          if (card) card.click();
+        }
+      });
+    })();
+
+    /* Mouse drag on interaction layer */
+    (function initHelixMouse() {
+      let startY = 0;
+      let startRot = 0;
+      let dragging = false;
+      let moved = false;
+
+      helixLayer.addEventListener('mousedown', (e) => {
+        dragging = true;
+        moved = false;
+        startY = e.clientY;
+        startRot = helixRotation;
+        dismissHint();
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!dragging) return;
+        moved = true;
+        const dy = startY - e.clientY;
+        helixRotation = startRot + (dy / HELIX_DRAG_SENSITIVITY) * HELIX_ANGLE_STEP;
+        helixRotation = Math.max(0, Math.min(helixRotation, (ERA_COUNT - 1) * HELIX_ANGLE_STEP));
+        updateHelixFocus();
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (dragging) {
+          dragging = false;
+          snapHelixToNearest();
+          // Simple click (no drag) = click the focused card
+          if (!moved) {
+            const card = getFocusedCard();
+            if (card) card.click();
+          }
+        }
+      });
+    })();
+
+    /* ─── BUILD PHASE 5: TOPICS ──────────────────────────── */
+    (function buildTopics() {
+      // Constellation (desktop)
+      const constellation = document.getElementById('topicsConstellation');
+      const svg = document.getElementById('topicsSvg');
+
+      // Draw connection lines
+      const connections = [
+        [0, 1], [1, 2], [0, 3], [3, 4], [4, 5], [5, 6],
+        [3, 7], [7, 8], [8, 6], [9, 7], [10, 6], [11, 8],
+        [1, 5], [4, 1], [9, 3],
+      ];
+
+      connections.forEach(([a, b]) => {
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', TOPIC_POSITIONS[a].x + '%');
+        line.setAttribute('y1', TOPIC_POSITIONS[a].y + '%');
+        line.setAttribute('x2', TOPIC_POSITIONS[b].x + '%');
+        line.setAttribute('y2', TOPIC_POSITIONS[b].y + '%');
+        line.setAttribute('stroke', 'rgba(255,255,255,0.04)');
+        line.setAttribute('stroke-width', '1');
+        line.classList.add('topic-line');
+        line.dataset.from = a;
+        line.dataset.to = b;
+        svg.appendChild(line);
+      });
+
+      // Place nodes
+      TOPICS.forEach((topic, i) => {
+        const pos = TOPIC_POSITIONS[i];
+        const node = document.createElement('div');
+        node.className = 'topic-node';
+        node.style.left = pos.x + '%';
+        node.style.top = pos.y + '%';
+        node.style.setProperty('--node-color', topic.color);
+        node.dataset.slug = topic.slug;
+        node.dataset.index = i;
+        node.innerHTML = `
+          <div class="topic-ring">
+            <div class="topic-ring-inner" style="background:${topic.color};color:${topic.color}"></div>
+          </div>
+          <div class="topic-ar">${topic.name_ar}</div>
+          <div class="topic-en">${topic.name_en}</div>
+        `;
+        node.addEventListener('click', () => {
+          toggleSelection('topics', topic.slug, node, '#topicsCta');
+          updateTopicLines();
+        });
+        constellation.appendChild(node);
+      });
+
+      // Grid (mobile)
+      const grid = document.getElementById('topicsGrid');
+      TOPICS.forEach(topic => {
+        const cell = document.createElement('div');
+        cell.className = 'topic-cell';
+        cell.dataset.slug = topic.slug;
+        cell.innerHTML = `
+          <div class="topic-ar">${topic.name_ar}</div>
+          <div class="topic-en">${topic.name_en}</div>
+        `;
+        cell.addEventListener('click', () => {
+          toggleSelection('topics', topic.slug, cell, '#topicsCta');
+          // Sync constellation state
+          const constellationNode = constellation.querySelector(`[data-slug="${topic.slug}"]`);
+          if (constellationNode) constellationNode.classList.toggle('selected', cell.classList.contains('selected'));
+          updateTopicLines();
+        });
+        grid.appendChild(cell);
+      });
+    })();
+
+    function updateTopicLines() {
+      document.querySelectorAll('.topic-line').forEach(line => {
+        const fromIdx = parseInt(line.dataset.from);
+        const toIdx = parseInt(line.dataset.to);
+        const fromSlug = TOPICS[fromIdx].slug;
+        const toSlug = TOPICS[toIdx].slug;
+        const fromSelected = selections.topics.includes(fromSlug);
+        const toSelected = selections.topics.includes(toSlug);
+
+        if (fromSelected && toSelected) {
+          line.setAttribute('stroke', 'rgba(197, 160, 89, 0.4)');
+          line.setAttribute('stroke-width', '1.5');
+        } else if (fromSelected || toSelected) {
+          line.setAttribute('stroke', 'rgba(197, 160, 89, 0.15)');
+          line.setAttribute('stroke-width', '1');
+        } else {
+          line.setAttribute('stroke', 'rgba(255,255,255,0.04)');
+          line.setAttribute('stroke-width', '1');
+        }
+      });
+    }
+
+    /* ─── SELECTION LOGIC ────────────────────────────────── */
+    function toggleSelection(type, slug, el, ctaSelector) {
+      const arr = selections[type];
+      const idx = arr.indexOf(slug);
+
+      if (idx >= 0) {
+        arr.splice(idx, 1);
+        el.classList.remove('selected');
+      } else {
+        arr.push(slug);
+        el.classList.add('selected');
+      }
+
+      // Update CTA text
+      const cta = document.querySelector(ctaSelector);
+      if (cta) {
+        const hasAny = arr.length > 0;
+        cta.classList.toggle('has-selection', hasAny);
+        if (type === 'moods') cta.textContent = hasAny ? 'التالي' : 'تخطى';
+        if (type === 'eras') cta.textContent = hasAny ? 'التالي' : 'تخطى';
+        if (type === 'topics') cta.textContent = hasAny ? 'أرني شعرًا' : 'تخطى';
+      }
+    }
+
+    /* ─── SHOW RESULT ────────────────────────────────────── */
+    function showResult() {
+      const allTags = [...selections.moods, ...selections.eras, ...selections.topics];
+
+      // Pick a poem based on first topic match, or default
+      const matchedTopic = selections.topics.find(t => POEMS[t]);
+      const poem = POEMS[matchedTopic] || POEMS.default;
+
+      // Match indicator
+      const matchText = document.getElementById('resultMatchText');
+      if (selections.topics.length > 0) {
+        const topicNames = selections.topics.map(slug => {
+          const t = TOPICS.find(t => t.slug === slug);
+          return t ? t.name_ar : slug;
+        });
+        matchText.textContent = 'لأنك تحب: ' + topicNames.join('، ');
+      } else {
+        matchText.textContent = 'قصيدة عشوائية';
+      }
+
+      // Tags display
+      const tagsContainer = document.getElementById('resultTags');
+      tagsContainer.innerHTML = '';
+      allTags.forEach(slug => {
+        const allData = [...MOODS, ...CLASSICAL_ERAS, ...MODERN_ERAS, ...TOPICS];
+        const tag = allData.find(t => t.slug === slug);
+        if (!tag) return;
+        const el = document.createElement('span');
+        el.className = 'result-tag';
+        el.style.borderColor = tag.color + '60';
+        el.style.color = tag.color;
+        el.style.background = tag.color + '15';
+        el.textContent = tag.name_ar;
+        tagsContainer.appendChild(el);
+      });
+
+      // Poem display
+      document.getElementById('resultTitle').textContent = poem.title;
+      document.getElementById('resultPoet').textContent = poem.poet + ' · ' + poem.era;
+
+      const versesContainer = document.getElementById('resultVerses');
+      versesContainer.innerHTML = '';
+      poem.verses.forEach((verse, i) => {
+        const p = document.createElement('p');
+        p.className = 'result-verse';
+        p.textContent = verse;
+        versesContainer.appendChild(p);
+        if (i < poem.verses.length - 1) {
+          const div = document.createElement('div');
+          div.className = 'result-divider';
+          versesContainer.appendChild(div);
+        }
+      });
+    }
+
+    /* ─── SPLASH ANIMATION ───────────────────────────────── */
+    function initSplash() {
+      if (typeof gsap !== 'undefined') {
+        const tl = gsap.timeline();
+        tl.to('#splashArabic', {
+          opacity: 1,
+          clipPath: 'inset(0 0% 0 0)',
+          duration: 1.2,
+          ease: 'expo.inOut',
+        }, 0.5);
+        tl.to('#splashLine', { width: '100px', duration: 0.6, ease: 'expo.out' }, 1.2);
+        tl.to('#splashEnglish', { opacity: 1, duration: 0.6, ease: 'power2.out' }, 1.5);
+        tl.to('#splashEnter', { opacity: 1, y: 0, duration: 0.6, ease: 'expo.out' }, 2);
+      } else {
+        // No GSAP fallback
+        document.getElementById('splashArabic').style.opacity = '1';
+        document.getElementById('splashArabic').style.clipPath = 'inset(0 0% 0 0)';
+        document.getElementById('splashLine').style.width = '100px';
+        document.getElementById('splashEnglish').style.opacity = '1';
+        const enter = document.getElementById('splashEnter');
+        enter.style.opacity = '1';
+        enter.style.transform = 'translateY(0)';
+      }
+    }
+
+    /* ─── EVENT LISTENERS ────────────────────────────────── */
+    // Splash enter
+    document.getElementById('splashEnter').addEventListener('click', () => goToPhase(1));
+
+    // Phase 1: tap anywhere
+    document.getElementById('phase1').addEventListener('click', () => goToPhase(2));
+
+    // Phase 2: continue
+    document.getElementById('kineticContinue').addEventListener('click', (e) => {
+      e.stopPropagation();
+      goToPhase(3);
+    });
+
+    // Mood CTA
+    document.getElementById('moodCta').addEventListener('click', () => goToPhase(4));
+
+    // Era CTA
+    document.getElementById('eraCta').addEventListener('click', () => goToPhase(5));
+
+    // Topics CTA
+    document.getElementById('topicsCta').addEventListener('click', () => {
+      showResult();
+      goToPhase(6);
+    });
+
+    // Result CTA — restart
+    document.getElementById('resultCta').addEventListener('click', () => {
+      // Reset state
+      selections.moods = [];
+      selections.eras = [];
+      selections.topics = [];
+      document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+      document.querySelectorAll('.picker-cta').forEach(btn => {
+        btn.classList.remove('has-selection');
+      });
+      document.getElementById('moodCta').textContent = 'تخطى';
+      document.getElementById('eraCta').textContent = 'تخطى';
+      document.getElementById('topicsCta').textContent = 'تخطى';
+      helixRotation = 0;
+      helixInteracted = false;
+      document.getElementById('helixHint')?.classList.remove('hidden');
+      updateHelixFocus();
+      updateTopicLines();
+      goToPhase(0);
+      setTimeout(initSplash, 600);
+    });
+
+    // Skip
+    document.getElementById('skipBtn').addEventListener('click', skipAll);
+
+    /* ─── INIT ───────────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', () => {
+      initSplash();
+      updateProgressDots();
+    });
+  </script>
+
+</body>
+</html>

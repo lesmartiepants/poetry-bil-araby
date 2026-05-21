@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Main App Hierarchy — Design Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --bg: #0c0c0e;
+      --surface: #131316;
+      --surface-raised: #1a1a1e;
+      --border: rgba(255, 255, 255, 0.06);
+      --border-gold: rgba(201, 168, 76, 0.2);
+      --text: #e7e5e4;
+      --muted: #a8a29e;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Forum', serif;
+      padding: 48px 40px;
+      max-width: 1440px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Typography ───────────────────────────────────────────── */
+    h1 {
+      font-family: 'Forum', serif;
+      font-size: 2.5rem;
+      color: var(--gold);
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    h2 {
+      font-family: 'Forum', serif;
+      font-size: 1.65rem;
+      color: var(--gold);
+      font-weight: 400;
+      margin-top: 3.5rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h3 {
+      font-family: 'Forum', serif;
+      font-size: 1.15rem;
+      color: #a8dadc;
+      font-weight: 400;
+      margin-top: 1.75rem;
+    }
+
+    p { margin-top: 0.6rem; }
+
+    ul { margin-top: 0.6rem; padding-left: 1.5rem; }
+    li { margin: 0.45rem 0; }
+
+    /* ── Issues box ───────────────────────────────────────────── */
+    .issues-box {
+      background: rgba(239, 68, 68, 0.06);
+      border-left: 3px solid #ef4444;
+      padding: 1.25rem 1.5rem;
+      margin-top: 1.5rem;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .issues-box h3 {
+      color: #fca5a5;
+      margin-top: 0;
+    }
+
+    .issue-tag {
+      display: inline-block;
+      background: rgba(239, 68, 68, 0.12);
+      color: #fca5a5;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 0.15rem 0.45rem;
+      border-radius: 3px;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    }
+
+    /* ── Option cards ─────────────────────────────────────────── */
+    .option-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2rem;
+      margin-top: 2rem;
+    }
+
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .option-header h2 {
+      margin-top: 0;
+      border: none;
+      padding: 0;
+      font-size: 1.4rem;
+    }
+
+    .option-number {
+      display: inline-block;
+      background: rgba(201, 168, 76, 0.12);
+      border: 1px solid var(--border-gold);
+      color: var(--gold);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      margin-right: 0.6rem;
+      vertical-align: middle;
+    }
+
+    .open-preview-btn {
+      display: inline-block;
+      background: var(--gold);
+      color: #0c0c0e;
+      font-family: 'Forum', serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      padding: 0.6rem 1.2rem;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: background 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .open-preview-btn:hover {
+      background: #d4af6a;
+      transform: scale(1.03);
+    }
+
+    .option-body {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-top: 1.5rem;
+    }
+
+    .option-preview-frame {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #0c0c0e;
+      min-height: 340px;
+      position: relative;
+    }
+
+    .option-preview-frame iframe {
+      width: 100%;
+      height: 340px;
+      border: none;
+      display: block;
+      pointer-events: none;
+    }
+
+    .preview-label {
+      position: absolute;
+      bottom: 8px; left: 8px;
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      opacity: 0.6;
+    }
+
+    .rationale h3 { margin-top: 0; }
+
+    .rationale h4 {
+      font-family: 'Forum', serif;
+      font-size: 0.95rem;
+      color: var(--gold);
+      font-weight: 400;
+      margin-top: 1.25rem;
+    }
+
+    .change-tag {
+      display: inline-block;
+      background: rgba(134, 239, 172, 0.1);
+      color: #86efac;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 0.15rem 0.4rem;
+      border-radius: 3px;
+      margin-right: 0.4rem;
+      vertical-align: middle;
+    }
+
+    /* ── Comparison table ─────────────────────────────────────── */
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+      background: var(--surface);
+      border-radius: 10px;
+      overflow: hidden;
+      font-size: 0.9rem;
+    }
+
+    .comparison-table th {
+      background: var(--surface-raised);
+      padding: 0.75rem 1rem;
+      text-align: left;
+      color: var(--gold);
+      font-weight: 400;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .comparison-table td {
+      padding: 0.65rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .comparison-table tr:last-child td { border-bottom: none; }
+
+    .comparison-table td:first-child {
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .check { color: #86efac; font-size: 1rem; }
+    .cross { color: #f87171; font-size: 1rem; }
+    .partial { color: #fbbf24; font-size: 1rem; }
+
+    /* ── Recommendations box ──────────────────────────────────── */
+    .reco-box {
+      background: rgba(134, 239, 172, 0.05);
+      border-left: 3px solid #86efac;
+      padding: 1.25rem 1.5rem;
+      margin-top: 1.75rem;
+      border-radius: 0 6px 6px 0;
+    }
+
+    .reco-box h3 {
+      color: #86efac;
+      margin-top: 0;
+    }
+
+    .reco-item {
+      margin-top: 0.7rem;
+    }
+
+    .reco-item strong {
+      color: var(--gold);
+    }
+
+    /* ── Live previews section ────────────────────────────────── */
+    .previews-section { margin-top: 5rem; }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .preview-container {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      background: var(--surface);
+    }
+
+    .preview-container-header {
+      padding: 0.75rem 1rem;
+      background: var(--surface-raised);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .preview-container-header h3 {
+      font-size: 0.9rem;
+      color: var(--text);
+      margin-top: 0;
+    }
+
+    .preview-container iframe {
+      width: 100%;
+      height: 560px;
+      border: none;
+      display: block;
+    }
+
+    /* ── Next steps ───────────────────────────────────────────── */
+    .next-steps {
+      margin-top: 5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+    }
+
+    .next-steps p {
+      font-size: 1.15rem;
+      color: var(--muted);
+    }
+
+    .next-steps strong {
+      color: var(--text);
+    }
+
+    .file-path {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: var(--muted);
+      background: rgba(255,255,255,0.05);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    /* ── Responsive ───────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      body { padding: 28px 20px; }
+      .option-body { grid-template-columns: 1fr; }
+      .preview-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 600px) {
+      h1 { font-size: 1.8rem; }
+      .option-header { flex-direction: column; }
+    }
+
+    /* ── Metric pills ─────────────────────────────────────────── */
+    .metric-pill {
+      display: inline-block;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      margin-left: 0.4rem;
+      vertical-align: middle;
+    }
+    .metric-before {
+      background: rgba(248, 113, 113, 0.1);
+      color: #f87171;
+      border: 1px solid rgba(248, 113, 113, 0.2);
+    }
+    .metric-after {
+      background: rgba(134, 239, 172, 0.1);
+      color: #86efac;
+      border: 1px solid rgba(134, 239, 172, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ──────────────────────────────────────────────── -->
+  <h1>Main App Hierarchy</h1>
+  <p class="subtitle">Design Review — Three visual alternatives to fix UI/UX hierarchy issues</p>
+
+
+  <!-- ── Identified Issues ───────────────────────────────────── -->
+  <h2>Identified Issues</h2>
+
+  <div class="issues-box">
+    <h3>6 Problems Found</h3>
+    <ul>
+      <li>
+        <span class="issue-tag">Hierarchy</span>
+        Brand header renders at <code>clamp(3rem, 6vw, 4.5rem)</code> — 48–72px — while the poet name (the primary content ID) is at <code>clamp(1.1rem, 3vw, 1.6rem)</code>. The app identity is louder than the content.
+      </li>
+      <li>
+        <span class="issue-tag">Contrast</span>
+        English translations at <code>opacity-40</code> produce approximately 3.5:1 contrast on #0c0c0e — below WCAG AA (4.5:1 minimum for body text).
+      </li>
+      <li>
+        <span class="issue-tag">Motion</span>
+        <code>slide-in-from-bottom-8 duration-1000</code> on every poem load is a full-second, 32px-travel slide — aggressive and distracting. Layout shifts visible as height animates.
+      </li>
+      <li>
+        <span class="issue-tag">Motion</span>
+        Header scroll collapse uses <code>scale()</code> transform with mismatched durations on transform (0.4s) vs opacity (0.3s), producing a clunky, non-synchronized shrink effect.
+      </li>
+      <li>
+        <span class="issue-tag">Clutter</span>
+        SVG corner frame brackets (8 line elements + 4 circle dots in a 550×120 viewBox) add visual noise around the poem title with no semantic meaning.
+      </li>
+      <li>
+        <span class="issue-tag">Spacing</span>
+        Verse gap of <code>gap-5</code> (1.25rem) is tight for poetry — reading rhythm requires more breathing room between stanzas.
+      </li>
+    </ul>
+  </div>
+
+
+  <!-- ── Option 1 ────────────────────────────────────────────── -->
+  <div class="option-card">
+    <div class="option-header">
+      <h2><span class="option-number">Option 1</span> Refined Current</h2>
+      <a href="previews/option-1-refined-current.html" class="open-preview-btn" target="_blank">Open Full Preview →</a>
+    </div>
+
+    <div class="option-body">
+      <div class="option-preview-frame">
+        <iframe src="previews/option-1-refined-current.html" title="Option 1 preview" loading="lazy"></iframe>
+        <span class="preview-label">Live preview — hover to interact</span>
+      </div>
+
+      <div class="rationale">
+        <h3>Design Direction</h3>
+        <p>Keeps the dark mystical aesthetic intact. Corrects every broken ratio without changing the fundamental visual language. The safest migration path.</p>
+
+        <h4>Key Changes</h4>
+        <ul>
+          <li>
+            Brand header: <span class="metric-pill metric-before">clamp(3rem, 6vw, 4.5rem)</span> <span class="metric-pill metric-after">1.2rem static</span> — shrunk ~60%, still centered
+          </li>
+          <li>
+            Poet name: <span class="metric-pill metric-before">clamp(1.1rem, 3vw, 1.6rem)</span> <span class="metric-pill metric-after">clamp(1.8rem, 4vw, 2.5rem)</span> — promoted, gold, bold
+          </li>
+          <li>
+            Poem title: <span class="metric-pill metric-before">clamp(1.3rem, 3.5vw, 2rem)</span> <span class="metric-pill metric-after">clamp(1.5rem, 3vw, 2rem)</span> — cleaner range
+          </li>
+          <li>
+            SVG frame brackets <span class="metric-pill metric-before">removed</span> — replaced with a 60px gold <code>&lt;hr&gt;</code> at opacity 0.4
+          </li>
+          <li>
+            English translations: <span class="metric-pill metric-before">opacity 0.4</span> <span class="metric-pill metric-after">opacity 0.6</span> — WCAG AA compliant
+          </li>
+          <li>
+            Verse entry: <span class="metric-pill metric-before">slide-in-from-bottom-8 1s</span> <span class="metric-pill metric-after">fadeIn 0.6s ease-out</span>
+          </li>
+          <li>
+            Verse gap: <span class="metric-pill metric-before">gap-5 (1.25rem)</span> <span class="metric-pill metric-after">2.5rem</span>
+          </li>
+          <li>
+            Verses: <span class="metric-pill metric-before">clamp(1.25rem, 2vw, 1.5rem)</span> <span class="metric-pill metric-after">clamp(1.4rem, 2.5vw, 1.8rem)</span> + leading 2.4
+          </li>
+        </ul>
+
+        <h4>Best For</h4>
+        <p>Teams wanting minimal risk migration. All six issues resolved while preserving existing visual identity.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── Option 2 ────────────────────────────────────────────── -->
+  <div class="option-card">
+    <div class="option-header">
+      <h2><span class="option-number">Option 2</span> Poet-First Layout</h2>
+      <a href="previews/option-2-poet-first.html" class="open-preview-btn" target="_blank">Open Full Preview →</a>
+    </div>
+
+    <div class="option-body">
+      <div class="option-preview-frame">
+        <iframe src="previews/option-2-poet-first.html" title="Option 2 preview" loading="lazy"></iframe>
+        <span class="preview-label">Live preview — hover to interact</span>
+      </div>
+
+      <div class="rationale">
+        <h3>Design Direction</h3>
+        <p>Radically rebalances the information architecture. Brand becomes an ambient fixture; the poet becomes the true protagonist of the UI. Strong editorial character — closest to how literary publications present poetry.</p>
+
+        <h4>Key Changes</h4>
+        <ul>
+          <li>
+            Brand: <span class="metric-pill metric-before">48–72px centered</span> <span class="metric-pill metric-after">14px top-left corner, 50% opacity</span> — brand stays, doesn't compete
+          </li>
+          <li>
+            Poet name: <span class="metric-pill metric-after">clamp(2rem, 5vw, 3rem)</span> — dominant visual anchor, gold glow
+          </li>
+          <li>
+            Poem title: <span class="metric-pill metric-after">clamp(1.4rem, 3vw, 1.8rem)</span> beneath poet, clearly secondary
+          </li>
+          <li>
+            Verse entry: <span class="metric-pill metric-after">staggered fadeUp, 150ms per verse</span> — builds narrative tension on load
+          </li>
+          <li>
+            Verse gap: <span class="metric-pill metric-after">3rem</span> — generous stanza breathing room
+          </li>
+          <li>
+            No SVG frame, no center header chrome
+          </li>
+          <li>
+            Translations: <span class="metric-pill metric-after">opacity 0.6</span> — WCAG AA pass
+          </li>
+        </ul>
+
+        <h4>Best For</h4>
+        <p>Maximum content hierarchy clarity. Users who come for specific poets. Most distinctive design direction — strongest editorial statement.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── Option 3 ────────────────────────────────────────────── -->
+  <div class="option-card">
+    <div class="option-header">
+      <h2><span class="option-number">Option 3</span> Ambient / Full Immersion</h2>
+      <a href="previews/option-3-ambient-header.html" class="open-preview-btn" target="_blank">Open Full Preview →</a>
+    </div>
+
+    <div class="option-body">
+      <div class="option-preview-frame">
+        <iframe src="previews/option-3-ambient-header.html" title="Option 3 preview" loading="lazy"></iframe>
+        <span class="preview-label">Live preview — hover to interact</span>
+      </div>
+
+      <div class="rationale">
+        <h3>Design Direction</h3>
+        <p>Zero top chrome. Brand dissolves into ambient background. The poem and its poet are the entire UI. Reading-app feeling — closer to Instapaper or iBooks than a social platform. Maximum focus.</p>
+
+        <h4>Key Changes</h4>
+        <ul>
+          <li>
+            Top header: <span class="metric-pill metric-before">fixed 64px header</span> <span class="metric-pill metric-after">removed entirely</span>
+          </li>
+          <li>
+            Brand: <span class="metric-pill metric-after">11px, 30% opacity, bottom-left fixed</span> — exists but whispers
+          </li>
+          <li>
+            Poet name: <span class="metric-pill metric-after">true &lt;h1&gt;, clamp(2.2rem, 5vw, 3.2rem)</span> — owns the full viewport top
+          </li>
+          <li>
+            Separator: <span class="metric-pill metric-after">4px dot, 25% opacity</span> — minimal to the point of disappearing
+          </li>
+          <li>
+            Verse entry: <span class="metric-pill metric-after">fadeUp 8px over 0.5s, staggered</span>
+          </li>
+          <li>
+            Translations: <span class="metric-pill metric-after">opacity 0.6</span> — WCAG AA pass
+          </li>
+          <li>
+            Control bar border: <span class="metric-pill metric-after">rgba(255,255,255,0.05)</span> — barely there
+          </li>
+        </ul>
+
+        <h4>Best For</h4>
+        <p>Deep reading sessions. Mobile-first users. Audiences who treat the app as a contemplative, literary experience rather than a discovery platform.</p>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── Comparison Table ─────────────────────────────────────── -->
+  <h2>Comparison Table</h2>
+
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th style="width: 24%">Criterion</th>
+        <th>Current</th>
+        <th>Option 1 — Refined</th>
+        <th>Option 2 — Poet-First</th>
+        <th>Option 3 — Ambient</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>WCAG AA contrast (translations)</td>
+        <td><span class="cross">✗</span> ~3.5:1</td>
+        <td><span class="check">✓</span> ~5.4:1</td>
+        <td><span class="check">✓</span> ~5.4:1</td>
+        <td><span class="check">✓</span> ~5.4:1</td>
+      </tr>
+      <tr>
+        <td>Poet name hierarchy</td>
+        <td><span class="cross">✗</span> Buried below brand</td>
+        <td><span class="check">✓</span> Promoted</td>
+        <td><span class="check">✓</span> Dominant</td>
+        <td><span class="check">✓</span> Dominant h1</td>
+      </tr>
+      <tr>
+        <td>Brand presence</td>
+        <td>Dominant (48–72px)</td>
+        <td>Reduced (1.2rem)</td>
+        <td>Ambient (14px corner)</td>
+        <td>Whisper (11px, 30% opacity)</td>
+      </tr>
+      <tr>
+        <td>Verse entry motion</td>
+        <td><span class="cross">✗</span> Aggressive 1s slide</td>
+        <td><span class="check">✓</span> 0.6s fade</td>
+        <td><span class="check">✓</span> Staggered fadeUp</td>
+        <td><span class="check">✓</span> Staggered fadeUp</td>
+      </tr>
+      <tr>
+        <td>SVG frame brackets</td>
+        <td><span class="cross">✗</span> 12 SVG elements</td>
+        <td><span class="check">✓</span> Gold &lt;hr&gt; rule</td>
+        <td><span class="check">✓</span> None</td>
+        <td><span class="check">✓</span> None</td>
+      </tr>
+      <tr>
+        <td>Reading focus (chrome)</td>
+        <td>Moderate</td>
+        <td>Improved</td>
+        <td>High</td>
+        <td>Maximum</td>
+      </tr>
+      <tr>
+        <td>Verse breathing room</td>
+        <td>1.25rem gap</td>
+        <td>2.5rem</td>
+        <td>3rem</td>
+        <td>2.75rem</td>
+      </tr>
+      <tr>
+        <td>Migration risk</td>
+        <td>—</td>
+        <td><span class="check">✓</span> Low</td>
+        <td><span class="partial">~</span> Medium</td>
+        <td><span class="partial">~</span> Medium</td>
+      </tr>
+      <tr>
+        <td>Brand recognition</td>
+        <td>Very high</td>
+        <td>Moderate</td>
+        <td>Low (by design)</td>
+        <td>Minimal (by design)</td>
+      </tr>
+      <tr>
+        <td>Mobile experience</td>
+        <td>Adequate</td>
+        <td>Good</td>
+        <td>Very good</td>
+        <td>Excellent</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <!-- ── Recommendations ─────────────────────────────────────── -->
+  <div class="reco-box">
+    <h3>Recommendations</h3>
+
+    <div class="reco-item">
+      <strong>Best Overall:</strong> Option 2 (Poet-First) — Solves all six issues while making the strongest editorial statement. The brand-to-corner treatment is increasingly standard in literary apps, and the staggered verse entry adds meaningful delight without being gratuitous.
+    </div>
+
+    <div class="reco-item">
+      <strong>Lowest Risk:</strong> Option 1 (Refined Current) — If there's brand-equity concern about shrinking the header further, Option 1 is the safest path. All accessibility issues are fixed, motion is calmed, hierarchy is corrected.
+    </div>
+
+    <div class="reco-item">
+      <strong>Best for Mobile / Deep Reading:</strong> Option 3 (Ambient) — Removing the header entirely gives the poem full viewport ownership on small screens. Consider this if analytics show primary usage is mobile and session depth (poems per session) is a key metric.
+    </div>
+
+    <div class="reco-item">
+      <strong>Quick Win (any option):</strong> Fix translations from <code>opacity-40</code> to <code>opacity-60</code> immediately — this is a WCAG AA failure and takes 30 seconds in <span class="file-path">src/app.jsx:1175</span>.
+    </div>
+  </div>
+
+
+  <!-- ── Live Interactive Previews ───────────────────────────── -->
+  <div class="previews-section">
+    <h2>Interactive Previews</h2>
+    <p style="color: var(--muted); margin-top: 0.5rem;">Scroll within each frame to explore the layout. Open full-screen for best experience.</p>
+
+    <div class="preview-grid">
+      <div class="preview-container">
+        <div class="preview-container-header">
+          <h3>Option 1 — Refined Current</h3>
+          <a href="previews/option-1-refined-current.html" target="_blank" style="font-size: 11px; color: var(--gold); text-decoration: none; opacity: 0.8;">↗ Full screen</a>
+        </div>
+        <iframe src="previews/option-1-refined-current.html" title="Option 1 full preview" loading="lazy"></iframe>
+      </div>
+
+      <div class="preview-container">
+        <div class="preview-container-header">
+          <h3>Option 2 — Poet-First</h3>
+          <a href="previews/option-2-poet-first.html" target="_blank" style="font-size: 11px; color: var(--gold); text-decoration: none; opacity: 0.8;">↗ Full screen</a>
+        </div>
+        <iframe src="previews/option-2-poet-first.html" title="Option 2 full preview" loading="lazy"></iframe>
+      </div>
+
+      <div class="preview-container">
+        <div class="preview-container-header">
+          <h3>Option 3 — Ambient</h3>
+          <a href="previews/option-3-ambient-header.html" target="_blank" style="font-size: 11px; color: var(--gold); text-decoration: none; opacity: 0.8;">↗ Full screen</a>
+        </div>
+        <iframe src="previews/option-3-ambient-header.html" title="Option 3 full preview" loading="lazy"></iframe>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ── Next Steps ──────────────────────────────────────────── -->
+  <div class="next-steps">
+    <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.06); margin-bottom: 2rem;">
+    <p>Which direction?</p>
+    <p style="margin-top: 0.75rem;">
+      Reply with <strong>"Option 1"</strong>, <strong>"Option 2"</strong>, or <strong>"Option 3"</strong> and the implementation will be applied to <span class="file-path">src/app.jsx</span>.
+    </p>
+    <p style="margin-top: 1rem; font-size: 0.85rem; color: var(--muted);">
+      Files in <span class="file-path">design-review/main-app/hierarchy-redesign/previews/</span>
+    </p>
+  </div>
+
+</body>
+</html>

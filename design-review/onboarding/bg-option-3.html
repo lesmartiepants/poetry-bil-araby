@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Background 3 — Muqarnas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================
+       DESIGN TOKENS
+       ========================================== */
+    :root {
+      --color-bg:           #0d0d14;
+      --color-surface:      rgba(20, 18, 28, 0.88);
+      --color-surface-edge: rgba(197, 160, 89, 0.18);
+
+      --color-gold:         #c5a059;
+      --color-gold-dim:     rgba(197, 160, 89, 0.55);
+      --color-gold-faint:   rgba(197, 160, 89, 0.18);
+      --color-lapis:        #2a5a8c;
+      --color-lapis-dim:    rgba(42, 90, 140, 0.45);
+
+      --color-text-primary: #e8dcc8;
+      --color-text-title:   #c5a059;
+      --color-text-poet:    rgba(240, 232, 216, 0.5);
+
+      --font-arabic:        'Amiri', serif;
+      --font-ui:            'Reem Kufi', sans-serif;
+
+      --ease-out-expo:      cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ==========================================
+       RESET & BASE
+       ========================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* ==========================================
+       SCENE CONTAINER
+       ========================================== */
+    .scene {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* ==========================================
+       MUQARNAS GEOMETRIC BACKGROUND
+       Three SVG layers at different scales/opacities
+       create depth — like nested muqarnas tiers.
+       ========================================== */
+    .geo-layer {
+      position: absolute;
+      inset: -10%;
+      width: 120%;
+      height: 120%;
+      pointer-events: none;
+    }
+
+    /* Outermost tier: largest diamonds, lapis-toned, very faint */
+    .geo-layer--outer {
+      opacity: 0.035;
+      animation: geoBreath 18s ease-in-out infinite alternate;
+    }
+
+    /* Middle tier: medium diamonds, gold-toned */
+    .geo-layer--mid {
+      opacity: 0.042;
+      animation: geoBreath 22s ease-in-out 4s infinite alternate-reverse;
+    }
+
+    /* Inner tier: smallest diamonds, mixed, slightly brighter */
+    .geo-layer--inner {
+      opacity: 0.055;
+      animation: geoBreath 14s ease-in-out 2s infinite alternate;
+    }
+
+    @keyframes geoBreath {
+      from { opacity: inherit; transform: scale(1); }
+      to   { opacity: calc(var(--breath-target, 1) * 1.4); transform: scale(1.008); }
+    }
+
+    .geo-layer--outer { --breath-target: 0.035; }
+    .geo-layer--mid   { --breath-target: 0.042; }
+    .geo-layer--inner { --breath-target: 0.055; }
+
+    /* ==========================================
+       RADIAL VIGNETTE MASK
+       Pattern is brightest at center, fades at edges.
+       Two masks: one clips the geo layers,
+       one darkens the perimeter for depth.
+       ========================================== */
+    .vignette-mask {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      /* Dark perimeter vignette */
+      background: radial-gradient(
+        ellipse 70% 70% at 50% 50%,
+        transparent 30%,
+        rgba(13, 13, 20, 0.55) 65%,
+        rgba(13, 13, 20, 0.92) 100%
+      );
+      z-index: 2;
+    }
+
+    /* Secondary vignette for extra depth */
+    .vignette-mask--deep {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse 50% 55% at 50% 50%,
+        transparent 20%,
+        rgba(13, 13, 20, 0.3) 60%,
+        rgba(13, 13, 20, 0.75) 100%
+      );
+      z-index: 3;
+    }
+
+    /* Geo layers are masked by radial gradient using CSS mask */
+    .geo-wrapper {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      /* Radial mask: pattern visible at center, invisible at edges */
+      -webkit-mask-image: radial-gradient(
+        ellipse 75% 75% at 50% 50%,
+        black 20%,
+        rgba(0,0,0,0.6) 55%,
+        transparent 85%
+      );
+      mask-image: radial-gradient(
+        ellipse 75% 75% at 50% 50%,
+        black 20%,
+        rgba(0,0,0,0.6) 55%,
+        transparent 85%
+      );
+    }
+
+    /* ==========================================
+       POEM CARD
+       ========================================== */
+    .card {
+      position: relative;
+      z-index: 10;
+      width: min(480px, calc(100vw - 48px));
+      padding: 48px 40px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-edge);
+      border-radius: 4px;
+
+      /* Layered shadows for depth — top light from "dome above" */
+      box-shadow:
+        0 0 0 1px rgba(197, 160, 89, 0.06),
+        0 1px 0 0 rgba(197, 160, 89, 0.15),
+        0 8px 32px rgba(0, 0, 0, 0.55),
+        0 32px 80px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(197, 160, 89, 0.08);
+
+      animation: cardRise 0.9s var(--ease-out-expo) both;
+    }
+
+    @keyframes cardRise {
+      from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Subtle inner glow along top edge — dome skylight effect */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      background: linear-gradient(
+        180deg,
+        rgba(197, 160, 89, 0.04) 0%,
+        transparent 40%
+      );
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       CARD CONTENT
+       ========================================== */
+    .poem-title {
+      font-family: var(--font-arabic);
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      font-weight: 400;
+      color: var(--color-text-title);
+      text-align: center;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      letter-spacing: 0.01em;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.25s both;
+    }
+
+    .poem-poet {
+      font-family: var(--font-ui);
+      font-size: clamp(0.78rem, 2vw, 0.85rem);
+      font-weight: 400;
+      color: var(--color-text-poet);
+      text-align: center;
+      margin-bottom: 36px;
+      letter-spacing: 0.04em;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.35s both;
+    }
+
+    .verse-pair {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.45s both;
+    }
+
+    .verse-line {
+      font-family: var(--font-arabic);
+      font-size: clamp(1rem, 3vw, 1.2rem);
+      font-weight: 400;
+      color: var(--color-text-primary);
+      text-align: center;
+      line-height: 1.9;
+      letter-spacing: 0.01em;
+    }
+
+    /* Ornamental divider */
+    .verse-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 12px 0;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.5s both;
+    }
+
+    .verse-divider::before,
+    .verse-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--color-gold-faint) 40%,
+        var(--color-gold-dim) 50%,
+        var(--color-gold-faint) 60%,
+        transparent
+      );
+    }
+
+    .verse-divider-ornament {
+      color: var(--color-gold);
+      font-size: 0.9rem;
+      line-height: 1;
+      opacity: 0.75;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ==========================================
+       LABEL — TOP-LEFT (dir=rtl so top-right visually)
+       ========================================== */
+    .bg-label {
+      position: fixed;
+      top: 20px;
+      left: 20px; /* left in logical terms = right visually in RTL */
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--color-gold-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      z-index: 20;
+      opacity: 0;
+      animation: labelFade 0.6s ease 1.2s forwards;
+    }
+
+    @keyframes labelFade {
+      to { opacity: 1; }
+    }
+
+    /* ==========================================
+       REDUCED MOTION
+       ========================================== */
+    @media (prefers-reduced-motion: reduce) {
+      .card,
+      .poem-title,
+      .poem-poet,
+      .verse-pair,
+      .verse-divider,
+      .verse-line,
+      .bg-label {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+      .geo-layer {
+        animation: none;
+      }
+    }
+
+    /* ==========================================
+       MOBILE ADJUSTMENTS
+       ========================================== */
+    @media (max-width: 420px) {
+      .card {
+        padding: 36px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scene">
+
+    <!-- Label -->
+    <div class="bg-label">Background 3 — Muqarnas</div>
+
+    <!-- Geometric background layers -->
+    <div class="geo-wrapper" aria-hidden="true">
+
+      <!-- OUTER TIER: large diamonds, lapis-dominant -->
+      <svg class="geo-layer geo-layer--outer" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!--
+            Muqarnas diamond tile: 120×60 unit cell.
+            Each diamond is a rhombus with 60° angles, typical of
+            Islamic geometric patterns. The interlocking creates
+            the honeycomb vault (muqarnas) visual.
+          -->
+          <pattern id="muqarnas-outer" x="0" y="0" width="120" height="104" patternUnits="userSpaceOnUse">
+            <!-- Row 1: Two diamonds offset -->
+            <!-- Diamond 1 (lapis face — left/dark) -->
+            <polygon points="0,52 60,0 120,52 60,104"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.5"
+              stroke-opacity="0.9"/>
+            <!-- Diamond face shading — left half (darker, recessed) -->
+            <polygon points="0,52 60,0 60,104"
+              fill="#1a3a5c"
+              fill-opacity="0.25"
+              stroke="none"/>
+            <!-- Diamond face shading — right half (lighter, projecting) -->
+            <polygon points="60,0 120,52 60,104"
+              fill="#3a6a9c"
+              fill-opacity="0.18"
+              stroke="none"/>
+
+            <!-- Offset row: half-brick shift -->
+            <polygon points="-60,104 0,52 60,104 0,156"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.5"
+              stroke-opacity="0.7"/>
+            <polygon points="60,104 120,52 180,104 120,156"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.5"
+              stroke-opacity="0.7"/>
+
+            <!-- Interior cross lines — the muqarnas cell subdivisions -->
+            <line x1="60" y1="0" x2="60" y2="104"
+              stroke="#2a5a8c" stroke-width="0.3" stroke-opacity="0.5"/>
+            <line x1="0" y1="52" x2="120" y2="52"
+              stroke="#2a5a8c" stroke-width="0.3" stroke-opacity="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#muqarnas-outer)"/>
+      </svg>
+
+      <!-- MIDDLE TIER: medium diamonds, gold-dominant -->
+      <svg class="geo-layer geo-layer--mid" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="muqarnas-mid" x="30" y="26" width="60" height="52" patternUnits="userSpaceOnUse">
+            <!-- Primary diamond -->
+            <polygon points="0,26 30,0 60,26 30,52"
+              fill="none"
+              stroke="#c5a059"
+              stroke-width="0.5"
+              stroke-opacity="1"/>
+            <!-- Face shading: top-left face (lit from above) -->
+            <polygon points="0,26 30,0 30,52"
+              fill="#c5a059"
+              fill-opacity="0.12"
+              stroke="none"/>
+            <!-- Face shading: top-right face (in shadow) -->
+            <polygon points="30,0 60,26 30,52"
+              fill="#8a6030"
+              fill-opacity="0.1"
+              stroke="none"/>
+
+            <!-- Subdivision lines — muqarnas stepping detail -->
+            <line x1="15" y1="13" x2="45" y2="13"
+              stroke="#c5a059" stroke-width="0.3" stroke-opacity="0.5"/>
+            <line x1="15" y1="39" x2="45" y2="39"
+              stroke="#c5a059" stroke-width="0.3" stroke-opacity="0.5"/>
+            <line x1="30" y1="0" x2="0" y2="26"
+              stroke="#c5a059" stroke-width="0.3" stroke-opacity="0.35"/>
+            <line x1="30" y1="0" x2="60" y2="26"
+              stroke="#c5a059" stroke-width="0.3" stroke-opacity="0.35"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#muqarnas-mid)"/>
+      </svg>
+
+      <!-- INNER TIER: small diamonds, alternating gold+lapis, finest detail -->
+      <svg class="geo-layer geo-layer--inner" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!--
+            Interlocked small diamonds: 30×26 cell.
+            Alternating gold and lapis creates the muqarnas
+            color-depth effect — warm tones advance, cool recede.
+          -->
+          <pattern id="muqarnas-inner" x="0" y="0" width="60" height="52" patternUnits="userSpaceOnUse">
+            <!-- Gold diamond (top) -->
+            <polygon points="15,0 30,13 15,26 0,13"
+              fill="none"
+              stroke="#c5a059"
+              stroke-width="0.5"
+              stroke-opacity="1"/>
+            <polygon points="15,0 30,13 15,26"
+              fill="#c5a059"
+              fill-opacity="0.15"
+              stroke="none"/>
+
+            <!-- Lapis diamond (right) -->
+            <polygon points="30,13 45,0 60,13 45,26"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.5"
+              stroke-opacity="1"/>
+            <polygon points="45,0 60,13 45,26"
+              fill="#2a5a8c"
+              fill-opacity="0.2"
+              stroke="none"/>
+
+            <!-- Second row offset -->
+            <!-- Lapis diamond (bottom-left) -->
+            <polygon points="0,39 15,26 30,39 15,52"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.5"
+              stroke-opacity="1"/>
+            <polygon points="0,39 15,26 15,52"
+              fill="#2a5a8c"
+              fill-opacity="0.18"
+              stroke="none"/>
+
+            <!-- Gold diamond (bottom-right) -->
+            <polygon points="30,39 45,26 60,39 45,52"
+              fill="none"
+              stroke="#c5a059"
+              stroke-width="0.5"
+              stroke-opacity="1"/>
+            <polygon points="45,26 60,39 45,52"
+              fill="#c5a059"
+              fill-opacity="0.12"
+              stroke="none"/>
+
+            <!-- Center connector lines — muqarnas web -->
+            <line x1="15" y1="26" x2="45" y2="26"
+              stroke="#8a7045" stroke-width="0.3" stroke-opacity="0.5"/>
+            <line x1="30" y1="13" x2="30" y2="39"
+              stroke="#8a7045" stroke-width="0.3" stroke-opacity="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#muqarnas-inner)"/>
+      </svg>
+
+    </div><!-- /.geo-wrapper -->
+
+    <!-- Vignette layers -->
+    <div class="vignette-mask" aria-hidden="true"></div>
+    <div class="vignette-mask--deep" aria-hidden="true"></div>
+
+    <!-- Poem card -->
+    <article class="card" lang="ar" dir="rtl">
+
+      <h1 class="poem-title">يا ليل الصبّ متى غده</h1>
+
+      <p class="poem-poet">الحصري القيرواني</p>
+
+      <div class="verse-pair">
+        <p class="verse-line">أقيامُ الساعةِ موعِدُهُ</p>
+
+        <div class="verse-divider" aria-hidden="true">
+          <span class="verse-divider-ornament">❊</span>
+        </div>
+
+        <p class="verse-line">أم قيامي حين أشاهدُهُ</p>
+      </div>
+
+    </article>
+
+  </div><!-- /.scene -->
+
+</body>
+</html>

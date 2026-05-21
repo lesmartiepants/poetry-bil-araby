@@ -60,6 +60,8 @@ const initialState = {
   activeAudioIds: [],
   activeInsightIds: [],
   pollingIntervalIds: [],
+  carouselPoems: [],
+  carouselIndex: 0,
 };
 
 export const usePoemStore = create((set, get) => ({
@@ -88,6 +90,16 @@ export const usePoemStore = create((set, get) => ({
   setInterpreting: (isInterpreting) => set({ isInterpreting }),
 
   resetInterpretation: () => set({ interpretation: null, isInterpreting: false }),
+
+  // Carousel state
+  setCarouselPoems: (poems) => set({ carouselPoems: poems, carouselIndex: 0 }),
+  addCarouselPoem: (poem) => set((s) => ({ carouselPoems: [...s.carouselPoems, poem] })),
+  updateCarouselPoem: (index, patch) =>
+    set((s) => ({
+      carouselPoems: s.carouselPoems.map((p, i) => (i === index ? { ...p, ...patch } : p)),
+    })),
+  clearCarouselPoems: () => set({ carouselPoems: [], carouselIndex: 0 }),
+  setCarouselIndex: (carouselIndex) => set({ carouselIndex }),
 
   // In-flight request tracking
   addActiveAudio: (id) => set((s) => ({ activeAudioIds: [...s.activeAudioIds, id] })),

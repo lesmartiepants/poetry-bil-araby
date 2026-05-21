@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 2: Poet-First Layout — Hierarchy Redesign</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Forum&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --gold-glow: rgba(201, 168, 76, 0.2);
+      --bg: #0c0c0e;
+      --text-primary: #e7e5e4;
+      --text-muted: #a8a29e;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Forum', serif;
+      overflow-x: hidden;
+    }
+
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* ── Tiny top-left brand wordmark: 14px, 50% opacity ─────── */
+    .site-header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 40;
+      pointer-events: none;
+      padding: 0.7rem 1rem;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+    }
+
+    /* Brand in top-left corner: 14px static, 50% opacity */
+    .wordmark {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      font-size: 14px;
+      line-height: 1;
+      opacity: 0.5;
+      direction: ltr;
+    }
+
+    .wordmark-arabic {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .wordmark-english {
+      font-family: 'Forum', serif;
+      color: #d4d0c8;
+    }
+
+    /* ── Main content ─────────────────────────────────────────── */
+    .main-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 4rem 1rem 8rem;
+    }
+
+    .poem-container {
+      max-width: 700px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Poem meta: poet is dominant visual anchor ─────────────── */
+    .poem-meta {
+      text-align: center;
+      width: 100%;
+      margin-bottom: 3rem;
+      animation: fadeIn 0.5s ease-out both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* Staggered verse fade-up animation */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Poet name: dominant h1, clamp(2rem, 5vw, 3rem) */
+    .poet-name {
+      font-family: 'Amiri', serif;
+      font-weight: 700;
+      font-size: clamp(2rem, 5vw, 3rem);
+      color: var(--gold);
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      text-shadow:
+        0 0 60px rgba(201, 168, 76, 0.3),
+        0 0 20px rgba(201, 168, 76, 0.12);
+    }
+
+    .poet-name-en {
+      font-family: 'Forum', serif;
+      font-size: clamp(0.875rem, 1.8vw, 1.05rem);
+      color: var(--gold);
+      opacity: 0.55;
+      margin-top: 0.25rem;
+      letter-spacing: 0.06em;
+      direction: ltr;
+      display: block;
+    }
+
+    /* Thin gold separator line */
+    .meta-divider {
+      width: 1px;
+      height: 32px;
+      background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+      opacity: 0.35;
+      margin: 1rem auto;
+    }
+
+    /* Poem title: secondary beneath, clamp(1.4rem, 3vw, 1.8rem) */
+    .poem-title {
+      font-family: 'Amiri', serif;
+      font-style: italic;
+      font-size: clamp(1.4rem, 3vw, 1.8rem);
+      color: #dcd6ca;
+      line-height: 1.45;
+      letter-spacing: 0.01em;
+    }
+
+    .poem-title-en {
+      font-family: 'Forum', serif;
+      font-style: italic;
+      font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      direction: ltr;
+      display: block;
+    }
+
+    /* ── Verses: staggered entry at 150ms per verse ─────────────── */
+    .verses {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 3rem; /* was ~1.25rem */
+      padding: 0 0.5rem;
+      text-align: center;
+    }
+
+    .verse-pair {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      animation: fadeUp 0.55s ease-out both;
+    }
+
+    /* 150ms stagger per verse */
+    .verse-pair:nth-child(1) { animation-delay: 0.1s; }
+    .verse-pair:nth-child(2) { animation-delay: 0.25s; }
+    .verse-pair:nth-child(3) { animation-delay: 0.4s; }
+    .verse-pair:nth-child(4) { animation-delay: 0.55s; }
+
+    .verse-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.35rem, 2.5vw, 1.7rem);
+      line-height: 2.3;
+      color: var(--text-primary);
+      direction: rtl;
+    }
+
+    /* English translation: opacity 0.6 */
+    .verse-en {
+      font-family: 'Forum', serif;
+      font-style: italic;
+      font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+      color: var(--text-primary);
+      opacity: 0.6;
+      direction: ltr;
+      max-width: 88%;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* ── Background texture ────────────────────────────────────── */
+    .bg-texture {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.02;
+      background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3C/svg%3E");
+      background-size: 60px 60px;
+      z-index: 0;
+    }
+
+    /* ── Bottom control bar ────────────────────────────────────── */
+    .control-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 50;
+      background: rgba(12, 12, 14, 0.94);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(201, 168, 76, 0.1);
+      padding: 0.65rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      direction: ltr;
+    }
+
+    .ctrl-group { display: flex; align-items: center; gap: 0.5rem; }
+
+    .ctrl-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #d6d3d1;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      transition: color 0.2s, background 0.2s;
+    }
+    .ctrl-btn:hover { color: #fff; background: rgba(201, 168, 76, 0.1); }
+    .ctrl-btn svg { width: 20px; height: 20px; }
+
+    .ctrl-btn.play {
+      width: 44px; height: 44px;
+      background: rgba(201, 168, 76, 0.12);
+      border: 1px solid rgba(201, 168, 76, 0.25);
+      color: var(--gold);
+    }
+    .ctrl-btn.play:hover { background: rgba(201, 168, 76, 0.22); }
+
+    .category-pill {
+      font-family: 'Forum', serif;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      background: rgba(201, 168, 76, 0.08);
+      border: 1px solid rgba(201, 168, 76, 0.22);
+      padding: 0.3rem 0.7rem;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+
+    .ctrl-label {
+      font-family: 'Forum', serif;
+      font-size: 8.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gold);
+      opacity: 0.6;
+      white-space: nowrap;
+    }
+
+    .ctrl-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* ── Option badge ─────────────────────────────────────────── */
+    .option-badge {
+      position: fixed;
+      top: 10px; right: 12px;
+      z-index: 100;
+      background: rgba(201, 168, 76, 0.15);
+      border: 1px solid rgba(201, 168, 76, 0.35);
+      color: var(--gold);
+      font-family: 'Forum', serif;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      direction: ltr;
+    }
+
+    @media (max-width: 480px) {
+      .verses { gap: 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="bg-texture"></div>
+
+    <div class="option-badge">Option 2 — Poet First</div>
+
+    <!-- Brand: 14px, top-left corner, 50% opacity — not dominating viewport -->
+    <header class="site-header">
+      <div class="wordmark">
+        <span class="wordmark-arabic">بالعربي</span>
+        <span class="wordmark-english">poetry</span>
+      </div>
+    </header>
+
+    <main class="main-scroll">
+      <div class="poem-container">
+
+        <!-- Poet name is the dominant visual anchor — h1 scale -->
+        <div class="poem-meta" dir="rtl">
+          <div class="poet-name">الشريف الرضي</div>
+          <span class="poet-name-en" dir="ltr">al-Sharif al-Radi</span>
+
+          <!-- Vertical gold line as separator -->
+          <div class="meta-divider"></div>
+
+          <!-- Poem title: secondary, beneath the poet -->
+          <div class="poem-title">ذكرى الأيام وجمال الوجوه</div>
+          <span class="poem-title-en" dir="ltr">Memory of Days and the Beauty of Faces</span>
+        </div>
+
+        <!-- Verses: 3rem gap, 150ms staggered fade-up -->
+        <div class="verses">
+          <div class="verse-pair">
+            <p class="verse-ar">أَذكُرُ أَيَّامَ الصِّبا وَبَهجَتَها وَجَمالَ الوُجوهِ في لَيالي الشَّبابِ</p>
+            <p class="verse-en">I remember the days of youth and their splendor — the beauty of faces in the nights of young age</p>
+          </div>
+
+          <div class="verse-pair">
+            <p class="verse-ar">كَم سَهَرنا عَلى النُّجومِ نُشاهِدُ ضَوءَها وَالنَّسيمُ يَسري بِطيبِ</p>
+            <p class="verse-en">How many nights we stayed awake watching the stars — their light, as the breeze carried sweet perfume</p>
+          </div>
+
+          <div class="verse-pair">
+            <p class="verse-ar">وَنَرى الوَردَ في الرِّياضِ يُنادي بِجَمالٍ يَفوقُ كُلَّ حَسيبِ</p>
+            <p class="verse-en">We saw the roses in the meadows calling out — with a beauty that surpasses every noble thing</p>
+          </div>
+
+          <div class="verse-pair">
+            <p class="verse-ar">ذَهَبَت تِلكَ الأَيَّامُ وَانقَضَت وَبَقِيَت في الفُؤادِ ذِكرى الحَبيبِ</p>
+            <p class="verse-en">Those days departed and passed away — yet in the heart remains the memory of the beloved</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Bottom control bar mockup -->
+    <div class="control-bar">
+      <div class="ctrl-group">
+        <div class="ctrl-col">
+          <button class="ctrl-btn" title="Discover">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+          </button>
+          <span class="ctrl-label">Discover</span>
+        </div>
+        <div class="ctrl-col">
+          <button class="ctrl-btn" title="Share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
+          <span class="ctrl-label">Share</span>
+        </div>
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-col">
+          <button class="ctrl-btn" title="Previous">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+        </div>
+        <div class="ctrl-col">
+          <button class="ctrl-btn play" title="Play">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          </button>
+        </div>
+        <div class="ctrl-col">
+          <button class="ctrl-btn" title="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="ctrl-group">
+        <span class="category-pill">Classical</span>
+        <div class="ctrl-col">
+          <button class="ctrl-btn" title="Insights">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </button>
+          <span class="ctrl-label">Insights</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

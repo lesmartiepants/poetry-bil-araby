@@ -44,6 +44,11 @@ export function useAuth() {
       setLoading(false);
       log.info('StateChange', `${event}${session ? ` — ${session.user.email}` : ''}`);
 
+      // Strip OAuth ?code= param from URL after PKCE exchange
+      if (event === 'SIGNED_IN' && window.location.search.includes('code=')) {
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+
       // Sync Sentry user context with auth state
       if (session?.user) {
         Sentry.setUser({ id: session.user.id, email: session.user.email });
@@ -236,6 +241,10 @@ export function useSavedPoems(user) {
   const savePoem = async (poem) => {
     if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
 
+    // Optimistic update — fill the heart immediately without waiting for the DB round-trip
+    const optimistic = { poem_id: poem.id, poem_text: poem.arabic, poet: poem.poet, title: poem.title };
+    setSavedPoems((prev) => [optimistic, ...prev]);
+
     try {
       log.info('Poems', `Saving poem: ${poem.poet} — ${poem.title} (id: ${poem.id})`);
       const { data, error } = await supabase
@@ -253,15 +262,32 @@ export function useSavedPoems(user) {
         .single();
 
       if (error) {
+        if (error.code === '23505') {
+          // Already saved — not an error (duplicate key after OAuth redirect)
+          log.info('Poems', 'Poem already saved (duplicate key — refreshing local state)');
+          await loadSavedPoems();
+          return { data: null };
+        }
         log.error('Poems', 'Failed to save poem', error.message);
+        // Rollback optimistic entry
+        setSavedPoems((prev) => prev.filter((p) => p !== optimistic));
         return { error };
       }
 
-      log.info('Poems', `Poem saved successfully (saved_id: ${data.id})`);
-      setSavedPoems((prev) => [data, ...prev]);
+      log.info('Poems', `Poem saved successfully (saved_id: ${data?.id})`);
+      if (data) {
+        // Replace optimistic entry with the real DB row
+        setSavedPoems((prev) => prev.map((p) => (p === optimistic ? data : p)));
+      } else {
+        // No data returned — refresh to ensure local state reflects DB truth
+        log.info('Poems', 'Poem already existed — refreshing saved poems list');
+        await loadSavedPoems();
+      }
       return { data };
     } catch (error) {
       log.error('Poems', 'Exception saving poem', error.message);
+      // Rollback optimistic entry
+      setSavedPoems((prev) => prev.filter((p) => p !== optimistic));
       return { error };
     }
   };

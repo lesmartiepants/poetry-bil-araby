@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { Rabbit } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Player, start as toneStart } from 'tone';
+import { Player, start as toneStart, getContext as getToneContext } from 'tone';
 import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
 import { FEATURES } from '../../constants/features';
@@ -218,9 +218,12 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   // Re-creating the player from the cached URL is cheaper than storing raw PCM buffers.
   if (audioUrl) {
     try {
-      // Bypass iOS silent switch by promoting audio session to "playback" mode,
-      // then unlock the AudioContext after the user gesture.
-      await unlockAudioForIOS();
+      // Bypass iOS silent switch: connect a silent <audio> element to the same
+      // AudioContext used by Tone.js via createMediaElementSource(), which causes
+      // iOS to associate that context with "playback" session category (ignores
+      // the silent switch). Must be awaited before toneStart() so the promotion
+      // is complete before Tone.js begins outputting audio.
+      await unlockAudioForIOS(getToneContext().rawContext);
       await toneStart();
       const player = await createPlayerReady(audioUrl);
       startPlayer(player, pauseOffset.value);
@@ -236,12 +239,12 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   }
 
   // iOS silent switch bypass + AudioContext unlock after user gesture.
-  // unlockAudioForIOS() promotes the iOS audio session from "ambient" (muted by
-  // the hardware silent switch) to "playback" (ignores the switch), so that the
-  // Tone.js Web Audio output is audible even when the iPhone ringer is off.
+  // Connecting a silent <audio> element to the Tone.js AudioContext via
+  // createMediaElementSource() causes iOS to associate the context with
+  // "playback" session category, which ignores the hardware silent switch.
   // Must be awaited — session promotion only completes when audio.play() resolves.
   // Tone.start() (toneStart) then resumes the AudioContext after the user gesture.
-  await unlockAudioForIOS();
+  await unlockAudioForIOS(getToneContext().rawContext);
   await toneStart();
 
   setGenerating(true);

@@ -114,11 +114,11 @@ describe('WS4: Tone.js integration', () => {
 
     it('togglePlay.js awaits unlockAudioForIOS in both RESUME and GENERATE paths', () => {
       const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
-      // Collect positions of all `await unlockAudioForIOS()` and `await toneStart()` calls
+      // Collect positions of all `await unlockAudioForIOS(` and `await toneStart()` calls
       const awaitedUnlockPositions = [];
       const toneStartPositions = [];
       let pos = 0;
-      while ((pos = content.indexOf('await unlockAudioForIOS()', pos)) !== -1) {
+      while ((pos = content.indexOf('await unlockAudioForIOS(', pos)) !== -1) {
         awaitedUnlockPositions.push(pos);
         pos++;
       }
@@ -135,19 +135,26 @@ describe('WS4: Tone.js integration', () => {
         const precedingAwaitedUnlock = awaitedUnlockPositions.some((u) => u < toneIdx);
         expect(
           precedingAwaitedUnlock,
-          `await toneStart() at position ${toneIdx} has no preceding await unlockAudioForIOS()`
+          `await toneStart() at position ${toneIdx} has no preceding await unlockAudioForIOS(`
         ).toBe(true);
       }
     });
 
+    it('togglePlay.js passes getToneContext().rawContext to unlockAudioForIOS', () => {
+      const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
+      expect(content).toMatch(
+        /unlockAudioForIOS\s*\(\s*getToneContext\s*\(\s*\)\s*\.\s*rawContext\s*\)/
+      );
+    });
+
     describe('unlockAudioForIOS unit tests', () => {
-      let originalCreateElement;
       let mockPlay;
       let mockAudio;
+      let originalCreateElement;
 
       beforeEach(() => {
         mockPlay = vi.fn().mockResolvedValue(undefined);
-        mockAudio = { src: '', volume: 1, play: mockPlay };
+        mockAudio = { setAttribute: vi.fn(), src: '', play: mockPlay };
         originalCreateElement = document.createElement.bind(document);
         vi.spyOn(document, 'createElement').mockImplementation((tag) => {
           if (tag === 'audio') return mockAudio;
@@ -171,16 +178,48 @@ describe('WS4: Tone.js integration', () => {
         expect(mockAudio.src).toMatch(/^data:audio\/wav;base64,/);
       });
 
-      it('sets volume to 1 (full, not near-zero) for reliable session promotion', async () => {
+      it('sets playsinline attribute so iOS does not go fullscreen', async () => {
         const { unlockAudioForIOS } = await import('../utils/audio.js');
         await unlockAudioForIOS();
-        expect(mockAudio.volume).toBe(1);
+        expect(mockAudio.setAttribute).toHaveBeenCalledWith('playsinline', '');
+      });
+
+      it('connects the audio element to the AudioContext via createMediaElementSource', async () => {
+        const mockSource = { connect: vi.fn() };
+        const mockDestination = {};
+        const mockAudioContext = {
+          createMediaElementSource: vi.fn().mockReturnValue(mockSource),
+          destination: mockDestination,
+        };
+        const { unlockAudioForIOS } = await import('../utils/audio.js');
+        await unlockAudioForIOS(mockAudioContext);
+        expect(mockAudioContext.createMediaElementSource).toHaveBeenCalledWith(mockAudio);
+        expect(mockSource.connect).toHaveBeenCalledWith(mockDestination);
+      });
+
+      it('skips createMediaElementSource when no audioContext is provided', async () => {
+        const { unlockAudioForIOS } = await import('../utils/audio.js');
+        await expect(unlockAudioForIOS(undefined)).resolves.toBeUndefined();
+        expect(mockPlay).toHaveBeenCalledTimes(1);
       });
 
       it('does not throw if audio.play() rejects (e.g. no user gesture)', async () => {
         mockPlay.mockRejectedValue(new DOMException('NotAllowedError'));
         const { unlockAudioForIOS } = await import('../utils/audio.js');
         await expect(unlockAudioForIOS()).resolves.not.toThrow();
+      });
+
+      it('does not throw if createMediaElementSource throws', async () => {
+        const mockAudioContext = {
+          createMediaElementSource: vi.fn().mockImplementation(() => {
+            throw new DOMException('InvalidStateError');
+          }),
+          destination: {},
+        };
+        const { unlockAudioForIOS } = await import('../utils/audio.js');
+        await expect(unlockAudioForIOS(mockAudioContext)).resolves.toBeUndefined();
+        // audio.play() must still be called even when the AudioContext wiring fails
+        expect(mockPlay).toHaveBeenCalledTimes(1);
       });
     });
   });

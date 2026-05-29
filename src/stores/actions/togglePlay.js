@@ -224,7 +224,9 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       // the silent switch). Must be awaited before toneStart() so the promotion
       // is complete before Tone.js begins outputting audio.
       await unlockAudioForIOS(getToneContext().rawContext);
-      await toneStart();
+      // Race toneStart() against a 4s timeout: AudioContext.resume() can hang
+      // indefinitely on iOS when the page regains focus or after interruptions.
+      await Promise.race([toneStart(), new Promise((r) => setTimeout(r, 4000))]);
       const player = await createPlayerReady(audioUrl);
       startPlayer(player, pauseOffset.value);
       setPlayer(player);
@@ -244,8 +246,14 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   // "playback" session category, which ignores the hardware silent switch.
   // Must be awaited — session promotion only completes when audio.play() resolves.
   // Tone.start() (toneStart) then resumes the AudioContext after the user gesture.
-  await unlockAudioForIOS(getToneContext().rawContext);
-  await toneStart();
+  //
+  // Both calls are guarded: if they throw (e.g. Tone.js not yet init'd) or hang
+  // (AudioContext.resume() stuck — a known iOS WebKit bug), we proceed anyway so
+  // isTogglingPlay.current is never permanently stuck.
+  try {
+    await unlockAudioForIOS(getToneContext().rawContext);
+    await Promise.race([toneStart(), new Promise((r) => setTimeout(r, 4000))]);
+  } catch (_) {}
 
   setGenerating(true);
 

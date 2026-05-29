@@ -81,7 +81,9 @@ export async function unlockAudioForIOS(audioContext) {
         // e.g. InvalidStateError if the element is already a media source node
       }
     }
-    await audio.play();
+    // Race against 1500ms timeout: audio.play() can hang indefinitely on some iOS
+    // versions when the AudioContext is in a bad state, permanently blocking callers.
+    await Promise.race([audio.play(), new Promise((r) => setTimeout(r, 1500))]);
   } catch (_) {
     // Silently absorb — restricted environment, no user gesture, or already promoted
   }

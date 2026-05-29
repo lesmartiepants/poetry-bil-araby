@@ -1459,6 +1459,7 @@ export default function DiwanApp() {
                       className="text-center"
                       style={{
                         ...POEM_META.title,
+                        fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
                         textShadow: darkMode
                           ? POEM_META.titleShadow.dark
                           : POEM_META.titleShadow.light,
@@ -1471,6 +1472,7 @@ export default function DiwanApp() {
                       className="text-center"
                       style={{
                         ...POEM_META.poet,
+                        fontSize: `calc(${POEM_META.poet.fontSize} * ${textScale})`,
                         color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
                       }}
                     >
@@ -1486,7 +1488,7 @@ export default function DiwanApp() {
                             dir="ltr"
                             style={{
                               fontFamily: "'Bodoni Moda', serif",
-                              fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
+                              fontSize: `calc(clamp(0.9rem, 1.8vw, 1.1rem) * ${textScale})`,
                               color: darkMode ? 'var(--gold)' : 'var(--gold)',
                               fontWeight: 500,
                               letterSpacing: '0.02em',
@@ -1501,7 +1503,7 @@ export default function DiwanApp() {
                             dir="ltr"
                             style={{
                               fontFamily: "'Forum', serif",
-                              fontSize: 'clamp(0.75rem, 1.4vw, 0.9rem)',
+                              fontSize: `calc(clamp(0.75rem, 1.4vw, 0.9rem) * ${textScale})`,
                               color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
                               fontWeight: 400,
                               letterSpacing: '0.03em',

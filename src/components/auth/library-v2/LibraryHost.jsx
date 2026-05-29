@@ -3,6 +3,9 @@ import SavedPoemsView from '../SavedPoemsView.jsx';
 import SavedPoemsView_A_Majlis from './SavedPoemsView_A_Majlis.jsx';
 import SavedPoemsView_B_DiwanGrid from './SavedPoemsView_B_DiwanGrid.jsx';
 import SavedPoemsView_C_Khazana from './SavedPoemsView_C_Khazana.jsx';
+import SavedPoemsView_D_Rayyan from './SavedPoemsView_D_Rayyan.jsx';
+import SavedPoemsView_E_Waraqa from './SavedPoemsView_E_Waraqa.jsx';
+import SavedPoemsView_F_Loh from './SavedPoemsView_F_Loh.jsx';
 import { DEMO_SAVED_POEMS } from './demoSavedPoems.js';
 
 /**
@@ -29,6 +32,9 @@ export const LIBRARY_VARIANTS = [
   { id: 'a', label: 'A · Majlis', sublabel: 'مَجلِس' },
   { id: 'b', label: 'B · Diwan', sublabel: 'ديوان' },
   { id: 'c', label: 'C · Khazana', sublabel: 'خَزانَة' },
+  { id: 'd', label: 'D · Rayyan', sublabel: 'ريَّان' },
+  { id: 'e', label: 'E · Waraqa', sublabel: 'وَرَقَة' },
+  { id: 'f', label: 'F · Loh', sublabel: 'لَوح' },
 ];
 
 const readInitial = () => {
@@ -112,6 +118,9 @@ const LibraryHost = ({
   if (variant === 'b') return <SavedPoemsView_B_DiwanGrid {...sharedProps} />;
   if (variant === 'c')
     return <SavedPoemsView_C_Khazana {...sharedProps} currentPoem={currentPoem} />;
+  if (variant === 'd') return <SavedPoemsView_D_Rayyan {...sharedProps} />;
+  if (variant === 'e') return <SavedPoemsView_E_Waraqa {...sharedProps} />;
+  if (variant === 'f') return <SavedPoemsView_F_Loh {...sharedProps} />;
 
   // Original
   return (

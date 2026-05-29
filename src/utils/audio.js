@@ -15,17 +15,20 @@ const SILENT_WAV_BASE64 = 'UklGRiYAAABXQVZFZm10IBAAAAABAAEAwF0AAIC7AAACABAAZGF0Y
  * "playback", after which Web Audio API output is also heard regardless of
  * the switch position.
  *
+ * Must be awaited: iOS session promotion is complete only after audio.play()
+ * resolves. Calling toneStart() before awaiting this races against the
+ * promotion and silently fails with the switch on.
+ *
  * Safe to call in non-browser environments (SSR / unit tests) — no-ops silently.
  */
-export function unlockAudioForIOS() {
+export async function unlockAudioForIOS() {
   if (typeof document === 'undefined') return;
   try {
     const audio = document.createElement('audio');
     audio.src = `data:audio/wav;base64,${SILENT_WAV_BASE64}`;
-    // Use near-zero (not zero) volume: iOS requires a non-muted, non-zero-volume element
-    // to promote the audio session from "ambient" to "playback".
-    audio.volume = 0.001;
-    audio.play().catch(() => {});
+    // The WAV payload is silence; full volume ensures iOS accepts the session promotion.
+    audio.volume = 1;
+    await audio.play();
   } catch (_) {
     // Ignore errors from restricted environments or missing user gesture
   }

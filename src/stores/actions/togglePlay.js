@@ -220,7 +220,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     try {
       // Bypass iOS silent switch by promoting audio session to "playback" mode,
       // then unlock the AudioContext after the user gesture.
-      unlockAudioForIOS();
+      await unlockAudioForIOS();
       await toneStart();
       const player = await createPlayerReady(audioUrl);
       startPlayer(player, pauseOffset.value);
@@ -239,8 +239,9 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   // unlockAudioForIOS() promotes the iOS audio session from "ambient" (muted by
   // the hardware silent switch) to "playback" (ignores the switch), so that the
   // Tone.js Web Audio output is audible even when the iPhone ringer is off.
+  // Must be awaited — session promotion only completes when audio.play() resolves.
   // Tone.start() (toneStart) then resumes the AudioContext after the user gesture.
-  unlockAudioForIOS();
+  await unlockAudioForIOS();
   await toneStart();
 
   setGenerating(true);

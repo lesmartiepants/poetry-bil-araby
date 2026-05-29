@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # Creates a focused PR for the Aa-settings design links feature.
-# Run this from the repo root on a clean working tree.
+# Run from the repo root on a clean working tree:  bash scripts/create-aa-settings-pr.sh
+#
+# NOTE: Do NOT use `git cherry-pick 1967185 9dbbba8` — those commits were based on the
+# 266-line version of TextSettingsPill.jsx. main is now 519 lines (Background + Sparkles
+# sections added in #485-490), so cherry-pick would place the links in the wrong position
+# (after Highlight Style, not at the end). This script inserts them correctly before
+# </Popover.Content>.
 set -euo pipefail
 
 BRANCH="fix/aa-settings-links"

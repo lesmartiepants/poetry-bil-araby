@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library v3 — F · Loh · Magazine Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Bodoni+Moda:ital,wght@0,400;0,500;1,400;1,500&family=Forum&family=Fustat:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../_shared.css">
+<link rel="stylesheet" href="_prod-bg.css">
+
+<style>
+/* ================================================================
+   F · Loh (لَوح) — "Editorial / art director / creative director"
+   Philosophy: Each poem is a collector's print — your library is
+   a gallery. Visual-first, scroll-through, museum-quality.
+   Influence: Pentagram, NYT Magazine, Are.na, editorial design.
+   ================================================================ */
+
+/* Full-screen takeover — replace everything with the gallery */
+.loh {
+  position: fixed; inset: 0;
+  z-index: 60;
+  display: flex; flex-direction: column;
+
+  /* Dark gallery environment */
+  background: #0c0c0e;
+}
+
+/* ── Gallery header ────────────────────────────────────────────── */
+.loh-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 36px 16px;
+  border-bottom: 1px solid var(--border-dark);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.loh-header-left {
+  display: flex; align-items: baseline; gap: 16px;
+}
+
+.loh-title-ar {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 26px; color: var(--gold);
+  direction: rtl;
+  text-shadow: 0 0 30px rgba(197,160,89,0.15);
+}
+.loh-title-en {
+  font-family: 'Bodoni Moda', serif; font-style: italic;
+  font-size: 14px; color: var(--txt-dark-dim);
+  letter-spacing: 0.03em;
+}
+
+.loh-header-center {
+  position: absolute; left: 50%; transform: translateX(-50%);
+  display: flex; gap: 8px;
+}
+
+/* View toggle: grid vs list */
+.loh-view-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 1px solid var(--border-dark);
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.loh-view-btn.active {
+  background: rgba(197,160,89,0.12);
+  border-color: rgba(197,160,89,0.28);
+}
+.loh-view-btn svg { width: 15px; height: 15px; stroke: var(--txt-dark-dim); fill: none; stroke-width: 1.5; }
+.loh-view-btn.active svg { stroke: var(--gold); }
+
+.loh-header-right {
+  display: flex; align-items: center; gap: 10px;
+}
+
+/* Search pill */
+.loh-search-pill {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 999px;
+  border: 1px solid var(--border-dark);
+  background: rgba(255,255,255,0.03);
+  backdrop-filter: blur(8px);
+  font-family: 'Tajawal', sans-serif; font-size: 13px;
+  color: var(--txt-dark-mute); cursor: pointer;
+  width: 200px;
+}
+.loh-search-pill svg { width: 14px; height: 14px; stroke: var(--txt-dark-mute); fill: none; stroke-width: 1.5; }
+
+/* Close */
+.loh-close-btn {
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 1px solid var(--border-dark);
+  background: rgba(255,255,255,0.03);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+}
+.loh-close-btn svg { width: 16px; height: 16px; stroke: var(--txt-dark-dim); fill: none; stroke-width: 1.5; }
+
+/* ── Filter bar ────────────────────────────────────────────────── */
+.loh-filters {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 36px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  flex-shrink: 0; overflow-x: auto;
+}
+.loh-filters::-webkit-scrollbar { display: none; }
+
+/* ── Gallery grid ──────────────────────────────────────────────── */
+.loh-grid {
+  flex: 1; overflow-y: auto; padding: 28px 36px 40px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+  align-content: start;
+}
+.loh-grid::-webkit-scrollbar { width: 6px; }
+.loh-grid::-webkit-scrollbar-thumb { background: rgba(197,160,89,0.12); border-radius: 3px; }
+
+/* ── Cover card ────────────────────────────────────────────────── */
+.loh-card {
+  border-radius: 16px; overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.loh-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.5);
+}
+.loh-card.featured {
+  grid-column: span 2;
+  grid-row: span 2;
+}
+
+/* Card gradient cover (unique per poet — art-director color story) */
+.loh-cover {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3/2;
+  display: flex; flex-direction: column;
+  justify-content: flex-end; padding: 20px;
+}
+.loh-card.featured .loh-cover { aspect-ratio: 3/2; }
+
+/* Each poet gets a distinct gradient palette */
+.grad-mutanabbi {
+  background:
+    linear-gradient(160deg, rgba(197,160,89,0.08) 0%, rgba(130,100,55,0.35) 55%, rgba(60,45,20,0.70) 100%),
+    linear-gradient(0deg, #1a1408 0%, #2a2010 60%, #14110a 100%);
+}
+.grad-darwish {
+  background:
+    linear-gradient(150deg, rgba(74,124,201,0.12) 0%, rgba(50,80,150,0.40) 55%, rgba(20,35,80,0.75) 100%),
+    linear-gradient(0deg, #080d18 0%, #10183a 60%, #080d18 100%);
+}
+.grad-qabbani {
+  background:
+    linear-gradient(145deg, rgba(160,89,120,0.12) 0%, rgba(120,55,90,0.38) 55%, rgba(55,20,45,0.72) 100%),
+    linear-gradient(0deg, #130a10 0%, #281525 60%, #130a10 100%);
+}
+.grad-rumi {
+  background:
+    linear-gradient(155deg, rgba(89,160,140,0.12) 0%, rgba(55,130,110,0.38) 55%, rgba(20,60,50,0.72) 100%),
+    linear-gradient(0deg, #090f0d 0%, #122420 60%, #090f0d 100%);
+}
+.grad-shawqi {
+  background:
+    linear-gradient(148deg, rgba(197,160,89,0.08) 0%, rgba(160,120,55,0.32) 55%, rgba(80,55,20,0.68) 100%),
+    linear-gradient(0deg, #141008 0%, #281f0d 60%, #141008 100%);
+}
+.grad-khayam {
+  background:
+    linear-gradient(152deg, rgba(180,89,89,0.10) 0%, rgba(140,60,60,0.36) 55%, rgba(65,20,20,0.70) 100%),
+    linear-gradient(0deg, #120808 0%, #231515 60%, #120808 100%);
+}
+
+/* Ornamental top-right corner watermark */
+.loh-cover-watermark {
+  position: absolute; top: 14px; right: 14px;
+  font-family: 'Reem Kufi', sans-serif; font-size: 28px; font-weight: 700;
+  opacity: 0.08; color: #fff; line-height: 1; direction: rtl;
+  user-select: none; pointer-events: none;
+}
+.loh-card.featured .loh-cover-watermark { font-size: 48px; }
+
+/* Card text overlay */
+.loh-cover-content {
+  position: relative; z-index: 2;
+  direction: rtl;
+}
+
+.loh-eyebrow {
+  font-family: 'Forum', serif; font-size: 9px;
+  letter-spacing: 0.28em; text-transform: uppercase;
+  color: rgba(197,160,89,0.70); margin-bottom: 6px;
+}
+.loh-card.featured .loh-eyebrow { font-size: 11px; }
+
+.loh-poem-title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 18px; line-height: 1.15;
+  color: rgba(231,229,228,0.92);
+  text-shadow: 0 1px 8px rgba(0,0,0,0.5);
+}
+.loh-card.featured .loh-poem-title { font-size: 30px; }
+
+.loh-verse-preview {
+  font-family: 'Amiri', serif; font-size: 12px; line-height: 1.9;
+  color: rgba(231,229,228,0.55);
+  margin-top: 6px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.loh-card.featured .loh-verse-preview {
+  font-size: 14px; -webkit-line-clamp: 3;
+  color: rgba(231,229,228,0.65);
+}
+
+/* Poet name bar below cover */
+.loh-poet-bar {
+  padding: 10px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  background: rgba(12,12,14,0.7);
+}
+
+.loh-poet-name {
+  font-family: 'Fustat', sans-serif; font-size: 12px;
+  color: rgba(197,160,89,0.70); direction: rtl;
+}
+.loh-card.featured .loh-poet-name { font-size: 14px; }
+
+.loh-poet-date {
+  font-family: 'Tajawal', sans-serif; font-size: 10px;
+  color: var(--txt-dark-mute); direction: ltr;
+}
+
+/* Hover overlay actions */
+.loh-card-hover {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: rgba(0,0,0,0.55); opacity: 0;
+  transition: opacity 160ms ease;
+  border-radius: 16px;
+}
+.loh-card:hover .loh-card-hover { opacity: 1; }
+.loh-hover-btn {
+  padding: 8px 16px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(12px);
+  font-family: 'Tajawal', sans-serif; font-size: 12px;
+  color: rgba(231,229,228,0.90); cursor: pointer;
+  display: flex; align-items: center; gap: 6px;
+}
+.loh-hover-btn svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.loh-hover-btn.gold {
+  border-color: rgba(197,160,89,0.45);
+  background: rgba(197,160,89,0.18);
+  color: var(--gold);
+}
+
+/* ── Annotation ────────────────────────────────────────────────── */
+.annotation {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 7px 20px;
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--txt-dark-mute); pointer-events: none;
+}
+.annotation .name { color: var(--gold); font-weight: 500; }
+</style>
+</head>
+
+<body>
+
+<!-- ══ Prod app chrome (visible THROUGH the loh header) ═══════════ -->
+<div class="app-scene"></div>
+<div class="app-grid"></div>
+
+<!-- Header & controls are replaced by Loh's own chrome — still show for reference -->
+<div class="app-header" style="z-index:10; opacity:0.5;">
+  <span class="word-poetry">poetry</span>
+  <span class="word-arabic">بالعربي</span>
+  <svg class="feather-icon" viewBox="0 0 24 24">
+    <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5l6.74-6.76z"/>
+    <line x1="16" y1="8" x2="2" y2="22"/>
+    <line x1="17.5" y1="15" x2="9" y2="15"/>
+  </svg>
+</div>
+
+<!-- ══ F · Loh — Magazine Gallery ══════════════════════════════════ -->
+<div class="loh">
+
+  <!-- Header -->
+  <div class="loh-header">
+    <div class="loh-header-left">
+      <div class="loh-title-ar">لَوحَة القصائد</div>
+      <div class="loh-title-en">Poetry collection</div>
+    </div>
+
+    <!-- View toggle -->
+    <div class="loh-header-center">
+      <button class="loh-view-btn active">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </button>
+      <button class="loh-view-btn">
+        <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      </button>
+    </div>
+
+    <div class="loh-header-right">
+      <div class="loh-search-pill">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        ابحث في مجموعتك…
+      </div>
+      <span class="badge">8 poems</span>
+      <button class="loh-close-btn">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="loh-filters">
+    <span class="chip on">الكل · All</span>
+    <span class="chip">المتنبي</span>
+    <span class="chip">محمود درويش</span>
+    <span class="chip">نزار قباني</span>
+    <span class="chip">أحمد شوقي</span>
+    <span class="chip">المعري</span>
+  </div>
+
+  <!-- Grid -->
+  <div class="loh-grid scroll-y">
+
+    <!-- FEATURED card (spans 2×2) -->
+    <div class="loh-card featured">
+      <div class="loh-cover grad-mutanabbi">
+        <div class="loh-cover-watermark">على</div>
+        <div class="loh-cover-content">
+          <div class="loh-eyebrow">قصيدة مميزة · Featured</div>
+          <div class="loh-poem-title">على قدر أهل العزم تأتي العزائم</div>
+          <div class="loh-verse-preview">
+            على قدرِ أهلِ العزمِ تأتي العزائمُ<br>
+            وتأتي على قدرِ الكرامِ المكارمُ
+          </div>
+        </div>
+      </div>
+      <div class="loh-poet-bar">
+        <span class="loh-poet-name">أبو الطيب المتنبي</span>
+        <span class="loh-poet-date">915–965 CE · saved 2h ago</span>
+      </div>
+      <div class="loh-card-hover">
+        <button class="loh-hover-btn gold">
+          <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          اقرأ · Read
+        </button>
+        <button class="loh-hover-btn">
+          <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          Share
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 2 -->
+    <div class="loh-card">
+      <div class="loh-cover grad-darwish">
+        <div class="loh-cover-watermark">بط</div>
+        <div class="loh-cover-content">
+          <div class="loh-eyebrow">قصيدة · Poem</div>
+          <div class="loh-poem-title">بطاقة هوية</div>
+          <div class="loh-verse-preview">سجّل أنا عربي ورقم بطاقتي خمسون ألف…</div>
+        </div>
+      </div>
+      <div class="loh-poet-bar">
+        <span class="loh-poet-name">محمود درويش</span>
+        <span class="loh-poet-date">Yesterday</span>
+      </div>
+      <div class="loh-card-hover">
+        <button class="loh-hover-btn gold"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Read</button>
+        <button class="loh-hover-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Remove</button>
+      </div>
+    </div>
+
+    <!-- Card 3 -->
+    <div class="loh-card">
+      <div class="loh-cover grad-qabbani">
+        <div class="loh-cover-watermark">رس</div>
+        <div class="loh-cover-content">
+          <div class="loh-eyebrow">قصيدة · Poem</div>
+          <div class="loh-poem-title">رسالة إلى أمي</div>
+          <div class="loh-verse-preview">أنا من أهواكِ يا أمي وأنا في كل شيء…</div>
+        </div>
+      </div>
+      <div class="loh-poet-bar">
+        <span class="loh-poet-name">نزار قباني</span>
+        <span class="loh-poet-date">3 days ago</span>
+      </div>
+      <div class="loh-card-hover">
+        <button class="loh-hover-btn gold"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Read</button>
+        <button class="loh-hover-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Remove</button>
+      </div>
+    </div>
+
+    <!-- Card 4 -->
+    <div class="loh-card">
+      <div class="loh-cover grad-rumi">
+        <div class="loh-cover-watermark">لا</div>
+        <div class="loh-cover-content">
+          <div class="loh-eyebrow">قصيدة · Poem</div>
+          <div class="loh-poem-title">لا تصالح</div>
+          <div class="loh-verse-preview">لا تصالح ولو منحوك الذهب…</div>
+        </div>
+      </div>
+      <div class="loh-poet-bar">
+        <span class="loh-poet-name">أمل دنقل</span>
+        <span class="loh-poet-date">5 days ago</span>
+      </div>
+      <div class="loh-card-hover">
+        <button class="loh-hover-btn gold"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Read</button>
+        <button class="loh-hover-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Remove</button>
+      </div>
+    </div>
+
+    <!-- Card 5 -->
+    <div class="loh-card">
+      <div class="loh-cover grad-shawqi">
+        <div class="loh-cover-watermark">أن</div>
+        <div class="loh-cover-content">
+          <div class="loh-eyebrow">قصيدة · Poem</div>
+          <div class="loh-poem-title">أندلسية</div>
+          <div class="loh-verse-preview">لكلّ شيءٍ إذا ما تمَّ نقصانُ…</div>
+        </div>
+      </div>
+      <div class="loh-poet-bar">
+        <span class="loh-poet-name">أبو البقاء الرندي</span>
+        <span class="loh-poet-date">1 week ago</span>
+      </div>
+      <div class="loh-card-hover">
+        <button class="loh-hover-btn gold"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Read</button>
+        <button class="loh-hover-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Remove</button>
+      </div>
+    </div>
+
+    <!-- Card 6 -->
+    <div class="loh-card">
+      <div class="loh-cover grad-khayam">
+        <div class="loh-cover-watermark">حب</div>
+        <div class="loh-cover-content">
+          <div class="loh-eyebrow">قصيدة · Poem</div>
+          <div class="loh-poem-title">حبيبتي تنهض من نومها</div>
+          <div class="loh-verse-preview">قومي يا حبيبتي استيقظي من نوم اللقاء…</div>
+        </div>
+      </div>
+      <div class="loh-poet-bar">
+        <span class="loh-poet-name">محمود درويش</span>
+        <span class="loh-poet-date">2 weeks ago</span>
+      </div>
+      <div class="loh-card-hover">
+        <button class="loh-hover-btn gold"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Read</button>
+        <button class="loh-hover-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>Remove</button>
+      </div>
+    </div>
+
+  </div><!-- /loh-grid -->
+
+</div><!-- /loh -->
+
+<!-- Annotation -->
+<div class="annotation">
+  <span class="name">F · Loh · لَوح</span>
+  <span>Magazine gallery · cover-art cards · editorial / art director direction</span>
+  <span style="opacity:0.4;">poetry-bil-araby v3 mockup</span>
+</div>
+
+</body>
+</html>

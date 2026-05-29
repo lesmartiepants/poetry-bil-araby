@@ -1,91 +1,65 @@
-/**
- * 50 ms of silence at 24 kHz mono 16-bit PCM — sufficient for iOS to recognise
- * the playback as a real media event and promote the audio session category.
- */
-const SILENT_WAV_BASE64 =
-  'UklGRoQJAABXQVZFZm10IBAAAAABAAEAwF0AAIC7AAACABAAZGF0YWAJAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
-  'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+// 50 ms of silence at 24 kHz mono 16-bit PCM, encoded as a WAV base64 data URI.
+// Built once at module load — no magic string to maintain or miscalculate.
+// iOS registers this as a real media-playback event, which is what promotes the
+// AVAudioSession from "ambient" (muted by the silent switch) to "playback".
+const SILENT_WAV_BASE64 = (() => {
+  const sampleRate = 24000;
+  const numSamples = Math.floor(sampleRate * 0.05); // 50 ms = 1200 samples
+  const dataLen = numSamples * 2; // 16-bit PCM = 2 bytes per sample
+  const buf = new ArrayBuffer(44 + dataLen);
+  const v = new DataView(buf);
+  const str = (off, text) => {
+    for (let i = 0; i < text.length; i++) v.setUint8(off + i, text.charCodeAt(i));
+  };
+  str(0, 'RIFF');
+  v.setUint32(4, 36 + dataLen, true); // file size - 8
+  str(8, 'WAVE');
+  str(12, 'fmt ');
+  v.setUint32(16, 16, true); // fmt chunk size
+  v.setUint16(20, 1, true); // PCM
+  v.setUint16(22, 1, true); // mono
+  v.setUint32(24, sampleRate, true);
+  v.setUint32(28, sampleRate * 2, true); // byte rate
+  v.setUint16(32, 2, true); // block align
+  v.setUint16(34, 16, true); // bits per sample
+  str(36, 'data');
+  v.setUint32(40, dataLen, true);
+  // Data section is zero-initialised (silence) — ArrayBuffer default
+  const bytes = new Uint8Array(buf);
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary);
+})();
 
 /**
- * Transition the iOS audio session from "ambient" (silenced by the hardware
- * mute/silent switch) to "playback" (ignores the silent switch).
+ * Bypass the iOS hardware silent switch for Web Audio API (Tone.js) playback.
  *
- * How it works: on iOS, Web Audio API routes output through AVAudioSession.
- * The default category is "ambient", which the silent switch mutes. Playing an
- * HTMLAudioElement *connected to the same AudioContext* via
- * createMediaElementSource() causes iOS to associate the AudioContext with an
- * active "playback" session, overriding the silent switch for all subsequent
- * output from that context — including Tone.js.
+ * iOS assigns the "ambient" AVAudioSession category to web audio by default,
+ * which the hardware silent switch mutes. Playing an HTMLAudioElement *directly
+ * to the device speaker* during a user gesture promotes the session to "playback"
+ * category, which ignores the silent switch. Because AVAudioSession is
+ * process-scoped in WKWebView, this promotion covers all subsequent audio output
+ * from the same page — including the AudioContext used by Tone.js.
  *
- * Must be called **and awaited** inside a user gesture, before toneStart(), so
- * the session is promoted before Tone.js begins outputting audio.
+ * Important: do NOT route the element through the AudioContext via
+ * createMediaElementSource() here. At call time the AudioContext is still
+ * suspended; routing audio through a suspended context prevents actual speaker
+ * output and therefore prevents session promotion.
  *
- * @param {AudioContext} [audioContext] - The raw AudioContext to promote (pass
- *   getToneContext().rawContext). Omit only in SSR / test environments.
+ * Must be called and awaited during a user gesture, before toneStart(), so
+ * the session is promoted before the AudioContext begins outputting audio.
  */
-export async function unlockAudioForIOS(audioContext) {
+export async function unlockAudioForIOS() {
   if (typeof document === 'undefined') return;
   try {
     const audio = document.createElement('audio');
     audio.setAttribute('playsinline', '');
     audio.src = `data:audio/wav;base64,${SILENT_WAV_BASE64}`;
-    if (audioContext?.createMediaElementSource) {
-      try {
-        const source = audioContext.createMediaElementSource(audio);
-        source.connect(audioContext.destination);
-      } catch (_) {
-        // e.g. InvalidStateError if the element is already a media source node
-      }
-    }
-    // Race against 1500ms timeout: audio.play() can hang indefinitely on some iOS
-    // versions when the AudioContext is in a bad state, permanently blocking callers.
-    await Promise.race([audio.play(), new Promise((r) => setTimeout(r, 1500))]);
+    // Race against 1500 ms: audio.play() can hang indefinitely on some iOS
+    // versions — the timeout ensures the caller is never permanently blocked.
+    await Promise.race([audio.play(), new Promise((resolve) => setTimeout(resolve, 1500))]);
   } catch (_) {
-    // Silently absorb — restricted environment, no user gesture, or already promoted
+    // Absorb: restricted environment, missing user gesture, or already promoted.
   }
 }
 

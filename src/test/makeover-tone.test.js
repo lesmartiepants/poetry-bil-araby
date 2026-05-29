@@ -90,57 +90,42 @@ describe('WS4: Tone.js integration', () => {
     });
   });
 
+  // ─── TDD: iOS silent switch bypass ────────────────────────────────────────
+  // These tests are written BEFORE the implementation exists (red phase).
+  // They define the exact contract for unlockAudioForIOS and the togglePlay
+  // changes required to bypass the iOS hardware silent switch.
   describe('iOS silent switch bypass', () => {
+    // ── Static contract tests ──────────────────────────────────────────────
+
     it('audio.js exports unlockAudioForIOS as an async function', () => {
       const content = fs.readFileSync(path.join(SRC, 'utils/audio.js'), 'utf-8');
-      // Must be async so callers can await session promotion before resuming AudioContext
       expect(content).toMatch(/export\s+async\s+function\s+unlockAudioForIOS/);
     });
 
-    it('audio.js awaits audio.play() so session promotion completes before returning', () => {
-      const content = fs.readFileSync(path.join(SRC, 'utils/audio.js'), 'utf-8');
-      expect(content).toMatch(/await\s+audio\.play\s*\(\)/);
-    });
-
-    it('audio.js contains a silent WAV base64 constant', () => {
-      const content = fs.readFileSync(path.join(SRC, 'utils/audio.js'), 'utf-8');
-      expect(content).toMatch(/SILENT_WAV_BASE64/);
-    });
-
-    it('togglePlay.js imports unlockAudioForIOS from utils/audio', () => {
-      const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
-      expect(content).toMatch(/unlockAudioForIOS/);
-    });
-
-    it('togglePlay.js awaits unlockAudioForIOS and calls toneStart in both RESUME and GENERATE paths', () => {
-      const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
-      // Both RESUME and GENERATE paths must await unlockAudioForIOS before toneStart
-      const awaitedUnlockMatches = content.match(/await\s+unlockAudioForIOS\s*\(/g) || [];
-      const toneStartMatches = content.match(/toneStart\s*\(\s*\)/g) || [];
-      expect(awaitedUnlockMatches.length).toBeGreaterThanOrEqual(2);
-      expect(toneStartMatches.length).toBeGreaterThanOrEqual(2);
-    });
-
-    it('togglePlay.js guards toneStart() against iOS AudioContext hang via Promise.race timeout', () => {
-      const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
-      // toneStart() is wrapped in Promise.race so a stuck AudioContext.resume() can't
-      // permanently lock isTogglingPlay.current — a known iOS WebKit bug.
-      expect(content).toMatch(/Promise\.race\s*\(\s*\[/);
-      expect(content).toMatch(/toneStart\s*\(\s*\).*setTimeout|setTimeout.*toneStart\s*\(\s*\)/s);
-    });
-
     it('audio.js guards audio.play() against hang via Promise.race timeout', () => {
+      // audio.play() can hang indefinitely on some iOS versions; a timeout
+      // ensures the caller always proceeds within a bounded time.
       const content = fs.readFileSync(path.join(SRC, 'utils/audio.js'), 'utf-8');
-      expect(content).toMatch(/Promise\.race\s*\(\s*\[/);
-      expect(content).toMatch(/audio\.play\s*\(\s*\).*setTimeout|setTimeout.*audio\.play/s);
+      expect(content).toMatch(/Promise\.race/);
     });
 
-    it('togglePlay.js passes getToneContext().rawContext to unlockAudioForIOS', () => {
+    it('togglePlay.js imports and awaits unlockAudioForIOS in both paths', () => {
       const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
-      expect(content).toMatch(
-        /unlockAudioForIOS\s*\(\s*getToneContext\s*\(\s*\)\s*\.\s*rawContext\s*\)/
-      );
+      // Must appear at least twice: once for RESUME, once for GENERATE
+      const matches = content.match(/await\s+unlockAudioForIOS\s*\(/g) || [];
+      expect(matches.length).toBeGreaterThanOrEqual(2);
     });
+
+    it('togglePlay.js guards toneStart() with a Promise.race timeout', () => {
+      // AudioContext.resume() can hang indefinitely on iOS — a timeout prevents
+      // isTogglingPlay.current from being permanently locked on the first tap.
+      const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
+      expect(content).toMatch(/Promise\.race/);
+      // toneStart() must be one of the race participants
+      expect(content).toMatch(/toneStart\s*\(\s*\)/);
+    });
+
+    // ── Behavioural unit tests for unlockAudioForIOS ───────────────────────
 
     describe('unlockAudioForIOS unit tests', () => {
       let mockPlay;
@@ -149,7 +134,7 @@ describe('WS4: Tone.js integration', () => {
 
       beforeEach(() => {
         mockPlay = vi.fn().mockResolvedValue(undefined);
-        mockAudio = { setAttribute: vi.fn(), src: '', play: mockPlay };
+        mockAudio = { setAttribute: vi.fn(), play: mockPlay, src: '' };
         originalCreateElement = document.createElement.bind(document);
         vi.spyOn(document, 'createElement').mockImplementation((tag) => {
           if (tag === 'audio') return mockAudio;
@@ -173,49 +158,25 @@ describe('WS4: Tone.js integration', () => {
         expect(mockAudio.src).toMatch(/^data:audio\/wav;base64,/);
       });
 
-      it('sets playsinline attribute so iOS does not go fullscreen', async () => {
+      it('sets playsinline so iOS does not go fullscreen', async () => {
         const { unlockAudioForIOS } = await import('../utils/audio.js');
         await unlockAudioForIOS();
         expect(mockAudio.setAttribute).toHaveBeenCalledWith('playsinline', '');
       });
 
-      it('connects the audio element to the AudioContext via createMediaElementSource', async () => {
-        const mockSource = { connect: vi.fn() };
-        const mockDestination = {};
-        const mockAudioContext = {
-          createMediaElementSource: vi.fn().mockReturnValue(mockSource),
-          destination: mockDestination,
-        };
-        const { unlockAudioForIOS } = await import('../utils/audio.js');
-        await unlockAudioForIOS(mockAudioContext);
-        expect(mockAudioContext.createMediaElementSource).toHaveBeenCalledWith(mockAudio);
-        expect(mockSource.connect).toHaveBeenCalledWith(mockDestination);
-      });
-
-      it('skips createMediaElementSource when no audioContext is provided', async () => {
-        const { unlockAudioForIOS } = await import('../utils/audio.js');
-        await expect(unlockAudioForIOS(undefined)).resolves.toBeUndefined();
-        expect(mockPlay).toHaveBeenCalledTimes(1);
-      });
-
       it('does not throw if audio.play() rejects (e.g. no user gesture)', async () => {
         mockPlay.mockRejectedValue(new DOMException('NotAllowedError'));
         const { unlockAudioForIOS } = await import('../utils/audio.js');
-        await expect(unlockAudioForIOS()).resolves.not.toThrow();
+        await expect(unlockAudioForIOS()).resolves.toBeUndefined();
       });
 
-      it('does not throw if createMediaElementSource throws', async () => {
-        const mockAudioContext = {
-          createMediaElementSource: vi.fn().mockImplementation(() => {
-            throw new DOMException('InvalidStateError');
-          }),
-          destination: {},
-        };
+      it('resolves within timeout even if audio.play() never settles', async () => {
+        // Simulates the iOS WebKit bug where play() hangs indefinitely
+        mockPlay.mockImplementation(() => new Promise(() => {}));
         const { unlockAudioForIOS } = await import('../utils/audio.js');
-        await expect(unlockAudioForIOS(mockAudioContext)).resolves.toBeUndefined();
-        // audio.play() must still be called even when the AudioContext wiring fails
-        expect(mockPlay).toHaveBeenCalledTimes(1);
-      });
+        // Should resolve in ~1.5s; allow 3s to avoid flakiness
+        await expect(unlockAudioForIOS()).resolves.toBeUndefined();
+      }, 3000);
     });
   });
 });

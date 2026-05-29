@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { Rabbit } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Player, start as toneStart, getContext as getToneContext } from 'tone';
+import { Player, start as toneStart } from 'tone';
 import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
 import { FEATURES } from '../../constants/features';
@@ -218,15 +218,17 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   // Re-creating the player from the cached URL is cheaper than storing raw PCM buffers.
   if (audioUrl) {
     try {
-      // Bypass iOS silent switch: connect a silent <audio> element to the same
-      // AudioContext used by Tone.js via createMediaElementSource(), which causes
-      // iOS to associate that context with "playback" session category (ignores
-      // the silent switch). Must be awaited before toneStart() so the promotion
-      // is complete before Tone.js begins outputting audio.
-      await unlockAudioForIOS(getToneContext().rawContext);
-      // Race toneStart() against a 4s timeout: AudioContext.resume() can hang
-      // indefinitely on iOS when the page regains focus or after interruptions.
-      await Promise.race([toneStart(), new Promise((r) => setTimeout(r, 4000))]);
+      // 1. Play a silent audio element directly to the device speaker.
+      //    This promotes the iOS AVAudioSession from "ambient" (muted by the
+      //    hardware silent switch) to "playback" (ignores the silent switch).
+      //    Must happen before toneStart() so the session is promoted before
+      //    the AudioContext starts outputting audio.
+      await unlockAudioForIOS();
+      // 2. Resume the AudioContext. Race against a 4 s timeout: on iOS,
+      //    AudioContext.resume() can hang when called without a prior session
+      //    promotion. The timeout ensures isTogglingPlay.current is not
+      //    permanently locked if the context cannot resume.
+      await Promise.race([toneStart(), new Promise((resolve) => setTimeout(resolve, 4000))]);
       const player = await createPlayerReady(audioUrl);
       startPlayer(player, pauseOffset.value);
       setPlayer(player);
@@ -240,19 +242,15 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     return;
   }
 
-  // iOS silent switch bypass + AudioContext unlock after user gesture.
-  // Connecting a silent <audio> element to the Tone.js AudioContext via
-  // createMediaElementSource() causes iOS to associate the context with
-  // "playback" session category, which ignores the hardware silent switch.
-  // Must be awaited — session promotion only completes when audio.play() resolves.
-  // Tone.start() (toneStart) then resumes the AudioContext after the user gesture.
-  //
-  // Both calls are guarded: if they throw (e.g. Tone.js not yet init'd) or hang
-  // (AudioContext.resume() stuck — a known iOS WebKit bug), we proceed anyway so
-  // isTogglingPlay.current is never permanently stuck.
+  // 1. Promote iOS AVAudioSession to "playback" (bypasses the hardware silent switch).
+  // 2. Resume the AudioContext so Tone.js can output audio.
+  // Both are wrapped in a try/catch + timeout so that if either hangs or throws,
+  // execution continues to setGenerating(true) and doGenerate()'s finally block,
+  // which unconditionally resets isTogglingPlay.current = false. Without this guard
+  // a stuck AudioContext.resume() would permanently lock the play button.
   try {
-    await unlockAudioForIOS(getToneContext().rawContext);
-    await Promise.race([toneStart(), new Promise((r) => setTimeout(r, 4000))]);
+    await unlockAudioForIOS();
+    await Promise.race([toneStart(), new Promise((resolve) => setTimeout(resolve, 4000))]);
   } catch (_) {}
 
   setGenerating(true);

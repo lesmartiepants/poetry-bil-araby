@@ -21,7 +21,8 @@ describe('WS4: Tone.js integration', () => {
 
     it('uses Tone.start() for iOS unlock', () => {
       const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
-      expect(content).toMatch(/(?:Tone\.)?start\s*\(/);
+      // start may be imported directly or aliased (e.g. as toneStart)
+      expect(content).toMatch(/(?:Tone\.)?(?:tone)?[Ss]tart\s*\(/);
     });
 
     it('uses Tone.Player for playback', () => {
@@ -134,11 +135,18 @@ describe('WS4: Tone.js integration', () => {
 
       beforeEach(() => {
         mockPlay = vi.fn().mockResolvedValue(undefined);
-        mockAudio = { setAttribute: vi.fn(), play: mockPlay, src: '' };
+        mockAudio = { setAttribute: vi.fn(), play: mockPlay, src: '', parentNode: null };
         originalCreateElement = document.createElement.bind(document);
         vi.spyOn(document, 'createElement').mockImplementation((tag) => {
           if (tag === 'audio') return mockAudio;
           return originalCreateElement(tag);
+        });
+        // Stub DOM attachment so the mock object doesn't cause Node errors
+        vi.spyOn(document.body, 'appendChild').mockImplementation(() => {
+          mockAudio.parentNode = document.body;
+        });
+        vi.spyOn(document.body, 'removeChild').mockImplementation(() => {
+          mockAudio.parentNode = null;
         });
       });
 
@@ -164,18 +172,35 @@ describe('WS4: Tone.js integration', () => {
         expect(mockAudio.setAttribute).toHaveBeenCalledWith('playsinline', '');
       });
 
-      it('does not throw if audio.play() rejects (e.g. no user gesture)', async () => {
-        mockPlay.mockRejectedValue(new DOMException('NotAllowedError'));
+      it('attaches audio element to document.body before playing', async () => {
         const { unlockAudioForIOS } = await import('../utils/audio.js');
-        await expect(unlockAudioForIOS()).resolves.toBeUndefined();
+        await unlockAudioForIOS();
+        expect(document.body.appendChild).toHaveBeenCalledWith(mockAudio);
       });
 
-      it('resolves within timeout even if audio.play() never settles', async () => {
+      it('removes audio element from document.body after unlock completes', async () => {
+        const { unlockAudioForIOS } = await import('../utils/audio.js');
+        await unlockAudioForIOS();
+        expect(document.body.removeChild).toHaveBeenCalledWith(mockAudio);
+      });
+
+      it('returns "ok" when audio.play() resolves', async () => {
+        const { unlockAudioForIOS } = await import('../utils/audio.js');
+        await expect(unlockAudioForIOS()).resolves.toBe('ok');
+      });
+
+      it('returns "error" and does not throw if audio.play() rejects (e.g. no user gesture)', async () => {
+        mockPlay.mockRejectedValue(new DOMException('NotAllowedError'));
+        const { unlockAudioForIOS } = await import('../utils/audio.js');
+        await expect(unlockAudioForIOS()).resolves.toBe('error');
+      });
+
+      it('returns "timeout" and resolves within timeout even if audio.play() never settles', async () => {
         // Simulates the iOS WebKit bug where play() hangs indefinitely
         mockPlay.mockImplementation(() => new Promise(() => {}));
         const { unlockAudioForIOS } = await import('../utils/audio.js');
         // Should resolve in ~1.5s; allow 3s to avoid flakiness
-        await expect(unlockAudioForIOS()).resolves.toBeUndefined();
+        await expect(unlockAudioForIOS()).resolves.toBe('timeout');
       }, 3000);
     });
   });

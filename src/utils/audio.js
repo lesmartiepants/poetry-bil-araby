@@ -48,18 +48,40 @@ const SILENT_WAV_BASE64 = (() => {
  *
  * Must be called and awaited during a user gesture, before toneStart(), so
  * the session is promoted before the AudioContext begins outputting audio.
+ *
+ * @returns {'ok'|'timeout'|'error'|'ssr'} Diagnostic status for logging.
  */
 export async function unlockAudioForIOS() {
-  if (typeof document === 'undefined') return;
+  if (typeof document === 'undefined') return 'ssr';
+  let audio;
   try {
-    const audio = document.createElement('audio');
+    audio = document.createElement('audio');
     audio.setAttribute('playsinline', '');
     audio.src = `data:audio/wav;base64,${SILENT_WAV_BASE64}`;
+    // Attach to DOM: required on some iOS/WKWebView versions for reliable playback
+    document.body.appendChild(audio);
+
     // Race against 1500 ms: audio.play() can hang indefinitely on some iOS
     // versions — the timeout ensures the caller is never permanently blocked.
-    await Promise.race([audio.play(), new Promise((resolve) => setTimeout(resolve, 1500))]);
+    // Suppress any late rejection from audio.play() if the timeout fires first.
+    let timedOut = false;
+    const playPromise = audio.play();
+    playPromise.catch(() => {}); // prevent unhandled rejection if timeout wins the race
+    await Promise.race([
+      playPromise,
+      new Promise((resolve) =>
+        setTimeout(() => {
+          timedOut = true;
+          resolve();
+        }, 1500)
+      ),
+    ]);
+    return timedOut ? 'timeout' : 'ok';
   } catch (_) {
     // Absorb: restricted environment, missing user gesture, or already promoted.
+    return 'error';
+  } finally {
+    if (audio?.parentNode) audio.parentNode.removeChild(audio);
   }
 }
 

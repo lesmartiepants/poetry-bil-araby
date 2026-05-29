@@ -223,7 +223,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       //    hardware silent switch) to "playback" (ignores the silent switch).
       //    Must happen before toneStart() so the session is promoted before
       //    the AudioContext starts outputting audio.
-      await unlockAudioForIOS();
+      const iosStatus = await unlockAudioForIOS();
+      if (FEATURES.logging && iosStatus !== 'ok') {
+        addLog('Audio', `iOS session unlock: ${iosStatus}`, 'info');
+      }
       // 2. Resume the AudioContext. Race against a 4 s timeout: on iOS,
       //    AudioContext.resume() can hang when called without a prior session
       //    promotion. The timeout ensures isTogglingPlay.current is not
@@ -249,7 +252,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   // which unconditionally resets isTogglingPlay.current = false. Without this guard
   // a stuck AudioContext.resume() would permanently lock the play button.
   try {
-    await unlockAudioForIOS();
+    const iosStatus = await unlockAudioForIOS();
+    if (FEATURES.logging && iosStatus !== 'ok') {
+      addLog('Audio', `iOS session unlock: ${iosStatus}`, 'info');
+    }
     await Promise.race([toneStart(), new Promise((resolve) => setTimeout(resolve, 4000))]);
   } catch (_) {}
 

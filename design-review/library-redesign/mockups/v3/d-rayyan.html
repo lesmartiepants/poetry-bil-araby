@@ -293,6 +293,29 @@ body.light .ray-footer-hint { color: var(--txt-light-mute); }
 .ray-footer-hint .sep { width: 1px; height: 12px; background: var(--border-dark); }
 body.light .ray-footer-hint .sep { background: var(--border-light); }
 
+/* ── Responsive: mobile ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .rayyan {
+    top: 0; left: 0; right: 0;
+    width: 100%; max-height: 100vh;
+    border-radius: 0;
+    margin-right: 0;
+    transform: none;
+  }
+  /* Collapse split pane — show only the list on mobile */
+  .ray-preview { display: none; }
+  .ray-list { width: 100%; border-right: none; }
+  /* Always show action buttons (no hover on touch) */
+  .ray-row-actions { opacity: 1; }
+  /* Hide keyboard hint footer on mobile */
+  .ray-footer { display: none; }
+  /* Hide keyboard shortcut badges */
+  .ray-kbd { display: none; }
+  /* Increase touch targets */
+  .ray-row { padding: 13px 16px; }
+  .ray-action-btn { width: 34px; height: 34px; }
+}
+
 /* ── Annotation ────────────────────────────────────────────────── */
 .annotation {
   position: fixed; top: 0; left: 0; right: 0; z-index: 200;

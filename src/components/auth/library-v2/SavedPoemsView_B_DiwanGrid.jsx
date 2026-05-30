@@ -13,6 +13,7 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { formatRelative, firstTwoLines } from './utils.js';
+import ShareCardModal from '../../ShareCardModal.jsx';
 
 /**
  * Library v2 · Option B — Diwan Grid (ديوان)
@@ -35,6 +36,8 @@ const SavedPoemsView_B_DiwanGrid = ({
   const [activePoet, setActivePoet] = useState('all');
   const [sort, setSort] = useState('recent'); // recent | poet | title
   const [selected, setSelected] = useState(() => new Set());
+  const [pinnedIds, setPinnedIds] = useState(() => new Set());
+  const [sharePoem, setSharePoem] = useState(null); // poem currently in ShareCardModal
 
   useEffect(() => {
     if (!isOpen) return undefined;
@@ -82,7 +85,67 @@ const SavedPoemsView_B_DiwanGrid = ({
   const selectedItems = filtered.filter((p) => selected.has(p.id));
 
   const handleBulkRemove = () => {
+    if (!window.confirm(`Remove ${selectedItems.length} poem${selectedItems.length > 1 ? 's' : ''} from your saved library? This cannot be undone.`)) return;
     selectedItems.forEach((p) => onUnsavePoem?.(p));
+    setSelected(new Set());
+  };
+
+  const handleBulkPin = () => {
+    setPinnedIds((prev) => {
+      const next = new Set(prev);
+      const allPinned = selectedItems.every((p) => next.has(p.id));
+      selectedItems.forEach((p) => {
+        if (allPinned) next.delete(p.id);
+        else next.add(p.id);
+      });
+      return next;
+    });
+    setSelected(new Set());
+  };
+
+  const handleBulkShare = async () => {
+    if (selectedItems.length === 1) {
+      // Single poem → open ShareCardModal for beautiful visual sharing
+      setSharePoem(selectedItems[0]);
+      setSelected(new Set());
+      return;
+    }
+    // Multiple poems → use native share or clipboard
+    const text = selectedItems
+      .map(
+        (p) =>
+          `${p.title || '—'}\n${p.poet || ''}\n\n${(p.poem_text || '')
+            .split('\n')
+            .slice(0, 4)
+            .join('\n')}`
+      )
+      .join('\n\n---\n\n');
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'قصائدي المحفوظة · My saved poems', text });
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+    } catch {
+      // User cancelled or clipboard unavailable — silently ignore
+    }
+    setSelected(new Set());
+  };
+
+  const handleBulkExport = async () => {
+    const text = selectedItems
+      .map(
+        (p, i) =>
+          `[${i + 1}] ${p.title || '—'}\n${p.poet || ''}\n\n${p.poem_text || ''}`
+      )
+      .join('\n\n' + '═'.repeat(40) + '\n\n');
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Poem export', text });
+      } else {
+        await navigator.clipboard.writeText(text);
+      }
+    } catch {}
     setSelected(new Set());
   };
 
@@ -91,184 +154,201 @@ const SavedPoemsView_B_DiwanGrid = ({
     : 'radial-gradient(circle at 50% 0%, rgba(74,124,201,0.05) 0%, transparent 45%), #FDFCF8';
 
   return (
-    <motion.div
-      key="diwan-grid"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.2 }}
-      className="fixed inset-0 z-[60] flex flex-col"
-      style={{ background: sceneBg }}
-    >
-      {/* Sticky glass header */}
-      <header
-        className={`sticky top-0 z-10 px-4 pt-[max(env(safe-area-inset-top),12px)] pb-3 md:px-8 md:pt-6 border-b ${theme.border} backdrop-blur-2xl backdrop-saturate-150`}
-        style={{
-          background: darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)',
-        }}
+    <>
+      <motion.div
+        key="diwan-grid"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        className="fixed inset-0 z-[60] flex flex-col"
+        style={{ background: sceneBg }}
       >
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <button
-            onClick={onClose}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/5 transition-colors"
-            aria-label="Close"
+        {/* Sticky glass header */}
+        <header
+          className={`sticky top-0 z-10 px-4 pt-[max(env(safe-area-inset-top),12px)] pb-3 md:px-8 md:pt-6 border-b ${theme.border} backdrop-blur-2xl backdrop-saturate-150`}
+          style={{
+            background: darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)',
+          }}
+        >
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <button
+              onClick={onClose}
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/5 transition-colors"
+              aria-label="Close"
+            >
+              <ChevronLeft size={20} className={theme.text} />
+            </button>
+            <div className="flex-1 text-center">
+              <div
+                dir="rtl"
+                style={{
+                  fontFamily: "'Reem Kufi', sans-serif",
+                  fontWeight: 700,
+                  fontSize: '1.15rem',
+                  color: 'var(--gold)',
+                  lineHeight: 1,
+                }}
+              >
+                قَصائِدي · {savedPoems.length}
+              </div>
+              <div
+                style={{ fontFamily: "'Forum', serif" }}
+                className={`text-[9px] tracking-[0.32em] uppercase ${theme.text} opacity-50 mt-1`}
+              >
+                My Diwan
+              </div>
+            </div>
+            <button
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/5 transition-colors"
+              aria-label="Layout"
+            >
+              <X size={20} className={`${theme.text} opacity-0 pointer-events-none`} />
+            </button>
+          </div>
+
+          {/* Search + sort */}
+          <div
+            className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${theme.border} ${darkMode ? 'bg-white/[0.05]' : 'bg-black/[0.04]'}`}
           >
-            <ChevronLeft size={20} className={theme.text} />
-          </button>
-          <div className="flex-1 text-center">
-            <div
-              dir="rtl"
+            <Search size={14} className={`${theme.text} opacity-50`} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by line, title, or poet…"
+              className={`flex-1 bg-transparent outline-none text-sm ${theme.text} placeholder:opacity-40`}
+              style={{ fontFamily: "'Tajawal', sans-serif" }}
+            />
+            <button
+              onClick={() =>
+                setSort((s) => (s === 'recent' ? 'poet' : s === 'poet' ? 'title' : 'recent'))
+              }
+              className="h-7 px-2.5 rounded-lg border border-gold/25 text-gold text-[11px] inline-flex items-center gap-1"
               style={{
-                fontFamily: "'Reem Kufi', sans-serif",
-                fontWeight: 700,
-                fontSize: '1.15rem',
-                color: 'var(--gold)',
-                lineHeight: 1,
+                background: 'rgba(197,160,89,0.10)',
+                fontFamily: "'Tajawal', sans-serif",
               }}
             >
-              قَصائِدي · {savedPoems.length}
-            </div>
-            <div
-              style={{ fontFamily: "'Forum', serif" }}
-              className={`text-[9px] tracking-[0.32em] uppercase ${theme.text} opacity-50 mt-1`}
-            >
-              My Diwan
-            </div>
+              {sort === 'recent' ? 'Recent' : sort === 'poet' ? 'Poet' : 'Title'}
+              <ChevronDown size={10} />
+            </button>
           </div>
-          <button
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/5 transition-colors"
-            aria-label="Layout"
-          >
-            <X size={20} className={`${theme.text} opacity-0 pointer-events-none`} />
-          </button>
-        </div>
 
-        {/* Search + sort */}
-        <div
-          className={`flex items-center gap-2 px-3 py-2 rounded-xl border ${theme.border} ${darkMode ? 'bg-white/[0.05]' : 'bg-black/[0.04]'}`}
-        >
-          <Search size={14} className={`${theme.text} opacity-50`} />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by line, title, or poet…"
-            className={`flex-1 bg-transparent outline-none text-sm ${theme.text} placeholder:opacity-40`}
-            style={{ fontFamily: "'Tajawal', sans-serif" }}
-          />
-          <button
-            onClick={() =>
-              setSort((s) => (s === 'recent' ? 'poet' : s === 'poet' ? 'title' : 'recent'))
-            }
-            className="h-7 px-2.5 rounded-lg border border-gold/25 text-gold text-[11px] inline-flex items-center gap-1"
+          {/* Poet chips */}
+          {poets.length > 0 && (
+            <div className="flex gap-1.5 mt-3 overflow-x-auto custom-scrollbar-hide -mx-1 px-1">
+              {[{ id: 'all', label: 'All' }, ...poets.map((p) => ({ id: p, label: p }))].map(
+                (chip) => {
+                  const active = activePoet === chip.id;
+                  return (
+                    <button
+                      key={chip.id}
+                      onClick={() => setActivePoet(chip.id)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors ${
+                        active
+                          ? 'border border-gold/45 bg-gold/12 text-gold'
+                          : `border ${theme.border} ${theme.text} opacity-65 hover:opacity-100`
+                      }`}
+                      style={{ fontFamily: "'Tajawal', sans-serif" }}
+                    >
+                      {chip.label}
+                    </button>
+                  );
+                }
+              )}
+            </div>
+          )}
+        </header>
+
+        {/* Selection bar */}
+        {inSelection && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 px-4 py-2.5 border-b"
             style={{
-              background: 'rgba(197,160,89,0.10)',
+              background: 'rgba(74,124,201,0.14)',
+              borderColor: 'rgba(74,124,201,0.3)',
+              color: '#6B95D6',
               fontFamily: "'Tajawal', sans-serif",
+              fontSize: '13px',
             }}
           >
-            {sort === 'recent' ? 'Recent' : sort === 'poet' ? 'Poet' : 'Title'}
-            <ChevronDown size={10} />
-          </button>
+            <CheckCircle2 size={14} />
+            <span className="font-medium">{selected.size} selected</span>
+            <span className="flex-1" />
+            <button
+              onClick={() => setSelected(new Set())}
+              className="px-2 py-0.5 rounded-md hover:bg-white/5"
+            >
+              Done
+            </button>
+          </motion.div>
+        )}
+
+        {/* Grid */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-3 md:px-8 pt-3 pb-[max(env(safe-area-inset-bottom),96px)]">
+          {filtered.length === 0 ? (
+            <EmptyState theme={theme} />
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 md:gap-4 max-w-7xl mx-auto">
+              {filtered.map((sp, idx) => (
+                <Tile
+                  key={sp.id || idx}
+                  sp={sp}
+                  index={idx}
+                  darkMode={darkMode}
+                  theme={theme}
+                  isSelected={selected.has(sp.id)}
+                  isPinned={pinnedIds.has(sp.id)}
+                  inSelection={inSelection}
+                  onCheckClick={(e) => {
+                    e.stopPropagation();
+                    toggleSelect(sp.id);
+                  }}
+                  onClick={() => {
+                    if (inSelection) toggleSelect(sp.id);
+                    else onSelectPoem?.(sp);
+                  }}
+                  onShareClick={(e) => {
+                    e.stopPropagation();
+                    setSharePoem(sp);
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Poet chips */}
-        {poets.length > 0 && (
-          <div className="flex gap-1.5 mt-3 overflow-x-auto custom-scrollbar-hide -mx-1 px-1">
-            {[{ id: 'all', label: 'All' }, ...poets.map((p) => ({ id: p, label: p }))].map(
-              (chip) => {
-                const active = activePoet === chip.id;
-                return (
-                  <button
-                    key={chip.id}
-                    onClick={() => setActivePoet(chip.id)}
-                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs whitespace-nowrap transition-colors ${
-                      active
-                        ? 'border border-gold/45 bg-gold/12 text-gold'
-                        : `border ${theme.border} ${theme.text} opacity-65 hover:opacity-100`
-                    }`}
-                    style={{ fontFamily: "'Tajawal', sans-serif" }}
-                  >
-                    {chip.label}
-                  </button>
-                );
-              }
-            )}
-          </div>
-        )}
-      </header>
-
-      {/* Selection bar */}
-      {inSelection && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 px-4 py-2.5 border-b"
-          style={{
-            background: 'rgba(74,124,201,0.14)',
-            borderColor: 'rgba(74,124,201,0.3)',
-            color: '#6B95D6',
-            fontFamily: "'Tajawal', sans-serif",
-            fontSize: '13px',
-          }}
-        >
-          <CheckCircle2 size={14} />
-          <span className="font-medium">{selected.size} selected</span>
-          <span className="flex-1" />
-          <button
-            onClick={() => setSelected(new Set())}
-            className="px-2 py-0.5 rounded-md hover:bg-white/5"
+        {/* Bottom action bar (selection mode) */}
+        {inSelection && (
+          <motion.nav
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+            className={`fixed bottom-0 left-0 right-0 z-20 flex items-center justify-around px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] border-t ${theme.border} backdrop-blur-2xl backdrop-saturate-150`}
+            style={{
+              background: darkMode ? 'rgba(12,12,14,0.86)' : 'rgba(253,252,248,0.86)',
+            }}
           >
-            Done
-          </button>
-        </motion.div>
-      )}
-
-      {/* Grid */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-3 md:px-8 pt-3 pb-[max(env(safe-area-inset-bottom),96px)]">
-        {filtered.length === 0 ? (
-          <EmptyState theme={theme} />
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 md:gap-4 max-w-7xl mx-auto">
-            {filtered.map((sp, idx) => (
-              <Tile
-                key={sp.id || idx}
-                sp={sp}
-                index={idx}
-                darkMode={darkMode}
-                theme={theme}
-                isSelected={selected.has(sp.id)}
-                inSelection={inSelection}
-                onCheckClick={(e) => {
-                  e.stopPropagation();
-                  toggleSelect(sp.id);
-                }}
-                onClick={() => {
-                  if (inSelection) toggleSelect(sp.id);
-                  else onSelectPoem?.(sp);
-                }}
-              />
-            ))}
-          </div>
+            <ActionBtn label="Export" icon={Download} color="text-gold" onClick={handleBulkExport} />
+            <ActionBtn label="Share" icon={Share2} color="text-gold" onClick={handleBulkShare} />
+            <ActionBtn
+              label={selectedItems.every((p) => pinnedIds.has(p.id)) ? 'Unpin' : 'Pin'}
+              icon={Pin}
+              color={theme.text}
+              onClick={handleBulkPin}
+            />
+            <ActionBtn label="Remove" icon={Trash2} color="text-red-400" onClick={handleBulkRemove} />
+          </motion.nav>
         )}
-      </div>
+      </motion.div>
 
-      {/* Bottom action bar (selection mode) */}
-      {inSelection && (
-        <motion.nav
-          initial={{ y: 80, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
-          className={`fixed bottom-0 left-0 right-0 z-20 flex items-center justify-around px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] border-t ${theme.border} backdrop-blur-2xl backdrop-saturate-150`}
-          style={{
-            background: darkMode ? 'rgba(12,12,14,0.86)' : 'rgba(253,252,248,0.86)',
-          }}
-        >
-          <ActionBtn label="Export" icon={Download} color="text-gold" />
-          <ActionBtn label="Share" icon={Share2} color="text-gold" />
-          <ActionBtn label="Pin" icon={Pin} color={theme.text} />
-          <ActionBtn label="Remove" icon={Trash2} color="text-red-400" onClick={handleBulkRemove} />
-        </motion.nav>
+      {/* Share Card Modal — renders above the library grid */}
+      {sharePoem && (
+        <ShareCardModal poem={sharePoem} onClose={() => setSharePoem(null)} />
       )}
-    </motion.div>
+    </>
   );
 };
 
@@ -283,7 +363,7 @@ const ActionBtn = ({ label, icon: Icon, color, onClick }) => (
   </button>
 );
 
-const Tile = ({ sp, index, darkMode, theme, isSelected, inSelection, onCheckClick, onClick }) => {
+const Tile = ({ sp, index, darkMode, theme, isSelected, isPinned, inSelection, onCheckClick, onClick, onShareClick }) => {
   const excerpt = firstTwoLines(sp.poem_text || '');
   return (
     <motion.button
@@ -295,7 +375,7 @@ const Tile = ({ sp, index, darkMode, theme, isSelected, inSelection, onCheckClic
       className={`relative text-right p-3 md:p-4 rounded-2xl border min-h-[168px] md:min-h-[200px] flex flex-col overflow-hidden transition-all ${
         isSelected
           ? 'border-lapis-light bg-lapis/10'
-          : `${theme.border} ${darkMode ? 'bg-gradient-to-br from-white/[0.04] to-white/[0.01]' : 'bg-gradient-to-br from-white/85 to-white/55'} hover:border-gold/30`
+          : `${theme.border} ${darkMode ? 'bg-[#18161e]' : 'bg-white/95'} hover:border-gold/30`
       }`}
     >
       {/* top gold rule */}
@@ -338,8 +418,12 @@ const Tile = ({ sp, index, darkMode, theme, isSelected, inSelection, onCheckClic
           </svg>
         )}
       </span>
-      {/* Heart (top-right) */}
-      <Heart size={14} className="absolute top-2.5 right-2.5 fill-gold text-gold opacity-90" />
+      {/* Pin indicator or Heart (top-right) */}
+      {isPinned ? (
+        <Pin size={14} className="absolute top-2.5 right-2.5 text-gold opacity-90" />
+      ) : (
+        <Heart size={14} className="absolute top-2.5 right-2.5 fill-gold text-gold opacity-90" />
+      )}
 
       <div
         style={{
@@ -378,6 +462,17 @@ const Tile = ({ sp, index, darkMode, theme, isSelected, inSelection, onCheckClic
         <span style={{ fontFamily: "'Tajawal', sans-serif" }}>
           {sp.saved_at ? formatRelative(sp.saved_at) : ''}
         </span>
+        {/* Quick share on single tile (non-selection mode) */}
+        {!inSelection && (
+          <button
+            onClick={onShareClick}
+            className="opacity-0 group-hover:opacity-100 hover:!opacity-100 text-gold transition-opacity"
+            title="Share"
+            aria-label="Share poem"
+          >
+            <Share2 size={11} />
+          </button>
+        )}
         {sp.category && (
           <span
             className="text-gold"

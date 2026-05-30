@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Search, Trash2, MoreHorizontal } from 'lucide-react';
+import { X, Search, Trash2, MoreHorizontal, Pin } from 'lucide-react';
 import { formatRelative, ROMAN, firstTwoLines } from './utils.js';
 
 /**
@@ -28,6 +28,7 @@ const SavedPoemsView_A_Majlis = ({
   const [query, setQuery] = useState('');
   const [activePoet, setActivePoet] = useState('all');
   const [swipeId, setSwipeId] = useState(null); // id whose swipe-action is revealed
+  const [pinnedIds, setPinnedIds] = useState(() => new Set());
   const startX = useRef(0);
   const startId = useRef(null);
 
@@ -56,6 +57,16 @@ const SavedPoemsView_A_Majlis = ({
     );
   });
 
+  const togglePin = (id) => {
+    setPinnedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setSwipeId(null);
+  };
+
   // Touch swipe-to-remove handlers (mobile only — pointer events also catch trackpad)
   const onPointerDown = (e, id) => {
     if (e.pointerType !== 'touch') return;
@@ -66,6 +77,7 @@ const SavedPoemsView_A_Majlis = ({
     if (e.pointerType !== 'touch' || startId.current == null) return;
     const dx = e.clientX - startX.current;
     if (dx < -40) setSwipeId(startId.current);
+    else if (dx > 20) setSwipeId(null);
   };
   const onPointerUp = () => {
     startId.current = null;
@@ -223,6 +235,7 @@ const SavedPoemsView_A_Majlis = ({
                 darkMode={darkMode}
                 theme={theme}
                 isSwiped={swipeId === sp.id}
+                isPinned={pinnedIds.has(sp.id)}
                 onPointerDown={(e) => onPointerDown(e, sp.id)}
                 onPointerMove={onPointerMove}
                 onPointerUp={onPointerUp}
@@ -230,6 +243,7 @@ const SavedPoemsView_A_Majlis = ({
                   setSwipeId(null);
                   onUnsavePoem?.(sp);
                 }}
+                onClickPin={() => togglePin(sp.id)}
                 onClickReset={() => setSwipeId(null)}
                 onSelect={() => onSelectPoem?.(sp)}
               />
@@ -247,32 +261,51 @@ const Leaf = ({
   darkMode,
   theme,
   isSwiped,
+  isPinned,
   onPointerDown,
   onPointerMove,
   onPointerUp,
   onClickRemove,
+  onClickPin,
   onClickReset,
   onSelect,
 }) => {
   const excerpt = firstTwoLines(sp.poem_text || '');
 
+  // Swipe reveals a 176px area: Pin (lapis) + Remove (red)
+  const SWIPE_W = 176;
+
   return (
     <div className="relative overflow-hidden rounded-2xl">
-      {/* Swipe-revealed remove action behind the card */}
-      <button
-        onClick={onClickRemove}
-        className="absolute inset-y-0 right-0 w-[88px] flex flex-col items-center justify-center gap-1 bg-red-500/90 text-white"
-        aria-label="Remove from saved"
+      {/* Swipe-revealed actions behind the card (Pin + Remove) */}
+      <div
+        className="absolute inset-y-0 right-0 flex"
+        style={{ width: SWIPE_W }}
+        aria-hidden="true"
       >
-        <Trash2 size={18} />
-        <span className="text-[10px] tracking-[0.05em] font-medium">Remove</span>
-      </button>
+        <button
+          onClick={onClickPin}
+          className="flex-1 flex flex-col items-center justify-center gap-1 bg-lapis text-white"
+        >
+          <Pin size={18} />
+          <span className="text-[10px] tracking-[0.05em] font-medium">
+            {isPinned ? 'Unpin' : 'Pin'}
+          </span>
+        </button>
+        <button
+          onClick={onClickRemove}
+          className="flex-1 flex flex-col items-center justify-center gap-1 bg-red-500 text-white"
+        >
+          <Trash2 size={18} />
+          <span className="text-[10px] tracking-[0.05em] font-medium">Remove</span>
+        </button>
+      </div>
 
       <AnimatePresence initial={false}>
         <motion.button
           key={sp.id || index}
           initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0, x: isSwiped ? -88 : 0 }}
+          animate={{ opacity: 1, y: 0, x: isSwiped ? -SWIPE_W : 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.24, ease: [0.2, 0.8, 0.2, 1], delay: index * 0.03 }}
           onClick={isSwiped ? onClickReset : onSelect}
@@ -280,12 +313,12 @@ const Leaf = ({
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
-          className={`relative w-full text-left rounded-2xl p-4 md:p-5 border ${theme.border} ${
-            darkMode
-              ? 'bg-gradient-to-br from-white/[0.04] to-white/[0.01]'
-              : 'bg-gradient-to-br from-white/85 to-white/55'
-          } hover:border-gold/30 transition-colors`}
-          style={{ touchAction: 'pan-y' }}
+          className={`relative w-full text-left rounded-2xl p-4 md:p-5 border ${theme.border} hover:border-gold/30 transition-colors`}
+          style={{
+            touchAction: 'pan-y',
+            // Fully opaque so swipe actions don't bleed through
+            background: darkMode ? '#18161e' : 'rgba(253,252,248,0.97)',
+          }}
         >
           {/* Top gold rule */}
           <span
@@ -350,20 +383,37 @@ const Leaf = ({
             <span style={{ fontFamily: "'Tajawal', sans-serif" }}>
               {sp.saved_at ? formatRelative(sp.saved_at) : ''}
             </span>
-            {sp.category && (
-              <span
-                className="px-2 py-0.5 rounded text-gold opacity-90"
-                style={{
-                  background: 'rgba(197,160,89,0.10)',
-                  fontFamily: "'Tajawal', sans-serif",
-                  fontSize: '10px',
-                  letterSpacing: '0.04em',
-                }}
-              >
-                {sp.category}
-              </span>
-            )}
+            <div className="flex items-center gap-2">
+              {isPinned && (
+                <Pin size={10} className="text-gold opacity-70" />
+              )}
+              {sp.category && (
+                <span
+                  className="px-2 py-0.5 rounded text-gold opacity-90"
+                  style={{
+                    background: 'rgba(197,160,89,0.10)',
+                    fontFamily: "'Tajawal', sans-serif",
+                    fontSize: '10px',
+                    letterSpacing: '0.04em',
+                  }}
+                >
+                  {sp.category}
+                </span>
+              )}
+            </div>
           </div>
+
+          {/* Swipe hint (mobile only, fades once swiped) */}
+          {!isSwiped && (
+            <div
+              className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none md:hidden"
+              style={{ opacity: 0.18 }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </div>
+          )}
         </motion.button>
       </AnimatePresence>
     </div>

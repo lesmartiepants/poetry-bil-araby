@@ -343,7 +343,7 @@ const SavedPoemsView_C_Khazana = ({
         )}
 
         {/* Time-grouped rows */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar pb-[max(env(safe-area-inset-bottom),24px)]">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar pb-[max(env(safe-area-inset-bottom),24px)]">
           {groups.length === 0 && pinned.length === 0 ? (
             <EmptyState theme={theme} />
           ) : (
@@ -459,7 +459,8 @@ const Row = ({
           onPointerCancel={onPointerUp}
           className={`relative w-full px-5 py-3 flex items-stretch gap-2.5 text-right border-b ${darkMode ? 'border-white/[0.04]' : 'border-black/[0.05]'}`}
           style={{
-            background: darkMode ? 'rgba(20,19,26,0.95)' : 'rgba(253,252,248,0.95)',
+            // Fully opaque so the lapis/red action buttons behind don't bleed through
+            background: darkMode ? '#14131A' : '#FDFCF8',
             touchAction: 'pan-y',
           }}
           dir="rtl"

@@ -99,17 +99,22 @@ const LibraryHost = ({
 }) => {
   const { variant, demo } = useLibraryVariant();
 
-  // When the demo toggle is on and the user has nothing saved, use demo data.
-  // We do NOT replace real saved poems if the user has any.
-  const effectivePoems =
-    demo && (!savedPoems || savedPoems.length === 0) ? DEMO_SAVED_POEMS : savedPoems;
+  // In demo mode: always use demo data and stub destructive callbacks so
+  // exploring variants can never mutate the real Supabase database.
+  const effectivePoems = demo ? DEMO_SAVED_POEMS : savedPoems;
+  const effectiveUnsave = demo
+    ? (poem) => console.log('[demo] onUnsavePoem called — no-op', poem?.title)
+    : onUnsavePoem;
+  const effectiveSelect = demo
+    ? (poem) => onSelectPoem?.(poem) // reads are fine in demo mode
+    : onSelectPoem;
 
   const sharedProps = {
     isOpen,
     onClose,
     savedPoems: effectivePoems,
-    onSelectPoem,
-    onUnsavePoem,
+    onSelectPoem: effectiveSelect,
+    onUnsavePoem: effectiveUnsave,
     theme,
     darkMode,
   };

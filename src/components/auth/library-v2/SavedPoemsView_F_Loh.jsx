@@ -8,13 +8,9 @@ import { formatRelative, firstLine } from './utils.js';
  *
  * "Editorial / art director / creative director" direction.
  * Each poem is a collector's print — your library is a gallery.
- * Visual-first, scroll-through, museum-quality.
  *
- * • Full-screen gallery takeover
- * • Featured tile (first poem) spans 2×2 columns
- * • Each poet gets a unique gradient color story
- * • Hover reveals Read + Share + Remove overlay actions
- * • Grid ↔ list toggle · search pill · poet filter chips
+ * Presented as a right-side drawer (480px on desktop, full-width on mobile)
+ * so the user can browse their collection without fully leaving the poem.
  */
 
 const POET_GRAD = {
@@ -67,99 +63,98 @@ const SavedPoemsView_F_Loh = ({
   });
 
   const gold = '#C5A059';
-  const border = 'rgba(255,255,255,0.06)';
+  const border = 'rgba(255,255,255,0.07)';
+  const bg = '#0c0c0e';
   const txt = 'rgba(231,229,228,0.92)';
   const txtMute = 'rgba(231,229,228,0.42)';
-  const chipBorder = 'rgba(255,255,255,0.08)';
+
+  const handleShare = async (poem) => {
+    const text = `${poem.title || '—'}\n${poem.poet || ''}\n\n${(poem.poem_text || '').split('\n').slice(0, 6).join('\n')}`;
+    try {
+      if (navigator.share) await navigator.share({ title: poem.title || 'قصيدة', text });
+      else await navigator.clipboard.writeText(text);
+    } catch {}
+  };
 
   return (
     <AnimatePresence>
+      {/* Scrim */}
       <motion.div
-        key="loh-gallery"
+        key="loh-scrim"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
+        onClick={onClose}
         style={{
-          position: 'fixed', inset: 0, zIndex: 80,
-          display: 'flex', flexDirection: 'column',
-          background: '#0c0c0e',
+          position: 'fixed', inset: 0, zIndex: 79,
+          background: 'rgba(0,0,0,0.55)',
+          backdropFilter: 'blur(3px)',
+        }}
+      />
+
+      {/* Right-side drawer */}
+      <motion.div
+        key="loh-drawer"
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', stiffness: 340, damping: 34 }}
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          position: 'fixed',
+          top: 0, right: 0, bottom: 0,
+          width: 'min(520px, 100vw)',
+          zIndex: 80,
+          display: 'flex',
+          flexDirection: 'column',
+          background: bg,
+          borderLeft: `1px solid ${border}`,
+          boxShadow: '-24px 0 80px rgba(0,0,0,0.60)',
         }}
         role="dialog"
         aria-label="Saved poems gallery — Loh"
       >
-        {/* Gallery header */}
+        {/* Drawer header */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          padding: '18px 36px 16px',
+          padding: '20px 20px 16px',
           borderBottom: `1px solid ${border}`,
-          flexShrink: 0, position: 'relative',
+          flexShrink: 0,
         }}>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 16 }}>
+          <div>
             <div style={{
               fontFamily: "'Reem Kufi', sans-serif", fontWeight: 700,
-              fontSize: 26, color: gold, direction: 'rtl',
+              fontSize: 22, color: gold, direction: 'rtl',
               textShadow: '0 0 30px rgba(197,160,89,0.15)',
             }}>لَوحَة القصائد</div>
             <div style={{
               fontFamily: "'Bodoni Moda', serif", fontStyle: 'italic',
-              fontSize: 14, color: txtMute, letterSpacing: '0.03em',
-            }}>Poetry collection</div>
+              fontSize: 12, color: txtMute, letterSpacing: '0.03em', marginTop: 2,
+            }}>Poetry collection · {filtered.length} poems</div>
           </div>
 
-          {/* View toggle — centered */}
-          <div style={{
-            position: 'absolute', left: '50%', transform: 'translateX(-50%)',
-            display: 'flex', gap: 8,
-          }}>
-            {[
-              { mode: 'grid', Icon: LayoutGrid },
-              { mode: 'list', Icon: List },
-            ].map(({ mode, Icon }) => (
-              <button
-                key={mode}
-                onClick={() => setViewMode(mode)}
-                style={{
-                  width: 34, height: 34, borderRadius: 8,
-                  border: viewMode === mode ? '1px solid rgba(197,160,89,0.28)' : `1px solid ${border}`,
-                  background: viewMode === mode ? 'rgba(197,160,89,0.12)' : 'transparent',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer',
-                }}>
-                <Icon size={15} color={viewMode === mode ? gold : txtMute} />
-              </button>
-            ))}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {/* Search pill */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 8,
-              padding: '8px 16px', borderRadius: 999,
-              border: `1px solid ${border}`,
-              background: 'rgba(255,255,255,0.03)',
-              backdropFilter: 'blur(8px)',
-              width: 200,
-            }}>
-              <Search size={14} color={txtMute} />
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="ابحث في مجموعتك…"
-                dir="rtl"
-                style={{
-                  flex: 1, background: 'transparent', border: 'none', outline: 'none',
-                  fontFamily: "'Tajawal', sans-serif", fontSize: 13, color: txt,
-                }}
-              />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* View toggle */}
+            <div style={{ display: 'flex', gap: 4 }}>
+              {[
+                { mode: 'grid', Icon: LayoutGrid },
+                { mode: 'list', Icon: List },
+              ].map(({ mode, Icon }) => (
+                <button
+                  key={mode}
+                  onClick={() => setViewMode(mode)}
+                  style={{
+                    width: 32, height: 32, borderRadius: 7,
+                    border: viewMode === mode ? '1px solid rgba(197,160,89,0.28)' : `1px solid ${border}`,
+                    background: viewMode === mode ? 'rgba(197,160,89,0.12)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer',
+                  }}>
+                  <Icon size={14} color={viewMode === mode ? gold : txtMute} />
+                </button>
+              ))}
             </div>
-            {/* Count badge */}
-            <span style={{
-              padding: '4px 10px', borderRadius: 6,
-              background: 'rgba(197,160,89,0.10)',
-              fontFamily: "'Tajawal', sans-serif", fontSize: 12,
-              color: 'rgba(197,160,89,0.80)',
-            }}>{filtered.length} poems</span>
             {/* Close */}
             <button
               onClick={onClose}
@@ -175,216 +170,275 @@ const SavedPoemsView_F_Loh = ({
           </div>
         </div>
 
-        {/* Filter chips */}
+        {/* Search + filter */}
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '12px 36px',
-          borderBottom: `1px solid rgba(255,255,255,0.04)`,
-          flexShrink: 0, overflowX: 'auto',
+          padding: '12px 16px 0',
+          flexShrink: 0,
         }}>
-          {['all', ...poets].map((p) => (
-            <button key={p} onClick={() => setActivePoet(p)} style={{
-              padding: '5px 12px', borderRadius: 999, border: 'none', cursor: 'pointer',
-              fontFamily: "'Tajawal', sans-serif", fontSize: 12, whiteSpace: 'nowrap',
-              background: activePoet === p ? 'rgba(197,160,89,0.15)' : 'rgba(255,255,255,0.04)',
-              color: activePoet === p ? gold : txtMute,
-              outline: activePoet === p ? '1px solid rgba(197,160,89,0.35)' : 'none',
-              transition: 'all 120ms ease',
-            }}>
-              {p === 'all' ? 'الكل · All' : p}
-            </button>
-          ))}
-        </div>
-
-        {/* Gallery grid */}
-        {viewMode === 'grid' ? (
+          {/* Search pill */}
           <div style={{
-            flex: 1, overflowY: 'auto', padding: '28px 36px 40px',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-            gap: 18,
-            alignContent: 'start',
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 14px', borderRadius: 12,
+            border: `1px solid ${border}`,
+            background: 'rgba(255,255,255,0.03)',
+            marginBottom: 10,
           }}>
-            {filtered.length === 0 && (
-              <div style={{
-                gridColumn: '1/-1', padding: '48px 0', textAlign: 'center',
-                fontFamily: "'Tajawal', sans-serif", fontSize: 16, color: txtMute,
-              }}>لا قصائد محفوظة · No poems saved</div>
-            )}
-            {filtered.map((poem, idx) => {
-              const isFeatured = idx === 0 && filtered.length > 1;
-              const isHov = hoverId === poem.id;
-              return (
-                <motion.div
-                  key={poem.id}
-                  onHoverStart={() => setHoverId(poem.id)}
-                  onHoverEnd={() => setHoverId(null)}
-                  style={{
-                    gridColumn: isFeatured ? 'span 2' : 'span 1',
-                    gridRow: isFeatured ? 'span 2' : 'span 1',
-                    borderRadius: 16, overflow: 'hidden',
-                    cursor: 'pointer',
-                    position: 'relative',
-                    border: `1px solid ${border}`,
-                  }}
-                  whileHover={{ y: -3, boxShadow: '0 14px 40px rgba(0,0,0,0.5)' }}
-                  transition={{ duration: 0.16 }}
-                >
-                  {/* Cover */}
-                  <div style={{
-                    position: 'relative', width: '100%',
-                    aspectRatio: isFeatured ? '3/2' : '3/2',
-                    display: 'flex', flexDirection: 'column',
-                    justifyContent: 'flex-end', padding: 20,
-                    background: getGrad(poem.poet),
-                  }}>
-                    {/* Watermark */}
-                    <div style={{
-                      position: 'absolute', top: 14, right: 14,
-                      fontFamily: "'Reem Kufi', sans-serif",
-                      fontSize: isFeatured ? 48 : 28, fontWeight: 700,
-                      opacity: 0.08, color: '#fff', lineHeight: 1,
-                      direction: 'rtl', userSelect: 'none',
-                    }}>
-                      {(poem.title || '').slice(0, 2)}
-                    </div>
-                    {/* Card content */}
-                    <div style={{ position: 'relative', zIndex: 2, direction: 'rtl' }}>
-                      <div style={{
-                        fontFamily: "'Forum', serif",
-                        fontSize: isFeatured ? 11 : 9,
-                        letterSpacing: '0.28em', textTransform: 'uppercase',
-                        color: 'rgba(197,160,89,0.70)', marginBottom: 6,
-                      }}>
-                        {isFeatured ? 'قصيدة مميزة · Featured' : 'قصيدة · Poem'}
-                      </div>
-                      <div style={{
-                        fontFamily: "'Reem Kufi', sans-serif", fontWeight: 700,
-                        fontSize: isFeatured ? 30 : 18, lineHeight: 1.15,
-                        color: 'rgba(231,229,228,0.92)',
-                        textShadow: '0 1px 8px rgba(0,0,0,0.5)',
-                      }}>{poem.title}</div>
-                      <div style={{
-                        fontFamily: "'Amiri', serif",
-                        fontSize: isFeatured ? 14 : 12, lineHeight: 1.9,
-                        color: isFeatured ? 'rgba(231,229,228,0.65)' : 'rgba(231,229,228,0.55)',
-                        marginTop: 6,
-                        display: '-webkit-box',
-                        WebkitLineClamp: isFeatured ? 3 : 2,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden',
-                      }}>{firstLine(poem.poem_text)}</div>
-                    </div>
-                    {/* Hover overlay */}
-                    <div style={{
-                      position: 'absolute', inset: 0, zIndex: 5,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                      background: 'rgba(0,0,0,0.55)',
-                      opacity: isHov ? 1 : 0,
-                      transition: 'opacity 160ms ease',
-                      borderRadius: '16px 16px 0 0',
-                    }}>
-                      <button
-                        onClick={() => { onSelectPoem(poem); onClose(); }}
-                        style={{
-                          padding: '8px 16px', borderRadius: 8,
-                          border: '1px solid rgba(197,160,89,0.45)',
-                          background: 'rgba(197,160,89,0.18)',
-                          backdropFilter: 'blur(12px)',
-                          fontFamily: "'Tajawal', sans-serif", fontSize: 12,
-                          color: gold, cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: 6,
-                        }}>
-                        <ExternalLink size={13} />
-                        اقرأ · Read
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onUnsavePoem(poem.id); }}
-                        style={{
-                          padding: '8px 16px', borderRadius: 8,
-                          border: '1px solid rgba(255,255,255,0.20)',
-                          background: 'rgba(255,255,255,0.10)',
-                          backdropFilter: 'blur(12px)',
-                          fontFamily: "'Tajawal', sans-serif", fontSize: 12,
-                          color: 'rgba(231,229,228,0.90)', cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: 6,
-                        }}>
-                        <Trash2 size={13} />
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                  {/* Poet bar */}
-                  <div style={{
-                    padding: '10px 16px',
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    borderTop: '1px solid rgba(255,255,255,0.04)',
-                    background: 'rgba(12,12,14,0.70)',
-                  }}>
-                    <span style={{
-                      fontFamily: "'Fustat', sans-serif",
-                      fontSize: isFeatured ? 14 : 12,
-                      color: 'rgba(197,160,89,0.70)', direction: 'rtl',
-                    }}>{poem.poet}</span>
-                    <span style={{ fontFamily: "'Tajawal', sans-serif", fontSize: 10, color: txtMute }}>
-                      {formatRelative(poem.saved_at)}
-                    </span>
-                  </div>
-                </motion.div>
-              );
-            })}
+            <Search size={13} color={txtMute} />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="ابحث في مجموعتك…"
+              dir="rtl"
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                fontFamily: "'Tajawal', sans-serif", fontSize: 13, color: txt,
+              }}
+            />
           </div>
-        ) : (
-          /* List view */
-          <div style={{ flex: 1, overflowY: 'auto', padding: '16px 36px' }}>
-            {filtered.map((poem, idx) => (
-              <div
-                key={poem.id}
-                onMouseEnter={() => setHoverId(poem.id)}
-                onMouseLeave={() => setHoverId(null)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 16,
-                  padding: '16px 0',
-                  borderBottom: `1px solid ${border}`,
-                  cursor: 'pointer',
-                }}>
-                {/* Gradient swatch */}
-                <div style={{
-                  width: 48, height: 48, borderRadius: 10, flexShrink: 0,
-                  background: getGrad(poem.poet),
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  border: `1px solid ${border}`,
-                }}>
-                  <span style={{
-                    fontFamily: "'Reem Kufi', sans-serif", fontSize: 16, fontWeight: 700,
-                    color: 'rgba(255,255,255,0.6)', direction: 'rtl',
-                  }}>{(poem.title || '').slice(0, 1)}</span>
-                </div>
-                <div style={{ flex: 1, minWidth: 0, direction: 'rtl' }}>
-                  <div style={{
-                    fontFamily: "'Reem Kufi', sans-serif", fontWeight: 600, fontSize: 16, color: txt,
-                    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                  }}>{poem.title}</div>
-                  <div style={{ fontFamily: "'Fustat', sans-serif", fontSize: 12, color: 'rgba(197,160,89,0.60)', marginTop: 2 }}>
-                    {poem.poet} · {formatRelative(poem.saved_at)}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 8, flexShrink: 0, opacity: hoverId === poem.id ? 1 : 0, transition: 'opacity 120ms' }}>
-                  <button onClick={() => { onSelectPoem(poem); onClose(); }} style={{
-                    padding: '6px 14px', borderRadius: 8,
-                    border: '1px solid rgba(197,160,89,0.30)', background: 'rgba(197,160,89,0.12)',
-                    fontFamily: "'Tajawal', sans-serif", fontSize: 12, color: gold, cursor: 'pointer',
-                  }}>Read</button>
-                  <button onClick={() => onUnsavePoem(poem.id)} style={{
-                    padding: '6px 12px', borderRadius: 8,
-                    border: `1px solid ${border}`, background: 'transparent',
-                    fontFamily: "'Tajawal', sans-serif", fontSize: 12, color: txtMute, cursor: 'pointer',
-                  }}>Remove</button>
-                </div>
-              </div>
+          {/* Poet chips */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            overflowX: 'auto', paddingBottom: 10,
+          }}>
+            {['all', ...poets].map((p) => (
+              <button key={p} onClick={() => setActivePoet(p)} style={{
+                padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer',
+                fontFamily: "'Tajawal', sans-serif", fontSize: 11, whiteSpace: 'nowrap', flexShrink: 0,
+                background: activePoet === p ? 'rgba(197,160,89,0.15)' : 'rgba(255,255,255,0.05)',
+                color: activePoet === p ? gold : txtMute,
+                outline: activePoet === p ? '1px solid rgba(197,160,89,0.35)' : 'none',
+                transition: 'all 120ms ease',
+              }}>
+                {p === 'all' ? 'الكل · All' : p}
+              </button>
             ))}
           </div>
-        )}
+        </div>
+
+        {/* Divider */}
+        <div style={{ height: 1, background: border, flexShrink: 0 }} />
+
+        {/* Gallery content */}
+        <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          {filtered.length === 0 && (
+            <div style={{
+              padding: '48px 20px', textAlign: 'center',
+              fontFamily: "'Tajawal', sans-serif", fontSize: 14, color: txtMute,
+            }}>لا قصائد محفوظة · No poems saved</div>
+          )}
+
+          {viewMode === 'grid' ? (
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+              gap: 12,
+              padding: '16px',
+              alignContent: 'start',
+            }}>
+              {filtered.map((poem, idx) => {
+                const isFeatured = idx === 0 && filtered.length > 2;
+                const isHov = hoverId === poem.id;
+                return (
+                  <motion.div
+                    key={poem.id}
+                    onHoverStart={() => setHoverId(poem.id)}
+                    onHoverEnd={() => setHoverId(null)}
+                    style={{
+                      gridColumn: isFeatured ? 'span 2' : 'span 1',
+                      borderRadius: 14, overflow: 'hidden',
+                      cursor: 'pointer',
+                      position: 'relative',
+                      border: `1px solid ${border}`,
+                    }}
+                    whileHover={{ y: -2, boxShadow: '0 10px 30px rgba(0,0,0,0.45)' }}
+                    transition={{ duration: 0.16 }}
+                  >
+                    {/* Cover */}
+                    <div style={{
+                      position: 'relative', width: '100%',
+                      aspectRatio: isFeatured ? '16/9' : '4/3',
+                      display: 'flex', flexDirection: 'column',
+                      justifyContent: 'flex-end', padding: 14,
+                      background: getGrad(poem.poet),
+                    }}>
+                      {/* Watermark */}
+                      <div style={{
+                        position: 'absolute', top: 10, right: 10,
+                        fontFamily: "'Reem Kufi', sans-serif",
+                        fontSize: isFeatured ? 36 : 22, fontWeight: 700,
+                        opacity: 0.08, color: '#fff', lineHeight: 1,
+                        direction: 'rtl', userSelect: 'none',
+                      }}>
+                        {(poem.title || '').slice(0, 2)}
+                      </div>
+                      {/* Card content */}
+                      <div style={{ position: 'relative', zIndex: 2, direction: 'rtl' }}>
+                        <div style={{
+                          fontFamily: "'Forum', serif",
+                          fontSize: 9,
+                          letterSpacing: '0.28em', textTransform: 'uppercase',
+                          color: 'rgba(197,160,89,0.70)', marginBottom: 5,
+                        }}>
+                          {isFeatured ? 'قصيدة مميزة · Featured' : 'قصيدة · Poem'}
+                        </div>
+                        <div style={{
+                          fontFamily: "'Reem Kufi', sans-serif", fontWeight: 700,
+                          fontSize: isFeatured ? 20 : 14, lineHeight: 1.2,
+                          color: 'rgba(231,229,228,0.92)',
+                          textShadow: '0 1px 8px rgba(0,0,0,0.5)',
+                          whiteSpace: isFeatured ? 'normal' : 'nowrap',
+                          overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>{poem.title}</div>
+                        {isFeatured && poem.poem_text && (
+                          <div style={{
+                            fontFamily: "'Amiri', serif",
+                            fontSize: 12, lineHeight: 1.9,
+                            color: 'rgba(231,229,228,0.60)',
+                            marginTop: 5,
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            overflow: 'hidden',
+                          }}>{firstLine(poem.poem_text)}</div>
+                        )}
+                      </div>
+                      {/* Hover overlay */}
+                      <div style={{
+                        position: 'absolute', inset: 0, zIndex: 5,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        background: 'rgba(0,0,0,0.55)',
+                        opacity: isHov ? 1 : 0,
+                        transition: 'opacity 160ms ease',
+                      }}>
+                        <button
+                          onClick={() => { onSelectPoem(poem); onClose(); }}
+                          style={{
+                            padding: '7px 14px', borderRadius: 7,
+                            border: '1px solid rgba(197,160,89,0.45)',
+                            background: 'rgba(197,160,89,0.18)',
+                            backdropFilter: 'blur(12px)',
+                            fontFamily: "'Tajawal', sans-serif", fontSize: 12,
+                            color: gold, cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 5,
+                          }}>
+                          <ExternalLink size={12} />
+                          اقرأ
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleShare(poem); }}
+                          style={{
+                            padding: '7px 12px', borderRadius: 7,
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            background: 'rgba(255,255,255,0.10)',
+                            backdropFilter: 'blur(12px)',
+                            fontFamily: "'Tajawal', sans-serif", fontSize: 12,
+                            color: 'rgba(231,229,228,0.90)', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: 5,
+                          }}>
+                          <Share2 size={12} />
+                          Share
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onUnsavePoem(poem); }}
+                          style={{
+                            width: 32, height: 32, borderRadius: 7,
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            background: 'rgba(255,255,255,0.08)',
+                            backdropFilter: 'blur(12px)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer',
+                          }}>
+                          <Trash2 size={13} color="rgba(231,229,228,0.75)" />
+                        </button>
+                      </div>
+                    </div>
+                    {/* Poet bar */}
+                    <div style={{
+                      padding: '8px 12px',
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      borderTop: '1px solid rgba(255,255,255,0.04)',
+                      background: 'rgba(12,12,14,0.80)',
+                    }}>
+                      <span style={{
+                        fontFamily: "'Fustat', sans-serif",
+                        fontSize: 11,
+                        color: 'rgba(197,160,89,0.70)', direction: 'rtl',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>{poem.poet}</span>
+                      <span style={{ fontFamily: "'Tajawal', sans-serif", fontSize: 10, color: txtMute, flexShrink: 0, marginLeft: 8 }}>
+                        {formatRelative(poem.saved_at)}
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            /* List view */
+            <div style={{ padding: '8px 0' }}>
+              {filtered.map((poem) => {
+                const isHov = hoverId === poem.id;
+                return (
+                  <div
+                    key={poem.id}
+                    onMouseEnter={() => setHoverId(poem.id)}
+                    onMouseLeave={() => setHoverId(null)}
+                    onClick={() => { onSelectPoem(poem); onClose(); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      padding: '14px 16px',
+                      borderBottom: `1px solid ${border}`,
+                      cursor: 'pointer',
+                      background: isHov ? 'rgba(197,160,89,0.04)' : 'transparent',
+                      transition: 'background 120ms',
+                    }}>
+                    {/* Gradient swatch */}
+                    <div style={{
+                      width: 44, height: 44, borderRadius: 10, flexShrink: 0,
+                      background: getGrad(poem.poet),
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: `1px solid ${border}`,
+                    }}>
+                      <span style={{
+                        fontFamily: "'Reem Kufi', sans-serif", fontSize: 14, fontWeight: 700,
+                        color: 'rgba(255,255,255,0.6)', direction: 'rtl',
+                      }}>{(poem.title || '').slice(0, 1)}</span>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0, direction: 'rtl' }}>
+                      <div style={{
+                        fontFamily: "'Reem Kufi', sans-serif", fontWeight: 600, fontSize: 15, color: txt,
+                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                      }}>{poem.title}</div>
+                      <div style={{ fontFamily: "'Fustat', sans-serif", fontSize: 11, color: 'rgba(197,160,89,0.60)', marginTop: 2 }}>
+                        {poem.poet} · {formatRelative(poem.saved_at)}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0, opacity: isHov ? 1 : 0, transition: 'opacity 120ms' }}>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); handleShare(poem); }}
+                        style={{
+                          width: 32, height: 32, borderRadius: 8,
+                          border: `1px solid ${border}`, background: 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                        }}>
+                        <Share2 size={13} color={txtMute} />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onUnsavePoem(poem); }}
+                        style={{
+                          width: 32, height: 32, borderRadius: 8,
+                          border: `1px solid ${border}`, background: 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                        }}>
+                        <Trash2 size={13} color={txtMute} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </motion.div>
     </AnimatePresence>
   );

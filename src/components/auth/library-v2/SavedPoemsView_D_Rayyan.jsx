@@ -9,10 +9,11 @@ import { formatRelative, ROMAN, groupByRecency, firstLine } from './utils.js';
  * "Top product designer" direction — Linear / Vercel / Arc command-palette UX.
  * The library as a precision tool: ⌘K for your saved poems.
  *
- * • Centered overlay (not full-screen) — sits above the poem, never fully covers it
- * • Split pane: indexed list on the left, live poem preview on the right
- * • Keyboard shortcuts in the footer (↑ ↓ navigate · ↵ open · ⌫ remove)
- * • Poet filter chips · time-grouped rows · inline actions per row
+ * Desktop: Centered overlay (not full-screen) — sits above the poem, never fully covers it.
+ *   Split pane: indexed list on the left, live poem preview on the right.
+ *   Keyboard shortcuts in the footer (↑ ↓ navigate · ↵ open · ⌫ remove).
+ *
+ * Mobile: Bottom sheet with single-column list (no split pane, no keyboard-on-open).
  */
 const SavedPoemsView_D_Rayyan = ({
   isOpen,
@@ -27,16 +28,20 @@ const SavedPoemsView_D_Rayyan = ({
   const [activePoet, setActivePoet] = useState('all');
   const [activeIndex, setActiveIndex] = useState(0);
   const inputRef = useRef(null);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   useEffect(() => {
     if (!isOpen) return undefined;
-    inputRef.current?.focus();
+    // Only autofocus on desktop — on mobile the keyboard would push the sheet off-screen
+    if (!isMobile) {
+      inputRef.current?.focus();
+    }
     const onKey = (e) => {
       if (e.key === 'Escape') { onClose(); return; }
       if (e.key === 'ArrowDown') { e.preventDefault(); setActiveIndex((i) => Math.min(i + 1, filtered.length - 1)); }
       if (e.key === 'ArrowUp') { e.preventDefault(); setActiveIndex((i) => Math.max(i - 1, 0)); }
       if (e.key === 'Enter' && filtered[activeIndex]) { onSelectPoem(filtered[activeIndex]); onClose(); }
-      if (e.key === 'Backspace' && e.metaKey && filtered[activeIndex]) { onUnsavePoem(filtered[activeIndex].id); }
+      if (e.key === 'Backspace' && e.metaKey && filtered[activeIndex]) { onUnsavePoem(filtered[activeIndex]); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -73,6 +78,238 @@ const SavedPoemsView_D_Rayyan = ({
   const gold = '#C5A059';
   const rowBorder = darkMode ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.04)';
 
+  // Mobile bottom sheet layout
+  if (isMobile) {
+    return (
+      <AnimatePresence>
+        {/* Scrim */}
+        <motion.div
+          key="rayyan-scrim-mobile"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          onClick={onClose}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 80,
+            background: darkMode ? 'rgba(0,0,0,0.50)' : 'rgba(0,0,0,0.30)',
+          }}
+        />
+        <motion.div
+          key="rayyan-sheet-mobile"
+          initial={{ y: '100%' }}
+          animate={{ y: 0 }}
+          exit={{ y: '100%' }}
+          transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'fixed',
+            bottom: 0, left: 0, right: 0,
+            height: '82vh',
+            zIndex: 81,
+            borderRadius: '24px 24px 0 0',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            background: glass,
+            border: `1px solid ${border}`,
+            boxShadow: '0 -8px 32px rgba(0,0,0,0.45)',
+          }}
+          role="dialog"
+          aria-label="Saved poems"
+        >
+          {/* Drag handle */}
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px', flexShrink: 0 }}>
+            <button
+              onClick={onClose}
+              style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(197,160,89,0.30)', border: 'none', cursor: 'pointer' }}
+              aria-label="Close"
+            />
+          </div>
+
+          {/* Header */}
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '8px 20px 12px',
+            borderBottom: `1px solid ${border}`,
+            flexShrink: 0,
+          }}>
+            <div style={{
+              fontFamily: "'Reem Kufi', sans-serif", fontWeight: 700,
+              fontSize: 20, color: gold, direction: 'rtl',
+            }}>محفوظاتي</div>
+            <button
+              onClick={onClose}
+              style={{
+                width: 32, height: 32, borderRadius: 8,
+                border: `1px solid ${border}`,
+                background: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+              }}>
+              <X size={14} color={txtMute} />
+            </button>
+          </div>
+
+          {/* Search */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 10,
+            padding: '12px 16px',
+            borderBottom: `1px solid ${border}`,
+            flexShrink: 0,
+          }}>
+            <Search size={15} color={gold} style={{ opacity: 0.65, flexShrink: 0 }} />
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setActiveIndex(0); }}
+              placeholder="ابحث في محفوظاتك…"
+              dir="rtl"
+              style={{
+                flex: 1, background: 'transparent', border: 'none', outline: 'none',
+                fontFamily: "'Tajawal', sans-serif", fontSize: 15,
+                color: txt,
+              }}
+            />
+          </div>
+
+          {/* Poet chips */}
+          {poets.length > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '8px 16px',
+              borderBottom: `1px solid ${border}`,
+              flexShrink: 0, overflowX: 'auto',
+            }}>
+              {['all', ...poets].map((p) => (
+                <button key={p} onClick={() => { setActivePoet(p); setActiveIndex(0); }} style={{
+                  padding: '4px 10px', borderRadius: 999, border: 'none', cursor: 'pointer',
+                  fontFamily: "'Tajawal', sans-serif", fontSize: 12, whiteSpace: 'nowrap',
+                  background: activePoet === p
+                    ? darkMode ? 'rgba(197,160,89,0.18)' : 'rgba(197,160,89,0.15)'
+                    : 'transparent',
+                  color: activePoet === p ? gold : txtMute,
+                  outline: activePoet === p ? `1px solid rgba(197,160,89,0.35)` : 'none',
+                }}>
+                  {p === 'all' ? 'الكل · All' : p}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* List (full width on mobile, no preview pane) */}
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+            {filtered.length === 0 && (
+              <div style={{
+                padding: '32px 20px', textAlign: 'center',
+                fontFamily: "'Tajawal', sans-serif", fontSize: 13, color: txtMute,
+              }}>لا نتائج · No results</div>
+            )}
+            {groups.map((group) => (
+              <div key={group.id}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '10px 16px 5px',
+                  fontFamily: "'Forum', serif", fontSize: 10,
+                  letterSpacing: '0.22em', textTransform: 'uppercase',
+                  color: txtMute, position: 'sticky', top: 0, zIndex: 2,
+                  background: darkMode ? 'rgba(16,15,20,0.95)' : 'rgba(252,250,245,0.97)',
+                }}>
+                  <ChevronDown size={11} color="currentColor" />
+                  {group.label}
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                    width: 18, height: 18, borderRadius: 4,
+                    background: 'rgba(197,160,89,0.10)',
+                    fontSize: 10, color: 'rgba(197,160,89,0.70)',
+                    fontFamily: "'Tajawal', sans-serif",
+                  }}>{group.items.length}</span>
+                </div>
+                {group.items.map((poem) => {
+                  const flatIdx = flat.indexOf(poem);
+                  const isActive = flatIdx === activeIndex;
+                  return (
+                    <div
+                      key={poem.id}
+                      onClick={() => { setActiveIndex(flatIdx); onSelectPoem(poem); onClose(); }}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '13px 16px', cursor: 'pointer',
+                        borderBottom: `1px solid ${rowBorder}`,
+                        background: isActive
+                          ? darkMode ? 'rgba(197,160,89,0.08)' : 'rgba(197,160,89,0.08)'
+                          : 'transparent',
+                        position: 'relative',
+                      }}
+                    >
+                      {isActive && (
+                        <div style={{
+                          position: 'absolute', left: 0, top: 0, bottom: 0,
+                          width: 2, background: gold, borderRadius: '0 2px 2px 0',
+                        }} />
+                      )}
+                      <span style={{
+                        fontFamily: "'Bodoni Moda', serif", fontStyle: 'italic',
+                        fontSize: 11, color: 'rgba(197,160,89,0.45)',
+                        width: 18, flexShrink: 0, textAlign: 'right',
+                      }}>
+                        {ROMAN[flatIdx] || (flatIdx + 1)}
+                      </span>
+                      <div style={{ flex: 1, minWidth: 0, direction: 'rtl' }}>
+                        <div style={{
+                          fontFamily: "'Reem Kufi', sans-serif", fontWeight: 600,
+                          fontSize: 15, color: isActive ? gold : txt,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>{poem.title || '—'}</div>
+                        <div style={{
+                          fontFamily: "'Fustat', sans-serif", fontSize: 12,
+                          color: txtMute, marginTop: 1,
+                          whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                        }}>{poem.poet || ''}</div>
+                        {poem.poem_text && (
+                          <div style={{
+                            fontFamily: "'Amiri', serif", fontSize: 12,
+                            color: txtMute, marginTop: 2, direction: 'rtl',
+                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                            opacity: 0.7,
+                          }}>{firstLine(poem.poem_text)}</div>
+                        )}
+                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onUnsavePoem(poem); }}
+                        title="Remove"
+                        style={{
+                          width: 32, height: 32, borderRadius: 8,
+                          border: `1px solid ${border}`,
+                          background: 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          cursor: 'pointer', flexShrink: 0,
+                        }}>
+                        <Trash2 size={14} color={txtMute} />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+
+          {/* Footer count */}
+          <div style={{
+            padding: '10px 16px',
+            borderTop: `1px solid ${border}`,
+            flexShrink: 0,
+            fontFamily: "'Tajawal', sans-serif", fontSize: 11, color: txtMute,
+            textAlign: 'center',
+          }}>
+            {filtered.length} saved poems
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
+
+  // Desktop: command-palette layout
   return (
     <AnimatePresence>
       <motion.div
@@ -270,7 +507,7 @@ const SavedPoemsView_D_Rayyan = ({
                           <ExternalLink size={12} color={txtMute} />
                         </button>
                         <button
-                          onClick={(e) => { e.stopPropagation(); onUnsavePoem(poem.id); }}
+                          onClick={(e) => { e.stopPropagation(); onUnsavePoem(poem); }}
                           title="Remove"
                           style={{
                             width: 26, height: 26, borderRadius: 6,
@@ -359,7 +596,7 @@ const SavedPoemsView_D_Rayyan = ({
                     اقرأ · Read poem
                   </button>
                   <button
-                    onClick={() => onUnsavePoem(activePoem.id)}
+                    onClick={() => onUnsavePoem(activePoem)}
                     style={{
                       display: 'flex', alignItems: 'center', gap: 6,
                       padding: '7px 12px', borderRadius: 8,

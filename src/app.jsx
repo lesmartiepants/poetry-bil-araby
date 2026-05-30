@@ -105,8 +105,7 @@ import VerticalSidebar from './components/VerticalSidebar.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
-import LibraryHost from './components/auth/library-v2/LibraryHost.jsx';
-import LibraryTesterBar from './components/auth/library-v2/LibraryTesterBar.jsx';
+import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
 import PlayControlsStrip from './components/PlayControlsStrip.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -1223,6 +1222,21 @@ export default function DiwanApp() {
     }
   };
 
+  // Share a poem directly from the saved library. The ShareCardModal reads
+  // from `displayedPoem`, so we first promote the saved poem to current via
+  // handleSelectSavedPoem (which closes the library and updates the carousel)
+  // and then open the modal on the next tick once state has settled.
+  const handleShareSavedPoem = (sp) => {
+    handleSelectSavedPoem(sp);
+    setTimeout(() => {
+      try {
+        useModalStore.getState().openShareCard();
+      } catch (err) {
+        addLog('Share Error', err?.message || String(err), 'error');
+      }
+    }, 80);
+  };
+
   const handleToggleTranslation = (showTranslation) => {
     addLog('Translation', `Translation ${showTranslation ? 'shown' : 'hidden'}`, 'user');
   };
@@ -1995,26 +2009,17 @@ export default function DiwanApp() {
         )}
       </AnimatePresence>
 
-      {/* Saved Poems View — routed through LibraryHost so the v2 tester
-          (?lib=a|b|c|0) can swap variants live.  Falls back to the original
-          when ?lib=0 or no variant is set. */}
-      <LibraryHost
+      {/* Saved Poems View — Khazana drawer */}
+      <SavedPoemsView
         isOpen={showSavedPoems}
         onClose={() => setShowSavedPoems(false)}
         savedPoems={savedPoems}
         onSelectPoem={handleSelectSavedPoem}
         onUnsavePoem={handleUnsavePoemFromList}
+        onSharePoem={handleShareSavedPoem}
         theme={theme}
-        currentFontClass={currentFontClass}
         darkMode={darkMode}
-        currentPoem={current}
       />
-
-      {/* Library v2 — TEMPORARY tester bar (top center). Flip
-          FEATURES.libraryV2Tester off in src/constants/features.js to hide. */}
-      {FEATURES.libraryV2Tester && (
-        <LibraryTesterBar darkMode={darkMode} onOpenLibrary={handleOpenSavedPoems} />
-      )}
 
       {/* Design Review + Bug — stacked bottom-left utility buttons */}
       {FEATURES.designReview && (

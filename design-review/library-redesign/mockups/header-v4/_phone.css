@@ -1,0 +1,147 @@
+
+@font-face { font-family: 'Reem Kufi'; src: local('Noto Kufi Arabic Bold'); font-weight: 600 700; }
+@font-face { font-family: 'Reem Kufi'; src: local('Noto Kufi Arabic Medium'); font-weight: 500; }
+@font-face { font-family: 'Amiri'; src: local('Amiri'); }
+@font-face { font-family: 'Tajawal'; src: local('Noto Kufi Arabic Regular'); }
+@font-face { font-family: 'Bodoni Moda'; src: local('Noto Serif Display Italic'), local('Noto Serif Italic'); font-style: italic; }
+@font-face { font-family: 'Forum'; src: local('Noto Serif Display'), local('Noto Serif'); }
+@font-face { font-family: 'Fustat'; src: local('Noto Sans Arabic'); }
+/* iPhone-frame shell for header-v4 mockups.
+   Renders one iPhone 14-ish device so screenshots match Siraj's reference. */
+/* Online font @import is blocked in sandboxed previews; in the live app the
+   real Reem Kufi / Amiri / Tajawal / Bodoni Moda / Forum / Fustat webfonts
+   load via the project's existing font pipeline. The fallbacks below let the
+   static HTML still render Arabic & Latin cleanly for mockup screenshots. */
+
+:root {
+  --gold: #C5A059;
+  --gold-soft: rgba(197, 160, 89, 0.45);
+  --gold-faint: rgba(197, 160, 89, 0.10);
+  --lapis: #6B95D6;
+  --bg: #0a0a0c;
+  --sheet-1: #1a1814;
+  --sheet-2: #131110;
+  --txt: #e7e5e4;
+  --dim: rgba(231, 229, 228, 0.62);
+  --mute: rgba(231, 229, 228, 0.36);
+  --hair: rgba(255, 255, 255, 0.06);
+  --hair-gold: rgba(197, 160, 89, 0.18);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background:
+    radial-gradient(circle at 30% 0%, rgba(74,124,201,0.06), transparent 50%),
+    radial-gradient(circle at 80% 100%, rgba(197,160,89,0.05), transparent 55%),
+    var(--bg);
+  color: var(--txt);
+  font-family: 'Tajawal', sans-serif;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 24px;
+}
+
+/* Device shell — iPhone-like, 393×852 */
+.device {
+  width: 393px; height: 852px;
+  border-radius: 56px;
+  padding: 12px;
+  background: #000;
+  box-shadow:
+    0 0 0 2px #2a2a2a,
+    0 40px 80px rgba(0,0,0,0.65),
+    inset 0 0 0 1px rgba(255,255,255,0.05);
+  position: relative;
+}
+.screen {
+  width: 100%; height: 100%;
+  border-radius: 46px; overflow: hidden;
+  background: #050505; position: relative;
+  display: flex; flex-direction: column;
+}
+.status-bar {
+  height: 54px; flex-shrink: 0;
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 0 32px 6px; position: relative; z-index: 2;
+  font-family: 'SF Pro Display', -apple-system, sans-serif;
+  font-size: 17px; font-weight: 600; color: #fff;
+}
+.status-bar .time { letter-spacing: -0.2px; }
+.status-bar .indicators { display: flex; align-items: center; gap: 6px; opacity: 0.95; font-size: 14px; }
+.notch {
+  position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+  width: 120px; height: 36px; background: #000; border-radius: 24px; z-index: 3;
+}
+
+/* Behind: a hint of the poem reader so the drawer feels in-context */
+.behind {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 80px 24px 0; opacity: 0.18;
+  direction: rtl; font-family: 'Amiri', serif; color: var(--gold);
+  font-size: 22px; line-height: 2; text-align: center;
+}
+.scrim {
+  position: absolute; inset: 0;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(2px);
+}
+
+/* The drawer: bottom-sheet, ~92dvh */
+.sheet {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  height: 92%;
+  background: linear-gradient(180deg, var(--sheet-1) 0%, var(--sheet-2) 100%);
+  border-top: 1px solid var(--hair-gold);
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -24px 60px rgba(0,0,0,0.55);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.handle {
+  flex-shrink: 0;
+  display: flex; justify-content: center; padding: 10px 0 4px;
+}
+.handle span { width: 40px; height: 4px; border-radius: 2px; background: rgba(197,160,89,0.28); }
+
+/* Generic content (sample list under each header) */
+.list { flex: 1; overflow: hidden; padding: 8px 16px 16px; }
+.row {
+  background: #1f1c17;
+  border: 1px solid var(--hair);
+  border-radius: 16px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  position: relative;
+}
+.row .meta {
+  font-family: 'Bodoni Moda', serif; font-style: italic;
+  color: var(--mute); font-size: 11px; margin-bottom: 4px;
+}
+.row .title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 600;
+  font-size: 17px; color: var(--gold);
+}
+.row .poet {
+  color: var(--dim); font-size: 13px; margin-top: 2px;
+}
+.row hr { border: 0; height: 1px; background: var(--hair-gold); margin: 10px 0; }
+.row .verse {
+  direction: rtl; font-family: 'Amiri', serif; color: var(--txt);
+  font-size: 14px; opacity: 0.85;
+}
+.row .stamp {
+  position: absolute; right: 14px; bottom: 12px;
+  font-family: 'Tajawal', sans-serif; font-size: 10px;
+  color: var(--mute);
+}
+.pin-chip {
+  position: absolute; top: -8px; right: 16px;
+  background: var(--gold); color: #1a1410;
+  font-size: 10px; padding: 3px 8px; border-radius: 999px;
+  font-weight: 700; letter-spacing: 0.05em;
+}
+
+/* Icon glyph helper (using unicode for fontless icons) */
+.i { font-style: normal; }

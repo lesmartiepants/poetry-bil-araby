@@ -40,7 +40,10 @@ export function startPlayer(player, offset) {
 export function recordPause() {
   const elapsed = Date.now() / 1000 - playbackStartTime.value;
   const newOffset = pauseOffset.value + Math.max(0, elapsed);
-  if (FEATURES.logging) console.log(`[Playback:recordPause] elapsed=${elapsed.toFixed(2)}s → offset=${newOffset.toFixed(2)}s`);
+  if (FEATURES.logging)
+    console.log(
+      `[Playback:recordPause] elapsed=${elapsed.toFixed(2)}s → offset=${newOffset.toFixed(2)}s`
+    );
   pauseOffset.value = newOffset;
   // Reset start time so subsequent recordPause calls are safe
   playbackStartTime.value = Date.now() / 1000;
@@ -57,7 +60,14 @@ export function recordPause() {
  * @param {number} totalDuration
  * @param {function} onVerseChange
  */
-export function applyHighlightsOnce(offset, wordRefs, wordOffsets, timings, totalDuration, onVerseChange) {
+export function applyHighlightsOnce(
+  offset,
+  wordRefs,
+  wordOffsets,
+  timings,
+  totalDuration,
+  onVerseChange
+) {
   // Clear all existing highlight classes
   for (let i = 0; i < wordRefs.length; i++) {
     const el = wordRefs[i]?.current;
@@ -131,14 +141,22 @@ export function applyHighlightsOnce(offset, wordRefs, wordOffsets, timings, tota
  * @param {number[]} params.wordOffsets             - First word index for each verse
  * @param {function} params.onVerseChange           - Called with verseIdx when verse changes
  */
-export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets = [], onVerseChange }) {
+export function useTTSHighlight({
+  wordRefs,
+  timings,
+  totalDuration,
+  wordOffsets = [],
+  onVerseChange,
+}) {
   const rafRef = useRef(null);
   const activeIndexRef = useRef(-1);
   const activeVerseRef = useRef(-1);
   const lastScrollRef = useRef(0);
   // Stable ref to onVerseChange so tick closure doesn't go stale
   const onVerseChangeRef = useRef(onVerseChange);
-  useEffect(() => { onVerseChangeRef.current = onVerseChange; });
+  useEffect(() => {
+    onVerseChangeRef.current = onVerseChange;
+  });
 
   // Start the rAF loop — called when isPlaying becomes true
   function startLoop() {
@@ -191,7 +209,10 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
                 lastScrollRef.current = now;
                 const fontSize = parseFloat(getComputedStyle(activeEl).fontSize) || 28;
                 const lineHeight = fontSize * 2.2; // matches leading-[2.2]
-                window.scrollBy({ top: Math.min(overflow + lineHeight * 0.5, lineHeight * 2), behavior: 'smooth' });
+                window.scrollBy({
+                  top: Math.min(overflow + lineHeight * 0.5, lineHeight * 2),
+                  behavior: 'smooth',
+                });
               }
             }
           }
@@ -256,7 +277,7 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
       stopLoop();
       clearAllClasses();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     // Safe: wordRefs and onVerseChangeRef.current are accessed by reference inside
     // the closure. wordRefs is recreated only when allWords.length changes, which
     // also causes timings to change (new poem) — so the effect re-runs and the

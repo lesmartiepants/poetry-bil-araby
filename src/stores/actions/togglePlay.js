@@ -12,7 +12,7 @@ import { useUIStore } from '../uiStore';
 import { getTTSContent, LIVE_SYSTEM_INSTRUCTION, getLiveContent } from '../../prompts';
 import { API_MODELS, TTS_CONFIG, fetchTTSWithFallback } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
-import { pcm16ToWav } from '../../utils/audio.js';
+import { pcm16ToWav, pcm16ChunksToWav, wavDurationSec } from '../../utils/audio.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -299,10 +299,15 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     let ttsMode = useUIStore.getState().ttsMode;
     const arabicTextChars = current?.arabic?.length || 0;
 
+    const { liveVoice: _liveVoice, liveTemperature: _liveTemp } = useUIStore.getState();
     const modelLabel = ttsMode === 'live' ? 'Live 3.1' : API_MODELS.tts;
+    const voiceLabel =
+      ttsMode === 'live'
+        ? ` | voice: ${_liveVoice} | temp: ${_liveTemp}`
+        : ` | voice: ${TTS_CONFIG.voiceName}`;
     addLog(
       'Audio API',
-      `→ Starting generation | Model: ${modelLabel} | ${arabicTextChars} chars Arabic`,
+      `→ Starting generation | Model: ${modelLabel}${voiceLabel} | ${arabicTextChars} chars Arabic`,
       'request'
     );
     setError(null);
@@ -335,15 +340,15 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
         try {
           if (mode === 'live') {
-            // ── Live API path — WebSocket TTS via server endpoint ──
+            // ── Live API path — SSE streaming from WebSocket TTS endpoint ──
             const { liveVoice, liveTemperature } = useUIStore.getState();
             const liveText = getLiveContent(current);
+            const liveT0 = performance.now();
             addLog(
               'Audio API',
               `[${ttsModel}] Live request → voice: ${liveVoice} | temp: ${liveTemperature} | ${liveText.length} chars`,
               'request'
             );
-            const liveStart = performance.now();
             const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -367,7 +372,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               } else if (liveRes.status === 404) {
                 addLog(
                   'Audio API',
-                  `[${ttsModel}] Live endpoint unavailable (404) — falling back to REST`,
+                  `[${ttsModel}] Live endpoint unavailable (404) — endpoint may not be deployed on this backend yet`,
                   'warning'
                 );
               } else {
@@ -380,21 +385,116 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               throw new Error('Live mode failed');
             }
 
-            const liveData = await liveRes.json();
-            if (!liveData.audioData) {
-              throw new Error('Live API returned no audio data');
+            // Detect response format: new SSE streaming or old JSON blob
+            const liveContentType = liveRes.headers.get('content-type') || '';
+            if (liveContentType.includes('text/event-stream')) {
+              // ── New SSE streaming format — read audio chunks as they arrive ──
+              const reader = liveRes.body.getReader();
+              const decoder = new TextDecoder();
+              const livePcmChunks = [];
+              let sseBuffer = '';
+              let firstLiveChunkMs = null;
+
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                sseBuffer += decoder.decode(value, { stream: true });
+                const lines = sseBuffer.split('\n');
+                sseBuffer = lines.pop() || '';
+                for (const line of lines) {
+                  if (!line.startsWith('data: ')) continue;
+                  const payload = line.slice(6).trim();
+                  if (payload === '[DONE]') break;
+                  try {
+                    const parsed = JSON.parse(payload);
+                    if (parsed.error) throw new Error(`Live API error: ${parsed.error}`);
+                    if (parsed.b64) {
+                      if (firstLiveChunkMs === null) {
+                        firstLiveChunkMs = performance.now() - liveT0;
+                        addLog(
+                          'Audio API',
+                          `[${ttsModel}] ← First chunk (${firstLiveChunkMs.toFixed(0)}ms) | Streaming...`,
+                          'info'
+                        );
+                      }
+                      livePcmChunks.push(parsed.b64);
+                    }
+                  } catch (parseErr) {
+                    addLog(
+                      'Audio API',
+                      `[${ttsModel}] SSE parse error: ${parseErr.message}`,
+                      'warning'
+                    );
+                  }
+                }
+              }
+              // Flush any remaining SSE buffer after the stream closes
+              if (sseBuffer.startsWith('data: ')) {
+                const payload = sseBuffer.slice(6).trim();
+                if (payload && payload !== '[DONE]') {
+                  try {
+                    const parsed = JSON.parse(payload);
+                    if (parsed.b64) livePcmChunks.push(parsed.b64);
+                  } catch (flushErr) {
+                    addLog(
+                      'Audio API',
+                      `[${ttsModel}] SSE buffer flush error: ${flushErr.message}`,
+                      'warning'
+                    );
+                  }
+                }
+              }
+
+              if (!livePcmChunks.length) {
+                throw new Error('Live API returned no audio chunks');
+              }
+
+              // Concatenate raw PCM16 chunks into a single base64 string.
+              // (Do NOT build a WAV blob here — downstream pcm16ToWav() adds the WAV header.)
+              const decoded = livePcmChunks.map((c) =>
+                Uint8Array.from(atob(c), (x) => x.charCodeAt(0))
+              );
+              const totalLen = decoded.reduce((sum, a) => sum + a.length, 0);
+              const combined = new Uint8Array(totalLen);
+              let byteOffset = 0;
+              for (const arr of decoded) {
+                combined.set(arr, byteOffset);
+                byteOffset += arr.length;
+              }
+              // Build base64 in 64KB chunks to avoid call-stack overflow on large buffers
+              const CHUNK = 65536;
+              let liveBinary = '';
+              for (let i = 0; i < combined.length; i += CHUNK) {
+                liveBinary += String.fromCharCode(...combined.subarray(i, i + CHUNK));
+              }
+              b64 = btoa(liveBinary);
+
+              const liveApiMs = performance.now() - liveT0;
+              const ttfaStr =
+                firstLiveChunkMs != null ? `${(firstLiveChunkMs / 1000).toFixed(2)}s` : 'n/a';
+              addLog(
+                'Audio API',
+                `[${ttsModel}] ✓ Live SSE complete | TTFA: ${ttfaStr} | Total: ${(liveApiMs / 1000).toFixed(2)}s | ${livePcmChunks.length} chunks | ${(combined.length / 1024).toFixed(1)}KB PCM`,
+                'success'
+              );
+            } else {
+              // ── Old JSON format — backend returns { audioData: "base64..." } ──
+              const liveData = await liveRes.json();
+              if (!liveData.audioData) {
+                throw new Error('Live API returned no audio data');
+              }
+              b64 = liveData.audioData;
+              const liveApiMs = performance.now() - liveT0;
+              addLog(
+                'Audio API',
+                `[${ttsModel}] ✓ Live API complete (JSON) | Total: ${(liveApiMs / 1000).toFixed(2)}s`,
+                'success'
+              );
             }
-            b64 = liveData.audioData;
-            const liveDuration = ((performance.now() - liveStart) / 1000).toFixed(2);
-            const liveSizeKB = Math.round((b64.length * 0.75) / 1024);
-            addLog(
-              'Audio API',
-              `[${ttsModel}] ✓ Complete | ${liveDuration}s | ~${liveSizeKB}KB PCM | voice: ${liveVoice}`,
-              'success'
-            );
           } else {
             // ── REST API path — generateContent flow ──
             const ttsContent = getTTSContent(current);
+            addLog('Audio API', `[REST] Attempting | model: ${API_MODELS.tts}`, 'info');
             const requestBody = JSON.stringify({
               contents: [{ parts: [{ text: ttsContent }] }],
               generationConfig: {
@@ -452,7 +552,17 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             addLog('Audio API', `[${ttsModel}] Success via REST API`, 'success');
           }
         } catch (modeError) {
-          addLog('Audio API', `[${ttsModel}] ${modeError.message} — trying next mode`, 'warning');
+          const nextMode = MODES[modeIdx + 1];
+          const nextModeLabel =
+            nextMode === 'live'
+              ? 'Live 2.0'
+              : nextMode === 'rest'
+                ? `REST (${API_MODELS.tts})`
+                : null;
+          const suffix = nextModeLabel
+            ? ` — switching to ${nextModeLabel}`
+            : ' — no more modes to try';
+          addLog('Audio API', `[${ttsModel}] ${modeError.message}${suffix}`, 'warning');
           modeIdx++; // try the other mode
           // Reset ttsModel label for the next attempt
         }
@@ -560,7 +670,21 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
   // Check if request already in flight — poll until it completes
   if (usePoemStore.getState().hasActiveAudio(current?.id)) {
-    addLog('Audio', 'Audio generation already in progress - waiting for completion', 'info');
+    const {
+      ttsMode: waitMode,
+      liveVoice: waitVoice,
+      liveTemperature: waitTemp,
+    } = useUIStore.getState();
+    const waitModelLabel = waitMode === 'live' ? 'Live 3.1' : API_MODELS.tts;
+    const waitVoiceLabel =
+      waitMode === 'live'
+        ? ` | voice: ${waitVoice} | temp: ${waitTemp}`
+        : ` | voice: ${TTS_CONFIG.voiceName}`;
+    addLog(
+      'Audio',
+      `Audio generation already in progress — waiting | Model: ${waitModelLabel}${waitVoiceLabel}`,
+      'info'
+    );
 
     // Show progress toast while waiting for in-flight prefetch
     const pollEstSeconds = estimateTTSSeconds(current?.arabic?.length || 0);

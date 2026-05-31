@@ -27,16 +27,17 @@ if (isPKCECallback || isImplicitCallback) {
 // session automatically (detectSessionInUrl: true). This is the Supabase-
 // recommended approach for modern SPAs and works reliably with wouter,
 // Vercel preview deployments, and service workers.
-export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        flowType: 'pkce',
-        detectSessionInUrl: true,
-        persistSession: true,
-        autoRefreshToken: true,
-      },
-    })
-  : null;
+export const supabase =
+  supabaseUrl && supabaseAnonKey
+    ? createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          flowType: 'pkce',
+          detectSessionInUrl: true,
+          persistSession: true,
+          autoRefreshToken: true,
+        },
+      })
+    : null;
 
 // Log OAuth callback result after initialization completes
 if (supabase && (isPKCECallback || isImplicitCallback)) {

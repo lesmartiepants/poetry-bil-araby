@@ -47,9 +47,9 @@ describe('computeWordTimings', () => {
     const words = ['ال', 'شعر'];
     const timings = computeWordTimings(words, 10);
     expect(timings[0].start).toBeCloseTo(0);
-    expect(timings[0].end).toBeCloseTo(4);   // 2/5 * 10
+    expect(timings[0].end).toBeCloseTo(4); // 2/5 * 10
     expect(timings[1].start).toBeCloseTo(4);
-    expect(timings[1].end).toBeCloseTo(10);  // 3/5 * 10
+    expect(timings[1].end).toBeCloseTo(10); // 3/5 * 10
   });
 
   it('each timing object has start, end, and word properties', () => {

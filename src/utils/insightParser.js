@@ -17,12 +17,12 @@ export function parseInsight(interpretation, addLog) {
   }
   const parts = interpretation
     .split(/POEM:|THE DEPTH:|THE AUTHOR:/i)
-    .map(p => p.trim())
+    .map((p) => p.trim())
     .filter(Boolean);
   const result = {
-    poeticTranslation: parts[0] || "",
-    depth: parts[1] || "",
-    author: parts[2] || "",
+    poeticTranslation: parts[0] || '',
+    depth: parts[1] || '',
+    author: parts[2] || '',
   };
   if (!result.poeticTranslation) {
     addLog?.('Translation', `Empty — no POEM marker | ${interpretation.length} chars`, 'error');

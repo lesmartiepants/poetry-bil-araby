@@ -70,7 +70,9 @@
 
 .tts-style-glow .tts-active {
   color: #d4b463;
-  text-shadow: 0 0 8px var(--gold), 0 0 20px rgba(201, 168, 76, 0.5);
+  text-shadow:
+    0 0 8px var(--gold),
+    0 0 20px rgba(201, 168, 76, 0.5);
 }
 
 .tts-style-glow .tts-past {
@@ -123,7 +125,9 @@
 .tts-style-focus-blur .tts-line {
   filter: blur(2px);
   opacity: 0.2;
-  transition: filter 300ms, opacity 300ms;
+  transition:
+    filter 300ms,
+    opacity 300ms;
 }
 
 .tts-style-focus-blur .tts-line.tts-line-active {

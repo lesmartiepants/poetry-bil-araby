@@ -884,6 +884,7 @@ export default function DiwanApp() {
   // One ref per word — stable array, recreated only when word count changes
   const wordRefs = useMemo(
     () => Array.from({ length: allWords.length }, () => ({ current: null })),
+
     [allWords.length]
   );
 

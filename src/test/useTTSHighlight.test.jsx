@@ -10,7 +10,13 @@ vi.mock('../stores/audioStore', () => ({
 }));
 
 import { useAudioStore } from '../stores/audioStore';
-import { useTTSHighlight, playbackStartTime, pauseOffset, startPlayer, recordPause } from '../hooks/useTTSHighlight.js';
+import {
+  useTTSHighlight,
+  playbackStartTime,
+  pauseOffset,
+  startPlayer,
+  recordPause,
+} from '../hooks/useTTSHighlight.js';
 
 // rAF mock
 let rafCallbacks = [];
@@ -49,9 +55,7 @@ afterEach(() => {
 
 // Trigger a state transition via the captured subscribe listener
 function triggerIsPlaying(isPlaying, wasPlaying) {
-  subscribeListeners.forEach((l) =>
-    l({ isPlaying }, { isPlaying: wasPlaying })
-  );
+  subscribeListeners.forEach((l) => l({ isPlaying }, { isPlaying: wasPlaying }));
 }
 
 // Helper: flush one rAF tick

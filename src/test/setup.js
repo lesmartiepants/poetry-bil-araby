@@ -82,9 +82,13 @@ const mockCanvas2DContext = {
   createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
   createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
   measureText: vi.fn(() => ({ width: 100 })),
-  get fillStyle() { return ''; },
+  get fillStyle() {
+    return '';
+  },
   set fillStyle(_) {},
-  get strokeStyle() { return ''; },
+  get strokeStyle() {
+    return '';
+  },
   set strokeStyle(_) {},
   lineWidth: 1,
   font: '',

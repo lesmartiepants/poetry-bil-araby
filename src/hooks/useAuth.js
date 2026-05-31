@@ -29,7 +29,10 @@ export function useAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      log.info('Session', session ? `Restored session for ${session.user.email}` : 'No existing session');
+      log.info(
+        'Session',
+        session ? `Restored session for ${session.user.email}` : 'No existing session'
+      );
       if (session?.user) {
         Sentry.setUser({ id: session.user.id, email: session.user.email });
       }
@@ -146,7 +149,8 @@ export function useUserSettings(user) {
         .eq('user_id', user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows returned
         log.error('Settings', 'Failed to load settings', error.message);
         return;
       }
@@ -167,10 +171,13 @@ export function useUserSettings(user) {
       log.info('Settings', 'Saving settings', newSettings);
       const { data, error } = await supabase
         .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          ...newSettings,
-        }, { onConflict: 'user_id' })
+        .upsert(
+          {
+            user_id: user.id,
+            ...newSettings,
+          },
+          { onConflict: 'user_id' }
+        )
         .select()
         .single();
 
@@ -242,7 +249,12 @@ export function useSavedPoems(user) {
     if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
 
     // Optimistic update — fill the heart immediately without waiting for the DB round-trip
-    const optimistic = { poem_id: poem.id, poem_text: poem.arabic, poet: poem.poet, title: poem.title };
+    const optimistic = {
+      poem_id: poem.id,
+      poem_text: poem.arabic,
+      poet: poem.poet,
+      title: poem.title,
+    };
     setSavedPoems((prev) => [optimistic, ...prev]);
 
     try {
@@ -297,10 +309,7 @@ export function useSavedPoems(user) {
 
     try {
       log.info('Poems', `Unsaving poem (id: ${poemId}, text: ${poemText ? 'yes' : 'no'})`);
-      let query = supabase
-        .from('saved_poems')
-        .delete()
-        .eq('user_id', user.id);
+      let query = supabase.from('saved_poems').delete().eq('user_id', user.id);
 
       if (poemId) {
         query = query.eq('poem_id', poemId);
@@ -332,11 +341,11 @@ export function useSavedPoems(user) {
 
   const isPoemSaved = (poem) => {
     if (!savedPoems.length) return false;
-    
+
     if (poem.id) {
       return savedPoems.some((p) => p.poem_id === poem.id);
     }
-    
+
     return savedPoems.some((p) => p.poem_text === poem.arabic);
   };
 
@@ -382,7 +391,7 @@ export function useDownvotes(user) {
       }
 
       log.info('Downvotes', `Loaded ${(data || []).length} downvoted poems`);
-      setDownvotedPoemIds((data || []).map(d => d.poem_id));
+      setDownvotedPoemIds((data || []).map((d) => d.poem_id));
     } catch (error) {
       log.error('Downvotes', 'Exception loading downvotes', error.message);
     } finally {
@@ -395,20 +404,18 @@ export function useDownvotes(user) {
     try {
       log.info('Downvotes', `Downvoting poem: ${poem.poet} — ${poem.title} (id: ${poem.id})`);
       // Optimistic update
-      setDownvotedPoemIds(prev => [...prev, poem.id]);
+      setDownvotedPoemIds((prev) => [...prev, poem.id]);
 
-      const { error } = await supabase
-        .from('poem_events')
-        .insert({
-          user_id: user.id,
-          poem_id: poem.id,
-          event_type: 'downvote',
-          metadata: { reason: 'low_quality' },
-        });
+      const { error } = await supabase.from('poem_events').insert({
+        user_id: user.id,
+        poem_id: poem.id,
+        event_type: 'downvote',
+        metadata: { reason: 'low_quality' },
+      });
 
       if (error) {
         // Revert optimistic update
-        setDownvotedPoemIds(prev => prev.filter(id => id !== poem.id));
+        setDownvotedPoemIds((prev) => prev.filter((id) => id !== poem.id));
         log.error('Downvotes', 'Failed to downvote poem', error.message);
         return { error };
       }
@@ -416,7 +423,7 @@ export function useDownvotes(user) {
       log.info('Downvotes', 'Poem downvoted successfully');
       return { error: null };
     } catch (error) {
-      setDownvotedPoemIds(prev => prev.filter(id => id !== poem.id));
+      setDownvotedPoemIds((prev) => prev.filter((id) => id !== poem.id));
       log.error('Downvotes', 'Exception downvoting poem', error.message);
       return { error };
     }
@@ -427,7 +434,7 @@ export function useDownvotes(user) {
     try {
       log.info('Downvotes', `Removing downvote for poem ${poemId}`);
       // Optimistic update
-      setDownvotedPoemIds(prev => prev.filter(id => id !== poemId));
+      setDownvotedPoemIds((prev) => prev.filter((id) => id !== poemId));
 
       const { error } = await supabase
         .from('poem_events')
@@ -438,7 +445,7 @@ export function useDownvotes(user) {
 
       if (error) {
         // Revert optimistic update
-        setDownvotedPoemIds(prev => [...prev, poemId]);
+        setDownvotedPoemIds((prev) => [...prev, poemId]);
         log.error('Downvotes', 'Failed to remove downvote', error.message);
         return { error };
       }
@@ -446,7 +453,7 @@ export function useDownvotes(user) {
       log.info('Downvotes', 'Downvote removed successfully');
       return { error: null };
     } catch (error) {
-      setDownvotedPoemIds(prev => [...prev, poemId]);
+      setDownvotedPoemIds((prev) => [...prev, poemId]);
       log.error('Downvotes', 'Exception removing downvote', error.message);
       return { error };
     }
@@ -475,14 +482,12 @@ export function usePoemEvents(user) {
     if (!user || !isSupabaseConfigured()) return;
     try {
       log.info('Events', `Emitting ${eventType} for poem ${poemId}`);
-      const { error } = await supabase
-        .from('poem_events')
-        .insert({
-          user_id: user.id,
-          poem_id: poemId,
-          event_type: eventType,
-          metadata,
-        });
+      const { error } = await supabase.from('poem_events').insert({
+        user_id: user.id,
+        poem_id: poemId,
+        event_type: eventType,
+        metadata,
+      });
 
       if (error) {
         log.error('Events', `Failed to emit ${eventType}`, error.message);

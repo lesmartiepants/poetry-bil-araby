@@ -17,7 +17,7 @@ export const CATEGORY_MAP = {
 const initialState = {
   darkMode: true,
   font: 'Amiri',
-  textSize: 1, // 0=S, 1=M, 2=L, 3=XL
+  textSize: 2, // 0=S, 1=M, 2=L, 3=XL
   showTranslation: true,
   showTransliteration: false,
   showDebugLogs: FEATURES.debug,
@@ -28,6 +28,19 @@ const initialState = {
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
   logs: [],
   headerOpacity: 0,
+  // Background settings
+  bgOpacity: 1.55, // multiplier for stroke opacity (1.55 = 155% of theme default)
+  bgColor: '', // hex override for line colour; '' = use theme default
+  bgParallax: 0.08, // parallax drift factor (0.08 = 8% of scroll speed)
+  bgPattern: '8.5', // currently-selected pattern from generator favorites
+  // Sparkle / particle controls
+  sparkleEnabled: true, // show gold sparkle particles
+  sparkleMode: 'particles', // 'particles' = gold ambient, 'ray-tracing' = L&S white rays
+  sparkleGlow: true, // central radial glow is permanently on
+  sparkleBrightness: 1.0, // opacity multiplier for particles
+  sparkleSpeed: 1.0, // speed multiplier for particles
+  sparkleAmount: 35, // ambient particle count (insight always uses ACTIVE_COUNT=60)
+  sparkleColor: '#c5a059', // base color for particles (gold by default)
   cacheStats: {
     audioHits: 0,
     audioMisses: 0,
@@ -50,6 +63,19 @@ export const useUIStore = create((set, get) => ({
   setShowTranslation: (showTranslation) => set({ showTranslation }),
   setShowTransliteration: (showTransliteration) => set({ showTransliteration }),
   setHeaderOpacity: (headerOpacity) => set({ headerOpacity }),
+  toggleRatchetMode: () => set((s) => ({ ratchetMode: !s.ratchetMode })),
+  setBgOpacity: (bgOpacity) => set({ bgOpacity }),
+  setBgColor: (bgColor) => set({ bgColor }),
+  setBgParallax: (bgParallax) => set({ bgParallax }),
+  setBgPattern: (bgPattern) => set({ bgPattern }),
+  setSparkleEnabled: (sparkleEnabled) => set({ sparkleEnabled }),
+  setSparkleMode: (sparkleMode) => set({ sparkleMode }),
+  setSparkleGlow: (sparkleGlow) => set({ sparkleGlow }),
+  setSparkleBrightness: (sparkleBrightness) => set({ sparkleBrightness }),
+  setSparkleSpeed: (sparkleSpeed) => set({ sparkleSpeed }),
+  setSparkleAmount: (sparkleAmount) => set({ sparkleAmount }),
+  setSparkleColor: (sparkleColor) => set({ sparkleColor }),
+
   cycleFont: () =>
     set((s) => {
       const idx = FONTS.findIndex((f) => f.id === s.font);
@@ -62,7 +88,6 @@ export const useUIStore = create((set, get) => ({
   toggleTranslation: () => set((s) => ({ showTranslation: !s.showTranslation })),
   toggleTransliteration: () => set((s) => ({ showTransliteration: !s.showTransliteration })),
   toggleDebugLogs: () => set((s) => ({ showDebugLogs: !s.showDebugLogs })),
-  toggleRatchetMode: () => set((s) => ({ ratchetMode: !s.ratchetMode })), // keep this one
 
   addLog: (label, msg, type = 'info') => {
     const now = performance.now();

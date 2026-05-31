@@ -34,6 +34,9 @@ const PlayControlsStrip = ({
   totalDuration = 0,
   onVerseChange = () => {},
 }) => {
+  const highlightStyle = useUIStore((s) => s.highlightStyle);
+  if (highlightStyle === 'none') return null;
+
   const seek = (offset) => {
     // Read live store state BEFORE stop() — the isPlaying prop is stale
     // (onstop fires and updates the store, but this closure captured the old prop)
@@ -83,11 +86,12 @@ const PlayControlsStrip = ({
       className="flex items-center justify-center gap-2 px-4 py-2 rounded-2xl backdrop-blur-xl border border-white/10 bg-black/40"
       style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
     >
-      {/* Prev verse — restarts from beginning at verse 0 */}
+      {/* Prev verse — disabled at first verse */}
       <button
         aria-label="Prev verse"
         onClick={handlePrev}
-        className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/10"
+        disabled={currentVerseIndex <= 0}
+        className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 disabled:opacity-30 hover:bg-white/10"
         style={{ color: 'var(--gold, #c9a84c)' }}
       >
         <SkipBack size={16} />

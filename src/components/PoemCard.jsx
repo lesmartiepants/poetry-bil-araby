@@ -76,10 +76,7 @@ export default function PoemCard({
             />
           </svg>
 
-          <div
-            className="relative z-10 flex flex-col items-center justify-center w-full"
-            dir="rtl"
-          >
+          <div className="relative z-10 flex flex-col items-center justify-center w-full" dir="rtl">
             <div
               className="font-amiri font-bold text-center"
               style={{
@@ -110,8 +107,7 @@ export default function PoemCard({
             >
               {current?.poetArabic || current?.poet}
             </div>
-            {(current?.poet !== current?.poetArabic ||
-              current?.title !== current?.titleArabic) && (
+            {(current?.poet !== current?.poetArabic || current?.title !== current?.titleArabic) && (
               <div
                 className="font-brand-en text-center italic"
                 dir="ltr"
@@ -123,9 +119,7 @@ export default function PoemCard({
               >
                 {current?.title !== current?.titleArabic && <span>{current.title}</span>}
                 {current?.title !== current?.titleArabic &&
-                  current?.poet !== current?.poetArabic && (
-                    <span className="opacity-40"> — </span>
-                  )}
+                  current?.poet !== current?.poetArabic && <span className="opacity-40"> — </span>}
                 {current?.poet !== current?.poetArabic && <span>{current.poet}</span>}
               </div>
             )}
@@ -162,7 +156,7 @@ export default function PoemCard({
                     dir="ltr"
                     className={`font-brand-en italic opacity-40 ${DESIGN.anim} mx-auto`}
                     style={{
-                      fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})`,
+                      fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale} * 0.85)`,
                       maxWidth: '90%',
                     }}
                   >
@@ -187,7 +181,6 @@ export default function PoemCard({
             </span>
           ))}
       </div>
-
     </div>
   );
 }

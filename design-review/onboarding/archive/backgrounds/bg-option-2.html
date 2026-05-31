@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Background 2 — Molded Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================
+       DESIGN TOKENS
+       ========================================== */
+    :root {
+      --color-bg:           #0d0d14;
+      --color-surface:      rgba(20, 18, 28, 0.88);
+      --color-surface-edge: rgba(197, 160, 89, 0.18);
+
+      --color-gold:         #c5a059;
+      --color-gold-dim:     rgba(197, 160, 89, 0.55);
+      --color-gold-faint:   rgba(197, 160, 89, 0.18);
+      --color-lapis:        #2a5a8c;
+      --color-lapis-dim:    rgba(42, 90, 140, 0.45);
+
+      --color-text-primary: #e8dcc8;
+      --color-text-title:   #c5a059;
+      --color-text-poet:    rgba(240, 232, 216, 0.5);
+
+      --font-arabic:        'Amiri', serif;
+      --font-ui:            'Reem Kufi', sans-serif;
+
+      --ease-out-expo:      cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ==========================================
+       RESET & BASE
+       ========================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* ==========================================
+       SCENE CONTAINER
+       ========================================== */
+    .scene {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* ==========================================
+       ARABESQUE CARVED-STUCCO BACKGROUND
+       Three SVG layers simulate the 3D relief of
+       Islamic molded plaster (جص منحوت):
+         - shadow layer (dark, offset down-right) = carved valley
+         - highlight layer (gold, offset up-left) = raised ridge
+       Three depth tiers at different scales/opacities
+       match the muqarnas multi-layer approach.
+       ========================================== */
+    .geo-layer {
+      position: absolute;
+      inset: -10%;
+      width: 120%;
+      height: 120%;
+      pointer-events: none;
+    }
+
+    /* Outermost tier: largest arabesque, lapis-toned, very faint */
+    .geo-layer--outer {
+      opacity: 0.035;
+      animation: geoBreath 18s ease-in-out infinite alternate;
+    }
+
+    /* Middle tier: medium arabesque, gold-toned */
+    .geo-layer--mid {
+      opacity: 0.042;
+      animation: geoBreath 22s ease-in-out 4s infinite alternate-reverse;
+    }
+
+    /* Inner tier: smallest arabesque, mixed, slightly brighter */
+    .geo-layer--inner {
+      opacity: 0.055;
+      animation: geoBreath 14s ease-in-out 2s infinite alternate;
+    }
+
+    @keyframes geoBreath {
+      from { opacity: inherit; transform: scale(1); }
+      to   { opacity: calc(var(--breath-target, 1) * 1.4); transform: scale(1.008); }
+    }
+
+    .geo-layer--outer { --breath-target: 0.035; }
+    .geo-layer--mid   { --breath-target: 0.042; }
+    .geo-layer--inner { --breath-target: 0.055; }
+
+    /* ==========================================
+       RADIAL VIGNETTE MASK
+       Pattern is brightest at center, fades at edges.
+       Two masks: one clips the geo layers,
+       one darkens the perimeter for depth.
+       ========================================== */
+    .vignette-mask {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      /* Dark perimeter vignette */
+      background: radial-gradient(
+        ellipse 70% 70% at 50% 50%,
+        transparent 30%,
+        rgba(13, 13, 20, 0.55) 65%,
+        rgba(13, 13, 20, 0.92) 100%
+      );
+      z-index: 2;
+    }
+
+    /* Secondary vignette for extra depth */
+    .vignette-mask--deep {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse 50% 55% at 50% 50%,
+        transparent 20%,
+        rgba(13, 13, 20, 0.3) 60%,
+        rgba(13, 13, 20, 0.75) 100%
+      );
+      z-index: 3;
+    }
+
+    /* Geo layers are masked by radial gradient using CSS mask */
+    .geo-wrapper {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      /* Radial mask: pattern visible at center, invisible at edges */
+      -webkit-mask-image: radial-gradient(
+        ellipse 75% 75% at 50% 50%,
+        black 20%,
+        rgba(0,0,0,0.6) 55%,
+        transparent 85%
+      );
+      mask-image: radial-gradient(
+        ellipse 75% 75% at 50% 50%,
+        black 20%,
+        rgba(0,0,0,0.6) 55%,
+        transparent 85%
+      );
+    }
+
+    /* ==========================================
+       POEM CARD
+       ========================================== */
+    .card {
+      position: relative;
+      z-index: 10;
+      width: min(480px, calc(100vw - 48px));
+      padding: 48px 40px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-edge);
+      border-radius: 4px;
+
+      /* Layered shadows for depth — top light from "dome above" */
+      box-shadow:
+        0 0 0 1px rgba(197, 160, 89, 0.06),
+        0 1px 0 0 rgba(197, 160, 89, 0.15),
+        0 8px 32px rgba(0, 0, 0, 0.55),
+        0 32px 80px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(197, 160, 89, 0.08);
+
+      animation: cardRise 0.9s var(--ease-out-expo) both;
+    }
+
+    @keyframes cardRise {
+      from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Subtle inner glow along top edge — dome skylight effect */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      background: linear-gradient(
+        180deg,
+        rgba(197, 160, 89, 0.04) 0%,
+        transparent 40%
+      );
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       CARD CONTENT
+       ========================================== */
+    .poem-title {
+      font-family: var(--font-arabic);
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      font-weight: 400;
+      color: var(--color-text-title);
+      text-align: center;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      letter-spacing: 0.01em;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.25s both;
+    }
+
+    .poem-poet {
+      font-family: var(--font-ui);
+      font-size: clamp(0.78rem, 2vw, 0.85rem);
+      font-weight: 400;
+      color: var(--color-text-poet);
+      text-align: center;
+      margin-bottom: 36px;
+      letter-spacing: 0.04em;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.35s both;
+    }
+
+    .verse-pair {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.45s both;
+    }
+
+    .verse-line {
+      font-family: var(--font-arabic);
+      font-size: clamp(1rem, 3vw, 1.2rem);
+      font-weight: 400;
+      color: var(--color-text-primary);
+      text-align: center;
+      line-height: 1.9;
+      letter-spacing: 0.01em;
+    }
+
+    /* Ornamental divider */
+    .verse-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 12px 0;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.5s both;
+    }
+
+    .verse-divider::before,
+    .verse-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--color-gold-faint) 40%,
+        var(--color-gold-dim) 50%,
+        var(--color-gold-faint) 60%,
+        transparent
+      );
+    }
+
+    .verse-divider-ornament {
+      color: var(--color-gold);
+      font-size: 0.9rem;
+      line-height: 1;
+      opacity: 0.75;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ==========================================
+       LABEL — TOP-LEFT (dir=rtl so top-right visually)
+       ========================================== */
+    .bg-label {
+      position: fixed;
+      top: 20px;
+      left: 20px; /* left in logical terms = right visually in RTL */
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--color-gold-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      z-index: 20;
+      opacity: 0;
+      animation: labelFade 0.6s ease 1.2s forwards;
+    }
+
+    @keyframes labelFade {
+      to { opacity: 1; }
+    }
+
+    /* ==========================================
+       REDUCED MOTION
+       ========================================== */
+    @media (prefers-reduced-motion: reduce) {
+      .card,
+      .poem-title,
+      .poem-poet,
+      .verse-pair,
+      .verse-divider,
+      .verse-line,
+      .bg-label {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+      .geo-layer {
+        animation: none;
+      }
+    }
+
+    /* ==========================================
+       MOBILE ADJUSTMENTS
+       ========================================== */
+    @media (max-width: 420px) {
+      .card {
+        padding: 36px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scene">
+
+    <!-- Label -->
+    <div class="bg-label">Background 2 — Molded Panel</div>
+
+    <!-- Geometric background layers -->
+    <div class="geo-wrapper" aria-hidden="true">
+
+      <!--
+        ARABESQUE CARVED-STUCCO PATTERN
+        ===================================
+        The tile (140×140) depicts a central medallion (shamsa) with
+        eight palmette leaves radiating outward, connected by flowing
+        interlocking strapwork to adjacent tiles. This mirrors real
+        Andalusian/Mamluk carved-stucco ornamentation (جص منحوت).
+
+        3D relief = two sub-layers inside each SVG <pattern>:
+          Shadow path: offset +1,+1, dark stroke (carved valley floor)
+          Highlight path: offset -1,-1, gold stroke (raised ridge crest)
+        The eye reads the offset pair as physical depth.
+      -->
+
+      <!-- OUTER TIER: large arabesque tile, lapis-dominant, very faint -->
+      <svg class="geo-layer geo-layer--outer" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <pattern id="arabesque-outer" x="0" y="0" width="140" height="140" patternUnits="userSpaceOnUse">
+            <!--
+              Outer tile motif: central eight-pointed rosette (shamsa)
+              with strapwork arcs flowing to the four cardinal edges,
+              and secondary palmette half-leaves at corners.
+            -->
+
+            <!-- === SHADOW LAYER (offset +1,+1 simulates carved valley) === -->
+            <g transform="translate(1,1)" stroke="rgba(0,0,0,0.06)" stroke-width="0.7" fill="none">
+              <!-- Central rosette outline — 8-petal flower at (70,70) r=22 -->
+              <path d="
+                M70,48
+                C76,48 80,54 80,60
+                C86,54 92,50 98,52
+                C100,58 96,64 90,66
+                C96,70 100,76 98,82
+                C92,84 86,80 82,76
+                C82,82 78,88 72,90
+                C66,90 62,84 62,78
+                C56,84 50,88 44,86
+                C42,80 46,74 52,72
+                C46,68 42,62 44,56
+                C50,54 56,58 60,62
+                C60,56 64,48 70,48Z
+              "/>
+              <!-- Inner rosette ring -->
+              <circle cx="70" cy="70" r="14" stroke-width="0.5"/>
+              <!-- Rosette hub -->
+              <circle cx="70" cy="70" r="6"/>
+
+              <!-- Strapwork arcs — N -->
+              <path d="M70,48 C65,38 55,28 42,18"/>
+              <path d="M70,48 C75,38 85,28 98,18"/>
+              <!-- Strapwork arcs — S -->
+              <path d="M70,92 C65,102 55,112 42,122"/>
+              <path d="M70,92 C75,102 85,112 98,122"/>
+              <!-- Strapwork arcs — W -->
+              <path d="M48,70 C38,65 28,55 18,42"/>
+              <path d="M48,70 C38,75 28,85 18,98"/>
+              <!-- Strapwork arcs — E -->
+              <path d="M92,70 C102,65 112,55 122,42"/>
+              <path d="M92,70 C102,75 112,85 122,98"/>
+
+              <!-- Palmette half-leaves at corners -->
+              <path d="M18,18 C28,22 34,32 32,42 C24,38 16,28 18,18Z"/>
+              <path d="M122,18 C112,22 106,32 108,42 C116,38 124,28 122,18Z"/>
+              <path d="M18,122 C28,118 34,108 32,98 C24,102 16,112 18,122Z"/>
+              <path d="M122,122 C112,118 106,108 108,98 C116,102 124,112 122,122Z"/>
+
+              <!-- Edge connector arcs (tile-to-tile strapwork) -->
+              <path d="M42,0 C48,8 52,20 48,30"/>
+              <path d="M98,0 C92,8 88,20 92,30"/>
+              <path d="M0,42 C8,48 20,52 30,48"/>
+              <path d="M0,98 C8,92 20,88 30,92"/>
+              <path d="M42,140 C48,132 52,120 48,110"/>
+              <path d="M98,140 C92,132 88,120 92,110"/>
+              <path d="M140,42 C132,48 120,52 110,48"/>
+              <path d="M140,98 C132,92 120,88 110,92"/>
+            </g>
+
+            <!-- === HIGHLIGHT LAYER (offset -1,-1 simulates raised ridge) === -->
+            <g transform="translate(-1,-1)" stroke="rgba(197,160,89,0.05)" stroke-width="0.6" fill="none">
+              <!-- Same geometry, lighter stroke — the ridge catches the light -->
+              <path d="
+                M70,48
+                C76,48 80,54 80,60
+                C86,54 92,50 98,52
+                C100,58 96,64 90,66
+                C96,70 100,76 98,82
+                C92,84 86,80 82,76
+                C82,82 78,88 72,90
+                C66,90 62,84 62,78
+                C56,84 50,88 44,86
+                C42,80 46,74 52,72
+                C46,68 42,62 44,56
+                C50,54 56,58 60,62
+                C60,56 64,48 70,48Z
+              "/>
+              <circle cx="70" cy="70" r="14" stroke-width="0.5"/>
+              <circle cx="70" cy="70" r="6"/>
+              <path d="M70,48 C65,38 55,28 42,18"/>
+              <path d="M70,48 C75,38 85,28 98,18"/>
+              <path d="M70,92 C65,102 55,112 42,122"/>
+              <path d="M70,92 C75,102 85,112 98,122"/>
+              <path d="M48,70 C38,65 28,55 18,42"/>
+              <path d="M48,70 C38,75 28,85 18,98"/>
+              <path d="M92,70 C102,65 112,55 122,42"/>
+              <path d="M92,70 C102,75 112,85 122,98"/>
+              <path d="M18,18 C28,22 34,32 32,42 C24,38 16,28 18,18Z"/>
+              <path d="M122,18 C112,22 106,32 108,42 C116,38 124,28 122,18Z"/>
+              <path d="M18,122 C28,118 34,108 32,98 C24,102 16,112 18,122Z"/>
+              <path d="M122,122 C112,118 106,108 108,98 C116,102 124,112 122,122Z"/>
+              <path d="M42,0 C48,8 52,20 48,30"/>
+              <path d="M98,0 C92,8 88,20 92,30"/>
+              <path d="M0,42 C8,48 20,52 30,48"/>
+              <path d="M0,98 C8,92 20,88 30,92"/>
+              <path d="M42,140 C48,132 52,120 48,110"/>
+              <path d="M98,140 C92,132 88,120 92,110"/>
+              <path d="M140,42 C132,48 120,52 110,48"/>
+              <path d="M140,98 C132,92 120,88 110,92"/>
+            </g>
+
+            <!-- === BASE STROKES (lapis-toned, full opacity within layer) === -->
+            <g stroke="#2a5a8c" stroke-width="0.5" fill="none">
+              <path d="
+                M70,48
+                C76,48 80,54 80,60
+                C86,54 92,50 98,52
+                C100,58 96,64 90,66
+                C96,70 100,76 98,82
+                C92,84 86,80 82,76
+                C82,82 78,88 72,90
+                C66,90 62,84 62,78
+                C56,84 50,88 44,86
+                C42,80 46,74 52,72
+                C46,68 42,62 44,56
+                C50,54 56,58 60,62
+                C60,56 64,48 70,48Z
+              "/>
+              <circle cx="70" cy="70" r="14" stroke-opacity="0.7"/>
+              <circle cx="70" cy="70" r="6" stroke-opacity="0.5"/>
+              <!-- Lapis fill on rosette petals — recessed faces appear cool/deep -->
+              <path d="M70,48 C76,48 80,54 80,60 C74,56 68,54 70,48Z"
+                fill="#1a3a5c" fill-opacity="0.18" stroke="none"/>
+              <path d="M98,52 C100,58 96,64 90,66 C92,58 96,54 98,52Z"
+                fill="#1a3a5c" fill-opacity="0.15" stroke="none"/>
+              <path d="M98,82 C92,84 86,80 82,76 C88,76 94,78 98,82Z"
+                fill="#1a3a5c" fill-opacity="0.18" stroke="none"/>
+              <path d="M72,90 C66,90 62,84 62,78 C66,82 70,86 72,90Z"
+                fill="#1a3a5c" fill-opacity="0.15" stroke="none"/>
+              <path d="M44,86 C42,80 46,74 52,72 C48,78 44,82 44,86Z"
+                fill="#1a3a5c" fill-opacity="0.18" stroke="none"/>
+              <path d="M44,56 C50,54 56,58 60,62 C54,60 48,58 44,56Z"
+                fill="#1a3a5c" fill-opacity="0.15" stroke="none"/>
+            </g>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#arabesque-outer)"/>
+      </svg>
+
+      <!-- MIDDLE TIER: medium arabesque tile, gold-dominant -->
+      <svg class="geo-layer geo-layer--mid" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!--
+            Mid tile: 100×100px. Same rosette-strapwork motif, scaled down.
+            Offset from outer tier by half a tile to create visual weave.
+            Gold tones on raised surfaces — opposite thermal to lapis.
+          -->
+          <pattern id="arabesque-mid" x="50" y="50" width="100" height="100" patternUnits="userSpaceOnUse">
+
+            <!-- Shadow layer -->
+            <g transform="translate(1,1)" stroke="rgba(0,0,0,0.06)" stroke-width="0.6" fill="none">
+              <path d="
+                M50,34
+                C55,34 58,39 58,44
+                C63,39 68,36 73,38
+                C75,43 72,48 67,50
+                C72,53 75,58 73,63
+                C68,65 63,62 60,58
+                C60,63 57,68 52,70
+                C47,70 44,65 44,60
+                C39,65 34,68 29,66
+                C27,61 30,56 35,54
+                C30,51 27,46 29,41
+                C34,39 39,42 42,46
+                C42,41 45,34 50,34Z
+              "/>
+              <circle cx="50" cy="52" r="10" stroke-width="0.4"/>
+              <circle cx="50" cy="52" r="4"/>
+              <path d="M50,34 C46,26 38,18 28,10"/>
+              <path d="M50,34 C54,26 62,18 72,10"/>
+              <path d="M50,70 C46,78 38,88 28,96"/>
+              <path d="M50,70 C54,78 62,88 72,96"/>
+              <path d="M32,52 C24,48 16,40 8,28"/>
+              <path d="M32,52 C24,56 16,64 8,76"/>
+              <path d="M68,52 C76,48 84,40 92,28"/>
+              <path d="M68,52 C76,56 84,64 92,76"/>
+              <path d="M10,10 C20,14 26,24 24,34 C16,30 8,20 10,10Z"/>
+              <path d="M90,10 C80,14 74,24 76,34 C84,30 92,20 90,10Z"/>
+              <path d="M10,90 C20,86 26,76 24,66 C16,70 8,80 10,90Z"/>
+              <path d="M90,90 C80,86 74,76 76,66 C84,70 92,80 90,90Z"/>
+            </g>
+
+            <!-- Highlight layer -->
+            <g transform="translate(-1,-1)" stroke="rgba(197,160,89,0.05)" stroke-width="0.55" fill="none">
+              <path d="
+                M50,34
+                C55,34 58,39 58,44
+                C63,39 68,36 73,38
+                C75,43 72,48 67,50
+                C72,53 75,58 73,63
+                C68,65 63,62 60,58
+                C60,63 57,68 52,70
+                C47,70 44,65 44,60
+                C39,65 34,68 29,66
+                C27,61 30,56 35,54
+                C30,51 27,46 29,41
+                C34,39 39,42 42,46
+                C42,41 45,34 50,34Z
+              "/>
+              <circle cx="50" cy="52" r="10" stroke-width="0.4"/>
+              <circle cx="50" cy="52" r="4"/>
+              <path d="M50,34 C46,26 38,18 28,10"/>
+              <path d="M50,34 C54,26 62,18 72,10"/>
+              <path d="M50,70 C46,78 38,88 28,96"/>
+              <path d="M50,70 C54,78 62,88 72,96"/>
+              <path d="M32,52 C24,48 16,40 8,28"/>
+              <path d="M32,52 C24,56 16,64 8,76"/>
+              <path d="M68,52 C76,48 84,40 92,28"/>
+              <path d="M68,52 C76,56 84,64 92,76"/>
+              <path d="M10,10 C20,14 26,24 24,34 C16,30 8,20 10,10Z"/>
+              <path d="M90,10 C80,14 74,24 76,34 C84,30 92,20 90,10Z"/>
+              <path d="M10,90 C20,86 26,76 24,66 C16,70 8,80 10,90Z"/>
+              <path d="M90,90 C80,86 74,76 76,66 C84,70 92,80 90,90Z"/>
+            </g>
+
+            <!-- Base gold strokes -->
+            <g stroke="#c5a059" stroke-width="0.5" fill="none">
+              <path d="
+                M50,34
+                C55,34 58,39 58,44
+                C63,39 68,36 73,38
+                C75,43 72,48 67,50
+                C72,53 75,58 73,63
+                C68,65 63,62 60,58
+                C60,63 57,68 52,70
+                C47,70 44,65 44,60
+                C39,65 34,68 29,66
+                C27,61 30,56 35,54
+                C30,51 27,46 29,41
+                C34,39 39,42 42,46
+                C42,41 45,34 50,34Z
+              "/>
+              <circle cx="50" cy="52" r="10" stroke-opacity="0.7"/>
+              <circle cx="50" cy="52" r="4" stroke-opacity="0.5"/>
+              <!-- Gold fill on raised rosette faces — warm tones advance optically -->
+              <path d="M50,34 C55,34 58,39 58,44 C54,40 50,38 50,34Z"
+                fill="#c5a059" fill-opacity="0.12" stroke="none"/>
+              <path d="M73,38 C75,43 72,48 67,50 C69,44 72,40 73,38Z"
+                fill="#c5a059" fill-opacity="0.1" stroke="none"/>
+              <path d="M73,63 C68,65 63,62 60,58 C64,60 70,62 73,63Z"
+                fill="#c5a059" fill-opacity="0.12" stroke="none"/>
+              <path d="M52,70 C47,70 44,65 44,60 C46,64 50,68 52,70Z"
+                fill="#c5a059" fill-opacity="0.1" stroke="none"/>
+              <!-- Strapwork curves -->
+              <path d="M50,34 C46,26 38,18 28,10" stroke-opacity="0.9"/>
+              <path d="M50,34 C54,26 62,18 72,10" stroke-opacity="0.9"/>
+              <path d="M50,70 C46,78 38,88 28,96" stroke-opacity="0.9"/>
+              <path d="M50,70 C54,78 62,88 72,96" stroke-opacity="0.9"/>
+              <path d="M32,52 C24,48 16,40 8,28" stroke-opacity="0.9"/>
+              <path d="M32,52 C24,56 16,64 8,76" stroke-opacity="0.9"/>
+              <path d="M68,52 C76,48 84,40 92,28" stroke-opacity="0.9"/>
+              <path d="M68,52 C76,56 84,64 92,76" stroke-opacity="0.9"/>
+              <!-- Corner palmette leaves -->
+              <path d="M10,10 C20,14 26,24 24,34 C16,30 8,20 10,10Z"
+                fill="#c5a059" fill-opacity="0.08"/>
+              <path d="M90,10 C80,14 74,24 76,34 C84,30 92,20 90,10Z"
+                fill="#c5a059" fill-opacity="0.08"/>
+              <path d="M10,90 C20,86 26,76 24,66 C16,70 8,80 10,90Z"
+                fill="#c5a059" fill-opacity="0.08"/>
+              <path d="M90,90 C80,86 74,76 76,66 C84,70 92,80 90,90Z"
+                fill="#c5a059" fill-opacity="0.08"/>
+            </g>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#arabesque-mid)"/>
+      </svg>
+
+      <!-- INNER TIER: small arabesque, alternating gold+lapis, finest detail -->
+      <svg class="geo-layer geo-layer--inner" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!--
+            Inner tile: 70×70px. Finest scale — shows interlocking detail
+            of the strapwork junctions and small palmette infill.
+            Alternating gold/lapis on adjacent petals mirrors the
+            warm/cool thermal contrast of real carved plaster illumination.
+          -->
+          <pattern id="arabesque-inner" x="0" y="0" width="70" height="70" patternUnits="userSpaceOnUse">
+
+            <!-- Shadow layer -->
+            <g transform="translate(1,1)" stroke="rgba(0,0,0,0.07)" stroke-width="0.55" fill="none">
+              <path d="
+                M35,22
+                C38,22 40,26 40,30
+                C44,26 48,24 51,26
+                C52,30 50,34 46,35
+                C50,37 52,41 51,45
+                C48,46 44,44 42,41
+                C42,45 40,49 36,50
+                C32,50 30,46 30,42
+                C26,46 22,48 19,46
+                C18,42 20,38 24,37
+                C20,35 18,31 19,27
+                C22,26 26,28 28,31
+                C28,27 31,22 35,22Z
+              "/>
+              <circle cx="35" cy="36" r="7"/>
+              <circle cx="35" cy="36" r="3"/>
+              <path d="M35,22 C32,15 26,9 18,4"/>
+              <path d="M35,22 C38,15 44,9 52,4"/>
+              <path d="M35,50 C32,57 26,63 18,68"/>
+              <path d="M35,50 C38,57 44,63 52,68"/>
+              <path d="M22,36 C15,32 9,26 4,18"/>
+              <path d="M22,36 C15,40 9,46 4,54"/>
+              <path d="M48,36 C55,32 61,26 66,18"/>
+              <path d="M48,36 C55,40 61,46 66,54"/>
+            </g>
+
+            <!-- Highlight layer -->
+            <g transform="translate(-1,-1)" stroke="rgba(197,160,89,0.055)" stroke-width="0.5" fill="none">
+              <path d="
+                M35,22
+                C38,22 40,26 40,30
+                C44,26 48,24 51,26
+                C52,30 50,34 46,35
+                C50,37 52,41 51,45
+                C48,46 44,44 42,41
+                C42,45 40,49 36,50
+                C32,50 30,46 30,42
+                C26,46 22,48 19,46
+                C18,42 20,38 24,37
+                C20,35 18,31 19,27
+                C22,26 26,28 28,31
+                C28,27 31,22 35,22Z
+              "/>
+              <circle cx="35" cy="36" r="7"/>
+              <circle cx="35" cy="36" r="3"/>
+              <path d="M35,22 C32,15 26,9 18,4"/>
+              <path d="M35,22 C38,15 44,9 52,4"/>
+              <path d="M35,50 C32,57 26,63 18,68"/>
+              <path d="M35,50 C38,57 44,63 52,68"/>
+              <path d="M22,36 C15,32 9,26 4,18"/>
+              <path d="M22,36 C15,40 9,46 4,54"/>
+              <path d="M48,36 C55,32 61,26 66,18"/>
+              <path d="M48,36 C55,40 61,46 66,54"/>
+            </g>
+
+            <!-- Base strokes — alternating gold/lapis petals -->
+            <g fill="none">
+              <!-- Rosette outline in gold -->
+              <path d="
+                M35,22
+                C38,22 40,26 40,30
+                C44,26 48,24 51,26
+                C52,30 50,34 46,35
+                C50,37 52,41 51,45
+                C48,46 44,44 42,41
+                C42,45 40,49 36,50
+                C32,50 30,46 30,42
+                C26,46 22,48 19,46
+                C18,42 20,38 24,37
+                C20,35 18,31 19,27
+                C22,26 26,28 28,31
+                C28,27 31,22 35,22Z
+              " stroke="#c5a059" stroke-width="0.5"/>
+
+              <!-- Gold-filled petals (NE, SW — lit faces) -->
+              <path d="M35,22 C38,22 40,26 40,30 C37,26 35,24 35,22Z"
+                fill="#c5a059" fill-opacity="0.15" stroke="none"/>
+              <path d="M51,45 C48,46 44,44 42,41 C46,42 50,44 51,45Z"
+                fill="#c5a059" fill-opacity="0.13" stroke="none"/>
+
+              <!-- Lapis-filled petals (NW, SE — shadow faces) -->
+              <path d="M51,26 C52,30 50,34 46,35 C48,30 50,28 51,26Z"
+                fill="#2a5a8c" fill-opacity="0.18" stroke="none"/>
+              <path d="M19,46 C18,42 20,38 24,37 C22,42 20,44 19,46Z"
+                fill="#2a5a8c" fill-opacity="0.15" stroke="none"/>
+
+              <!-- Inner rings -->
+              <circle cx="35" cy="36" r="7" stroke="#c5a059" stroke-width="0.4" stroke-opacity="0.8"/>
+              <circle cx="35" cy="36" r="3" stroke="#2a5a8c" stroke-width="0.4" stroke-opacity="0.7"/>
+
+              <!-- Strapwork — gold going towards light, lapis going into shadow -->
+              <path d="M35,22 C32,15 26,9 18,4" stroke="#c5a059" stroke-width="0.45" stroke-opacity="0.9"/>
+              <path d="M35,22 C38,15 44,9 52,4" stroke="#c5a059" stroke-width="0.45" stroke-opacity="0.9"/>
+              <path d="M35,50 C32,57 26,63 18,68" stroke="#2a5a8c" stroke-width="0.45" stroke-opacity="0.9"/>
+              <path d="M35,50 C38,57 44,63 52,68" stroke="#2a5a8c" stroke-width="0.45" stroke-opacity="0.9"/>
+              <path d="M22,36 C15,32 9,26 4,18" stroke="#2a5a8c" stroke-width="0.45" stroke-opacity="0.9"/>
+              <path d="M22,36 C15,40 9,46 4,54" stroke="#2a5a8c" stroke-width="0.45" stroke-opacity="0.9"/>
+              <path d="M48,36 C55,32 61,26 66,18" stroke="#c5a059" stroke-width="0.45" stroke-opacity="0.9"/>
+              <path d="M48,36 C55,40 61,46 66,54" stroke="#c5a059" stroke-width="0.45" stroke-opacity="0.9"/>
+
+              <!-- Hub dot -->
+              <circle cx="35" cy="36" r="1.5" fill="#c5a059" fill-opacity="0.5" stroke="none"/>
+            </g>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#arabesque-inner)"/>
+      </svg>
+
+    </div><!-- /.geo-wrapper -->
+
+    <!-- Vignette layers -->
+    <div class="vignette-mask" aria-hidden="true"></div>
+    <div class="vignette-mask--deep" aria-hidden="true"></div>
+
+    <!-- Poem card -->
+    <article class="card" lang="ar" dir="rtl">
+
+      <h1 class="poem-title">يا ليل الصبّ متى غده</h1>
+
+      <p class="poem-poet">الحصري القيرواني</p>
+
+      <div class="verse-pair">
+        <p class="verse-line">أقيامُ الساعةِ موعِدُهُ</p>
+
+        <div class="verse-divider" aria-hidden="true">
+          <span class="verse-divider-ornament">❊</span>
+        </div>
+
+        <p class="verse-line">أم قيامي حين أشاهدُهُ</p>
+      </div>
+
+    </article>
+
+  </div><!-- /.scene -->
+
+</body>
+</html>

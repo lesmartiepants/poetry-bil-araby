@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Background 4 — Star & Cross (Lapis Only)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================
+       DESIGN TOKENS
+       ========================================== */
+    :root {
+      --color-bg:           #0d0d14;
+      --color-surface:      rgba(20, 18, 28, 0.88);
+      --color-surface-edge: rgba(42, 90, 140, 0.25);
+
+      --color-lapis:        #2a5a8c;
+      --color-lapis-dim:    rgba(42, 90, 140, 0.55);
+      --color-lapis-faint:  rgba(42, 90, 140, 0.22);
+
+      --color-text-primary: #e8dcc8;
+      --color-text-title:   #7aadd4;
+      --color-text-poet:    rgba(240, 232, 216, 0.5);
+
+      --font-arabic:        'Amiri', serif;
+      --font-ui:            'Reem Kufi', sans-serif;
+
+      --ease-out-expo:      cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ==========================================
+       RESET & BASE
+       ========================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* ==========================================
+       SCENE CONTAINER
+       ========================================== */
+    .scene {
+      position: relative;
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* ==========================================
+       STAR-AND-CROSS GEOMETRIC BACKGROUND
+       Two SVG layers — outer (large lapis) and inner
+       (small lapis) — create depth without any gold.
+       ========================================== */
+    .geo-layer {
+      position: absolute;
+      inset: -10%;
+      width: 120%;
+      height: 120%;
+      pointer-events: none;
+    }
+
+    /* Outermost tier: largest tiles, lapis-toned, very faint */
+    .geo-layer--outer {
+      opacity: 0.040;
+      animation: geoBreath 18s ease-in-out infinite alternate;
+    }
+
+    /* Inner tier: smallest tiles, lapis only, slightly brighter */
+    .geo-layer--inner {
+      opacity: 0.060;
+      animation: geoBreath 14s ease-in-out 2s infinite alternate;
+    }
+
+    @keyframes geoBreath {
+      from { opacity: inherit; transform: scale(1); }
+      to   { opacity: calc(var(--breath-target, 1) * 1.4); transform: scale(1.008); }
+    }
+
+    .geo-layer--outer { --breath-target: 0.040; }
+    .geo-layer--inner { --breath-target: 0.060; }
+
+    /* ==========================================
+       RADIAL VIGNETTE MASK
+       Pattern is brightest at center, fades at edges.
+       ========================================== */
+    .vignette-mask {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse 70% 70% at 50% 50%,
+        transparent 30%,
+        rgba(13, 13, 20, 0.55) 65%,
+        rgba(13, 13, 20, 0.92) 100%
+      );
+      z-index: 2;
+    }
+
+    /* Secondary vignette for extra depth */
+    .vignette-mask--deep {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse 50% 55% at 50% 50%,
+        transparent 20%,
+        rgba(13, 13, 20, 0.3) 60%,
+        rgba(13, 13, 20, 0.75) 100%
+      );
+      z-index: 3;
+    }
+
+    /* Geo layers are masked by radial gradient using CSS mask */
+    .geo-wrapper {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      -webkit-mask-image: radial-gradient(
+        ellipse 75% 75% at 50% 50%,
+        black 20%,
+        rgba(0,0,0,0.6) 55%,
+        transparent 85%
+      );
+      mask-image: radial-gradient(
+        ellipse 75% 75% at 50% 50%,
+        black 20%,
+        rgba(0,0,0,0.6) 55%,
+        transparent 85%
+      );
+    }
+
+    /* ==========================================
+       POEM CARD
+       ========================================== */
+    .card {
+      position: relative;
+      z-index: 10;
+      width: min(480px, calc(100vw - 48px));
+      padding: 48px 40px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-edge);
+      border-radius: 4px;
+
+      /* Layered shadows — lapis highlight on top edge */
+      box-shadow:
+        0 0 0 1px rgba(42, 90, 140, 0.08),
+        0 1px 0 0 rgba(42, 90, 140, 0.18),
+        0 8px 32px rgba(0, 0, 0, 0.55),
+        0 32px 80px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(42, 90, 140, 0.10);
+
+      animation: cardRise 0.9s var(--ease-out-expo) both;
+    }
+
+    @keyframes cardRise {
+      from {
+        opacity: 0;
+        transform: translateY(28px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Subtle inner glow along top edge */
+    .card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      background: linear-gradient(
+        180deg,
+        rgba(42, 90, 140, 0.05) 0%,
+        transparent 40%
+      );
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       CARD CONTENT
+       ========================================== */
+    .poem-title {
+      font-family: var(--font-arabic);
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      font-weight: 400;
+      color: var(--color-text-title);
+      text-align: center;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      letter-spacing: 0.01em;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.25s both;
+    }
+
+    .poem-poet {
+      font-family: var(--font-ui);
+      font-size: clamp(0.78rem, 2vw, 0.85rem);
+      font-weight: 400;
+      color: var(--color-text-poet);
+      text-align: center;
+      margin-bottom: 36px;
+      letter-spacing: 0.04em;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.35s both;
+    }
+
+    .verse-pair {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.45s both;
+    }
+
+    .verse-line {
+      font-family: var(--font-arabic);
+      font-size: clamp(1rem, 3vw, 1.2rem);
+      font-weight: 400;
+      color: var(--color-text-primary);
+      text-align: center;
+      line-height: 1.9;
+      letter-spacing: 0.01em;
+    }
+
+    /* Ornamental divider */
+    .verse-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      margin: 12px 0;
+      animation: fadeUp 0.7s var(--ease-out-expo) 0.5s both;
+    }
+
+    .verse-divider::before,
+    .verse-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--color-lapis-faint) 40%,
+        var(--color-lapis-dim) 50%,
+        var(--color-lapis-faint) 60%,
+        transparent
+      );
+    }
+
+    .verse-divider-ornament {
+      color: var(--color-lapis);
+      font-size: 0.9rem;
+      line-height: 1;
+      opacity: 0.75;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ==========================================
+       LABEL — TOP-LEFT (dir=rtl so top-right visually)
+       ========================================== */
+    .bg-label {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      font-family: var(--font-ui);
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--color-lapis-dim);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      z-index: 20;
+      opacity: 0;
+      animation: labelFade 0.6s ease 1.2s forwards;
+    }
+
+    @keyframes labelFade {
+      to { opacity: 1; }
+    }
+
+    /* ==========================================
+       REDUCED MOTION
+       ========================================== */
+    @media (prefers-reduced-motion: reduce) {
+      .card,
+      .poem-title,
+      .poem-poet,
+      .verse-pair,
+      .verse-divider,
+      .verse-line,
+      .bg-label {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+      .geo-layer {
+        animation: none;
+      }
+    }
+
+    /* ==========================================
+       MOBILE ADJUSTMENTS
+       ========================================== */
+    @media (max-width: 420px) {
+      .card {
+        padding: 36px 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scene">
+
+    <!-- Label -->
+    <div class="bg-label">Background 4 — Star &amp; Cross (Lapis)</div>
+
+    <!-- Geometric background layers -->
+    <div class="geo-wrapper" aria-hidden="true">
+
+      <!--
+        STAR-AND-CROSS TILE GEOMETRY — LAPIS ONLY
+        =============================================
+        Same khatam sulaymani (8-pointed star + cross) geometry
+        as option 1, but with gold/yellow layer removed.
+        Only lapis (blue) tones remain — outer large tiles
+        and inner small tiles, both fully blue.
+      -->
+
+      <!-- OUTER TIER: large tiles (~120×120 unit), lapis-dominant -->
+      <svg class="geo-layer geo-layer--outer" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!--
+            120×120 tile.
+            Star vertices (alternating from two squares):
+              Square A (axis-aligned, scaled to 120):
+                (60,12) (108,60) (60,108) (12,60)
+              Square B (45°-rotated, inset ~28.3% from each edge):
+                (94,26) (94,94) (26,94) (26,26)
+              8-pointed star by interleaving:
+                (60,12) (94,26) (108,60) (94,94)
+                (60,108)(26,94) (12,60)  (26,26)
+
+            Cross fills at tile edges (4 half-crosses per tile):
+              Top edge midpoint  (60,0):   diamond (60,-12)(72,0)(60,12)(48,0)
+              Bottom edge        (60,120): diamond (60,108)(72,120)(60,132)(48,120)
+              Left edge          (0,60):   diamond (-12,60)(0,72)(12,60)(0,48)
+              Right edge         (120,60): diamond (108,60)(120,72)(132,60)(120,48)
+          -->
+          <pattern id="star-cross-outer" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+
+            <!-- 8-pointed star — full outline -->
+            <polygon
+              points="60,12 94,26 108,60 94,94 60,108 26,94 12,60 26,26"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.5"
+              stroke-opacity="0.9"
+              stroke-linejoin="miter"/>
+
+            <!-- Star face shading: left half (cool, recessed) -->
+            <polygon
+              points="60,12 26,26 12,60 26,94 60,108 60,60"
+              fill="#1a3a5c"
+              fill-opacity="0.22"
+              stroke="none"/>
+
+            <!-- Star face shading: right half (warmer, slightly projecting) -->
+            <polygon
+              points="60,12 94,26 108,60 94,94 60,108 60,60"
+              fill="#3a6a9c"
+              fill-opacity="0.15"
+              stroke="none"/>
+
+            <!-- Inner octagon connecting the concave notches of the star -->
+            <polygon
+              points="60,26 79,41 79,79 60,94 41,79 41,41"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.3"
+              stroke-opacity="0.45"/>
+
+            <!-- Cross fills: 4 arm-diamonds at tile edges -->
+            <!-- Top-edge half-cross arm -->
+            <polygon
+              points="48,0 60,12 72,0"
+              fill="#1a3a5c"
+              fill-opacity="0.18"
+              stroke="#2a5a8c"
+              stroke-width="0.4"
+              stroke-opacity="0.8"/>
+
+            <!-- Bottom-edge half-cross arm -->
+            <polygon
+              points="48,120 60,108 72,120"
+              fill="#1a3a5c"
+              fill-opacity="0.18"
+              stroke="#2a5a8c"
+              stroke-width="0.4"
+              stroke-opacity="0.8"/>
+
+            <!-- Left-edge half-cross arm -->
+            <polygon
+              points="0,48 12,60 0,72"
+              fill="#1a3a5c"
+              fill-opacity="0.18"
+              stroke="#2a5a8c"
+              stroke-width="0.4"
+              stroke-opacity="0.8"/>
+
+            <!-- Right-edge half-cross arm -->
+            <polygon
+              points="120,48 108,60 120,72"
+              fill="#1a3a5c"
+              fill-opacity="0.18"
+              stroke="#2a5a8c"
+              stroke-width="0.4"
+              stroke-opacity="0.8"/>
+
+            <!-- Corner quarter-cross diamonds (4 corners share one cross each) -->
+            <polygon
+              points="0,0 12,0 26,14 0,12"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.3"
+              stroke-opacity="0.5"/>
+            <polygon
+              points="120,0 108,0 94,14 120,12"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.3"
+              stroke-opacity="0.5"/>
+            <polygon
+              points="0,120 12,120 26,106 0,108"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.3"
+              stroke-opacity="0.5"/>
+            <polygon
+              points="120,120 108,120 94,106 120,108"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.3"
+              stroke-opacity="0.5"/>
+
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#star-cross-outer)"/>
+      </svg>
+
+      <!-- INNER TIER: small tiles (~50×50 unit), lapis only -->
+      <svg class="geo-layer geo-layer--inner" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!--
+            50×50 tile. Single star-cross unit, fully lapis.
+
+            Star at (25,25):
+              Square A: (25,5)(45,25)(25,45)(5,25)
+              Square B: (39,11)(39,39)(11,39)(11,11)
+              8-star:   (25,5)(39,11)(45,25)(39,39)(25,45)(11,39)(5,25)(11,11)
+
+            Cross arms at midpoints of the 50×50 cell:
+              Top (25,0): (20,0)(25,5)(30,0)
+              Bottom (25,50): (20,50)(25,45)(30,50)
+              Left (0,25): (0,20)(5,25)(0,30)
+              Right (50,25): (50,20)(45,25)(50,30)
+          -->
+          <pattern id="star-cross-inner" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+
+            <!-- 8-pointed star — lapis outline -->
+            <polygon
+              points="25,5 39,11 45,25 39,39 25,45 11,39 5,25 11,11"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.5"
+              stroke-opacity="1"
+              stroke-linejoin="miter"/>
+
+            <!-- Star fill: left inner face (deeper lapis) -->
+            <polygon
+              points="25,5 11,11 5,25 11,39 25,45 25,25"
+              fill="#1a3a5c"
+              fill-opacity="0.22"
+              stroke="none"/>
+
+            <!-- Star fill: right inner face (lighter lapis) -->
+            <polygon
+              points="25,5 39,11 45,25 39,39 25,45 25,25"
+              fill="#3a6a9c"
+              fill-opacity="0.18"
+              stroke="none"/>
+
+            <!-- Inner square detail — lapis -->
+            <polygon
+              points="25,11 34,18 34,32 25,39 16,32 16,18"
+              fill="none"
+              stroke="#2a5a8c"
+              stroke-width="0.3"
+              stroke-opacity="0.45"/>
+
+            <!-- Cross arm outlines — all lapis -->
+            <polygon
+              points="20,0 25,5 30,0"
+              fill="#2a5a8c"
+              fill-opacity="0.15"
+              stroke="#2a5a8c"
+              stroke-width="0.4"
+              stroke-opacity="0.9"/>
+            <polygon
+              points="20,50 25,45 30,50"
+              fill="#2a5a8c"
+              fill-opacity="0.15"
+              stroke="#2a5a8c"
+              stroke-width="0.4"
+              stroke-opacity="0.9"/>
+            <polygon
+              points="0,20 5,25 0,30"
+              fill="#2a5a8c"
+              fill-opacity="0.15"
+              stroke="#2a5a8c"
+              stroke-width="0.4"
+              stroke-opacity="0.9"/>
+            <polygon
+              points="50,20 45,25 50,30"
+              fill="#2a5a8c"
+              fill-opacity="0.15"
+              stroke="#2a5a8c"
+              stroke-width="0.4"
+              stroke-opacity="0.9"/>
+
+            <!-- Center connector web — lapis -->
+            <line x1="25" y1="5"  x2="25" y2="45"
+              stroke="#2a5a8c" stroke-width="0.25" stroke-opacity="0.4"/>
+            <line x1="5"  y1="25" x2="45" y2="25"
+              stroke="#2a5a8c" stroke-width="0.25" stroke-opacity="0.4"/>
+
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#star-cross-inner)"/>
+      </svg>
+
+    </div><!-- /.geo-wrapper -->
+
+    <!-- Vignette layers -->
+    <div class="vignette-mask" aria-hidden="true"></div>
+    <div class="vignette-mask--deep" aria-hidden="true"></div>
+
+    <!-- Poem card -->
+    <article class="card" lang="ar" dir="rtl">
+
+      <h1 class="poem-title">يا ليل الصبّ متى غده</h1>
+
+      <p class="poem-poet">الحصري القيرواني</p>
+
+      <div class="verse-pair">
+        <p class="verse-line">أقيامُ الساعةِ موعِدُهُ</p>
+
+        <div class="verse-divider" aria-hidden="true">
+          <span class="verse-divider-ornament">❊</span>
+        </div>
+
+        <p class="verse-line">أم قيامي حين أشاهدُهُ</p>
+      </div>
+
+    </article>
+
+  </div><!-- /.scene -->
+
+</body>
+</html>

@@ -82,6 +82,7 @@ import './styles/app.css';
 import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
+import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -89,8 +90,10 @@ import {
   playbackStartTime,
   isSeeking,
 } from './hooks/useTTSHighlight.js';
+import { useIdleTimer } from './hooks/useIdleTimer.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
+import SquoctogonBackground from './components/SquoctogonBackground.jsx';
 
 import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
@@ -148,9 +151,22 @@ export default function DiwanApp() {
   const animationFrameRef = useRef(null);
   const sourceNodeRef = useRef(null);
   const volumePulseRef = useRef(null);
+  // Ref for the floating idle-state listen button — interactions inside it
+  // won't reset the idle timer (user can listen without waking the chrome UI).
+  const listenButtonIdleRef = useRef(null);
+  // Settings controls that stay visible during zen mode — interacting with them
+  // should NOT reset the idle timer (user adjusts settings without waking chrome).
+  const themeToggleRef = useRef(null);
+  const textSettingsRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(0);
+  const [bgScrollY, setBgScrollY] = useState(0);
   const [fireTapped, setFireTapped] = useState(false);
+
+  // Zen idle mode — hides chrome after 2s of inactivity, leaving only the poem,
+  // the settings controls (Aa / sun icon), and a gentle floating listen button.
+  // Only deliberate taps/clicks wake the chrome back — scroll is ignored.
+  const { isIdle } = useIdleTimer(2_000, [listenButtonIdleRef, themeToggleRef, textSettingsRef]);
 
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
@@ -190,6 +206,17 @@ export default function DiwanApp() {
   const currentFont = useUIStore((s) => s.font);
   const setCurrentFont = useUIStore((s) => s.setFont);
   const ratchetMode = useUIStore((s) => s.ratchetMode);
+  const bgOpacity = useUIStore((s) => s.bgOpacity);
+  const bgColor = useUIStore((s) => s.bgColor);
+  const bgParallax = useUIStore((s) => s.bgParallax);
+  const bgPattern = useUIStore((s) => s.bgPattern);
+  const sparkleEnabled = useUIStore((s) => s.sparkleEnabled);
+  const sparkleMode = useUIStore((s) => s.sparkleMode);
+  const sparkleGlow = useUIStore((s) => s.sparkleGlow);
+  const sparkleBrightness = useUIStore((s) => s.sparkleBrightness);
+  const sparkleSpeed = useUIStore((s) => s.sparkleSpeed);
+  const sparkleAmount = useUIStore((s) => s.sparkleAmount);
+  const sparkleColor = useUIStore((s) => s.sparkleColor);
   // ── Audio store (Zustand) ──
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const setIsPlaying = useAudioStore((s) => s.setPlaying);
@@ -721,8 +748,10 @@ export default function DiwanApp() {
   }, []);
 
   const handleScroll = (e) => {
-    const progress = Math.min(1, e.target.scrollTop / 120);
+    const scrollTop = e.target.scrollTop;
+    const progress = Math.min(1, scrollTop / 120);
     setHeaderOpacity(progress);
+    setBgScrollY(scrollTop);
   };
 
   // Fetch dynamic poet list from API when discover drawer first opens
@@ -813,10 +842,39 @@ export default function DiwanApp() {
   // When no audio is loaded, use a character-weighted simulated duration (~650ms/word)
   const effectiveDuration = audioDuration || allWords.length * 0.65;
 
-  const wordTimings = useMemo(
-    () => computeWordTimings(allWords, effectiveDuration),
-    [allWords, effectiveDuration]
+  // Build per-verse word groups — needed for VAD boundary alignment
+  const verseWords = useMemo(
+    () =>
+      wordOffsets.map((startIdx, v) => {
+        const endIdx = v + 1 < wordOffsets.length ? wordOffsets[v + 1] : allWords.length;
+        return allWords.slice(startIdx, endIdx);
+      }),
+    [allWords, wordOffsets]
   );
+
+  const wordTimings = useMemo(() => {
+    // When actual audio is loaded, derive timings from the waveform (VAD alignment).
+    // This is far more accurate than character-count estimation because it uses the
+    // real pauses between verses detected in the audio signal.
+    if (audioPlayer?.buffer?.loaded) {
+      try {
+        const vadTimings = computeWordTimingsFromAudio(audioPlayer.buffer, verseWords);
+        if (vadTimings && vadTimings.length === allWords.length) {
+          if (FEATURES.logging) {
+            console.log(
+              `[WordTiming] VAD timings computed for ${vadTimings.length} words from audio buffer`
+            );
+          }
+          return vadTimings;
+        }
+      } catch (err) {
+        if (FEATURES.logging)
+          console.warn('[WordTiming] VAD failed, falling back to char-weighted:', err.message);
+      }
+    }
+    // Fallback: character-count proportional distribution (used pre-audio or on VAD failure)
+    return computeWordTimings(allWords, effectiveDuration);
+  }, [audioPlayer, verseWords, allWords, effectiveDuration]);
 
   // Per-verse start times — first word of each verse's timing.start
   const verseStartTimes = useMemo(() => {
@@ -1320,8 +1378,17 @@ export default function DiwanApp() {
         />
       )}
 
-      {/* Corner wordmark — top-right, fades out on scroll */}
-      <header
+      {/* Corner wordmark — top-right, fades out on scroll and when idle */}
+      <motion.header
+        animate={{
+          opacity: isIdle ? 0 : BRAND_HEADER.containerOpacity * (1 - headerOpacity),
+          y: isIdle ? -14 : 0,
+        }}
+        transition={
+          isIdle
+            ? { duration: 0.7, ease: [0.16, 1, 0.3, 1] }
+            : { type: 'spring', stiffness: 300, damping: 28, mass: 0.8 }
+        }
         style={{
           position: 'fixed',
           top: 0,
@@ -1329,8 +1396,6 @@ export default function DiwanApp() {
           zIndex: 40,
           pointerEvents: 'none',
           padding: '0.6rem 0.8rem',
-          opacity: BRAND_HEADER.containerOpacity * (1 - headerOpacity),
-          transition: 'opacity 0.3s ease-out',
         }}
       >
         <div className="flex flex-row items-center gap-1">
@@ -1352,18 +1417,31 @@ export default function DiwanApp() {
           </span>
           <Feather style={{ ...BRAND_HEADER.feather, color: 'var(--gold)' }} strokeWidth={1.5} />
         </div>
-      </header>
+      </motion.header>
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
-          <div
-            className="absolute inset-0 pointer-events-none opacity-[0.03]"
-            style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3C/svg%3E")`,
-              backgroundSize: '60px 60px',
-            }}
+          {/* Islamic pattern tiling background — from geometric-explorer catalog */}
+          <SquoctogonBackground
+            darkMode={darkMode}
+            scrollY={bgScrollY}
+            opacityScale={bgOpacity}
+            colorOverride={bgColor}
+            parallaxFactor={bgParallax}
+            patternName={bgPattern}
+            topThirdOnly
           />
-          <MysticalConsultationEffect active={isInterpreting} theme={theme} />
+          <MysticalConsultationEffect
+            active={isInterpreting}
+            scrollY={bgScrollY}
+            sparkleEnabled={sparkleEnabled}
+            sparkleMode={sparkleMode}
+            sparkleGlow={sparkleGlow}
+            sparkleBrightness={sparkleBrightness}
+            sparkleSpeed={sparkleSpeed}
+            sparkleAmount={sparkleAmount}
+            sparkleColor={sparkleColor}
+          />
 
           <main
             ref={mainScrollRef}
@@ -1382,6 +1460,7 @@ export default function DiwanApp() {
                       className="text-center"
                       style={{
                         ...POEM_META.title,
+                        fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
                         textShadow: darkMode
                           ? POEM_META.titleShadow.dark
                           : POEM_META.titleShadow.light,
@@ -1394,6 +1473,7 @@ export default function DiwanApp() {
                       className="text-center"
                       style={{
                         ...POEM_META.poet,
+                        fontSize: `calc(${POEM_META.poet.fontSize} * ${textScale})`,
                         color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
                       }}
                     >
@@ -1409,7 +1489,7 @@ export default function DiwanApp() {
                             dir="ltr"
                             style={{
                               fontFamily: "'Bodoni Moda', serif",
-                              fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
+                              fontSize: `calc(clamp(0.9rem, 1.8vw, 1.1rem) * ${textScale})`,
                               color: darkMode ? 'var(--gold)' : 'var(--gold)',
                               fontWeight: 500,
                               letterSpacing: '0.02em',
@@ -1424,7 +1504,7 @@ export default function DiwanApp() {
                             dir="ltr"
                             style={{
                               fontFamily: "'Forum', serif",
-                              fontSize: 'clamp(0.75rem, 1.4vw, 0.9rem)',
+                              fontSize: `calc(clamp(0.75rem, 1.4vw, 0.9rem) * ${textScale})`,
                               color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
                               fontWeight: 400,
                               letterSpacing: '0.03em',
@@ -1503,6 +1583,14 @@ export default function DiwanApp() {
                         dismissTTSProgress();
                         cancelAnalysis();
                         setInterpretation(null);
+                        // If an analysis was in-flight and got cancelled, un-mark it so
+                        // swiping back to that poem will re-trigger its translation.
+                        if (
+                          carouselExplainTargetId.current &&
+                          usePoemStore.getState().isInterpreting
+                        ) {
+                          explainedPoemIds.current.delete(carouselExplainTargetId.current);
+                        }
                         carouselExplainTargetId.current = null;
                         setShowTranslation(true);
                         const newPoem = usePoemStore.getState().carouselPoems[idx];
@@ -1520,11 +1608,11 @@ export default function DiwanApp() {
                           });
                           updateOGMetaTags(newPoem);
                         }
-                        if (
-                          newPoem &&
-                          !newPoem.english &&
-                          !explainedPoemIds.current.has(newPoem.id)
-                        ) {
+                        if (newPoem && !newPoem.english) {
+                          // Always (re-)queue translation for poems without one — this handles
+                          // the case where a previous analysis was cancelled mid-stream, leaving
+                          // the poem with no translation and its ID stuck in explainedPoemIds.
+                          explainedPoemIds.current.delete(newPoem.id);
                           setAutoExplainPending(true);
                         }
                       }}
@@ -1558,16 +1646,31 @@ export default function DiwanApp() {
             </div>
           </main>
 
-          {/* Bottom fade — content fades out above the control bar */}
-          <div
+          {/* Bottom fade — content fades out above the control bar; slides away with footer when idle */}
+          <motion.div
             className="pointer-events-none fixed bottom-0 left-0 right-0 z-40"
+            animate={isIdle ? { opacity: 0, y: 60 } : { opacity: 1, y: 0 }}
+            transition={
+              isIdle
+                ? { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }
+                : { type: 'spring', stiffness: 280, damping: 26 }
+            }
             style={{
               height: '100px',
               background: `linear-gradient(to top, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)'} 30%, ${darkMode ? 'rgba(12,12,14,0.4)' : 'rgba(253,252,248,0.4)'} 60%, transparent 100%)`,
             }}
           />
 
-          <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom">
+          <motion.footer
+            className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom"
+            animate={isIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
+            transition={
+              isIdle
+                ? { duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: 0.12 }
+                : { type: 'spring', stiffness: 280, damping: 26 }
+            }
+            style={{ pointerEvents: isIdle ? 'none' : 'auto' }}
+          >
             {/* Highlight mode: Listen (one-shot) → PlayControlsStrip (exclusive) */}
             {highlightStyle !== 'none' && (
               <div className="mb-2 flex justify-center">
@@ -1828,7 +1931,33 @@ export default function DiwanApp() {
                 </span>
               </div>
             </div>
-          </footer>
+          </motion.footer>
+
+          {/* Floating idle listen / pause button — only visible when chrome is hidden.
+              Attached to listenButtonIdleRef so tapping it does NOT wake the UI chrome;
+              the user can control playback while staying in immersive zen mode. */}
+          <AnimatePresence>
+            {isIdle && (
+              <motion.div
+                ref={listenButtonIdleRef}
+                className="fixed z-[55] flex justify-center"
+                style={{ bottom: '1.25rem', left: 0, right: 0, pointerEvents: 'auto' }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 8 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 26, delay: 0.35 }}
+              >
+                <button
+                  onClick={togglePlay}
+                  aria-label={isPlaying ? 'Pause recitation' : 'Listen to poem'}
+                  className={`px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 transition-all duration-150`}
+                  style={{ boxShadow: '0 4px 32px rgba(0,0,0,0.45)' }}
+                >
+                  {isPlaying ? 'Pause' : 'Listen'}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
@@ -1904,17 +2033,17 @@ export default function DiwanApp() {
         </div>
       )}
 
-      {/* Theme Toggle — top-right */}
-      <div className="fixed top-10 right-2 md:right-[25rem] z-[46]">
+      {/* Theme Toggle — top-right, always visible (settings stay in zen mode) */}
+      <div ref={themeToggleRef} className="fixed top-10 right-2 md:right-[25rem] z-[46]">
         <ThemeToggle />
       </div>
 
-      {/* Text Settings — below theme toggle */}
-      <div className="fixed top-[5.5rem] right-2 md:right-[25rem] z-[46]">
+      {/* Text Settings — below theme toggle, always visible (settings stay in zen mode) */}
+      <div ref={textSettingsRef} className="fixed top-[5.5rem] right-2 md:right-[25rem] z-[46]">
         <TextSettingsPill />
       </div>
 
-      {/* Vertical Sidebar - always visible */}
+      {/* Vertical Sidebar — hides in zen idle mode */}
       <VerticalSidebar
         onCopy={handleCopy}
         onShare={handleShare}
@@ -1929,6 +2058,7 @@ export default function DiwanApp() {
         isDownvoted={current ? isPoemDownvoted(current) : false}
         onUnflag={handleUndownvote}
         user={user}
+        isIdle={isIdle}
       />
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}

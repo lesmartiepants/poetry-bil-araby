@@ -1,4 +1,4 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { transliterate } from '../utils/transliterate.js';
@@ -66,6 +66,22 @@ const PoemCarousel = forwardRef(
     const [canScrollPrev, setCanScrollPrev] = useState(false);
     const [canScrollNext, setCanScrollNext] = useState(false);
 
+    // Track the active slide's height so the viewport never inherits height from taller slides
+    const slideRefs = useRef([]);
+    const [activeHeight, setActiveHeight] = useState(undefined);
+
+    useEffect(() => {
+      const node = slideRefs.current[currentIndex];
+      if (!node) return;
+      const ro = new ResizeObserver((entries) => {
+        if (entries.length > 0) setActiveHeight(entries[0].contentRect.height);
+      });
+      ro.observe(node);
+      // Measure immediately so there's no flash of the wrong height on slide change
+      setActiveHeight(node.getBoundingClientRect().height);
+      return () => ro.disconnect();
+    }, [currentIndex]);
+
     // Hide swipe hint after 3 seconds
     useEffect(() => {
       if (poems.length <= 1) return;
@@ -131,6 +147,10 @@ const PoemCarousel = forwardRef(
       if (emblaApi) emblaApi.reInit();
     }, [emblaApi, poems.length]);
 
+    const setSlideRef = useCallback((el, slideIdx) => {
+      slideRefs.current[slideIdx] = el;
+    }, []);
+
     const goldColor = '#c5a059';
 
     return (
@@ -167,8 +187,12 @@ const PoemCarousel = forwardRef(
           </button>
         )}
 
-        {/* Carousel viewport — no touchAction override so Embla can receive horizontal swipe */}
-        <div ref={emblaRef} className="overflow-hidden w-full">
+        {/* Carousel viewport — height tracks the active slide to prevent empty space under short poems */}
+        <div
+          ref={emblaRef}
+          className="overflow-hidden w-full transition-[height] duration-300 ease-in-out"
+          style={{ height: activeHeight ?? 'auto' }}
+        >
           <div className="flex items-start">
             {poems.map((poem, slideIdx) => {
               const isActive = slideIdx === currentIndex;
@@ -183,7 +207,11 @@ const PoemCarousel = forwardRef(
                   })();
 
               return (
-                <div key={poem.id ?? slideIdx} className="flex-shrink-0 w-full h-fit">
+                <div
+                  key={poem.id ?? slideIdx}
+                  ref={(el) => setSlideRef(el, slideIdx)}
+                  className="flex-shrink-0 w-full h-fit"
+                >
                   <div className="px-4 md:px-20 py-2 text-center">
                     <div
                       className={`flex flex-col gap-5 md:gap-7${useHighlight ? ` tts-style-${highlightStyle}` : ''}`}
@@ -232,7 +260,7 @@ const PoemCarousel = forwardRef(
                               dir="ltr"
                               className={`font-brand-en inline-fade-in mx-auto`}
                               style={{
-                                fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
+                                fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale} * 0.85)`,
                                 maxWidth: '90%',
                                 animationDelay: `${idx * 120}ms`,
                               }}

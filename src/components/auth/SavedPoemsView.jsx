@@ -302,6 +302,7 @@ const SavedPoemsView = ({
       else ids.forEach((id) => next.add(id));
       return next;
     });
+    exitSelectMode();
   };
 
   const handleShareRow = (sp) => {
@@ -375,15 +376,9 @@ const SavedPoemsView = ({
           <div className="w-10 h-1 rounded-full bg-gold/25" />
         </div>
 
-        {/* Header */}
-        <header className="relative px-5 pt-1 pb-3 flex-shrink-0">
-          <div
-            style={{ fontFamily: "'Forum', serif" }}
-            className="text-[10px] tracking-[0.3em] uppercase text-gold opacity-80"
-          >
-            Khazana · خَزانَة
-          </div>
-          <div className="flex items-end justify-between gap-3 mt-1">
+        {/* Header — bilingual title (Arabic + English at equal weight) */}
+        <header className="relative px-5 pt-2 pb-3 flex-shrink-0">
+          <div className="flex items-end justify-between gap-3">
             <div className="flex-1 min-w-0">
               <h2
                 dir="rtl"
@@ -397,8 +392,21 @@ const SavedPoemsView = ({
               >
                 قصائدي المحفوظة
               </h2>
+              <div
+                className="mt-1.5"
+                style={{
+                  fontFamily: "'Reem Kufi', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 'clamp(1.05rem, 3vw, 1.25rem)',
+                  color: 'var(--gold)',
+                  letterSpacing: '0.01em',
+                  lineHeight: 1,
+                }}
+              >
+                My Poetry Library
+              </div>
               <p
-                className={`mt-1 ${safeTheme.text} opacity-60`}
+                className={`mt-1.5 ${safeTheme.text} opacity-60`}
                 style={{ fontFamily: "'Bodoni Moda', serif", fontStyle: 'italic', fontSize: 11 }}
               >
                 {savedPoems.length} saved · {pinnedIds.size} pinned
@@ -408,7 +416,7 @@ const SavedPoemsView = ({
               type="button"
               onClick={onClose}
               aria-label="Close saved poems"
-              className="w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-full transition-colors flex-shrink-0"
               style={{
                 background: 'rgba(197,160,89,0.08)',
                 border: '1px solid rgba(197,160,89,0.18)',
@@ -607,7 +615,10 @@ const SavedPoemsView = ({
                     onClick={() => {
                       const id = [...selectedIds][0];
                       const sp = savedPoems.find((p) => p.id === id);
-                      if (sp) handleShareRow(sp);
+                      if (sp) {
+                        handleShareRow(sp);
+                        exitSelectMode();
+                      }
                     }}
                     icon={Share2}
                     label="Share"
@@ -670,33 +681,28 @@ const PinnedCard = ({ sp, darkMode, selectMode, selected, onTap, onUnpin }) => (
           : 'linear-gradient(160deg, rgba(197,160,89,0.10) 0%, rgba(197,160,89,0.02) 100%)',
       }}
     >
-      <span
-        className="inline-flex items-center gap-1 text-gold"
-        style={{
-          fontFamily: "'Bodoni Moda', serif",
-          fontStyle: 'italic',
-          fontSize: 9,
-          letterSpacing: '0.06em',
-        }}
-      >
-        <Pin size={9} /> Pinned
-      </span>
       <div
-        className="truncate"
         style={{
           fontFamily: "'Reem Kufi', sans-serif",
           fontWeight: 600,
-          fontSize: 13,
+          fontSize: 14,
           color: 'var(--gold)',
           lineHeight: 1.3,
-          marginTop: 4,
+          // Two-line clamp so titles can use the space freed by the removed "Pinned" label
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          // Reserve space top-right for the unpin chip when not in select mode
+          paddingLeft: selectMode ? 0 : 28,
+          minHeight: '2.6em',
         }}
       >
         {sp.title || '—'}
       </div>
       <div
         style={{ fontFamily: "'Fustat', sans-serif", fontSize: 11 }}
-        className={`mt-0.5 truncate ${darkMode ? 'text-[#D4D0C8] opacity-80' : 'text-[#6B5C3E]'}`}
+        className={`mt-1 truncate ${darkMode ? 'text-[#D4D0C8] opacity-80' : 'text-[#6B5C3E]'}`}
       >
         {sp.poet || ''}
       </div>
@@ -834,8 +840,9 @@ const Row = ({
             </span>
             {excerpt && (
               <span
-                className={`block truncate mt-1 ${theme.text} opacity-60`}
-                style={{ fontFamily: "'Amiri', serif", fontSize: 12 }}
+                className={`block truncate mt-1.5 ${theme.text} opacity-75`}
+                dir="rtl"
+                style={{ fontFamily: "'Amiri', serif", fontSize: 16, lineHeight: 1.7 }}
               >
                 {excerpt}
               </span>

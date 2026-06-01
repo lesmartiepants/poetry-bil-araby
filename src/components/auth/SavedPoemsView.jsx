@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  X,
   Pin,
   PinOff,
   Trash2,
@@ -376,54 +375,42 @@ const SavedPoemsView = ({
           <div className="w-10 h-1 rounded-full bg-gold/25" />
         </div>
 
-        {/* Header — bilingual title (Arabic + English at equal weight) */}
+        {/* Header — bilingual title (Arabic + English at equal weight).
+            No close button: drawer dismisses by drag-down, backdrop tap, or ESC
+            (same pattern as the Explain / Insight drawer). */}
         <header className="relative px-5 pt-2 pb-3 flex-shrink-0">
-          <div className="flex items-end justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <h2
-                dir="rtl"
-                className="font-amiri leading-none"
-                style={{
-                  fontFamily: "'Reem Kufi', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 'clamp(1.4rem, 4vw, 1.75rem)',
-                  color: 'var(--gold)',
-                }}
-              >
-                قصائدي المحفوظة
-              </h2>
-              <div
-                className="mt-1.5"
-                style={{
-                  fontFamily: "'Reem Kufi', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 'clamp(1.05rem, 3vw, 1.25rem)',
-                  color: 'var(--gold)',
-                  letterSpacing: '0.01em',
-                  lineHeight: 1,
-                }}
-              >
-                My Poetry Library
-              </div>
-              <p
-                className={`mt-1.5 ${safeTheme.text} opacity-60`}
-                style={{ fontFamily: "'Bodoni Moda', serif", fontStyle: 'italic', fontSize: 11 }}
-              >
-                {savedPoems.length} saved · {pinnedIds.size} pinned
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="Close saved poems"
-              className="w-8 h-8 flex items-center justify-center rounded-full transition-colors flex-shrink-0"
+          <div className="min-w-0">
+            <h2
+              dir="rtl"
+              className="font-amiri leading-none"
               style={{
-                background: 'rgba(197,160,89,0.08)',
-                border: '1px solid rgba(197,160,89,0.18)',
+                fontFamily: "'Reem Kufi', sans-serif",
+                fontWeight: 700,
+                fontSize: 'clamp(1.4rem, 4vw, 1.75rem)',
+                color: 'var(--gold)',
               }}
             >
-              <X size={14} style={{ color: 'var(--gold)', opacity: 0.8 }} />
-            </button>
+              قصائدي المحفوظة
+            </h2>
+            <div
+              className="mt-1.5"
+              style={{
+                fontFamily: "'Reem Kufi', sans-serif",
+                fontWeight: 700,
+                fontSize: 'clamp(1.05rem, 3vw, 1.25rem)',
+                color: 'var(--gold)',
+                letterSpacing: '0.01em',
+                lineHeight: 1,
+              }}
+            >
+              My Poetry Library
+            </div>
+            <p
+              className={`mt-1.5 ${safeTheme.text} opacity-60`}
+              style={{ fontFamily: "'Bodoni Moda', serif", fontStyle: 'italic', fontSize: 11 }}
+            >
+              {savedPoems.length} saved · {pinnedIds.size} pinned
+            </p>
           </div>
         </header>
 

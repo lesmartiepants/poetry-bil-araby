@@ -1,0 +1,65 @@
+[
+  {
+    "file": "raw/stryker-core.md",
+    "url": "https://stryker-mutator.io/docs/stryker-js/vitest-runner/",
+    "type": "official",
+    "trust": "high",
+    "fetched": "2026-06-01"
+  },
+  {
+    "file": "raw/stryker-core.md",
+    "url": "https://stryker-mutator.io/docs/stryker-js/incremental/",
+    "type": "official",
+    "trust": "high",
+    "fetched": "2026-06-01"
+  },
+  {
+    "file": "raw/stryker-core.md",
+    "url": "https://stryker-mutator.io/blog/announcing-stryker-js-7/",
+    "type": "official",
+    "trust": "high",
+    "fetched": "2026-06-01"
+  },
+  {
+    "file": "raw/stryker-core.md",
+    "url": "https://github.com/stryker-mutator/stryker-js/issues/3320",
+    "type": "github",
+    "trust": "high",
+    "fetched": "2026-06-01"
+  },
+  {
+    "file": "raw/stryker-core.md",
+    "url": "https://stryker-mutator.io/docs/stryker-js/guides/react/",
+    "type": "official",
+    "trust": "high",
+    "fetched": "2026-06-01"
+  },
+  {
+    "file": "raw/stryker-core.md",
+    "url": "https://medium.com/accor-digital-and-tech/introducing-mutation-testing-in-vue-js-with-strykerjs-e1083afe7326",
+    "type": "blog",
+    "trust": "medium",
+    "fetched": "2026-06-01"
+  },
+  {
+    "file": "raw/alternatives.md",
+    "url": "https://fast-check.dev/",
+    "type": "official",
+    "trust": "high",
+    "fetched": "2026-06-01"
+  },
+  {
+    "file": "raw/alternatives.md",
+    "url": "https://dev.to/tobiastimm/property-based-testing-with-react-and-fast-check-3dce",
+    "type": "blog",
+    "trust": "medium",
+    "fetched": "2026-06-01"
+  },
+  {
+    "file": "raw/alternatives.md",
+    "url": "https://medium.com/@boxed/mutation.vs-property-based-testing-4c788b06f665",
+    "type": "blog",
+    "trust": "medium",
+    "fetched": "2026-06-01"
+  }
+]

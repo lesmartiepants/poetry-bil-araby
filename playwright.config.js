@@ -77,7 +77,10 @@ export default defineConfig({
       name: 'Desktop Chrome',
       use: {
         ...devices['Desktop Chrome'],
-        viewport: { width: 1920, height: 1080 }
+        viewport: { width: 1920, height: 1080 },
+        // Web Audio (Tone.js) is blocked in headless Chromium without this;
+        // required for audio-playback behavioral tests to reach the playing state.
+        launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
       },
     },
   ] : [
@@ -87,7 +90,10 @@ export default defineConfig({
       name: 'Desktop Chrome',
       use: {
         ...devices['Desktop Chrome'],
-        viewport: { width: 1920, height: 1080 }
+        viewport: { width: 1920, height: 1080 },
+        // Allow Web Audio (Tone.js) to start without a gesture so audio-playback
+        // behavioral tests can reach the playing state in headless Chromium.
+        launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
       },
     },
     {

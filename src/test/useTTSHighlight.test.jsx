@@ -10,7 +10,13 @@ vi.mock('../stores/audioStore', () => ({
 }));
 
 import { useAudioStore } from '../stores/audioStore';
-import { useTTSHighlight, playbackStartTime, pauseOffset, startPlayer, recordPause } from '../hooks/useTTSHighlight.js';
+import {
+  useTTSHighlight,
+  playbackStartTime,
+  pauseOffset,
+  startPlayer,
+  recordPause,
+} from '../hooks/useTTSHighlight.js';
 
 // rAF mock
 let rafCallbacks = [];
@@ -49,9 +55,7 @@ afterEach(() => {
 
 // Trigger a state transition via the captured subscribe listener
 function triggerIsPlaying(isPlaying, wasPlaying) {
-  subscribeListeners.forEach((l) =>
-    l({ isPlaying }, { isPlaying: wasPlaying })
-  );
+  subscribeListeners.forEach((l) => l({ isPlaying }, { isPlaying: wasPlaying }));
 }
 
 // Helper: flush one rAF tick
@@ -59,6 +63,14 @@ function flushRaf() {
   const toFlush = [...rafCallbacks];
   rafCallbacks = [];
   toFlush.forEach(({ cb }) => cb(performance.now()));
+}
+
+// Deterministic "elapsed time" control. The hook computes
+// elapsed = Date.now()/1000 - playbackStartTime.value + pauseOffset.value,
+// so pinning playbackStartTime to (now - seconds) makes elapsed ≈ seconds.
+function setElapsed(seconds) {
+  playbackStartTime.value = Date.now() / 1000 - seconds;
+  pauseOffset.value = 0;
 }
 
 describe('useTTSHighlight', () => {
@@ -160,6 +172,69 @@ describe('useTTSHighlight', () => {
     const wordRefs = [];
     renderHook(() => useTTSHighlight({ wordRefs, timings: [], totalDuration: 5 }));
     expect(mockRaf).toHaveBeenCalled();
+  });
+});
+
+describe('useTTSHighlight — word advancement over time (@wf-readalong)', () => {
+  function threeWords() {
+    const spans = [0, 1, 2].map(() => document.createElement('span'));
+    const wordRefs = spans.map((s) => ({ current: s }));
+    const timings = [
+      { word: 'one', start: 0, end: 1 },
+      { word: 'two', start: 1, end: 2 },
+      { word: 'three', start: 2, end: 3 },
+    ];
+    return { spans, wordRefs, timings, totalDuration: 3 };
+  }
+
+  it('moves the active word forward as elapsed crosses each timing boundary', () => {
+    const { spans, wordRefs, timings, totalDuration } = threeWords();
+
+    setElapsed(0.5); // inside word 0 [0,1)
+    renderHook(() => useTTSHighlight({ wordRefs, timings, totalDuration }));
+    act(() => triggerIsPlaying(true, false));
+    act(() => flushRaf());
+    expect(spans[0].classList.contains('tts-active')).toBe(true);
+    expect(spans[1].classList.contains('tts-active')).toBe(false);
+
+    setElapsed(1.5); // inside word 1 [1,2)
+    act(() => flushRaf());
+    expect(spans[1].classList.contains('tts-active')).toBe(true);
+    expect(spans[0].classList.contains('tts-active')).toBe(false);
+    expect(spans[0].classList.contains('tts-past')).toBe(true);
+
+    setElapsed(2.5); // inside word 2 [2,3)
+    act(() => flushRaf());
+    expect(spans[2].classList.contains('tts-active')).toBe(true);
+    expect(spans[0].classList.contains('tts-past')).toBe(true);
+    expect(spans[1].classList.contains('tts-past')).toBe(true);
+  });
+
+  it('pins the final word active once elapsed passes total duration', () => {
+    const { spans, wordRefs, timings, totalDuration } = threeWords();
+
+    setElapsed(totalDuration + 1); // 4s, past the 3s end
+    renderHook(() => useTTSHighlight({ wordRefs, timings, totalDuration }));
+    act(() => triggerIsPlaying(true, false));
+    act(() => flushRaf());
+    expect(spans[2].classList.contains('tts-active')).toBe(true);
+  });
+
+  it('freezes highlight in place on pause (no class change after stop)', () => {
+    const { spans, wordRefs, timings, totalDuration } = threeWords();
+
+    setElapsed(1.5);
+    renderHook(() => useTTSHighlight({ wordRefs, timings, totalDuration }));
+    act(() => triggerIsPlaying(true, false));
+    act(() => flushRaf());
+    expect(spans[1].classList.contains('tts-active')).toBe(true);
+
+    // Pause: loop stops, highlight should stay on word 1 even though time moves on.
+    act(() => triggerIsPlaying(false, true));
+    setElapsed(2.5); // time advances past word 2...
+    act(() => flushRaf()); // ...but the loop is stopped, so no rAF work happens
+    expect(spans[1].classList.contains('tts-active'), 'active word frozen on pause').toBe(true);
+    expect(spans[2].classList.contains('tts-active')).toBe(false);
   });
 });
 

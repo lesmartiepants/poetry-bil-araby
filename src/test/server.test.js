@@ -1,6 +1,28 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import request from 'supertest';
 
+// Mock fs so server.js readFileSync('tts-lab.html') does not crash.
+// In the happy-dom test environment, import.meta.url is not a file: URL, so
+// fileURLToPath(new URL('tts-lab.html', import.meta.url)) throws at module load time.
+// Stubbing readFileSync for that path lets the module import cleanly.
+vi.mock('fs', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    default: {
+      ...actual,
+      readFileSync: (path, enc) => {
+        if (String(path).includes('tts-lab')) return '<html>mock-tts-lab</html>';
+        return actual.readFileSync(path, enc);
+      },
+    },
+    readFileSync: (path, enc) => {
+      if (String(path).includes('tts-lab')) return '<html>mock-tts-lab</html>';
+      return actual.readFileSync(path, enc);
+    },
+  };
+});
+
 // Mock pg module before importing server
 const mockPool = {
   query: vi.fn(),

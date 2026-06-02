@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest';
 import { transliterate } from '../utils/transliterate.js';
 import { filterPoemsByCategory } from '../utils/filterPoems.js';
@@ -74,7 +75,7 @@ describe('filterPoemsByCategory', () => {
 
 describe('seenPoems', () => {
   beforeEach(() => {
-    localStorage.clear();
+    window.localStorage?.clear();
   });
 
   it('returns empty array when no seen poems', () => {
@@ -99,7 +100,7 @@ describe('seenPoems', () => {
     // Manually insert an old entry
     const oldEntry = { id: 1, seenAt: Date.now() - 31 * 24 * 60 * 60 * 1000 };
     const newEntry = { id: 2, seenAt: Date.now() };
-    localStorage.setItem('seenPoems', JSON.stringify([oldEntry, newEntry]));
+    window.localStorage.setItem('seenPoems', JSON.stringify([oldEntry, newEntry]));
 
     pruneSeenPoems();
     const seen = getSeenPoems();
@@ -109,7 +110,7 @@ describe('seenPoems', () => {
 
   it('getRecentSeenIds returns max 200 IDs', () => {
     const entries = Array.from({ length: 250 }, (_, i) => ({ id: i, seenAt: Date.now() }));
-    localStorage.setItem('seenPoems', JSON.stringify(entries));
+    window.localStorage.setItem('seenPoems', JSON.stringify(entries));
 
     const ids = getRecentSeenIds();
     expect(ids).toHaveLength(200);

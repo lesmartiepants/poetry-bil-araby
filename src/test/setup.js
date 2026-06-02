@@ -2,6 +2,41 @@ import { expect, afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 
+// Polyfill localStorage/sessionStorage for happy-dom (which requires --localstorage-file
+// to expose them as bare globals). This lets unit tests for utilities that touch
+// localStorage (e.g. seenPoems) run without switching the whole suite to jsdom.
+if (typeof globalThis.localStorage === 'undefined') {
+  const makeStorage = () => {
+    let store = {};
+    return {
+      getItem: (k) => store[k] ?? null,
+      setItem: (k, v) => {
+        store[k] = String(v);
+      },
+      removeItem: (k) => {
+        delete store[k];
+      },
+      clear: () => {
+        store = {};
+      },
+      key: (i) => Object.keys(store)[i] ?? null,
+      get length() {
+        return Object.keys(store).length;
+      },
+    };
+  };
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: makeStorage(),
+    configurable: true,
+    writable: true,
+  });
+  Object.defineProperty(globalThis, 'sessionStorage', {
+    value: makeStorage(),
+    configurable: true,
+    writable: true,
+  });
+}
+
 // Mock seed-poems module so tests use a predictable seed poem
 vi.mock('../data/seed-poems.json', () => ({
   default: [
@@ -82,9 +117,13 @@ const mockCanvas2DContext = {
   createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
   createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
   measureText: vi.fn(() => ({ width: 100 })),
-  get fillStyle() { return ''; },
+  get fillStyle() {
+    return '';
+  },
   set fillStyle(_) {},
-  get strokeStyle() { return ''; },
+  get strokeStyle() {
+    return '';
+  },
   set strokeStyle(_) {},
   lineWidth: 1,
   font: '',

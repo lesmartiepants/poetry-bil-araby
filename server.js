@@ -318,9 +318,16 @@ const validate = (req, res, next) => {
   next();
 };
 
-// Lightweight health check (no DB query — fast enough for Render's deploy probe)
+// Lightweight health check (no DB query — fast enough for Render's deploy probe).
+// `commit` exposes the deployed git SHA (Render sets RENDER_GIT_COMMIT) so drift
+// between the running build and main is detectable — a stale build silently
+// served an outdated API for ~2 months because nothing surfaced the version.
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', uptime: process.uptime() });
+  res.json({
+    status: 'ok',
+    uptime: process.uptime(),
+    commit: process.env.RENDER_GIT_COMMIT || process.env.GIT_COMMIT || 'unknown',
+  });
 });
 
 // Full health check with database connectivity

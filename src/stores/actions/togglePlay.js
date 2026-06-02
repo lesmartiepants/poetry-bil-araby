@@ -153,12 +153,71 @@ export function dismissTTSProgress() {
   }
 }
 
+/** True when running on iOS Safari / WKWebView. */
+const isIOS = () =>
+  typeof navigator !== 'undefined' &&
+  /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+  !('MSStream' in window);
+
+/**
+ * HTMLAudioElement-backed player that matches the Tone.Player interface used by
+ * togglePlay (start / stop / onstop).
+ *
+ * On iOS, AudioContext routes through the "ambient" AVAudioSession category which
+ * the hardware silent switch mutes. HTMLAudioElement routes through the native media
+ * playback path (same as playing a song in Safari) which ignores the silent switch.
+ * The word-highlight system uses wall-clock time, not AudioContext.currentTime, so
+ * it works identically with this player.
+ */
+function createHTMLAudioPlayer(url) {
+  return new Promise((resolve) => {
+    const audio = document.createElement('audio');
+    audio.setAttribute('playsinline', '');
+    audio.preload = 'auto';
+    audio.src = url;
+
+    const player = {
+      onstop: null,
+      start(_time, offset = 0) {
+        audio.currentTime = offset;
+        audio.play().catch(() => {});
+      },
+      stop() {
+        audio.pause();
+        audio.currentTime = 0;
+        this.onstop?.();
+      },
+    };
+
+    audio.addEventListener('ended', () => {
+      player.onstop?.();
+    });
+
+    // Blob URLs are local — loadeddata fires near-instantly. 500 ms timeout as a
+    // safety net on older iOS where canplaythrough/loadeddata can be delayed.
+    let done = false;
+    const resolveOnce = () => {
+      if (!done) {
+        done = true;
+        resolve(player);
+      }
+    };
+    audio.addEventListener('loadeddata', resolveOnce, { once: true });
+    audio.addEventListener('error', resolveOnce, { once: true });
+    setTimeout(resolveOnce, 500);
+  });
+}
+
 /**
  * Create a Tone.Player from a URL and wait until its buffer is fully decoded before returning.
  * Uses the constructor onload callback (not player.loaded or Tone.loaded()) because those
  * can resolve before the AudioBuffer decode completes for blob URLs in Tone.js v15.
+ *
+ * On iOS, returns an HTMLAudioElement-backed player instead so audio plays through the
+ * native media path and is not muted by the hardware silent switch.
  */
 function createPlayerReady(url) {
+  if (isIOS()) return createHTMLAudioPlayer(url);
   return new Promise((resolve, reject) => {
     const player = new Player(url, () => resolve(player)).toDestination();
     player.buffer.onerror = () => reject(new Error('buffer is either not set or not loaded'));
@@ -218,8 +277,9 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   // Re-creating the player from the cached URL is cheaper than storing raw PCM buffers.
   if (audioUrl) {
     try {
-      // Unlock AudioContext after user gesture (handles iOS autoplay policy)
-      await toneStart();
+      // Unlock AudioContext after user gesture (handles iOS autoplay policy).
+      // Skip on iOS — AudioContext is not used there; HTMLAudioElement handles playback.
+      if (!isIOS()) await toneStart();
       const player = await createPlayerReady(audioUrl);
       startPlayer(player, pauseOffset.value);
       setPlayer(player);
@@ -233,9 +293,9 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     return;
   }
 
-  // iOS Safari / browser autoplay unlock — Tone.start() resumes the AudioContext
-  // after a user gesture, replacing the old mute/play/pause trick on the raw Audio element.
-  await toneStart();
+  // Unlock AudioContext after user gesture so Tone.js can output audio.
+  // Skip on iOS — AudioContext is not used there; HTMLAudioElement handles playback.
+  if (!isIOS()) await toneStart();
 
   setGenerating(true);
 

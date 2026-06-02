@@ -1222,6 +1222,21 @@ export default function DiwanApp() {
     }
   };
 
+  // Share a poem directly from the saved library. The ShareCardModal reads
+  // from `displayedPoem`, so we first promote the saved poem to current via
+  // handleSelectSavedPoem (which closes the library and updates the carousel)
+  // and then open the modal on the next tick once state has settled.
+  const handleShareSavedPoem = (sp) => {
+    handleSelectSavedPoem(sp);
+    setTimeout(() => {
+      try {
+        useModalStore.getState().openShareCard();
+      } catch (err) {
+        addLog('Share Error', err?.message || String(err), 'error');
+      }
+    }, 80);
+  };
+
   const handleToggleTranslation = (showTranslation) => {
     addLog('Translation', `Translation ${showTranslation ? 'shown' : 'hidden'}`, 'user');
   };
@@ -1996,15 +2011,16 @@ export default function DiwanApp() {
         )}
       </AnimatePresence>
 
-      {/* Saved Poems View */}
+      {/* Saved Poems View — Khazana drawer */}
       <SavedPoemsView
         isOpen={showSavedPoems}
         onClose={() => setShowSavedPoems(false)}
         savedPoems={savedPoems}
         onSelectPoem={handleSelectSavedPoem}
         onUnsavePoem={handleUnsavePoemFromList}
+        onSharePoem={handleShareSavedPoem}
         theme={theme}
-        currentFontClass={currentFontClass}
+        darkMode={darkMode}
       />
 
       {/* Design Review + Bug — stacked bottom-left utility buttons */}

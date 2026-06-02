@@ -1,0 +1,424 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library v3 · Mobile · Option D — Rayyan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:wght@400;500&family=Forum&family=Fustat:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_mobile.css">
+<style>
+/* ── Mobile D: Rayyan — iOS bottom sheet command palette ─────── */
+.d-app {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(74,124,201,0.08) 0%, transparent 50%),
+    var(--bg-dark);
+  color: var(--txt-dark);
+}
+body.theme-light .d-app {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(74,124,201,0.07) 0%, transparent 50%),
+    var(--bg-light);
+  color: var(--txt-light);
+}
+
+/* Peek of the "app" behind the sheet — poem text faded */
+.d-poem-peek {
+  position: absolute;
+  top: calc(var(--safe-top) + 16px);
+  left: 24px; right: 24px;
+  opacity: 0.28;
+  direction: rtl;
+}
+.d-poem-peek-title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 16px; color: var(--gold);
+  margin-bottom: 8px;
+}
+.d-poem-peek-verse {
+  font-family: 'Amiri', serif; font-size: 14px; line-height: 2;
+  color: var(--txt-dark);
+}
+body.theme-light .d-poem-peek-verse { color: var(--txt-light); }
+
+/* Scrim behind the sheet (lighter — command palette style) */
+.d-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.40);
+  backdrop-filter: blur(2px);
+}
+
+/* The bottom sheet */
+.d-sheet {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 82%;
+  border-radius: 22px 22px 0 0;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  background: rgba(14,13,18,0.97);
+  backdrop-filter: blur(40px) saturate(140%);
+  border-top: 1px solid rgba(255,255,255,0.07);
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.6);
+}
+body.theme-light .d-sheet {
+  background: rgba(252,251,248,0.97);
+  border-top-color: rgba(197,160,89,0.15);
+  box-shadow: 0 -4px 24px rgba(28,25,23,0.15);
+}
+
+/* Drag handle */
+.d-handle {
+  display: flex; justify-content: center;
+  padding: 12px 0 6px;
+  flex-shrink: 0;
+}
+.d-handle-bar {
+  width: 38px; height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.15);
+}
+body.theme-light .d-handle-bar { background: rgba(28,25,23,0.18); }
+
+/* Variant badge */
+.d-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  margin: 0 auto 10px;
+  padding: 4px 14px; border-radius: 999px;
+  background: rgba(197,160,89,0.10);
+  border: 1px solid rgba(197,160,89,0.25);
+  font-family: 'Forum', serif; font-size: 11px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--gold); white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Search bar */
+.d-search {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  flex-shrink: 0;
+}
+body.theme-light .d-search { border-bottom-color: rgba(197,160,89,0.12); }
+
+.d-search-icon {
+  width: 16px; height: 16px; flex-shrink: 0;
+  stroke: var(--gold); fill: none;
+  stroke-width: 2; stroke-linecap: round;
+  opacity: 0.65;
+}
+
+.d-search input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: 'Tajawal', sans-serif; font-size: 15px;
+  color: var(--txt-dark); direction: rtl;
+}
+body.theme-light .d-search input { color: var(--txt-light); }
+.d-search input::placeholder { color: var(--txt-dark-mute); }
+body.theme-light .d-search input::placeholder { color: var(--txt-light-mute); }
+
+.d-esc {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 2px 9px; border-radius: 5px;
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.05);
+  color: var(--txt-dark-mute);
+  height: 20px; flex-shrink: 0;
+}
+body.theme-light .d-esc {
+  border-color: rgba(0,0,0,0.12);
+  background: rgba(0,0,0,0.04);
+  color: var(--txt-light-mute);
+}
+
+/* Filter chips */
+.d-filters {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0; overflow-x: auto;
+}
+.d-filters::-webkit-scrollbar { display: none; }
+
+.d-filter-label {
+  font-family: 'Forum', serif; font-size: 10px;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--txt-dark-mute); white-space: nowrap; flex-shrink: 0;
+}
+body.theme-light .d-filter-label { color: var(--txt-light-mute); }
+
+/* Poem list */
+.d-list {
+  flex: 1; overflow-y: auto;
+  padding-bottom: calc(var(--safe-bottom) + 8px);
+}
+
+/* Group heading */
+.d-group {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px 5px;
+  font-family: 'Forum', serif; font-size: 10px;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--txt-dark-mute);
+  position: sticky; top: 0;
+  background: rgba(14,13,18,0.95); backdrop-filter: blur(8px);
+  z-index: 2;
+}
+body.theme-light .d-group {
+  color: var(--txt-light-mute);
+  background: rgba(252,251,248,0.95);
+}
+
+.d-group-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 4px;
+  background: rgba(197,160,89,0.10);
+  font-size: 10px; color: rgba(197,160,89,0.70);
+}
+
+/* Poem row */
+.d-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  transition: background 100ms;
+  position: relative;
+}
+body.theme-light .d-row { border-bottom-color: rgba(0,0,0,0.04); }
+.d-row.active {
+  background: rgba(197,160,89,0.08);
+}
+.d-row.active::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--gold); border-radius: 0 2px 2px 0;
+}
+
+.d-row-num {
+  font-family: 'Bodoni Moda', serif; font-style: italic;
+  font-size: 11px; color: rgba(197,160,89,0.45);
+  width: 20px; flex-shrink: 0; text-align: right;
+}
+
+.d-row-info { flex: 1; min-width: 0; direction: rtl; }
+.d-row-title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 600;
+  font-size: 14px; color: var(--txt-dark);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.theme-light .d-row-title { color: var(--txt-light); }
+.d-row.active .d-row-title { color: var(--gold); }
+.d-row-poet {
+  font-family: 'Fustat', sans-serif; font-size: 11px;
+  color: var(--txt-dark-mute); margin-top: 1px;
+}
+body.theme-light .d-row-poet { color: var(--txt-light-mute); }
+
+/* Action buttons — always visible on mobile (no hover) */
+.d-row-actions {
+  display: flex; gap: 4px; flex-shrink: 0;
+}
+.d-row-actions.muted { opacity: 0.35; }
+.d-action-btn {
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: center;
+}
+body.theme-light .d-action-btn {
+  border-color: rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.03);
+}
+.d-action-btn svg {
+  width: 13px; height: 13px;
+  stroke: var(--txt-dark-dim); fill: none; stroke-width: 1.5;
+}
+body.theme-light .d-action-btn svg { stroke: var(--txt-light-dim); }
+
+.d-row-date {
+  font-family: 'Tajawal', sans-serif; font-size: 10px;
+  color: var(--txt-dark-mute); white-space: nowrap; flex-shrink: 0;
+}
+body.theme-light .d-row-date { color: var(--txt-light-mute); }
+
+/* Active-row quick preview strip */
+.d-quick-preview {
+  margin: 0 16px 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(197,160,89,0.06);
+  border: 1px solid rgba(197,160,89,0.14);
+  direction: rtl;
+}
+.d-qp-verse {
+  font-family: 'Amiri', serif; font-size: 13px; line-height: 2;
+  color: var(--txt-dark); opacity: 0.80;
+}
+body.theme-light .d-qp-verse { color: var(--txt-light); }
+.d-qp-open {
+  margin-top: 8px;
+  display: flex; align-items: center; gap: 6px;
+  font-family: 'Tajawal', sans-serif; font-size: 12px;
+  color: var(--gold);
+}
+.d-qp-open svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+</style>
+</head>
+<body class="theme-dark">
+<div class="iphone">
+  <div class="annotation"><strong>Mobile · D · Rayyan · ريَّان</strong> &nbsp;·&nbsp; bottom sheet · poem list · quick preview</div>
+  <div class="iphone-screen">
+    <div class="dynamic-island"></div>
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <span class="indicators">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="3" width="3" height="8" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 11a1.4 1.4 0 1 0 0-2.8 1.4 1.4 0 0 0 0 2.8z"/><path d="M2.5 6.5a7 7 0 0 1 10 0l-1.4 1.4a5 5 0 0 0-7.2 0L2.5 6.5z"/><path d="M0 3.7a10.5 10.5 0 0 1 15 0l-1.4 1.4a8.5 8.5 0 0 0-12.2 0L0 3.7z"/></svg>
+        <svg width="27" height="11" viewBox="0 0 27 11" fill="none"><rect x="0.5" y="0.5" width="22" height="10" rx="2.5" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="7" rx="1.2" fill="currentColor"/><rect x="24" y="3.5" width="2" height="4" rx="0.8" fill="currentColor" opacity="0.5"/></svg>
+      </span>
+    </div>
+
+    <div class="d-app">
+      <!-- Faded poem text behind the sheet -->
+      <div class="d-poem-peek">
+        <div class="d-poem-peek-title">على قدر أهل العزم</div>
+        <div class="d-poem-peek-verse">
+          على قدرِ أهلِ العزمِ تأتي العزائمُ<br>
+          وتأتي على قدرِ الكرامِ المكارمُ
+        </div>
+      </div>
+
+      <!-- Scrim -->
+      <div class="d-scrim"></div>
+
+      <!-- Bottom sheet -->
+      <div class="d-sheet">
+        <div class="d-handle"><div class="d-handle-bar"></div></div>
+        <div class="d-badge">D · Rayyan · ريَّان</div>
+
+        <!-- Search -->
+        <div class="d-search">
+          <svg class="d-search-icon" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input type="text" placeholder="ابحث في محفوظاتك… search saved" readonly>
+          <span class="d-esc">esc</span>
+        </div>
+
+        <!-- Filters -->
+        <div class="d-filters">
+          <span class="d-filter-label">Poet</span>
+          <span class="chip on" style="font-size:12px;">الكل</span>
+          <span class="chip" style="font-size:12px;">المتنبي</span>
+          <span class="chip" style="font-size:12px;">درويش</span>
+          <span class="chip" style="font-size:12px;">قباني</span>
+        </div>
+
+        <!-- List -->
+        <div class="d-list">
+          <div class="d-group">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            Recently saved
+            <span class="d-group-count">3</span>
+          </div>
+
+          <!-- Row 1 — active (selected) -->
+          <div class="d-row active">
+            <span class="d-row-num">I</span>
+            <div class="d-row-info">
+              <div class="d-row-title">على قدر أهل العزم</div>
+              <div class="d-row-poet">أبو الطيب المتنبي</div>
+            </div>
+            <div class="d-row-actions">
+              <div class="d-action-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+              <div class="d-action-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+            </div>
+            <span class="d-row-date">2h</span>
+          </div>
+
+          <!-- Quick preview for active row -->
+          <div class="d-quick-preview">
+            <div class="d-qp-verse">
+              على قدرِ أهلِ العزمِ تأتي العزائمُ<br>
+              وتأتي على قدرِ الكرامِ المكارمُ
+            </div>
+            <div class="d-qp-open">
+              <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              اقرأ · Open poem
+            </div>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="d-row">
+            <span class="d-row-num">II</span>
+            <div class="d-row-info">
+              <div class="d-row-title">بطاقة هوية</div>
+              <div class="d-row-poet">محمود درويش</div>
+            </div>
+            <div class="d-row-actions muted">
+              <div class="d-action-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+              <div class="d-action-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+            </div>
+            <span class="d-row-date">Yesterday</span>
+          </div>
+
+          <!-- Row 3 -->
+          <div class="d-row">
+            <span class="d-row-num">III</span>
+            <div class="d-row-info">
+              <div class="d-row-title">رسالة إلى أمي</div>
+              <div class="d-row-poet">نزار قباني</div>
+            </div>
+            <div class="d-row-actions muted">
+              <div class="d-action-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+              <div class="d-action-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+            </div>
+            <span class="d-row-date">3d</span>
+          </div>
+
+          <div class="d-group">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            Earlier
+            <span class="d-group-count">5</span>
+          </div>
+
+          <div class="d-row">
+            <span class="d-row-num">IV</span>
+            <div class="d-row-info">
+              <div class="d-row-title">لا تصالح</div>
+              <div class="d-row-poet">أمل دنقل</div>
+            </div>
+            <div class="d-row-actions muted">
+              <div class="d-action-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+              <div class="d-action-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+            </div>
+            <span class="d-row-date">2w</span>
+          </div>
+
+          <div class="d-row">
+            <span class="d-row-num">V</span>
+            <div class="d-row-info">
+              <div class="d-row-title">حبيبتي تنهض من نومها</div>
+              <div class="d-row-poet">محمود درويش</div>
+            </div>
+            <div class="d-row-actions muted">
+              <div class="d-action-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+              <div class="d-action-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+            </div>
+            <span class="d-row-date">3w</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+</div>
+</body>
+</html>

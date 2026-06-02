@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library v3 — E · Waraqa · Floating Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Bodoni+Moda:ital,wght@0,400;0,500;1,400;1,500&family=Forum&family=Fustat:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../_shared.css">
+<link rel="stylesheet" href="_prod-bg.css">
+
+<style>
+/* ================================================================
+   E · Waraqa (وَرَقَة) — "Indie / Bear Notes / personal journal"
+   Philosophy: Your saved poems as a treasured personal notebook —
+   floating beside the poem you're reading, never taking it over.
+   Influence: Bear, Craft, Obsidian, Paco Coursey minimalism.
+   ================================================================ */
+
+/* The library floats as a contained card — does NOT darken the poem */
+/* No scrim — you can still see/read the main poem behind it */
+
+/* ── Main floating card ────────────────────────────────────────── */
+.waraqa {
+  position: fixed;
+  top: 56px;
+  right: 420px; /* sits just left of the sidebar */
+  bottom: 72px;
+  width: min(380px, calc(100vw - 460px - 24px));
+  border-radius: 18px;
+  z-index: 60;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+
+  /* Warmer glass — amber-tinted, indie feel */
+  background: rgba(19,17,14,0.88);
+  backdrop-filter: blur(32px) saturate(130%);
+  border: 1px solid rgba(197,160,89,0.14);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.04),
+    0 8px 32px rgba(0,0,0,0.65),
+    0 24px 64px rgba(0,0,0,0.45),
+    inset 0 1px 0 rgba(255,255,255,0.06);
+}
+body.light .waraqa {
+  background: rgba(255,252,244,0.94);
+  border-color: rgba(197,160,89,0.22);
+  box-shadow: 0 4px 24px rgba(28,25,23,0.15), 0 1px 0 rgba(197,160,89,0.2) inset;
+}
+
+/* ── Drag handle (indie apps always have one) ──────────────────── */
+.wq-handle {
+  display: flex; justify-content: center;
+  padding: 10px 0 4px;
+  flex-shrink: 0;
+}
+.wq-handle-bar {
+  width: 32px; height: 4px;
+  border-radius: 2px;
+  background: rgba(197,160,89,0.25);
+}
+
+/* ── Header ────────────────────────────────────────────────────── */
+.wq-header {
+  padding: 8px 18px 14px;
+  border-bottom: 1px solid rgba(197,160,89,0.10);
+  flex-shrink: 0;
+  position: relative;
+}
+body.light .wq-header { border-bottom-color: rgba(197,160,89,0.15); }
+
+.wq-title-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.wq-title-ar {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 20px; color: var(--gold);
+  direction: rtl;
+  text-shadow: 0 0 24px rgba(197,160,89,0.15);
+}
+body.light .wq-title-ar { text-shadow: none; }
+
+.wq-title-en {
+  font-family: 'Bodoni Moda', serif; font-style: italic;
+  font-size: 11px; color: var(--txt-dark-mute);
+  direction: rtl; margin-top: 2px;
+}
+body.light .wq-title-en { color: var(--txt-light-mute); }
+
+.wq-close {
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+body.light .wq-close {
+  border-color: rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.03);
+}
+.wq-close svg { width: 13px; height: 13px; stroke: var(--txt-dark-mute); fill: none; stroke-width: 2; }
+body.light .wq-close svg { stroke: var(--txt-light-mute); }
+
+/* Inline stats row */
+.wq-stats {
+  display: flex; align-items: center; gap: 12px;
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  color: var(--txt-dark-mute);
+}
+body.light .wq-stats { color: var(--txt-light-mute); }
+.wq-stat-sep { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: 0.35; }
+.wq-stat-num { color: var(--gold); font-size: 12px; font-weight: 600; }
+
+/* ── Search bar ────────────────────────────────────────────────── */
+.wq-search {
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(197,160,89,0.08);
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+body.light .wq-search { border-bottom-color: rgba(197,160,89,0.12); }
+
+.wq-search-icon {
+  width: 14px; height: 14px; flex-shrink: 0;
+  stroke: rgba(197,160,89,0.50); fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+
+.wq-search input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: 'Tajawal', sans-serif; font-size: 13px;
+  color: var(--txt-dark); direction: rtl;
+}
+body.light .wq-search input { color: var(--txt-light); }
+.wq-search input::placeholder { color: var(--txt-dark-mute); font-size: 12px; }
+body.light .wq-search input::placeholder { color: var(--txt-light-mute); }
+
+/* ── Pinned section ────────────────────────────────────────────── */
+.wq-section-label {
+  display: flex; align-items: center; gap: 7px;
+  padding: 10px 14px 5px;
+  font-family: 'Forum', serif; font-size: 10px;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--txt-dark-mute);
+}
+body.light .wq-section-label { color: var(--txt-light-mute); }
+.wq-section-label svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* Pinned horizontal strip */
+.wq-pinned-strip {
+  display: flex; gap: 8px; padding: 6px 14px 10px;
+  overflow-x: auto; flex-shrink: 0;
+  border-bottom: 1px solid rgba(197,160,89,0.08);
+}
+body.light .wq-pinned-strip { border-bottom-color: rgba(197,160,89,0.12); }
+.wq-pinned-strip::-webkit-scrollbar { display: none; }
+
+.pin-card {
+  flex-shrink: 0;
+  width: 130px; padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(197,160,89,0.07);
+  border: 1px solid rgba(197,160,89,0.18);
+  cursor: pointer;
+  transition: all 150ms;
+}
+.pin-card:hover {
+  background: rgba(197,160,89,0.12);
+  border-color: rgba(197,160,89,0.28);
+}
+body.light .pin-card { background: rgba(197,160,89,0.08); border-color: rgba(197,160,89,0.22); }
+
+.pin-card-title {
+  font-family: 'Reem Kufi', sans-serif; font-size: 13px;
+  font-weight: 600; color: var(--gold);
+  direction: rtl; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis; margin-bottom: 3px;
+}
+.pin-card-poet {
+  font-family: 'Fustat', sans-serif; font-size: 10px;
+  color: var(--txt-dark-mute); direction: rtl;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.light .pin-card-poet { color: var(--txt-light-mute); }
+
+/* Pin indicator */
+.pin-icon {
+  width: 12px; height: 12px; margin-bottom: 5px;
+  stroke: rgba(197,160,89,0.5); fill: none; stroke-width: 1.5;
+}
+
+/* ── Poem list ─────────────────────────────────────────────────── */
+.wq-list {
+  flex: 1; overflow-y: auto;
+  padding: 6px 0 8px;
+}
+.wq-list::-webkit-scrollbar { width: 4px; }
+.wq-list::-webkit-scrollbar-thumb { background: rgba(197,160,89,0.12); border-radius: 2px; }
+
+/* Time group label */
+.wq-time-label {
+  padding: 8px 14px 3px;
+  font-family: 'Tajawal', sans-serif; font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--txt-dark-mute); opacity: 0.7;
+}
+body.light .wq-time-label { color: var(--txt-light-mute); }
+
+/* Poem entry row */
+.wq-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  border-radius: 8px; margin: 1px 6px;
+  transition: background 120ms;
+  position: relative;
+}
+.wq-row:hover { background: rgba(197,160,89,0.06); }
+.wq-row.active { background: rgba(197,160,89,0.10); }
+body.light .wq-row:hover { background: rgba(197,160,89,0.07); }
+body.light .wq-row.active { background: rgba(197,160,89,0.10); }
+
+/* Left dot accent */
+.wq-row-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1.5px solid rgba(197,160,89,0.35);
+  flex-shrink: 0; margin-top: 5px;
+}
+.wq-row.active .wq-row-dot {
+  background: var(--gold);
+  border-color: var(--gold);
+  box-shadow: 0 0 6px rgba(197,160,89,0.4);
+}
+
+.wq-row-body { flex: 1; min-width: 0; direction: rtl; }
+.wq-row-title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 600;
+  font-size: 14px; color: var(--txt-dark);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.light .wq-row-title { color: var(--txt-light); }
+.wq-row.active .wq-row-title { color: var(--gold); }
+
+.wq-row-excerpt {
+  font-family: 'Amiri', serif; font-size: 12px;
+  color: var(--txt-dark-mute); line-height: 1.7;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 2px;
+}
+body.light .wq-row-excerpt { color: var(--txt-light-mute); }
+
+.wq-row-meta {
+  display: flex; align-items: center; gap: 6px; margin-top: 3px;
+}
+.wq-row-poet {
+  font-family: 'Fustat', sans-serif; font-size: 10px;
+  color: rgba(197,160,89,0.5);
+}
+.wq-row-age {
+  font-family: 'Tajawal', sans-serif; font-size: 10px;
+  color: var(--txt-dark-mute); opacity: 0.6;
+}
+body.light .wq-row-age { color: var(--txt-light-mute); }
+
+/* Hover actions (appear on hover) */
+.wq-row-actions {
+  display: flex; gap: 3px; flex-shrink: 0; opacity: 0;
+  transition: opacity 120ms; padding-top: 2px;
+}
+.wq-row:hover .wq-row-actions { opacity: 1; }
+.wq-mini-btn {
+  width: 24px; height: 24px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+}
+body.light .wq-mini-btn { border-color: rgba(0,0,0,0.08); }
+.wq-mini-btn svg { width: 11px; height: 11px; stroke: var(--txt-dark-dim); fill: none; stroke-width: 1.5; }
+body.light .wq-mini-btn svg { stroke: var(--txt-light-dim); }
+
+/* ── Footer actions ────────────────────────────────────────────── */
+.wq-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  border-top: 1px solid rgba(197,160,89,0.08);
+  flex-shrink: 0;
+}
+body.light .wq-footer { border-top-color: rgba(197,160,89,0.12); }
+
+.wq-footer-count {
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  color: var(--txt-dark-mute);
+}
+body.light .wq-footer-count { color: var(--txt-light-mute); }
+
+.wq-footer-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 8px;
+  border: 1px solid rgba(197,160,89,0.20);
+  background: rgba(197,160,89,0.07);
+  font-family: 'Tajawal', sans-serif; font-size: 12px;
+  color: rgba(197,160,89,0.80); cursor: pointer;
+}
+.wq-footer-btn svg { width: 12px; height: 12px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+/* ── Responsive: mobile ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .waraqa {
+    right: 0; left: 0;
+    top: auto; bottom: 0;
+    width: 100%;
+    height: 72%;
+    border-radius: 22px 22px 0 0;
+  }
+  /* Always show row actions on touch */
+  .wq-row-actions { opacity: 1; }
+  /* Increase touch targets */
+  .wq-row { padding: 10px 14px; }
+  .wq-mini-btn { width: 30px; height: 30px; }
+}
+
+/* ── Annotation ────────────────────────────────────────────────── */
+.annotation {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 20px;
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--txt-dark-mute); pointer-events: none;
+}
+body.light .annotation { color: var(--txt-light-mute); }
+.annotation .name { color: var(--gold); font-weight: 500; }
+</style>
+</head>
+
+<body>
+
+<!-- ══ Prod app background ══════════════════════════════════════════ -->
+<div class="app-scene"></div>
+<div class="app-grid"></div>
+
+<!-- Poem text — fully visible; no scrim (waraqa floats alongside) -->
+<div class="app-poem" style="opacity:0.72;">
+  <div class="poem-title">على قدر أهل العزم</div>
+  <div class="poem-poet">المتنبي · Al-Mutanabbi</div>
+  <div class="poem-divider"></div>
+  <div class="poem-verses">
+    على قدرِ أهلِ العزمِ تأتي العزائمُ<br>
+    وتأتي على قدرِ الكرامِ المكارمُ<br>
+    وتعظمُ في عينِ الصغيرِ صغارُها<br>
+    وتصغرُ في عينِ العظيمِ العظائمُ
+  </div>
+</div>
+
+<!-- Top-right header -->
+<div class="app-header">
+  <span class="word-poetry">poetry</span>
+  <span class="word-arabic">بالعربي</span>
+  <svg class="feather-icon" viewBox="0 0 24 24">
+    <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5l6.74-6.76z"/>
+    <line x1="16" y1="8" x2="2" y2="22"/>
+    <line x1="17.5" y1="15" x2="9" y2="15"/>
+  </svg>
+</div>
+
+<!-- Right controls -->
+<div class="app-controls">
+  <div class="ctrl-pill">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+  </div>
+  <div class="ctrl-pill text-pill">Aa</div>
+</div>
+
+<!-- Sidebar hint -->
+<div class="app-sidebar-hint">
+  <div class="skel" style="width:80%;"></div>
+  <div class="skel" style="width:65%;"></div>
+</div>
+
+<!-- Bottom hint -->
+<div class="app-bottom-hint">
+  <div class="bottom-btn"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></div>
+  <div class="bottom-discover">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(197,160,89,0.7)" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    اكتشف · Discover
+  </div>
+  <div class="bottom-btn"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></div>
+</div>
+
+<!-- NO SCRIM — Waraqa is a floating panel, main poem stays readable -->
+
+<!-- ══ E · Waraqa — Floating Card ═══════════════════════════════════ -->
+<div class="waraqa">
+
+  <!-- Drag handle -->
+  <div class="wq-handle"><div class="wq-handle-bar"></div></div>
+
+  <!-- Header -->
+  <div class="wq-header">
+    <div class="wq-title-row">
+      <div>
+        <div class="wq-title-ar">محفوظاتي</div>
+        <div class="wq-title-en">My saved verses</div>
+      </div>
+      <button class="wq-close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div class="wq-stats">
+      <span><span class="wq-stat-num">8</span> poems</span>
+      <span class="wq-stat-sep"></span>
+      <span><span class="wq-stat-num">4</span> poets</span>
+      <span class="wq-stat-sep"></span>
+      <span>2 pinned</span>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="wq-search">
+    <svg class="wq-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" placeholder="ابحث… search" readonly>
+  </div>
+
+  <!-- Pinned section -->
+  <div class="wq-section-label">
+    <svg viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17H19V13L15 9V3H9V9L5 13V17Z"/></svg>
+    Pinned
+  </div>
+  <div class="wq-pinned-strip">
+    <div class="pin-card">
+      <svg class="pin-icon" viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17H19V13L15 9V3H9V9L5 13V17Z"/></svg>
+      <div class="pin-card-title">على قدر أهل العزم</div>
+      <div class="pin-card-poet">المتنبي</div>
+    </div>
+    <div class="pin-card">
+      <svg class="pin-icon" viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17H19V13L15 9V3H9V9L5 13V17Z"/></svg>
+      <div class="pin-card-title">بطاقة هوية</div>
+      <div class="pin-card-poet">محمود درويش</div>
+    </div>
+  </div>
+
+  <!-- Main list -->
+  <div class="wq-list scroll-y">
+
+    <div class="wq-time-label">Today</div>
+
+    <div class="wq-row active">
+      <div class="wq-row-dot"></div>
+      <div class="wq-row-body">
+        <div class="wq-row-title">على قدر أهل العزم</div>
+        <div class="wq-row-excerpt">على قدرِ أهلِ العزمِ تأتي العزائمُ…</div>
+        <div class="wq-row-meta">
+          <span class="wq-row-poet">المتنبي</span>
+          <span style="width:2px;height:2px;border-radius:50%;background:rgba(197,160,89,0.3);"></span>
+          <span class="wq-row-age">2h ago</span>
+        </div>
+      </div>
+      <div class="wq-row-actions">
+        <div class="wq-mini-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+        <div class="wq-mini-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="wq-row">
+      <div class="wq-row-dot"></div>
+      <div class="wq-row-body">
+        <div class="wq-row-title">رسالة إلى أمي</div>
+        <div class="wq-row-excerpt">أنا من أهواكِ يا أمي وأنا…</div>
+        <div class="wq-row-meta">
+          <span class="wq-row-poet">نزار قباني</span>
+          <span style="width:2px;height:2px;border-radius:50%;background:rgba(197,160,89,0.3);"></span>
+          <span class="wq-row-age">6h ago</span>
+        </div>
+      </div>
+      <div class="wq-row-actions">
+        <div class="wq-mini-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+        <div class="wq-mini-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="wq-time-label">Yesterday</div>
+
+    <div class="wq-row">
+      <div class="wq-row-dot"></div>
+      <div class="wq-row-body">
+        <div class="wq-row-title">لا تصالح</div>
+        <div class="wq-row-excerpt">لا تصالح ولو منحوك الذهب…</div>
+        <div class="wq-row-meta">
+          <span class="wq-row-poet">أمل دنقل</span>
+          <span style="width:2px;height:2px;border-radius:50%;background:rgba(197,160,89,0.3);"></span>
+          <span class="wq-row-age">Yesterday</span>
+        </div>
+      </div>
+      <div class="wq-row-actions">
+        <div class="wq-mini-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+        <div class="wq-mini-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="wq-time-label">This week</div>
+
+    <div class="wq-row">
+      <div class="wq-row-dot"></div>
+      <div class="wq-row-body">
+        <div class="wq-row-title">حبيبتي تنهض من نومها</div>
+        <div class="wq-row-excerpt">قومي يا حبيبتي استيقظي…</div>
+        <div class="wq-row-meta">
+          <span class="wq-row-poet">محمود درويش</span>
+          <span style="width:2px;height:2px;border-radius:50%;background:rgba(197,160,89,0.3);"></span>
+          <span class="wq-row-age">3 days</span>
+        </div>
+      </div>
+      <div class="wq-row-actions">
+        <div class="wq-mini-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+        <div class="wq-mini-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+      </div>
+    </div>
+
+    <div class="wq-row">
+      <div class="wq-row-dot"></div>
+      <div class="wq-row-body">
+        <div class="wq-row-title">المساء</div>
+        <div class="wq-row-excerpt">يا مساءَ الخيرِ يا أُنسَ القلوبِ…</div>
+        <div class="wq-row-meta">
+          <span class="wq-row-poet">خليل مطران</span>
+          <span style="width:2px;height:2px;border-radius:50%;background:rgba(197,160,89,0.3);"></span>
+          <span class="wq-row-age">5 days</span>
+        </div>
+      </div>
+      <div class="wq-row-actions">
+        <div class="wq-mini-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+        <div class="wq-mini-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+      </div>
+    </div>
+
+  </div><!-- /wq-list -->
+
+  <!-- Footer -->
+  <div class="wq-footer">
+    <span class="wq-footer-count">8 saved · 4 poets</span>
+    <button class="wq-footer-btn">
+      <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      Export
+    </button>
+  </div>
+
+</div><!-- /waraqa -->
+
+<!-- Annotation strip -->
+<div class="annotation">
+  <span class="name">E · Waraqa · وَرَقَة</span>
+  <span>Floating card · no scrim · poem stays readable · indie journal aesthetic</span>
+  <span style="opacity:0.4;">poetry-bil-araby v3 mockup</span>
+</div>
+
+</body>
+</html>

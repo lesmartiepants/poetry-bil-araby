@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library Redesign · Mobile · Option C — Khazana</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:wght@400;500&family=Forum&family=Fustat:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_mobile.css">
+<style>
+  /* ── Mobile C: Khazana (native bottom sheet, half-snap point) ── */
+  .c-app {
+    position: absolute; inset: 0;
+    overflow: hidden;
+    background: var(--bg-dark);
+  }
+  body.theme-light .c-app { background: var(--bg-light); }
+
+  /* Background = dimmed current poem */
+  .c-bg {
+    position: absolute; inset: 0;
+    padding: calc(var(--safe-top) + 24px) 32px 0;
+    text-align: center;
+    direction: rtl;
+    color: var(--gold);
+    opacity: 0.42;
+  }
+  body.theme-light .c-bg { color: #8a6f2f; opacity: 0.5; }
+  .c-bg-eyebrow {
+    font-family: 'Forum', serif; font-size: 10px;
+    letter-spacing: 0.32em; text-transform: uppercase;
+    color: var(--txt-dark-dim); margin-bottom: 22px;
+    opacity: 0.7;
+  }
+  body.theme-light .c-bg-eyebrow { color: var(--txt-light-dim); }
+  .c-bg-poem {
+    font-family: 'Amiri', serif;
+    font-size: 22px; line-height: 2.2;
+  }
+  .c-bg-meta {
+    margin-top: 18px;
+    font-family: 'Reem Kufi', sans-serif; font-size: 12px;
+    color: var(--txt-dark-mute); letter-spacing: 0.1em;
+  }
+  body.theme-light .c-bg-meta { color: var(--txt-light-mute); }
+
+  /* Scrim — soft so background stays readable */
+  .c-scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.35) 35%, rgba(0,0,0,0.55) 60%);
+    pointer-events: none;
+  }
+  body.theme-light .c-scrim {
+    background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(28,25,23,0.18) 35%, rgba(28,25,23,0.32) 60%);
+  }
+
+  /* Bottom sheet at half-snap (~62% of screen) */
+  .sheet {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 62%;
+    background: rgba(20, 19, 26, 0.92);
+    backdrop-filter: blur(40px) saturate(160%);
+    border-top: 1px solid var(--border-dark);
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.55);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  body.theme-light .sheet {
+    background: rgba(253, 252, 248, 0.94);
+    border-top-color: var(--border-light);
+    box-shadow: 0 -20px 60px rgba(28, 25, 23, 0.18);
+  }
+
+  /* Drag handle */
+  .sheet-handle {
+    margin: 8px auto 4px;
+    width: 36px; height: 5px; border-radius: 100px;
+    background: rgba(255,255,255,0.18);
+  }
+  body.theme-light .sheet-handle { background: rgba(0,0,0,0.18); }
+
+  /* Sheet header */
+  .sheet-header {
+    padding: 8px 20px 14px;
+    border-bottom: 1px solid var(--border-dark);
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 12px;
+  }
+  body.theme-light .sheet-header { border-bottom-color: var(--border-light); }
+  .sheet-titles { flex: 1; min-width: 0; }
+  .sheet-eyebrow {
+    font-family: 'Forum', serif; font-size: 10px;
+    letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--gold); opacity: 0.85;
+    margin-bottom: 4px;
+  }
+  .sheet-title-ar {
+    font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+    font-size: 24px; color: var(--gold); line-height: 1;
+  }
+  .sheet-title-en {
+    font-family: 'Bodoni Moda', serif; font-style: italic;
+    font-size: 11px; color: var(--txt-dark-dim); margin-top: 4px;
+  }
+  body.theme-light .sheet-title-en { color: var(--txt-light-dim); }
+  .sheet-close {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid var(--border-dark);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--txt-dark-dim);
+  }
+  body.theme-light .sheet-close { background: rgba(0,0,0,0.04); border-color: var(--border-light); color: var(--txt-light-dim); }
+
+  .sheet-stats {
+    display: flex; gap: 14px;
+    padding: 10px 20px 0;
+    font-family: 'SF Pro Display', system-ui, sans-serif;
+    font-size: 11px;
+    color: var(--txt-dark-mute);
+  }
+  body.theme-light .sheet-stats { color: var(--txt-light-mute); }
+  .sheet-stat strong { color: var(--gold); font-weight: 600; font-size: 13px; }
+
+  /* Pinned strip */
+  .sec-label {
+    padding: 14px 20px 8px;
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'Forum', serif;
+    font-size: 10px; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--gold); opacity: 0.85;
+  }
+  .sec-label .line {
+    flex: 1; height: 1px;
+    background: linear-gradient(90deg, rgba(197,160,89,0.3), transparent);
+  }
+
+  .pinned-strip {
+    padding: 0 14px 4px;
+    display: flex; gap: 8px;
+    overflow-x: auto;
+  }
+  .pin-card {
+    flex: 0 0 156px;
+    padding: 12px 12px 10px;
+    border-radius: 14px;
+    border: 1px solid rgba(197,160,89,0.28);
+    background: linear-gradient(160deg, rgba(197,160,89,0.10) 0%, rgba(197,160,89,0.02) 100%);
+  }
+  .pin-pin {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: var(--gold); font-family: 'Bodoni Moda', serif; font-style: italic;
+    font-size: 9px; letter-spacing: 0.06em;
+  }
+  .pin-title {
+    font-family: 'Reem Kufi', sans-serif; font-weight: 600;
+    font-size: 13px; color: var(--gold); direction: rtl; line-height: 1.3;
+    margin-top: 4px;
+  }
+  .pin-poet {
+    font-family: 'Fustat', sans-serif;
+    font-size: 11px; color: #D4D0C8; opacity: 0.8;
+    direction: rtl; margin-top: 2px;
+  }
+  body.theme-light .pin-poet { color: #6B5C3E; }
+
+  /* Timeline rows */
+  .sheet-body {
+    flex: 1; overflow-y: auto;
+    padding-bottom: calc(var(--safe-bottom) + 24px);
+  }
+  .row {
+    display: flex; align-items: stretch; gap: 10px;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  body.theme-light .row { border-bottom-color: rgba(0,0,0,0.05); }
+  .row-marker { flex: 0 0 3px; border-radius: 2px; background: var(--gold); opacity: 0.5; }
+  .row.active .row-marker { opacity: 1; }
+  .row-body { flex: 1; min-width: 0; }
+  .row-top {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  }
+  .row-title {
+    font-family: 'Reem Kufi', sans-serif; font-weight: 600;
+    font-size: 15px; color: var(--gold);
+    direction: rtl;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    flex: 1;
+  }
+  .row-time {
+    font-family: 'SF Pro Display', system-ui, sans-serif;
+    font-size: 11px; color: var(--txt-dark-mute); flex-shrink: 0;
+  }
+  body.theme-light .row-time { color: var(--txt-light-mute); }
+  .row-poet {
+    font-family: 'Fustat', sans-serif; font-size: 11px;
+    color: #D4D0C8; opacity: 0.7; direction: rtl; margin-top: 2px;
+  }
+  body.theme-light .row-poet { color: #6B5C3E; }
+  .row-excerpt {
+    font-family: 'Amiri', serif; font-size: 12px;
+    color: var(--txt-dark); opacity: 0.6;
+    direction: rtl; margin-top: 4px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  body.theme-light .row-excerpt { color: var(--txt-light); }
+  .row.active {
+    background: rgba(197,160,89,0.08);
+  }
+
+  /* iOS-style swipe action behind a row */
+  .row-swipe {
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(90deg, transparent 0%, transparent 55%, #1f6feb 55%, #2563eb 78%, #b91c1c 78%, #ef4444 100%);
+  }
+  .row-swipe .row {
+    transform: translateX(-128px);
+    transition: transform 240ms cubic-bezier(.2,.8,.2,1);
+    background: rgba(20,19,26,0.95);
+  }
+  body.theme-light .row-swipe .row { background: rgba(253,252,248,0.95); }
+  .row-swipe .actions {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: 128px;
+    display: grid; grid-template-columns: 1fr 1fr;
+    color: white;
+    font-family: 'SF Pro Display', system-ui, sans-serif;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.04em;
+  }
+  .row-swipe .actions > div {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  }
+</style>
+</head>
+<body class="theme-dark">
+<div class="iphone">
+  <div class="annotation"><strong>Mobile · Option C · Khazana</strong> &nbsp;·&nbsp; native bottom sheet at half-snap · iOS swipe actions</div>
+  <div class="iphone-screen">
+    <div class="dynamic-island"></div>
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <span class="indicators">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="3" width="3" height="8" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 11a1.4 1.4 0 1 0 0-2.8 1.4 1.4 0 0 0 0 2.8z"/><path d="M2.5 6.5a7 7 0 0 1 10 0l-1.4 1.4a5 5 0 0 0-7.2 0L2.5 6.5z"/><path d="M0 3.7a10.5 10.5 0 0 1 15 0l-1.4 1.4a8.5 8.5 0 0 0-12.2 0L0 3.7z"/></svg>
+        <svg width="27" height="11" viewBox="0 0 27 11" fill="none"><rect x="0.5" y="0.5" width="22" height="10" rx="2.5" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="7" rx="1.2" fill="currentColor"/><rect x="24" y="3.5" width="2" height="4" rx="0.8" fill="currentColor" opacity="0.5"/></svg>
+      </span>
+    </div>
+
+    <div class="c-app">
+      <!-- Background — current poem behind the sheet -->
+      <div class="c-bg">
+        <div class="c-bg-eyebrow">Currently reading</div>
+        <div class="c-bg-poem">
+          وَإِذا كانَتِ النُفوسُ كِباراً<br>
+          تَعِبَت في مُرادِها الأَجسامُ
+        </div>
+        <div class="c-bg-meta">المتنبي · الكبر</div>
+      </div>
+      <div class="c-scrim"></div>
+
+      <!-- Bottom sheet -->
+      <section class="sheet">
+        <div class="sheet-handle"></div>
+
+        <header class="sheet-header">
+          <div class="sheet-titles">
+            <div class="sheet-eyebrow">Khazana · خَزانَة</div>
+            <div class="sheet-title-ar">قَصائِدي</div>
+            <div class="sheet-title-en">My treasury of saved poems</div>
+          </div>
+          <button class="sheet-close" aria-label="Close">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </header>
+
+        <div class="sheet-stats">
+          <div class="sheet-stat"><strong>12</strong> poems</div>
+          <div class="sheet-stat"><strong>4</strong> poets</div>
+          <div class="sheet-stat"><strong>3</strong> pinned</div>
+        </div>
+
+        <div class="sec-label">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M16 4v8l4 4v2H4v-2l4-4V4h8z"/></svg>
+          Pinned · مُثَبَّت
+          <span class="line"></span>
+        </div>
+
+        <div class="pinned-strip">
+          <div class="pin-card">
+            <div class="pin-pin"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M16 4v8l4 4v2H4v-2l4-4V4h8z"/></svg> Most read</div>
+            <div class="pin-title">عَلى قَدرِ أَهلِ العَزمِ</div>
+            <div class="pin-poet">المُتنبِّي</div>
+          </div>
+          <div class="pin-card">
+            <div class="pin-pin"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M16 4v8l4 4v2H4v-2l4-4V4h8z"/></svg> Recently</div>
+            <div class="pin-title">أَعَزُّ مَكان</div>
+            <div class="pin-poet">أَبو الطَيِّب</div>
+          </div>
+          <div class="pin-card">
+            <div class="pin-pin"><svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M16 4v8l4 4v2H4v-2l4-4V4h8z"/></svg> By you</div>
+            <div class="pin-title">وَطَني</div>
+            <div class="pin-poet">ابنُ الرّومي</div>
+          </div>
+        </div>
+
+        <div class="sheet-body">
+          <div class="sec-label">Today · اليوم<span class="line"></span></div>
+
+          <div class="row active">
+            <div class="row-marker"></div>
+            <div class="row-body">
+              <div class="row-top">
+                <div class="row-title">عَلى قَدرِ أَهلِ العَزمِ</div>
+                <div class="row-time">2h</div>
+              </div>
+              <div class="row-poet">المُتنبِّي</div>
+              <div class="row-excerpt">عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ · وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ</div>
+            </div>
+          </div>
+
+          <div class="sec-label">This week · هَذا الأُسبوع<span class="line"></span></div>
+
+          <!-- Demo a row mid-swipe to expose iOS-style trailing actions -->
+          <div class="row-swipe">
+            <div class="actions">
+              <div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4v8l4 4v2H4v-2l4-4V4h8z"/></svg>
+                Pin
+              </div>
+              <div>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg>
+                Remove
+              </div>
+            </div>
+            <div class="row">
+              <div class="row-marker"></div>
+              <div class="row-body">
+                <div class="row-top">
+                  <div class="row-title">أَعَزُّ مَكانٍ في الدُّنى</div>
+                  <div class="row-time">Yesterday</div>
+                </div>
+                <div class="row-poet">أَبو الطَيِّب</div>
+                <div class="row-excerpt">أَعَزُّ مَكانٍ في الدُّنى سَرجُ سابِحٍ · وَخَيرُ جَليسٍ في الزَّمانِ كِتابُ</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="row-marker"></div>
+            <div class="row-body">
+              <div class="row-top">
+                <div class="row-title">وَطَني</div>
+                <div class="row-time">3d</div>
+              </div>
+              <div class="row-poet">ابنُ الرّومي</div>
+              <div class="row-excerpt">وَلي وَطَنٌ آلَيتُ أَلَّا أَبيعَهُ · وَأَلَّا أَرى غَيري لَهُ الدَّهرَ مالِكا</div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="row-marker"></div>
+            <div class="row-body">
+              <div class="row-top">
+                <div class="row-title">حَبيبَتي</div>
+                <div class="row-time">5d</div>
+              </div>
+              <div class="row-poet">نِزار قبَّاني</div>
+              <div class="row-excerpt">في كُلِّ زاوِيَةٍ مِنَ الدُّنيا أَراكِ · وَفي كُلِّ نَجمٍ ساطِعٍ ألقاكِ</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+</div>
+</body>
+</html>

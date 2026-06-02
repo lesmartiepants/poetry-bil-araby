@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library v3 · Mobile · Option E — Waraqa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:wght@400;500&family=Forum&family=Fustat:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_mobile.css">
+<style>
+/* ── Mobile E: Waraqa — floating notebook → bottom sheet ─────── */
+.e-app {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 50% 20%, rgba(197,160,89,0.07) 0%, transparent 50%),
+    var(--bg-dark);
+  color: var(--txt-dark);
+}
+body.theme-light .e-app {
+  background:
+    radial-gradient(circle at 50% 20%, rgba(197,160,89,0.06) 0%, transparent 50%),
+    var(--bg-light);
+  color: var(--txt-light);
+}
+
+/* Main poem — visible above the sheet (core Waraqa principle: poem stays readable) */
+.e-poem-above {
+  position: absolute;
+  top: calc(var(--safe-top) + 8px);
+  left: 20px; right: 20px;
+  direction: rtl;
+}
+.e-poem-title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 18px; color: var(--gold);
+  margin-bottom: 6px;
+}
+.e-poem-poet {
+  font-family: 'Fustat', sans-serif; font-size: 12px;
+  color: var(--txt-dark-mute); margin-bottom: 10px;
+}
+body.theme-light .e-poem-poet { color: var(--txt-light-mute); }
+.e-poem-rule {
+  width: 36px; height: 1px;
+  background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
+  margin-bottom: 10px;
+}
+.e-poem-verse {
+  font-family: 'Amiri', serif; font-size: 14px; line-height: 2;
+  color: var(--txt-dark); opacity: 0.85;
+}
+body.theme-light .e-poem-verse { color: var(--txt-light); }
+
+/* The bottom sheet — slides up, leaves poem visible above */
+.e-sheet {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 70%;
+  border-radius: 22px 22px 0 0;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  background: rgba(19,17,14,0.97);
+  backdrop-filter: blur(40px) saturate(130%);
+  border-top: 1px solid rgba(197,160,89,0.14);
+  box-shadow:
+    0 -8px 40px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+body.theme-light .e-sheet {
+  background: rgba(255,252,244,0.97);
+  border-top-color: rgba(197,160,89,0.22);
+  box-shadow: 0 -4px 24px rgba(28,25,23,0.15), inset 0 1px 0 rgba(197,160,89,0.15);
+}
+
+/* Drag handle */
+.e-handle {
+  display: flex; justify-content: center;
+  padding: 10px 0 4px;
+  flex-shrink: 0;
+}
+.e-handle-bar {
+  width: 36px; height: 4px; border-radius: 2px;
+  background: rgba(197,160,89,0.25);
+}
+
+/* Header */
+.e-header {
+  padding: 6px 16px 12px;
+  border-bottom: 1px solid rgba(197,160,89,0.10);
+  flex-shrink: 0;
+}
+body.theme-light .e-header { border-bottom-color: rgba(197,160,89,0.15); }
+
+.e-header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 6px;
+}
+.e-title-ar {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 18px; color: var(--gold);
+  direction: rtl;
+}
+.e-title-en {
+  font-family: 'Bodoni Moda', serif; font-style: italic;
+  font-size: 10px; color: var(--txt-dark-mute);
+  margin-top: 1px; direction: rtl;
+}
+body.theme-light .e-title-en { color: var(--txt-light-mute); }
+.e-close {
+  width: 28px; height: 28px; border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  display: flex; align-items: center; justify-content: center;
+}
+body.theme-light .e-close { border-color: rgba(0,0,0,0.08); background: rgba(0,0,0,0.03); }
+.e-close svg { width: 12px; height: 12px; stroke: var(--txt-dark-mute); fill: none; stroke-width: 2; }
+body.theme-light .e-close svg { stroke: var(--txt-light-mute); }
+
+.e-stats {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  color: var(--txt-dark-mute);
+}
+body.theme-light .e-stats { color: var(--txt-light-mute); }
+.e-stat-num { color: var(--gold); font-weight: 600; }
+.e-stat-sep { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: 0.35; }
+
+/* Search */
+.e-search {
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(197,160,89,0.08);
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+body.theme-light .e-search { border-bottom-color: rgba(197,160,89,0.12); }
+.e-search-icon { width: 13px; height: 13px; flex-shrink: 0; stroke: rgba(197,160,89,0.50); fill: none; stroke-width: 2; }
+.e-search input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: 'Tajawal', sans-serif; font-size: 13px;
+  color: var(--txt-dark); direction: rtl;
+}
+body.theme-light .e-search input { color: var(--txt-light); }
+.e-search input::placeholder { color: var(--txt-dark-mute); font-size: 12px; }
+body.theme-light .e-search input::placeholder { color: var(--txt-light-mute); }
+
+/* Pinned section label */
+.e-section-label {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 14px 4px;
+  font-family: 'Forum', serif; font-size: 10px;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--txt-dark-mute); flex-shrink: 0;
+}
+body.theme-light .e-section-label { color: var(--txt-light-mute); }
+.e-section-label svg { width: 10px; height: 10px; stroke: currentColor; fill: none; stroke-width: 2; }
+
+/* Pinned horizontal strip */
+.e-pinned {
+  display: flex; gap: 8px; padding: 4px 14px 10px;
+  overflow-x: auto; flex-shrink: 0;
+  border-bottom: 1px solid rgba(197,160,89,0.08);
+}
+body.theme-light .e-pinned { border-bottom-color: rgba(197,160,89,0.12); }
+.e-pinned::-webkit-scrollbar { display: none; }
+
+.e-pin-card {
+  flex-shrink: 0;
+  width: 110px; padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(197,160,89,0.07);
+  border: 1px solid rgba(197,160,89,0.18);
+}
+body.theme-light .e-pin-card { background: rgba(197,160,89,0.08); border-color: rgba(197,160,89,0.22); }
+.e-pin-icon { width: 11px; height: 11px; stroke: rgba(197,160,89,0.5); fill: none; stroke-width: 1.5; margin-bottom: 4px; display: block; }
+.e-pin-title {
+  font-family: 'Reem Kufi', sans-serif; font-size: 12px;
+  font-weight: 600; color: var(--gold);
+  direction: rtl; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-bottom: 2px;
+}
+.e-pin-poet {
+  font-family: 'Fustat', sans-serif; font-size: 10px;
+  color: var(--txt-dark-mute); direction: rtl;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.theme-light .e-pin-poet { color: var(--txt-light-mute); }
+
+/* Poem list */
+.e-list {
+  flex: 1; overflow-y: auto;
+  padding: 4px 0 calc(var(--safe-bottom) + 8px);
+}
+
+.e-time-label {
+  padding: 7px 14px 2px;
+  font-family: 'Tajawal', sans-serif; font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--txt-dark-mute); opacity: 0.7;
+}
+body.theme-light .e-time-label { color: var(--txt-light-mute); }
+
+.e-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  border-radius: 8px; margin: 1px 6px;
+  position: relative;
+}
+.e-row.active { background: rgba(197,160,89,0.10); }
+body.theme-light .e-row.active { background: rgba(197,160,89,0.10); }
+
+.e-row-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1.5px solid rgba(197,160,89,0.35);
+  flex-shrink: 0; margin-top: 5px;
+}
+.e-row.active .e-row-dot {
+  background: var(--gold); border-color: var(--gold);
+  box-shadow: 0 0 6px rgba(197,160,89,0.4);
+}
+
+.e-row-body { flex: 1; min-width: 0; direction: rtl; }
+.e-row-title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 600;
+  font-size: 13px; color: var(--txt-dark);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.theme-light .e-row-title { color: var(--txt-light); }
+.e-row.active .e-row-title { color: var(--gold); }
+.e-row-excerpt {
+  font-family: 'Amiri', serif; font-size: 11px;
+  color: var(--txt-dark-mute); line-height: 1.7;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  margin-top: 1px;
+}
+body.theme-light .e-row-excerpt { color: var(--txt-light-mute); }
+.e-row-meta {
+  display: flex; align-items: center; gap: 5px; margin-top: 2px;
+}
+.e-row-poet { font-family: 'Fustat', sans-serif; font-size: 10px; color: rgba(197,160,89,0.5); }
+.e-row-age { font-family: 'Tajawal', sans-serif; font-size: 10px; color: var(--txt-dark-mute); opacity: 0.6; }
+body.theme-light .e-row-age { color: var(--txt-light-mute); }
+
+/* Inline action buttons (always visible on mobile) */
+.e-row-actions { display: flex; gap: 3px; flex-shrink: 0; padding-top: 2px; }
+.e-mini-btn {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: transparent;
+  display: flex; align-items: center; justify-content: center;
+}
+body.theme-light .e-mini-btn { border-color: rgba(0,0,0,0.08); }
+.e-mini-btn svg { width: 11px; height: 11px; stroke: var(--txt-dark-dim); fill: none; stroke-width: 1.5; }
+body.theme-light .e-mini-btn svg { stroke: var(--txt-light-dim); }
+</style>
+</head>
+<body class="theme-dark">
+<div class="iphone">
+  <div class="annotation"><strong>Mobile · E · Waraqa · وَرَقَة</strong> &nbsp;·&nbsp; bottom sheet · poem stays visible above · pinned strip</div>
+  <div class="iphone-screen">
+    <div class="dynamic-island"></div>
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <span class="indicators">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="3" width="3" height="8" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 11a1.4 1.4 0 1 0 0-2.8 1.4 1.4 0 0 0 0 2.8z"/><path d="M2.5 6.5a7 7 0 0 1 10 0l-1.4 1.4a5 5 0 0 0-7.2 0L2.5 6.5z"/><path d="M0 3.7a10.5 10.5 0 0 1 15 0l-1.4 1.4a8.5 8.5 0 0 0-12.2 0L0 3.7z"/></svg>
+        <svg width="27" height="11" viewBox="0 0 27 11" fill="none"><rect x="0.5" y="0.5" width="22" height="10" rx="2.5" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="7" rx="1.2" fill="currentColor"/><rect x="24" y="3.5" width="2" height="4" rx="0.8" fill="currentColor" opacity="0.5"/></svg>
+      </span>
+    </div>
+
+    <div class="e-app">
+      <!-- Main poem visible above the sheet — core Waraqa principle -->
+      <div class="e-poem-above">
+        <div class="e-poem-title">على قدر أهل العزم</div>
+        <div class="e-poem-poet">المتنبي · Al-Mutanabbi</div>
+        <div class="e-poem-rule"></div>
+        <div class="e-poem-verse">
+          على قدرِ أهلِ العزمِ تأتي العزائمُ<br>
+          وتأتي على قدرِ الكرامِ المكارمُ
+        </div>
+      </div>
+
+      <!-- Bottom sheet — no scrim, poem stays readable above -->
+      <div class="e-sheet">
+        <div class="e-handle"><div class="e-handle-bar"></div></div>
+
+        <div class="e-header">
+          <div class="e-header-row">
+            <div>
+              <div class="e-title-ar">محفوظاتي</div>
+              <div class="e-title-en">My saved verses</div>
+            </div>
+            <button class="e-close"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+          </div>
+          <div class="e-stats">
+            <span><span class="e-stat-num">8</span> poems</span>
+            <span class="e-stat-sep"></span>
+            <span><span class="e-stat-num">4</span> poets</span>
+            <span class="e-stat-sep"></span>
+            <span>2 pinned</span>
+          </div>
+        </div>
+
+        <div class="e-search">
+          <svg class="e-search-icon" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" placeholder="ابحث… search" readonly>
+        </div>
+
+        <!-- Pinned section -->
+        <div class="e-section-label">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17H19V13L15 9V3H9V9L5 13V17Z"/></svg>
+          Pinned
+        </div>
+        <div class="e-pinned">
+          <div class="e-pin-card">
+            <svg class="e-pin-icon" viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17H19V13L15 9V3H9V9L5 13V17Z"/></svg>
+            <div class="e-pin-title">على قدر أهل العزم</div>
+            <div class="e-pin-poet">المتنبي</div>
+          </div>
+          <div class="e-pin-card">
+            <svg class="e-pin-icon" viewBox="0 0 24 24"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17H19V13L15 9V3H9V9L5 13V17Z"/></svg>
+            <div class="e-pin-title">بطاقة هوية</div>
+            <div class="e-pin-poet">محمود درويش</div>
+          </div>
+        </div>
+
+        <!-- List -->
+        <div class="e-list">
+          <div class="e-time-label">Today</div>
+
+          <div class="e-row active">
+            <div class="e-row-dot"></div>
+            <div class="e-row-body">
+              <div class="e-row-title">على قدر أهل العزم</div>
+              <div class="e-row-excerpt">على قدرِ أهلِ العزمِ تأتي العزائمُ…</div>
+              <div class="e-row-meta">
+                <span class="e-row-poet">المتنبي</span>
+                <span style="width:2px;height:2px;border-radius:50%;background:rgba(197,160,89,0.3);"></span>
+                <span class="e-row-age">2h ago</span>
+              </div>
+            </div>
+            <div class="e-row-actions">
+              <div class="e-mini-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+              <div class="e-mini-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+            </div>
+          </div>
+
+          <div class="e-row">
+            <div class="e-row-dot"></div>
+            <div class="e-row-body">
+              <div class="e-row-title">رسالة إلى أمي</div>
+              <div class="e-row-excerpt">أنا من أهواكِ يا أمي…</div>
+              <div class="e-row-meta">
+                <span class="e-row-poet">نزار قباني</span>
+                <span style="width:2px;height:2px;border-radius:50%;background:rgba(197,160,89,0.3);"></span>
+                <span class="e-row-age">6h ago</span>
+              </div>
+            </div>
+            <div class="e-row-actions">
+              <div class="e-mini-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+              <div class="e-mini-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+            </div>
+          </div>
+
+          <div class="e-time-label">Yesterday</div>
+
+          <div class="e-row">
+            <div class="e-row-dot"></div>
+            <div class="e-row-body">
+              <div class="e-row-title">لا تصالح</div>
+              <div class="e-row-excerpt">لا تصالح ولو منحوك الذهب…</div>
+              <div class="e-row-meta">
+                <span class="e-row-poet">أمل دنقل</span>
+                <span style="width:2px;height:2px;border-radius:50%;background:rgba(197,160,89,0.3);"></span>
+                <span class="e-row-age">Yesterday</span>
+              </div>
+            </div>
+            <div class="e-row-actions">
+              <div class="e-mini-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+              <div class="e-mini-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+            </div>
+          </div>
+
+          <div class="e-time-label">This week</div>
+
+          <div class="e-row">
+            <div class="e-row-dot"></div>
+            <div class="e-row-body">
+              <div class="e-row-title">حبيبتي تنهض من نومها</div>
+              <div class="e-row-excerpt">قومي يا حبيبتي استيقظي…</div>
+              <div class="e-row-meta">
+                <span class="e-row-poet">محمود درويش</span>
+                <span style="width:2px;height:2px;border-radius:50%;background:rgba(197,160,89,0.3);"></span>
+                <span class="e-row-age">3 days</span>
+              </div>
+            </div>
+            <div class="e-row-actions">
+              <div class="e-mini-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+              <div class="e-mini-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+</div>
+</body>
+</html>

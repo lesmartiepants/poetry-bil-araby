@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library v3 · Mobile · Option F — Loh</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:wght@400;500&family=Forum&family=Fustat:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_mobile.css">
+<style>
+/* ── Mobile F: Loh — magazine gallery → 2-col cover grid ─────── */
+.f-app {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  background: #0c0c0e;
+  color: var(--txt-dark);
+  overflow: hidden;
+}
+
+/* Compact header */
+.f-header {
+  padding: calc(var(--safe-top) + 2px) 16px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
+  background: rgba(12,12,14,0.95);
+  backdrop-filter: blur(16px);
+}
+.f-header-left {
+  display: flex; flex-direction: column;
+}
+.f-title-ar {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 18px; color: var(--gold);
+  direction: rtl; line-height: 1.1;
+  text-shadow: 0 0 20px rgba(197,160,89,0.15);
+}
+.f-title-en {
+  font-family: 'Bodoni Moda', serif; font-style: italic;
+  font-size: 11px; color: var(--txt-dark-dim);
+}
+.f-header-right {
+  display: flex; align-items: center; gap: 8px;
+}
+.f-count-badge {
+  padding: 3px 10px; border-radius: 999px;
+  background: rgba(197,160,89,0.10);
+  border: 1px solid rgba(197,160,89,0.20);
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  color: rgba(197,160,89,0.80);
+}
+.f-close-btn {
+  width: 32px; height: 32px; border-radius: 9px;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.03);
+  display: flex; align-items: center; justify-content: center;
+}
+.f-close-btn svg { width: 15px; height: 15px; stroke: var(--txt-dark-dim); fill: none; stroke-width: 1.5; }
+
+/* Filter chips (scrollable row) */
+.f-filters {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  flex-shrink: 0; overflow-x: auto;
+}
+.f-filters::-webkit-scrollbar { display: none; }
+
+/* Gallery grid — 2 columns on mobile */
+.f-grid {
+  flex: 1; overflow-y: auto;
+  padding: 12px 12px calc(var(--safe-bottom) + 16px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  align-content: start;
+}
+
+/* Featured card spans full width */
+.f-card { border-radius: 12px; overflow: hidden; position: relative; cursor: pointer; }
+.f-card.featured { grid-column: span 2; }
+
+/* Cover area */
+.f-cover {
+  position: relative; width: 100%;
+  aspect-ratio: 16/9;
+  display: flex; flex-direction: column;
+  justify-content: flex-end; padding: 12px;
+}
+.f-card.featured .f-cover { aspect-ratio: 21/9; }
+
+/* Poet gradients */
+.grad-mutanabbi {
+  background:
+    linear-gradient(160deg, rgba(197,160,89,0.08) 0%, rgba(130,100,55,0.35) 55%, rgba(60,45,20,0.70) 100%),
+    linear-gradient(0deg, #1a1408 0%, #2a2010 60%, #14110a 100%);
+}
+.grad-darwish {
+  background:
+    linear-gradient(150deg, rgba(74,124,201,0.12) 0%, rgba(50,80,150,0.40) 55%, rgba(20,35,80,0.75) 100%),
+    linear-gradient(0deg, #080d18 0%, #10183a 60%, #080d18 100%);
+}
+.grad-qabbani {
+  background:
+    linear-gradient(145deg, rgba(160,89,120,0.12) 0%, rgba(120,55,90,0.38) 55%, rgba(55,20,45,0.72) 100%),
+    linear-gradient(0deg, #130a10 0%, #281525 60%, #130a10 100%);
+}
+.grad-dunqul {
+  background:
+    linear-gradient(155deg, rgba(89,160,140,0.12) 0%, rgba(55,130,110,0.38) 55%, rgba(20,60,50,0.72) 100%),
+    linear-gradient(0deg, #090f0d 0%, #122420 60%, #090f0d 100%);
+}
+.grad-shawqi {
+  background:
+    linear-gradient(148deg, rgba(197,160,89,0.08) 0%, rgba(160,120,55,0.32) 55%, rgba(80,55,20,0.68) 100%),
+    linear-gradient(0deg, #141008 0%, #281f0d 60%, #141008 100%);
+}
+
+/* Watermark initial */
+.f-watermark {
+  position: absolute; top: 8px; right: 10px;
+  font-family: 'Reem Kufi', sans-serif; font-size: 20px; font-weight: 700;
+  opacity: 0.08; color: #fff; line-height: 1; direction: rtl;
+  user-select: none; pointer-events: none;
+}
+.f-card.featured .f-watermark { font-size: 32px; }
+
+/* Cover text */
+.f-cover-content { position: relative; z-index: 2; direction: rtl; }
+.f-eyebrow {
+  font-family: 'Forum', serif; font-size: 8px;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: rgba(197,160,89,0.70); margin-bottom: 4px;
+}
+.f-card.featured .f-eyebrow { font-size: 9px; }
+.f-poem-title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 13px; line-height: 1.2;
+  color: rgba(231,229,228,0.92);
+  text-shadow: 0 1px 6px rgba(0,0,0,0.5);
+}
+.f-card.featured .f-poem-title { font-size: 18px; }
+.f-verse-preview {
+  font-family: 'Amiri', serif; font-size: 11px; line-height: 1.8;
+  color: rgba(231,229,228,0.55);
+  margin-top: 4px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.f-card.featured .f-verse-preview { font-size: 12px; -webkit-line-clamp: 2; color: rgba(231,229,228,0.65); }
+
+/* Poet bar */
+.f-poet-bar {
+  padding: 7px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-top: 1px solid rgba(255,255,255,0.04);
+  background: rgba(12,12,14,0.7);
+}
+.f-poet-name {
+  font-family: 'Fustat', sans-serif; font-size: 10px;
+  color: rgba(197,160,89,0.70); direction: rtl;
+}
+.f-card.featured .f-poet-name { font-size: 12px; }
+.f-poet-date {
+  font-family: 'Tajawal', sans-serif; font-size: 9px;
+  color: var(--txt-dark-mute);
+}
+
+/* Hover overlay — on mobile show tapped state (visible always for mockup clarity) */
+.f-card-actions {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: rgba(0,0,0,0.50);
+  border-radius: 12px;
+}
+.f-card.tapped .f-card-actions { opacity: 1; }
+.f-card:not(.tapped) .f-card-actions { opacity: 0; }
+/* For mockup: show actions on featured card */
+.f-card.featured .f-card-actions { opacity: 1; }
+
+.f-action-btn {
+  padding: 6px 12px; border-radius: 7px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  backdrop-filter: blur(8px);
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  color: rgba(231,229,228,0.90); cursor: pointer;
+  display: flex; align-items: center; gap: 5px;
+}
+.f-action-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+.f-action-btn.gold {
+  border-color: rgba(197,160,89,0.45);
+  background: rgba(197,160,89,0.18);
+  color: var(--gold);
+}
+</style>
+</head>
+<body class="theme-dark">
+<div class="iphone">
+  <div class="annotation"><strong>Mobile · F · Loh · لَوح</strong> &nbsp;·&nbsp; 2-col cover grid · featured full-width card</div>
+  <div class="iphone-screen">
+    <div class="dynamic-island"></div>
+    <div class="status-bar">
+      <span class="time">9:41</span>
+      <span class="indicators">
+        <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="7" width="3" height="4" rx="0.5"/><rect x="4.5" y="5" width="3" height="6" rx="0.5"/><rect x="9" y="3" width="3" height="8" rx="0.5"/><rect x="13.5" y="0" width="3" height="11" rx="0.5"/></svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill="currentColor"><path d="M7.5 11a1.4 1.4 0 1 0 0-2.8 1.4 1.4 0 0 0 0 2.8z"/><path d="M2.5 6.5a7 7 0 0 1 10 0l-1.4 1.4a5 5 0 0 0-7.2 0L2.5 6.5z"/><path d="M0 3.7a10.5 10.5 0 0 1 15 0l-1.4 1.4a8.5 8.5 0 0 0-12.2 0L0 3.7z"/></svg>
+        <svg width="27" height="11" viewBox="0 0 27 11" fill="none"><rect x="0.5" y="0.5" width="22" height="10" rx="2.5" stroke="currentColor" opacity="0.5"/><rect x="2" y="2" width="19" height="7" rx="1.2" fill="currentColor"/><rect x="24" y="3.5" width="2" height="4" rx="0.8" fill="currentColor" opacity="0.5"/></svg>
+      </span>
+    </div>
+
+    <div class="f-app">
+      <!-- Compact header -->
+      <div class="f-header">
+        <div class="f-header-left">
+          <div class="f-title-ar">لَوحَة القصائد</div>
+          <div class="f-title-en">Poetry collection</div>
+        </div>
+        <div class="f-header-right">
+          <span class="f-count-badge">8 poems</span>
+          <button class="f-close-btn">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Filter chips -->
+      <div class="f-filters">
+        <span class="chip on" style="font-size:11px; padding:5px 11px;">الكل</span>
+        <span class="chip" style="font-size:11px; padding:5px 11px;">المتنبي</span>
+        <span class="chip" style="font-size:11px; padding:5px 11px;">درويش</span>
+        <span class="chip" style="font-size:11px; padding:5px 11px;">قباني</span>
+        <span class="chip" style="font-size:11px; padding:5px 11px;">+3</span>
+      </div>
+
+      <!-- 2-column grid -->
+      <div class="f-grid">
+
+        <!-- Featured card — full width -->
+        <div class="f-card featured">
+          <div class="f-cover grad-mutanabbi">
+            <div class="f-watermark">على</div>
+            <div class="f-cover-content">
+              <div class="f-eyebrow">قصيدة مميزة · Featured</div>
+              <div class="f-poem-title">على قدر أهل العزم تأتي العزائم</div>
+              <div class="f-verse-preview">
+                على قدرِ أهلِ العزمِ تأتي العزائمُ<br>
+                وتأتي على قدرِ الكرامِ المكارمُ
+              </div>
+            </div>
+          </div>
+          <div class="f-poet-bar">
+            <span class="f-poet-name">أبو الطيب المتنبي</span>
+            <span class="f-poet-date">2h ago</span>
+          </div>
+          <div class="f-card-actions">
+            <button class="f-action-btn gold">
+              <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+              اقرأ
+            </button>
+            <button class="f-action-btn">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+              Remove
+            </button>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="f-card">
+          <div class="f-cover grad-darwish">
+            <div class="f-watermark">بط</div>
+            <div class="f-cover-content">
+              <div class="f-eyebrow">Poem</div>
+              <div class="f-poem-title">بطاقة هوية</div>
+              <div class="f-verse-preview">سجّل أنا عربي…</div>
+            </div>
+          </div>
+          <div class="f-poet-bar">
+            <span class="f-poet-name">محمود درويش</span>
+            <span class="f-poet-date">Yesterday</span>
+          </div>
+          <div class="f-card-actions">
+            <button class="f-action-btn gold"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Read</button>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="f-card">
+          <div class="f-cover grad-qabbani">
+            <div class="f-watermark">رس</div>
+            <div class="f-cover-content">
+              <div class="f-eyebrow">Poem</div>
+              <div class="f-poem-title">رسالة إلى أمي</div>
+              <div class="f-verse-preview">أنا من أهواكِ…</div>
+            </div>
+          </div>
+          <div class="f-poet-bar">
+            <span class="f-poet-name">نزار قباني</span>
+            <span class="f-poet-date">3 days</span>
+          </div>
+          <div class="f-card-actions">
+            <button class="f-action-btn gold"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Read</button>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="f-card">
+          <div class="f-cover grad-dunqul">
+            <div class="f-watermark">لا</div>
+            <div class="f-cover-content">
+              <div class="f-eyebrow">Poem</div>
+              <div class="f-poem-title">لا تصالح</div>
+              <div class="f-verse-preview">لا تصالح ولو منحوك الذهب…</div>
+            </div>
+          </div>
+          <div class="f-poet-bar">
+            <span class="f-poet-name">أمل دنقل</span>
+            <span class="f-poet-date">5 days</span>
+          </div>
+          <div class="f-card-actions">
+            <button class="f-action-btn gold"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Read</button>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="f-card">
+          <div class="f-cover grad-shawqi">
+            <div class="f-watermark">أن</div>
+            <div class="f-cover-content">
+              <div class="f-eyebrow">Poem</div>
+              <div class="f-poem-title">أندلسية</div>
+              <div class="f-verse-preview">لكلّ شيءٍ إذا ما تمَّ نقصانُ…</div>
+            </div>
+          </div>
+          <div class="f-poet-bar">
+            <span class="f-poet-name">أبو البقاء الرندي</span>
+            <span class="f-poet-date">1 week</span>
+          </div>
+          <div class="f-card-actions">
+            <button class="f-action-btn gold"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Read</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="home-indicator"></div>
+  </div>
+</div>
+</body>
+</html>

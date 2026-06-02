@@ -1,0 +1,319 @@
+/* ================================================================
+   _prod-bg.css — Prod-accurate app background for v3 mockups
+   Recreates the exact poetry-bil-araby visual context so reviewers
+   can see how each library direction integrates into the real app.
+   ================================================================ */
+
+/* ── CSS variables (mirrors src/constants/theme.js) ─────────────── */
+:root {
+  --gold:         #C5A059;
+  --gold-soft:    rgba(197,160,89,0.4);
+  --gold-faint:   rgba(197,160,89,0.08);
+  --gold-glow:    rgba(197,160,89,0.14);
+  --lapis:        #4A7CC9;
+  --lapis-light:  #6B95D6;
+  --lapis-faint:  rgba(74,124,201,0.12);
+  --bg-dark:      #0c0c0e;
+  --bg-light:     #FDFCF8;
+  --txt-dark:     #e7e5e4;
+  --txt-dark-dim: rgba(231,229,228,0.60);
+  --txt-dark-mute:rgba(231,229,228,0.30);
+  --txt-light:    #1c1917;
+  --txt-light-dim:rgba(28,25,23,0.65);
+  --txt-light-mute:rgba(28,25,23,0.38);
+  --border-dark:  rgba(255,255,255,0.06);
+  --border-light: rgba(168,162,158,0.20);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+/* ── Page-level background ───────────────────────────────────────── */
+body {
+  background: var(--bg-dark);
+  color: var(--txt-dark);
+  font-family: 'Tajawal', sans-serif;
+  position: relative;
+  overflow: hidden;
+  height: 100vh;
+}
+body.light { background: var(--bg-light); color: var(--txt-light); }
+
+/* Ambient radial gradients — matches prod exactly */
+.app-scene {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse at 18%  8%, rgba(74,124,201,0.10) 0%, transparent 38%),
+    radial-gradient(ellipse at 82% 90%, rgba(197,160,89,0.08) 0%, transparent 42%),
+    radial-gradient(ellipse at 50% 50%, rgba(197,160,89,0.025) 0%, transparent 65%);
+}
+body.light .app-scene {
+  background:
+    radial-gradient(ellipse at 18%  8%, rgba(74,124,201,0.06) 0%, transparent 38%),
+    radial-gradient(ellipse at 82% 90%, rgba(197,160,89,0.06) 0%, transparent 42%);
+}
+
+/* Very subtle grid overlay — mimics SquoctogonBackground */
+.app-grid {
+  position: fixed; inset: 0; pointer-events: none; z-index: 1;
+  background-image:
+    repeating-linear-gradient(0deg,   transparent 0px, transparent 39px, rgba(255,255,255,0.014) 39px, rgba(255,255,255,0.014) 40px),
+    repeating-linear-gradient(90deg,  transparent 0px, transparent 39px, rgba(255,255,255,0.014) 39px, rgba(255,255,255,0.014) 40px);
+}
+body.light .app-grid {
+  background-image:
+    repeating-linear-gradient(0deg,  transparent 0px, transparent 39px, rgba(0,0,0,0.025) 39px, rgba(0,0,0,0.025) 40px),
+    repeating-linear-gradient(90deg, transparent 0px, transparent 39px, rgba(0,0,0,0.025) 39px, rgba(0,0,0,0.025) 40px);
+}
+
+/* ── Top-right wordmark ("poetry بالعربي" + Feather) ─────────────── */
+.app-header {
+  position: fixed; top: 12px; right: 16px;
+  display: flex; align-items: center; gap: 5px;
+  z-index: 20; pointer-events: none;
+  opacity: 0.80;
+}
+body.light .app-header { opacity: 0.70; }
+
+.app-header .word-poetry {
+  font-family: 'Forum', serif;
+  font-size: 13px; letter-spacing: 0.03em;
+  color: var(--txt-dark-dim);
+}
+body.light .app-header .word-poetry { color: var(--txt-light-dim); }
+
+.app-header .word-arabic {
+  font-family: 'Reem Kufi', sans-serif;
+  font-weight: 600; font-size: 14px;
+  color: var(--gold);
+}
+
+.app-header .feather-icon {
+  width: 13px; height: 13px;
+  stroke: var(--gold); fill: none; opacity: 0.7;
+  stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── Right-side utility controls ──────────────────────────────────── */
+/* ThemeToggle + TextSettingsPill stack — prod positions these at
+   top-10/top-[5.5rem] on the right side of the main area.
+   On desktop with the 400px right sidebar they sit further left;
+   on mobile they're near the right edge. We show both for accuracy. */
+.app-controls {
+  position: fixed; top: 40px; right: 12px;
+  display: flex; flex-direction: column; gap: 6px;
+  z-index: 20; pointer-events: none;
+}
+
+.ctrl-pill {
+  display: flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px;
+  border-radius: 999px;
+  background: rgba(14,13,18,0.5);
+  border: 1px solid var(--border-dark);
+  backdrop-filter: blur(12px) saturate(120%);
+}
+body.light .ctrl-pill {
+  background: rgba(255,255,255,0.68);
+  border-color: var(--border-light);
+}
+.ctrl-pill svg {
+  width: 16px; height: 16px;
+  stroke: var(--txt-dark-dim); fill: none;
+  stroke-width: 1.5;
+}
+body.light .ctrl-pill svg { stroke: var(--txt-light-dim); }
+
+/* Text settings pill is slightly wider */
+.ctrl-pill.text-pill {
+  width: auto; padding: 0 12px; gap: 4px;
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  letter-spacing: 0.04em; color: var(--txt-dark-mute);
+}
+body.light .ctrl-pill.text-pill { color: var(--txt-light-mute); }
+
+/* ── Right vertical sidebar hint ─────────────────────────────────── */
+/* On desktop the sidebar is 400px wide — we hint at it for context */
+.app-sidebar-hint {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: 400px;
+  border-left: 1px solid var(--border-dark);
+  background: rgba(12,12,14,0.25);
+  backdrop-filter: blur(2px);
+  z-index: 5; pointer-events: none;
+  display: flex; flex-direction: column; align-items: center;
+  padding-top: 60px; gap: 12px;
+}
+body.light .app-sidebar-hint {
+  border-left-color: var(--border-light);
+  background: rgba(253,252,248,0.3);
+}
+
+/* Skeleton lines mimicking sidebar content */
+.skel {
+  height: 8px; border-radius: 4px;
+  background: rgba(255,255,255,0.05);
+}
+body.light .skel { background: rgba(0,0,0,0.06); }
+
+/* ── Bottom play-controls hint ────────────────────────────────────── */
+.app-bottom-hint {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: 68px;
+  background: linear-gradient(0deg, rgba(12,12,14,0.85) 0%, transparent 100%);
+  z-index: 5; pointer-events: none;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  padding-bottom: 8px;
+}
+body.light .app-bottom-hint {
+  background: linear-gradient(0deg, rgba(253,252,248,0.9) 0%, transparent 100%);
+}
+
+.bottom-btn {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--border-dark);
+  background: rgba(14,13,18,0.55);
+  backdrop-filter: blur(10px);
+  display: flex; align-items: center; justify-content: center;
+}
+body.light .bottom-btn {
+  background: rgba(255,255,255,0.72);
+  border-color: var(--border-light);
+}
+.bottom-btn svg { width: 15px; height: 15px; stroke: var(--txt-dark-dim); fill: none; stroke-width: 1.5; }
+body.light .bottom-btn svg { stroke: var(--txt-light-dim); }
+
+/* Bottom discover button */
+.bottom-discover {
+  padding: 8px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(197,160,89,0.3);
+  background: rgba(197,160,89,0.08);
+  font-family: 'Forum', serif; font-size: 12px; letter-spacing: 0.08em;
+  color: rgba(197,160,89,0.7);
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* ── Centered poem content ────────────────────────────────────────── */
+.app-poem {
+  position: fixed; inset: 0;
+  /* On desktop, center in the left area (before sidebar) */
+  right: 400px;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; pointer-events: none; z-index: 2;
+  padding: 60px 40px 80px;
+}
+
+.poem-title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: clamp(24px,3.5vw,36px);
+  color: var(--gold);
+  direction: rtl; text-align: center;
+  margin-bottom: 6px;
+  text-shadow: 0 0 40px rgba(197,160,89,0.18);
+}
+body.light .poem-title { text-shadow: none; }
+
+.poem-poet {
+  font-family: 'Fustat', sans-serif; font-size: 12px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(197,160,89,0.55);
+  text-align: center; margin-bottom: 4px;
+}
+
+.poem-divider {
+  width: 160px; height: 1px; margin: 16px auto;
+  background: linear-gradient(90deg, transparent, var(--gold-soft), var(--gold-soft), transparent);
+}
+
+.poem-verses {
+  font-family: 'Amiri', serif;
+  font-size: clamp(17px,2.2vw,22px);
+  line-height: 2.45;
+  color: rgba(231,229,228,0.82);
+  direction: rtl; text-align: center;
+}
+body.light .poem-verses { color: rgba(28,25,23,0.80); }
+
+/* Bottom-right: heart icon (saved state) */
+.poem-heart {
+  position: fixed; bottom: 84px; right: 420px;
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 5; opacity: 0.5; pointer-events: none;
+}
+.poem-heart svg { width: 18px; height: 18px; stroke: var(--gold); fill: var(--gold); }
+
+/* ── Shared modal utils ───────────────────────────────────────────── */
+.scrim {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.52);
+  backdrop-filter: blur(8px) saturate(80%);
+  z-index: 50;
+}
+body.light .scrim { background: rgba(20,18,16,0.35); }
+
+/* Glass card surface */
+.glass {
+  background: rgba(18,17,22,0.72);
+  backdrop-filter: blur(28px) saturate(160%);
+  border: 1px solid var(--border-dark);
+}
+body.light .glass {
+  background: rgba(255,255,255,0.86);
+  border-color: var(--border-light);
+}
+
+/* Gold rule (decorative horizontal line) */
+.gold-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold-soft) 25%, var(--gold) 50%, var(--gold-soft) 75%, transparent 100%);
+}
+
+/* Tag chips */
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 13px; border-radius: 999px;
+  border: 1px solid var(--border-dark);
+  font-family: 'Tajawal', sans-serif; font-size: 12px;
+  color: var(--txt-dark-mute); cursor: pointer;
+  transition: all 150ms ease; white-space: nowrap;
+}
+body.light .chip { border-color: var(--border-light); color: var(--txt-light-mute); }
+.chip.on {
+  background: rgba(197,160,89,0.12);
+  border-color: rgba(197,160,89,0.38);
+  color: var(--gold);
+}
+body.light .chip.on {
+  background: rgba(197,160,89,0.14);
+  border-color: rgba(197,160,89,0.45);
+  color: #8b6e28;
+}
+
+/* Scrollbar styling */
+.scroll-y { overflow-y: auto; }
+.scroll-y::-webkit-scrollbar { width: 5px; }
+.scroll-y::-webkit-scrollbar-thumb { background: rgba(197,160,89,0.15); border-radius: 3px; }
+.scroll-y:hover::-webkit-scrollbar-thumb { background: rgba(197,160,89,0.3); }
+
+/* Close button */
+.close-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border-dark);
+  background: transparent; color: var(--txt-dark-dim);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+body.light .close-btn { border-color: var(--border-light); color: var(--txt-light-dim); }
+
+/* Pill badges */
+.badge {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: 999px;
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  background: rgba(197,160,89,0.10);
+  color: rgba(197,160,89,0.75);
+  border: 1px solid rgba(197,160,89,0.2);
+}

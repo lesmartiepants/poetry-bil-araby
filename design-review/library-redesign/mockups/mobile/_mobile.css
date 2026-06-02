@@ -1,0 +1,151 @@
+/* Mobile-specific tokens & shared chrome */
+:root {
+  --gold: #C5A059;
+  --gold-soft: rgba(197, 160, 89, 0.4);
+  --gold-faint: rgba(197, 160, 89, 0.10);
+  --lapis: #4A7CC9;
+  --lapis-light: #6B95D6;
+  --bg-dark: #0c0c0e;
+  --bg-dark-2: #14131a;
+  --bg-light: #FDFCF8;
+  --bg-light-2: #F5F3EE;
+  --txt-dark: #e7e5e4;
+  --txt-dark-dim: rgba(231, 229, 228, 0.62);
+  --txt-dark-mute: rgba(231, 229, 228, 0.32);
+  --txt-light: #1c1917;
+  --txt-light-dim: rgba(28, 25, 23, 0.66);
+  --txt-light-mute: rgba(28, 25, 23, 0.4);
+  --border-dark: rgba(255, 255, 255, 0.07);
+  --border-light: rgba(168, 162, 158, 0.22);
+  --safe-top: 47px;
+  --safe-bottom: 34px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; -webkit-font-smoothing: antialiased; }
+
+/* The page background (the "table" the phone sits on) */
+body {
+  font-family: 'Tajawal', sans-serif;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(74,124,201,0.07) 0%, transparent 40%),
+    radial-gradient(circle at 75% 85%, rgba(197,160,89,0.06) 0%, transparent 45%),
+    #0a0a0c;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 36px 16px;
+}
+body.theme-light {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(74,124,201,0.06) 0%, transparent 40%),
+    radial-gradient(circle at 75% 85%, rgba(197,160,89,0.06) 0%, transparent 45%),
+    #ECE9E4;
+}
+
+/* iPhone frame — 390 × 844 logical, with 12px hardware bezel */
+.iphone {
+  position: relative;
+  width: 414px;
+  height: 870px;
+  background: #050507;
+  border-radius: 56px;
+  padding: 12px;
+  box-shadow:
+    inset 0 0 0 2px #1a1a1d,
+    0 50px 80px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255,255,255,0.04);
+}
+body.theme-light .iphone {
+  box-shadow:
+    inset 0 0 0 2px #1a1a1d,
+    0 50px 80px rgba(28, 25, 23, 0.22),
+    0 0 0 1px rgba(0,0,0,0.05);
+}
+
+.iphone-screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 44px;
+  overflow: hidden;
+  background: var(--bg-dark);
+}
+body.theme-light .iphone-screen { background: var(--bg-light); }
+
+/* Dynamic Island */
+.dynamic-island {
+  position: absolute;
+  top: 12px; left: 50%;
+  transform: translateX(-50%);
+  width: 124px; height: 36px;
+  background: #050507;
+  border-radius: 100px;
+  z-index: 100;
+}
+
+/* iOS status bar */
+.status-bar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: var(--safe-top);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px 0;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 17px; font-weight: 600;
+  color: var(--txt-dark);
+  z-index: 50;
+  pointer-events: none;
+}
+body.theme-light .status-bar { color: var(--txt-light); }
+.status-bar .time { letter-spacing: -0.02em; }
+.status-bar .indicators { display: flex; align-items: center; gap: 6px; }
+.status-bar .indicators svg { display: block; }
+
+/* Home indicator */
+.home-indicator {
+  position: absolute;
+  bottom: 8px; left: 50%;
+  transform: translateX(-50%);
+  width: 134px; height: 5px;
+  border-radius: 100px;
+  background: rgba(255, 255, 255, 0.85);
+  z-index: 200;
+}
+body.theme-light .home-indicator { background: rgba(0, 0, 0, 0.85); }
+
+/* Annotation strip outside the phone */
+.annotation {
+  position: absolute;
+  top: -28px; left: 0; right: 0;
+  text-align: center;
+  font-family: 'Tajawal', sans-serif;
+  font-size: 11px; letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+}
+body.theme-light .annotation { color: rgba(28,25,23,0.55); }
+.annotation strong { color: var(--gold); font-weight: 500; }
+
+/* Two-up layout for dark + light side-by-side optional */
+.stage-multi {
+  display: flex; gap: 36px; align-items: center;
+}
+
+/* Common font helpers */
+.font-amiri    { font-family: 'Amiri', serif; }
+.font-reem     { font-family: 'Reem Kufi', sans-serif; }
+.font-fustat   { font-family: 'Fustat', sans-serif; }
+.font-tajawal  { font-family: 'Tajawal', sans-serif; }
+.font-bodoni   { font-family: 'Bodoni Moda', serif; }
+.font-forum    { font-family: 'Forum', serif; }
+.font-sf       { font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, system-ui, sans-serif; }
+
+/* Decorative gold rule */
+.gold-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold-soft) 20%, var(--gold) 50%, var(--gold-soft) 80%, transparent 100%);
+}
+
+/* Hide scrollbars inside phone screens for screenshot cleanliness */
+.iphone-screen ::-webkit-scrollbar { width: 0; height: 0; }
+.iphone-screen * { scrollbar-width: none; }

@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library Redesign — Option A · Majlis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:wght@400;500&family=Forum&family=Fustat:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  /* ── Option A: Majlis ─────────────────────────────────── */
+  .majlis {
+    width: 100%; max-width: 720px;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px var(--border-dark);
+    display: flex; flex-direction: column;
+    max-height: calc(100vh - 112px);
+  }
+  body.theme-light .majlis {
+    box-shadow: 0 30px 80px rgba(28,25,23,0.18), 0 0 0 1px var(--border-light);
+  }
+
+  /* Header */
+  .majlis-header {
+    position: relative;
+    padding: 36px 40px 28px;
+    border-bottom: 1px solid var(--border-dark);
+  }
+  body.theme-light .majlis-header { border-bottom-color: var(--border-light); }
+  .majlis-eyebrow {
+    font-family: 'Forum', serif;
+    font-size: 11px; letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+  }
+  .majlis-title-ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 700;
+    font-size: 38px; line-height: 1.1;
+    color: var(--gold);
+    text-shadow: 0 0 32px rgba(197,160,89,0.18);
+    direction: rtl;
+  }
+  body.theme-light .majlis-title-ar { text-shadow: none; }
+  .majlis-title-en {
+    font-family: 'Bodoni Moda', serif;
+    font-size: 14px; letter-spacing: 0.04em;
+    color: var(--txt-dark-dim);
+    margin-top: 8px; font-style: italic;
+  }
+  body.theme-light .majlis-title-en { color: var(--txt-light-dim); }
+  .majlis-meta {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 20px;
+    font-family: 'Tajawal', sans-serif; font-size: 12px;
+    color: var(--txt-dark-mute); letter-spacing: 0.06em;
+  }
+  body.theme-light .majlis-meta { color: var(--txt-light-mute); }
+  .majlis-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; opacity: 0.5; }
+  .majlis-close {
+    position: absolute; top: 24px; right: 24px;
+    width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: 1px solid var(--border-dark);
+    color: var(--txt-dark-dim); cursor: pointer;
+  }
+
+  /* Filter strip */
+  .majlis-filters {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 16px 40px;
+    border-bottom: 1px solid var(--border-dark);
+  }
+  body.theme-light .majlis-filters { border-bottom-color: var(--border-light); }
+
+  /* Body */
+  .majlis-body {
+    padding: 12px 40px 40px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* Card */
+  .leaf {
+    position: relative;
+    padding: 28px 4px 22px;
+    border-bottom: 1px dashed rgba(197,160,89,0.18);
+  }
+  .leaf:last-child { border-bottom: none; }
+  .leaf-num {
+    font-family: 'Bodoni Moda', serif;
+    font-style: italic;
+    font-size: 12px;
+    color: var(--gold);
+    opacity: 0.7;
+    margin-bottom: 6px;
+  }
+  .leaf-title-ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 600;
+    font-size: 22px;
+    color: var(--gold);
+    direction: rtl;
+    line-height: 1.3;
+  }
+  .leaf-poet {
+    font-family: 'Fustat', sans-serif;
+    font-size: 15px;
+    color: #D4D0C8;
+    margin-top: 4px;
+    direction: rtl;
+  }
+  body.theme-light .leaf-poet { color: #6B5C3E; }
+  .leaf-rule {
+    width: 60px; height: 1px;
+    background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
+    margin: 14px 0;
+  }
+  .leaf-excerpt {
+    font-family: 'Amiri', serif;
+    font-size: 17px;
+    line-height: 2.0;
+    direction: rtl;
+    color: var(--txt-dark);
+    opacity: 0.86;
+  }
+  body.theme-light .leaf-excerpt { color: var(--txt-light); opacity: 0.88; }
+  .leaf-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 18px;
+    font-family: 'Tajawal', sans-serif; font-size: 12px;
+    color: var(--txt-dark-mute);
+  }
+  body.theme-light .leaf-footer { color: var(--txt-light-mute); }
+  .leaf-actions {
+    display: flex; gap: 4px;
+    opacity: 0; transition: opacity 200ms ease;
+  }
+  .leaf:hover .leaf-actions, .leaf.show-actions .leaf-actions { opacity: 1; }
+  .leaf-action {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border-dark);
+    background: transparent; color: var(--txt-dark-dim); cursor: pointer;
+  }
+  body.theme-light .leaf-action { border-color: var(--border-light); color: var(--txt-light-dim); }
+  .leaf-action:hover { color: var(--gold); border-color: rgba(197,160,89,0.4); }
+  .leaf-action.danger:hover { color: #f87171; border-color: rgba(248,113,113,0.4); }
+
+  /* Search */
+  .majlis-search {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid var(--border-dark);
+    flex: 1; min-width: 220px;
+  }
+  body.theme-light .majlis-search { background: rgba(0,0,0,0.03); border-color: var(--border-light); }
+  .majlis-search input {
+    background: transparent; border: none; outline: none;
+    flex: 1; color: inherit;
+    font-family: 'Tajawal', sans-serif; font-size: 13px;
+  }
+  .majlis-search input::placeholder { color: var(--txt-dark-mute); }
+  body.theme-light .majlis-search input::placeholder { color: var(--txt-light-mute); }
+</style>
+</head>
+<body class="theme-dark">
+  <div class="annotation">
+    <span><span class="opt-name">Option A · Majlis</span> &nbsp; Editorial card stack — gold hairlines, serif-heavy</span>
+    <span>Saved Poems / قصائدي المحفوظة</span>
+  </div>
+
+  <div class="scrim"></div>
+
+  <div class="stage">
+    <div class="majlis glass-dark">
+      <!-- Header -->
+      <header class="majlis-header">
+        <button class="majlis-close" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+        <div class="majlis-eyebrow">My Library · مَجلِسي</div>
+        <div class="majlis-title-ar">قَصائِدي المَحفوظَة</div>
+        <div class="majlis-title-en">A private majlis of poems you've kept close</div>
+        <div class="majlis-meta">
+          <span>12 poems</span><span class="dot"></span>
+          <span>4 poets</span><span class="dot"></span>
+          <span>Last added 2h ago</span>
+        </div>
+      </header>
+
+      <!-- Filters -->
+      <div class="majlis-filters">
+        <div class="majlis-search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input placeholder="Search saved poems… / ابحث في قصائدك" />
+        </div>
+        <span class="chip active">All · الكل</span>
+        <span class="chip">Recent</span>
+        <span class="chip">By poet</span>
+        <span class="chip">By tag</span>
+      </div>
+
+      <!-- Body -->
+      <div class="majlis-body scroll-fade">
+        <article class="leaf show-actions">
+          <div class="leaf-num">i.</div>
+          <div class="leaf-title-ar">عَلى قَدرِ أَهلِ العَزمِ</div>
+          <div class="leaf-poet">المُتنبِّي</div>
+          <div class="leaf-rule"></div>
+          <div class="leaf-excerpt">
+            عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ&nbsp;&nbsp;·&nbsp;&nbsp;وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ
+          </div>
+          <div class="leaf-footer">
+            <span>Saved 2h ago · المديح</span>
+            <div class="leaf-actions">
+              <button class="leaf-action" title="Read"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+              <button class="leaf-action" title="Share"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5"/></svg></button>
+              <button class="leaf-action danger" title="Remove"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg></button>
+            </div>
+          </div>
+        </article>
+
+        <article class="leaf">
+          <div class="leaf-num">ii.</div>
+          <div class="leaf-title-ar">أَعَزُّ مَكانٍ في الدُّنى</div>
+          <div class="leaf-poet">أَبو الطَيِّب المُتنبِّي</div>
+          <div class="leaf-rule"></div>
+          <div class="leaf-excerpt">
+            أَعَزُّ مَكانٍ في الدُّنى سَرجُ سابِحٍ&nbsp;&nbsp;·&nbsp;&nbsp;وَخَيرُ جَليسٍ في الزَّمانِ كِتابُ
+          </div>
+          <div class="leaf-footer">
+            <span>Saved yesterday · الحكمة</span>
+            <div class="leaf-actions"><button class="leaf-action danger"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg></button></div>
+          </div>
+        </article>
+
+        <article class="leaf">
+          <div class="leaf-num">iii.</div>
+          <div class="leaf-title-ar">وَطَني</div>
+          <div class="leaf-poet">ابنُ الرّومي</div>
+          <div class="leaf-rule"></div>
+          <div class="leaf-excerpt">
+            وَلي وَطَنٌ آلَيتُ أَلَّا أَبيعَهُ&nbsp;&nbsp;·&nbsp;&nbsp;وَأَلَّا أَرى غَيري لَهُ الدَّهرَ مالِكا
+          </div>
+          <div class="leaf-footer">
+            <span>Saved 3 days ago · الوطن</span>
+            <div class="leaf-actions"><button class="leaf-action danger"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg></button></div>
+          </div>
+        </article>
+
+        <article class="leaf">
+          <div class="leaf-num">iv.</div>
+          <div class="leaf-title-ar">حَبيبَتي</div>
+          <div class="leaf-poet">نِزار قبَّاني</div>
+          <div class="leaf-rule"></div>
+          <div class="leaf-excerpt">
+            في كُلِّ زاوِيَةٍ مِنَ الدُّنيا أَراكِ&nbsp;&nbsp;·&nbsp;&nbsp;وَفي كُلِّ نَجمٍ ساطِعٍ ألقاكِ
+          </div>
+          <div class="leaf-footer">
+            <span>Saved last week · الغزل</span>
+            <div class="leaf-actions"><button class="leaf-action danger"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg></button></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

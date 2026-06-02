@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library Redesign — Option B · Diwan Grid</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Bodoni+Moda:wght@400;500&family=Forum&family=Fustat:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="_shared.css">
+<style>
+  /* ── Option B: Diwan Grid ────────────────────────────── */
+  .diwan {
+    width: 100%; max-width: 1040px;
+    border-radius: 24px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px var(--border-dark);
+    display: flex; flex-direction: column;
+    max-height: calc(100vh - 112px);
+    overflow: hidden;
+  }
+  body.theme-light .diwan { box-shadow: 0 30px 80px rgba(28,25,23,0.18), 0 0 0 1px var(--border-light); }
+
+  .diwan-header {
+    padding: 24px 32px 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 24px;
+    border-bottom: 1px solid var(--border-dark);
+  }
+  body.theme-light .diwan-header { border-bottom-color: var(--border-light); }
+
+  .diwan-title-block { display: flex; align-items: baseline; gap: 14px; }
+  .diwan-title-ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 700; font-size: 26px;
+    color: var(--gold);
+  }
+  .diwan-title-en {
+    font-family: 'Forum', serif; font-size: 14px;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--txt-dark-mute);
+  }
+  body.theme-light .diwan-title-en { color: var(--txt-light-mute); }
+  .count-pill {
+    font-family: 'Bodoni Moda', serif; font-style: italic;
+    font-size: 12px;
+    padding: 3px 10px; border-radius: 999px;
+    background: rgba(197,160,89,0.12);
+    color: var(--gold);
+    border: 1px solid rgba(197,160,89,0.25);
+  }
+
+  .diwan-actions { display: flex; align-items: center; gap: 10px; }
+  .icon-btn {
+    width: 40px; height: 40px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: 1px solid var(--border-dark);
+    color: var(--txt-dark-dim); cursor: pointer;
+  }
+  body.theme-light .icon-btn { border-color: var(--border-light); color: var(--txt-light-dim); }
+  .icon-btn:hover { color: var(--gold); border-color: rgba(197,160,89,0.4); }
+
+  /* Toolbar */
+  .diwan-toolbar {
+    padding: 14px 32px;
+    display: flex; align-items: center; gap: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid var(--border-dark);
+  }
+  body.theme-light .diwan-toolbar { border-bottom-color: var(--border-light); }
+  .search-box {
+    flex: 1 1 280px;
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border-dark);
+  }
+  body.theme-light .search-box { background: rgba(0,0,0,0.03); border-color: var(--border-light); }
+  .search-box input {
+    background: transparent; border: none; outline: none;
+    flex: 1; color: inherit;
+    font-family: 'Tajawal', sans-serif; font-size: 13px;
+  }
+  .sort {
+    font-family: 'Tajawal', sans-serif; font-size: 12px;
+    color: var(--txt-dark-dim); display: flex; gap: 6px; align-items: center;
+  }
+  body.theme-light .sort { color: var(--txt-light-dim); }
+
+  /* Selection bar (visible state) */
+  .selection-bar {
+    padding: 10px 32px;
+    display: flex; align-items: center; gap: 14px;
+    background: rgba(74,124,201,0.08);
+    border-bottom: 1px solid rgba(74,124,201,0.18);
+    font-family: 'Tajawal', sans-serif; font-size: 13px;
+    color: var(--lapis-light);
+  }
+  .selection-bar .sel-count { font-weight: 600; color: var(--lapis-light); }
+  .selection-bar .sep { width: 1px; height: 18px; background: var(--border-dark); }
+  .sel-btn {
+    background: transparent; border: none; cursor: pointer;
+    color: inherit; font: inherit; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .sel-btn.danger { color: #f87171; }
+
+  /* Grid */
+  .diwan-grid {
+    padding: 22px 28px 32px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .tile {
+    position: relative;
+    border-radius: 16px;
+    padding: 22px 20px 18px;
+    background:
+      linear-gradient(160deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid var(--border-dark);
+    transition: all 250ms ease;
+    cursor: pointer;
+    overflow: hidden;
+    min-height: 200px;
+    display: flex; flex-direction: column;
+  }
+  body.theme-light .tile {
+    background: linear-gradient(160deg, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.4) 100%);
+    border-color: var(--border-light);
+  }
+  .tile:hover {
+    border-color: rgba(197,160,89,0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+  }
+  .tile.selected {
+    border-color: var(--lapis-light);
+    background: linear-gradient(160deg, rgba(74,124,201,0.10) 0%, rgba(74,124,201,0.03) 100%);
+  }
+  .tile::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.4;
+  }
+
+  .tile-checkbox {
+    position: absolute; top: 14px; left: 14px;
+    width: 22px; height: 22px; border-radius: 6px;
+    border: 1px solid var(--border-dark);
+    background: rgba(0,0,0,0.4); backdrop-filter: blur(6px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 200ms;
+  }
+  body.theme-light .tile-checkbox { background: rgba(255,255,255,0.7); border-color: var(--border-light); }
+  .tile:hover .tile-checkbox, .tile.selected .tile-checkbox { opacity: 1; }
+  .tile.selected .tile-checkbox {
+    background: var(--lapis); border-color: var(--lapis-light);
+  }
+  .tile.selected .tile-checkbox svg { color: white; }
+
+  .tile-heart {
+    position: absolute; top: 14px; right: 14px;
+    color: var(--gold); opacity: 0.6;
+  }
+  .tile-heart.filled { opacity: 1; }
+
+  .tile-poet-tag {
+    font-family: 'Bodoni Moda', serif;
+    font-style: italic; font-size: 11px;
+    color: var(--gold); opacity: 0.85;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+  .tile-title {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 600;
+    font-size: 22px; line-height: 1.25;
+    color: var(--gold);
+    direction: rtl;
+    margin-bottom: 8px;
+  }
+  .tile-poet {
+    font-family: 'Fustat', sans-serif;
+    font-size: 13px;
+    color: #D4D0C8; opacity: 0.75;
+    direction: rtl;
+    margin-bottom: 14px;
+  }
+  body.theme-light .tile-poet { color: #6B5C3E; }
+  .tile-excerpt {
+    font-family: 'Amiri', serif;
+    font-size: 14px; line-height: 1.85;
+    direction: rtl;
+    color: var(--txt-dark); opacity: 0.78;
+    flex: 1;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  body.theme-light .tile-excerpt { color: var(--txt-light); }
+  .tile-foot {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(197,160,89,0.15);
+    font-family: 'Tajawal', sans-serif; font-size: 11px;
+    color: var(--txt-dark-mute);
+  }
+  body.theme-light .tile-foot { color: var(--txt-light-mute); }
+  .tile-tag {
+    padding: 2px 8px; border-radius: 4px;
+    background: rgba(197,160,89,0.08);
+    color: var(--gold); opacity: 0.85;
+    font-size: 10px; letter-spacing: 0.05em; text-transform: uppercase;
+  }
+
+  /* Featured tile (larger, spans 2 cols) */
+  .tile.feat { grid-column: span 2; min-height: 200px; }
+  .tile.feat .tile-title { font-size: 30px; }
+  .tile.feat .tile-excerpt { font-size: 16px; -webkit-line-clamp: 4; }
+
+</style>
+</head>
+<body class="theme-dark">
+  <div class="annotation">
+    <span><span class="opt-name">Option B · Diwan Grid</span> &nbsp; Mosaic tile board · multi-select · search & sort</span>
+    <span>Saved Poems / قصائدي المحفوظة</span>
+  </div>
+
+  <div class="scrim"></div>
+
+  <div class="stage">
+    <div class="diwan glass-dark">
+      <!-- Header -->
+      <header class="diwan-header">
+        <div class="diwan-title-block">
+          <span class="diwan-title-ar">قَصائِدي</span>
+          <span class="diwan-title-en">My Diwan</span>
+          <span class="count-pill">12 saved</span>
+        </div>
+        <div class="diwan-actions">
+          <button class="icon-btn" title="Grid view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+          <button class="icon-btn" title="List view"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+          <button class="icon-btn" title="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+        </div>
+      </header>
+
+      <!-- Toolbar -->
+      <div class="diwan-toolbar">
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity:0.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+          <input placeholder="Search by line, title, or poet…" />
+        </div>
+        <span class="chip active">All</span>
+        <span class="chip">المتنبي</span>
+        <span class="chip">ابن الرومي</span>
+        <span class="chip">نزار قباني</span>
+        <span class="chip">+5</span>
+        <span class="sort">
+          Sort: <strong style="color:var(--gold)">Recently saved</strong>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+        </span>
+      </div>
+
+      <!-- Selection bar (active state) -->
+      <div class="selection-bar">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+        <span class="sel-count">2 selected</span>
+        <span class="sep"></span>
+        <button class="sel-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Export</button>
+        <button class="sel-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5"/></svg> Share</button>
+        <button class="sel-btn danger" style="margin-left:auto"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Remove</button>
+      </div>
+
+      <!-- Grid -->
+      <div class="diwan-grid scroll-fade">
+        <!-- Featured tile, selected -->
+        <div class="tile feat selected">
+          <div class="tile-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <svg class="tile-heart filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+          <div class="tile-poet-tag">most read · today</div>
+          <div class="tile-title">عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِم</div>
+          <div class="tile-poet">المُتنبِّي</div>
+          <div class="tile-excerpt">عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ&nbsp;·&nbsp;وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ&nbsp;·&nbsp;وَتَعظُمُ في عَينِ الصَغيرِ صِغارُها</div>
+          <div class="tile-foot"><span>Saved 2h ago</span><span class="tile-tag">المديح</span></div>
+        </div>
+
+        <!-- regular tile, selected -->
+        <div class="tile selected">
+          <div class="tile-checkbox"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></div>
+          <svg class="tile-heart filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+          <div class="tile-title">أَعَزُّ مَكان</div>
+          <div class="tile-poet">أَبو الطَيِّب</div>
+          <div class="tile-excerpt">أَعَزُّ مَكانٍ في الدُّنى سَرجُ سابِحٍ&nbsp;·&nbsp;وَخَيرُ جَليسٍ في الزَّمانِ كِتابُ</div>
+          <div class="tile-foot"><span>Yesterday</span><span class="tile-tag">حكمة</span></div>
+        </div>
+
+        <!-- regular tile -->
+        <div class="tile">
+          <div class="tile-checkbox"></div>
+          <svg class="tile-heart filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+          <div class="tile-title">وَطَني</div>
+          <div class="tile-poet">ابنُ الرّومي</div>
+          <div class="tile-excerpt">وَلي وَطَنٌ آلَيتُ أَلَّا أَبيعَهُ&nbsp;·&nbsp;وَأَلَّا أَرى غَيري لَهُ الدَّهرَ مالِكا</div>
+          <div class="tile-foot"><span>3 days ago</span><span class="tile-tag">وطن</span></div>
+        </div>
+
+        <div class="tile">
+          <div class="tile-checkbox"></div>
+          <svg class="tile-heart filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+          <div class="tile-title">حَبيبَتي</div>
+          <div class="tile-poet">نِزار قبَّاني</div>
+          <div class="tile-excerpt">في كُلِّ زاوِيَةٍ مِنَ الدُّنيا أَراكِ&nbsp;·&nbsp;وَفي كُلِّ نَجمٍ ساطِعٍ ألقاكِ</div>
+          <div class="tile-foot"><span>Last week</span><span class="tile-tag">غزل</span></div>
+        </div>
+
+        <div class="tile">
+          <div class="tile-checkbox"></div>
+          <svg class="tile-heart filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+          <div class="tile-title">النَّفسُ تَبكي</div>
+          <div class="tile-poet">جُبران خَليل جُبران</div>
+          <div class="tile-excerpt">النَّفسُ تَبكي عَلى الدُّنيا وَقَد عَلِمَت&nbsp;·&nbsp;أَنَّ السَّعادَةَ فيها تَركُ ما فيها</div>
+          <div class="tile-foot"><span>Last week</span><span class="tile-tag">زهد</span></div>
+        </div>
+
+        <div class="tile">
+          <div class="tile-checkbox"></div>
+          <svg class="tile-heart filled" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z"/></svg>
+          <div class="tile-title">إِذا غامَرتَ</div>
+          <div class="tile-poet">المُتنبِّي</div>
+          <div class="tile-excerpt">إِذا غامَرتَ في شَرَفٍ مَرومِ&nbsp;·&nbsp;فَلا تَقنَع بِما دونَ النُجومِ</div>
+          <div class="tile-foot"><span>2 weeks ago</span><span class="tile-tag">حكمة</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

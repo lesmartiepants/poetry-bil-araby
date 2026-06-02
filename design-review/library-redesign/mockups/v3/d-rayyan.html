@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Library v3 — D · Rayyan · Command Palette</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Bodoni+Moda:ital,wght@0,400;0,500;1,400;1,500&family=Forum&family=Fustat:wght@400;500;600&family=Reem+Kufi:wght@500;600;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../_shared.css">
+<link rel="stylesheet" href="_prod-bg.css">
+
+<style>
+/* ================================================================
+   D · Rayyan (ريَّان) — "Top product designer" direction
+   Inspiration: Linear command palette, Vercel / Arc keyboard-first UX
+   Philosophy: The library as a precision tool — ⌘K for your poems
+   ================================================================ */
+
+/* ── Command palette container ─────────────────────────────────── */
+.rayyan {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  /* Center in the left area (excludes 400px sidebar) */
+  margin-right: 200px;
+  width: min(700px, calc(100vw - 440px - 64px));
+  max-height: calc(100vh - 160px);
+  border-radius: 16px;
+  z-index: 60;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.09),
+              0 8px 32px rgba(0,0,0,0.72),
+              0 32px 80px rgba(0,0,0,0.55),
+              0 0 0 0 rgba(197,160,89,0);
+}
+
+/* ── Search / command bar ──────────────────────────────────────── */
+.ray-search {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-dark);
+  flex-shrink: 0;
+}
+body.light .ray-search { border-bottom-color: var(--border-light); }
+
+.ray-search-icon {
+  width: 18px; height: 18px; flex-shrink: 0;
+  stroke: var(--gold); fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  opacity: 0.75;
+}
+
+.ray-search input {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-family: 'Tajawal', sans-serif; font-size: 16px;
+  color: var(--txt-dark); letter-spacing: 0.01em;
+  direction: rtl;
+}
+body.light .ray-search input { color: var(--txt-light); }
+.ray-search input::placeholder { color: var(--txt-dark-mute); font-size: 15px; }
+body.light .ray-search input::placeholder { color: var(--txt-light-mute); }
+
+.ray-kbd {
+  display: flex; align-items: center; gap: 4px;
+  flex-shrink: 0;
+}
+.kbd {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 2px 7px; border-radius: 5px;
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.05);
+  color: var(--txt-dark-mute);
+  min-width: 22px; height: 20px;
+}
+body.light .kbd {
+  border-color: rgba(0,0,0,0.12);
+  background: rgba(0,0,0,0.05);
+  color: var(--txt-light-mute);
+}
+
+/* ── Filter strip ──────────────────────────────────────────────── */
+.ray-filters {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 20px 8px;
+  border-bottom: 1px solid var(--border-dark);
+  flex-shrink: 0; overflow-x: auto;
+}
+body.light .ray-filters { border-bottom-color: var(--border-light); }
+.ray-filters::-webkit-scrollbar { display: none; }
+
+.ray-filter-label {
+  font-family: 'Forum', serif;
+  font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--txt-dark-mute); margin-left: 4px; white-space: nowrap;
+}
+body.light .ray-filter-label { color: var(--txt-light-mute); }
+
+/* ── Main body: list + preview ─────────────────────────────────── */
+.ray-body {
+  display: flex; flex: 1; min-height: 0;
+}
+
+/* Left: poem list */
+.ray-list {
+  width: 56%; flex-shrink: 0;
+  border-right: 1px solid var(--border-dark);
+  overflow-y: auto; overflow-x: hidden;
+}
+body.light .ray-list { border-right-color: var(--border-light); }
+.ray-list::-webkit-scrollbar { width: 4px; }
+.ray-list::-webkit-scrollbar-thumb { background: rgba(197,160,89,0.12); border-radius: 2px; }
+
+/* Group heading */
+.ray-group {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px 5px;
+  font-family: 'Forum', serif; font-size: 10px;
+  letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--txt-dark-mute); position: sticky; top: 0;
+  background: rgba(16,15,20,0.9); backdrop-filter: blur(8px);
+  z-index: 2;
+}
+body.light .ray-group {
+  color: var(--txt-light-mute);
+  background: rgba(250,249,245,0.92);
+}
+.ray-group-count {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 4px;
+  background: rgba(197,160,89,0.10);
+  font-size: 10px; color: rgba(197,160,89,0.70);
+}
+
+/* Poem row */
+.ray-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.025);
+  transition: background 120ms ease;
+  position: relative;
+}
+body.light .ray-row { border-bottom-color: rgba(0,0,0,0.04); }
+.ray-row:hover { background: rgba(197,160,89,0.05); }
+.ray-row.active {
+  background: rgba(197,160,89,0.08);
+}
+.ray-row.active::before {
+  content: '';
+  position: absolute; left: 0; top: 0; bottom: 0; width: 2px;
+  background: var(--gold); border-radius: 0 2px 2px 0;
+}
+
+.ray-row-num {
+  font-family: 'Bodoni Moda', serif; font-style: italic;
+  font-size: 11px; color: rgba(197,160,89,0.45);
+  width: 18px; flex-shrink: 0; text-align: right;
+}
+
+.ray-row-info { flex: 1; min-width: 0; direction: rtl; }
+.ray-row-title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 600;
+  font-size: 14px; color: var(--txt-dark);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.light .ray-row-title { color: var(--txt-light); }
+.ray-row.active .ray-row-title { color: var(--gold); }
+.ray-row-poet {
+  font-family: 'Fustat', sans-serif; font-size: 11px;
+  color: var(--txt-dark-mute); margin-top: 1px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+body.light .ray-row-poet { color: var(--txt-light-mute); }
+
+/* Action icons that appear on active row */
+.ray-row-actions {
+  display: flex; gap: 4px; flex-shrink: 0; opacity: 0;
+  transition: opacity 100ms;
+}
+.ray-row.active .ray-row-actions { opacity: 1; }
+.ray-row:hover .ray-row-actions { opacity: 0.7; }
+.ray-action-btn {
+  width: 26px; height: 26px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  display: flex; align-items: center; justify-content: center;
+}
+body.light .ray-action-btn {
+  border-color: rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.04);
+}
+.ray-action-btn svg {
+  width: 12px; height: 12px;
+  stroke: var(--txt-dark-dim); fill: none; stroke-width: 1.5;
+}
+body.light .ray-action-btn svg { stroke: var(--txt-light-dim); }
+
+/* Date tag */
+.ray-row-date {
+  font-family: 'Tajawal', sans-serif; font-size: 10px;
+  color: var(--txt-dark-mute); white-space: nowrap; flex-shrink: 0;
+}
+
+/* Right: poem preview */
+.ray-preview {
+  flex: 1; min-width: 0; padding: 24px 22px;
+  display: flex; flex-direction: column; overflow-y: auto;
+}
+
+.ray-preview-eyebrow {
+  font-family: 'Forum', serif; font-size: 10px;
+  letter-spacing: 0.30em; text-transform: uppercase;
+  color: rgba(197,160,89,0.6); margin-bottom: 12px;
+}
+
+.ray-preview-title {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 22px; color: var(--gold);
+  direction: rtl; line-height: 1.2;
+  margin-bottom: 4px;
+}
+.ray-preview-poet {
+  font-family: 'Fustat', sans-serif; font-size: 12px;
+  color: var(--txt-dark-mute); direction: rtl;
+  letter-spacing: 0.06em;
+}
+body.light .ray-preview-poet { color: var(--txt-light-mute); }
+
+.ray-preview-rule {
+  height: 1px; margin: 14px 0;
+  background: linear-gradient(90deg, var(--gold-soft) 0%, transparent 100%);
+}
+
+.ray-preview-verse {
+  font-family: 'Amiri', serif; font-size: 15px; line-height: 2.3;
+  color: rgba(231,229,228,0.78);
+  direction: rtl; flex: 1;
+  display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden;
+}
+body.light .ray-preview-verse { color: rgba(28,25,23,0.75); }
+
+.ray-preview-footer {
+  margin-top: 20px; padding-top: 16px;
+  border-top: 1px solid var(--border-dark);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+body.light .ray-preview-footer { border-top-color: var(--border-light); }
+
+.ray-preview-open {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 16px; border-radius: 8px;
+  background: rgba(197,160,89,0.12);
+  border: 1px solid rgba(197,160,89,0.30);
+  font-family: 'Tajawal', sans-serif; font-size: 13px;
+  color: var(--gold); cursor: pointer;
+  transition: all 140ms ease;
+}
+.ray-preview-open:hover {
+  background: rgba(197,160,89,0.20);
+  border-color: rgba(197,160,89,0.50);
+}
+.ray-preview-open svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+.ray-preview-remove {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 8px;
+  border: 1px solid var(--border-dark);
+  background: transparent;
+  font-family: 'Tajawal', sans-serif; font-size: 12px;
+  color: var(--txt-dark-mute); cursor: pointer;
+}
+body.light .ray-preview-remove { border-color: var(--border-light); color: var(--txt-light-mute); }
+.ray-preview-remove svg { width: 13px; height: 13px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+
+/* ── Footer hint bar ───────────────────────────────────────────── */
+.ray-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border-dark);
+  flex-shrink: 0;
+}
+body.light .ray-footer { border-top-color: var(--border-light); }
+.ray-footer-hint {
+  display: flex; align-items: center; gap: 10px;
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  color: var(--txt-dark-mute);
+}
+body.light .ray-footer-hint { color: var(--txt-light-mute); }
+.ray-footer-hint .sep { width: 1px; height: 12px; background: var(--border-dark); }
+body.light .ray-footer-hint .sep { background: var(--border-light); }
+
+/* ── Responsive: mobile ────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .rayyan {
+    top: 0; left: 0; right: 0;
+    width: 100%; max-height: 100vh;
+    border-radius: 0;
+    margin-right: 0;
+    transform: none;
+  }
+  /* Collapse split pane — show only the list on mobile */
+  .ray-preview { display: none; }
+  .ray-list { width: 100%; border-right: none; }
+  /* Always show action buttons (no hover on touch) */
+  .ray-row-actions { opacity: 1; }
+  /* Hide keyboard hint footer on mobile */
+  .ray-footer { display: none; }
+  /* Hide keyboard shortcut badges */
+  .ray-kbd { display: none; }
+  /* Increase touch targets */
+  .ray-row { padding: 13px 16px; }
+  .ray-action-btn { width: 34px; height: 34px; }
+}
+
+/* ── Annotation ────────────────────────────────────────────────── */
+.annotation {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 20px;
+  font-family: 'Tajawal', sans-serif; font-size: 11px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--txt-dark-mute);
+  pointer-events: none;
+}
+body.light .annotation { color: var(--txt-light-mute); }
+.annotation .name { color: var(--gold); font-weight: 500; }
+
+/* Label pill on palette */
+.variant-badge {
+  position: absolute; top: -10px; left: 50%; transform: translateX(-50%);
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 12px 3px 10px; border-radius: 999px;
+  background: rgba(197,160,89,0.14); border: 1px solid rgba(197,160,89,0.30);
+  font-family: 'Forum', serif; font-size: 11px;
+  letter-spacing: 0.16em; text-transform: uppercase;
+  color: var(--gold); white-space: nowrap;
+}
+</style>
+</head>
+
+<body>
+
+<!-- ══ Prod app background ══════════════════════════════════════════ -->
+<div class="app-scene"></div>
+<div class="app-grid"></div>
+
+<!-- Poem text (center-left, fades on modal open via scrim) -->
+<div class="app-poem" style="opacity:0.35;">
+  <div class="poem-title">قصيدة في الهمَّة</div>
+  <div class="poem-poet">المتنبي · Al-Mutanabbi</div>
+  <div class="poem-divider"></div>
+  <div class="poem-verses">
+    على قدرِ أهلِ العزمِ تأتي العزائمُ<br>
+    وتأتي على قدرِ الكرامِ المكارمُ<br>
+    وتعظمُ في عينِ الصغيرِ صغارُها<br>
+    وتصغرُ في عينِ العظيمِ العظائمُ
+  </div>
+</div>
+
+<!-- Top-right header -->
+<div class="app-header">
+  <span class="word-poetry">poetry</span>
+  <span class="word-arabic">بالعربي</span>
+  <!-- Feather icon -->
+  <svg class="feather-icon" viewBox="0 0 24 24">
+    <path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5l6.74-6.76z"/>
+    <line x1="16" y1="8" x2="2" y2="22"/>
+    <line x1="17.5" y1="15" x2="9" y2="15"/>
+  </svg>
+</div>
+
+<!-- Right controls -->
+<div class="app-controls">
+  <div class="ctrl-pill">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+  </div>
+  <div class="ctrl-pill text-pill">Aa</div>
+</div>
+
+<!-- Sidebar hint -->
+<div class="app-sidebar-hint">
+  <div class="skel" style="width:80%;"></div>
+  <div class="skel" style="width:65%;"></div>
+  <div class="skel" style="width:75%;"></div>
+  <div style="width:80%; height:1px; background: var(--border-dark); margin:4px 0;"></div>
+  <div class="skel" style="width:70%;"></div>
+  <div class="skel" style="width:60%;"></div>
+</div>
+
+<!-- Bottom hint -->
+<div class="app-bottom-hint">
+  <div class="bottom-btn">
+    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+  </div>
+  <div class="bottom-discover">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(197,160,89,0.7)" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    اكتشف · Discover
+  </div>
+  <div class="bottom-btn">
+    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+  </div>
+</div>
+
+<!-- Scrim (lighter — command palette doesn't need full blackout) -->
+<div class="scrim" style="background:rgba(0,0,0,0.38); backdrop-filter:blur(4px);"></div>
+
+<!-- ══ D · Rayyan — Command Palette ═════════════════════════════════ -->
+<div class="rayyan glass">
+
+  <!-- Variant label pill -->
+  <div class="variant-badge" style="position:relative;transform:none;display:inline-flex;align-self:center;margin:14px auto 0;">
+    D · Rayyan · ريَّان
+  </div>
+  <div style="height:10px;"></div>
+
+  <!-- Search bar -->
+  <div class="ray-search">
+    <svg class="ray-search-icon" viewBox="0 0 24 24">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input type="text" value="مت" placeholder="ابحث في محفوظاتك… search saved poems" readonly>
+    <div class="ray-kbd">
+      <span class="kbd">esc</span>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="ray-filters">
+    <span class="ray-filter-label">Poet</span>
+    <span class="chip on">الكل · All</span>
+    <span class="chip">المتنبي</span>
+    <span class="chip">محمود درويش</span>
+    <span class="chip">نزار قباني</span>
+    <span class="chip">أبو نواس</span>
+  </div>
+
+  <!-- Body: list + preview -->
+  <div class="ray-body">
+
+    <!-- Left: poem list -->
+    <div class="ray-list scroll-y">
+
+      <div class="ray-group">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        Recently saved
+        <span class="ray-group-count">3</span>
+      </div>
+
+      <!-- Row 1 — active -->
+      <div class="ray-row active">
+        <span class="ray-row-num">I</span>
+        <div class="ray-row-info">
+          <div class="ray-row-title">على قدر أهل العزم</div>
+          <div class="ray-row-poet">أبو الطيب المتنبي</div>
+        </div>
+        <div class="ray-row-actions">
+          <div class="ray-action-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+          <div class="ray-action-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+        </div>
+        <span class="ray-row-date">2h ago</span>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="ray-row">
+        <span class="ray-row-num">II</span>
+        <div class="ray-row-info">
+          <div class="ray-row-title">بطاقة هوية</div>
+          <div class="ray-row-poet">محمود درويش</div>
+        </div>
+        <div class="ray-row-actions">
+          <div class="ray-action-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+          <div class="ray-action-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+        </div>
+        <span class="ray-row-date">Yesterday</span>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="ray-row">
+        <span class="ray-row-num">III</span>
+        <div class="ray-row-info">
+          <div class="ray-row-title">رسالة إلى أمي</div>
+          <div class="ray-row-poet">نزار قباني</div>
+        </div>
+        <div class="ray-row-actions">
+          <div class="ray-action-btn"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></div>
+          <div class="ray-action-btn"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg></div>
+        </div>
+        <span class="ray-row-date">3 days</span>
+      </div>
+
+      <div class="ray-group">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        Earlier
+        <span class="ray-group-count">5</span>
+      </div>
+
+      <div class="ray-row">
+        <span class="ray-row-num">IV</span>
+        <div class="ray-row-info">
+          <div class="ray-row-title">لا تصالح</div>
+          <div class="ray-row-poet">أمل دنقل</div>
+        </div>
+        <span class="ray-row-date">2w ago</span>
+      </div>
+
+      <div class="ray-row">
+        <span class="ray-row-num">V</span>
+        <div class="ray-row-info">
+          <div class="ray-row-title">حبيبتي تنهض من نومها</div>
+          <div class="ray-row-poet">محمود درويش</div>
+        </div>
+        <span class="ray-row-date">3w ago</span>
+      </div>
+
+      <div class="ray-row">
+        <span class="ray-row-num">VI</span>
+        <div class="ray-row-info">
+          <div class="ray-row-title">المساء</div>
+          <div class="ray-row-poet">خليل مطران</div>
+        </div>
+        <span class="ray-row-date">1m ago</span>
+      </div>
+
+      <div class="ray-row">
+        <span class="ray-row-num">VII</span>
+        <div class="ray-row-info">
+          <div class="ray-row-title">أندلسية</div>
+          <div class="ray-row-poet">أبو البقاء الرندي</div>
+        </div>
+        <span class="ray-row-date">2m ago</span>
+      </div>
+
+      <div class="ray-row">
+        <span class="ray-row-num">VIII</span>
+        <div class="ray-row-info">
+          <div class="ray-row-title">يا ليلة العيد</div>
+          <div class="ray-row-poet">أحمد شوقي</div>
+        </div>
+        <span class="ray-row-date">2m ago</span>
+      </div>
+
+    </div><!-- /ray-list -->
+
+    <!-- Right: poem preview -->
+    <div class="ray-preview">
+      <div class="ray-preview-eyebrow">قصيدة مختارة · Selected Poem</div>
+      <div class="ray-preview-title">على قدر أهل العزم</div>
+      <div class="ray-preview-poet">أبو الطيب المتنبي — 915–965 CE</div>
+      <div class="ray-preview-rule"></div>
+      <div class="ray-preview-verse">
+        على قدرِ أهلِ العزمِ تأتي العزائمُ<br>
+        وتأتي على قدرِ الكرامِ المكارمُ<br>
+        وتعظمُ في عينِ الصغيرِ صغارُها<br>
+        وتصغرُ في عينِ العظيمِ العظائمُ<br>
+        يُكلَّفُ سيفُ الدولةِ الهمَّ كُلَّهُ<br>
+        وقد عجزَت عنه الجيوشُ الخضارمُ
+      </div>
+
+      <!-- Saved date -->
+      <div style="margin-top:14px; font-family:'Tajawal',sans-serif; font-size:11px; color:var(--txt-dark-mute); display:flex; align-items:center; gap:6px; direction:ltr;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        Saved 2 hours ago
+      </div>
+
+      <div class="ray-preview-footer">
+        <button class="ray-preview-open">
+          <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          اقرأ · Read poem
+        </button>
+        <button class="ray-preview-remove">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+          Remove
+        </button>
+      </div>
+    </div><!-- /ray-preview -->
+
+  </div><!-- /ray-body -->
+
+  <!-- Footer hint bar -->
+  <div class="ray-footer">
+    <div class="ray-footer-hint">
+      <span class="kbd">↑ ↓</span> Navigate
+      <div class="sep"></div>
+      <span class="kbd">↵</span> Open
+      <div class="sep"></div>
+      <span class="kbd">⌫</span> Remove
+    </div>
+    <div class="ray-footer-hint" style="direction:rtl;">
+      <span class="badge">8 saved</span>
+      <span style="font-size:11px; color:var(--txt-dark-mute);">محفوظاتي</span>
+    </div>
+  </div>
+
+</div><!-- /rayyan -->
+
+<!-- Annotation strip -->
+<div class="annotation">
+  <span class="name">D · Rayyan · ريَّان</span>
+  <span>Command palette · keyboard-first · top product designer direction</span>
+  <span style="opacity:0.4;">poetry-bil-araby v3 mockup</span>
+</div>
+
+</body>
+</html>

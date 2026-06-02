@@ -285,7 +285,21 @@ const DebugPanel = ({ controlBarRef }) => {
               <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">Voice</span>
               <select
                 value={liveVoice}
-                onChange={(e) => { useUIStore.getState().setLiveVoice(e.target.value); useUIStore.getState().addLog('Settings', `Live voice → ${e.target.value}`, 'user'); }}
+                onChange={(e) => {
+                  useUIStore.getState().setLiveVoice(e.target.value);
+                  useUIStore.getState().addLog('Settings', `Live voice → ${e.target.value}`, 'user');
+                  // Reset loaded audio so the next Listen regenerates in the new voice
+                  // (otherwise the resume-from-blob path would replay the old voice).
+                  const { player, resetAudio } = useAudioStore.getState();
+                  if (player) {
+                    try {
+                      player.stop();
+                    } catch {
+                      /* already stopped */
+                    }
+                  }
+                  resetAudio();
+                }}
                 className="flex-1 text-[0.6rem] font-mono rounded px-1.5 py-0.5 cursor-pointer"
                 style={{ background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', color: 'rgb(251,146,60)' }}
               >

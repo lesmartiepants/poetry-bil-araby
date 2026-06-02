@@ -10,7 +10,7 @@
 import { FEATURES } from '../constants/index.js';
 import { INSIGHTS_SYSTEM_PROMPT, getTTSContent } from '../prompts';
 import { API_MODELS, TTS_CONFIG, geminiTextFetch, thinkingConfigFor, fetchTTSWithFallback, canPrefetchTts } from './gemini.js';
-import { CACHE_CONFIG, cacheOperations } from './cache.js';
+import { CACHE_CONFIG, cacheOperations, audioCacheKey } from './cache.js';
 import { pcm16ToWav } from '../utils/audio.js';
 
 import { usePoemStore } from '../stores/poemStore';
@@ -54,8 +54,10 @@ export const prefetchManager = {
         return;
       }
 
-      // Check cache first - don't prefetch if already cached
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, poemId, addLog);
+      // Check cache first - don't prefetch if already cached. Prefetch always uses
+      // the REST engine + default voice, so key the cache the same way playback does.
+      const audioKey = audioCacheKey(poemId, 'rest', TTS_CONFIG.voiceName);
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, audioKey, addLog);
       if (cached?.blob) {
         if (addLog)
           addLog('Prefetch Audio', `Audio already cached for poem ${poemId} - skipping`, 'info');
@@ -168,8 +170,8 @@ export const prefetchManager = {
           const audioDuration = samples / 24000;
           const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
 
-          // Cache the blob
-          await cacheOperations.set(CACHE_CONFIG.stores.audio, poemId, {
+          // Cache the blob under the same REST+voice key playback reads.
+          await cacheOperations.set(CACHE_CONFIG.stores.audio, audioKey, {
             blob,
             metadata: {
               poet: poem.poet,

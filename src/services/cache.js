@@ -21,6 +21,18 @@ export const CACHE_CONFIG = {
 };
 
 /**
+ * Build the audio-cache key for a poem. Includes the TTS mode and voice so that
+ * switching the voice (or engine) regenerates instead of replaying stale audio
+ * in the previous voice. Same poem + same mode + same voice = cache hit.
+ *
+ * @param {string|number} poemId
+ * @param {string} mode  - 'live' | 'rest'
+ * @param {string} voice - voice name (e.g. 'Orus', 'Fenrir')
+ */
+export const audioCacheKey = (poemId, mode, voice) =>
+  `${poemId}::${mode || 'rest'}::${voice || 'default'}`;
+
+/**
  * Initialize IndexedDB cache database.
  * Creates object stores for audio, insights, and poems if they don't exist.
  */

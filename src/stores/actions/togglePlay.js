@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { Rabbit } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Player, start as toneStart } from 'tone';
+import { Player, start as toneStart, getContext } from 'tone';
 import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
 import { FEATURES } from '../../constants/features';
@@ -11,8 +11,14 @@ import { usePoemStore } from '../poemStore';
 import { useUIStore } from '../uiStore';
 import { getTTSContent, LIVE_SYSTEM_INSTRUCTION, getLiveContent } from '../../prompts';
 import { API_MODELS, TTS_CONFIG, fetchTTSWithFallback } from '../../services/gemini.js';
-import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
+import { cacheOperations, CACHE_CONFIG, audioCacheKey } from '../../services/cache.js';
 import { pcm16ToWav } from '../../utils/audio.js';
+import {
+  createStreamingPlayer,
+  consumeSSE,
+  pcmBase64ToInt16,
+  concatPcmBase64,
+} from '../../utils/liveAudioStream.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -302,10 +308,17 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   const playId = ++_currentPlayId;
 
   const doGenerate = async () => {
+    // Resolve the selected engine + voice up front so the cache key reflects them.
+    // Same poem in a different voice/engine must regenerate, not replay stale audio.
+    let ttsMode = useUIStore.getState().ttsMode;
+    const { liveVoice, liveTemperature } = useUIStore.getState();
+    const keyFor = (mode) =>
+      audioCacheKey(current?.id, mode, mode === 'live' ? liveVoice : TTS_CONFIG.voiceName);
+
     // CHECK CACHE
     if (FEATURES.caching && current?.id) {
       const cacheStart = performance.now();
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id, addLog);
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, keyFor(ttsMode), addLog);
       const cacheTime = performance.now() - cacheStart;
 
       if (cached?.blob) {
@@ -356,7 +369,6 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     // Mark in-flight
     usePoemStore.getState().addActiveAudio(current?.id);
 
-    let ttsMode = useUIStore.getState().ttsMode;
     const arabicTextChars = current?.arabic?.length || 0;
 
     const modelLabel = ttsMode === 'live' ? 'Live 3.1' : API_MODELS.tts;
@@ -381,6 +393,117 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       let b64;
       let ttsModel;
 
+      // ── Live streaming fast-path (desktop/Android) ──────────────────────────
+      // Play PCM chunks as they arrive from /api/ai/live-tts?stream=1 — first sound
+      // in ~1s instead of waiting for the whole recitation. iOS keeps the buffered
+      // HTMLAudio path below (the hardware silent switch mutes Web Audio).
+      if (ttsMode === 'live' && !isIOS()) {
+        try {
+          const liveText = getLiveContent(current);
+          addLog(
+            'Audio API',
+            `[Live 3.1] Streaming → voice: ${liveVoice} | temp: ${liveTemperature} | ${liveText.length} chars`,
+            'request'
+          );
+          const streamPlayer = createStreamingPlayer(getContext().rawContext);
+          const pcmB64 = [];
+          let sampleRate = 24000;
+          let firstSound = false;
+          let streamErr = null;
+
+          const liveRes = await fetch(`${apiUrl}/api/ai/live-tts?stream=1`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: liveText,
+              voiceName: liveVoice,
+              temperature: liveTemperature,
+              systemInstruction: LIVE_SYSTEM_INSTRUCTION,
+            }),
+          });
+          if (!liveRes.ok || !liveRes.body) {
+            throw new Error(`Live stream HTTP ${liveRes.status}`);
+          }
+
+          await consumeSSE(liveRes.body.getReader(), {
+            onMeta: (m) => {
+              if (m.sampleRate) sampleRate = m.sampleRate;
+            },
+            onChunk: (chunkB64) => {
+              // Swipe/navigation guard — stop feeding if the user moved on.
+              if (_currentPlayId !== playId) {
+                streamPlayer.stop();
+                return;
+              }
+              pcmB64.push(chunkB64);
+              streamPlayer.pushChunk(pcmBase64ToInt16(chunkB64));
+              if (!firstSound) {
+                firstSound = true;
+                const t = ((performance.now() - apiStart) / 1000).toFixed(2);
+                addLog('Audio API', `[Live 3.1] ▶ First sound (${t}s) | voice: ${liveVoice}`, 'success');
+                progress.dismiss('Recitation ready');
+                setPlayer(streamPlayer);
+                startPlayer(streamPlayer, 0);
+                setPlaying(true);
+                setGenerating(false);
+              }
+            },
+            onDone: () => streamPlayer.markInputDone(),
+            onError: (msg) => {
+              streamErr = msg;
+            },
+          });
+
+          // User navigated away mid-stream — bail without caching/playing.
+          if (_currentPlayId !== playId) {
+            streamPlayer.stop();
+            return;
+          }
+
+          if (firstSound) {
+            // Build one WAV from the collected PCM for caching + resume-from-blob.
+            const blob = pcm16ToWav(concatPcmBase64(pcmB64), sampleRate);
+            if (blob) {
+              setUrl(URL.createObjectURL(blob));
+              if (FEATURES.caching && current?.id) {
+                await cacheOperations.set(
+                  CACHE_CONFIG.stores.audio,
+                  keyFor('live'),
+                  {
+                    blob,
+                    metadata: {
+                      poet: current.poet,
+                      title: current.title,
+                      size: blob.size,
+                      model: 'Live 3.1',
+                      voice: liveVoice,
+                    },
+                  },
+                  addLog
+                );
+                addLog('Audio Cache', `Live audio cached (voice: ${liveVoice})`, 'success');
+              }
+            }
+            return; // success — finally{} resets generating/toggling flags
+          }
+
+          // Stream ended before any audio — fall through to REST.
+          addLog(
+            'Audio API',
+            `[Live 3.1] No audio${streamErr ? `: ${streamErr}` : ''} — falling back to REST`,
+            'warning'
+          );
+          ttsMode = 'rest';
+        } catch (streamError) {
+          addLog(
+            'Audio API',
+            `[Live 3.1] Stream failed: ${streamError.message} — falling back to REST`,
+            'warning'
+          );
+          ttsMode = 'rest';
+        }
+      }
+
       // ── Try selected mode first; on any failure (429, 404, network, etc.)
       //    fall back to the other mode once. This makes the app resilient when
       //    one path is rate-limited or unavailable (e.g. Live route not deployed
@@ -395,8 +518,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
         try {
           if (mode === 'live') {
-            // ── Live API path — WebSocket TTS via server endpoint ──
-            const { liveVoice, liveTemperature } = useUIStore.getState();
+            // ── Live API path — WebSocket TTS via server endpoint (buffered fallback) ──
             const liveText = getLiveContent(current);
             addLog(
               'Audio API',
@@ -580,7 +702,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         const cacheStart = performance.now();
         await cacheOperations.set(
           CACHE_CONFIG.stores.audio,
-          current.id,
+          keyFor(ttsMode),
           {
             blob,
             metadata: {

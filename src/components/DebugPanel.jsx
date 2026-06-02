@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bug, X, Trash2, Zap, Radio, Wifi } from 'lucide-react';
+import { Bug, X, Copy, Check, Zap, Radio, Wifi } from 'lucide-react';
 import Sentry from '../sentry.js';
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
@@ -13,7 +13,42 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 const DebugPanel = ({ controlBarRef }) => {
   const logs = useUIStore((s) => s.logs);
-  const onClear = () => useUIStore.getState().clearLogs();
+  const [copied, setCopied] = useState(false);
+
+  // Serialize the whole log to plain text and copy it to the clipboard.
+  const onCopyLogs = async () => {
+    const text = logs
+      .map((l) => `${l.time || l.rel || ''} [${(l.type || 'info').toUpperCase()}] [${l.label}] ${l.msg}`)
+      .join('\n');
+    const ok = await (async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        return true;
+      } catch {
+        // Fallback for non-secure contexts / older browsers
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.opacity = '0';
+          document.body.appendChild(ta);
+          ta.select();
+          const done = document.execCommand('copy');
+          document.body.removeChild(ta);
+          return done;
+        } catch {
+          return false;
+        }
+      }
+    })();
+    useUIStore
+      .getState()
+      .addLog('Debug', ok ? `Copied ${logs.length} log lines to clipboard` : 'Copy failed', ok ? 'success' : 'error');
+    if (ok) {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }
+  };
   const darkMode = useUIStore((s) => s.darkMode);
   const visible = useUIStore((s) => s.showDebugLogs);
   const currentFont = useUIStore((s) => s.font);
@@ -195,11 +230,12 @@ const DebugPanel = ({ controlBarRef }) => {
           </span>
           <div className="flex items-center gap-1.5">
             <button
-              onClick={onClear}
-              className="p-1 transition-colors text-gold/30 hover:text-gold/70"
-              title="Clear logs"
+              onClick={onCopyLogs}
+              disabled={logs.length === 0}
+              className="p-1 transition-colors text-gold/30 hover:text-gold/70 disabled:opacity-30"
+              title={copied ? 'Copied!' : 'Copy logs to clipboard'}
             >
-              <Trash2 size={11} />
+              {copied ? <Check size={11} className="text-emerald-400" /> : <Copy size={11} />}
             </button>
             <button
               onClick={() => setPanelOpen(false)}
@@ -285,7 +321,21 @@ const DebugPanel = ({ controlBarRef }) => {
               <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">Voice</span>
               <select
                 value={liveVoice}
-                onChange={(e) => { useUIStore.getState().setLiveVoice(e.target.value); useUIStore.getState().addLog('Settings', `Live voice → ${e.target.value}`, 'user'); }}
+                onChange={(e) => {
+                  useUIStore.getState().setLiveVoice(e.target.value);
+                  useUIStore.getState().addLog('Settings', `Live voice → ${e.target.value}`, 'user');
+                  // Reset loaded audio so the next Listen regenerates in the new voice
+                  // (otherwise the resume-from-blob path would replay the old voice).
+                  const { player, resetAudio } = useAudioStore.getState();
+                  if (player) {
+                    try {
+                      player.stop();
+                    } catch {
+                      /* already stopped */
+                    }
+                  }
+                  resetAudio();
+                }}
                 className="flex-1 text-[0.6rem] font-mono rounded px-1.5 py-0.5 cursor-pointer"
                 style={{ background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', color: 'rgb(251,146,60)' }}
               >

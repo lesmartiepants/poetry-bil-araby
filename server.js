@@ -949,221 +949,265 @@ app.post('/api/ai/:model/:action', async (req, res) => {
 // ═══════════════════════════════════════════════════════════════
 app.post('/api/ai/live-tts', async (req, res) => {
   const LIVE_MODEL = 'models/gemini-3.1-flash-live-preview';
-  const WS_TOTAL_TIMEOUT = 60000; // 60s hard ceiling
-  const WS_FIRST_CHUNK_TIMEOUT = 20000; // fail fast if model never starts responding
+  const WS_FIRST_CHUNK_TIMEOUT = 20000; // fail fast if the model never starts responding
+  const WS_IDLE_TIMEOUT = 25000; // after audio starts, no chunk for this long = stalled
+  // Per-request wall-clock ceiling. Streaming keeps the HTTP connection alive with
+  // flowing data, so it can run long (a multi-minute recitation). The buffering path
+  // holds one silent request open, so it gets a tighter cap to stay under proxy limits.
+  const WS_MAX_STREAM = 180000;
+  const WS_MAX_BUFFER = 90000;
 
-  try {
-    if (!GEMINI_API_KEY) {
-      return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
-    }
-    const { text, voiceName, systemInstruction, temperature } = req.body || {};
-    if (!text || typeof text !== 'string' || !text.trim()) {
-      return res.status(400).json({ error: 'Missing or empty "text" field' });
-    }
+  if (!GEMINI_API_KEY) {
+    return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
+  }
+  const { text, voiceName, systemInstruction, temperature } = req.body || {};
+  if (!text || typeof text !== 'string' || !text.trim()) {
+    return res.status(400).json({ error: 'Missing or empty "text" field' });
+  }
 
-    const voice = voiceName || 'Fenrir';
-    const temp = temperature != null ? parseFloat(temperature) : 0;
+  const voice = voiceName || 'Fenrir';
+  const temp = temperature != null ? parseFloat(temperature) : 0;
+  const streaming = req.query.stream === '1' || req.query.stream === 'sse';
 
-    log.info(
-      'Live TTS',
-      `Request | model: ${LIVE_MODEL} | voice: ${voice} | temp: ${temp} | text: ${text.length} chars`
-    );
+  log.info(
+    'Live TTS',
+    `Request | model: ${LIVE_MODEL} | voice: ${voice} | temp: ${temp} | text: ${text.length} chars | mode: ${streaming ? 'stream' : 'buffer'}`
+  );
 
-    const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
+  const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
+  const t0 = Date.now();
+  const ms = () => `+${Date.now() - t0}ms`;
 
-    const t0 = Date.now();
-    const ms = () => `+${Date.now() - t0}ms`;
+  /**
+   * Open one Live API WebSocket session and drive callbacks as audio arrives.
+   * Shared by the streaming (SSE) and buffering (JSON) paths so the protocol
+   * handling lives in one place.
+   *
+   * Contract: `onFail` only fires BEFORE any audio chunk (so a caller can safely
+   * fall back to REST). Once the first chunk has arrived, every terminal event
+   * (turnComplete, interrupt, ws-close, idle, max) resolves through `onDone` with
+   * whatever audio was received — partial audio is still usable.
+   *
+   * @returns {() => void} canceller that closes the socket (for client disconnects)
+   */
+  const runSession = ({ maxMs, onFirstChunk, onChunk, onDone, onFail }) => {
+    let settled = false;
+    let chunkCount = 0;
+    let firstChunkTimer = null;
+    let idleTimer = null;
 
-    const audioChunks = await new Promise((resolve, reject) => {
-      const chunks = [];
-      let settled = false;
-      let firstChunkTimer = null;
+    const clearTimers = () => {
+      clearTimeout(firstChunkTimer);
+      clearTimeout(idleTimer);
+      clearTimeout(maxTimer);
+    };
+    const done = (reason) => {
+      if (settled) return;
+      settled = true;
+      clearTimers();
+      try {
+        ws.close();
+      } catch {}
+      onDone(reason, chunkCount);
+    };
+    const fail = (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimers();
+      try {
+        ws.close();
+      } catch {}
+      onFail(err, chunkCount);
+    };
+    // Past the first chunk, "stop" means "we're done with what we have", never a hard fail.
+    const stop = (reason, err) => (chunkCount > 0 ? done(reason) : fail(err));
 
-      // Single settle helper prevents double-resolve/reject
-      const settle = (fn) => {
-        if (settled) return;
-        settled = true;
-        clearTimeout(totalTimeout);
-        clearTimeout(firstChunkTimer);
-        fn();
-      };
+    const maxTimer = setTimeout(() => {
+      log.error('Live TTS', `Max ${maxMs}ms reached (${ms()}) | ${chunkCount} chunks`);
+      stop('max-duration', new Error(`Live TTS exceeded ${Math.round(maxMs / 1000)}s`));
+    }, maxMs);
+    const resetIdle = () => {
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => {
+        log.error('Live TTS', `Idle ${WS_IDLE_TIMEOUT}ms, no new chunk (${ms()}) | ${chunkCount} chunks`);
+        stop('idle', new Error('Live TTS stalled'));
+      }, WS_IDLE_TIMEOUT);
+    };
 
-      const totalTimeout = setTimeout(() => {
-        log.error('Live TTS', `Hard timeout after 60s (${ms()}) | ${chunks.length} chunks so far`);
-        settle(() => {
-          ws.close();
-          reject(new Error('Live TTS timed out after 60s'));
-        });
-      }, WS_TOTAL_TIMEOUT);
+    const ws = new WebSocket(wsUrl);
 
-      const ws = new WebSocket(wsUrl);
-
-      ws.on('open', () => {
-        log.info('Live TTS', `WS connected (${ms()})`);
-
-        const setupMsg = {
-          setup: {
-            model: LIVE_MODEL,
-            generationConfig: {
-              responseModalities: ['AUDIO'],
-              speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
-              ...(temp !== 0 ? { temperature: temp } : {}),
-            },
-            systemInstruction: {
-              parts: [
-                {
-                  text:
-                    systemInstruction ||
-                    'You are a text-to-speech reader. Read aloud the exact text provided by the user, word for word, with no additions, commentary, questions, or paraphrasing. Do not respond conversationally. Only speak the text as given.',
-                },
-              ],
-            },
+    ws.on('open', () => {
+      log.info('Live TTS', `WS connected (${ms()})`);
+      const setupMsg = {
+        setup: {
+          model: LIVE_MODEL,
+          generationConfig: {
+            responseModalities: ['AUDIO'],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
+            ...(temp !== 0 ? { temperature: temp } : {}),
           },
-        };
-        log.debug(
-          'Live TTS',
-          `Setup msg sent | voice: ${voice} | modalities: AUDIO | temp: ${temp}`
-        );
-        ws.send(JSON.stringify(setupMsg));
-      });
-
-      ws.on('message', (raw) => {
-        try {
-          const msg = JSON.parse(raw.toString());
-          const msgKeys = Object.keys(msg).join(', ');
-          log.debug('Live TTS', `← ${msgKeys} (${ms()})`);
-
-          // ── Setup complete — send the poem text ──────────────────────────
-          if (msg.setupComplete !== undefined) {
-            log.info(
-              'Live TTS',
-              `Setup complete (${ms()}) | sending ${text.length}-char text | voice: ${voice}`
-            );
-
-            // Start a fast-fail timer — if no audio arrives within 20s the model isn't responding
-            firstChunkTimer = setTimeout(() => {
-              log.error(
-                'Live TTS',
-                `No audio chunk received after 20s — aborting (model may not support format)`
-              );
-              settle(() => {
-                ws.close();
-                reject(new Error('Live TTS: no audio data within 20s'));
-              });
-            }, WS_FIRST_CHUNK_TIMEOUT);
-
-            // clientContent + turnComplete:true is the correct format for native-audio models
-            // to receive a complete text turn and immediately start generating audio.
-            ws.send(
-              JSON.stringify({
-                clientContent: {
-                  turns: [{ role: 'user', parts: [{ text }] }],
-                  turnComplete: true,
-                },
-              })
-            );
-            return;
-          }
-
-          // ── API-level error ──────────────────────────────────────────────
-          if (msg.error) {
-            const errMsg = msg.error?.message || JSON.stringify(msg.error);
-            log.error('Live TTS', `API error (${ms()}): ${errMsg}`);
-            settle(() => {
-              ws.close();
-              reject(new Error(`Gemini Live API error: ${errMsg}`));
-            });
-            return;
-          }
-
-          // ── Audio / text parts ───────────────────────────────────────────
-          if (msg.serverContent?.modelTurn?.parts) {
-            for (const part of msg.serverContent.modelTurn.parts) {
-              if (part.inlineData?.data) {
-                if (chunks.length === 0) {
-                  clearTimeout(firstChunkTimer); // cancel the no-audio timer
-                  log.info(
-                    'Live TTS',
-                    `First audio chunk arrived (${ms()}) | mime: ${part.inlineData.mimeType || 'audio/pcm'}`
-                  );
-                }
-                chunks.push(part.inlineData.data);
-                log.debug(
-                  'Live TTS',
-                  `Chunk #${chunks.length}: ${part.inlineData.data.length} b64 chars (${ms()})`
-                );
-              } else if (part.text) {
-                log.debug('Live TTS', `Text part: "${part.text.substring(0, 80)}" (${ms()})`);
-              }
-            }
-          }
-
-          // ── Turn complete — all audio received ───────────────────────────
-          if (msg.serverContent?.turnComplete) {
-            log.info('Live TTS', `Turn complete (${ms()}) | ${chunks.length} chunks total`);
-            settle(() => {
-              ws.close();
-              resolve(chunks);
-            });
-          }
-
-          // ── Interrupted (model stopped mid-response) ─────────────────────
-          if (msg.serverContent?.interrupted) {
-            log.error('Live TTS', `Session interrupted by model (${ms()})`);
-            settle(() => {
-              ws.close();
-              if (chunks.length > 0)
-                resolve(chunks); // partial audio is still usable
-              else reject(new Error('Live TTS session interrupted before any audio'));
-            });
-          }
-        } catch (e) {
-          log.error('Live TTS', `Message parse error: ${e.message}`);
-        }
-      });
-
-      ws.on('error', (err) => {
-        log.error('Live TTS', `WS error (${ms()}): ${err.message}`);
-        settle(() => reject(err));
-      });
-
-      ws.on('close', (code, reason) => {
-        const reasonStr = reason?.toString() || '';
-        log.info(
-          'Live TTS',
-          `WS closed (${ms()}) | code: ${code}${reasonStr ? ` | reason: ${reasonStr}` : ''}`
-        );
-        if (!settled) {
-          settle(() => {
-            if (chunks.length > 0) resolve(chunks);
-            else
-              reject(
-                new Error(
-                  `WebSocket closed unexpectedly: code=${code}${reasonStr ? ` (${reasonStr})` : ''}`
-                )
-              );
-          });
-        }
-      });
+          systemInstruction: {
+            parts: [
+              {
+                text:
+                  systemInstruction ||
+                  'You are a text-to-speech reader. Read aloud the exact text provided by the user, word for word, with no additions, commentary, questions, or paraphrasing. Do not respond conversationally. Only speak the text as given.',
+              },
+            ],
+          },
+        },
+      };
+      ws.send(JSON.stringify(setupMsg));
     });
 
-    if (!audioChunks.length) {
-      return res.status(500).json({ error: 'No audio data received from Live API' });
-    }
+    ws.on('message', (raw) => {
+      try {
+        const msg = JSON.parse(raw.toString());
 
-    // Decode each base64 chunk to binary, concat, re-encode.
-    // Simple string join is wrong when chunks have base64 padding ('=') in the middle.
-    const combined = Buffer.concat(audioChunks.map((b64) => Buffer.from(b64, 'base64')));
-    const combinedBase64 = combined.toString('base64');
-    log.info(
-      'Live TTS',
-      `Done (${ms()}) | ${audioChunks.length} chunks | ${combined.length} bytes PCM | voice: ${voice}`
-    );
-    res.json({ audioData: combinedBase64 });
-  } catch (error) {
-    log.error('Live TTS', `Failed: ${error.message}`);
-    res.status(500).json({ error: `Live TTS failed: ${error.message}` });
+        // ── Setup complete — send the poem text ──────────────────────────
+        if (msg.setupComplete !== undefined) {
+          log.info('Live TTS', `Setup complete (${ms()}) | sending ${text.length}-char text`);
+          firstChunkTimer = setTimeout(() => {
+            log.error('Live TTS', `No audio within 20s — aborting (${ms()})`);
+            fail(new Error('Live TTS: no audio data within 20s'));
+          }, WS_FIRST_CHUNK_TIMEOUT);
+          // clientContent + turnComplete:true is the correct format for native-audio
+          // models: deliver a complete text turn and immediately start generating audio.
+          ws.send(
+            JSON.stringify({
+              clientContent: { turns: [{ role: 'user', parts: [{ text }] }], turnComplete: true },
+            })
+          );
+          return;
+        }
+
+        // ── API-level error ──────────────────────────────────────────────
+        if (msg.error) {
+          const errMsg = msg.error?.message || JSON.stringify(msg.error);
+          log.error('Live TTS', `API error (${ms()}): ${errMsg}`);
+          stop('api-error', new Error(`Gemini Live API error: ${errMsg}`));
+          return;
+        }
+
+        // ── Audio / text parts ───────────────────────────────────────────
+        if (msg.serverContent?.modelTurn?.parts) {
+          for (const part of msg.serverContent.modelTurn.parts) {
+            if (part.inlineData?.data) {
+              if (chunkCount === 0) {
+                clearTimeout(firstChunkTimer);
+                log.info(
+                  'Live TTS',
+                  `First audio chunk (${ms()}) | mime: ${part.inlineData.mimeType || 'audio/pcm'}`
+                );
+                if (onFirstChunk) onFirstChunk(part.inlineData.mimeType);
+              }
+              chunkCount++;
+              onChunk(part.inlineData.data);
+              resetIdle();
+            }
+          }
+        }
+
+        // ── Turn complete — all audio received ───────────────────────────
+        if (msg.serverContent?.turnComplete) {
+          log.info('Live TTS', `Turn complete (${ms()}) | ${chunkCount} chunks total`);
+          done('complete');
+        }
+
+        // ── Interrupted (model stopped mid-response) ─────────────────────
+        if (msg.serverContent?.interrupted) {
+          log.error('Live TTS', `Session interrupted by model (${ms()})`);
+          stop('interrupted', new Error('Live TTS session interrupted before any audio'));
+        }
+      } catch (e) {
+        log.error('Live TTS', `Message parse error: ${e.message}`);
+      }
+    });
+
+    ws.on('error', (err) => {
+      log.error('Live TTS', `WS error (${ms()}): ${err.message}`);
+      stop('ws-error', err);
+    });
+
+    ws.on('close', (code, reason) => {
+      const reasonStr = reason?.toString() || '';
+      log.info('Live TTS', `WS closed (${ms()}) | code: ${code}${reasonStr ? ` | ${reasonStr}` : ''}`);
+      stop('ws-close', new Error(`WebSocket closed: code=${code}${reasonStr ? ` (${reasonStr})` : ''}`));
+    });
+
+    return () => {
+      try {
+        ws.close();
+      } catch {}
+    };
+  };
+
+  // ── Streaming path: forward each PCM chunk as an SSE event ─────────────────
+  // First sound reaches the listener in ~1s instead of waiting for the whole
+  // recitation to synthesize. Removes the old 60s buffer ceiling that 500'd long poems.
+  if (streaming) {
+    res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache, no-transform');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // disable proxy buffering (nginx/Render)
+    if (typeof res.flushHeaders === 'function') res.flushHeaders();
+
+    const sse = (obj) => {
+      try {
+        res.write(`data: ${JSON.stringify(obj)}\n\n`);
+      } catch {}
+    };
+
+    const cancel = runSession({
+      maxMs: WS_MAX_STREAM,
+      onFirstChunk: (mime) =>
+        sse({ meta: { sampleRate: 24000, mimeType: mime || 'audio/pcm;rate=24000' } }),
+      onChunk: (b64) => sse({ chunk: b64 }),
+      onDone: (reason, n) => {
+        log.info('Live TTS', `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice}`);
+        sse({ done: true, chunks: n, reason });
+        try {
+          res.end();
+        } catch {}
+      },
+      onFail: (err, n) => {
+        log.error('Live TTS', `Stream failed (${ms()}): ${err.message} | ${n} chunks`);
+        sse({ error: err.message });
+        try {
+          res.end();
+        } catch {}
+      },
+    });
+
+    // If the listener navigates away / closes the tab, stop the upstream session.
+    res.on('close', () => cancel());
+    return;
   }
+
+  // ── Buffering path (legacy/iOS/safety): collect all chunks, return one blob ──
+  const chunks = [];
+  runSession({
+    maxMs: WS_MAX_BUFFER,
+    onChunk: (b64) => chunks.push(b64),
+    onDone: () => {
+      if (!chunks.length) {
+        if (!res.headersSent) res.status(500).json({ error: 'No audio data received from Live API' });
+        return;
+      }
+      // Decode each base64 chunk to binary, concat, re-encode. A plain string join
+      // is wrong when chunks carry base64 padding ('=') in the middle.
+      const combined = Buffer.concat(chunks.map((b64) => Buffer.from(b64, 'base64')));
+      log.info(
+        'Live TTS',
+        `Done (${ms()}) | ${chunks.length} chunks | ${combined.length} bytes PCM | voice: ${voice}`
+      );
+      res.json({ audioData: combined.toString('base64') });
+    },
+    onFail: (err) => {
+      log.error('Live TTS', `Failed: ${err.message}`);
+      if (!res.headersSent) res.status(500).json({ error: `Live TTS failed: ${err.message}` });
+    },
+  });
 });
 
 // ═══════════════════════════════════════════════════════════════

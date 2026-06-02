@@ -5,7 +5,7 @@ import { useUIStore } from '../uiStore';
 import { useModalStore } from '../modalStore';
 import { INSIGHTS_SYSTEM_PROMPT, RATCHET_SYSTEM_PROMPT } from '../../prompts';
 import { parseInsight } from '../../utils/insightParser';
-import { geminiTextFetch } from '../../services/gemini.js';
+import { geminiTextFetch, thinkingConfigFor } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
 import { saveTranslation } from '../../services/database.js';
 
@@ -172,14 +172,19 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       let firstChunkTime = null;
       let chunkCount = 0;
 
-      const insightsStreamBody = JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }],
-        systemInstruction: { parts: [{ text: activeSystemPrompt }] },
-        generationConfig: { maxOutputTokens: 8192 },
-      });
+      // Body is built per-model so thinking config matches the model family
+      // (3.x → thinkingLevel, 2.5 → thinkingBudget). Minimizing thinking is the
+      // single biggest translation latency win: first streamed token drops from
+      // ~15s warm (~27s cold) to ~1s. See thinkingConfigFor().
+      const buildInsightsBody = (model) =>
+        JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          systemInstruction: { parts: [{ text: activeSystemPrompt }] },
+          generationConfig: { maxOutputTokens: 8192, ...thinkingConfigFor(model) },
+        });
       const res = await geminiTextFetch(
         'streamGenerateContent',
-        insightsStreamBody,
+        buildInsightsBody,
         'Insights failed',
         addLog
       );

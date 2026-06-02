@@ -53,6 +53,14 @@ export default [
     },
   },
 
+  // Node.js scripts (CI gates, code generation)
+  {
+    files: ['scripts/**/*.{js,mjs}'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
+
   // Test files — add Node/test globals
   {
     files: ['src/test/**/*.{js,jsx}'],

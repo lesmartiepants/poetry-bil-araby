@@ -1,6 +1,12 @@
 import { motion } from 'framer-motion';
 import { SkipBack, Play, Pause, SkipForward, Loader2 } from 'lucide-react';
-import { startPlayer, pauseOffset, playbackStartTime, isSeeking, applyHighlightsOnce } from '../hooks/useTTSHighlight';
+import {
+  startPlayer,
+  pauseOffset,
+  playbackStartTime,
+  isSeeking,
+  applyHighlightsOnce,
+} from '../hooks/useTTSHighlight';
 import { useAudioStore } from '../stores/audioStore';
 import { useUIStore } from '../stores/uiStore';
 
@@ -28,18 +34,24 @@ const PlayControlsStrip = ({
   totalDuration = 0,
   onVerseChange = () => {},
 }) => {
+  const highlightStyle = useUIStore((s) => s.highlightStyle);
+  if (highlightStyle === 'none') return null;
   const seek = (offset) => {
     // Read live store state BEFORE stop() — the isPlaying prop is stale
     // (onstop fires and updates the store, but this closure captured the old prop)
     const wasPlaying = useAudioStore.getState().isPlaying;
-    useUIStore.getState().addLog('Playback', `⏩ Seek to ${offset.toFixed(2)}s | wasPlaying: ${wasPlaying}`, 'user');
+    useUIStore
+      .getState()
+      .addLog('Playback', `⏩ Seek to ${offset.toFixed(2)}s | wasPlaying: ${wasPlaying}`, 'user');
     isSeeking.value = true;
     if (wasPlaying) {
       // Set state BEFORE stop() — isPlaying=true when onstop fires means
       // the guard check will see isSeeking=true and return without clobbering.
       useAudioStore.getState().setPlaying(true);
     }
-    try { player.stop(); } catch {}
+    try {
+      player.stop();
+    } catch {}
     if (wasPlaying) {
       startPlayer(player, offset);
     } else {
@@ -77,7 +89,8 @@ const PlayControlsStrip = ({
       <button
         aria-label="Prev verse"
         onClick={handlePrev}
-        className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 hover:bg-white/10"
+        disabled={currentVerseIndex === 0}
+        className="w-8 h-8 flex items-center justify-center rounded-lg transition-all duration-150 disabled:opacity-30 hover:bg-white/10"
         style={{ color: 'var(--gold, #c9a84c)' }}
       >
         <SkipBack size={16} />

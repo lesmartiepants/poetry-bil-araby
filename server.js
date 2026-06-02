@@ -29,7 +29,14 @@ import WebSocket from 'ws';
 
 const { Pool } = pg;
 const app = express();
-const _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
+// Wrap in try/catch so the module loads cleanly in test environments where
+// import.meta.url is not a file: URL (e.g. happy-dom Vitest environment).
+let _labHtml = '';
+try {
+  _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
+} catch {
+  // tts-lab route returns empty response when the HTML file cannot be resolved
+}
 const PORT = process.env.PORT || 3001;
 const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
 const LOG_DEBUG = process.env.LOG_DEBUG === 'true'; // verbose DB debug, off by default
@@ -946,12 +953,12 @@ app.post('/api/ai/live-tts', async (req, res) => {
   const WS_FIRST_CHUNK_TIMEOUT = 20000; // fail fast if model never starts responding
 
   try {
-    if (!GEMINI_API_KEY) {
-      return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
-    }
     const { text, voiceName, systemInstruction, temperature } = req.body || {};
     if (!text || typeof text !== 'string' || !text.trim()) {
       return res.status(400).json({ error: 'Missing or empty "text" field' });
+    }
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
     }
 
     const voice = voiceName || 'Fenrir';

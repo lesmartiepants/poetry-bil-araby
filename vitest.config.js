@@ -16,6 +16,15 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
+    // Per-file environment overrides: server tests run in node (import.meta.url is a real file: URL there)
+    environmentMatchGlobs: [
+      ['**/src/test/server.test.js', 'node'],
+      ['**/src/test/design-review-api.test.js', 'node'],
+    ],
+    // jsdom needs a url for localStorage/sessionStorage to work
+    environmentOptions: {
+      jsdom: { url: 'http://localhost/' },
+    },
     setupFiles: './src/test/setup.js',
     css: true,
     include: ['src/**/*.test.{js,jsx,ts,tsx}'],
@@ -51,12 +60,15 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       exclude: ['node_modules/', 'src/test/', '*.config.js', 'dist/', '.github/', 'e2e/'],
-      // Baseline thresholds — prevents silent test deletion
+      // Coverage ratchet — floor can only go up, never down.
+      // autoUpdate: true means a passing run updates these values automatically;
+      // CI fails if any metric drops below the recorded floor.
       thresholds: {
-        statements: 35,
-        branches: 25,
-        functions: 30,
-        lines: 35,
+        autoUpdate: true,
+        statements: 60,
+        branches: 50,
+        functions: 55,
+        lines: 60,
       },
       // Speed up coverage collection in CI
       reportsDirectory: './coverage',

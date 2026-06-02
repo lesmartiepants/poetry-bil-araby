@@ -1,5 +1,11 @@
 name: CI Pipeline
 
+# Required secrets for full coverage:
+#   VITE_GEMINI_API_KEY   — enables AI-mode and TTS unit tests that call Gemini
+#   DATABASE_URL          — enables E2E tests against real PostgreSQL
+#   SUPABASE_ACCESS_TOKEN — enables migration checks in deploy.yml
+#   SUPABASE_PROJECT_REF  — Supabase project identifier for CLI commands
+
 on:
   push:
     branches: [main]
@@ -19,6 +25,9 @@ on:
       - '.github/**.md'
       - 'LICENSE'
       - '.gitignore'
+  # Weekly full browser matrix run (Monday 4:03 AM UTC)
+  schedule:
+    - cron: '3 4 * * 1'
 
 permissions:
   contents: read
@@ -60,11 +69,35 @@ jobs:
               - 'postcss.config.js'
               - '.github/workflows/**'
 
+  # Lint — runs in parallel with build (fast feedback, no artifact dependency)
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: |
+      needs.detect-changes.outputs.code-changed == 'true' ||
+      needs.detect-changes.outputs.config-changed == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
   # Stage 1: Build and validate
   build:
     name: Build & Validate
     runs-on: ubuntu-latest
     needs: detect-changes
+    timeout-minutes: 10
     if: |
       needs.detect-changes.outputs.code-changed == 'true' ||
       needs.detect-changes.outputs.tests-changed == 'true' ||
@@ -91,7 +124,7 @@ jobs:
           path: dist/
           retention-days: 7
 
-  # Stage 2: Unit tests
+  # Stage 2: Unit tests (browser-env components + utilities)
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
@@ -100,7 +133,7 @@ jobs:
       needs.detect-changes.outputs.code-changed == 'true' ||
       needs.detect-changes.outputs.tests-changed == 'true' ||
       needs.detect-changes.outputs.config-changed == 'true'
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
 
@@ -117,6 +150,36 @@ jobs:
         run: npm run test:coverage
         env:
           CI: true
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
+
+      - name: Gate — new source files must have test files
+        run: |
+          BASE="${{ github.base_ref || 'main' }}"
+          git fetch origin "$BASE" --depth=1 2>/dev/null || true
+          NEW_SRC=$(git diff --name-only "origin/${BASE}...HEAD" 2>/dev/null \
+            | grep -E '^src/(components|stores/actions)/[^/]+\.(js|jsx)$' \
+            | grep -v '\.test\.' || true)
+          MISSING=""
+          for FILE in $NEW_SRC; do
+            BASE_NAME=$(basename "$FILE" .jsx); BASE_NAME=$(basename "$BASE_NAME" .js)
+            if ! find src/test -name "${BASE_NAME}.test.*" -print -quit | grep -q .; then
+              MISSING="$MISSING\n  $FILE  →  src/test/${BASE_NAME}.test.jsx"
+            fi
+          done
+          if [ -n "$MISSING" ]; then
+            echo -e "New source files have no test file:$MISSING"
+            echo "Create the test file (even a minimal stub) before merging."
+            exit 1
+          fi
+          echo "Gate passed: all new source files have test coverage"
 
   # Stage 3: Smoke Tests — user-flow E2E (all API calls mocked, no backend needed)
   smoke-tests:
@@ -127,7 +190,7 @@ jobs:
       needs.detect-changes.outputs.code-changed == 'true' ||
       needs.detect-changes.outputs.tests-changed == 'true' ||
       needs.detect-changes.outputs.config-changed == 'true'
-    timeout-minutes: 5
+    timeout-minutes: 15
     outputs:
       missing_tokens: ${{ steps.e2e-env.outputs.missing_tokens }}
 
@@ -148,22 +211,41 @@ jobs:
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          # Include playwright version in the key so new browser installs are forced
+          # when playwright itself is updated (not just when package-lock changes).
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('playwright.config.js') }}
           restore-keys: |
+            ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}-
             ${{ runner.os }}-playwright-
 
       - name: Install Playwright browsers (chromium only for CI speed)
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
 
-      - name: Install Playwright system dependencies
+      - name: Install Playwright system dependencies (cache hit path)
         if: steps.playwright-cache.outputs.cache-hit == 'true'
+        # Separate from browser install to avoid redundant apt-get on cache hits
         run: npx playwright install-deps chromium
 
-      - name: Run Playwright smoke tests
+      - name: Check required CI secrets
+        id: e2e-env
+        run: |
+          MISSING=""
+          if [ -z "$VITE_GEMINI_API_KEY" ]; then MISSING="$MISSING\nVITE_GEMINI_API_KEY (enables TTS smoke tests)"; fi
+          if [ -n "$MISSING" ]; then
+            echo "missing_tokens=$MISSING" >> "$GITHUB_OUTPUT"
+            echo -e "Some CI secrets are not configured:$MISSING"
+          else
+            echo "missing_tokens=" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+
+      - name: Run Playwright smoke tests (Desktop Chrome + Mobile Chrome)
         run: npm run test:e2e
         env:
           CI: true
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
 
       - name: Upload Playwright report
         if: always()
@@ -181,6 +263,43 @@ jobs:
           path: test-results/
           retention-days: 14
           if-no-files-found: ignore
+
+  # Weekly full browser matrix job (Chrome + Firefox + WebKit + Mobile Chrome)
+  # Runs on schedule only so it doesn't slow every PR.
+  weekly-full-matrix:
+    name: Full Browser Matrix (Weekly)
+    runs-on: ubuntu-latest
+    # Only on the weekly schedule trigger
+    if: github.event_name == 'schedule'
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install all Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run full browser matrix
+        run: npm run test:e2e:full
+        env:
+          CI: true
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+
+      - name: Upload full matrix Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-full-matrix
+          path: playwright-report/
+          retention-days: 30
 
   # Stage 4: Deploy preview (Vercel, Netlify, or GitHub Pages)
   deploy-preview:
@@ -220,6 +339,7 @@ jobs:
             const buildStatus = '${{ needs.build.result }}';
             const testStatus = '${{ needs.test.result }}';
             const smokeStatus = '${{ needs.smoke-tests.result }}';
+            const lintStatus = '${{ needs.lint.result }}';
 
             const icon = (s) => s === 'success' ? '✅' : s === 'failure' ? '❌' : s === 'skipped' ? '⏭️' : '⚠️';
             const allPassed = [buildStatus, testStatus, smokeStatus].every(s => s === 'success' || s === 'skipped');
@@ -227,13 +347,14 @@ jobs:
             let body = `## CI ${allPassed ? '✅' : '❌'}\n\n`;
             body += `| Check | Status |\n|-------|--------|\n`;
             body += `| Build | ${icon(buildStatus)} ${buildStatus} |\n`;
+            body += `| Lint | ${icon(lintStatus)} ${lintStatus} |\n`;
             body += `| Unit Tests | ${icon(testStatus)} ${testStatus} |\n`;
             body += `| Smoke Tests | ${icon(smokeStatus)} ${smokeStatus} |\n`;
 
             const failures = [];
-            const warnings = [];
 
             if (buildStatus === 'failure') failures.push('Build');
+            if (lintStatus === 'failure') failures.push('Lint');
             if (testStatus === 'failure') failures.push('Unit Tests');
             if (smokeStatus === 'failure') failures.push('Smoke Tests');
 
@@ -242,12 +363,18 @@ jobs:
             }
 
             // Report missing secrets/tokens (quiet diagnostics from e2e-env step)
+            // Note: reads from smoke-tests (not the old e2e-tests job name — that bug is fixed)
             const missingTokens = process.env.MISSING_TOKENS || '';
             if (missingTokens.trim()) {
               body += `\n<details><summary>⚠️ Missing CI secrets (some tests skipped)</summary>\n\n`;
               body += missingTokens.split('\\n').filter(Boolean).map(t => `- ${t}`).join('\n');
               body += `\n\nAdd these in **Settings → Secrets and variables → Actions** to enable full test coverage.`;
-              body += `\n</details>\n`;
+              body += `\n\n**Required secrets:**\n`;
+              body += `- \`VITE_GEMINI_API_KEY\` — AI mode and TTS tests\n`;
+              body += `- \`DATABASE_URL\` — E2E tests against real PostgreSQL\n`;
+              body += `- \`SUPABASE_ACCESS_TOKEN\` — migration checks\n`;
+              body += `- \`SUPABASE_PROJECT_REF\` — Supabase CLI commands\n`;
+              body += `</details>\n`;
             }
 
             body += `\n<sub>Run [#${process.env.RUN_NUMBER}](${process.env.RUN_URL}) · ${new Date().toISOString().slice(0, 16)}Z</sub>`;
@@ -280,4 +407,6 @@ jobs:
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           RUN_NUMBER: ${{ github.run_number }}
-          MISSING_TOKENS: ${{ needs.e2e-tests.outputs.missing_tokens || '' }}
+          # Fixed: was referencing 'needs.e2e-tests.outputs.missing_tokens' (wrong job name)
+          # now correctly reads from the 'smoke-tests' job
+          MISSING_TOKENS: ${{ needs.smoke-tests.outputs.missing_tokens || '' }}

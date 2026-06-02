@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import PlayControlsStrip from '../components/PlayControlsStrip';
 import { useUIStore } from '../stores/uiStore';
+import { useAudioStore } from '../stores/audioStore';
 
 // Mock framer-motion AnimatePresence + motion so tests work without the full library
 vi.mock('framer-motion', () => ({
@@ -9,8 +10,8 @@ vi.mock('framer-motion', () => ({
   motion: new Proxy(
     {},
     {
-      get: (_, tag) =>
-        // eslint-disable-next-line react/display-name
+      get:
+        (_, tag) =>
         ({ children, ...rest }) => {
           const { initial, animate, exit, transition, ...domProps } = rest;
           return createElement(tag, domProps, children);
@@ -22,11 +23,14 @@ vi.mock('framer-motion', () => ({
 // Import createElement after the mock so it's available in the proxy factory
 import { createElement } from 'react';
 
-// Mock useTTSHighlight — only startPlayer and pauseOffset are used by the strip
+// Mock useTTSHighlight — export all names the strip imports
 const mockStartPlayer = vi.fn();
 vi.mock('../hooks/useTTSHighlight', () => ({
   startPlayer: (...args) => mockStartPlayer(...args),
-  pauseOffset: 0,
+  pauseOffset: { value: 0 },
+  isSeeking: { value: false },
+  playbackStartTime: { value: 0 },
+  applyHighlightsOnce: vi.fn(),
 }));
 
 // Minimal mock player object
@@ -135,6 +139,8 @@ describe('PlayControlsStrip — play/pause button', () => {
 describe('PlayControlsStrip — prev/next verse navigation', () => {
   it('calls startPlayer with previous verse time when Prev is clicked', () => {
     useUIStore.getState().setHighlightStyle('glow');
+    // seek() reads wasPlaying from the store (not the prop), so sync the store
+    useAudioStore.getState().setPlaying(true);
     render(
       <PlayControlsStrip
         player={mockPlayer}
@@ -150,6 +156,8 @@ describe('PlayControlsStrip — prev/next verse navigation', () => {
 
   it('calls startPlayer with next verse time when Next is clicked', () => {
     useUIStore.getState().setHighlightStyle('glow');
+    // seek() reads wasPlaying from the store (not the prop), so sync the store
+    useAudioStore.getState().setPlaying(true);
     render(
       <PlayControlsStrip
         player={mockPlayer}

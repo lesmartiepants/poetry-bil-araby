@@ -9,7 +9,7 @@
 
 import { FEATURES } from '../constants/index.js';
 import { INSIGHTS_SYSTEM_PROMPT, getTTSContent } from '../prompts';
-import { API_MODELS, TTS_CONFIG, geminiTextFetch, fetchTTSWithFallback, canPrefetchTts } from './gemini.js';
+import { API_MODELS, TTS_CONFIG, geminiTextFetch, thinkingConfigFor, fetchTTSWithFallback, canPrefetchTts } from './gemini.js';
 import { CACHE_CONFIG, cacheOperations } from './cache.js';
 import { pcm16ToWav } from '../utils/audio.js';
 
@@ -253,13 +253,17 @@ export const prefetchManager = {
       }
 
       const apiStart = performance.now();
-      const prefetchBody = JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }],
-        systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
-      });
+      // Per-model body so thinking config matches the model family — same
+      // latency fix as the foreground insights path. See thinkingConfigFor().
+      const buildPrefetchBody = (model) =>
+        JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
+          generationConfig: { ...thinkingConfigFor(model) },
+        });
       const res = await geminiTextFetch(
         'generateContent',
-        prefetchBody,
+        buildPrefetchBody,
         'Prefetch Insights',
         addLog
       );

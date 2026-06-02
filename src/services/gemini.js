@@ -13,7 +13,10 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 export const API_MODELS = {
   tts: 'gemini-2.5-flash-preview-tts',
   ttsFallback: 'gemini-2.5-pro-preview-tts',
-  textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
+  // Fallback list, used only when the ListModels API is unavailable. Newest first.
+  // Both confirmed serving generateContent (2026-06); gemini-2.0-flash and
+  // gemini-1.5-flash were retired (404) and were removed.
+  textDefaults: ['gemini-3.5-flash', 'gemini-2.5-flash'],
 };
 
 /**
@@ -170,22 +173,43 @@ export const discoverTextModels = async (addLog) => {
 };
 
 /**
+ * Thinking control by model family. Deep "thinking" stalls the first streamed
+ * token: profiling production (2026-06) showed insights TTFT of ~15s warm
+ * (~27s cold) where the model emitted nothing, then streamed the whole answer
+ * in ~2s. Minimizing thinking drops first-token latency to ~1s with no
+ * meaningful quality loss for translation/analysis.
+ *
+ * Gemini 3.x uses `thinkingLevel` ('minimal' = lowest latency); 2.5 uses
+ * `thinkingBudget` (0 disables). Older families don't support thinking and
+ * 400 on the field, so they get nothing. Returns a spreadable fragment so the
+ * caller merges it into an existing generationConfig.
+ */
+export const thinkingConfigFor = (model = '') => {
+  if (/gemini-3/.test(model)) return { thinkingConfig: { thinkingLevel: 'minimal' } };
+  if (/gemini-2\.5/.test(model)) return { thinkingConfig: { thinkingBudget: 0 } };
+  return {};
+};
+
+/**
  * Fetch from a Gemini text endpoint with automatic model fallback.
  * Uses the dynamically discovered model list (ranked newest/cheapest first).
  * Retries on HTTP 404/410 (model unavailable/deprecated); throws immediately on other errors.
  *
- * @param {string}   endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent'
- * @param {string}   body     - Pre-serialised JSON request body
+ * @param {string} endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent'
+ * @param {string|function(string):string} bodyOrBuilder - Pre-serialised JSON request body,
+ *   OR a builder `(model) => jsonString` invoked per attempt so the body can vary by model
+ *   (e.g. model-specific thinking config). A plain string is reused for every attempt.
  * @param {string}   label    - Human-readable prefix for the thrown error message
  * @param {Function} addLog   - Component logging helper
  * @returns {Promise<Response>} Resolved Response with ok === true
  */
-export const geminiTextFetch = async (endpoint, body, label, addLog) => {
+export const geminiTextFetch = async (endpoint, bodyOrBuilder, label, addLog) => {
   const log = typeof addLog === 'function' ? addLog : () => {};
   const models = await discoverTextModels(log);
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
     if (i > 0) log('Model Fallback', `Trying fallback: ${model}`, 'warning');
+    const body = typeof bodyOrBuilder === 'function' ? bodyOrBuilder(model) : bodyOrBuilder;
     const res = await fetch(`${apiUrl}/api/ai/${model}/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

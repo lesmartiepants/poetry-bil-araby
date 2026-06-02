@@ -63,7 +63,11 @@ const DebugPanel = ({ controlBarRef }) => {
   const liveVoice = useUIStore((s) => s.liveVoice);
   const liveTemperature = useUIStore((s) => s.liveTemperature);
   const [panelOpen, setPanelOpen] = useState(false);
-  const [ttsModel, setTtsModel] = useState(API_MODELS.tts.includes('pro') ? 'pro' : 'flash');
+  // Initialize the engine display from the actual ttsMode so the panel and playback
+  // agree (ttsMode defaults to 'live'). Falls back to the REST model label otherwise.
+  const [ttsModel, setTtsModel] = useState(() =>
+    useUIStore.getState().ttsMode === 'live' ? 'live' : API_MODELS.tts.includes('pro') ? 'pro' : 'flash'
+  );
   const [bugDescription, setBugDescription] = useState('');
   const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const [bugError, setBugError] = useState('');

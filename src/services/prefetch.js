@@ -14,6 +14,7 @@ import { CACHE_CONFIG, cacheOperations, audioCacheKey } from './cache.js';
 import { pcm16ToWav } from '../utils/audio.js';
 
 import { usePoemStore } from '../stores/poemStore';
+import { useUIStore } from '../stores/uiStore';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -27,6 +28,10 @@ export const prefetchManager = {
   prefetchAudio: async (poemId, poem, addLog) => {
     if (!FEATURES.prefetching || !FEATURES.caching) return;
     if (!poemId || !poem?.arabic) return;
+
+    // The Live engine (default) streams in ~1s and keys its cache by voice, so this
+    // REST prefetch would never be played — skip it to avoid burning the daily REST quota.
+    if (useUIStore.getState().ttsMode === 'live') return;
 
     // Skip if quota was exhausted for this poem earlier in the session
     if (_quotaExhaustedIds.has(poemId)) return;

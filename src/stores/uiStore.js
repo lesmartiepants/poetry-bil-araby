@@ -5,6 +5,23 @@ import { FONTS } from '../constants/fonts';
 
 const MAX_LOGS = 200;
 
+// TTS engine preference. Defaults to 'live' (streaming, first sound ~1s). The user's
+// explicit choice is remembered across reloads, but the debug-panel toggle always
+// switches it, so no one gets locked onto one engine.
+const TTS_MODE_KEY = 'tts-mode';
+const loadTtsMode = () => {
+  try {
+    const v = localStorage.getItem(TTS_MODE_KEY);
+    if (v === 'rest' || v === 'live') return v;
+  } catch {}
+  return 'live';
+};
+const persistTtsMode = (mode) => {
+  try {
+    localStorage.setItem(TTS_MODE_KEY, mode);
+  } catch {}
+};
+
 export const CATEGORY_MAP = {
   user: { color: '#00bcd4', prefix: 'USER' },
   request: { color: '#ff9800', prefix: '  →' },
@@ -22,7 +39,7 @@ const initialState = {
   showTransliteration: false,
   showDebugLogs: FEATURES.debug,
   ratchetMode: false, // Ratchet Mode: explains poems in Gen Z / gangster slang
-  ttsMode: 'rest', // 'rest' | 'live'
+  ttsMode: loadTtsMode(), // 'rest' | 'live' — defaults to 'live' (streaming)
   liveVoice: 'Orus',
   liveTemperature: 0,
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
@@ -52,7 +69,10 @@ const initialState = {
 export const useUIStore = create((set, get) => ({
   ...initialState,
 
-  setTtsMode: (ttsMode) => set({ ttsMode }),
+  setTtsMode: (ttsMode) => {
+    persistTtsMode(ttsMode);
+    set({ ttsMode });
+  },
   setLiveVoice: (liveVoice) => set({ liveVoice }),
   setLiveTemperature: (liveTemperature) => set({ liveTemperature }),
   setHighlightStyle: (highlightStyle) => set({ highlightStyle }),

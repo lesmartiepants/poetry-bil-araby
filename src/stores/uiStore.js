@@ -7,7 +7,9 @@ const MAX_LOGS = 200;
 
 // TTS engine preference. Defaults to 'live' (streaming, first sound ~1s). The user's
 // explicit choice is remembered across reloads, but the debug-panel toggle always
-// switches it, so no one gets locked onto one engine.
+// switches it, so no one gets locked onto one engine. (Returning visitors get the
+// new default automatically once their device picks up the new build — see the
+// version-based auto-refresh in main.jsx.)
 const TTS_MODE_KEY = 'tts-mode';
 const loadTtsMode = () => {
   try {

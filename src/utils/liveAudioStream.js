@@ -174,17 +174,28 @@ export function createStreamingPlayer(ctx, { sampleRate = DEFAULT_SAMPLE_RATE } 
       }
       return this;
     },
-    /** Stop immediately and fire onstop (pause / navigation). */
+    /** Stop and fire onstop (pause / navigation). A short gain fade avoids the
+     *  click/pop you get from cutting PCM sources off abruptly mid-sample. */
     stop() {
-      if (stopped) {
-        // already ended naturally; still honor explicit stop semantics
-      }
       stopped = true;
+      const t = ctx.currentTime;
+      const FADE = 0.02; // 20ms — inaudible as a fade, long enough to kill the click
+      try {
+        output.gain.cancelScheduledValues(t);
+        output.gain.setValueAtTime(output.gain.value, t);
+        output.gain.linearRampToValueAtTime(0, t + FADE);
+      } catch {
+        /* gain automation unsupported — fall through to a hard stop */
+      }
       for (const s of sources) {
         try {
-          s.stop();
+          s.stop(t + FADE + 0.005); // stop just after the fade completes
         } catch {
-          /* already stopped */
+          try {
+            s.stop();
+          } catch {
+            /* already stopped */
+          }
         }
       }
       sources.clear();

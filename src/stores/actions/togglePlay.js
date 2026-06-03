@@ -138,11 +138,30 @@ function createProgressToast(estimatedSeconds, arabicText) {
 let _currentPlayId = 0;
 
 /**
- * Invalidate any in-flight togglePlay so it won't start playback after a swipe.
+ * AbortController for the in-flight Live SSE stream. Lets stop/pause/swipe/replay
+ * cancel the upstream Gemini Live session instead of leaving it generating in the
+ * background (orphaned audio + wasted quota).
+ */
+let _currentStreamAbort = null;
+function abortCurrentStream() {
+  if (_currentStreamAbort) {
+    try {
+      _currentStreamAbort.abort();
+    } catch {
+      /* already aborted */
+    }
+    _currentStreamAbort = null;
+  }
+}
+
+/**
+ * Invalidate any in-flight togglePlay so it won't start playback after a swipe,
+ * and cancel any streaming session in flight.
  * Call this alongside resetAudio() in the carousel swipe handlers.
  */
 export function abortPlay() {
   _currentPlayId++;
+  abortCurrentStream();
 }
 
 /** Module-level ref to the active progress toast's dismiss function. */
@@ -269,6 +288,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   // PAUSE — Tone.Player uses stop() rather than pause()
   if (isPlaying) {
     recordPause();
+    abortCurrentStream(); // cancel an in-flight Live stream so it can't keep generating
     if (existingPlayer) {
       existingPlayer.stop();
     }
@@ -411,9 +431,16 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           let firstSound = false;
           let streamErr = null;
 
+          // Cancel any prior stream, then arm an AbortController so stop/pause/swipe/
+          // replay can tear this Live session down instead of orphaning it.
+          abortCurrentStream();
+          const streamAbort = new AbortController();
+          _currentStreamAbort = streamAbort;
+
           const liveRes = await fetch(`${apiUrl}/api/ai/live-tts?stream=1`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            signal: streamAbort.signal,
             body: JSON.stringify({
               text: liveText,
               voiceName: liveVoice,
@@ -453,6 +480,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               streamErr = msg;
             },
           });
+
+          // Stream finished on its own — release the abort handle so a later
+          // stop()/pause() doesn't try to abort an already-complete controller.
+          if (_currentStreamAbort === streamAbort) _currentStreamAbort = null;
 
           // User navigated away mid-stream — bail without caching/playing.
           if (_currentPlayId !== playId) {
@@ -495,6 +526,11 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           );
           ttsMode = 'rest';
         } catch (streamError) {
+          // Intentional cancel (stop / pause / swipe / replay) — not a failure.
+          // Don't fall back to REST; the user moved on.
+          if (streamError.name === 'AbortError' || _currentPlayId !== playId) {
+            return;
+          }
           addLog(
             'Audio API',
             `[Live 3.1] Stream failed: ${streamError.message} — falling back to REST`,

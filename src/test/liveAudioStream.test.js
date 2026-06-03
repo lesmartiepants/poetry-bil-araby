@@ -1,5 +1,43 @@
 import { describe, it, expect } from 'vitest';
-import { pcmBase64ToInt16, concatPcmBase64, consumeSSE } from '../utils/liveAudioStream.js';
+import {
+  pcmBase64ToInt16,
+  concatPcmBase64,
+  consumeSSE,
+  createStreamingPlayer,
+} from '../utils/liveAudioStream.js';
+
+/** Minimal AudioContext stub that records start()/stop() calls on sources. */
+function mockCtx() {
+  const started = [];
+  const stopped = [];
+  return {
+    currentTime: 0,
+    state: 'running',
+    destination: { _dest: true },
+    resume() {},
+    createGain: () => ({ connect() {} }),
+    createBuffer: (_ch, len, rate) => ({
+      duration: len / rate,
+      getChannelData: () => new Float32Array(len),
+    }),
+    createBufferSource() {
+      const src = {
+        buffer: null,
+        onended: null,
+        connect() {},
+        start() {
+          started.push(src);
+        },
+        stop() {
+          stopped.push(src);
+        },
+      };
+      return src;
+    },
+    _started: started,
+    _stopped: stopped,
+  };
+}
 
 /** Encode an Int16Array (LE) to a base64 string, mirroring what the API sends. */
 function int16ToBase64(int16) {
@@ -87,3 +125,37 @@ describe('consumeSSE', () => {
     expect(events).toEqual(['no audio within 20s']);
   });
 });
+
+describe('createStreamingPlayer stop()', () => {
+  it('halts every scheduled source and fires onstop once (the swipe-stop path)', () => {
+    const ctx = mockCtx();
+    const player = createStreamingPlayer(ctx);
+    let stops = 0;
+    player.onstop = () => stops++;
+
+    player.pushChunk(new Int16Array([1, 2, 3, 4]));
+    player.pushChunk(new Int16Array([5, 6, 7, 8]));
+    expect(ctx._started.length).toBe(2);
+
+    // What the carousel swipe handler now does: stop() unconditionally.
+    player.stop();
+    expect(ctx._stopped.length).toBe(2); // both in-flight sources stopped — no background audio
+    expect(stops).toBe(1);
+
+    // Chunks still arriving after stop are ignored (stream may not have drained yet).
+    player.pushChunk(new Int16Array([9, 10]));
+    expect(ctx._started.length).toBe(2);
+  });
+
+  it('fires onstop after the queue drains when input is done', () => {
+    const ctx = mockCtx();
+    const player = createStreamingPlayer(ctx);
+    let stops = 0;
+    player.onstop = () => stops++;
+
+    player.pushChunk(new Int16Array([1, 2]));
+    ctx._started[0].onended(); // the scheduled source finishes
+    player.markInputDone();
+    expect(stops).toBe(1);
+  });
+})

@@ -1268,10 +1268,16 @@ export default function DiwanApp() {
 
   useEffect(() => {
     setInterpretation(null);
-    // Stop Tone.Player if active
+    // Stop any active player. Stop unconditionally — streaming and iOS HTMLAudio
+    // players have no `.state` property, so a `state === 'started'` gate would skip
+    // them and leave audio playing after the poem changes.
     const player = useAudioStore.getState().player;
-    if (player && player.state === 'started') {
-      player.stop();
+    if (player) {
+      try {
+        player.stop();
+      } catch {
+        /* already stopped */
+      }
     }
     setIsPlaying(false);
     if (audioUrl) URL.revokeObjectURL(audioUrl);
@@ -1582,8 +1588,15 @@ export default function DiwanApp() {
                         setCarouselIndex(idx);
                         // Stop audio and reset TTS state when navigating poems
                         const { player: activePlayer, resetAudio } = useAudioStore.getState();
-                        if (activePlayer && activePlayer.state === 'started') {
-                          activePlayer.stop();
+                        // Stop unconditionally. Streaming and iOS HTMLAudio players have no
+                        // `.state` property, so the old `state === 'started'` gate skipped
+                        // stop() for them and the audio kept playing in the background after a swipe.
+                        if (activePlayer) {
+                          try {
+                            activePlayer.stop();
+                          } catch {
+                            /* already stopped */
+                          }
                         }
                         if (audioUrl) URL.revokeObjectURL(audioUrl);
                         abortPlay();

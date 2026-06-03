@@ -140,6 +140,12 @@ let _currentPlayId = 0;
  * background (orphaned audio + wasted quota).
  */
 let _currentStreamAbort = null;
+// Buffered (non-streaming) generation fetch in flight — the REST generateContent
+// call and the buffered Live fallback. Held at module scope so abortPlay() can
+// cancel it. Without this, a long REST generation (~30s) kept the play guard held,
+// so switching engine/voice mid-buffer rejected the next play as "already in
+// progress" until the fetch finished (#560, #562, #563).
+let _currentGenAbort = null;
 function abortCurrentStream() {
   if (_currentStreamAbort) {
     try {
@@ -149,12 +155,21 @@ function abortCurrentStream() {
     }
     _currentStreamAbort = null;
   }
+  if (_currentGenAbort) {
+    try {
+      _currentGenAbort.abort();
+    } catch {
+      /* already aborted */
+    }
+    _currentGenAbort = null;
+  }
 }
 
 /**
  * Invalidate any in-flight togglePlay so it won't start playback after a swipe,
- * and cancel any streaming session in flight.
- * Call this alongside resetAudio() in the carousel swipe handlers.
+ * and cancel any streaming OR buffered generation in flight.
+ * Call this alongside resetAudio() in the carousel swipe handlers, and when
+ * switching engine/voice mid-recitation.
  */
 export function abortPlay() {
   _currentPlayId++;
@@ -651,6 +666,13 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       const MODES = ttsMode === 'live' ? ['live', 'rest'] : ['rest', 'live'];
       let modeIdx = 0;
 
+      // One abort controller for whichever buffered fetch runs, held at module scope
+      // so abortPlay() (engine/voice switch, swipe) can cancel it and release the
+      // play guard promptly — instead of waiting out a ~30s generation (#562, #563).
+      const genAbort = new AbortController();
+      _currentGenAbort = genAbort;
+      const genTimeoutId = setTimeout(() => genAbort.abort(), 120_000);
+
       while (modeIdx < MODES.length && !b64) {
         const mode = MODES[modeIdx];
         ttsModel = mode === 'live' ? 'Live 3.1' : API_MODELS.tts;
@@ -668,6 +690,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              signal: genAbort.signal,
               body: JSON.stringify({
                 text: liveText,
                 voiceName: liveVoice,
@@ -726,23 +749,16 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               },
             });
             const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-            const ttsAbortController = new AbortController();
-            const ttsTimeoutId = setTimeout(() => ttsAbortController.abort(), 120_000);
-            let fallbackResult;
-            try {
-              fallbackResult = await fetchTTSWithFallback(
-                url,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: requestBody,
-                  signal: ttsAbortController.signal,
-                },
-                { addLog, label: 'Audio API' }
-              );
-            } finally {
-              clearTimeout(ttsTimeoutId);
-            }
+            const fallbackResult = await fetchTTSWithFallback(
+              url,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: requestBody,
+                signal: genAbort.signal,
+              },
+              { addLog, label: 'Audio API' }
+            );
             const res = fallbackResult.res;
             ttsModel = fallbackResult.model;
 
@@ -773,10 +789,23 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             addLog('Audio API', `[${ttsModel}] Success via REST API`, 'success');
           }
         } catch (modeError) {
+          // Superseded by a newer play / engine or voice switch — abortPlay() bumped
+          // the play id and aborted the fetch. Stop entirely; don't try the next mode.
+          if (_currentPlayId !== playId) break;
           addLog('Audio API', `[${ttsModel}] ${modeError.message} — trying next mode`, 'warning');
           modeIdx++; // try the other mode
-          // Reset ttsModel label for the next attempt
         }
+      }
+
+      clearTimeout(genTimeoutId);
+      if (_currentGenAbort === genAbort) _currentGenAbort = null;
+
+      // Superseded mid-generation (engine/voice switch or swipe aborted the fetch) —
+      // bail quietly. The finally releases the play guard, so the next play works
+      // immediately instead of being rejected as "already in progress" (#562, #563).
+      if (_currentPlayId !== playId) {
+        progress.dismiss();
+        return;
       }
 
       const apiTime = performance.now() - apiStart;

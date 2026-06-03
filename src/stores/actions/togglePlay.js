@@ -44,12 +44,21 @@ const TTS_LOADING_MESSAGES = [
 ];
 
 /**
- * Create a Sonner toast with a countdown timer for TTS generation.
- * Format: "Recitation ready in Xs" title, "Preparing N lines" description cycling with fun messages.
- * Returns { dismiss } function for cleanup. Auto-dismisses if isGenerating
- * goes false externally (e.g. poem navigation).
+ * Create a Sonner toast for TTS generation.
+ *
+ * Two shapes:
+ *  - countdown (default): "Recitation ready in Xs" ticking down to "Almost ready...".
+ *    Right for REST and buffered paths, which must generate the whole clip before
+ *    playback, so the wait is real and roughly predictable (~0.06 s/char).
+ *  - indeterminate: "Starting recitation…" with no number. Right for the Live stream,
+ *    which plays its first words in ~1s — there's no meaningful countdown, and the
+ *    first-sound handler dismisses it. Showing a full-generation countdown there
+ *    (e.g. "ready in 59s") was just wrong.
+ *
+ * Returns { dismiss } for cleanup. Auto-dismisses if isGenerating goes false
+ * externally (e.g. poem navigation).
  */
-function createProgressToast(estimatedSeconds, arabicText) {
+function createProgressToast(estimatedSeconds, arabicText, { indeterminate = false } = {}) {
   const toastId = `tts-progress-${Date.now()}`;
   const startTime = Date.now();
   const lineCount = arabicText ? arabicText.split('\n').filter((l) => l.trim()).length : 0;
@@ -58,18 +67,23 @@ function createProgressToast(estimatedSeconds, arabicText) {
       ? `Preparing ${lineCount} line${lineCount !== 1 ? 's' : ''}`
       : 'Preparing recitation';
 
-  toast.loading(`Recitation ready in ${estimatedSeconds}s`, {
-    id: toastId,
-    description: lineInfo,
-    duration: Infinity,
-    icon: createElement(
+  const bounceIcon = () =>
+    createElement(
       motion.div,
       {
         animate: { y: [0, -5, 0] },
         transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
       },
       createElement(Rabbit, { size: 16 })
-    ),
+    );
+
+  const STARTING = 'Starting recitation…';
+
+  toast.loading(indeterminate ? STARTING : `Recitation ready in ${estimatedSeconds}s`, {
+    id: toastId,
+    description: lineInfo,
+    duration: Infinity,
+    icon: bounceIcon(),
   });
 
   const interval = setInterval(() => {
@@ -81,39 +95,22 @@ function createProgressToast(estimatedSeconds, arabicText) {
     }
 
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const remaining = estimatedSeconds - elapsed;
-    const msgIndex = Math.floor(elapsed / 5) % TTS_LOADING_MESSAGES.length;
-    const subtitle = TTS_LOADING_MESSAGES[msgIndex];
+    const subtitle = TTS_LOADING_MESSAGES[Math.floor(elapsed / 5) % TTS_LOADING_MESSAGES.length];
 
-    if (remaining > 0) {
-      toast.loading(`Recitation ready in ${remaining}s`, {
-        id: toastId,
-        description: subtitle,
-        duration: Infinity,
-        icon: createElement(
-          motion.div,
-          {
-            animate: { y: [0, -5, 0] },
-            transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
-          },
-          createElement(Rabbit, { size: 16 })
-        ),
-      });
+    let label;
+    if (indeterminate) {
+      label = STARTING;
     } else {
-      toast.loading('Almost ready...', {
-        id: toastId,
-        description: subtitle,
-        duration: Infinity,
-        icon: createElement(
-          motion.div,
-          {
-            animate: { y: [0, -5, 0] },
-            transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
-          },
-          createElement(Rabbit, { size: 16 })
-        ),
-      });
+      const remaining = estimatedSeconds - elapsed;
+      label = remaining > 0 ? `Recitation ready in ${remaining}s` : 'Almost ready...';
     }
+
+    toast.loading(label, {
+      id: toastId,
+      description: subtitle,
+      duration: Infinity,
+      icon: bounceIcon(),
+    });
   }, 1000);
 
   let dismissed = false;
@@ -143,6 +140,12 @@ let _currentPlayId = 0;
  * background (orphaned audio + wasted quota).
  */
 let _currentStreamAbort = null;
+// Buffered (non-streaming) generation fetch in flight — the REST generateContent
+// call and the buffered Live fallback. Held at module scope so abortPlay() can
+// cancel it. Without this, a long REST generation (~30s) kept the play guard held,
+// so switching engine/voice mid-buffer rejected the next play as "already in
+// progress" until the fetch finished (#560, #562, #563).
+let _currentGenAbort = null;
 function abortCurrentStream() {
   if (_currentStreamAbort) {
     try {
@@ -152,12 +155,21 @@ function abortCurrentStream() {
     }
     _currentStreamAbort = null;
   }
+  if (_currentGenAbort) {
+    try {
+      _currentGenAbort.abort();
+    } catch {
+      /* already aborted */
+    }
+    _currentGenAbort = null;
+  }
 }
 
 /**
  * Invalidate any in-flight togglePlay so it won't start playback after a swipe,
- * and cancel any streaming session in flight.
- * Call this alongside resetAudio() in the carousel swipe handlers.
+ * and cancel any streaming OR buffered generation in flight.
+ * Call this alongside resetAudio() in the carousel swipe handlers, and when
+ * switching engine/voice mid-recitation.
  */
 export function abortPlay() {
   _currentPlayId++;
@@ -194,29 +206,99 @@ const isIOS = () =>
  * The word-highlight system uses wall-clock time, not AudioContext.currentTime, so
  * it works identically with this player.
  */
+// iOS only lets an <audio> element be played programmatically once it has had
+// play() called on it inside a user gesture. The REST path builds its player AFTER
+// the multi-second TTS generation await — long past the gesture — so the first
+// play()'s NotAllowedError was swallowed and nothing sounded, while the wall-clock
+// read-along still advanced (so it LOOKED like it was playing). A pause+play then
+// worked because that ran in a fresh gesture.
+//
+// Fix: keep ONE <audio> element, bless it with a silent clip inside the play
+// gesture (unlockIOSAudioElement, called before generation), and reuse that same
+// blessed element for playback. iOS keeps the element user-activated for its
+// lifetime, so the later programmatic play() after generation is allowed.
+let _iosAudioEl = null;
+let _iosSilentUrl = null;
+
+function getIOSAudioEl() {
+  if (!_iosAudioEl) {
+    const a = document.createElement('audio');
+    a.setAttribute('playsinline', '');
+    a.preload = 'auto';
+    _iosAudioEl = a;
+  }
+  return _iosAudioEl;
+}
+
+function iosSilentUrl() {
+  if (_iosSilentUrl) return _iosSilentUrl;
+  try {
+    // ~50ms of silence (zeroed PCM16 @ 24kHz) wrapped as a WAV blob.
+    const b64 = btoa(String.fromCharCode.apply(null, new Uint8Array(2400)));
+    const blob = pcm16ToWav(b64);
+    if (blob) _iosSilentUrl = URL.createObjectURL(blob);
+  } catch {
+    /* leave null — unlock becomes a best-effort no-op */
+  }
+  return _iosSilentUrl;
+}
+
+/** Bless the reusable iOS <audio> element inside a user gesture. No-op off iOS. */
+function unlockIOSAudioElement() {
+  if (!isIOS()) return;
+  const a = getIOSAudioEl();
+  const silent = iosSilentUrl();
+  if (!silent) return;
+  try {
+    a.muted = true;
+    a.src = silent;
+    const settle = () => {
+      try {
+        a.pause();
+        a.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+      a.muted = false;
+    };
+    const p = a.play();
+    if (p && typeof p.then === 'function') p.then(settle).catch(settle);
+    else settle();
+  } catch {
+    a.muted = false;
+  }
+}
+
 function createHTMLAudioPlayer(url) {
   return new Promise((resolve) => {
-    const audio = document.createElement('audio');
-    audio.setAttribute('playsinline', '');
-    audio.preload = 'auto';
+    // Reuse the gesture-blessed element so play() after the generation await works.
+    const audio = getIOSAudioEl();
+    audio.muted = false;
     audio.src = url;
 
     const player = {
       onstop: null,
       start(_time, offset = 0) {
-        audio.currentTime = offset;
+        try {
+          audio.currentTime = offset;
+        } catch {
+          /* currentTime may throw before metadata loads */
+        }
         audio.play().catch(() => {});
       },
       stop() {
         audio.pause();
-        audio.currentTime = 0;
+        try {
+          audio.currentTime = 0;
+        } catch {
+          /* ignore */
+        }
         this.onstop?.();
       },
     };
 
-    audio.addEventListener('ended', () => {
-      player.onstop?.();
-    });
+    // Property assignment (not addEventListener) so reuse doesn't stack handlers.
+    audio.onended = () => player.onstop?.();
 
     // Blob URLs are local — loadeddata fires near-instantly. 500 ms timeout as a
     // safety net on older iOS where canplaythrough/loadeddata can be delayed.
@@ -328,6 +410,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     try {
       if ('audioSession' in navigator) navigator.audioSession.type = 'playback';
     } catch { /* older iOS without the Audio Session API → buffered fallback still works */ }
+    // Bless the reusable <audio> element NOW, inside the gesture, so the REST
+    // path's play() after the generation await is allowed (otherwise silent first
+    // play; #...). Web Audio (Live) doesn't need this, but it's a cheap no-op there.
+    unlockIOSAudioElement();
   }
   // Unlock the AudioContext after the user gesture (now on iOS too).
   await toneStart();
@@ -410,12 +496,23 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     );
     setError(null);
 
-    // Show progress toast with estimated countdown
+    // Progress toast. Live streams first sound in ~1s, so it gets an indeterminate
+    // "Starting recitation…" (dismissed on first sound) instead of a misleading
+    // full-generation countdown. REST / buffered must generate the whole clip first,
+    // so they get the real countdown. If Live falls back to REST below, the toast is
+    // swapped for a countdown at that point.
+    const willStream =
+      ttsMode === 'live' &&
+      (!isIOS() || (typeof navigator !== 'undefined' && 'audioSession' in navigator));
     const estSeconds = estimateTTSSeconds(arabicTextChars);
-    const progress = createProgressToast(estSeconds, current?.arabic);
+    let progress = willStream
+      ? createProgressToast(0, current?.arabic, { indeterminate: true })
+      : createProgressToast(estSeconds, current?.arabic);
     addLog(
       'Audio',
-      `Estimated generation time: ~${estSeconds}s for ${arabicTextChars} Arabic chars`,
+      willStream
+        ? 'Live streaming — first sound expected in ~1s'
+        : `Estimated generation time: ~${estSeconds}s for ${arabicTextChars} Arabic chars`,
       'info'
     );
 
@@ -430,7 +527,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       // gesture set navigator.audioSession.type='playback' above, so Web Audio
       // plays through the hardware silent switch (verified on device). Old iOS
       // without the Audio Session API falls through to the HLS/buffered path below.
-      if (ttsMode === 'live' && (!isIOS() || (typeof navigator !== 'undefined' && 'audioSession' in navigator))) {
+      if (willStream) {
         try {
           const liveText = getLiveContent(current);
           addLog(
@@ -553,6 +650,14 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         }
       }
 
+      // Live streaming was attempted but yielded no audio (we're now in the buffered
+      // path, which generates the whole clip before playback). Swap the indeterminate
+      // "Starting…" toast for an accurate countdown on that real wait.
+      if (willStream && !b64) {
+        progress.dismiss();
+        progress = createProgressToast(estSeconds, current?.arabic);
+      }
+
       // ── Try selected mode first; on any failure (429, 404, network, etc.)
       //    fall back to the other mode once. This makes the app resilient when
       //    one path is rate-limited or unavailable (e.g. Live route not deployed
@@ -560,6 +665,13 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       // Order modes so the selected one is always tried first (index 0).
       const MODES = ttsMode === 'live' ? ['live', 'rest'] : ['rest', 'live'];
       let modeIdx = 0;
+
+      // One abort controller for whichever buffered fetch runs, held at module scope
+      // so abortPlay() (engine/voice switch, swipe) can cancel it and release the
+      // play guard promptly — instead of waiting out a ~30s generation (#562, #563).
+      const genAbort = new AbortController();
+      _currentGenAbort = genAbort;
+      const genTimeoutId = setTimeout(() => genAbort.abort(), 120_000);
 
       while (modeIdx < MODES.length && !b64) {
         const mode = MODES[modeIdx];
@@ -578,6 +690,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             const liveRes = await fetch(`${apiUrl}/api/ai/live-tts`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
+              signal: genAbort.signal,
               body: JSON.stringify({
                 text: liveText,
                 voiceName: liveVoice,
@@ -636,23 +749,16 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               },
             });
             const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-            const ttsAbortController = new AbortController();
-            const ttsTimeoutId = setTimeout(() => ttsAbortController.abort(), 120_000);
-            let fallbackResult;
-            try {
-              fallbackResult = await fetchTTSWithFallback(
-                url,
-                {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: requestBody,
-                  signal: ttsAbortController.signal,
-                },
-                { addLog, label: 'Audio API' }
-              );
-            } finally {
-              clearTimeout(ttsTimeoutId);
-            }
+            const fallbackResult = await fetchTTSWithFallback(
+              url,
+              {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: requestBody,
+                signal: genAbort.signal,
+              },
+              { addLog, label: 'Audio API' }
+            );
             const res = fallbackResult.res;
             ttsModel = fallbackResult.model;
 
@@ -683,10 +789,23 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             addLog('Audio API', `[${ttsModel}] Success via REST API`, 'success');
           }
         } catch (modeError) {
+          // Superseded by a newer play / engine or voice switch — abortPlay() bumped
+          // the play id and aborted the fetch. Stop entirely; don't try the next mode.
+          if (_currentPlayId !== playId) break;
           addLog('Audio API', `[${ttsModel}] ${modeError.message} — trying next mode`, 'warning');
           modeIdx++; // try the other mode
-          // Reset ttsModel label for the next attempt
         }
+      }
+
+      clearTimeout(genTimeoutId);
+      if (_currentGenAbort === genAbort) _currentGenAbort = null;
+
+      // Superseded mid-generation (engine/voice switch or swipe aborted the fetch) —
+      // bail quietly. The finally releases the play guard, so the next play works
+      // immediately instead of being rejected as "already in progress" (#562, #563).
+      if (_currentPlayId !== playId) {
+        progress.dismiss();
+        return;
       }
 
       const apiTime = performance.now() - apiStart;

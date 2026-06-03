@@ -9,12 +9,28 @@ const MAX_LOGS = 200;
 // explicit choice is remembered across reloads, but the debug-panel toggle always
 // switches it, so no one gets locked onto one engine.
 const TTS_MODE_KEY = 'tts-mode';
+const DEFAULT_TTS_MODE = 'live';
+
+// Release-gated reset. Returning visitors who opened the site before the default
+// flipped to Live can be stuck on a stored 'rest' preference. Bump this string on
+// any release that should force every returning visitor back to DEFAULT_TTS_MODE
+// exactly once. After that one reset, their own toggle choice persists again.
+const TTS_MODE_RESET_KEY = 'tts-mode-reset';
+const TTS_MODE_RESET_VERSION = '2026-06-live-default';
+
 const loadTtsMode = () => {
   try {
+    // If this build's reset stamp is ahead of what the browser last saw, drop any
+    // stored engine preference so the current default wins, then record the stamp.
+    if (localStorage.getItem(TTS_MODE_RESET_KEY) !== TTS_MODE_RESET_VERSION) {
+      localStorage.removeItem(TTS_MODE_KEY);
+      localStorage.setItem(TTS_MODE_RESET_KEY, TTS_MODE_RESET_VERSION);
+      return DEFAULT_TTS_MODE;
+    }
     const v = localStorage.getItem(TTS_MODE_KEY);
     if (v === 'rest' || v === 'live') return v;
   } catch {}
-  return 'live';
+  return DEFAULT_TTS_MODE;
 };
 const persistTtsMode = (mode) => {
   try {

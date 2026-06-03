@@ -8,6 +8,7 @@ import { useUIStore, CATEGORY_MAP } from '../stores/uiStore';
 import { usePoemStore } from '../stores/poemStore';
 import { useAudioStore } from '../stores/audioStore';
 import { API_MODELS } from '../services/gemini.js';
+import { abortPlay } from '../stores/actions/togglePlay.js';
 import { cacheOperations, CACHE_CONFIG } from '../services/cache.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -96,6 +97,24 @@ const DebugPanel = ({ controlBarRef }) => {
   }, [panelOpen, errorCount]);
   const unreadErrors = errorCount - lastViewedErrors.current;
 
+  // Stop playback and cancel any in-flight Live stream before switching engine or
+  // voice. abortPlay() invalidates the in-flight generation's playId so it releases
+  // the play guard (isTogglingPlay) and stops streaming. Without it, switching
+  // mid-recitation leaves an orphaned stream holding the guard, and the next play is
+  // rejected as "Play toggle already in progress" with no audio (#560, #558).
+  const stopAndResetAudio = () => {
+    abortPlay();
+    const { player, resetAudio } = useAudioStore.getState();
+    if (player) {
+      try {
+        player.stop();
+      } catch {
+        /* already stopped */
+      }
+    }
+    resetAudio();
+  };
+
   const handleTtsModelToggle = async () => {
     const cycle = { pro: 'flash', flash: 'live', live: 'pro' };
     const next = cycle[ttsModel] || 'pro';
@@ -123,10 +142,8 @@ const DebugPanel = ({ controlBarRef }) => {
     if (poem?.id) {
       await cacheOperations.delete(CACHE_CONFIG.stores.audio, poem.id);
     }
-    // Reset audio state
-    const { player, resetAudio } = useAudioStore.getState();
-    if (player) try { player.stop(); } catch {}
-    resetAudio();
+    // Cancel any in-flight stream + reset, so the next play isn't blocked (#560).
+    stopAndResetAudio();
   };
 
   const handleSubmitBug = async () => {
@@ -329,17 +346,10 @@ const DebugPanel = ({ controlBarRef }) => {
                 onChange={(e) => {
                   useUIStore.getState().setLiveVoice(e.target.value);
                   useUIStore.getState().addLog('Settings', `Live voice → ${e.target.value}`, 'user');
-                  // Reset loaded audio so the next Listen regenerates in the new voice
-                  // (otherwise the resume-from-blob path would replay the old voice).
-                  const { player, resetAudio } = useAudioStore.getState();
-                  if (player) {
-                    try {
-                      player.stop();
-                    } catch {
-                      /* already stopped */
-                    }
-                  }
-                  resetAudio();
+                  // Cancel any in-flight stream + reset loaded audio so the next Listen
+                  // regenerates in the new voice and isn't blocked as "already in
+                  // progress" (otherwise resume-from-blob replays the old voice) (#558).
+                  stopAndResetAudio();
                 }}
                 className="flex-1 text-[0.6rem] font-mono rounded px-1.5 py-0.5 cursor-pointer"
                 style={{ background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', color: 'rgb(251,146,60)' }}

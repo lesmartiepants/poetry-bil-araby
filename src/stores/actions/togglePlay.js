@@ -319,9 +319,18 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     return;
   }
 
-  // Unlock AudioContext after user gesture so Tone.js can output audio.
-  // Skip on iOS — AudioContext is not used there; HTMLAudioElement handles playback.
-  if (!isIOS()) await toneStart();
+  // iOS: set the audio session to 'playback' inside the user gesture so Web Audio
+  // plays THROUGH the hardware silent switch (verified on a real iPhone). This lets
+  // iOS use the exact same smooth streaming player as desktop — no HLS, no stutter,
+  // ~1s first sound — instead of the silent-switch-muted Web Audio that forced the
+  // old HTMLAudio/HLS detours.
+  if (isIOS()) {
+    try {
+      if ('audioSession' in navigator) navigator.audioSession.type = 'playback';
+    } catch { /* older iOS without the Audio Session API → buffered fallback still works */ }
+  }
+  // Unlock the AudioContext after the user gesture (now on iOS too).
+  await toneStart();
 
   setGenerating(true);
 
@@ -413,11 +422,13 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       let b64;
       let ttsModel;
 
-      // ── Live streaming fast-path (desktop/Android) ──────────────────────────
+      // ── Live streaming fast-path (all platforms) ────────────────────────────
       // Play PCM chunks as they arrive from /api/ai/live-tts?stream=1 — first sound
-      // in ~1s instead of waiting for the whole recitation. iOS keeps the buffered
-      // HTMLAudio path below (the hardware silent switch mutes Web Audio).
-      if (ttsMode === 'live' && !isIOS()) {
+      // in ~1s instead of waiting for the whole recitation. iOS is included: the
+      // gesture set navigator.audioSession.type='playback' above, so Web Audio
+      // plays through the hardware silent switch (verified on device). Old iOS
+      // without the Audio Session API falls through to the HLS/buffered path below.
+      if (ttsMode === 'live' && (!isIOS() || (typeof navigator !== 'undefined' && 'audioSession' in navigator))) {
         try {
           const liveText = getLiveContent(current);
           addLog(

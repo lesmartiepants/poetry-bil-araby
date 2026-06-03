@@ -1,14 +1,36 @@
+import { writeFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import { sentryVitePlugin } from '@sentry/vite-plugin'
 
+// Unique per build. Prefer the deploy commit SHA (set by Vercel) so the id is
+// stable for a given commit; fall back to the build timestamp locally. Every
+// deploy changes this, which is what lets open devices detect a new release.
+const BUILD_ID = process.env.VERCEL_GIT_COMMIT_SHA || process.env.VITE_BUILD_ID || String(Date.now())
+
+// Emit dist/version.json at build time holding the same BUILD_ID baked into the
+// bundle. The running app polls this file and reloads when the ids differ, so a
+// new release refreshes every device that has the app open (see main.jsx).
+const emitVersionJson = () => ({
+  name: 'emit-version-json',
+  apply: 'build',
+  writeBundle() {
+    writeFileSync(resolve('dist/version.json'), JSON.stringify({ buildId: BUILD_ID }))
+  },
+})
+
 export default defineConfig({
   build: {
     sourcemap: 'hidden',
   },
+  define: {
+    __BUILD_ID__: JSON.stringify(BUILD_ID),
+  },
   plugins: [
     react(),
+    emitVersionJson(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],

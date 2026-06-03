@@ -87,14 +87,47 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   </React.StrictMode>
 );
 
-// iOS standalone PWAs don't auto-check for SW updates — poll every 60s
+// ── New-release auto-refresh ────────────────────────────────────────────────
+// Every build bakes a unique __BUILD_ID__ and ships a matching /version.json.
+// We poll that file; when its id differs from the one baked into this running
+// bundle, a newer release is live, so we reload to pick it up. This is the
+// general mechanism that keeps every open phone/device current after a deploy —
+// it does not depend on the service worker firing (iOS Safari is unreliable
+// there). The SW path below stays as a second layer.
+/* global __BUILD_ID__ */
+const CURRENT_BUILD = typeof __BUILD_ID__ !== 'undefined' ? __BUILD_ID__ : 'dev';
+
+async function checkForNewRelease() {
+  try {
+    const res = await fetch(`/version.json?t=${Date.now()}`, { cache: 'no-store' });
+    if (!res.ok) return;
+    const { buildId } = await res.json();
+    if (!buildId || buildId === CURRENT_BUILD) return;
+    // Guard against reload loops if the new bundle somehow still reports the old id.
+    if (sessionStorage.getItem('reloaded-for-build') === buildId) return;
+    sessionStorage.setItem('reloaded-for-build', buildId);
+    window.location.reload();
+  } catch {
+    /* offline or version.json missing (e.g. dev) — ignore */
+  }
+}
+
+// Check on an interval, and immediately whenever the app is brought to the
+// foreground (the common case for an installed PWA reopened after a deploy).
+setInterval(checkForNewRelease, 60 * 1000);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') checkForNewRelease();
+});
+checkForNewRelease();
+
+// Second layer: nudge the service worker to update, and reload when a new one
+// takes control so the precached assets are fresh too.
 if ('serviceWorker' in navigator) {
   setInterval(() => {
     navigator.serviceWorker.getRegistrations()
       .then(regs => regs.forEach(r => r.update()));
   }, 60 * 1000);
 
-  // When new SW activates, reload to get fresh assets
   let refreshing = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
     if (refreshing) return;

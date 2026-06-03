@@ -33,6 +33,30 @@ export const audioCacheKey = (poemId, mode, voice) =>
   `${poemId}::${mode || 'rest'}::${voice || 'default'}`;
 
 /**
+ * iOS Safari (WebKit) throws "Error preparing Blob/File data to be stored in
+ * object store" when a Blob is put() into IndexedDB — a long-standing WebKit
+ * bug. ArrayBuffers round-trip reliably, so we convert any Blob to an
+ * ArrayBuffer before writing and rebuild the Blob on read. Records written by
+ * the old (Blob) path still read back fine: they just have no _blobBuffer.
+ */
+export const serializeForStore = async (data) => {
+  if (data && data.blob instanceof Blob) {
+    const buffer = await data.blob.arrayBuffer();
+    const { blob, ...rest } = data;
+    return { ...rest, _blobBuffer: buffer, _blobType: blob.type || '' };
+  }
+  return data;
+};
+
+export const deserializeFromStore = (record) => {
+  if (record && record._blobBuffer) {
+    const { _blobBuffer, _blobType, ...rest } = record;
+    return { ...rest, blob: new Blob([_blobBuffer], { type: _blobType || 'audio/wav' }) };
+  }
+  return record;
+};
+
+/**
  * Initialize IndexedDB cache database.
  * Creates object stores for audio, insights, and poems if they don't exist.
  */
@@ -83,7 +107,7 @@ export const cacheOperations = {
       const db = await initCache();
       if (!db) return null;
 
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         const transaction = db.transaction([storeName], 'readonly');
         const store = transaction.objectStore(storeName);
         const request = store.get(poemId);
@@ -113,10 +137,12 @@ export const cacheOperations = {
             }
           }
 
-          resolve(result);
+          resolve(deserializeFromStore(result));
         };
 
-        request.onerror = () => reject(request.error);
+        // Reads are best-effort: a failed read is a cache miss, never an error
+        // that breaks the caller.
+        request.onerror = () => resolve(null);
       });
     } catch (error) {
       if (addLog) addLog('Cache', `Get error: ${error.message}`, 'error');
@@ -140,18 +166,28 @@ export const cacheOperations = {
       const db = await initCache();
       if (!db) return false;
 
-      return new Promise((resolve, reject) => {
+      // Convert any Blob to an ArrayBuffer before storing (WebKit IDB Blob bug).
+      const stored = await serializeForStore(data);
+
+      return new Promise((resolve) => {
         const transaction = db.transaction([storeName], 'readwrite');
         const store = transaction.objectStore(storeName);
         const record = {
           poemId,
           timestamp: Date.now(),
-          ...data,
+          ...stored,
         };
         const request = store.put(record);
 
         request.onsuccess = () => resolve(true);
-        request.onerror = () => reject(request.error);
+        // Caching is best-effort: a failed write must never break playback, so
+        // log and resolve false instead of rejecting up to the caller.
+        request.onerror = () => {
+          if (addLog)
+            addLog('Cache', `Set failed (non-fatal): ${request.error?.message || 'unknown'}`, 'warning');
+          resolve(false);
+        };
+        transaction.onerror = () => resolve(false);
       });
     } catch (error) {
       if (addLog) addLog('Cache', `Set error: ${error.message}`, 'error');

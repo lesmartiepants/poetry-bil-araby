@@ -341,8 +341,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     // Same poem in a different voice/engine must regenerate, not replay stale audio.
     let ttsMode = useUIStore.getState().ttsMode;
     const { liveVoice, liveTemperature } = useUIStore.getState();
-    const keyFor = (mode) =>
-      audioCacheKey(current?.id, mode, mode === 'live' ? liveVoice : TTS_CONFIG.voiceName);
+    // Both engines use the listener's selected voice, so the cache key keys on it
+    // regardless of mode — switching voice (or engine) regenerates rather than
+    // replaying stale audio in the wrong voice.
+    const keyFor = (mode) => audioCacheKey(current?.id, mode, liveVoice);
 
     // CHECK CACHE
     if (FEATURES.caching && current?.id) {
@@ -629,7 +631,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               generationConfig: {
                 responseModalities: TTS_CONFIG.responseModalities,
                 speechConfig: {
-                  voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName } },
+                  voiceConfig: { prebuiltVoiceConfig: { voiceName: liveVoice } },
                 },
               },
             });

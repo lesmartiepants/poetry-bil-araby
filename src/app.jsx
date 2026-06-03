@@ -15,6 +15,7 @@ import {
   X,
   Rabbit,
   Heart,
+  Mic,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -46,6 +47,7 @@ import {
   GOLD,
   CATEGORIES,
   FONTS,
+  nextVoice,
 } from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
@@ -227,6 +229,8 @@ export default function DiwanApp() {
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
   const audioPlayer = useAudioStore((s) => s.player);
+  const liveVoice = useUIStore((s) => s.liveVoice);
+  const setLiveVoice = useUIStore((s) => s.setLiveVoice);
   const highlightStyle = useUIStore((s) => s.highlightStyle);
   const hasAutoLoaded = useRef(false);
   const longPressTimer = useRef(null);
@@ -930,6 +934,23 @@ export default function DiwanApp() {
 
   const togglePlay = () =>
     togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track });
+
+  // Cycle the reading voice (the pill next to Listen). Voice is part of the audio
+  // cache key, so the next play regenerates in the new voice on its own — we just
+  // drop any stale in-memory audio so the UI reflects the change immediately.
+  const cycleVoice = () => {
+    const next = nextVoice(liveVoice);
+    setLiveVoice(next);
+    const { player, resetAudio } = useAudioStore.getState();
+    if (player) {
+      try {
+        player.stop();
+      } catch {}
+    }
+    resetAudio();
+    addLog('Settings', `Voice → ${next}`, 'user');
+    track?.('voice_change', { voice: next });
+  };
 
   const handleAnalyze = () => {
     // When in carousel mode, record which poem we're explaining so the patching
@@ -1718,19 +1739,33 @@ export default function DiwanApp() {
                       onVerseChange={setCurrentVerseIndex}
                     />
                   ) : (
-                    <motion.button
+                    <motion.div
                       key="listen-trigger"
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 8 }}
                       transition={{ duration: 0.2, ease: 'easeOut' }}
-                      onClick={togglePlay}
-                      aria-label="Start recitation"
-                      className={`px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 transition-all duration-150`}
-                      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+                      className="flex items-center gap-2"
                     >
-                      Listen
-                    </motion.button>
+                      <button
+                        onClick={togglePlay}
+                        aria-label="Start recitation"
+                        className={`px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 transition-all duration-150`}
+                        style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+                      >
+                        Listen
+                      </button>
+                      <button
+                        onClick={cycleVoice}
+                        aria-label={`Reading voice: ${liveVoice}. Tap to change.`}
+                        title="Change reading voice"
+                        className={`flex items-center gap-1.5 pl-2.5 pr-3 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-xs font-medium tracking-wide hover:bg-white/10 transition-all duration-150`}
+                        style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+                      >
+                        <Mic size={13} className="opacity-70" />
+                        {liveVoice}
+                      </button>
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </div>

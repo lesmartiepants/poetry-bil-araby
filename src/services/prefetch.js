@@ -59,9 +59,11 @@ export const prefetchManager = {
         return;
       }
 
-      // Check cache first - don't prefetch if already cached. Prefetch always uses
-      // the REST engine + default voice, so key the cache the same way playback does.
-      const audioKey = audioCacheKey(poemId, 'rest', TTS_CONFIG.voiceName);
+      // Check cache first - don't prefetch if already cached. Prefetch uses the REST
+      // engine and the listener's selected voice, so key the cache the same way
+      // playback does — otherwise a voice change would make every prefetch a miss.
+      const voiceName = useUIStore.getState().liveVoice;
+      const audioKey = audioCacheKey(poemId, 'rest', voiceName);
       const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, audioKey, addLog);
       if (cached?.blob) {
         if (addLog)
@@ -81,7 +83,7 @@ export const prefetchManager = {
           responseModalities: TTS_CONFIG.responseModalities,
           speechConfig: {
             voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+              prebuiltVoiceConfig: { voiceName },
             },
           },
         },

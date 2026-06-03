@@ -936,12 +936,15 @@ export default function DiwanApp() {
     togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track });
 
   // Cycle the reading voice (the pill next to Listen). Voice is part of the audio
-  // cache key, so the next play regenerates in the new voice on its own — we just
-  // drop any stale in-memory audio so the UI reflects the change immediately.
+  // cache key, so playback regenerates in the new voice. If audio is currently
+  // playing or generating, stop it and restart in the new voice so the change is
+  // immediate; otherwise just drop any stale in-memory audio.
   const cycleVoice = () => {
     const next = nextVoice(liveVoice);
     setLiveVoice(next);
-    const { player, resetAudio } = useAudioStore.getState();
+    const { isPlaying: playing, isGenerating, player, resetAudio } = useAudioStore.getState();
+    const wasActive = playing || isGenerating;
+    abortPlay(); // cancel any in-flight Live stream / generation
     if (player) {
       try {
         player.stop();
@@ -950,6 +953,8 @@ export default function DiwanApp() {
     resetAudio();
     addLog('Settings', `Voice → ${next}`, 'user');
     track?.('voice_change', { voice: next });
+    // Restart in the new voice once the reset has settled.
+    if (wasActive) setTimeout(() => togglePlay(), 0);
   };
 
   const handleAnalyze = () => {
@@ -1721,7 +1726,7 @@ export default function DiwanApp() {
           >
             {/* Highlight mode: Listen (one-shot) → PlayControlsStrip (exclusive) */}
             {highlightStyle !== 'none' && (
-              <div className="mb-2 flex justify-center">
+              <div className="mb-2 flex flex-wrap items-center justify-center gap-2">
                 <AnimatePresence mode="wait">
                   {isPlaying || isGeneratingAudio || audioPlayer !== null ? (
                     <PlayControlsStrip
@@ -1739,35 +1744,33 @@ export default function DiwanApp() {
                       onVerseChange={setCurrentVerseIndex}
                     />
                   ) : (
-                    <motion.div
+                    <motion.button
                       key="listen-trigger"
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 8 }}
                       transition={{ duration: 0.2, ease: 'easeOut' }}
-                      className="flex items-center gap-2"
+                      onClick={togglePlay}
+                      aria-label="Start recitation"
+                      className={`min-h-[44px] px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
+                      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
                     >
-                      <button
-                        onClick={togglePlay}
-                        aria-label="Start recitation"
-                        className={`px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 transition-all duration-150`}
-                        style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
-                      >
-                        Listen
-                      </button>
-                      <button
-                        onClick={cycleVoice}
-                        aria-label={`Reading voice: ${liveVoice}. Tap to change.`}
-                        title="Change reading voice"
-                        className={`flex items-center gap-1.5 pl-2.5 pr-3 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-xs font-medium tracking-wide hover:bg-white/10 transition-all duration-150`}
-                        style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
-                      >
-                        <Mic size={13} className="opacity-70" />
-                        {liveVoice}
-                      </button>
-                    </motion.div>
+                      Listen
+                    </motion.button>
                   )}
                 </AnimatePresence>
+                {/* Voice cycle pill — persistent so the voice can be changed mid-playback
+                    (tapping restarts in the new voice). 44px target per the design spec. */}
+                <button
+                  onClick={cycleVoice}
+                  aria-label={`Reading voice: ${liveVoice}. Tap to change.`}
+                  title="Change reading voice"
+                  className={`min-h-[44px] flex items-center gap-1.5 pl-3 pr-3.5 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-xs font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
+                  style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+                >
+                  <Mic size={16} className="opacity-70" />
+                  {liveVoice}
+                </button>
               </div>
             )}
             <div

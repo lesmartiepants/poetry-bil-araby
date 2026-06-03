@@ -44,12 +44,21 @@ const TTS_LOADING_MESSAGES = [
 ];
 
 /**
- * Create a Sonner toast with a countdown timer for TTS generation.
- * Format: "Recitation ready in Xs" title, "Preparing N lines" description cycling with fun messages.
- * Returns { dismiss } function for cleanup. Auto-dismisses if isGenerating
- * goes false externally (e.g. poem navigation).
+ * Create a Sonner toast for TTS generation.
+ *
+ * Two shapes:
+ *  - countdown (default): "Recitation ready in Xs" ticking down to "Almost ready...".
+ *    Right for REST and buffered paths, which must generate the whole clip before
+ *    playback, so the wait is real and roughly predictable (~0.06 s/char).
+ *  - indeterminate: "Starting recitation…" with no number. Right for the Live stream,
+ *    which plays its first words in ~1s — there's no meaningful countdown, and the
+ *    first-sound handler dismisses it. Showing a full-generation countdown there
+ *    (e.g. "ready in 59s") was just wrong.
+ *
+ * Returns { dismiss } for cleanup. Auto-dismisses if isGenerating goes false
+ * externally (e.g. poem navigation).
  */
-function createProgressToast(estimatedSeconds, arabicText) {
+function createProgressToast(estimatedSeconds, arabicText, { indeterminate = false } = {}) {
   const toastId = `tts-progress-${Date.now()}`;
   const startTime = Date.now();
   const lineCount = arabicText ? arabicText.split('\n').filter((l) => l.trim()).length : 0;
@@ -58,18 +67,23 @@ function createProgressToast(estimatedSeconds, arabicText) {
       ? `Preparing ${lineCount} line${lineCount !== 1 ? 's' : ''}`
       : 'Preparing recitation';
 
-  toast.loading(`Recitation ready in ${estimatedSeconds}s`, {
-    id: toastId,
-    description: lineInfo,
-    duration: Infinity,
-    icon: createElement(
+  const bounceIcon = () =>
+    createElement(
       motion.div,
       {
         animate: { y: [0, -5, 0] },
         transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
       },
       createElement(Rabbit, { size: 16 })
-    ),
+    );
+
+  const STARTING = 'Starting recitation…';
+
+  toast.loading(indeterminate ? STARTING : `Recitation ready in ${estimatedSeconds}s`, {
+    id: toastId,
+    description: lineInfo,
+    duration: Infinity,
+    icon: bounceIcon(),
   });
 
   const interval = setInterval(() => {
@@ -81,39 +95,22 @@ function createProgressToast(estimatedSeconds, arabicText) {
     }
 
     const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const remaining = estimatedSeconds - elapsed;
-    const msgIndex = Math.floor(elapsed / 5) % TTS_LOADING_MESSAGES.length;
-    const subtitle = TTS_LOADING_MESSAGES[msgIndex];
+    const subtitle = TTS_LOADING_MESSAGES[Math.floor(elapsed / 5) % TTS_LOADING_MESSAGES.length];
 
-    if (remaining > 0) {
-      toast.loading(`Recitation ready in ${remaining}s`, {
-        id: toastId,
-        description: subtitle,
-        duration: Infinity,
-        icon: createElement(
-          motion.div,
-          {
-            animate: { y: [0, -5, 0] },
-            transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
-          },
-          createElement(Rabbit, { size: 16 })
-        ),
-      });
+    let label;
+    if (indeterminate) {
+      label = STARTING;
     } else {
-      toast.loading('Almost ready...', {
-        id: toastId,
-        description: subtitle,
-        duration: Infinity,
-        icon: createElement(
-          motion.div,
-          {
-            animate: { y: [0, -5, 0] },
-            transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
-          },
-          createElement(Rabbit, { size: 16 })
-        ),
-      });
+      const remaining = estimatedSeconds - elapsed;
+      label = remaining > 0 ? `Recitation ready in ${remaining}s` : 'Almost ready...';
     }
+
+    toast.loading(label, {
+      id: toastId,
+      description: subtitle,
+      duration: Infinity,
+      icon: bounceIcon(),
+    });
   }, 1000);
 
   let dismissed = false;
@@ -484,12 +481,23 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     );
     setError(null);
 
-    // Show progress toast with estimated countdown
+    // Progress toast. Live streams first sound in ~1s, so it gets an indeterminate
+    // "Starting recitation…" (dismissed on first sound) instead of a misleading
+    // full-generation countdown. REST / buffered must generate the whole clip first,
+    // so they get the real countdown. If Live falls back to REST below, the toast is
+    // swapped for a countdown at that point.
+    const willStream =
+      ttsMode === 'live' &&
+      (!isIOS() || (typeof navigator !== 'undefined' && 'audioSession' in navigator));
     const estSeconds = estimateTTSSeconds(arabicTextChars);
-    const progress = createProgressToast(estSeconds, current?.arabic);
+    let progress = willStream
+      ? createProgressToast(0, current?.arabic, { indeterminate: true })
+      : createProgressToast(estSeconds, current?.arabic);
     addLog(
       'Audio',
-      `Estimated generation time: ~${estSeconds}s for ${arabicTextChars} Arabic chars`,
+      willStream
+        ? 'Live streaming — first sound expected in ~1s'
+        : `Estimated generation time: ~${estSeconds}s for ${arabicTextChars} Arabic chars`,
       'info'
     );
 
@@ -504,7 +512,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       // gesture set navigator.audioSession.type='playback' above, so Web Audio
       // plays through the hardware silent switch (verified on device). Old iOS
       // without the Audio Session API falls through to the HLS/buffered path below.
-      if (ttsMode === 'live' && (!isIOS() || (typeof navigator !== 'undefined' && 'audioSession' in navigator))) {
+      if (willStream) {
         try {
           const liveText = getLiveContent(current);
           addLog(
@@ -625,6 +633,14 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           );
           ttsMode = 'rest';
         }
+      }
+
+      // Live streaming was attempted but yielded no audio (we're now in the buffered
+      // path, which generates the whole clip before playback). Swap the indeterminate
+      // "Starting…" toast for an accurate countdown on that real wait.
+      if (willStream && !b64) {
+        progress.dismiss();
+        progress = createProgressToast(estSeconds, current?.arabic);
       }
 
       // ── Try selected mode first; on any failure (429, 404, network, etc.)

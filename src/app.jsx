@@ -48,6 +48,7 @@ import {
   CATEGORIES,
   FONTS,
   nextVoice,
+  voiceGender,
 } from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
@@ -1768,7 +1769,10 @@ export default function DiwanApp() {
                   className={`min-h-[44px] flex items-center gap-1.5 pl-3 pr-3.5 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-xs font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
                   style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
                 >
-                  <Mic size={16} className="opacity-70" />
+                  <Mic
+                    size={16}
+                    style={{ color: voiceGender(liveVoice) === 'f' ? '#c084fc' : '#60a5fa' }}
+                  />
                   {liveVoice}
                 </button>
               </div>

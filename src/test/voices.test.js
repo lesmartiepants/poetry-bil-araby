@@ -1,50 +1,63 @@
 import { describe, it, expect } from 'vitest';
-import { VOICE_SHORTLIST, DEFAULT_VOICE, nextVoice } from '../constants/voices.js';
+import { VOICE_CATALOG, DEFAULT_VOICE, nextVoice, voiceGender } from '../constants/voices.js';
 
-describe('voice shortlist', () => {
-  it('has at least two distinct voices to cycle between', () => {
-    expect(VOICE_SHORTLIST.length).toBeGreaterThanOrEqual(2);
-    const names = VOICE_SHORTLIST.map((v) => v.name);
-    expect(new Set(names).size).toBe(names.length); // no duplicates
+describe('voice catalog', () => {
+  it('has voices to cycle between with no duplicates', () => {
+    expect(VOICE_CATALOG.length).toBeGreaterThanOrEqual(2);
+    const names = VOICE_CATALOG.map((v) => v.name);
+    expect(new Set(names).size).toBe(names.length);
   });
 
-  it('every entry has a name and a descriptor', () => {
-    for (const v of VOICE_SHORTLIST) {
+  it('every entry has a name, descriptor, and a valid gender', () => {
+    for (const v of VOICE_CATALOG) {
       expect(typeof v.name).toBe('string');
       expect(v.name.length).toBeGreaterThan(0);
       expect(typeof v.descriptor).toBe('string');
       expect(v.descriptor.length).toBeGreaterThan(0);
+      expect(['f', 'm']).toContain(v.gender);
     }
   });
 
-  it('DEFAULT_VOICE is the first shortlist entry', () => {
-    expect(DEFAULT_VOICE).toBe(VOICE_SHORTLIST[0].name);
+  it('DEFAULT_VOICE is a real catalog entry', () => {
+    expect(VOICE_CATALOG.some((v) => v.name === DEFAULT_VOICE)).toBe(true);
+  });
+});
+
+describe('voiceGender', () => {
+  it('returns the gender for a known voice', () => {
+    expect(voiceGender('Kore')).toBe('f');
+    expect(voiceGender('Orus')).toBe('m');
+  });
+
+  it('returns null for an unknown voice', () => {
+    expect(voiceGender('NotAVoice')).toBeNull();
+    expect(voiceGender(undefined)).toBeNull();
   });
 });
 
 describe('nextVoice', () => {
-  it('advances to the next voice in order', () => {
-    for (let i = 0; i < VOICE_SHORTLIST.length - 1; i++) {
-      expect(nextVoice(VOICE_SHORTLIST[i].name)).toBe(VOICE_SHORTLIST[i + 1].name);
+  it('advances to the next voice in order, through the whole catalog', () => {
+    for (let i = 0; i < VOICE_CATALOG.length - 1; i++) {
+      expect(nextVoice(VOICE_CATALOG[i].name)).toBe(VOICE_CATALOG[i + 1].name);
     }
   });
 
   it('wraps around from the last voice to the first', () => {
-    const last = VOICE_SHORTLIST[VOICE_SHORTLIST.length - 1].name;
-    expect(nextVoice(last)).toBe(VOICE_SHORTLIST[0].name);
+    const last = VOICE_CATALOG[VOICE_CATALOG.length - 1].name;
+    expect(nextVoice(last)).toBe(VOICE_CATALOG[0].name);
   });
 
-  it('restarts the cycle for a voice not in the shortlist (e.g. a DebugPanel pick)', () => {
-    expect(nextVoice('Zephyr')).toBe(VOICE_SHORTLIST[0].name);
-    expect(nextVoice(undefined)).toBe(VOICE_SHORTLIST[0].name);
-    expect(nextVoice('')).toBe(VOICE_SHORTLIST[0].name);
+  it('restarts the cycle for a voice not in the catalog', () => {
+    expect(nextVoice('NotAVoice')).toBe(VOICE_CATALOG[0].name);
+    expect(nextVoice(undefined)).toBe(VOICE_CATALOG[0].name);
+    expect(nextVoice('')).toBe(VOICE_CATALOG[0].name);
   });
 
-  it('cycles through the entire shortlist and returns to the start', () => {
-    let voice = DEFAULT_VOICE;
-    for (let i = 0; i < VOICE_SHORTLIST.length; i++) {
+  it('cycles through the entire catalog and returns to the start', () => {
+    let voice = VOICE_CATALOG[0].name;
+    for (let i = 0; i < VOICE_CATALOG.length; i++) {
       voice = nextVoice(voice);
     }
-    expect(voice).toBe(DEFAULT_VOICE);
+    expect(voice).toBe(VOICE_CATALOG[0].name);
   });
 });

@@ -106,6 +106,21 @@ async function checkForNewRelease() {
     // Guard against reload loops if the new bundle somehow still reports the old id.
     if (sessionStorage.getItem('reloaded-for-build') === buildId) return;
     sessionStorage.setItem('reloaded-for-build', buildId);
+    // A plain reload can still be served the OLD precached bundle by a stale
+    // service worker. Force past it: pull the new SW and drop the workbox
+    // precache (old hashed JS/CSS), so the reload fetches the fresh bundle.
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.update().catch(() => {})));
+      }
+      if (window.caches) {
+        const keys = await caches.keys();
+        await Promise.all(
+          keys.filter((k) => /workbox|precache|html-navigation/i.test(k)).map((k) => caches.delete(k))
+        );
+      }
+    } catch { /* best-effort — reload anyway */ }
     window.location.reload();
   } catch {
     /* offline or version.json missing (e.g. dev) — ignore */

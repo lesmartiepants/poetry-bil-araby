@@ -14,6 +14,14 @@ export const pauseOffset = { value: 0 };
  * onstop handler skips its setPlaying(false) call. Reset after startPlayer().
  */
 export const isSeeking = { value: false };
+/**
+ * Tracks whether the most recent stop was a user pause (freeze highlight in place)
+ * vs a natural end-of-playback (snap the highlight to the final word so the whole
+ * poem reads as completed). Set true in recordPause(), reset false when a loop
+ * starts. Without this, the rAF loop stops on end before the last word's timing
+ * window is reached and the read-along freezes one word short.
+ */
+export const lastStopWasPause = { value: false };
 
 /**
  * Start a Tone.Player from a given offset and record the wall-clock start time.
@@ -38,6 +46,7 @@ export function startPlayer(player, offset) {
  * will accumulate double elapsed time until startPlayer() fires. Only use for pause.
  */
 export function recordPause() {
+  lastStopWasPause.value = true; // this stop is a pause → freeze highlight, don't snap to end
   const elapsed = Date.now() / 1000 - playbackStartTime.value;
   const newOffset = pauseOffset.value + Math.max(0, elapsed);
   if (FEATURES.logging) console.log(`[Playback:recordPause] elapsed=${elapsed.toFixed(2)}s → offset=${newOffset.toFixed(2)}s`);
@@ -142,6 +151,7 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
 
   // Start the rAF loop — called when isPlaying becomes true
   function startLoop() {
+    lastStopWasPause.value = false; // fresh run; treat the next stop as a natural end unless a pause sets this
     // One-shot scroll on first frame — ensures the active word is visible
     // even if the user has scrolled away while paused.
     let firstTick = true;
@@ -242,7 +252,20 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
         startLoop();
       } else if (!isPlaying && wasPlaying) {
         stopLoop();
-        // Do NOT clear classes on pause — highlights freeze in place
+        // Natural end (not a user pause): snap the highlight to the final word so
+        // the whole poem reads as completed. The rAF loop can stop before the last
+        // word's timing window is reached when the duration estimate overshoots,
+        // which left the read-along frozen one word short.
+        if (!lastStopWasPause.value && wordRefs.length > 0) {
+          const last = wordRefs.length - 1;
+          for (let i = 0; i <= last; i++) {
+            const el = wordRefs[i]?.current;
+            if (!el) continue;
+            el.classList.remove('tts-active', 'tts-past');
+            el.classList.add(i === last ? 'tts-active' : 'tts-past');
+          }
+        }
+        // On a user pause, highlights freeze in place (no change).
       }
     });
 

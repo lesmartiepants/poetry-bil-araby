@@ -194,29 +194,99 @@ const isIOS = () =>
  * The word-highlight system uses wall-clock time, not AudioContext.currentTime, so
  * it works identically with this player.
  */
+// iOS only lets an <audio> element be played programmatically once it has had
+// play() called on it inside a user gesture. The REST path builds its player AFTER
+// the multi-second TTS generation await — long past the gesture — so the first
+// play()'s NotAllowedError was swallowed and nothing sounded, while the wall-clock
+// read-along still advanced (so it LOOKED like it was playing). A pause+play then
+// worked because that ran in a fresh gesture.
+//
+// Fix: keep ONE <audio> element, bless it with a silent clip inside the play
+// gesture (unlockIOSAudioElement, called before generation), and reuse that same
+// blessed element for playback. iOS keeps the element user-activated for its
+// lifetime, so the later programmatic play() after generation is allowed.
+let _iosAudioEl = null;
+let _iosSilentUrl = null;
+
+function getIOSAudioEl() {
+  if (!_iosAudioEl) {
+    const a = document.createElement('audio');
+    a.setAttribute('playsinline', '');
+    a.preload = 'auto';
+    _iosAudioEl = a;
+  }
+  return _iosAudioEl;
+}
+
+function iosSilentUrl() {
+  if (_iosSilentUrl) return _iosSilentUrl;
+  try {
+    // ~50ms of silence (zeroed PCM16 @ 24kHz) wrapped as a WAV blob.
+    const b64 = btoa(String.fromCharCode.apply(null, new Uint8Array(2400)));
+    const blob = pcm16ToWav(b64);
+    if (blob) _iosSilentUrl = URL.createObjectURL(blob);
+  } catch {
+    /* leave null — unlock becomes a best-effort no-op */
+  }
+  return _iosSilentUrl;
+}
+
+/** Bless the reusable iOS <audio> element inside a user gesture. No-op off iOS. */
+function unlockIOSAudioElement() {
+  if (!isIOS()) return;
+  const a = getIOSAudioEl();
+  const silent = iosSilentUrl();
+  if (!silent) return;
+  try {
+    a.muted = true;
+    a.src = silent;
+    const settle = () => {
+      try {
+        a.pause();
+        a.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
+      a.muted = false;
+    };
+    const p = a.play();
+    if (p && typeof p.then === 'function') p.then(settle).catch(settle);
+    else settle();
+  } catch {
+    a.muted = false;
+  }
+}
+
 function createHTMLAudioPlayer(url) {
   return new Promise((resolve) => {
-    const audio = document.createElement('audio');
-    audio.setAttribute('playsinline', '');
-    audio.preload = 'auto';
+    // Reuse the gesture-blessed element so play() after the generation await works.
+    const audio = getIOSAudioEl();
+    audio.muted = false;
     audio.src = url;
 
     const player = {
       onstop: null,
       start(_time, offset = 0) {
-        audio.currentTime = offset;
+        try {
+          audio.currentTime = offset;
+        } catch {
+          /* currentTime may throw before metadata loads */
+        }
         audio.play().catch(() => {});
       },
       stop() {
         audio.pause();
-        audio.currentTime = 0;
+        try {
+          audio.currentTime = 0;
+        } catch {
+          /* ignore */
+        }
         this.onstop?.();
       },
     };
 
-    audio.addEventListener('ended', () => {
-      player.onstop?.();
-    });
+    // Property assignment (not addEventListener) so reuse doesn't stack handlers.
+    audio.onended = () => player.onstop?.();
 
     // Blob URLs are local — loadeddata fires near-instantly. 500 ms timeout as a
     // safety net on older iOS where canplaythrough/loadeddata can be delayed.
@@ -328,6 +398,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     try {
       if ('audioSession' in navigator) navigator.audioSession.type = 'playback';
     } catch { /* older iOS without the Audio Session API → buffered fallback still works */ }
+    // Bless the reusable <audio> element NOW, inside the gesture, so the REST
+    // path's play() after the generation await is allowed (otherwise silent first
+    // play; #...). Web Audio (Live) doesn't need this, but it's a cheap no-op there.
+    unlockIOSAudioElement();
   }
   // Unlock the AudioContext after the user gesture (now on iOS too).
   await toneStart();

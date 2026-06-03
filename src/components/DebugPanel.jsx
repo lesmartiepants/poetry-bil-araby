@@ -3,6 +3,7 @@ import { Bug, X, Copy, Check, Zap, Radio, Wifi } from 'lucide-react';
 import Sentry from '../sentry.js';
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
+import { VOICE_CATALOG } from '../constants/voices.js';
 import { useUIStore, CATEGORY_MAP } from '../stores/uiStore';
 import { usePoemStore } from '../stores/poemStore';
 import { useAudioStore } from '../stores/audioStore';
@@ -344,22 +345,14 @@ const DebugPanel = ({ controlBarRef }) => {
                 style={{ background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', color: 'rgb(251,146,60)' }}
               >
                 <optgroup label="♀ Female">
-                  {[
-                    { n: 'Zephyr', d: 'Bright' }, { n: 'Kore', d: 'Firm' }, { n: 'Leda', d: 'Youthful' },
-                    { n: 'Aoede', d: 'Breezy' }, { n: 'Callirrhoe', d: 'Easy-going' }, { n: 'Autonoe', d: 'Bright' },
-                    { n: 'Despina', d: 'Smooth' }, { n: 'Erinome', d: 'Clear' }, { n: 'Laomedeia', d: 'Upbeat' },
-                    { n: 'Achernar', d: 'Soft' }, { n: 'Pulcherrima', d: 'Forward' }, { n: 'Achird', d: 'Friendly' },
-                    { n: 'Schedar', d: 'Even' }, { n: 'Vindemiatrix', d: 'Gentle' }, { n: 'Sulafat', d: 'Warm' },
-                  ].map(v => <option key={v.n} value={v.n}>{v.n} — {v.d}</option>)}
+                  {VOICE_CATALOG.filter((v) => v.gender === 'f').map((v) => (
+                    <option key={v.name} value={v.name}>{v.name} — {v.descriptor}</option>
+                  ))}
                 </optgroup>
                 <optgroup label="♂ Male">
-                  {[
-                    { n: 'Orus', d: 'Firm' }, { n: 'Puck', d: 'Upbeat' }, { n: 'Charon', d: 'Informative' },
-                    { n: 'Fenrir', d: 'Excitable' }, { n: 'Enceladus', d: 'Breathy' }, { n: 'Iapetus', d: 'Clear' },
-                    { n: 'Umbriel', d: 'Easy-going' }, { n: 'Algieba', d: 'Smooth' }, { n: 'Algenib', d: 'Gravelly' },
-                    { n: 'Rasalgethi', d: 'Informative' }, { n: 'Alnilam', d: 'Firm' }, { n: 'Gacrux', d: 'Mature' },
-                    { n: 'Zubenelgenubi', d: 'Casual' }, { n: 'Sadachbia', d: 'Lively' }, { n: 'Sadaltager', d: 'Knowledgeable' },
-                  ].map(v => <option key={v.n} value={v.n}>{v.n} — {v.d}</option>)}
+                  {VOICE_CATALOG.filter((v) => v.gender === 'm').map((v) => (
+                    <option key={v.name} value={v.name}>{v.name} — {v.descriptor}</option>
+                  ))}
                 </optgroup>
               </select>
             </div>

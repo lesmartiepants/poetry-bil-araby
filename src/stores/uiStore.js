@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { FEATURES } from '../constants/features';
 import { THEME } from '../constants/theme';
 import { FONTS } from '../constants/fonts';
+import { DEFAULT_VOICE } from '../constants/voices';
 
 const MAX_LOGS = 200;
 
@@ -24,6 +25,22 @@ const persistTtsMode = (mode) => {
   } catch {}
 };
 
+// Selected speaking voice. Driven by the voice-cycle pill next to Listen (and the
+// DebugPanel picker). Remembered across reloads so a listener's choice sticks.
+const TTS_VOICE_KEY = 'tts-voice';
+const loadLiveVoice = () => {
+  try {
+    const v = localStorage.getItem(TTS_VOICE_KEY);
+    if (v) return v;
+  } catch {}
+  return DEFAULT_VOICE;
+};
+const persistLiveVoice = (voice) => {
+  try {
+    localStorage.setItem(TTS_VOICE_KEY, voice);
+  } catch {}
+};
+
 export const CATEGORY_MAP = {
   user: { color: '#00bcd4', prefix: 'USER' },
   request: { color: '#ff9800', prefix: '  →' },
@@ -42,7 +59,7 @@ const initialState = {
   showDebugLogs: FEATURES.debug,
   ratchetMode: false, // Ratchet Mode: explains poems in Gen Z / gangster slang
   ttsMode: loadTtsMode(), // 'rest' | 'live' — defaults to 'live' (streaming)
-  liveVoice: 'Orus',
+  liveVoice: loadLiveVoice(), // selected speaking voice, persisted (default DEFAULT_VOICE)
   liveTemperature: 0,
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
   logs: [],
@@ -75,7 +92,10 @@ export const useUIStore = create((set, get) => ({
     persistTtsMode(ttsMode);
     set({ ttsMode });
   },
-  setLiveVoice: (liveVoice) => set({ liveVoice }),
+  setLiveVoice: (liveVoice) => {
+    persistLiveVoice(liveVoice);
+    set({ liveVoice });
+  },
   setLiveTemperature: (liveTemperature) => set({ liveTemperature }),
   setHighlightStyle: (highlightStyle) => set({ highlightStyle }),
   setDarkMode: (darkMode) => set({ darkMode }),

@@ -95,6 +95,22 @@ describe('buildLiveWordTimings', () => {
     }
   });
 
+  it('end >= start after monotonic clamp (overlapping fragments)', () => {
+    // Fragment 2 starts at byte 0 (same as fragment 1) → its words get clamped.
+    // After clamping start forward, end must also be clamped so end >= start.
+    const result = buildLiveWordTimings(
+      [
+        { text: 'alpha beta', audioBytesBefore: 0 },
+        { text: 'gamma', audioBytesBefore: 0 }, // same start → overlaps with fragment 1
+      ],
+      48000
+    );
+
+    for (let i = 0; i < result.length; i++) {
+      expect(result[i].end).toBeGreaterThanOrEqual(result[i].start);
+    }
+  });
+
   it('handles custom sampleRate and bytesPerSample', () => {
     // 16000 Hz * 2 bytes/sample = 32000 bytes per second
     const result = buildLiveWordTimings(

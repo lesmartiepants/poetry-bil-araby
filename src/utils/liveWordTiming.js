@@ -67,10 +67,14 @@ export function buildLiveWordTimings(fragments, totalAudioBytes, opts = {}) {
     }
   }
 
-  // Enforce monotonic non-decreasing: clamp any start times to previous word's end
+  // Enforce monotonic non-decreasing and start <= end.
+  // Must clamp end AFTER adjusting start — otherwise end can go below start.
   for (let i = 1; i < timings.length; i++) {
     if (timings[i].start < timings[i - 1].end) {
       timings[i].start = timings[i - 1].end;
+    }
+    if (timings[i].end < timings[i].start) {
+      timings[i].end = timings[i].start;
     }
   }
 

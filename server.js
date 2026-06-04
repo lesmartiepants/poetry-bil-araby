@@ -1003,6 +1003,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
     let firstChunkTimer = null;
     let idleTimer = null;
     let totalBytes = 0;
+    let bytesAtLastTranscriptEnd = 0; // byte offset where the current fragment's audio started
     const transcriptFragments = [];
 
     const clearTimers = () => {
@@ -1112,20 +1113,26 @@ app.post('/api/ai/live-tts', async (req, res) => {
                 if (onFirstChunk) onFirstChunk(part.inlineData.mimeType);
               }
               chunkCount++;
-              const audioBuffer = Buffer.from(part.inlineData.data, 'base64');
-              totalBytes += audioBuffer.length;
-              onChunk(part.inlineData.data);
+              const base64 = part.inlineData.data;
+              const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+              totalBytes += Math.floor((base64.length * 3) / 4) - padding;
+              onChunk(base64);
               resetIdle();
             }
           }
         }
 
         // ── Output transcription (interleaved with audio) ──────────────────
+        // The API sends transcription AFTER the audio it describes, so totalBytes
+        // at this point is already past the end of this fragment's audio.
+        // bytesAtLastTranscriptEnd holds the byte position where THIS fragment's
+        // audio started (= where the previous fragment's audio ended).
         if (msg.serverContent?.outputTranscription?.text) {
           transcriptFragments.push({
             text: msg.serverContent.outputTranscription.text,
-            audioBytesBefore: totalBytes,
+            audioBytesBefore: bytesAtLastTranscriptEnd,
           });
+          bytesAtLastTranscriptEnd = totalBytes;
         }
 
         // ── Turn complete — all audio received ───────────────────────────

@@ -26,10 +26,17 @@ import { fileURLToPath } from 'url';
 import { resolve } from 'path';
 import { readFileSync } from 'fs';
 import WebSocket from 'ws';
+import { buildLiveWordTimings } from './src/utils/liveWordTiming.js';
 
 const { Pool } = pg;
 const app = express();
-const _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
+let _labHtml = '';
+try {
+  _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
+} catch {
+  // In test environment, import.meta.url may not be a valid file URL
+  _labHtml = '<html><!-- tts-lab.html not available in test environment --></html>';
+}
 const PORT = process.env.PORT || 3001;
 const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
 const LOG_DEBUG = process.env.LOG_DEBUG === 'true'; // verbose DB debug, off by default
@@ -995,6 +1002,8 @@ app.post('/api/ai/live-tts', async (req, res) => {
     let chunkCount = 0;
     let firstChunkTimer = null;
     let idleTimer = null;
+    let totalBytes = 0;
+    const transcriptFragments = [];
 
     const clearTimers = () => {
       clearTimeout(firstChunkTimer);
@@ -1008,7 +1017,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
       try {
         ws.close();
       } catch {}
-      onDone(reason, chunkCount);
+      onDone(reason, chunkCount, { transcriptFragments, totalBytes });
     };
     const fail = (err) => {
       if (settled) return;
@@ -1055,6 +1064,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
               },
             ],
           },
+          outputAudioTranscription: {},
         },
       };
       ws.send(JSON.stringify(setupMsg));
@@ -1102,10 +1112,20 @@ app.post('/api/ai/live-tts', async (req, res) => {
                 if (onFirstChunk) onFirstChunk(part.inlineData.mimeType);
               }
               chunkCount++;
+              const audioBuffer = Buffer.from(part.inlineData.data, 'base64');
+              totalBytes += audioBuffer.length;
               onChunk(part.inlineData.data);
               resetIdle();
             }
           }
+        }
+
+        // ── Output transcription (interleaved with audio) ──────────────────
+        if (msg.serverContent?.outputTranscription?.text) {
+          transcriptFragments.push({
+            text: msg.serverContent.outputTranscription.text,
+            audioBytesBefore: totalBytes,
+          });
         }
 
         // ── Turn complete — all audio received ───────────────────────────
@@ -1163,9 +1183,13 @@ app.post('/api/ai/live-tts', async (req, res) => {
       onFirstChunk: (mime) =>
         sse({ meta: { sampleRate: 24000, mimeType: mime || 'audio/pcm;rate=24000' } }),
       onChunk: (b64) => sse({ chunk: b64 }),
-      onDone: (reason, n) => {
-        log.info('Live TTS', `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice}`);
-        sse({ done: true, chunks: n, reason });
+      onDone: (reason, n, { transcriptFragments, totalBytes }) => {
+        const wordTimings = buildLiveWordTimings(transcriptFragments, totalBytes);
+        log.info(
+          'Live TTS',
+          `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice} | ${wordTimings.length} words from ${transcriptFragments.length} fragments`
+        );
+        sse({ done: true, chunks: n, reason, ...(wordTimings.length ? { wordTimings } : {}) });
         try {
           res.end();
         } catch {}
@@ -1189,7 +1213,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
   runSession({
     maxMs: WS_MAX_BUFFER,
     onChunk: (b64) => chunks.push(b64),
-    onDone: () => {
+    onDone: (_reason, _chunkCount, { transcriptFragments, totalBytes }) => {
       if (!chunks.length) {
         if (!res.headersSent) res.status(500).json({ error: 'No audio data received from Live API' });
         return;
@@ -1197,11 +1221,15 @@ app.post('/api/ai/live-tts', async (req, res) => {
       // Decode each base64 chunk to binary, concat, re-encode. A plain string join
       // is wrong when chunks carry base64 padding ('=') in the middle.
       const combined = Buffer.concat(chunks.map((b64) => Buffer.from(b64, 'base64')));
+      const wordTimings = buildLiveWordTimings(transcriptFragments, combined.length);
       log.info(
         'Live TTS',
-        `Done (${ms()}) | ${chunks.length} chunks | ${combined.length} bytes PCM | voice: ${voice}`
+        `Done (${ms()}) | ${chunks.length} chunks | ${combined.length} bytes PCM | voice: ${voice} | Word timings: ${wordTimings.length} words from ${transcriptFragments.length} fragments`
       );
-      res.json({ audioData: combined.toString('base64') });
+      res.json({
+        audioData: combined.toString('base64'),
+        ...(wordTimings.length ? { wordTimings } : {}),
+      });
     },
     onFail: (err) => {
       log.error('Live TTS', `Failed: ${err.message}`);

@@ -86,6 +86,7 @@ import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
 import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
+import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -230,6 +231,8 @@ export default function DiwanApp() {
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
   const audioPlayer = useAudioStore((s) => s.player);
+  // Real per-word timings from the Live TTS transcript (null in REST mode / pre-audio).
+  const serverWordTimings = useAudioStore((s) => s.wordTimings);
   const liveVoice = useUIStore((s) => s.liveVoice);
   const setLiveVoice = useUIStore((s) => s.setLiveVoice);
   const highlightStyle = useUIStore((s) => s.highlightStyle);
@@ -858,6 +861,23 @@ export default function DiwanApp() {
   );
 
   const wordTimings = useMemo(() => {
+    // Best source: REAL per-word timings from the Live TTS transcript, aligned onto
+    // the displayed tokens. These are exact (the model reported what it said and the
+    // audio byte position tells us when), so they beat every estimate. Used when the
+    // alignment confidently covers the line; otherwise we fall through to VAD.
+    if (serverWordTimings && serverWordTimings.length > 0) {
+      const aligned = alignTranscriptTimings(allWords, serverWordTimings);
+      if (aligned && aligned.timings.length === allWords.length && aligned.confidence >= 0.5) {
+        if (FEATURES.logging) {
+          console.log(
+            `[WordTiming] Live transcript timings aligned (${(aligned.confidence * 100).toFixed(0)}% of ${allWords.length} words)`
+          );
+        }
+        return aligned.timings;
+      }
+      if (FEATURES.logging)
+        console.log('[WordTiming] Live transcript alignment low-confidence — using VAD');
+    }
     // When actual audio is loaded, derive timings from the waveform (VAD alignment).
     // This is far more accurate than character-count estimation because it uses the
     // real pauses between verses detected in the audio signal.
@@ -879,7 +899,7 @@ export default function DiwanApp() {
     }
     // Fallback: character-count proportional distribution (used pre-audio or on VAD failure)
     return computeWordTimings(allWords, effectiveDuration);
-  }, [audioPlayer, verseWords, allWords, effectiveDuration]);
+  }, [audioPlayer, verseWords, allWords, effectiveDuration, serverWordTimings]);
 
   // Per-verse start times — first word of each verse's timing.start
   const verseStartTimes = useMemo(() => {

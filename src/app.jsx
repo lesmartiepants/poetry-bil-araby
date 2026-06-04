@@ -90,6 +90,7 @@ import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
 import {
   useTTSHighlight,
   startPlayer,
+  getPlaybackElapsed,
   pauseOffset,
   playbackStartTime,
   isSeeking,
@@ -868,27 +869,45 @@ export default function DiwanApp() {
     if (serverWordTimings && serverWordTimings.length > 0) {
       if (FEATURES.logging) {
         const lastSrv = serverWordTimings[serverWordTimings.length - 1];
-        const first3 = serverWordTimings.slice(0, 3).map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`).join(' ');
-        useUIStore.getState().addLog(
-          'WordTiming:Server',
-          `${serverWordTimings.length} words | span=0–${lastSrv?.end?.toFixed(2) ?? '?'}s | ${first3}`
-        );
+        const first3 = serverWordTimings
+          .slice(0, 3)
+          .map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`)
+          .join(' ');
+        useUIStore
+          .getState()
+          .addLog(
+            'WordTiming:Server',
+            `${serverWordTimings.length} words | span=0–${lastSrv?.end?.toFixed(2) ?? '?'}s | ${first3}`
+          );
       }
       const aligned = alignTranscriptTimings(allWords, serverWordTimings);
       if (aligned && aligned.timings.length === allWords.length && aligned.confidence >= 0.5) {
         if (FEATURES.logging) {
           const lastAligned = aligned.timings[aligned.timings.length - 1];
-          const first3 = aligned.timings.slice(0, 3).map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`).join(' ');
-          const last3 = aligned.timings.slice(-3).map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`).join(' ');
-          useUIStore.getState().addLog(
-            'WordTiming:Aligned',
-            `conf=${(aligned.confidence * 100).toFixed(0)}% | ${allWords.length} words | span=0–${lastAligned?.end?.toFixed(2) ?? '?'}s | eff=${effectiveDuration.toFixed(2)}s | [${first3}] … [${last3}]`
-          );
+          const first3 = aligned.timings
+            .slice(0, 3)
+            .map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`)
+            .join(' ');
+          const last3 = aligned.timings
+            .slice(-3)
+            .map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`)
+            .join(' ');
+          useUIStore
+            .getState()
+            .addLog(
+              'WordTiming:Aligned',
+              `conf=${(aligned.confidence * 100).toFixed(0)}% | ${allWords.length} words | span=0–${lastAligned?.end?.toFixed(2) ?? '?'}s | eff=${effectiveDuration.toFixed(2)}s | [${first3}] … [${last3}]`
+            );
         }
         return aligned.timings;
       }
       if (FEATURES.logging)
-        useUIStore.getState().addLog('WordTiming', `Live alignment low-confidence (${aligned?.confidence != null ? (aligned.confidence * 100).toFixed(0) : '?'}%) — using VAD`);
+        useUIStore
+          .getState()
+          .addLog(
+            'WordTiming',
+            `Live alignment low-confidence (${aligned?.confidence != null ? (aligned.confidence * 100).toFixed(0) : '?'}%) — using VAD`
+          );
     }
     // When actual audio is loaded, derive timings from the waveform (VAD alignment).
     // This is far more accurate than character-count estimation because it uses the
@@ -898,13 +917,17 @@ export default function DiwanApp() {
         const vadTimings = computeWordTimingsFromAudio(audioPlayer.buffer, verseWords);
         if (vadTimings && vadTimings.length === allWords.length) {
           if (FEATURES.logging) {
-            useUIStore.getState().addLog('WordTiming', `VAD timings: ${vadTimings.length} words from audio buffer`);
+            useUIStore
+              .getState()
+              .addLog('WordTiming', `VAD timings: ${vadTimings.length} words from audio buffer`);
           }
           return vadTimings;
         }
       } catch (err) {
         if (FEATURES.logging)
-          useUIStore.getState().addLog('WordTiming', `VAD failed: ${err.message} — using char-weighted`, 'error');
+          useUIStore
+            .getState()
+            .addLog('WordTiming', `VAD failed: ${err.message} — using char-weighted`, 'error');
       }
     }
     // Fallback: character-count proportional distribution (used pre-audio or on VAD failure)
@@ -955,7 +978,8 @@ export default function DiwanApp() {
   useEffect(() => {
     if (!FEATURES.logging || !isPlaying) return;
     const id = setInterval(() => {
-      const elapsed = Date.now() / 1000 - playbackStartTime.value + pauseOffset.value;
+      const elapsed = getPlaybackElapsed();
+      const clock = useAudioStore.getState().player?.getCurrentTime ? 'player' : 'wall';
       let activeIdx = -1;
       for (let i = 0; i < wordTimings.length; i++) {
         if (elapsed >= wordTimings[i].start && elapsed < wordTimings[i].end) {
@@ -963,10 +987,12 @@ export default function DiwanApp() {
           break;
         }
       }
-      useUIStore.getState().addLog(
-        'Highlight:tick',
-        `t=${elapsed.toFixed(2)}s | word[${activeIdx}]="${allWords[activeIdx] ?? 'none'}" | total=${highlightTotalDuration.toFixed(2)}s | eff=${effectiveDuration.toFixed(2)}s`
-      );
+      useUIStore
+        .getState()
+        .addLog(
+          'Highlight:tick',
+          `t=${elapsed.toFixed(2)}s (${clock}) | word[${activeIdx}]="${allWords[activeIdx] ?? 'none'}" | total=${highlightTotalDuration.toFixed(2)}s | eff=${effectiveDuration.toFixed(2)}s`
+        );
     }, 3000);
     return () => clearInterval(id);
   }, [isPlaying, wordTimings, allWords, highlightTotalDuration, effectiveDuration]);

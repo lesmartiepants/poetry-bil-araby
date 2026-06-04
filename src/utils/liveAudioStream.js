@@ -114,6 +114,7 @@ export function createStreamingPlayer(ctx, { sampleRate = DEFAULT_SAMPLE_RATE } 
   let inputDone = false;
   let stopped = false;
   let firstChunkAt = null; // ctx.currentTime of first scheduled chunk
+  let insertedGapSeconds = 0; // cumulative underrun gaps inserted into the schedule
   const sources = new Set();
   // All chunks fan through one gain node so the volume-detection analyser can
   // tap a single output (matches the Tone.Player.connect() interface).
@@ -139,9 +140,13 @@ export function createStreamingPlayer(ctx, { sampleRate = DEFAULT_SAMPLE_RATE } 
       src.buffer = buf;
       src.connect(output);
       const now = ctx.currentTime;
+      const prevNextTime = nextTime;
       // Small lead on the first chunk; resync if generation fell behind playback
       // (an underrun leaves a gap rather than overlapping audio).
       if (nextTime < now + 0.05) nextTime = now + 0.05;
+      if (firstChunkAt !== null && nextTime > prevNextTime) {
+        insertedGapSeconds += nextTime - prevNextTime;
+      }
       if (firstChunkAt === null) firstChunkAt = nextTime;
       src.start(nextTime);
       nextTime += buf.duration;
@@ -204,6 +209,17 @@ export function createStreamingPlayer(ctx, { sampleRate = DEFAULT_SAMPLE_RATE } 
     /** True once at least one chunk has been scheduled. */
     get hasStarted() {
       return firstChunkAt !== null;
+    },
+    /**
+     * Playback progress in CONTENT seconds (not wall-clock): excludes scheduling
+     * gaps inserted on stream underruns so highlight timing doesn't run ahead.
+     */
+    getCurrentTime() {
+      if (firstChunkAt === null) return 0;
+      const playedOnCtxClock = Math.max(0, ctx.currentTime - firstChunkAt);
+      const contentPlayed = Math.max(0, playedOnCtxClock - insertedGapSeconds);
+      const contentScheduled = Math.max(0, nextTime - firstChunkAt - insertedGapSeconds);
+      return Math.min(contentPlayed, contentScheduled);
     },
   };
   return player;

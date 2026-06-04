@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAudioStore } from '../stores/audioStore';
 import { FEATURES } from '../constants/features';
 
@@ -9,6 +9,7 @@ import { FEATURES } from '../constants/features';
  */
 export const playbackStartTime = { value: 0 };
 export const pauseOffset = { value: 0 };
+export const playbackPlayerRef = { value: null };
 /**
  * Seek guard — set true before player.stop() in a seek operation so the
  * onstop handler skips its setPlaying(false) call. Reset after startPlayer().
@@ -31,10 +32,20 @@ export const lastStopWasPause = { value: false };
  * @param {number} offset - seconds into the audio to start from
  */
 export function startPlayer(player, offset) {
+  playbackPlayerRef.value = player ?? null;
   pauseOffset.value = offset;
   playbackStartTime.value = Date.now() / 1000;
   if (FEATURES.logging) console.log(`[Playback:startPlayer] offset=${offset.toFixed(2)}s`);
   player.start(undefined, offset);
+}
+
+/** Read playback position in seconds; prefers player-provided content clock. */
+export function getPlaybackElapsed() {
+  const playerElapsed = playbackPlayerRef.value?.getCurrentTime?.();
+  if (Number.isFinite(playerElapsed)) {
+    return Math.max(0, pauseOffset.value + playerElapsed);
+  }
+  return Date.now() / 1000 - playbackStartTime.value + pauseOffset.value;
 }
 
 /**
@@ -47,9 +58,12 @@ export function startPlayer(player, offset) {
  */
 export function recordPause() {
   lastStopWasPause.value = true; // this stop is a pause → freeze highlight, don't snap to end
-  const elapsed = Date.now() / 1000 - playbackStartTime.value;
-  const newOffset = pauseOffset.value + Math.max(0, elapsed);
-  if (FEATURES.logging) console.log(`[Playback:recordPause] elapsed=${elapsed.toFixed(2)}s → offset=${newOffset.toFixed(2)}s`);
+  const newOffset = Math.max(0, getPlaybackElapsed());
+  const elapsed = Math.max(0, newOffset - pauseOffset.value);
+  if (FEATURES.logging)
+    console.log(
+      `[Playback:recordPause] elapsed=${elapsed.toFixed(2)}s → offset=${newOffset.toFixed(2)}s`
+    );
   pauseOffset.value = newOffset;
   // Reset start time so subsequent recordPause calls are safe
   playbackStartTime.value = Date.now() / 1000;
@@ -66,7 +80,14 @@ export function recordPause() {
  * @param {number} totalDuration
  * @param {function} onVerseChange
  */
-export function applyHighlightsOnce(offset, wordRefs, wordOffsets, timings, totalDuration, onVerseChange) {
+export function applyHighlightsOnce(
+  offset,
+  wordRefs,
+  wordOffsets,
+  timings,
+  totalDuration,
+  onVerseChange
+) {
   // Clear all existing highlight classes
   for (let i = 0; i < wordRefs.length; i++) {
     const el = wordRefs[i]?.current;
@@ -76,7 +97,7 @@ export function applyHighlightsOnce(offset, wordRefs, wordOffsets, timings, tota
   }
 
   // Compute elapsed time from global playback state
-  const elapsed = Date.now() / 1000 - playbackStartTime.value + pauseOffset.value;
+  const elapsed = Number.isFinite(offset) ? Math.max(0, offset) : getPlaybackElapsed();
 
   // Find active word index
   let newIndex = -1;
@@ -140,14 +161,22 @@ export function applyHighlightsOnce(offset, wordRefs, wordOffsets, timings, tota
  * @param {number[]} params.wordOffsets             - First word index for each verse
  * @param {function} params.onVerseChange           - Called with verseIdx when verse changes
  */
-export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets = [], onVerseChange }) {
+export function useTTSHighlight({
+  wordRefs,
+  timings,
+  totalDuration,
+  wordOffsets = [],
+  onVerseChange,
+}) {
   const rafRef = useRef(null);
   const activeIndexRef = useRef(-1);
   const activeVerseRef = useRef(-1);
   const lastScrollRef = useRef(0);
   // Stable ref to onVerseChange so tick closure doesn't go stale
   const onVerseChangeRef = useRef(onVerseChange);
-  useEffect(() => { onVerseChangeRef.current = onVerseChange; });
+  useEffect(() => {
+    onVerseChangeRef.current = onVerseChange;
+  });
 
   // Start the rAF loop — called when isPlaying becomes true
   function startLoop() {
@@ -156,7 +185,7 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
     // even if the user has scrolled away while paused.
     let firstTick = true;
     function tick() {
-      const elapsed = Date.now() / 1000 - playbackStartTime.value + pauseOffset.value;
+      const elapsed = getPlaybackElapsed();
 
       // Find the word index whose window contains elapsed
       let newIndex = -1;
@@ -201,7 +230,10 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
                 lastScrollRef.current = now;
                 const fontSize = parseFloat(getComputedStyle(activeEl).fontSize) || 28;
                 const lineHeight = fontSize * 2.2; // matches leading-[2.2]
-                window.scrollBy({ top: Math.min(overflow + lineHeight * 0.5, lineHeight * 2), behavior: 'smooth' });
+                window.scrollBy({
+                  top: Math.min(overflow + lineHeight * 0.5, lineHeight * 2),
+                  behavior: 'smooth',
+                });
               }
             }
           }
@@ -279,7 +311,7 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
       stopLoop();
       clearAllClasses();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     // Safe: wordRefs and onVerseChangeRef.current are accessed by reference inside
     // the closure. wordRefs is recreated only when allWords.length changes, which
     // also causes timings to change (new poem) — so the effect re-runs and the

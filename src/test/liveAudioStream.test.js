@@ -10,6 +10,7 @@ import {
 function mockCtx() {
   const started = [];
   const stopped = [];
+  const startTimes = [];
   return {
     currentTime: 0,
     state: 'running',
@@ -25,7 +26,8 @@ function mockCtx() {
         buffer: null,
         onended: null,
         connect() {},
-        start() {
+        start(when) {
+          startTimes.push(when);
           started.push(src);
         },
         stop() {
@@ -36,6 +38,7 @@ function mockCtx() {
     },
     _started: started,
     _stopped: stopped,
+    _startTimes: startTimes,
   };
 }
 
@@ -158,4 +161,25 @@ describe('createStreamingPlayer stop()', () => {
     player.markInputDone();
     expect(stops).toBe(1);
   });
-})
+
+  it('getCurrentTime excludes inserted underrun gaps', () => {
+    const ctx = mockCtx();
+    const player = createStreamingPlayer(ctx);
+
+    // First chunk starts at t≈0.05 with default lead.
+    ctx.currentTime = 0;
+    player.pushChunk(new Int16Array(2400)); // 0.1s at 24k
+    expect(ctx._startTimes[0]).toBeCloseTo(0.05, 4);
+
+    // Simulate stream underrun: next chunk arrives late at t=0.50.
+    // Scheduler inserts a gap between old nextTime (0.15) and new start (0.55).
+    ctx.currentTime = 0.5;
+    player.pushChunk(new Int16Array(2400));
+    expect(ctx._startTimes[1]).toBeCloseTo(0.55, 4);
+
+    // Halfway through second chunk on context clock (t=0.60), content playback
+    // should be 0.15s (first 0.10 + second 0.05), not 0.55s.
+    ctx.currentTime = 0.6;
+    expect(player.getCurrentTime()).toBeCloseTo(0.15, 2);
+  });
+});

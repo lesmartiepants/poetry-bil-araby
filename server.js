@@ -1102,6 +1102,8 @@ app.post('/api/ai/live-tts', async (req, res) => {
 
         // ── Audio / text parts ───────────────────────────────────────────
         if (msg.serverContent?.modelTurn?.parts) {
+          const bytesBeforeMsg = totalBytes;
+          let msgAudioBytes = 0;
           for (const part of msg.serverContent.modelTurn.parts) {
             if (part.inlineData?.data) {
               if (chunkCount === 0) {
@@ -1115,10 +1117,15 @@ app.post('/api/ai/live-tts', async (req, res) => {
               chunkCount++;
               const base64 = part.inlineData.data;
               const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
-              totalBytes += Math.floor((base64.length * 3) / 4) - padding;
+              const chunkBytes = Math.floor((base64.length * 3) / 4) - padding;
+              totalBytes += chunkBytes;
+              msgAudioBytes += chunkBytes;
               onChunk(base64);
               resetIdle();
             }
+          }
+          if (msgAudioBytes > 0) {
+            log.info('Live TTS', `[Frag] audio +${msgAudioBytes}B → total=${totalBytes} (${(totalBytes / 48000).toFixed(3)}s) | transcript-pending-from=${bytesBeforeMsg}`);
           }
         }
 
@@ -1128,11 +1135,14 @@ app.post('/api/ai/live-tts', async (req, res) => {
         // bytesAtLastTranscriptEnd holds the byte position where THIS fragment's
         // audio started (= where the previous fragment's audio ended).
         if (msg.serverContent?.outputTranscription?.text) {
+          const fragText = msg.serverContent.outputTranscription.text;
+          const stamp = bytesAtLastTranscriptEnd;
           transcriptFragments.push({
-            text: msg.serverContent.outputTranscription.text,
-            audioBytesBefore: bytesAtLastTranscriptEnd,
+            text: fragText,
+            audioBytesBefore: stamp,
           });
           bytesAtLastTranscriptEnd = totalBytes;
+          log.info('Live TTS', `[Frag] transcript "${fragText.slice(0, 50)}" | stamp=${stamp}B (${(stamp / 48000).toFixed(3)}s) → total=${totalBytes}B (${(totalBytes / 48000).toFixed(3)}s)`);
         }
 
         // ── Turn complete — all audio received ───────────────────────────
@@ -1196,6 +1206,10 @@ app.post('/api/ai/live-tts', async (req, res) => {
           'Live TTS',
           `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice} | ${wordTimings.length} words from ${transcriptFragments.length} fragments`
         );
+        log.info('Live TTS', `[Frag] Summary: ${transcriptFragments.length} frags | stamps=[${transcriptFragments.map((f) => `${(f.audioBytesBefore / 48000).toFixed(2)}s`).join(',')}] | totalBytes=${totalBytes} (${(totalBytes / 48000).toFixed(2)}s)`);
+        if (wordTimings.length > 0) {
+          log.info('Live TTS', `[WordTimings] first=${wordTimings[0].word}@${wordTimings[0].start.toFixed(2)}-${wordTimings[0].end.toFixed(2)}s | last=${wordTimings[wordTimings.length-1].word}@${wordTimings[wordTimings.length-1].start.toFixed(2)}-${wordTimings[wordTimings.length-1].end.toFixed(2)}s`);
+        }
         sse({ done: true, chunks: n, reason, ...(wordTimings.length ? { wordTimings } : {}) });
         try {
           res.end();

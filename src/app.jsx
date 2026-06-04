@@ -866,11 +866,23 @@ export default function DiwanApp() {
     // audio byte position tells us when), so they beat every estimate. Used when the
     // alignment confidently covers the line; otherwise we fall through to VAD.
     if (serverWordTimings && serverWordTimings.length > 0) {
+      if (FEATURES.logging) {
+        const lastSrv = serverWordTimings[serverWordTimings.length - 1];
+        console.log(
+          `[WordTiming:Server] ${serverWordTimings.length} words | span=0–${lastSrv?.end?.toFixed(2) ?? '?'}s`,
+          serverWordTimings.slice(0, 3).map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`)
+        );
+      }
       const aligned = alignTranscriptTimings(allWords, serverWordTimings);
       if (aligned && aligned.timings.length === allWords.length && aligned.confidence >= 0.5) {
         if (FEATURES.logging) {
+          const lastAligned = aligned.timings[aligned.timings.length - 1];
           console.log(
-            `[WordTiming] Live transcript timings aligned (${(aligned.confidence * 100).toFixed(0)}% of ${allWords.length} words)`
+            `[WordTiming:Aligned] confidence=${(aligned.confidence * 100).toFixed(0)}% | ${allWords.length} words | span=0–${lastAligned?.end?.toFixed(2) ?? '?'}s | effectiveDuration=${effectiveDuration.toFixed(2)}s`,
+            {
+              first3: aligned.timings.slice(0, 3).map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`),
+              last3: aligned.timings.slice(-3).map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`),
+            }
           );
         }
         return aligned.timings;
@@ -901,6 +913,20 @@ export default function DiwanApp() {
     return computeWordTimings(allWords, effectiveDuration);
   }, [audioPlayer, verseWords, allWords, effectiveDuration, serverWordTimings]);
 
+  // When the streaming player is active, audioPlayer.buffer is undefined so
+  // effectiveDuration falls back to a char-count estimate (~0.65s/word). That
+  // estimate is shorter than real recitation time, causing useTTSHighlight's
+  // "snap to last word" guard (elapsed >= totalDuration) to fire prematurely —
+  // the highlight jumps to the end while the voice still has words left.
+  // Fix: use the actual end time from word timings when available.
+  const highlightTotalDuration = useMemo(() => {
+    if (wordTimings.length > 0) {
+      const lastEnd = wordTimings[wordTimings.length - 1].end;
+      if (lastEnd > 0) return lastEnd;
+    }
+    return effectiveDuration;
+  }, [wordTimings, effectiveDuration]);
+
   // Per-verse start times — first word of each verse's timing.start
   const verseStartTimes = useMemo(() => {
     return wordOffsets.map((offset) => wordTimings[offset]?.start ?? 0);
@@ -920,10 +946,31 @@ export default function DiwanApp() {
   useTTSHighlight({
     wordRefs,
     timings: wordTimings,
-    totalDuration: effectiveDuration,
+    totalDuration: highlightTotalDuration,
     wordOffsets,
     onVerseChange: setCurrentVerseIndex,
   });
+
+  // Periodic playback-position diagnostic — logs elapsed time, the active word, and
+  // the highlight duration ceiling every 3 s during playback. Paste the output to
+  // see if highlight timing tracks the voice or drifts.
+  useEffect(() => {
+    if (!FEATURES.logging || !isPlaying) return;
+    const id = setInterval(() => {
+      const elapsed = Date.now() / 1000 - playbackStartTime.value + pauseOffset.value;
+      let activeIdx = -1;
+      for (let i = 0; i < wordTimings.length; i++) {
+        if (elapsed >= wordTimings[i].start && elapsed < wordTimings[i].end) {
+          activeIdx = i;
+          break;
+        }
+      }
+      console.log(
+        `[Highlight:tick] t=${elapsed.toFixed(2)}s | word[${activeIdx}]="${allWords[activeIdx] ?? 'none'}" | highlightTotal=${highlightTotalDuration.toFixed(2)}s | effectiveDuration=${effectiveDuration.toFixed(2)}s`
+      );
+    }, 3000);
+    return () => clearInterval(id);
+  }, [isPlaying, wordTimings, allWords, highlightTotalDuration, effectiveDuration]);
 
   // pcm16ToWav imported from ./utils/audio.js (used directly below)
 
@@ -1761,7 +1808,7 @@ export default function DiwanApp() {
                       wordRefs={wordRefs}
                       wordOffsets={wordOffsets}
                       timings={wordTimings}
-                      totalDuration={effectiveDuration}
+                      totalDuration={highlightTotalDuration}
                       onVerseChange={setCurrentVerseIndex}
                     />
                   ) : (

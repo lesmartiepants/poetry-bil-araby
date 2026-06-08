@@ -87,6 +87,8 @@ import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
 import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
 import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
+import { smoothWordTimings } from './utils/smoothWordTimings.js';
+import { evenDistributeTimings } from './utils/evenDistributeTimings.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -912,6 +914,21 @@ export default function DiwanApp() {
               `matched=${aligned.matchedCount}/${serverWordTimings.length} transcript (${(transcriptMatchRatio * 100).toFixed(0)}%) | ${allWords.length} display words | span=0–${lastAligned?.end?.toFixed(2) ?? '?'}s | eff=${effectiveDuration.toFixed(2)}s | [${first3}] … [${last3}]`
             );
         }
+        // A/B smoothing of the per-word spans to kill the bursty flash/stick pattern.
+        // Toggle live via localStorage('ttsSmoothMode'): 'smooth' (min-dwell redistribute,
+        // default), 'even' (verse-anchored even distribution), or 'raw' (transcript as-is).
+        let mode = 'smooth';
+        try {
+          mode = localStorage.getItem('ttsSmoothMode') || 'smooth';
+        } catch {
+          /* localStorage unavailable */
+        }
+        try {
+          if (mode === 'smooth') return smoothWordTimings(aligned.timings);
+          if (mode === 'even') return evenDistributeTimings(aligned.timings, wordOffsets);
+        } catch (err) {
+          if (FEATURES.logging) console.warn('[WordTiming] smoother failed, using raw', err);
+        }
         return aligned.timings;
       }
       if (FEATURES.logging)
@@ -945,7 +962,7 @@ export default function DiwanApp() {
     }
     // Fallback: character-count proportional distribution (used pre-audio or on VAD failure)
     return computeWordTimings(allWords, effectiveDuration);
-  }, [audioPlayer, verseWords, allWords, effectiveDuration, serverWordTimings]);
+  }, [audioPlayer, verseWords, allWords, wordOffsets, effectiveDuration, serverWordTimings]);
 
   // When the streaming player is active, audioPlayer.buffer is undefined so
   // effectiveDuration falls back to a char-count estimate (~0.65s/word). That

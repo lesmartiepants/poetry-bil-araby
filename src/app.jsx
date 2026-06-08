@@ -89,6 +89,7 @@ import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
 import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
 import { smoothWordTimings } from './utils/smoothWordTimings.js';
 import { evenDistributeTimings } from './utils/evenDistributeTimings.js';
+import { verseLetterWeightedTimings } from './utils/verseLetterWeightedTimings.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -924,10 +925,15 @@ export default function DiwanApp() {
           /* localStorage unavailable */
         }
         try {
-          if (mode === 'smooth') return smoothWordTimings(aligned.timings);
-          if (mode === 'even') return evenDistributeTimings(aligned.timings, wordOffsets, { charWeighted: false, minDwell: 0.18 });
+          // Read timing mode from localStorage (allows live A/B without redeploy)
+          let timingMode = 'even';
+          try { timingMode = localStorage.getItem('ttsTimingMode') || 'even'; } catch {}
+          
+          if (timingMode === 'smooth') return smoothWordTimings(aligned.timings);
+          if (timingMode === 'even') return evenDistributeTimings(aligned.timings, wordOffsets, { charWeighted: false, minDwell: 0.18 });
+          if (timingMode === 'verseLetterWeighted') return verseLetterWeightedTimings(aligned.timings, wordOffsets);
         } catch (err) {
-          if (FEATURES.logging) console.warn('[WordTiming] smoother failed, using raw', err);
+          if (FEATURES.logging) console.warn('[WordTiming] timing mode failed, using raw', err);
         }
         return aligned.timings;
       }

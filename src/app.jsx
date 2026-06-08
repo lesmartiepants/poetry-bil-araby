@@ -881,7 +881,20 @@ export default function DiwanApp() {
           );
       }
       const aligned = alignTranscriptTimings(allWords, serverWordTimings);
-      if (aligned && aligned.timings.length === allWords.length && aligned.confidence >= 0.5) {
+      // Gate on how well the TRANSCRIBED words matched the display (a right-poem
+      // check), not whole-line coverage. While streaming, only a prefix of the poem
+      // is transcribed — but that prefix always leads the playhead by seconds, so the
+      // lit word is exact and the rest fills in before playback reaches it. Requiring
+      // whole-line confidence here would reject every partial update and keep us on
+      // the estimate until the poem was nearly over (the original bug).
+      const transcriptMatchRatio =
+        aligned && serverWordTimings.length ? aligned.matchedCount / serverWordTimings.length : 0;
+      if (
+        aligned &&
+        aligned.timings.length === allWords.length &&
+        aligned.matchedCount >= 1 &&
+        transcriptMatchRatio >= 0.5
+      ) {
         if (FEATURES.logging) {
           const lastAligned = aligned.timings[aligned.timings.length - 1];
           const first3 = aligned.timings
@@ -896,7 +909,7 @@ export default function DiwanApp() {
             .getState()
             .addLog(
               'WordTiming:Aligned',
-              `conf=${(aligned.confidence * 100).toFixed(0)}% | ${allWords.length} words | span=0–${lastAligned?.end?.toFixed(2) ?? '?'}s | eff=${effectiveDuration.toFixed(2)}s | [${first3}] … [${last3}]`
+              `matched=${aligned.matchedCount}/${serverWordTimings.length} transcript (${(transcriptMatchRatio * 100).toFixed(0)}%) | ${allWords.length} display words | span=0–${lastAligned?.end?.toFixed(2) ?? '?'}s | eff=${effectiveDuration.toFixed(2)}s | [${first3}] … [${last3}]`
             );
         }
         return aligned.timings;
@@ -906,7 +919,7 @@ export default function DiwanApp() {
           .getState()
           .addLog(
             'WordTiming',
-            `Live alignment low-confidence (${aligned?.confidence != null ? (aligned.confidence * 100).toFixed(0) : '?'}%) — using VAD`
+            `Live alignment rejected (transcript match ${(transcriptMatchRatio * 100).toFixed(0)}%, matched ${aligned?.matchedCount ?? 0}/${serverWordTimings.length}) — using VAD`
           );
     }
     // When actual audio is loaded, derive timings from the waveform (VAD alignment).

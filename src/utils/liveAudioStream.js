@@ -63,9 +63,9 @@ export function concatPcmBase64(chunks) {
  *   { error: "<message>" }               — terminal failure
  *
  * @param {ReadableStreamDefaultReader<Uint8Array>} reader
- * @param {{onMeta?, onChunk?, onDone?, onError?}} handlers
+ * @param {{onMeta?, onChunk?, onTiming?, onDone?, onError?}} handlers
  */
-export async function consumeSSE(reader, { onMeta, onChunk, onDone, onError } = {}) {
+export async function consumeSSE(reader, { onMeta, onChunk, onTiming, onDone, onError } = {}) {
   const decoder = new TextDecoder();
   let buffer = '';
   for (;;) {
@@ -89,6 +89,7 @@ export async function consumeSSE(reader, { onMeta, onChunk, onDone, onError } = 
         }
         if (evt.meta) onMeta?.(evt.meta);
         else if (evt.chunk) onChunk?.(evt.chunk);
+        else if (evt.partialTimings) onTiming?.(evt.partialTimings);
         else if (evt.done) onDone?.(evt);
         else if (evt.error) onError?.(evt.error);
       }

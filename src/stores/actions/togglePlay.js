@@ -592,9 +592,24 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
                 setGenerating(false);
               }
             },
+            onTiming: (partial) => {
+              // Real per-word timings arrive ahead of the playhead during streaming.
+              // Apply each update live so the highlight tracks the exact recited word
+              // instead of the char estimate.
+              if (_currentPlayId !== playId) return;
+              if (partial && partial.length) {
+                serverWordTimings = partial;
+                useAudioStore.getState().setWordTimings(partial);
+              }
+            },
             onDone: (done) => {
               streamPlayer.markInputDone();
-              if (done?.wordTimings) serverWordTimings = done.wordTimings;
+              if (done?.wordTimings) {
+                serverWordTimings = done.wordTimings;
+                if (_currentPlayId === playId) {
+                  useAudioStore.getState().setWordTimings(done.wordTimings);
+                }
+              }
             },
             onError: (msg) => {
               streamErr = msg;

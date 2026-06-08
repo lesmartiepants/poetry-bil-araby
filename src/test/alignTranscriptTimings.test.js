@@ -120,6 +120,35 @@ describe('alignTranscriptTimings', () => {
     expect(res.timings[0].start).toBeLessThanOrEqual(0.3);
   });
 
+  it('aligns a streaming prefix: matched words exact, tail filled, matchedCount reported', () => {
+    // Mid-stream: only the first 3 of 6 display words are transcribed so far.
+    const allWords = ['قف', 'نبك', 'من', 'ذكرى', 'حبيب', 'ومنزل'];
+    const partial = [
+      { word: 'قف', start: 0, end: 0.4 },
+      { word: 'نبك', start: 0.4, end: 0.9 },
+      { word: 'من', start: 0.9, end: 1.2 },
+    ];
+    const res = alignTranscriptTimings(allWords, partial);
+    expect(res).not.toBeNull();
+    expect(res.matchedCount).toBe(3);
+    // transcript-match ratio = 3/3 = 1.0 -> the streaming gate (>= 0.5) accepts it
+    expect(res.matchedCount / partial.length).toBe(1);
+    assertWellFormed(res.timings, allWords);
+    // words already transcribed get exact times (these cover the playhead)
+    expect(res.timings[0]).toMatchObject({ start: 0, end: 0.4 });
+    expect(res.timings[2]).toMatchObject({ start: 0.9, end: 1.2 });
+    // the not-yet-spoken tail is filled, never NaN
+    expect(Number.isFinite(res.timings[5].start)).toBe(true);
+  });
+
+  it('exposes matchedCount on an exact alignment', () => {
+    const res = alignTranscriptTimings(['a', 'b'], [
+      { word: 'a', start: 0, end: 1 },
+      { word: 'b', start: 1, end: 2 },
+    ]);
+    expect(res.matchedCount).toBe(2);
+  });
+
   it('spreads evenly when nothing matches (confidence 0)', () => {
     const allWords = ['aaa', 'bbb'];
     const transcript = [{ word: 'zzz', start: 0, end: 2 }];

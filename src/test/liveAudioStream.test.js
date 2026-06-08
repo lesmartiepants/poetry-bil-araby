@@ -127,6 +127,29 @@ describe('consumeSSE', () => {
     });
     expect(events).toEqual(['no audio within 20s']);
   });
+
+  it('dispatches interleaved partialTimings to onTiming, before done', async () => {
+    const events = [];
+    const stream = [
+      'data: {"chunk":"AAA="}\n\n',
+      'data: {"partialTimings":[{"word":"قف","start":0,"end":0.4}]}\n\n',
+      'data: {"chunk":"AQA="}\n\n',
+      'data: {"partialTimings":[{"word":"قف","start":0,"end":0.4},{"word":"نبك","start":0.4,"end":0.9}]}\n\n',
+      'data: {"done":true,"chunks":2,"wordTimings":[{"word":"قف","start":0,"end":0.4},{"word":"نبك","start":0.4,"end":0.95}]}\n\n',
+    ];
+    await consumeSSE(fakeReader(stream), {
+      onChunk: (c) => events.push(['chunk', c]),
+      onTiming: (t) => events.push(['timing', t.length]),
+      onDone: (d) => events.push(['done', d.wordTimings?.length]),
+    });
+    expect(events).toEqual([
+      ['chunk', 'AAA='],
+      ['timing', 1],
+      ['chunk', 'AQA='],
+      ['timing', 2],
+      ['done', 2],
+    ]);
+  });
 });
 
 describe('createStreamingPlayer stop()', () => {

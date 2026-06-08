@@ -997,7 +997,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
    *
    * @returns {() => void} canceller that closes the socket (for client disconnects)
    */
-  const runSession = ({ maxMs, onFirstChunk, onChunk, onDone, onFail }) => {
+  const runSession = ({ maxMs, onFirstChunk, onChunk, onDone, onFail, onTranscript }) => {
     let settled = false;
     let chunkCount = 0;
     let firstChunkTimer = null;
@@ -1143,6 +1143,10 @@ app.post('/api/ai/live-tts', async (req, res) => {
           });
           bytesAtLastTranscriptEnd = totalBytes;
           log.info('Live TTS', `[Frag] transcript "${fragText.slice(0, 50)}" | stamp=${stamp}B (${(stamp / 48000).toFixed(3)}s) → total=${totalBytes}B (${(totalBytes / 48000).toFixed(3)}s)`);
+          // Forward timings the moment they exist — they lead the playhead by
+          // seconds, so the client can light the exact word during streaming
+          // instead of waiting for the end-of-turn 'done' event.
+          if (onTranscript) onTranscript(transcriptFragments, totalBytes);
         }
 
         // ── Turn complete — all audio received ───────────────────────────
@@ -1200,6 +1204,10 @@ app.post('/api/ai/live-tts', async (req, res) => {
       onFirstChunk: (mime) =>
         sse({ meta: { sampleRate: 24000, mimeType: mime || 'audio/pcm;rate=24000' } }),
       onChunk: (b64) => sse({ chunk: b64 }),
+      onTranscript: (frags, total) => {
+        const partial = buildLiveWordTimings(frags, total);
+        if (partial.length) sse({ partialTimings: partial });
+      },
       onDone: (reason, n, { transcriptFragments, totalBytes }) => {
         const wordTimings = buildLiveWordTimings(transcriptFragments, totalBytes);
         log.info(

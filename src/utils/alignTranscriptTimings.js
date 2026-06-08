@@ -62,6 +62,8 @@ const FORWARD_WINDOW = 3; // how far ahead in the transcript to look for a match
  * @returns {{timings: {word: string, start: number, end: number}[], confidence: number} | null}
  *   `timings.length === allWords.length`, starts monotonic non-decreasing,
  *   `start <= end`, no NaN. `confidence` = matched / allWords.length in [0,1].
+ *   `matchedCount` = number of display tokens matched to a transcript token
+ *   (use matchedCount / transcript.length to gate partial/streaming transcripts).
  *   Returns null when either input is empty.
  */
 export function alignTranscriptTimings(allWords, transcriptTimings) {
@@ -117,6 +119,7 @@ export function alignTranscriptTimings(allWords, transcriptTimings) {
     return {
       timings: spreadEvenly(allWords, start, end),
       confidence: 0,
+      matchedCount: 0,
     };
   }
   if (firstAnchor > 0) {
@@ -151,7 +154,7 @@ export function alignTranscriptTimings(allWords, transcriptTimings) {
     }
   }
 
-  return { timings, confidence: matchedCount / allWords.length };
+  return { timings, confidence: matchedCount / allWords.length, matchedCount };
 }
 
 /** Coerce to a finite number, defaulting to 0. */

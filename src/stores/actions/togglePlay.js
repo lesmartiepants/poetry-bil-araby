@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
 import { FEATURES } from '../../constants/features';
 import { useAudioStore } from '../audioStore';
-import { startPlayer, recordPause, pauseOffset } from '../../hooks/useTTSHighlight.js';
+import { startPlayer, recordPause, pauseOffset, getPlaybackElapsed } from '../../hooks/useTTSHighlight.js';
 import { usePoemStore } from '../poemStore';
 import { useUIStore } from '../uiStore';
 import { getTTSContent, LIVE_SYSTEM_INSTRUCTION, getLiveContent } from '../../prompts';
@@ -600,6 +600,12 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               if (partial && partial.length) {
                 serverWordTimings = partial;
                 useAudioStore.getState().setWordTimings(partial);
+                const span = partial[partial.length - 1]?.end ?? 0;
+                addLog(
+                  'WordTiming:apply',
+                  `partial | ${partial.length} words | span=0–${span.toFixed(2)}s | playhead=${getPlaybackElapsed().toFixed(2)}s | voice=${liveVoice} | playId=${playId}`,
+                  'info'
+                );
               }
             },
             onDone: (done) => {
@@ -608,6 +614,12 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
                 serverWordTimings = done.wordTimings;
                 if (_currentPlayId === playId) {
                   useAudioStore.getState().setWordTimings(done.wordTimings);
+                  const span = done.wordTimings[done.wordTimings.length - 1]?.end ?? 0;
+                  addLog(
+                    'WordTiming:apply',
+                    `final | ${done.wordTimings.length} words | span=0–${span.toFixed(2)}s | playhead=${getPlaybackElapsed().toFixed(2)}s | voice=${liveVoice} | playId=${playId}`,
+                    'success'
+                  );
                 }
               }
             },

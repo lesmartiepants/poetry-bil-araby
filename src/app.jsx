@@ -953,12 +953,17 @@ export default function DiwanApp() {
   // "snap to last word" guard (elapsed >= totalDuration) to fire prematurely —
   // the highlight jumps to the end while the voice still has words left.
   // Fix: use the actual end time from word timings when available.
+  // IMPORTANT: take the MAX of the estimate and the timings' last end, never the
+  // raw last end. While streaming, the aligned array's not-yet-transcribed tail
+  // collapses onto the last matched word's end (e.g. ~3s early in the stream), so
+  // wordTimings[last].end is tiny until the full transcript lands. Using it raw
+  // pushed the snap-to-last-word threshold down to a few seconds → instant
+  // jump-to-end. The char estimate is a sane floor; the real (full) span exceeds
+  // it once the stream completes, and generation outruns playback so the full
+  // span is in place long before the playhead reaches it.
   const highlightTotalDuration = useMemo(() => {
-    if (wordTimings.length > 0) {
-      const lastEnd = wordTimings[wordTimings.length - 1].end;
-      if (lastEnd > 0) return lastEnd;
-    }
-    return effectiveDuration;
+    const lastEnd = wordTimings.length > 0 ? wordTimings[wordTimings.length - 1].end : 0;
+    return Math.max(effectiveDuration, lastEnd > 0 ? lastEnd : 0);
   }, [wordTimings, effectiveDuration]);
 
   // Per-verse start times — first word of each verse's timing.start
@@ -988,27 +993,70 @@ export default function DiwanApp() {
   // Periodic playback-position diagnostic — logs elapsed time, the active word, and
   // the highlight duration ceiling every 3 s during playback. Paste the output to
   // see if highlight timing tracks the voice or drifts.
+  // Latest timing snapshot in a ref so the playback-diagnostic effect can key on
+  // isPlaying alone (start/end fire once per playback) while still reading fresh
+  // timings on each tick — during streaming wordTimings updates ~once per word.
+  const timingDiagRef = useRef(null);
+  useEffect(() => {
+    timingDiagRef.current = { wordTimings, allWords, highlightTotalDuration, effectiveDuration };
+  }, [wordTimings, allWords, highlightTotalDuration, effectiveDuration]);
+
+  const matchIdx = (wt, elapsed) => {
+    for (let i = 0; i < wt.length; i++) {
+      if (elapsed >= wt[i].start && elapsed < wt[i].end) return i;
+    }
+    return -1;
+  };
+
   useEffect(() => {
     if (!FEATURES.logging || !isPlaying) return;
+    const addLog = useUIStore.getState().addLog;
+    const voice = useUIStore.getState().liveVoice;
+    const snap = () => timingDiagRef.current || { wordTimings, allWords, highlightTotalDuration, effectiveDuration };
+    const spanOf = (wt) => (wt.length ? wt[wt.length - 1].end : 0);
+
+    const s0 = snap();
+    addLog(
+      'Highlight:start',
+      `words=${s0.allWords.length} | timings=${s0.wordTimings.length} | span=0–${spanOf(s0.wordTimings).toFixed(2)}s | eff=${s0.effectiveDuration.toFixed(2)}s | total=${s0.highlightTotalDuration.toFixed(2)}s | voice=${voice}`
+    );
+
+    let snapLogged = false;
     const id = setInterval(() => {
+      const { wordTimings: wt, allWords: aw, highlightTotalDuration: total } = snap();
       const elapsed = getPlaybackElapsed();
       const clock = useAudioStore.getState().player?.getCurrentTime ? 'player' : 'wall';
-      let activeIdx = -1;
-      for (let i = 0; i < wordTimings.length; i++) {
-        if (elapsed >= wordTimings[i].start && elapsed < wordTimings[i].end) {
-          activeIdx = i;
-          break;
-        }
-      }
-      useUIStore
-        .getState()
-        .addLog(
-          'Highlight:tick',
-          `t=${elapsed.toFixed(2)}s (${clock}) | word[${activeIdx}]="${allWords[activeIdx] ?? 'none'}" | total=${highlightTotalDuration.toFixed(2)}s | eff=${effectiveDuration.toFixed(2)}s`
+      const idx = matchIdx(wt, elapsed);
+      const snapped = wt.length > 0 && elapsed >= total;
+      addLog(
+        'Highlight:tick',
+        `t=${elapsed.toFixed(2)}s (${clock}) | word[${idx}]="${aw[idx] ?? 'none'}" | total=${total.toFixed(2)}s | span=${spanOf(wt).toFixed(2)}s | snap=${snapped}`
+      );
+      // Capture the moment the snap-to-last-word guard engages. If t is well short
+      // of the real audio length, this is a premature jump-to-end.
+      if (snapped && !snapLogged) {
+        snapLogged = true;
+        addLog(
+          'Highlight:SNAP',
+          `snapped to last word @ t=${elapsed.toFixed(2)}s | total=${total.toFixed(2)}s | span=${spanOf(wt).toFixed(2)}s — premature if t ≪ audio length`
         );
-    }, 3000);
-    return () => clearInterval(id);
-  }, [isPlaying, wordTimings, allWords, highlightTotalDuration, effectiveDuration]);
+      }
+    }, 2000);
+
+    return () => {
+      clearInterval(id);
+      // End-of-playback snapshot (issue #571): where was the highlight when audio
+      // stopped? Compare t against the audio length to see the async gap.
+      const { wordTimings: wt, allWords: aw, highlightTotalDuration: total } = snap();
+      const elapsed = getPlaybackElapsed();
+      const idx = matchIdx(wt, elapsed);
+      addLog(
+        'Highlight:end',
+        `playback stopped @ t=${elapsed.toFixed(2)}s | highlight word[${idx}]/${aw.length} | total=${total.toFixed(2)}s | span=${spanOf(wt).toFixed(2)}s`
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying]);
 
   // pcm16ToWav imported from ./utils/audio.js (used directly below)
 

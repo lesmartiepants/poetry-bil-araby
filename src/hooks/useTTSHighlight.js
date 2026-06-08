@@ -10,6 +10,22 @@ import { FEATURES } from '../constants/features';
 export const playbackStartTime = { value: 0 };
 export const pauseOffset = { value: 0 };
 export const playbackPlayerRef = { value: null };
+
+// Highlight lag (seconds). The transcript-derived word start times run slightly
+// AHEAD of the audio: the Live API streams a word's text before that word's audio
+// settles into the byte stream, so each word's start is stamped a touch early and
+// the highlight skips to the next word before it's finished being recited. Subtract
+// a small lag from the playback clock so a word lights up while it's actually spoken.
+// Overridable live (no redeploy) via localStorage('ttsHighlightLag') for tuning.
+const DEFAULT_HIGHLIGHT_LAG = 0.25;
+export function getHighlightLag() {
+  try {
+    const v = parseFloat(localStorage.getItem('ttsHighlightLag'));
+    return Number.isFinite(v) ? v : DEFAULT_HIGHLIGHT_LAG;
+  } catch {
+    return DEFAULT_HIGHLIGHT_LAG;
+  }
+}
 /**
  * Seek guard — set true before player.stop() in a seek operation so the
  * onstop handler skips its setPlaying(false) call. Reset after startPlayer().
@@ -198,7 +214,7 @@ export function useTTSHighlight({
     // even if the user has scrolled away while paused.
     let firstTick = true;
     function tick() {
-      const elapsed = getPlaybackElapsed();
+      const elapsed = Math.max(0, getPlaybackElapsed() - getHighlightLag());
       // Read latest timing inputs from refs (updated by streaming partials) so the
       // loop never has to restart — which is what caused the start-of-playback flicker.
       const timings = timingsRef.current;

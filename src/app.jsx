@@ -917,9 +917,9 @@ export default function DiwanApp() {
         // A/B smoothing of the per-word spans to kill the bursty flash/stick pattern.
         // Toggle live via localStorage('ttsSmoothMode'): 'smooth' (min-dwell redistribute,
         // default), 'even' (verse-anchored even distribution), or 'raw' (transcript as-is).
-        let mode = 'smooth';
+        let mode = 'even';
         try {
-          mode = localStorage.getItem('ttsSmoothMode') || 'smooth';
+          mode = localStorage.getItem('ttsSmoothMode') || 'even';
         } catch {
           /* localStorage unavailable */
         }

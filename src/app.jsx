@@ -91,6 +91,7 @@ import { smoothWordTimings } from './utils/smoothWordTimings.js';
 import { evenDistributeTimings } from './utils/evenDistributeTimings.js';
 import { verseLetterWeightedTimings } from './utils/verseLetterWeightedTimings.js';
 import { applySilenceAwarePacing } from './utils/silenceAwareTimings.js';
+import { applyVerseDelays } from './utils/applyVerseDelays.js';
 import { useSilenceDetector } from './hooks/useSilenceDetector.js';
 import {
   useTTSHighlight,
@@ -938,6 +939,16 @@ export default function DiwanApp() {
           if (timingMode === 'smooth') result = smoothWordTimings(result);
           else if (timingMode === 'verseLetterWeighted') result = verseLetterWeightedTimings(result, wordOffsets);
           else if (timingMode === 'even') result = evenDistributeTimings(result, wordOffsets, { charWeighted: false, minDwell: 0.18 });
+          
+          // Apply verse delays (for even and verseLetterWeighted modes)
+          if ((timingMode === 'even' || timingMode === 'verseLetterWeighted') && wordOffsets && wordOffsets.length > 0) {
+            let verseDelayMs = 0;
+            try { verseDelayMs = parseFloat(localStorage.getItem('ttsVerseDelayMs') || '0'); } catch {}
+            const verseDelaySeconds = Math.max(0, verseDelayMs / 1000);
+            if (verseDelaySeconds > 0) {
+              result = applyVerseDelays(result, wordOffsets, verseDelaySeconds);
+            }
+          }
           
           // Apply silence awareness as optional post-pass (currently scaffolded, needs PCM integration)
           if (enableSilenceAware) {

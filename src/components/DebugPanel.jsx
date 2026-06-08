@@ -80,6 +80,9 @@ const DebugPanel = ({ controlBarRef }) => {
   const [enableSilenceAware, setEnableSilenceAware] = useState(() => {
     try { return localStorage.getItem('ttsEnableSilenceAware') === 'true'; } catch { return false; }
   });
+  const [verseDelayMs, setVerseDelayMs] = useState(() => {
+    try { return parseFloat(localStorage.getItem('ttsVerseDelayMs') || '0'); } catch { return 0; }
+  });
   const scrollRef = useRef(null);
   const btnPos = { right: 8, bottom: 52 };
   const panelRight = 68; // clears sidebar (right:8 + ~52px wide + 8px gap)
@@ -410,6 +413,28 @@ const DebugPanel = ({ controlBarRef }) => {
                 />
                 <span>Pause on silence (exp)</span>
               </label>
+              <div className="flex flex-col items-start gap-1 w-full">
+                <div className="flex items-baseline justify-between w-full">
+                  <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">Verse Delay</span>
+                  <span className="text-[0.6rem] font-mono opacity-60">{verseDelayMs.toFixed(0)}ms</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="500"
+                  step="25"
+                  value={verseDelayMs}
+                  onChange={(e) => {
+                    const val = parseFloat(e.target.value);
+                    setVerseDelayMs(val);
+                    try { localStorage.setItem('ttsVerseDelayMs', val.toString()); } catch {}
+                    useUIStore.getState().addLog('Settings', `Verse delay → ${val.toFixed(0)}ms`, 'user');
+                  }}
+                  className="w-full h-1 cursor-pointer accent-orange-400"
+                  title="Add delay at the start of each verse (slows highlight exit from first word)"
+                />
+                <span className="text-[0.5rem] opacity-40 text-center w-full">even & verse+letters only</span>
+              </div>
             </div>
           </div>
         )}

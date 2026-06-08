@@ -2,6 +2,29 @@ import { describe, it, expect } from 'vitest';
 import { buildLiveWordTimings } from '../utils/liveWordTiming.js';
 
 describe('buildLiveWordTimings', () => {
+  it('recovers words from a pre-audio first fragment (no zero-duration collapse)', () => {
+    // The first transcription arrives before any audio byte, so it AND the next
+    // fragment both stamp at byte 0. They must share the first real span, not vanish.
+    const SR = 24000, BPS = 2; // 48000 bytes = 1.0s
+    const fragments = [
+      { text: 'قف نبك', audioBytesBefore: 0 },
+      { text: 'من', audioBytesBefore: 2 }, // 2 bytes = pre-audio burst, must still merge
+      { text: 'ذكرى', audioBytesBefore: 48000 },
+    ];
+    const out = buildLiveWordTimings(fragments, 96000); // 2.0s total
+    const words = out.map((w) => w.word);
+    expect(words).toEqual(['قف', 'نبك', 'من', 'ذكرى']);
+    // none collapsed to zero duration
+    for (const w of out) expect(w.end).toBeGreaterThan(w.start);
+    expect(out[0].start).toBe(0);
+    // the three pre-audio words share [0, 1.0s]; ذكرى takes [1.0, 2.0s]
+    expect(out[2].end).toBeCloseTo(1.0, 5);
+    expect(out[3].start).toBeCloseTo(1.0, 5);
+    expect(out[3].end).toBeCloseTo(2.0, 5);
+    // monotonic
+    for (let i = 1; i < out.length; i++) expect(out[i].start).toBeGreaterThanOrEqual(out[i - 1].start);
+  });
+
   it('empty fragments array returns empty timings', () => {
     const result = buildLiveWordTimings([], 48000);
     expect(result).toEqual([]);

@@ -18,6 +18,12 @@ export function buildLiveWordTimings(fragments, totalAudioBytes, opts = {}) {
 
   // Helper: convert byte offset to seconds
   const bytesToSeconds = (bytes) => bytes / (sampleRate * bytesPerSample);
+  // Fragments whose start bytes fall within this gap are treated as one group.
+  // Transcription can outrun audio (especially at the very start, where the first
+  // 2-3 words are all stamped within a couple of bytes of each other before audio
+  // catches up). 30ms is well below any real recited word, so distinct words are
+  // never wrongly merged.
+  const MIN_GAP_BYTES = sampleRate * bytesPerSample * 0.03;
 
   // Defensive: empty input → empty output
   if (!fragments || fragments.length === 0) return [];
@@ -25,44 +31,44 @@ export function buildLiveWordTimings(fragments, totalAudioBytes, opts = {}) {
 
   const timings = [];
 
-  for (let i = 0; i < fragments.length; i++) {
-    const frag = fragments[i];
-    if (!frag.text || typeof frag.text !== 'string') continue;
+  // Keep only fragments with real text, preserving order.
+  const valid = fragments.filter((f) => f && typeof f.text === 'string' && f.text.trim());
 
-    // Time span for this fragment: from its audioBytesBefore to the next fragment's start
-    // (or to totalAudioBytes for the last fragment).
-    const fragmentStart = bytesToSeconds(frag.audioBytesBefore);
-    const nextBytesBefore = fragments[i + 1]?.audioBytesBefore ?? totalAudioBytes;
-    let fragmentEnd = bytesToSeconds(nextBytesBefore);
-
-    // Defensive: ensure fragmentEnd >= fragmentStart
+  // Group consecutive fragments that share the same audioBytesBefore. This happens
+  // at the very start: the first transcription arrives BEFORE any audio byte, so it
+  // and the next fragment both stamp at byte 0. Without grouping, the first fragment
+  // collapses to zero duration (start === end) and its words never highlight — the
+  // read-along would skip the first word or two. A group spans from its shared start
+  // byte to the next STRICTLY-GREATER start byte (or totalAudioBytes), and all the
+  // group's words share that span. In steady state every fragment has a distinct
+  // start byte, so each group is a single fragment and behavior is unchanged.
+  let g = 0;
+  while (g < valid.length) {
+    const groupStartBytes = valid[g].audioBytesBefore;
+    const words = [];
+    let h = g;
+    while (h < valid.length && valid[h].audioBytesBefore - groupStartBytes < MIN_GAP_BYTES) {
+      for (const w of valid[h].text.split(/\s+/)) if (w.length > 0) words.push(w);
+      h++;
+    }
+    const nextStartBytes = h < valid.length ? valid[h].audioBytesBefore : totalAudioBytes;
+    const fragmentStart = bytesToSeconds(groupStartBytes);
+    let fragmentEnd = bytesToSeconds(nextStartBytes);
     if (fragmentEnd < fragmentStart) fragmentEnd = fragmentStart;
+    g = h;
 
-    // Skip zero-duration fragments
-    if (fragmentEnd === fragmentStart) continue;
-
-    // Split text into words, filtering empty
-    const words = frag.text.split(/\s+/).filter((w) => w.length > 0);
     if (words.length === 0) continue;
-
-    // Distribute the time span [fragmentStart, fragmentEnd) across words
-    // proportional to each word's character length
-    const totalChars = words.reduce((sum, w) => sum + w.length, 0);
-    if (totalChars === 0) continue;
+    const totalChars = words.reduce((sum, w) => sum + w.length, 0) || 1;
 
     let currentStart = fragmentStart;
     for (let j = 0; j < words.length; j++) {
-      const word = words[j];
-      const charRatio = word.length / totalChars;
-      const wordDuration = (fragmentEnd - fragmentStart) * charRatio;
-      const wordEnd = currentStart + wordDuration;
-
-      timings.push({
-        word,
-        start: currentStart,
-        end: wordEnd,
-      });
-
+      const charRatio = words[j].length / totalChars;
+      // Pin the last word's end exactly to fragmentEnd to avoid float drift.
+      const wordEnd =
+        j === words.length - 1
+          ? fragmentEnd
+          : currentStart + (fragmentEnd - fragmentStart) * charRatio;
+      timings.push({ word: words[j], start: currentStart, end: wordEnd });
       currentStart = wordEnd;
     }
   }

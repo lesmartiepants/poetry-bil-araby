@@ -925,7 +925,7 @@ export default function DiwanApp() {
         }
         try {
           if (mode === 'smooth') return smoothWordTimings(aligned.timings);
-          if (mode === 'even') return evenDistributeTimings(aligned.timings, wordOffsets, { charWeighted: true });
+          if (mode === 'even') return evenDistributeTimings(aligned.timings, wordOffsets, { charWeighted: false, minDwell: 0.18 });
         } catch (err) {
           if (FEATURES.logging) console.warn('[WordTiming] smoother failed, using raw', err);
         }

@@ -342,7 +342,7 @@ function createPlayerReady(url) {
  * @param {Function} options.addLog - Logging function
  * @param {Function} options.track - Analytics tracking
  */
-export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, track }) {
+export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, track, silenceDetector }) {
   const {
     isPlaying,
     isGenerating,
@@ -569,6 +569,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             throw new Error(`Live stream HTTP ${liveRes.status}`);
           }
 
+          let _detector = silenceDetector; // capture for onChunk closure
           await consumeSSE(liveRes.body.getReader(), {
             onMeta: (m) => {
               if (m.sampleRate) sampleRate = m.sampleRate;
@@ -580,7 +581,9 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
                 return;
               }
               pcmB64.push(chunkB64);
-              streamPlayer.pushChunk(pcmBase64ToInt16(chunkB64));
+              const pcmData = pcmBase64ToInt16(chunkB64);
+              streamPlayer.pushChunk(pcmData);
+              if (_detector) _detector.addAudio(pcmData);
               if (!firstSound) {
                 firstSound = true;
                 const t = ((performance.now() - apiStart) / 1000).toFixed(2);

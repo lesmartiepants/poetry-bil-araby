@@ -389,6 +389,7 @@ const DebugPanel = ({ controlBarRef }) => {
                 <option value="even">even (uniform)</option>
                 <option value="smooth">smooth (min-dwell)</option>
                 <option value="verseLetterWeighted">verse + letters</option>
+                <option value="silenceAware">silence-aware (exp)</option>
                 <option value="raw">raw (lumpy)</option>
               </select>
             </div>

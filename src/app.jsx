@@ -90,6 +90,8 @@ import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
 import { smoothWordTimings } from './utils/smoothWordTimings.js';
 import { evenDistributeTimings } from './utils/evenDistributeTimings.js';
 import { verseLetterWeightedTimings } from './utils/verseLetterWeightedTimings.js';
+import { applySilenceAwarePacing } from './utils/silenceAwareTimings.js';
+import { useSilenceDetector } from './hooks/useSilenceDetector.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -932,6 +934,7 @@ export default function DiwanApp() {
           if (timingMode === 'smooth') return smoothWordTimings(aligned.timings);
           if (timingMode === 'even') return evenDistributeTimings(aligned.timings, wordOffsets, { charWeighted: false, minDwell: 0.18 });
           if (timingMode === 'verseLetterWeighted') return verseLetterWeightedTimings(aligned.timings, wordOffsets);
+          if (timingMode === 'silenceAware') return applySilenceAwarePacing(aligned.timings, []); // silenceGaps from detector
         } catch (err) {
           if (FEATURES.logging) console.warn('[WordTiming] timing mode failed, using raw', err);
         }

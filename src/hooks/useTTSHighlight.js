@@ -178,6 +178,19 @@ export function useTTSHighlight({
     onVerseChangeRef.current = onVerseChange;
   });
 
+  // Keep timing inputs in refs so the rAF loop reads the latest values WITHOUT
+  // the main effect re-running on every update. During Live streaming, `timings`
+  // updates ~once per word as partial transcripts arrive; if the effect tore down
+  // and re-created the loop each time (its cleanup clears the highlight classes),
+  // the active word flickered off-and-on for the first ~2s. Reading from refs
+  // keeps the loop alive and the highlight stable across streaming refinements.
+  const timingsRef = useRef(timings);
+  timingsRef.current = timings;
+  const totalDurationRef = useRef(totalDuration);
+  totalDurationRef.current = totalDuration;
+  const wordOffsetsRef = useRef(wordOffsets);
+  wordOffsetsRef.current = wordOffsets;
+
   // Start the rAF loop — called when isPlaying becomes true
   function startLoop() {
     lastStopWasPause.value = false; // fresh run; treat the next stop as a natural end unless a pause sets this
@@ -186,6 +199,11 @@ export function useTTSHighlight({
     let firstTick = true;
     function tick() {
       const elapsed = getPlaybackElapsed();
+      // Read latest timing inputs from refs (updated by streaming partials) so the
+      // loop never has to restart — which is what caused the start-of-playback flicker.
+      const timings = timingsRef.current;
+      const totalDuration = totalDurationRef.current;
+      const wordOffsets = wordOffsetsRef.current;
 
       // Find the word index whose window contains elapsed
       let newIndex = -1;
@@ -316,5 +334,8 @@ export function useTTSHighlight({
     // the closure. wordRefs is recreated only when allWords.length changes, which
     // also causes timings to change (new poem) — so the effect re-runs and the
     // closure is refreshed. onVerseChange is kept current via onVerseChangeRef.
-  }, [timings, totalDuration, wordOffsets]);
+    // Depend only on wordRefs (recreated when the poem / word count changes). Timing
+    // refinements during streaming flow through the refs above without restarting the
+    // loop or clearing classes, so the highlight no longer flickers as partials arrive.
+  }, [wordRefs]);
 }

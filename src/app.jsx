@@ -927,14 +927,24 @@ export default function DiwanApp() {
           /* localStorage unavailable */
         }
         try {
-          // Read timing mode from localStorage (allows live A/B without redeploy)
           let timingMode = 'even';
-          try { timingMode = localStorage.getItem('ttsTimingMode') || 'even'; } catch {}
+          let enableSilenceAware = false;
+          try {
+            timingMode = localStorage.getItem('ttsTimingMode') || 'even';
+            enableSilenceAware = localStorage.getItem('ttsEnableSilenceAware') === 'true';
+          } catch {}
           
-          if (timingMode === 'smooth') return smoothWordTimings(aligned.timings);
-          if (timingMode === 'even') return evenDistributeTimings(aligned.timings, wordOffsets, { charWeighted: false, minDwell: 0.18 });
-          if (timingMode === 'verseLetterWeighted') return verseLetterWeightedTimings(aligned.timings, wordOffsets);
-          if (timingMode === 'silenceAware') return applySilenceAwarePacing(aligned.timings, []); // silenceGaps from detector
+          let result = aligned.timings;
+          if (timingMode === 'smooth') result = smoothWordTimings(result);
+          else if (timingMode === 'verseLetterWeighted') result = verseLetterWeightedTimings(result, wordOffsets);
+          else if (timingMode === 'even') result = evenDistributeTimings(result, wordOffsets, { charWeighted: false, minDwell: 0.18 });
+          
+          // Apply silence awareness as optional post-pass (currently scaffolded, needs PCM integration)
+          if (enableSilenceAware) {
+            result = applySilenceAwarePacing(result, []);
+          }
+          
+          return result;
         } catch (err) {
           if (FEATURES.logging) console.warn('[WordTiming] timing mode failed, using raw', err);
         }

@@ -77,6 +77,9 @@ const DebugPanel = ({ controlBarRef }) => {
   const [timingMode, setTimingMode] = useState(() => {
     try { return localStorage.getItem('ttsTimingMode') || 'even'; } catch { return 'even'; }
   });
+  const [enableSilenceAware, setEnableSilenceAware] = useState(() => {
+    try { return localStorage.getItem('ttsEnableSilenceAware') === 'true'; } catch { return false; }
+  });
   const scrollRef = useRef(null);
   const btnPos = { right: 8, bottom: 52 };
   const panelRight = 68; // clears sidebar (right:8 + ~52px wide + 8px gap)
@@ -379,19 +382,34 @@ const DebugPanel = ({ controlBarRef }) => {
               />
               <span className="text-[0.6rem] font-mono text-orange-400 w-7 text-right">{liveTemperature.toFixed(2)}</span>
             </div>
-            <div className="flex flex-col items-start gap-1">
-              <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">Timing Mode</span>
-              <select
-                value={timingMode}
-                onChange={(e) => { setTimingMode(e.target.value); try { localStorage.setItem('ttsTimingMode', e.target.value); } catch {} useUIStore.getState().addLog('Settings', `Timing mode → ${e.target.value}`, 'user'); }}
-                className={`rounded text-[0.75rem] px-2 py-1 cursor-pointer ${darkMode ? 'bg-white/[0.06] border border-white/[0.1] text-white/80' : 'bg-black/[0.03] border border-black/[0.1] text-black/70'}`}
-              >
-                <option value="even">even (uniform)</option>
-                <option value="smooth">smooth (min-dwell)</option>
-                <option value="verseLetterWeighted">verse + letters</option>
-                <option value="silenceAware">silence-aware (exp)</option>
-                <option value="raw">raw (lumpy)</option>
-              </select>
+            <div className="flex flex-col items-start gap-2">
+              <div className="flex flex-col items-start gap-1">
+                <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">Timing Mode</span>
+                <select
+                  value={timingMode}
+                  onChange={(e) => { setTimingMode(e.target.value); try { localStorage.setItem('ttsTimingMode', e.target.value); } catch {} useUIStore.getState().addLog('Settings', `Timing mode → ${e.target.value}`, 'user'); }}
+                  className={`rounded text-[0.75rem] px-2 py-1 cursor-pointer ${darkMode ? 'bg-white/[0.06] border border-white/[0.1] text-white/80' : 'bg-black/[0.03] border border-black/[0.1] text-black/70'}`}
+                >
+                  <option value="even">even (uniform)</option>
+                  <option value="smooth">smooth (min-dwell)</option>
+                  <option value="verseLetterWeighted">verse + letters</option>
+                  <option value="raw">raw (lumpy)</option>
+                </select>
+              </div>
+              <label className="flex items-center gap-1.5 text-[0.6rem] cursor-pointer opacity-75 hover:opacity-100">
+                <input
+                  type="checkbox"
+                  checked={enableSilenceAware}
+                  onChange={(e) => {
+                    const val = e.target.checked;
+                    setEnableSilenceAware(val);
+                    try { localStorage.setItem('ttsEnableSilenceAware', val ? 'true' : 'false'); } catch {}
+                    useUIStore.getState().addLog('Settings', `Silence-aware ${val ? 'ON' : 'OFF'}`, 'user');
+                  }}
+                  className="w-3 h-3 cursor-pointer"
+                />
+                <span>Pause on silence (exp)</span>
+              </label>
             </div>
           </div>
         )}

@@ -77,9 +77,6 @@ const DebugPanel = ({ controlBarRef }) => {
   const [timingMode, setTimingMode] = useState(() => {
     try { return localStorage.getItem('ttsTimingMode') || 'verseLetterWeighted'; } catch { return 'verseLetterWeighted'; }
   });
-  const [enableSilenceAware, setEnableSilenceAware] = useState(() => {
-    try { return localStorage.getItem('ttsEnableSilenceAware') === 'true'; } catch { return false; }
-  });
   const [verseDelayMs, setVerseDelayMs] = useState(() => {
     try { return parseFloat(localStorage.getItem('ttsVerseDelayMs') || '125'); } catch { return 125; }
   });
@@ -399,20 +396,6 @@ const DebugPanel = ({ controlBarRef }) => {
                   <option value="raw">raw (lumpy)</option>
                 </select>
               </div>
-              <label className="flex items-center gap-1.5 text-[0.6rem] cursor-pointer opacity-75 hover:opacity-100">
-                <input
-                  type="checkbox"
-                  checked={enableSilenceAware}
-                  onChange={(e) => {
-                    const val = e.target.checked;
-                    setEnableSilenceAware(val);
-                    try { localStorage.setItem('ttsEnableSilenceAware', val ? 'true' : 'false'); } catch {}
-                    useUIStore.getState().addLog('Settings', `Silence-aware ${val ? 'ON' : 'OFF'}`, 'user');
-                  }}
-                  className="w-3 h-3 cursor-pointer"
-                />
-                <span>Pause on silence (exp)</span>
-              </label>
               <div className="flex flex-col items-start gap-1 w-full">
                 <div className="flex items-baseline justify-between w-full">
                   <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">Verse Delay</span>

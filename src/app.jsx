@@ -90,9 +90,6 @@ import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
 import { smoothWordTimings } from './utils/smoothWordTimings.js';
 import { evenDistributeTimings } from './utils/evenDistributeTimings.js';
 import { verseLetterWeightedTimings } from './utils/verseLetterWeightedTimings.js';
-import { applySilenceAwarePacing } from './utils/silenceAwareTimings.js';
-import { applyVerseDelays } from './utils/applyVerseDelays.js';
-import { useSilenceDetector } from './hooks/useSilenceDetector.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -929,10 +926,8 @@ export default function DiwanApp() {
         }
         try {
           let timingMode = 'even';
-          let enableSilenceAware = false;
           try {
             timingMode = localStorage.getItem('ttsTimingMode') || 'even';
-            enableSilenceAware = localStorage.getItem('ttsEnableSilenceAware') === 'true';
           } catch {}
           
           let result = aligned.timings;
@@ -949,12 +944,6 @@ export default function DiwanApp() {
               result = applyVerseDelays(result, wordOffsets, verseDelaySeconds);
             }
           }
-          
-          // Apply silence awareness as optional post-pass (currently scaffolded, needs PCM integration)
-          if (enableSilenceAware) {
-            result = applySilenceAwarePacing(result, []);
-          }
-          
           return result;
         } catch (err) {
           if (FEATURES.logging) console.warn('[WordTiming] timing mode failed, using raw', err);

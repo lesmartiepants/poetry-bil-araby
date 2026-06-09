@@ -75,13 +75,13 @@ const DebugPanel = ({ controlBarRef }) => {
   const [bugError, setBugError] = useState('');
   const [lastViewedCount, setLastViewedCount] = useState(0);
   const [timingMode, setTimingMode] = useState(() => {
-    try { return localStorage.getItem('ttsTimingMode') || 'even'; } catch { return 'even'; }
+    try { return localStorage.getItem('ttsTimingMode') || 'verseLetterWeighted'; } catch { return 'verseLetterWeighted'; }
   });
   const [enableSilenceAware, setEnableSilenceAware] = useState(() => {
     try { return localStorage.getItem('ttsEnableSilenceAware') === 'true'; } catch { return false; }
   });
   const [verseDelayMs, setVerseDelayMs] = useState(() => {
-    try { return parseFloat(localStorage.getItem('ttsVerseDelayMs') || '0'); } catch { return 0; }
+    try { return parseFloat(localStorage.getItem('ttsVerseDelayMs') || '125'); } catch { return 125; }
   });
   const scrollRef = useRef(null);
   const btnPos = { right: 8, bottom: 52 };
@@ -433,7 +433,7 @@ const DebugPanel = ({ controlBarRef }) => {
                   className="w-full h-1 cursor-pointer accent-orange-400"
                   title="Add delay at the start of each verse (slows highlight exit from first word)"
                 />
-                <span className="text-[0.5rem] opacity-40 text-center w-full">even & verse+letters only</span>
+                <span className="text-[0.5rem] opacity-40 text-center w-full">first-word dwell (default 125ms)</span>
               </div>
             </div>
           </div>

@@ -26,10 +26,17 @@ import { fileURLToPath } from 'url';
 import { resolve } from 'path';
 import { readFileSync } from 'fs';
 import WebSocket from 'ws';
+import { buildLiveWordTimings } from './src/utils/liveWordTiming.js';
 
 const { Pool } = pg;
 const app = express();
-const _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
+let _labHtml = '';
+try {
+  _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
+} catch {
+  // In test environment, import.meta.url may not be a valid file URL
+  _labHtml = '<html><!-- tts-lab.html not available in test environment --></html>';
+}
 const PORT = process.env.PORT || 3001;
 const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
 const LOG_DEBUG = process.env.LOG_DEBUG === 'true'; // verbose DB debug, off by default
@@ -990,11 +997,14 @@ app.post('/api/ai/live-tts', async (req, res) => {
    *
    * @returns {() => void} canceller that closes the socket (for client disconnects)
    */
-  const runSession = ({ maxMs, onFirstChunk, onChunk, onDone, onFail }) => {
+  const runSession = ({ maxMs, onFirstChunk, onChunk, onDone, onFail, onTranscript }) => {
     let settled = false;
     let chunkCount = 0;
     let firstChunkTimer = null;
     let idleTimer = null;
+    let totalBytes = 0;
+    let bytesAtLastTranscriptEnd = 0; // byte offset where the current fragment's audio started
+    const transcriptFragments = [];
 
     const clearTimers = () => {
       clearTimeout(firstChunkTimer);
@@ -1008,7 +1018,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
       try {
         ws.close();
       } catch {}
-      onDone(reason, chunkCount);
+      onDone(reason, chunkCount, { transcriptFragments, totalBytes });
     };
     const fail = (err) => {
       if (settled) return;
@@ -1055,6 +1065,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
               },
             ],
           },
+          outputAudioTranscription: {},
         },
       };
       ws.send(JSON.stringify(setupMsg));
@@ -1091,6 +1102,8 @@ app.post('/api/ai/live-tts', async (req, res) => {
 
         // ── Audio / text parts ───────────────────────────────────────────
         if (msg.serverContent?.modelTurn?.parts) {
+          const bytesBeforeMsg = totalBytes;
+          let msgAudioBytes = 0;
           for (const part of msg.serverContent.modelTurn.parts) {
             if (part.inlineData?.data) {
               if (chunkCount === 0) {
@@ -1102,10 +1115,38 @@ app.post('/api/ai/live-tts', async (req, res) => {
                 if (onFirstChunk) onFirstChunk(part.inlineData.mimeType);
               }
               chunkCount++;
-              onChunk(part.inlineData.data);
+              const base64 = part.inlineData.data;
+              const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+              const chunkBytes = Math.floor((base64.length * 3) / 4) - padding;
+              totalBytes += chunkBytes;
+              msgAudioBytes += chunkBytes;
+              onChunk(base64);
               resetIdle();
             }
           }
+          if (msgAudioBytes > 0) {
+            log.info('Live TTS', `[Frag] audio +${msgAudioBytes}B → total=${totalBytes} (${(totalBytes / 48000).toFixed(3)}s) | transcript-pending-from=${bytesBeforeMsg}`);
+          }
+        }
+
+        // ── Output transcription (interleaved with audio) ──────────────────
+        // The API sends transcription AFTER the audio it describes, so totalBytes
+        // at this point is already past the end of this fragment's audio.
+        // bytesAtLastTranscriptEnd holds the byte position where THIS fragment's
+        // audio started (= where the previous fragment's audio ended).
+        if (msg.serverContent?.outputTranscription?.text) {
+          const fragText = msg.serverContent.outputTranscription.text;
+          const stamp = bytesAtLastTranscriptEnd;
+          transcriptFragments.push({
+            text: fragText,
+            audioBytesBefore: stamp,
+          });
+          bytesAtLastTranscriptEnd = totalBytes;
+          log.info('Live TTS', `[Frag] transcript "${fragText.slice(0, 50)}" | stamp=${stamp}B (${(stamp / 48000).toFixed(3)}s) → total=${totalBytes}B (${(totalBytes / 48000).toFixed(3)}s)`);
+          // Forward timings the moment they exist — they lead the playhead by
+          // seconds, so the client can light the exact word during streaming
+          // instead of waiting for the end-of-turn 'done' event.
+          if (onTranscript) onTranscript(transcriptFragments, totalBytes);
         }
 
         // ── Turn complete — all audio received ───────────────────────────
@@ -1163,9 +1204,21 @@ app.post('/api/ai/live-tts', async (req, res) => {
       onFirstChunk: (mime) =>
         sse({ meta: { sampleRate: 24000, mimeType: mime || 'audio/pcm;rate=24000' } }),
       onChunk: (b64) => sse({ chunk: b64 }),
-      onDone: (reason, n) => {
-        log.info('Live TTS', `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice}`);
-        sse({ done: true, chunks: n, reason });
+      onTranscript: (frags, total) => {
+        const partial = buildLiveWordTimings(frags, total);
+        if (partial.length) sse({ partialTimings: partial });
+      },
+      onDone: (reason, n, { transcriptFragments, totalBytes }) => {
+        const wordTimings = buildLiveWordTimings(transcriptFragments, totalBytes);
+        log.info(
+          'Live TTS',
+          `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice} | ${wordTimings.length} words from ${transcriptFragments.length} fragments`
+        );
+        log.info('Live TTS', `[Frag] Summary: ${transcriptFragments.length} frags | stamps=[${transcriptFragments.map((f) => `${(f.audioBytesBefore / 48000).toFixed(2)}s`).join(',')}] | totalBytes=${totalBytes} (${(totalBytes / 48000).toFixed(2)}s)`);
+        if (wordTimings.length > 0) {
+          log.info('Live TTS', `[WordTimings] first=${wordTimings[0].word}@${wordTimings[0].start.toFixed(2)}-${wordTimings[0].end.toFixed(2)}s | last=${wordTimings[wordTimings.length-1].word}@${wordTimings[wordTimings.length-1].start.toFixed(2)}-${wordTimings[wordTimings.length-1].end.toFixed(2)}s`);
+        }
+        sse({ done: true, chunks: n, reason, ...(wordTimings.length ? { wordTimings } : {}) });
         try {
           res.end();
         } catch {}
@@ -1189,7 +1242,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
   runSession({
     maxMs: WS_MAX_BUFFER,
     onChunk: (b64) => chunks.push(b64),
-    onDone: () => {
+    onDone: (_reason, _chunkCount, { transcriptFragments, totalBytes }) => {
       if (!chunks.length) {
         if (!res.headersSent) res.status(500).json({ error: 'No audio data received from Live API' });
         return;
@@ -1197,11 +1250,15 @@ app.post('/api/ai/live-tts', async (req, res) => {
       // Decode each base64 chunk to binary, concat, re-encode. A plain string join
       // is wrong when chunks carry base64 padding ('=') in the middle.
       const combined = Buffer.concat(chunks.map((b64) => Buffer.from(b64, 'base64')));
+      const wordTimings = buildLiveWordTimings(transcriptFragments, combined.length);
       log.info(
         'Live TTS',
-        `Done (${ms()}) | ${chunks.length} chunks | ${combined.length} bytes PCM | voice: ${voice}`
+        `Done (${ms()}) | ${chunks.length} chunks | ${combined.length} bytes PCM | voice: ${voice} | Word timings: ${wordTimings.length} words from ${transcriptFragments.length} fragments`
       );
-      res.json({ audioData: combined.toString('base64') });
+      res.json({
+        audioData: combined.toString('base64'),
+        ...(wordTimings.length ? { wordTimings } : {}),
+      });
     },
     onFail: (err) => {
       log.error('Live TTS', `Failed: ${err.message}`);

@@ -27,6 +27,35 @@ export function getHighlightLag() {
   }
 }
 /**
+ * Dev-only debug bridge for reproducing highlight-timing issues in the running app
+ * (Playwright / manual). Gated by localStorage('ttsHighlightDebug') — a complete
+ * no-op otherwise, so production playback is untouched. When enabled it:
+ *   - lets the playback clock be driven from the page (window.__ttsSetClock)
+ *   - exposes the audio store so a test can push streaming timing updates
+ *   - records every active-word transition to window.__ttsHighlightLog with the
+ *     clock + the target word's start, so on→off→on (a flash) is visible.
+ */
+const debugClock = { value: null };
+function ttsDebugEnabled() {
+  try {
+    return typeof window !== 'undefined' && !!localStorage.getItem('ttsHighlightDebug');
+  } catch {
+    return false;
+  }
+}
+if (ttsDebugEnabled()) {
+  window.__ttsHighlightLog = [];
+  window.__ttsSetClock = (s) => {
+    debugClock.value = Number.isFinite(s) ? s : null;
+  };
+  window.__ttsAudioStore = useAudioStore;
+  // uiStore holds liveVoice; lazy import keeps it out of the prod path.
+  import('../stores/uiStore.js').then((m) => {
+    window.__ttsUIStore = m.useUIStore;
+  }).catch(() => {});
+}
+
+/**
  * Seek guard — set true before player.stop() in a seek operation so the
  * onstop handler skips its setPlaying(false) call. Reset after startPlayer().
  */
@@ -57,6 +86,7 @@ export function startPlayer(player, offset) {
 
 /** Read playback position in seconds; prefers player-provided content clock. */
 export function getPlaybackElapsed() {
+  if (debugClock.value != null) return Math.max(0, debugClock.value); // dev-only override
   const playerElapsed = playbackPlayerRef.value?.getCurrentTime?.();
   if (Number.isFinite(playerElapsed)) {
     return Math.max(0, pauseOffset.value + playerElapsed);
@@ -235,6 +265,15 @@ export function useTTSHighlight({
       }
 
       if (newIndex !== activeIndexRef.current) {
+        if (typeof window !== 'undefined' && window.__ttsHighlightLog) {
+          window.__ttsHighlightLog.push({
+            t: Math.round((globalThis.performance?.now?.() ?? 0)),
+            prevIdx: activeIndexRef.current,
+            idx: newIndex,
+            elapsed: Number(elapsed.toFixed(3)),
+            start: newIndex >= 0 ? Number((timings[newIndex]?.start ?? 0).toFixed(3)) : null,
+          });
+        }
         activeIndexRef.current = newIndex;
         for (let i = 0; i < wordRefs.length; i++) {
           const el = wordRefs[i]?.current;

@@ -90,6 +90,7 @@ import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
 import { smoothWordTimings } from './utils/smoothWordTimings.js';
 import { evenDistributeTimings } from './utils/evenDistributeTimings.js';
 import { verseLetterWeightedTimings } from './utils/verseLetterWeightedTimings.js';
+import { verseSyllableWeightedTimings } from './utils/verseSyllableWeightedTimings.js';
 import { applyVerseDelays } from './utils/applyVerseDelays.js';
 import {
   useTTSHighlight,
@@ -930,14 +931,15 @@ export default function DiwanApp() {
           try {
             timingMode = localStorage.getItem('ttsTimingMode') || 'even';
           } catch {}
-          
+
           let result = aligned.timings;
           if (timingMode === 'smooth') result = smoothWordTimings(result);
           else if (timingMode === 'verseLetterWeighted') result = verseLetterWeightedTimings(result, wordOffsets);
+          else if (timingMode === 'verseSyllableWeighted') result = verseSyllableWeightedTimings(result, wordOffsets);
           else if (timingMode === 'even') result = evenDistributeTimings(result, wordOffsets, { charWeighted: false, minDwell: 0.18 });
-          
-          // Apply verse delays (for even and verseLetterWeighted modes)
-          if ((timingMode === 'even' || timingMode === 'verseLetterWeighted') && wordOffsets && wordOffsets.length > 0) {
+
+          // Apply verse delays (for verse-anchored modes: even, verse+letters, verse+syllables)
+          if ((timingMode === 'even' || timingMode === 'verseLetterWeighted' || timingMode === 'verseSyllableWeighted') && wordOffsets && wordOffsets.length > 0) {
             let verseDelayMs = 0;
             try { verseDelayMs = parseFloat(localStorage.getItem('ttsVerseDelayMs') || '0'); } catch {}
             const verseDelaySeconds = Math.max(0, verseDelayMs / 1000);

@@ -87,6 +87,8 @@ import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
 import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
 import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
+import { smoothWordTimings } from './utils/smoothWordTimings.js';
+import { evenDistributeTimings } from './utils/evenDistributeTimings.js';
 import { verseLetterWeightedTimings } from './utils/verseLetterWeightedTimings.js';
 import { applySilenceAwarePacing } from './utils/silenceAwareTimings.js';
 import { applyVerseDelays } from './utils/applyVerseDelays.js';
@@ -937,13 +939,17 @@ export default function DiwanApp() {
           /* localStorage unavailable */
         }
         try {
+          let timingMode = 'even';
           let enableSilenceAware = false;
           try {
+            timingMode = localStorage.getItem('ttsTimingMode') || 'even';
             enableSilenceAware = localStorage.getItem('ttsEnableSilenceAware') === 'true';
           } catch {}
           
-          // Verse+letters is the implemented timing mode
-          let result = verseLetterWeightedTimings(aligned.timings, wordOffsets);
+          let result = aligned.timings;
+          if (timingMode === 'smooth') result = smoothWordTimings(result);
+          else if (timingMode === 'verseLetterWeighted') result = verseLetterWeightedTimings(result, wordOffsets);
+          else if (timingMode === 'even') result = evenDistributeTimings(result, wordOffsets, { charWeighted: false, minDwell: 0.18 });
           
           // Apply verse delays (for even and verseLetterWeighted modes)
           if ((timingMode === 'even' || timingMode === 'verseLetterWeighted') && wordOffsets && wordOffsets.length > 0) {

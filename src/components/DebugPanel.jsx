@@ -74,14 +74,11 @@ const DebugPanel = ({ controlBarRef }) => {
   const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const [bugError, setBugError] = useState('');
   const [lastViewedCount, setLastViewedCount] = useState(0);
-  const [timingMode, setTimingMode] = useState(() => {
-    try { return localStorage.getItem('ttsTimingMode') || 'even'; } catch { return 'even'; }
-  });
   const [enableSilenceAware, setEnableSilenceAware] = useState(() => {
     try { return localStorage.getItem('ttsEnableSilenceAware') === 'true'; } catch { return false; }
   });
   const [verseDelayMs, setVerseDelayMs] = useState(() => {
-    try { return parseFloat(localStorage.getItem('ttsVerseDelayMs') || '0'); } catch { return 0; }
+    try { return parseFloat(localStorage.getItem('ttsVerseDelayMs') || '125'); } catch { return 125; }
   });
   const scrollRef = useRef(null);
   const btnPos = { right: 8, bottom: 52 };
@@ -386,19 +383,6 @@ const DebugPanel = ({ controlBarRef }) => {
               <span className="text-[0.6rem] font-mono text-orange-400 w-7 text-right">{liveTemperature.toFixed(2)}</span>
             </div>
             <div className="flex flex-col items-start gap-2">
-              <div className="flex flex-col items-start gap-1">
-                <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">Timing Mode</span>
-                <select
-                  value={timingMode}
-                  onChange={(e) => { setTimingMode(e.target.value); try { localStorage.setItem('ttsTimingMode', e.target.value); } catch {} useUIStore.getState().addLog('Settings', `Timing mode → ${e.target.value}`, 'user'); }}
-                  className={`rounded text-[0.75rem] px-2 py-1 cursor-pointer ${darkMode ? 'bg-white/[0.06] border border-white/[0.1] text-white/80' : 'bg-black/[0.03] border border-black/[0.1] text-black/70'}`}
-                >
-                  <option value="even">even (uniform)</option>
-                  <option value="smooth">smooth (min-dwell)</option>
-                  <option value="verseLetterWeighted">verse + letters</option>
-                  <option value="raw">raw (lumpy)</option>
-                </select>
-              </div>
               <label className="flex items-center gap-1.5 text-[0.6rem] cursor-pointer opacity-75 hover:opacity-100">
                 <input
                   type="checkbox"
@@ -433,7 +417,7 @@ const DebugPanel = ({ controlBarRef }) => {
                   className="w-full h-1 cursor-pointer accent-orange-400"
                   title="Add delay at the start of each verse (slows highlight exit from first word)"
                 />
-                <span className="text-[0.5rem] opacity-40 text-center w-full">even & verse+letters only</span>
+                <span className="text-[0.5rem] opacity-40 text-center w-full">first-word dwell (default 125ms)</span>
               </div>
             </div>
           </div>

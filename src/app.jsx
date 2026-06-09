@@ -90,6 +90,7 @@ import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
 import { smoothWordTimings } from './utils/smoothWordTimings.js';
 import { evenDistributeTimings } from './utils/evenDistributeTimings.js';
 import { verseLetterWeightedTimings } from './utils/verseLetterWeightedTimings.js';
+import { applyVerseDelays } from './utils/applyVerseDelays.js';
 import {
   useTTSHighlight,
   startPlayer,

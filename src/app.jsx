@@ -93,7 +93,6 @@ import { verseLetterWeightedTimings } from './utils/verseLetterWeightedTimings.j
 import { applySilenceAwarePacing } from './utils/silenceAwareTimings.js';
 import { applyVerseDelays } from './utils/applyVerseDelays.js';
 import { useSilenceDetector } from './hooks/useSilenceDetector.js';
-
 import {
   useTTSHighlight,
   startPlayer,
@@ -868,16 +867,6 @@ export default function DiwanApp() {
     [allWords, wordOffsets]
   );
 
-  const silenceDetector = useSilenceDetector();
-  const { setSilenceGaps } = useAudioStore();
-
-  useEffect(() => {
-    // When silence is detected, update the store
-    silenceDetector.onSilenceDetected((gaps) => {
-      setSilenceGaps(gaps || []);
-    });
-  }, [silenceDetector, setSilenceGaps]);
-
   const wordTimings = useMemo(() => {
     // Best source: REAL per-word timings from the Live TTS transcript, aligned onto
     // the displayed tokens. These are exact (the model reported what it said and the
@@ -961,10 +950,9 @@ export default function DiwanApp() {
             }
           }
           
-          // Apply silence awareness with detected gaps
+          // Apply silence awareness as optional post-pass (currently scaffolded, needs PCM integration)
           if (enableSilenceAware) {
-            const silenceGaps = useAudioStore.getState().silenceGaps || [];
-            result = applySilenceAwarePacing(result, silenceGaps);
+            result = applySilenceAwarePacing(result, []);
           }
           
           return result;
@@ -1146,7 +1134,7 @@ export default function DiwanApp() {
   });
 
   const togglePlay = () =>
-    togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track, silenceDetector });
+    togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track });
 
   // Cycle the reading voice (the pill next to Listen). Voice is part of the audio
   // cache key, so playback regenerates in the new voice. If audio is currently

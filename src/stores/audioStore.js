@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 
 const initialState = {
-  silenceGaps: [],
   isPlaying: false,
   isGenerating: false,
   url: null,
@@ -22,7 +21,6 @@ export const useAudioStore = create((set) => ({
   setError: (error) => set({ error }),
   setPlayer: (player) => set({ player }),
   setWordTimings: (wordTimings) => set({ wordTimings }),
-  setSilenceGaps: (silenceGaps) => set({ silenceGaps }),
 
   resetAudio: () =>
     set({ isPlaying: false, isGenerating: false, url: null, error: null, player: null, wordTimings: null }),

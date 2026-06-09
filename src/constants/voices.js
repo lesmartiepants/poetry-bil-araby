@@ -61,7 +61,7 @@ export function voiceGender(name) {
 
 /**
  * Next voice in the cycle, alternating between male and female voices.
- * Ensures smooth gender transitions for a more natural listening experience.
+ * Cycles through all voices of the opposite gender in order.
  *
  * @param {string} current - the currently selected voice name
  * @returns {string} the next voice name (opposite gender)
@@ -69,28 +69,27 @@ export function voiceGender(name) {
 export function nextVoice(current) {
   const currentVoice = _byName.get(current);
   if (!currentVoice) {
-    // Unknown voice, cycle back to first voice
+    // Unknown voice, cycle to first voice
     return VOICE_CATALOG[0].name;
   }
 
-  // Find next voice with opposite gender
+  // Get all voices of opposite gender
   const oppositeGender = currentVoice.gender === 'f' ? 'm' : 'f';
-  const currentIndex = VOICE_CATALOG.findIndex((v) => v.name === current);
+  const oppositeVoices = VOICE_CATALOG.filter((v) => v.gender === oppositeGender);
 
-  // Search forward from current position for opposite gender
-  for (let i = currentIndex + 1; i < VOICE_CATALOG.length; i++) {
-    if (VOICE_CATALOG[i].gender === oppositeGender) {
-      return VOICE_CATALOG[i].name;
-    }
+  if (oppositeVoices.length === 0) {
+    // No voices of opposite gender, cycle to first voice
+    return VOICE_CATALOG[0].name;
   }
 
-  // Wrap around: find first voice of opposite gender from the start
-  for (let i = 0; i < currentIndex; i++) {
-    if (VOICE_CATALOG[i].gender === oppositeGender) {
-      return VOICE_CATALOG[i].name;
-    }
-  }
+  // Find which opposite-gender voice we last came from (if any)
+  // by checking sessionStorage or defaulting to cycle through in order
+  const cycleKey = `voiceCycle_${currentVoice.gender}`;
+  const lastIndex = parseInt(sessionStorage.getItem(cycleKey) || '-1', 10);
+  const nextIndex = (lastIndex + 1) % oppositeVoices.length;
 
-  // Fallback (should not happen if catalog has both genders)
-  return VOICE_CATALOG[0].name;
+  // Store where we are in the opposite-gender cycle
+  sessionStorage.setItem(`voiceCycle_${oppositeGender}`, nextIndex.toString());
+
+  return oppositeVoices[nextIndex].name;
 }

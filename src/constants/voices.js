@@ -60,36 +60,43 @@ export function voiceGender(name) {
 }
 
 /**
- * Next voice in the cycle, alternating between male and female voices.
- * Cycles through all voices of the opposite gender in order.
+ * Next voice in the cycle, strictly alternating between male and female voices.
+ * Male → Female → Male → Female, etc., cycling through different voices each tap.
  *
  * @param {string} current - the currently selected voice name
- * @returns {string} the next voice name (opposite gender)
+ * @returns {string} the next voice name (opposite gender, next in sequence)
  */
 export function nextVoice(current) {
   const currentVoice = _byName.get(current);
+  const maleVoices = VOICE_CATALOG.filter((v) => v.gender === 'm');
+  const femaleVoices = VOICE_CATALOG.filter((v) => v.gender === 'f');
+
   if (!currentVoice) {
-    // Unknown voice, cycle to first voice
-    return VOICE_CATALOG[0].name;
+    // Unknown voice, default to first male
+    return maleVoices[0]?.name || VOICE_CATALOG[0].name;
   }
 
-  // Get all voices of opposite gender
-  const oppositeGender = currentVoice.gender === 'f' ? 'm' : 'f';
-  const oppositeVoices = VOICE_CATALOG.filter((v) => v.gender === oppositeGender);
-
+  // Get the opposite gender list
+  const oppositeVoices = currentVoice.gender === 'm' ? femaleVoices : maleVoices;
   if (oppositeVoices.length === 0) {
-    // No voices of opposite gender, cycle to first voice
     return VOICE_CATALOG[0].name;
   }
 
-  // Find which opposite-gender voice we last came from (if any)
-  // by checking sessionStorage or defaulting to cycle through in order
-  const cycleKey = `voiceCycle_${currentVoice.gender}`;
-  const lastIndex = parseInt(sessionStorage.getItem(cycleKey) || '-1', 10);
-  const nextIndex = (lastIndex + 1) % oppositeVoices.length;
+  // Track position in each gender's cycle independently
+  const maleKeyIndex = 'voiceCycleIndexMale';
+  const femaleKeyIndex = 'voiceCycleIndexFemale';
 
-  // Store where we are in the opposite-gender cycle
-  sessionStorage.setItem(`voiceCycle_${oppositeGender}`, nextIndex.toString());
-
-  return oppositeVoices[nextIndex].name;
+  if (currentVoice.gender === 'm') {
+    // Currently male, move to next female
+    const femaleIndex = parseInt(sessionStorage.getItem(femaleKeyIndex) || '0', 10);
+    const nextFemaleIndex = (femaleIndex + 1) % femaleVoices.length;
+    sessionStorage.setItem(femaleKeyIndex, nextFemaleIndex.toString());
+    return femaleVoices[nextFemaleIndex].name;
+  } else {
+    // Currently female, move to next male
+    const maleIndex = parseInt(sessionStorage.getItem(maleKeyIndex) || '0', 10);
+    const nextMaleIndex = (maleIndex + 1) % maleVoices.length;
+    sessionStorage.setItem(maleKeyIndex, nextMaleIndex.toString());
+    return maleVoices[nextMaleIndex].name;
+  }
 }

@@ -31,26 +31,23 @@ npm run test:e2e:debug   # Debug mode
 
 ## Architecture
 
-### Single-File Component Design
-The entire application lives in `src/app.jsx` (~2700+ lines). This is intentional for simplicity but creates specific patterns you must understand:
+> **Living map:** [`docs/APP-STATE.md`](docs/APP-STATE.md) is the feature inventory + test-coverage matrix, generated from [`feature-manifest.json`](feature-manifest.json). Read it first to see what the app does and how well each feature is tested. CI fails if a feature is added/removed without updating the manifest.
 
-**Feature Flags** (app.jsx:9-18)
-```javascript
-const FEATURES = {
-  grounding: false,   // Experimental: Google Search grounding
-  debug: true,        // Debug panel visibility
-  logging: true,      // Emit structured logs to console (captured by Vercel/browser)
-  caching: true,      // IndexedDB caching for AI insights
-  streaming: true,    // Streaming AI responses
-  prefetching: true,  // Aggressive prefetching
-  database: true      // Enable database poem source (requires backend)
-};
-```
-Toggle features here rather than conditionally importing code.
+### Modular React app (was single-file, now ~62 modules)
+`src/app.jsx` is still the main render tree, but the logic was extracted into modules. Search the right place, not just `app.jsx`:
 
-**Design Constants** (app.jsx:14-68): `DESIGN` (layout/typography), `THEME` (colors). Never hardcode styles.
+- `src/stores/` — Zustand stores: `uiStore`, `poemStore`, `audioStore`, `modalStore` (all visual/playback/overlay state lives here)
+- `src/stores/actions/` — the heavy async logic: `togglePlay.js` (the 1025-line TTS playback state machine, most regression-prone file), `fetchPoem.js`, `analyzePoem.js`
+- `src/hooks/` — `useAuth`, `useTTSHighlight`, `useIdleTimer`, `useKeyboardShortcuts`, `useQueryParams`
+- `src/services/` — `database.js`, `gemini.js`, `cache.js` (IndexedDB), `prefetch.js`
+- `src/components/` — 20 presentational components (`PoemCarousel`, `DiscoverDrawer`, `InsightOverlay`, `DebugPanel`, `auth/*`, …)
+- `src/constants/` — `features.js` (feature flags), `voices.js`, `poets.js`, `fonts.js`; `src/utils/` — `liveAudioStream.js`, `audioWordTiming.js`, etc.
 
-**Architecture:** Single-file React app with dual-mode system (Database/AI), Express backend, React hooks state management.
+**Feature Flags** (`src/constants/features.js`): `grounding`, `debug`, `logging`, `caching`, `streaming`, `prefetching`, `database`, `onboarding`, `forceOnboarding`, `designReview`. Toggle here rather than conditionally importing code.
+
+**Design Constants** (`src/constants/`): `DESIGN` (layout/typography), `THEME` (colors). Never hardcode styles.
+
+**Architecture:** Modular React app with a dual-mode system (Database/AI), Express backend, Zustand + hooks state management.
 
 ### Backend Integration
 
@@ -132,12 +129,7 @@ VERCEL_TOKEN                    // For Vercel CLI
 
 ## Common Gotchas
 
-1. **Single File Complexity**: Since everything is in `app.jsx`, search carefully for the section you need. The file is organized with comment headers like:
-   ```javascript
-   /* ============================================
-      1. FEATURE FLAGS & DESIGN SYSTEM
-      ============================================ */
-   ```
+1. **Find the right module**: Logic is split across `src/stores/`, `src/stores/actions/`, `src/hooks/`, `src/services/`, `src/components/`, `src/constants/`, `src/utils/`. `app.jsx` is the render tree, not the whole app. The audio/TTS logic lives in `src/stores/actions/togglePlay.js`. See [`docs/APP-STATE.md`](docs/APP-STATE.md) for the feature → file map.
 
 2. **Arabic Typography**: Always test with actual Arabic text. The app uses specialized fonts (Amiri, Tajawal) that may render differently than Latin text.
 

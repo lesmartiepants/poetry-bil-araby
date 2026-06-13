@@ -60,6 +60,18 @@ jobs:
               - 'postcss.config.js'
               - '.github/workflows/**'
 
+  # Stage 0b: Feature-manifest drift gate (fast, no deps — pure Node built-ins)
+  manifest-check:
+    name: Feature Manifest Drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+      - name: Check feature manifest vs code
+        run: node scripts/check-feature-manifest.mjs --check
+
   # Stage 1: Build and validate
   build:
     name: Build & Validate
@@ -210,22 +222,24 @@ jobs:
   pr-feedback:
     name: PR Feedback Bot
     runs-on: ubuntu-latest
-    needs: [detect-changes, build, test, smoke-tests]
+    needs: [detect-changes, manifest-check, build, test, smoke-tests]
     if: always() && github.event_name == 'pull_request'
     steps:
       - name: Post CI summary to PR
         uses: actions/github-script@v7
         with:
           script: |
+            const manifestStatus = '${{ needs.manifest-check.result }}';
             const buildStatus = '${{ needs.build.result }}';
             const testStatus = '${{ needs.test.result }}';
             const smokeStatus = '${{ needs.smoke-tests.result }}';
 
             const icon = (s) => s === 'success' ? '✅' : s === 'failure' ? '❌' : s === 'skipped' ? '⏭️' : '⚠️';
-            const allPassed = [buildStatus, testStatus, smokeStatus].every(s => s === 'success' || s === 'skipped');
+            const allPassed = [manifestStatus, buildStatus, testStatus, smokeStatus].every(s => s === 'success' || s === 'skipped');
 
             let body = `## CI ${allPassed ? '✅' : '❌'}\n\n`;
             body += `| Check | Status |\n|-------|--------|\n`;
+            body += `| Feature Manifest | ${icon(manifestStatus)} ${manifestStatus} |\n`;
             body += `| Build | ${icon(buildStatus)} ${buildStatus} |\n`;
             body += `| Unit Tests | ${icon(testStatus)} ${testStatus} |\n`;
             body += `| Smoke Tests | ${icon(smokeStatus)} ${smokeStatus} |\n`;
@@ -233,6 +247,7 @@ jobs:
             const failures = [];
             const warnings = [];
 
+            if (manifestStatus === 'failure') failures.push('Feature Manifest');
             if (buildStatus === 'failure') failures.push('Build');
             if (testStatus === 'failure') failures.push('Unit Tests');
             if (smokeStatus === 'failure') failures.push('Smoke Tests');

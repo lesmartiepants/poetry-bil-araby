@@ -25,7 +25,9 @@
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write 'src/**/*.{js,jsx,json,css}'",
     "format:check": "prettier --check 'src/**/*.{js,jsx,json,css}'",
-    "prepare": "husky"
+    "prepare": "husky",
+    "manifest:check": "node scripts/check-feature-manifest.mjs --check",
+    "manifest:update": "node scripts/check-feature-manifest.mjs --update"
   },
   "lint-staged": {
     "*.{js,jsx}": [

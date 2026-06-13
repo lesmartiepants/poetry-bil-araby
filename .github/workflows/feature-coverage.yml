@@ -1,0 +1,110 @@
+name: Feature Coverage
+
+# Keeps feature-manifest.json honest. Fails when code grows or loses an HTTP
+# endpoint or component that the manifest doesn't know about, or when the
+# manifest points at files that no longer exist. Regenerates the auto block in
+# docs/APP-STATE.md and comments the reconciliation on the PR.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server.js'
+      - 'src/components/**'
+      - 'src/test/**'
+      - 'e2e/**'
+      - 'feature-manifest.json'
+      - 'scripts/check-feature-manifest.mjs'
+      - 'docs/APP-STATE.md'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'server.js'
+      - 'src/components/**'
+      - 'src/test/**'
+      - 'e2e/**'
+      - 'feature-manifest.json'
+      - 'scripts/check-feature-manifest.mjs'
+      - 'docs/APP-STATE.md'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  manifest-drift:
+    name: Feature manifest drift gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+
+      # Capture the report (do not fail the step yet — we want to comment first).
+      - name: Run drift check
+        id: drift
+        run: |
+          set +e
+          node scripts/check-feature-manifest.mjs --check > drift.txt 2>&1
+          echo "exit_code=$?" >> "$GITHUB_OUTPUT"
+          cat drift.txt
+          {
+            echo 'report<<DRIFT_EOF'
+            cat drift.txt
+            echo 'DRIFT_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # Verify docs/APP-STATE.md auto block is committed up to date.
+      - name: Verify doc is in sync
+        id: docsync
+        run: |
+          set +e
+          node scripts/check-feature-manifest.mjs --update > /dev/null 2>&1
+          if git diff --quiet -- docs/APP-STATE.md; then
+            echo "doc_stale=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "doc_stale=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::docs/APP-STATE.md auto block is out of date. Run 'npm run manifest:update' and commit."
+          fi
+
+      - name: Comment on PR
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const drift = process.env.DRIFT_REPORT || '';
+            const exitCode = '${{ steps.drift.outputs.exit_code }}';
+            const docStale = '${{ steps.docsync.outputs.doc_stale }}';
+            const ok = exitCode === '0';
+
+            const MARKER = '<!-- feature-coverage-bot -->';
+            let body = `${MARKER}\n## Feature coverage ${ok ? '✅' : '❌'}\n\n`;
+            if (!ok) {
+              body += `**Manifest is out of sync with the code.** A feature was added or removed without updating \`feature-manifest.json\`.\n\n`;
+            } else {
+              body += `Manifest matches the code.\n\n`;
+            }
+            if (docStale === 'true') {
+              body += `⚠️ \`docs/APP-STATE.md\` is stale — run \`npm run manifest:update\` and commit.\n\n`;
+            }
+            body += `<details><summary>Reconciliation report</summary>\n\n\`\`\`\n${drift.slice(0, 6000)}\n\`\`\`\n</details>\n`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(MARKER));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner: context.repo.owner, repo: context.repo.repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner: context.repo.owner, repo: context.repo.repo, issue_number: context.issue.number, body });
+            }
+        env:
+          DRIFT_REPORT: ${{ steps.drift.outputs.report }}
+
+      - name: Fail if drift detected
+        if: steps.drift.outputs.exit_code != '0'
+        run: |
+          echo "Feature manifest drift detected. Update feature-manifest.json to match the code."
+          exit 1

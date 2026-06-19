@@ -63,7 +63,9 @@ const PoemReader = memo(function PoemReader({
   const useHighlight = isActive && highlightStyle !== 'none' && activeVersePairs.length > 0;
 
   const goldColor = darkMode ? '#c5a059' : '#8B6430';
-  const firstReveal = revealedCount === 1 && stanzas.length > 1;
+  // True when the poem hasn't been tapped yet and has more stanzas to reveal —
+  // used to show the initial "tap to begin reading" prompt.
+  const showInitialPrompt = revealedCount === 1 && stanzas.length > 1;
 
   return (
     <div
@@ -171,7 +173,7 @@ const PoemReader = memo(function PoemReader({
 
           {/* Tap guidance — initial prompt before any tap, then "tap to continue" */}
           <AnimatePresence mode="wait">
-            {!isAllRevealed && isActive && firstReveal ? (
+            {!isAllRevealed && isActive && showInitialPrompt ? (
               <motion.div
                 key="tap-begin"
                 initial={{ opacity: 0, y: 6 }}

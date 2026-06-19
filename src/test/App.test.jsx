@@ -289,8 +289,8 @@ describe('DiwanApp', () => {
       const playBtn = screen.getByLabelText('Start recitation');
       await userEvent.click(playBtn);
 
-      // The button should be disabled while generating — in pill/non-none highlight mode,
-      // the Start recitation button is replaced by PlayControlsStrip when isGenerating is true.
+      // Once generation starts, the "Start recitation" button is replaced by the
+      // generating state (PlayControlsStrip or loader). Verify it's no longer in the DOM.
       await waitFor(() => {
         expect(screen.queryByLabelText('Start recitation')).not.toBeInTheDocument();
       });

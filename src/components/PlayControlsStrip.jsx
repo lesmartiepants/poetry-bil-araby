@@ -13,6 +13,9 @@ import { useUIStore } from '../stores/uiStore';
 /**
  * PlayControlsStrip — transport bar above the footer controls.
  *
+ * Renders nothing when `highlightStyle === 'none'` (reads from uiStore directly
+ * so callers don't need to gate it themselves).
+ *
  * Props:
  *   player            {object}   Tone.Player instance
  *   isPlaying         {boolean}

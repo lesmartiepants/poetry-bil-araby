@@ -48,6 +48,18 @@ if (ttsDebugEnabled()) {
   window.__ttsSetClock = (s) => {
     debugClock.value = Number.isFinite(s) ? s : null;
   };
+  // Start the REAL wall-clock playback path (no override): elapsed advances in
+  // real seconds from now, exactly as a live recitation drives it. Used by the
+  // UX QA harness to exercise the natural estimate→aligned handoff timing.
+  window.__ttsStartWallClock = () => {
+    debugClock.value = null;
+    pauseOffset.value = 0;
+    playbackStartTime.value = Date.now() / 1000;
+  };
+  // The exact playhead the tick uses, so the QA harness can compare what's being
+  // recited (aligned-transcript window at this elapsed) against what's highlighted.
+  window.__ttsGetElapsed = getPlaybackElapsed;
+  window.__ttsGetLag = getHighlightLag;
   window.__ttsAudioStore = useAudioStore;
   // uiStore holds liveVoice; lazy import keeps it out of the prod path.
   import('../stores/uiStore.js').then((m) => {
@@ -262,6 +274,17 @@ export function useTTSHighlight({
       // If past the last word end, keep the last word active
       if (elapsed >= totalDuration && timings.length > 0) {
         newIndex = timings.length - 1;
+      }
+
+      // Monotonic hold: once a word has been highlighted, never fall back to
+      // "nothing" mid-playback. The first-word flash came from exactly this — the
+      // char-count estimate lights word0 at start=0, then the aligned+verse-delayed
+      // timing moves word0.start to ~0.125 while the lag-floored clock is still ~0,
+      // so the window search returns -1 and word0 goes dark (on→off→on). Holding the
+      // last active word until the playhead actually reaches the next one removes the
+      // flicker and naturally lets the first word dwell, which is what we want.
+      if (newIndex === -1 && activeIndexRef.current >= 0) {
+        newIndex = activeIndexRef.current;
       }
 
       if (newIndex !== activeIndexRef.current) {

@@ -126,8 +126,10 @@ test.describe('first-word flash (timing matrix)', () => {
             store.setState({ isPlaying: false });
             await frame();
 
-            // Flash = an active→inactive edge anywhere in the startup sequence.
-            const flashed = seq.some((v, i) => i > 0 && seq[i - 1] === true && v === false);
+            // Flash = word0 lights more than once (on→off→on). A single on→off is the
+            // normal hand-off to word1, not a flash. Count false→true edges.
+            const activations = seq.filter((v, i) => v === true && (i === 0 || seq[i - 1] === false)).length;
+            const flashed = activations > 1;
             rows.push({ mode, delay, voice, seq, flashed });
           }
         }

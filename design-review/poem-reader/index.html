@@ -40,6 +40,8 @@
     a.card:active{transform:scale(.985)}
     a.card:hover{border-color:var(--gold);background:rgba(197,160,89,.07)}
     a.card:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+    a.card.featured{border-color:var(--gold);background:linear-gradient(180deg,rgba(197,160,89,.12),rgba(197,160,89,.04))}
+    a.card.featured .num{color:var(--gold-bright)}
     .card .num{font-family:'Reem Kufi',sans-serif;color:var(--gold);font-size:clamp(1.1rem,4.5vw,1.3rem);opacity:.7}
     .card h2{font-family:'Cormorant Garamond',serif;font-size:clamp(1.4rem,6vw,1.8rem);color:var(--gold-bright);margin:.15rem 0 .35rem;font-weight:400}
     .card p{color:var(--muted);font-size:clamp(.92rem,3.8vw,1.05rem);line-height:1.5}
@@ -51,11 +53,18 @@
 <body>
   <header>
     <div class="wordmark"><span class="en">poetry</span><span class="ar">بالعربي</span></div>
-    <p class="tagline">Tap-to-reveal reading experience — three motion directions.</p>
-    <p class="hint">Best on a phone. Tap a panel to bloom each 4-line stanza · swipe up for the next poem.</p>
+    <p class="tagline">Tap-to-reveal reading experience — see it inside the full app, or compare the three motion directions.</p>
+    <p class="hint">Best on a phone. Tap to bloom each 4-line stanza · swipe up for the next poem · top-right toggles theme.</p>
   </header>
 
   <main class="cards">
+    <a class="card featured" href="./app-integrated.html">
+      <span class="num">★ Integrated app mock</span>
+      <h2>Full experience</h2>
+      <p>The reading flow inside the real app shell — top bar, side action rail, bottom nav &amp; Listen — with a live switcher to compare all three motion styles. Working swipes &amp; taps.</p>
+      <span class="go">Open the app mock →</span>
+    </a>
+    <p style="text-align:center;color:var(--muted);font-size:.82rem;margin:.2rem 0 -.4rem">— or view each motion style full-screen —</p>
     <a class="card" href="./aurora-bloom.html">
       <span class="num">٠١ — Aurora Bloom</span>
       <h2>Meditative</h2>

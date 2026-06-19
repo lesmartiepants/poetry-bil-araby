@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="dark" data-style="aurora">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+  <title>Poem Reader — Integrated Mock</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;600&family=Cormorant+Garamond:ital,wght@0,400;1,300;1,400&display=swap" rel="stylesheet" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/SplitText.min.js"></script>
+
+  <style>
+  /* =========================================================================
+     DESIGN TOKENS
+     ========================================================================= */
+  :root{
+    --gold:#c5a059; --gold-bright:#d4b463;
+    --gold-foil:linear-gradient(135deg,#b8922e,#c5a059,#e2c67a,#c5a059,#b8922e);
+    --lapis-deep:#1e3a6e; --lapis-mid:#2e5090; --lapis-light:#4a7cc9;
+
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bottom:env(safe-area-inset-bottom,0px);
+    --topbar-h:54px; --bottomnav-h:64px; --rail-w:52px;
+  }
+  /* dark (default) */
+  [data-theme="dark"]{
+    --bg:#0c0c0e; --bg-2:#101013;
+    --text:rgba(233,231,228,.93); --text-muted:rgba(233,231,228,.42);
+    --meta:rgba(197,160,89,.78);
+    --shadow-verse:0 0 26px rgba(197,160,89,.16);
+    --chrome-bg:rgba(14,14,17,.66); --chrome-border:rgba(255,255,255,.07);
+    --chrome-strong:rgba(255,255,255,.10);
+    --glass:saturate(150%) blur(18px);
+    --divider:rgba(197,160,89,.20);
+    --dot-idle:rgba(197,160,89,.26); --dot-on:#c5a059;
+    --pattern:rgba(197,160,89,.05);
+  }
+  /* light */
+  [data-theme="light"]{
+    --bg:#fbf7ee; --bg-2:#f4ecd9;
+    --text:#2c271f; --text-muted:rgba(44,39,31,.46);
+    --meta:#8a6420;
+    --shadow-verse:0 0 16px rgba(138,100,32,.10);
+    --chrome-bg:rgba(251,247,238,.7); --chrome-border:rgba(44,39,31,.10);
+    --chrome-strong:rgba(44,39,31,.14);
+    --glass:saturate(150%) blur(18px);
+    --divider:rgba(44,39,31,.14);
+    --dot-idle:rgba(138,100,32,.3); --dot-on:#8a6420;
+    --pattern:rgba(138,100,32,.06);
+  }
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%;overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--text);
+    font-family:'Cormorant Garamond',Georgia,serif;transition:background .45s ease,color .45s ease}
+
+  /* =========================================================================
+     STAGE & FEED  (the swipeable vertical pager)
+     ========================================================================= */
+  #stage{position:fixed;inset:0;overflow:hidden;touch-action:none}  /* touch-action:none = we own vertical gestures */
+  #feed{display:flex;flex-direction:column;width:100%;will-change:transform;transform:translate3d(0,0,0)}
+
+  .panel{position:relative;width:100vw;height:100dvh;flex:0 0 auto;overflow:hidden}
+
+  /* ---- ambient background layers (per style) ---- */
+  .bg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .bg-pattern{position:absolute;inset:-10%;opacity:.05;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><g fill='none' stroke='%23c5a059' stroke-width='1'><rect x='34' y='34' width='52' height='52'/><rect x='34' y='34' width='52' height='52' transform='rotate(45 60 60)'/></g></svg>");
+    background-size:120px 120px;
+    -webkit-mask-image:radial-gradient(ellipse at center,#000,transparent 82%);mask-image:radial-gradient(ellipse at center,#000,transparent 82%)}
+  /* aurora orbs */
+  .orb{position:absolute;border-radius:50%;filter:blur(80px);will-change:transform,opacity;opacity:0;transition:opacity .5s ease}
+  .orb.gold{width:60vw;height:60vw;background:rgba(197,160,89,.10);top:26%;left:50%;transform:translate(-50%,-50%)}
+  .orb.lapis{width:42vw;height:42vw;background:rgba(74,124,201,.06);top:60%;left:58%;transform:translate(-50%,-50%)}
+  /* parchment (ink) */
+  .parchment{position:absolute;inset:0;opacity:0;transition:opacity .5s ease;
+    background:radial-gradient(ellipse at 50% 36%,rgba(206,170,98,.10),transparent 60%)}
+  .grain{position:absolute;inset:0;opacity:0;mix-blend-mode:multiply;transition:opacity .5s ease;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>")}
+  /* editorial grid (kinetic) */
+  .grid{position:absolute;inset:-8%;opacity:0;transition:opacity .5s ease;
+    background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+    background-size:62px 62px;-webkit-mask-image:radial-gradient(ellipse at center,#000 35%,transparent 80%);mask-image:radial-gradient(ellipse at center,#000 35%,transparent 80%)}
+  [data-theme="light"] .grid{background-image:linear-gradient(rgba(0,0,0,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,.05) 1px,transparent 1px)}
+
+  /* show the right ambient set for the active style */
+  [data-style="aurora"] .orb{opacity:1}
+  [data-style="ink"] .parchment,[data-style="ink"] .grain{opacity:1}
+  [data-style="ink"] .grain{opacity:.22}
+  [data-style="kinetic"] .grid{opacity:.6}
+
+  /* =========================================================================
+     READING COLUMN
+     ========================================================================= */
+  .reading{position:relative;z-index:1;height:100%;overflow:hidden}
+  /* teleprompter document — JS translates it so the active stanza stays centred */
+  .doc{position:absolute;top:0;left:0;right:0;
+    padding:0 calc(var(--rail-w) + 6px) 0 18px;
+    display:flex;flex-direction:column;align-items:center;text-align:center;will-change:transform}
+
+  .meta{margin-bottom:clamp(1.1rem,3.2vh,2rem);max-width:min(680px,92vw)}
+  .meta-title{font-family:'Reem Kufi','Amiri',sans-serif;font-weight:600;
+    font-size:clamp(1.2rem,5vw,1.7rem);color:var(--gold-bright);direction:rtl;letter-spacing:.01em}
+  .meta-poet{font-family:'Cormorant Garamond',serif;font-style:italic;
+    font-size:clamp(.85rem,3.4vw,1.05rem);color:var(--meta);direction:rtl;margin-top:.3rem}
+  .meta-rule{width:54px;height:1px;margin:.6rem auto 0;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6}
+
+  .stanzas{width:100%;max-width:min(680px,92vw);display:flex;flex-direction:column;
+    align-items:center;gap:clamp(.8rem,2.2vh,1.3rem)}
+
+  .stanza{width:100%;opacity:0;text-align:center}
+  .stanza.on{opacity:1}
+  .stanza.dim{opacity:.3;pointer-events:none;transition:opacity .55s ease,filter .55s ease,transform .55s ease}
+  [data-style="ink"] .stanza.dim{filter:sepia(.45) brightness(.9);opacity:.4}
+  [data-style="kinetic"] .stanza.dim{transform:scale(.965);transform-origin:right center;opacity:.26}
+
+  .line{position:relative;margin-bottom:clamp(.45rem,1.2vh,.7rem)}
+  .mask{display:block;overflow:hidden;padding:.04em 0}
+  .ar{display:block;font-family:'Amiri',serif;direction:rtl;color:var(--text);
+    font-size:calc(clamp(1.25rem,4.6vw,2rem) * var(--scale,1));line-height:1.95;text-shadow:var(--shadow-verse)}
+  .rule{display:block;height:1px;width:min(220px,58%);margin:.3rem auto .2rem;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);transform:scaleX(0);opacity:0}
+  .en{display:block;font-family:'Cormorant Garamond',serif;font-style:italic;direction:ltr;color:var(--text-muted);
+    font-size:calc(clamp(.74rem,3.1vw,1rem) * var(--scale,1));line-height:1.45;margin-top:.05em}
+
+  [data-style="kinetic"] .stanza{position:relative;text-align:right;padding-right:clamp(16px,5vw,30px)}
+  [data-style="kinetic"] .line{text-align:right}
+  [data-style="kinetic"] .rule{margin-right:0;margin-left:auto}
+  .kbar{position:absolute;top:.1em;right:0;width:3px;height:calc(100% - .2em);background:var(--gold-foil);
+    transform:scaleY(0);transform-origin:top;border-radius:2px;opacity:0}
+  .knum{position:absolute;top:-.7em;right:14px;font-family:'Reem Kufi',sans-serif;font-weight:600;line-height:1;
+    font-size:clamp(1.6rem,7vw,2.6rem);color:var(--gold);opacity:0;pointer-events:none}
+  [data-style="kinetic"] .kbar,[data-style="kinetic"] .knum{display:block}
+  .kbar,.knum{display:none}
+
+  /* =========================================================================
+     APP CHROME
+     ========================================================================= */
+  .chrome{position:fixed;z-index:30;backdrop-filter:var(--glass);-webkit-backdrop-filter:var(--glass)}
+
+  /* top bar */
+  #topbar{top:0;left:0;right:0;height:calc(var(--safe-top) + var(--topbar-h));
+    padding:var(--safe-top) 14px 0;display:flex;align-items:center;justify-content:space-between;
+    background:linear-gradient(180deg,var(--chrome-bg),transparent);border:0}
+  .wordmark{display:flex;align-items:baseline;gap:.4rem;direction:ltr}
+  .wordmark .en{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.15rem;color:var(--gold-bright)}
+  .wordmark .ar{font-family:'Reem Kufi',sans-serif;direction:rtl;font-size:1rem;color:var(--gold)}
+  .top-actions{display:flex;align-items:center;gap:8px;direction:ltr}
+  .icon-btn{width:40px;height:40px;min-width:40px;border-radius:12px;border:1px solid var(--chrome-border);
+    background:var(--chrome-bg);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;
+    transition:background .2s,border-color .2s,transform .15s}
+  .icon-btn:hover{background:var(--chrome-strong)}
+  .icon-btn:active{transform:scale(.92)}
+  .icon-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .icon-btn svg{width:18px;height:18px;stroke:var(--gold);fill:none;stroke-width:1.7}
+  .pill{height:40px;padding:0 12px;border-radius:999px;border:1px solid var(--chrome-border);background:var(--chrome-bg);
+    color:var(--text);font-family:'Cormorant Garamond',serif;font-size:.85rem;display:flex;align-items:center;gap:.4rem;cursor:pointer;direction:ltr}
+  .pill:active{transform:scale(.96)}
+  .pill svg{width:15px;height:15px;stroke:var(--gold);fill:none;stroke-width:1.7}
+
+  /* style switcher (under top bar, centered) */
+  #switcher{position:fixed;z-index:31;top:calc(var(--safe-top) + var(--topbar-h) + 8px);left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;gap:.5rem;padding:6px 8px;border-radius:999px;
+    background:var(--chrome-bg);border:1px solid var(--chrome-border);backdrop-filter:var(--glass);-webkit-backdrop-filter:var(--glass);direction:ltr}
+  #switcher .seg{font-family:'Cormorant Garamond',serif;font-size:.78rem;color:var(--text-muted);
+    padding:4px 10px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:color .2s,background .2s}
+  #switcher .seg.active{color:#1a1408;background:var(--gold);font-weight:600}
+
+  /* right action rail (VerticalSidebar mock) */
+  #rail{top:50%;right:6px;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;
+    padding:8px 5px;border-radius:18px;background:var(--chrome-bg);border:1px solid var(--chrome-border);direction:ltr}
+  #rail .icon-btn{width:42px;height:42px;border:0;background:transparent}
+  #rail .icon-btn:hover{background:var(--chrome-strong)}
+  #rail .icon-btn.saved svg{fill:var(--gold)}
+
+  /* bottom nav */
+  #bottomnav{bottom:0;left:0;right:0;height:calc(var(--safe-bottom) + var(--bottomnav-h));
+    padding:0 6px var(--safe-bottom);display:flex;align-items:center;justify-content:space-around;
+    background:linear-gradient(0deg,var(--chrome-bg),transparent);border-top:1px solid var(--chrome-border)}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--text-muted);
+    background:none;border:0;font-family:'Cormorant Garamond',serif;font-size:.62rem;letter-spacing:.04em;padding:6px 0;transition:color .2s}
+  .nav-item svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7}
+  .nav-item.active{color:var(--gold)}
+  .nav-item.center{flex:0 0 auto}
+  .nav-listen{width:54px;height:54px;border-radius:50%;background:var(--gold-foil);display:flex;align-items:center;justify-content:center;
+    margin-top:-18px;box-shadow:0 6px 20px rgba(197,160,89,.4);border:3px solid var(--bg)}
+  .nav-listen svg{width:22px;height:22px;stroke:#1a1408;fill:#1a1408;stroke-width:1.4}
+  .nav-listen.playing{animation:listenPulse 1.6s ease-in-out infinite}
+  @keyframes listenPulse{0%,100%{box-shadow:0 6px 20px rgba(197,160,89,.4)}50%{box-shadow:0 6px 34px rgba(197,160,89,.75)}}
+
+  /* misbaha progress dots (above bottom nav) */
+  #dots{position:fixed;z-index:29;left:50%;transform:translateX(-50%);
+    bottom:calc(var(--safe-bottom) + var(--bottomnav-h) + 14px);display:flex;gap:7px;align-items:center;opacity:0;transition:opacity .35s ease}
+  #dots.show{opacity:1}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--dot-idle);transition:transform .3s ease,background .3s ease}
+  .dot.now{background:var(--dot-on);transform:scale(1.5)}
+  .dot.was{background:var(--dot-on);opacity:.5}
+
+  /* hints */
+  .hint{position:fixed;z-index:29;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.4rem;
+    pointer-events:none;opacity:0;transition:opacity .4s ease;color:var(--meta);font-style:italic;font-family:'Cormorant Garamond',serif;font-size:.82rem;direction:ltr}
+  .hint.show{opacity:1}
+  #tapHint{bottom:calc(var(--safe-bottom) + var(--bottomnav-h) + 48px)}
+  #tapHint .ring{width:34px;height:34px;border:1.5px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;animation:ring 2.1s ease infinite}
+  #tapHint svg{width:14px;height:14px;fill:var(--gold)}
+  @keyframes ring{0%,100%{box-shadow:0 0 0 0 rgba(197,160,89,.35)}50%{box-shadow:0 0 0 9px rgba(197,160,89,0)}}
+  #swipeHint{bottom:calc(var(--safe-bottom) + var(--bottomnav-h) + 48px)}
+  #swipeHint .arr{animation:floatUp 1.7s ease-in-out infinite}
+  #swipeHint svg{width:22px;height:22px;stroke:var(--gold);fill:none;stroke-width:1.8}
+  @keyframes floatUp{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+
+  /* vignette */
+  #vig{position:fixed;inset:0;z-index:20;pointer-events:none;background:radial-gradient(ellipse at center,transparent 58%,rgba(0,0,0,.4) 100%)}
+  [data-theme="light"] #vig{background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.06) 100%)}
+
+  /* reduced motion */
+  @media (prefers-reduced-motion:reduce){
+    .orb,#tapHint .ring,#swipeHint .arr,.nav-listen.playing{animation:none!important}
+    .stanza{transition:opacity .25s ease!important}
+  }
+  </style>
+</head>
+<body>
+
+<div id="vig" aria-hidden="true"></div>
+
+<!-- ===== STAGE / FEED ===== -->
+<div id="stage" role="main" aria-label="Poetry reader">
+  <div id="feed"></div>
+</div>
+
+<!-- ===== TOP BAR ===== -->
+<header id="topbar" class="chrome">
+  <div class="wordmark"><span class="en">poetry</span><span class="ar">بالعربي</span></div>
+  <div class="top-actions">
+    <button class="pill" id="sizeBtn" aria-label="Text size">
+      <svg viewBox="0 0 24 24"><path d="M4 7V5h16v2M9 19h6M12 5v14"/></svg><span id="sizeLbl">M</span>
+    </button>
+    <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">
+      <svg id="themeIco" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ===== STYLE SWITCHER ===== -->
+<div id="switcher" role="tablist" aria-label="Motion style">
+  <span class="seg active" data-style="aurora" role="tab">Aurora</span>
+  <span class="seg" data-style="ink" role="tab">Ink &amp; Light</span>
+  <span class="seg" data-style="kinetic" role="tab">Kinetic</span>
+</div>
+
+<!-- ===== RIGHT ACTION RAIL ===== -->
+<nav id="rail" class="chrome" aria-label="Poem actions">
+  <button class="icon-btn save" id="saveBtn" aria-label="Save poem"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
+  <button class="icon-btn" aria-label="Share"><svg viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg></button>
+  <button class="icon-btn" aria-label="Copy"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 012-2h10"/></svg></button>
+  <button class="icon-btn" aria-label="Flag"><svg viewBox="0 0 24 24"><path d="M4 21V4h13l-2 4 2 4H4"/></svg></button>
+  <button class="icon-btn" aria-label="Account"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg></button>
+</nav>
+
+<!-- ===== BOTTOM NAV ===== -->
+<nav id="bottomnav" class="chrome" aria-label="Main navigation">
+  <button class="nav-item active" aria-label="Read"><svg viewBox="0 0 24 24"><path d="M3 5h7a2 2 0 012 2v12a3 3 0 00-3-3H3zM21 5h-7a2 2 0 00-2 2v12a3 3 0 013-3h6z"/></svg>Read</button>
+  <button class="nav-item" aria-label="Discover"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Discover</button>
+  <button class="nav-item center" aria-label="Listen" id="listenBtn"><span class="nav-listen" id="listenCircle"><svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></span></button>
+  <button class="nav-item" aria-label="Khazana (saved)"><svg viewBox="0 0 24 24"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"/></svg>Khazana</button>
+  <button class="nav-item" aria-label="You"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>You</button>
+</nav>
+
+<!-- ===== PROGRESS + HINTS ===== -->
+<div id="dots" role="progressbar" aria-label="Stanza progress"></div>
+<div id="tapHint" class="hint show"><span>tap to reveal</span><span class="ring"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12l7 7 7-7"/></svg></span></div>
+<div id="swipeHint" class="hint"><span class="arr"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></span><span>swipe up · next poem</span></div>
+
+<script>
+/* =========================================================================
+   Poem Reader — Integrated Mock
+   Full app chrome + finger-following vertical pager + tap-to-bloom stanzas,
+   with a live Aurora / Ink / Kinetic style switcher.
+   ========================================================================= */
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let splitOK = false;
+try{ if(typeof SplitText!=='undefined'){ gsap.registerPlugin(SplitText); splitOK=true; } }catch(e){}
+
+/* ---- POEMS (real seed data + literary translations) ---- */
+const POEMS=[
+ {title:'زوال ملك الدنيا', poet:'أبو إسحاق الإلبيري', lines:[
+   {ar:'أَيْنَ المُلُوكُ وَأَيْنَ مَا جَمَعُوا وَمَا', en:'Where are the kings? Where is all they amassed,'},
+   {ar:'ذَخَرُوهُ مِنْ ذَهَبِ الْمَتَاعِ الذَّاهِبِ', en:'the gold they hoarded — wealth that fades and passes?'},
+   {ar:'وَمِنَ السَّوَابِغِ وَالصَّوَارِمِ وَالقَنَا', en:'Where are the coats of mail, the swords, the lances,'},
+   {ar:'وَمِنَ الصَّواهِلِ بُدْنٌ وَشَوَازِبُ', en:'the neighing steeds, the sleek and the well-fed?'},
+   {ar:'كَانَتْ سَوَابِقُهَا تَحْمِلُ مِنْهُمْ', en:'Their racing chargers used to carry forth'},
+   {ar:'أَقْمَارُ أَنْدِيَةٍ وَأُسْدُ كَتَائِبٍ', en:'moons of the council, lions of the ranks.'},
+   {ar:'كَانُوا لُيُوثًا خَفِيَّةً لَكِنَّهُمْ', en:'They were hidden lions — and even so'},
+   {ar:'سَكَنُوا غِيَاضَ أَسِنَّةٍ وَقَوَاضِبِ', en:'they made their dens in thickets of spears and blades.'},
+   {ar:'قَصَفَتْهُمْ رِيحُ الرَّدَى وَرَمَتْهُمْ', en:'The wind of doom snapped them; they were struck down'},
+   {ar:'كَفُّ الْمَنُونِ بِكُلِّ سَهْمٍ صَائِبٍ', en:'by the hand of fate with every unerring arrow.'},
+ ]},
+ {title:'جدول ونسيم', poet:'أبو البقاء الرندي', lines:[
+   {ar:'وَجَدْوَلٍ كُلَّمَا مَرَّ النَّسِيمُ بِهِ', en:'A brook — and whenever the breeze passed over it,'},
+   {ar:'كَسَاهُ دَرْعًا لَهَا حَبَابُهُ حُلَقُ', en:'it clothed it in mail whose bubbles were the rings.'},
+   {ar:'حَتَّى إِذَا انْطَبَعَتْ لَيْلًا بِهِ شُهْبُ', en:'Until, when stars were stamped upon it in the night,'},
+   {ar:'لَمْ تَمْتَرِ الْعَيْنُ فِيهِ أَنَّهُ الأُفْقُ', en:'the eye no longer doubted it had become the sky.'},
+ ]},
+ {title:'فقد ابن مية', poet:'آمنة بنت عتيبة', lines:[
+   {ar:'عَلَى مِثْلِ ابْنِ مَيَّةَ فَانْعِيَاهُ', en:'For one like Ibn Mayya, mourn him well —'},
+   {ar:'تَشُقُّ نَوَاعِمُ البِشْرِ الجُيُوبَا', en:'let tender, joyful women rend their collars.'},
+   {ar:'وَكَانَ أَبِي عُتَيْبَةُ شَمّرِيّاً', en:'My father Utayba was a man who strove,'},
+   {ar:'فَلاَ تَلْقَاهُ يَدَّخِرُ النَّصِيبَا', en:'you never found him hoarding back his share.'},
+   {ar:'ضُرُوبًا لِلْكَمِيِّ إِذَا اشْمَعَلَّتْ', en:'a striker of the armored knight whenever'},
+   {ar:'عَوَانُ الحَرْبِ لا وَرَعًا هُيُوبَا', en:'the grinding war flared up — no timid, fearful soul.'},
+ ]},
+];
+const arNum=n=>{const m='٠١٢٣٤٥٦٧٨٩';let s=String(n).split('').map(d=>m[+d]).join('');return s.length<2?'٠'+s:s;};
+const chunk=(a,n=4)=>{const o=[];for(let i=0;i<a.length;i+=n)o.push(a.slice(i,i+n));return o;};
+
+/* ---- build panels ---- */
+const feed=document.getElementById('feed');
+const panelData=POEMS.map((poem,pi)=>{
+  const stanzas=chunk(poem.lines,4);
+  const panel=document.createElement('section');
+  panel.className='panel';panel.dataset.pi=pi;
+  panel.innerHTML=`
+    <div class="bg" aria-hidden="true">
+      <div class="bg-pattern"></div>
+      <div class="orb gold"></div><div class="orb lapis"></div>
+      <div class="parchment"></div><div class="grain"></div>
+      <div class="grid"></div>
+    </div>
+    <div class="reading">
+      <div class="doc">
+        <div class="meta">
+          <div class="meta-title" lang="ar">${poem.title}</div>
+          <div class="meta-poet" lang="ar">${poem.poet}</div>
+          <div class="meta-rule"></div>
+        </div>
+        <div class="stanzas"></div>
+      </div>
+    </div>`;
+  const sc=panel.querySelector('.stanzas');
+  stanzas.forEach((lines,si)=>{
+    const st=document.createElement('div');st.className='stanza';st.dataset.si=si;
+    st.innerHTML=`<span class="kbar"></span><span class="knum">${arNum(si+1)}</span>`;
+    lines.forEach(({ar,en})=>{
+      const ln=document.createElement('div');ln.className='line';
+      ln.innerHTML=`<span class="mask"><span class="ar" lang="ar" dir="rtl">${ar}</span></span>
+                    <i class="rule"></i><span class="en" lang="en" dir="ltr">${en}</span>`;
+      st.appendChild(ln);
+    });
+    sc.appendChild(st);
+  });
+  feed.appendChild(panel);
+  return {panel,stanzas,revealed:0,total:stanzas.length,
+    reading:panel.querySelector('.reading'),doc:panel.querySelector('.doc'),meta:panel.querySelector('.meta')};
+});
+
+/* ---- state ---- */
+let cur=0, panelH=window.innerHeight, feedY=0, animating=false;
+const stage=document.getElementById('stage');
+const dotsEl=document.getElementById('dots');
+const tapHint=document.getElementById('tapHint');
+const swipeHint=document.getElementById('swipeHint');
+
+function setY(y){feedY=y;feed.style.transform=`translate3d(0,${-y}px,0)`;}
+/* Teleprompter: translate a poem's .doc so the active stanza (or meta) sits in the visible centre */
+function focus(pd,idx,animate=true){
+  if(!pd||!pd.doc)return;
+  const sw=document.getElementById('switcher').getBoundingClientRect();
+  const bn=document.getElementById('bottomnav').getBoundingClientRect();
+  const visCenter=((sw.bottom+14)+(bn.top-14))/2;
+  const el=idx<0?pd.meta:pd.panel.querySelectorAll('.stanza')[idx];
+  if(!el)return;
+  const r=el.getBoundingClientRect();
+  const cy=gsap.getProperty(pd.doc,'y')||0;
+  gsap.to(pd.doc,{y:cy+(visCenter-(r.top+r.height/2)),duration:(animate&&!reduce)?.6:0,ease:'power3.out',overwrite:true});
+}
+function focusCurrent(animate){const pd=panelData[cur];focus(pd,pd.revealed>0?pd.revealed-1:-1,animate);}
+function measure(){panelH=stage.clientHeight;document.querySelectorAll('.panel').forEach(p=>p.style.height=panelH+'px');setY(cur*panelH);focusCurrent(false);}
+window.addEventListener('resize',measure);
+if(window.visualViewport)visualViewport.addEventListener('resize',measure);
+
+/* =========================================================================
+   THEME / SIZE / STYLE
+   ========================================================================= */
+let dark=true;
+document.getElementById('themeBtn').addEventListener('click',e=>{e.stopPropagation();dark=!dark;
+  document.documentElement.dataset.theme=dark?'dark':'light';
+  document.getElementById('themeIco').innerHTML=dark
+    ?'<circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M2 12h2M20 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>'
+    :'<path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/>';});
+
+const SIZES=[['S',.9],['M',1],['L',1.15],['XL',1.32]];let sz=1;
+document.getElementById('sizeBtn').addEventListener('click',e=>{e.stopPropagation();sz=(sz+1)%SIZES.length;
+  document.documentElement.style.setProperty('--scale',SIZES[sz][1]);document.getElementById('sizeLbl').textContent=SIZES[sz][0];});
+
+let style='aurora';
+document.querySelectorAll('#switcher .seg').forEach(seg=>{
+  seg.addEventListener('click',e=>{e.stopPropagation();
+    style=seg.dataset.style;
+    document.documentElement.dataset.style=style;
+    document.querySelectorAll('#switcher .seg').forEach(s=>s.classList.toggle('active',s===seg));
+    resetPanel(panelData[cur]);
+    requestAnimationFrame(()=>tapReveal());  /* immediately show the first stanza in the new style */
+  });
+});
+
+/* =========================================================================
+   REVEAL ENGINES (one per style)
+   ========================================================================= */
+function clearAnims(st){gsap.killTweensOf(st.querySelectorAll('*'));}
+
+function revealReduced(st){gsap.set(st,{opacity:1});gsap.fromTo(st,{opacity:0},{opacity:1,duration:.4});}
+
+function revealAurora(st){
+  gsap.set(st,{opacity:1});
+  st.querySelectorAll('.line').forEach((ln,i)=>{
+    const ar=ln.querySelector('.ar'),en=ln.querySelector('.en');
+    let done=false;
+    if(splitOK){try{const sp=new SplitText(ar,{type:'words'});
+      gsap.fromTo(sp.words,{opacity:0,y:16,filter:'blur(12px)'},
+        {opacity:1,y:0,filter:'blur(0px)',duration:.75,ease:'expo.out',stagger:{each:.042,from:'end'},delay:i*.13});done=true;}catch(e){}}
+    if(!done)gsap.fromTo(ar,{opacity:0,y:14,filter:'blur(8px)'},{opacity:1,y:0,filter:'blur(0px)',duration:.7,ease:'expo.out',delay:i*.12});
+    gsap.fromTo(en,{opacity:0,y:8},{opacity:1,y:0,duration:.55,ease:'power2.out',delay:i*.13+.22});
+  });
+}
+function revealInk(st){
+  gsap.set(st,{opacity:1});
+  st.querySelectorAll('.line').forEach((ln,i)=>{
+    const ar=ln.querySelector('.ar'),rule=ln.querySelector('.rule'),en=ln.querySelector('.en'),at=i*.18;
+    gsap.fromTo(ar,{clipPath:'inset(0 0 0 100%)',WebkitClipPath:'inset(0 0 0 100%)',filter:'blur(7px)',opacity:.15},
+      {clipPath:'inset(0 0 0 0%)',WebkitClipPath:'inset(0 0 0 0%)',filter:'blur(0px)',opacity:1,duration:.95,ease:'power3.out',delay:at});
+    gsap.fromTo(rule,{scaleX:0,opacity:0},{scaleX:1,opacity:.85,duration:.8,ease:'power2.out',delay:at+.15});
+    gsap.fromTo(en,{opacity:0,y:7},{opacity:1,y:0,duration:.6,ease:'power2.out',delay:at+.38});
+  });
+}
+function revealKinetic(st){
+  gsap.set(st,{opacity:1});
+  const bar=st.querySelector('.kbar'),num=st.querySelector('.knum');
+  gsap.fromTo(bar,{scaleY:0},{scaleY:1,duration:.6,ease:'expo.out'});
+  gsap.fromTo(num,{opacity:0,x:14},{opacity:.92,x:0,duration:.6,ease:'expo.out',delay:.05});
+  st.querySelectorAll('.line').forEach((ln,i)=>{
+    const ar=ln.querySelector('.ar'),en=ln.querySelector('.en');
+    let done=false;
+    if(i===0&&splitOK){try{const sp=new SplitText(ar,{type:'chars'});
+      gsap.fromTo(sp.chars,{yPercent:115,opacity:0},{yPercent:0,opacity:1,duration:.8,ease:'expo.out',stagger:{each:.018,from:'end'}});
+      gsap.fromTo(ar,{scale:1.06},{scale:1,duration:.8,ease:'expo.out'});done=true;}catch(e){}}
+    if(!done)gsap.fromTo(ar,{yPercent:110,opacity:0,scale:1.05},{yPercent:0,opacity:1,scale:1,duration:.7,ease:'expo.out',delay:i*.1});
+    gsap.fromTo(en,{opacity:0,y:10},{opacity:1,y:0,duration:.55,ease:'power2.out',delay:i*.1+.25});
+  });
+}
+const ENGINES={aurora:revealAurora,ink:revealInk,kinetic:revealKinetic};
+
+function revealStanza(pd,idx){
+  const st=pd.panel.querySelectorAll('.stanza')[idx];if(!st)return;
+  pd.panel.querySelectorAll('.stanza.on').forEach(s=>s.classList.add('dim'));
+  st.classList.remove('dim');st.classList.add('on');
+  (reduce?revealReduced:ENGINES[style])(st);
+  focus(pd,idx);
+}
+function resetPanel(pd){
+  pd.revealed=0;
+  pd.panel.querySelectorAll('.stanza').forEach(s=>{clearAnims(s);s.classList.remove('on','dim');gsap.set(s,{clearProps:'all'});gsap.set(s,{opacity:0});
+    s.querySelectorAll('.ar,.en,.rule,.kbar,.knum').forEach(el=>gsap.set(el,{clearProps:'all'}));});
+  updateUI(pd);
+  focus(pd,-1,false);
+}
+
+/* =========================================================================
+   UI (dots + hints)
+   ========================================================================= */
+function updateUI(pd){
+  dotsEl.innerHTML='';
+  if(pd.total>1){for(let i=0;i<pd.total;i++){const d=document.createElement('span');d.className='dot'+(i<pd.revealed-1?' was':i===pd.revealed-1?' now':'');dotsEl.appendChild(d);}}
+  dotsEl.classList.toggle('show',pd.revealed>0&&pd.total>1);
+  tapHint.classList.toggle('show',pd.revealed===0);
+  swipeHint.classList.toggle('show',pd.revealed>=pd.total&&cur<POEMS.length-1);
+}
+
+function tapReveal(){
+  const pd=panelData[cur];
+  if(pd.revealed<pd.total){revealStanza(pd,pd.revealed);pd.revealed++;updateUI(pd);}
+  else if(cur<POEMS.length-1){go(cur+1);}
+}
+
+/* Listen (mock): reveal whole poem + pulse — mirrors TTS reconciliation */
+const listenCircle=document.getElementById('listenCircle');let playing=false;
+document.getElementById('listenBtn').addEventListener('click',e=>{e.stopPropagation();
+  playing=!playing;listenCircle.classList.toggle('playing',playing);
+  if(playing){const pd=panelData[cur];while(pd.revealed<pd.total){revealStanza(pd,pd.revealed);pd.revealed++;}updateUI(pd);}});
+
+document.getElementById('saveBtn').addEventListener('click',e=>{e.stopPropagation();e.currentTarget.classList.toggle('saved');});
+
+/* =========================================================================
+   NAVIGATION (snap between poems)
+   ========================================================================= */
+function go(idx){
+  if(idx<0||idx>=POEMS.length||animating){if(idx<0||idx>=POEMS.length)snapBack();return;}
+  animating=true;
+  const from=cur;cur=idx;
+  const dir=idx>from?1:-1;
+  const target=idx*panelH;
+  gsap.to({y:feedY},{y:target,duration:reduce?.01:.55,ease:'power3.out',
+    onUpdate:function(){setY(this.targets()[0].y);},
+    onComplete:()=>{animating=false;
+      /* parallax settle for kinetic incoming bg */
+      if(style==='kinetic'&&!reduce){const bg=panelData[cur].panel.querySelector('.bg');gsap.fromTo(bg,{y:dir*30},{y:0,duration:.6,ease:'power3.out'});}
+      updateUI(panelData[cur]);focusCurrent(false);}});
+}
+function snapBack(){gsap.to({y:feedY},{y:cur*panelH,duration:.4,ease:'power3.out',onUpdate:function(){setY(this.targets()[0].y);}});}
+
+/* =========================================================================
+   GESTURE ENGINE — finger-following drag + velocity snap + tap
+   ========================================================================= */
+let pid=null,startY=0,startX=0,baseY=0,startT=0,axis=null,onControl=false,lastY=0,lastT=0,vel=0;
+function isControl(t){return t.closest('#topbar,#switcher,#rail,#bottomnav,.icon-btn,.pill,.seg,.nav-item');}
+
+stage.addEventListener('pointerdown',e=>{
+  if(animating)return;
+  onControl=!!isControl(e.target);if(onControl)return;
+  pid=e.pointerId;startY=lastY=e.clientY;startX=e.clientX;baseY=feedY;startT=lastT=performance.now();axis=null;vel=0;
+  try{stage.setPointerCapture(pid);}catch(_){}
+},{passive:true});
+
+stage.addEventListener('pointermove',e=>{
+  if(pid===null||e.pointerId!==pid)return;
+  const dy=e.clientY-startY,dx=e.clientX-startX;
+  if(axis===null){ if(Math.abs(dy)>6||Math.abs(dx)>6) axis=Math.abs(dy)>=Math.abs(dx)?'y':'x'; }
+  if(axis!=='y')return;
+  if(e.cancelable)e.preventDefault();
+  const now=performance.now();vel=(e.clientY-lastY)/Math.max(1,now-lastT);lastY=e.clientY;lastT=now;
+  let y=baseY-dy;
+  const max=(POEMS.length-1)*panelH;
+  if(y<0)y=y*0.35; else if(y>max)y=max+(y-max)*0.35;   /* rubber-band at ends */
+  setY(y);
+},{passive:false});
+
+function endDrag(e){
+  if(pid===null||(e&&e.pointerId!==pid))return;
+  try{stage.releasePointerCapture(pid);}catch(_){}
+  const dy=(e?e.clientY:lastY)-startY, dt=performance.now()-startT, dist=Math.hypot((e?e.clientX:startX)-startX,dy);
+  pid=null;
+  if(axis!=='y'){ if(dist<10&&dt<350&&!onControl)tapReveal(); return; }
+  /* decide snap: distance threshold OR flick velocity */
+  const flick=Math.abs(vel)>0.5;
+  if((dy<-panelH*0.2||(flick&&vel<0))) go(cur+1);
+  else if((dy>panelH*0.2||(flick&&vel>0))) go(cur-1);
+  else { if(dist<10&&dt<350)tapReveal(); else snapBack(); }
+  axis=null;
+}
+stage.addEventListener('pointerup',endDrag,{passive:false});
+stage.addEventListener('pointercancel',endDrag,{passive:true});
+
+/* keyboard + wheel */
+addEventListener('keydown',e=>{
+  if(e.key===' '||e.key==='Enter'){e.preventDefault();tapReveal();}
+  else if(e.key==='ArrowDown'||e.key==='PageDown'){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowUp'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+});
+let wlock=false;
+stage.addEventListener('wheel',e=>{e.preventDefault();if(wlock||animating)return;wlock=true;setTimeout(()=>wlock=false,650);
+  if(e.deltaY>18)go(cur+1);else if(e.deltaY<-18)go(cur-1);},{passive:false});
+
+/* =========================================================================
+   AURORA BREATHING (only for aurora style)
+   ========================================================================= */
+if(!reduce){panelData.forEach((pd,i)=>{
+  const g=pd.panel.querySelector('.orb.gold'),l=pd.panel.querySelector('.orb.lapis');
+  gsap.to(g,{scale:1.18,duration:7+i*.4,yoyo:true,repeat:-1,ease:'sine.inOut',delay:i*.6});
+  gsap.to(l,{scale:1.25,x:'8%',duration:9+i*.3,yoyo:true,repeat:-1,ease:'sine.inOut',delay:i*.4+1.2});
+});}
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+function init(){measure();updateUI(panelData[0]);}
+init();
+addEventListener('load',measure);
+</script>
+</body>
+</html>

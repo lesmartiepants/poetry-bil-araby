@@ -19,7 +19,6 @@ import { DESIGN, POEM_META } from '../../constants/index.js';
  *   showTransliteration {boolean}
  *   textScale     {number}           — multiplier from TEXT_SIZES
  *   currentFontClass {string}        — CSS class for Arabic font
- *   stanzaNumber  {number}           — 0-based index (used for stagger offset)
  *   data-testid   {string}           — forwarded to outer div
  */
 const StanzaReveal = memo(function StanzaReveal({
@@ -30,7 +29,6 @@ const StanzaReveal = memo(function StanzaReveal({
   showTransliteration = false,
   textScale = 1,
   currentFontClass = 'font-amiri',
-  stanzaNumber: _stanzaNumber,
   'data-testid': testId,
 }) {
   const { containerRef } = useSplitTextReveal(active, {

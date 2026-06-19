@@ -141,6 +141,8 @@ const PoemFeed = forwardRef(function PoemFeed(
       <div
         ref={emblaRef}
         className="overflow-hidden w-full"
+        role="region"
+        aria-label="Poem feed"
         style={{ touchAction: 'pan-y' }}
       >
         <div

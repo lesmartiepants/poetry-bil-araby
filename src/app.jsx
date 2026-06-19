@@ -1607,107 +1607,174 @@ export default function DiwanApp() {
                 </div>
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
-                  {carouselPoems.length > 0 &&
-                    (() => {
-                      // Shared slide-change handler used by both PoemCarousel and PoemFeed
-                      const handleSlideChange = (idx, direction) => {
-                        setCarouselIndex(idx);
-                        // Stop audio and reset TTS state when navigating poems
-                        const { player: activePlayer, resetAudio } = useAudioStore.getState();
-                        // Stop unconditionally. Streaming and iOS HTMLAudio players have no
-                        // `.state` property, so the old `state === 'started'` gate skipped
-                        // stop() for them and the audio kept playing in the background after a swipe.
-                        if (activePlayer) {
-                          try {
-                            activePlayer.stop();
-                          } catch {
-                            /* already stopped */
-                          }
-                        }
-                        if (audioUrl) URL.revokeObjectURL(audioUrl);
-                        abortPlay();
-                        resetAudio();
-                        isTogglingPlay.current = false;
-                        pauseOffset.value = 0;
-                        playbackStartTime.value = 0;
-                        document
-                          .querySelectorAll('.tts-active, .tts-past')
-                          .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
-                        dismissTTSProgress();
-                        cancelAnalysis();
-                        setInterpretation(null);
-                        // If an analysis was in-flight and got cancelled, un-mark it so
-                        // swiping back to that poem will re-trigger its translation.
-                        if (
-                          carouselExplainTargetId.current &&
-                          usePoemStore.getState().isInterpreting
-                        ) {
-                          explainedPoemIds.current.delete(carouselExplainTargetId.current);
-                        }
-                        carouselExplainTargetId.current = null;
-                        setShowTranslation(true);
-                        const newPoem = usePoemStore.getState().carouselPoems[idx];
-                        if (FEATURES.logging && newPoem) {
-                          const fromPoem = carouselPoems[carouselIndex];
-                          addLog(
-                            'Carousel',
-                            `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
-                            'user'
-                          );
-                        }
-                        if (newPoem?.id) {
-                          navigate('/poem/' + newPoem.id + window.location.search, {
-                            replace: true,
-                          });
-                          updateOGMetaTags(newPoem);
-                        }
-                        if (newPoem && !newPoem.english) {
-                          // Always (re-)queue translation for poems without one — this handles
-                          // the case where a previous analysis was cancelled mid-stream, leaving
-                          // the poem with no translation and its ID stuck in explainedPoemIds.
-                          explainedPoemIds.current.delete(newPoem.id);
-                          setAutoExplainPending(true);
-                        }
-                      };
-
-                      const handleLoadMore = () => {
-                        if (!current?.poetArabic) return;
-                        const existingIds = carouselPoems.map((p) => p.id);
-                        fetchPoemsByPoet(current.poetArabic, 3, existingIds)
-                          .then((newPoems) => {
-                            newPoems.forEach((p) => addCarouselPoem(p));
-                          })
-                          .catch((err) => {
-                            if (FEATURES.logging)
-                              addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
-                          });
-                      };
-
-                      const sharedProps = {
-                        ref: carouselRef,
-                        poems: carouselPoems,
-                        currentIndex: carouselIndex,
-                        onSlideChange: handleSlideChange,
-                        darkMode,
-                        showTranslation,
-                        showTransliteration,
-                        textScale,
-                        currentFontClass,
-                        POEM_META,
-                        DESIGN,
-                        onLoadMore: handleLoadMore,
-                        highlightStyle,
-                        activeVersePairs: versePairs,
-                        wordRefs,
-                        wordOffsets,
-                      };
-
-                      return FEATURES.verticalFeed ? (
-                        <PoemFeed {...sharedProps} />
+                  {carouselPoems.length > 0 && (
+                    <>
+                      {FEATURES.verticalFeed ? (
+                        <PoemFeed
+                          ref={carouselRef}
+                          poems={carouselPoems}
+                          currentIndex={carouselIndex}
+                          onSlideChange={(idx, direction) => {
+                            setCarouselIndex(idx);
+                            const { player: activePlayer, resetAudio } = useAudioStore.getState();
+                            if (activePlayer) {
+                              try { activePlayer.stop(); } catch { /* already stopped */ }
+                            }
+                            if (audioUrl) URL.revokeObjectURL(audioUrl);
+                            abortPlay();
+                            resetAudio();
+                            isTogglingPlay.current = false;
+                            pauseOffset.value = 0;
+                            playbackStartTime.value = 0;
+                            document
+                              .querySelectorAll('.tts-active, .tts-past')
+                              .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
+                            dismissTTSProgress();
+                            cancelAnalysis();
+                            setInterpretation(null);
+                            if (
+                              carouselExplainTargetId.current &&
+                              usePoemStore.getState().isInterpreting
+                            ) {
+                              explainedPoemIds.current.delete(carouselExplainTargetId.current);
+                            }
+                            carouselExplainTargetId.current = null;
+                            setShowTranslation(true);
+                            const newPoem = usePoemStore.getState().carouselPoems[idx];
+                            if (FEATURES.logging && newPoem) {
+                              const fromPoem = carouselPoems[carouselIndex];
+                              addLog(
+                                'Carousel',
+                                `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                                'user'
+                              );
+                            }
+                            if (newPoem?.id) {
+                              navigate('/poem/' + newPoem.id + window.location.search, {
+                                replace: true,
+                              });
+                              updateOGMetaTags(newPoem);
+                            }
+                            if (newPoem && !newPoem.english) {
+                              explainedPoemIds.current.delete(newPoem.id);
+                              setAutoExplainPending(true);
+                            }
+                          }}
+                          darkMode={darkMode}
+                          showTranslation={showTranslation}
+                          showTransliteration={showTransliteration}
+                          textScale={textScale}
+                          currentFontClass={currentFontClass}
+                          POEM_META={POEM_META}
+                          DESIGN={DESIGN}
+                          onLoadMore={() => {
+                            if (!current?.poetArabic) return;
+                            const existingIds = carouselPoems.map((p) => p.id);
+                            fetchPoemsByPoet(current.poetArabic, 3, existingIds)
+                              .then((newPoems) => {
+                                newPoems.forEach((p) => addCarouselPoem(p));
+                              })
+                              .catch((err) => {
+                                if (FEATURES.logging)
+                                  addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
+                              });
+                          }}
+                          highlightStyle={highlightStyle}
+                          activeVersePairs={versePairs}
+                          wordRefs={wordRefs}
+                          wordOffsets={wordOffsets}
+                        />
                       ) : (
-                        <PoemCarousel {...sharedProps} />
-                      );
-                    })()}
+                        <PoemCarousel
+                          ref={carouselRef}
+                          poems={carouselPoems}
+                          currentIndex={carouselIndex}
+                          onSlideChange={(idx, direction) => {
+                            setCarouselIndex(idx);
+                            // Stop audio and reset TTS state when navigating poems
+                            const { player: activePlayer, resetAudio } = useAudioStore.getState();
+                            // Stop unconditionally. Streaming and iOS HTMLAudio players have no
+                            // `.state` property, so the old `state === 'started'` gate skipped
+                            // stop() for them and the audio kept playing in the background after a swipe.
+                            if (activePlayer) {
+                              try {
+                                activePlayer.stop();
+                              } catch {
+                                /* already stopped */
+                              }
+                            }
+                            if (audioUrl) URL.revokeObjectURL(audioUrl);
+                            abortPlay();
+                            resetAudio();
+                            isTogglingPlay.current = false;
+                            pauseOffset.value = 0;
+                            playbackStartTime.value = 0;
+                            document
+                              .querySelectorAll('.tts-active, .tts-past')
+                              .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
+                            dismissTTSProgress();
+                            cancelAnalysis();
+                            setInterpretation(null);
+                            // If an analysis was in-flight and got cancelled, un-mark it so
+                            // swiping back to that poem will re-trigger its translation.
+                            if (
+                              carouselExplainTargetId.current &&
+                              usePoemStore.getState().isInterpreting
+                            ) {
+                              explainedPoemIds.current.delete(carouselExplainTargetId.current);
+                            }
+                            carouselExplainTargetId.current = null;
+                            setShowTranslation(true);
+                            const newPoem = usePoemStore.getState().carouselPoems[idx];
+                            if (FEATURES.logging && newPoem) {
+                              const fromPoem = carouselPoems[carouselIndex];
+                              addLog(
+                                'Carousel',
+                                `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                                'user'
+                              );
+                            }
+                            if (newPoem?.id) {
+                              navigate('/poem/' + newPoem.id + window.location.search, {
+                                replace: true,
+                              });
+                              updateOGMetaTags(newPoem);
+                            }
+                            if (newPoem && !newPoem.english) {
+                              // Always (re-)queue translation for poems without one — this handles
+                              // the case where a previous analysis was cancelled mid-stream, leaving
+                              // the poem with no translation and its ID stuck in explainedPoemIds.
+                              explainedPoemIds.current.delete(newPoem.id);
+                              setAutoExplainPending(true);
+                            }
+                          }}
+                          darkMode={darkMode}
+                          showTranslation={showTranslation}
+                          showTransliteration={showTransliteration}
+                          textScale={textScale}
+                          currentFontClass={currentFontClass}
+                          POEM_META={POEM_META}
+                          DESIGN={DESIGN}
+                          onLoadMore={() => {
+                            if (!current?.poetArabic) return;
+                            const existingIds = carouselPoems.map((p) => p.id);
+                            fetchPoemsByPoet(current.poetArabic, 3, existingIds)
+                              .then((newPoems) => {
+                                newPoems.forEach((p) => addCarouselPoem(p));
+                              })
+                              .catch((err) => {
+                                if (FEATURES.logging)
+                                  addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
+                              });
+                          }}
+                          highlightStyle={highlightStyle}
+                          activeVersePairs={versePairs}
+                          wordRefs={wordRefs}
+                          wordOffsets={wordOffsets}
+                        />
+                      )}
+                    </>
+                  )}
                 </div>
               </div>
             </div>

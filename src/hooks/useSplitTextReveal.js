@@ -2,12 +2,15 @@ import { useRef, useEffect } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { SplitText } from 'gsap/SplitText';
+import { FEATURES } from '../constants/index.js';
 
 gsap.registerPlugin(SplitText);
 
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Evaluated once at module load — MediaQueryList creation is cheap but calling
+// matchMedia() on every render creates a new object each time unnecessarily.
+const reducedMotionMQ =
+  typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+const prefersReducedMotion = () => reducedMotionMQ?.matches ?? false;
 
 /**
  * useSplitTextReveal — drives a word-by-word blur-up cascade for one stanza DOM node.
@@ -24,7 +27,6 @@ export function useSplitTextReveal(active, { stagger = 0.04, duration = 0.5, ski
   const containerRef = useRef(null);
   const splitRef = useRef(null);
   const hasRunRef = useRef(false);
-  const reduced = prefersReducedMotion();
 
   // Clean up split on unmount
   useEffect(() => {
@@ -46,7 +48,7 @@ export function useSplitTextReveal(active, { stagger = 0.04, duration = 0.5, ski
       hasRunRef.current = true;
 
       // Reduced-motion: simple fade-in, no split required
-      if (reduced) {
+      if (prefersReducedMotion()) {
         gsap.fromTo(containerRef.current, { opacity: 0 }, { opacity: 1, duration: 0.35 });
         return;
       }
@@ -85,8 +87,9 @@ export function useSplitTextReveal(active, { stagger = 0.04, duration = 0.5, ski
             }
           },
         });
-      } catch {
+      } catch (err) {
         // SplitText might fail on unusual Arabic text — fall back gracefully
+        if (FEATURES.logging) console.warn('[StanzaReveal] SplitText fallback:', err);
         gsap.fromTo(containerRef.current, { opacity: 0 }, { opacity: 1, duration: 0.4 });
       }
     },

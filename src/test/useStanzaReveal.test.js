@@ -63,6 +63,7 @@ describe('useStanzaReveal', () => {
     poemId = 2;
     rerender();
     expect(result.current.revealedCount).toBe(1);
+    expect(result.current.stanzaIndex).toBe(0);
   });
 
   it('handles empty stanzas gracefully', () => {

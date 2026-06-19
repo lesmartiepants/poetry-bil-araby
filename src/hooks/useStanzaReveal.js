@@ -17,7 +17,9 @@ import { useState, useCallback } from 'react';
  */
 export function useStanzaReveal(stanzas, poemId) {
   // Store poemId alongside count so a poemId change resets synchronously in the render
-  // phase (avoids a setState-inside-effect warning while still being correct React).
+  // phase rather than inside a useEffect (which would trigger an extra render cycle and
+  // cause a react-hooks/set-state-in-effect warning). Reading `state.poemId !== poemId`
+  // during render gives us the reset on the very next paint with zero extra renders.
   const [state, setState] = useState({ poemId, revealedCount: 1 });
 
   const revealedCount = state.poemId === poemId ? state.revealedCount : 1;

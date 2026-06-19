@@ -1,4 +1,4 @@
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import StanzaReveal from '../reveal/StanzaReveal.jsx';
 import HighlightedVerse from '../HighlightedVerse.jsx';
@@ -47,7 +47,7 @@ const PoemReader = memo(function PoemReader({
     const arLines = poem?.arabic ? poem.arabic.split('\n') : [];
     const enLines = poem?.english ? poem.english.split('\n') : [];
     return arLines.map((ar, i) => ({ ar, en: enLines[i] || '' }));
-  }, [poem?.arabic, poem?.english]);
+  }, [poem]);
 
   const stanzas = useMemo(() => chunkStanzas(versePairs), [versePairs]);
 
@@ -56,11 +56,11 @@ const PoemReader = memo(function PoemReader({
     poem?.id
   );
 
-  // Register revealAll with parent (for TTS "Listen" path) whenever poemId or stanzas change
-  useMemo(() => {
+  // Register revealAll with parent (for TTS "Listen" path) whenever poemId or stanzas change.
+  // revealAll is stable per poem (useCallback on poemId/total), so including it in deps is safe.
+  useEffect(() => {
     if (onRevealAllReady) onRevealAllReady(revealAll);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [poem?.id, stanzas.length]);
+  }, [poem?.id, stanzas.length, revealAll, onRevealAllReady]);
 
   // When TTS highlight is active, show all verses with word-level highlighting
   const useHighlight = isActive && highlightStyle !== 'none' && activeVersePairs.length > 0;

@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aurora Bloom — شعر بالعربي</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;1,300;1,400&display=swap" rel="stylesheet" />
+
+  <!-- GSAP + SplitText -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.13.0/SplitText.min.js"></script>
+
+  <style>
+    /* ===== DESIGN TOKENS ===== */
+    :root {
+      --gold:          #c5a059;
+      --gold-bright:   #d4b463;
+      --gold-foil:     linear-gradient(135deg,#b8922e,#c5a059,#e2c67a,#c5a059,#b8922e);
+      --lapis-deep:    #1e3a6e;
+      --lapis-mid:     #2e5090;
+      --lapis-light:   #4a7cc9;
+
+      /* dark theme (default) */
+      --bg:            #0c0c0e;
+      --text:          rgba(231,229,228,.92);
+      --text-muted:    rgba(231,229,228,.38);
+      --panel-bg:      #0c0c0e;
+      --meta-color:    rgba(197,160,89,.72);
+      --shadow-verse:  0 0 28px rgba(197,160,89,.18);
+      --aurora-a:      rgba(197,160,89,.09);
+      --aurora-b:      rgba(74,124,201,.06);
+      --divider:       rgba(197,160,89,.18);
+      --toggle-bg:     rgba(255,255,255,.08);
+      --toggle-hover:  rgba(255,255,255,.14);
+      --dot-active:    #c5a059;
+      --dot-idle:      rgba(197,160,89,.28);
+    }
+
+    /* light theme */
+    [data-theme="light"] {
+      --bg:            #fdfcf8;
+      --text:          #2b2b2b;
+      --text-muted:    rgba(43,43,43,.38);
+      --panel-bg:      #fdfcf8;
+      --meta-color:    #8a6828;
+      --shadow-verse:  0 0 20px rgba(197,160,89,.12);
+      --aurora-a:      rgba(197,160,89,.06);
+      --aurora-b:      rgba(74,124,201,.04);
+      --divider:       rgba(43,43,43,.12);
+      --toggle-bg:     rgba(0,0,0,.06);
+      --toggle-hover:  rgba(0,0,0,.10);
+      --dot-active:    #8a6828;
+      --dot-idle:      rgba(138,104,40,.22);
+    }
+
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      transition: background .4s ease, color .4s ease;
+    }
+
+    /* ===== VIEWPORT & FEED ===== */
+    #viewport {
+      position: fixed; inset: 0;
+      overflow: hidden;
+    }
+
+    #feed {
+      /* vertical stack of panels; translateY driven by JS */
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      will-change: transform;
+    }
+
+    /* ===== PANEL ===== */
+    .panel {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ===== AURORA GLOW (one per panel, behind text) ===== */
+    .aurora {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .aurora-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      will-change: transform, opacity;
+    }
+    .aurora-orb.gold {
+      width: 55vw; height: 55vw;
+      background: var(--aurora-a);
+      top: 30%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .aurora-orb.lapis {
+      width: 40vw; height: 40vw;
+      background: var(--aurora-b);
+      top: 55%; left: 55%;
+      transform: translate(-50%, -50%);
+    }
+
+    /* ===== POEM CONTENT ===== */
+    .poem-inner {
+      position: relative;
+      z-index: 1;
+      width: min(680px, 90vw);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+
+    /* Header: title + poet */
+    .poem-header {
+      text-align: center;
+      margin-bottom: clamp(1.6rem, 3vh, 2.4rem);
+      opacity: 1;
+      transition: opacity .5s ease;
+    }
+    .poem-title {
+      font-family: 'Reem Kufi', 'Amiri', sans-serif;
+      font-size: clamp(1.15rem, 2.8vw, 1.55rem);
+      font-weight: 600;
+      color: var(--gold-bright);
+      letter-spacing: .02em;
+      direction: rtl;
+      margin-bottom: .35rem;
+    }
+    .poem-poet {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(.8rem, 1.8vw, 1rem);
+      color: var(--meta-color);
+      direction: rtl;
+    }
+
+    /* Stanza list */
+    .stanzas {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(.9rem, 2vh, 1.4rem);
+    }
+
+    /* Individual stanza */
+    .stanza {
+      width: 100%;
+      opacity: 0;         /* hidden until revealed */
+      text-align: center;
+    }
+    .stanza.revealed {
+      opacity: 1;
+    }
+    /* Dimmed prior stanza */
+    .stanza.dimmed {
+      opacity: .32;
+      filter: blur(1px);
+      transition: opacity .6s ease, filter .6s ease;
+      pointer-events: none;
+    }
+
+    /* Individual line wrapper */
+    .verse-line {
+      margin-bottom: clamp(.5rem, 1.2vh, .8rem);
+      text-align: center;
+    }
+    .verse-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.3rem, 3.2vw, 2.1rem);
+      line-height: 2.0;
+      direction: rtl;
+      color: var(--text);
+      text-shadow: var(--shadow-verse);
+      display: block;
+    }
+    .verse-en {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(.72rem, 1.6vw, 1rem);
+      line-height: 1.5;
+      direction: ltr;
+      color: var(--text-muted);
+      display: block;
+      margin-top: -.1em;
+    }
+
+    /* ===== TAP-TO-REVEAL HINT ===== */
+    .tap-hint {
+      position: absolute;
+      bottom: clamp(80px, 12vh, 110px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .45rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .4s ease;
+    }
+    .tap-hint.visible { opacity: 1; }
+    .tap-hint-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(.7rem, 1.5vw, .88rem);
+      color: var(--meta-color);
+      letter-spacing: .08em;
+      direction: ltr;
+    }
+    .tap-hint-icon {
+      width: 32px; height: 32px;
+      border: 1.5px solid var(--gold);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      animation: pulseRing 2.2s ease infinite;
+    }
+    .tap-hint-icon svg { width: 14px; height: 14px; fill: var(--gold); }
+    @keyframes pulseRing {
+      0%,100% { box-shadow: 0 0 0 0 rgba(197,160,89,.35); }
+      50%      { box-shadow: 0 0 0 10px rgba(197,160,89,0); }
+    }
+
+    /* ===== SWIPE-UP HINT (all stanzas done) ===== */
+    .swipe-hint {
+      position: absolute;
+      bottom: clamp(24px, 5vh, 40px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: .4rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .5s ease;
+    }
+    .swipe-hint.visible { opacity: 1; }
+    .swipe-hint-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(.68rem, 1.4vw, .85rem);
+      color: var(--meta-color);
+      letter-spacing: .06em;
+      direction: ltr;
+    }
+    .swipe-hint-arrow {
+      animation: floatUp 1.8s ease-in-out infinite;
+    }
+    .swipe-hint-arrow svg { width: 22px; height: 22px; stroke: var(--gold); fill: none; }
+    @keyframes floatUp {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-6px); }
+    }
+
+    /* ===== MISBAHA PROGRESS DOTS ===== */
+    .progress-dots {
+      position: absolute;
+      bottom: clamp(60px, 9vh, 80px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3;
+      display: flex;
+      gap: .55rem;
+      align-items: center;
+      direction: ltr;
+      opacity: 0;
+      transition: opacity .4s ease;
+    }
+    .progress-dots.visible { opacity: 1; }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--dot-idle);
+      transition: background .35s ease, transform .35s ease;
+      flex-shrink: 0;
+    }
+    .dot.active {
+      background: var(--dot-active);
+      transform: scale(1.45);
+    }
+    .dot.done {
+      background: var(--dot-active);
+      opacity: .55;
+    }
+
+    /* ===== NEXT-POEM BUTTON (chevron, visible on desktop hover) ===== */
+    .chevron-btn {
+      position: absolute;
+      bottom: clamp(14px, 3vh, 22px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 4;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 12px;
+      touch-action: manipulation;
+      opacity: 0;
+      transition: opacity .3s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .chevron-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; border-radius: 4px; }
+    .chevron-btn svg { width: 28px; height: 28px; stroke: var(--gold); fill: none; opacity: .5; }
+    .panel:hover .chevron-btn { opacity: 1; }
+
+    /* ===== THEME TOGGLE ===== */
+    #theme-toggle {
+      position: fixed;
+      top: clamp(14px, 2.5vh, 22px);
+      left: clamp(14px, 2.5vw, 22px); /* left = English-direction left, but LTR button so keep it top-right visually */
+      z-index: 100;
+      background: var(--toggle-bg);
+      border: 1px solid var(--divider);
+      border-radius: 999px;
+      padding: 7px 14px;
+      cursor: pointer;
+      color: var(--text);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(.72rem, 1.4vw, .85rem);
+      letter-spacing: .05em;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background .2s ease, color .4s ease, border-color .4s ease;
+      touch-action: manipulation;
+      min-width: 44px; min-height: 44px;
+      display: flex; align-items: center; gap: .4rem;
+      direction: ltr;
+    }
+    #theme-toggle:hover { background: var(--toggle-hover); }
+    #theme-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+    #theme-toggle svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+    /* ===== POEM COUNTER (top-center) ===== */
+    #poem-counter {
+      position: fixed;
+      top: clamp(14px, 2.5vh, 22px);
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(.68rem, 1.3vw, .8rem);
+      color: var(--meta-color);
+      letter-spacing: .12em;
+      direction: ltr;
+      pointer-events: none;
+    }
+
+    /* ===== FOOTER LABEL ===== */
+    #footer-label {
+      position: fixed;
+      bottom: clamp(8px, 1.5vh, 14px);
+      right: clamp(14px, 2.5vw, 22px);
+      z-index: 100;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: clamp(.6rem, 1.2vw, .75rem);
+      color: var(--text-muted);
+      letter-spacing: .06em;
+      direction: ltr;
+      pointer-events: none;
+      animation: fadeLabelOut 6s ease forwards;
+      animation-delay: 3s;
+    }
+    @keyframes fadeLabelOut {
+      0%   { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    /* ===== VIGNETTE OVERLAY ===== */
+    #vignette {
+      position: fixed; inset: 0;
+      z-index: 90;
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.45) 100%);
+      transition: background .4s ease;
+    }
+    [data-theme="light"] #vignette {
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,.08) 100%);
+    }
+
+    /* ===== REDUCED MOTION ===== */
+    @media (prefers-reduced-motion: reduce) {
+      .aurora-orb, .tap-hint-icon, .swipe-hint-arrow { animation: none !important; }
+      .stanza { transition: opacity .3s ease !important; filter: none !important; }
+      .stanza.dimmed { filter: none !important; }
+    }
+
+    /* ===== MOBILE ADJUSTMENTS ===== */
+    @media (max-width: 480px) {
+      .verse-ar { font-size: clamp(1.15rem, 4.5vw, 1.6rem); }
+      .verse-en { font-size: clamp(.65rem, 2.8vw, .85rem); }
+      .poem-title { font-size: clamp(1rem, 4vw, 1.3rem); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Overlay: vignette -->
+<div id="vignette" aria-hidden="true"></div>
+
+<!-- Theme toggle (top-left visually; accessible label contains "theme") -->
+<button id="theme-toggle" aria-label="Toggle light/dark theme" title="Toggle theme">
+  <!-- sun/moon icon swaps via JS -->
+  <svg id="toggle-icon" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" fill="none" aria-hidden="true">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+  <span id="toggle-label">Light theme</span>
+</button>
+
+<!-- Poem counter -->
+<div id="poem-counter" aria-live="polite">1 / 3</div>
+
+<!-- Main scrollable feed (will be populated by JS) -->
+<div id="viewport" role="main">
+  <div id="feed" aria-label="Arabic poetry feed"></div>
+</div>
+
+<!-- Footer brand label -->
+<div id="footer-label" aria-hidden="true">Aurora Bloom — tap to reveal · swipe up for next</div>
+
+<script>
+/* =====================================================================
+   Aurora Bloom — Arabic Poetry Reader
+   Technique: GSAP SplitText word-by-word blur-to-focus reveal,
+   aurora breathing glow, vertical feed with crossfade transitions.
+   ===================================================================== */
+
+/* ---- Detect reduced motion preference ---- */
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---- Register SplitText plugin (free in GSAP 3.13+) ---- */
+let splitTextAvailable = false;
+try {
+  if (typeof SplitText !== 'undefined') {
+    gsap.registerPlugin(SplitText);
+    splitTextAvailable = true;
+  }
+} catch(e) { /* graceful fallback */ }
+
+/* =====================================================================
+   POEM DATA
+   Each poem: title, poet, lines[] each with {ar, en}
+   Stanzas computed at 4 lines each.
+   ===================================================================== */
+const POEMS = [
+  {
+    id: 'a',
+    title: 'زوال ملك الدنيا',
+    poet:  'أبو إسحاق الإلبيري',
+    lines: [
+      { ar: 'أَيْنَ المُلُوكُ وَأَيْنَ مَا جَمَعُوا وَمَا',         en: 'Where are the kings? Where is all they amassed,' },
+      { ar: 'ذَخَرُوهُ مِنْ ذَهَبِ الْمَتَاعِ الذَّاهِبِ',           en: 'the gold they hoarded — wealth that fades and passes?' },
+      { ar: 'وَمِنَ السَّوَابِغِ وَالصَّوَارِمِ وَالقَنَا',           en: 'Where are the coats of mail, the swords, the lances,' },
+      { ar: 'وَمِنَ الصَّواهِلِ بُدْنٌ وَشَوَازِبُ',                 en: 'the neighing steeds, the sleek and the well-fed?' },
+      { ar: 'كَانَتْ سَوَابِقُهَا تَحْمِلُ مِنْهُمْ',               en: 'Their racing chargers used to carry forth' },
+      { ar: 'أَقْمَارُ أَنْدِيَةٍ وَأُسْدُ كَتَائِبٍ',               en: 'moons of the council, lions of the ranks.' },
+      { ar: 'كَانُوا لُيُوثًا خَفِيَّةً لَكِنَّهُمْ',               en: 'They were hidden lions — and even so' },
+      { ar: 'سَكَنُوا غِيَاضَ أَسِنَّةٍ وَقَوَاضِبِ',               en: 'they made their dens in thickets of spears and blades.' },
+      { ar: 'قَصَفَتْهُمْ رِيحُ الرَّدَى وَرَمَتْهُمْ',             en: 'The wind of doom snapped them; they were struck down' },
+      { ar: 'كَفُّ الْمَنُونِ بِكُلِّ سَهْمٍ صَائِبٍ',               en: 'by the hand of fate with every unerring arrow.' },
+    ]
+  },
+  {
+    id: 'b',
+    title: 'جدول ونسيم',
+    poet:  'أبو البقاء الرندي',
+    lines: [
+      { ar: 'وَجَدْوَلٍ كُلَّمَا مَرَّ النَّسِيمُ بِهِ',             en: 'A brook — and whenever the breeze passed over it,' },
+      { ar: 'كَسَاهُ دَرْعًا لَهَا حَبَابُهُ حُلَقُ',               en: 'it clothed it in mail whose bubbles were the rings.' },
+      { ar: 'حَتَّى إِذَا انْطَبَعَتْ لَيْلًا بِهِ شُهْبُ',         en: 'Until, when stars were stamped upon it in the night,' },
+      { ar: 'لَمْ تَمْتَرِ الْعَيْنُ فِيهِ أَنَّهُ الأُفْقُ',       en: 'the eye no longer doubted it had become the sky.' },
+    ]
+  },
+  {
+    id: 'c',
+    title: 'فقد ابن مية',
+    poet:  'آمنة بنت عتيبة',
+    lines: [
+      { ar: 'عَلَى مِثْلِ ابْنِ مَيَّةَ فَانْعِيَاهُ',               en: 'For one like Ibn Mayya, mourn him well —' },
+      { ar: 'تَشُقُّ نَوَاعِمُ البِشْرِ الجُيُوبَا',                 en: 'let tender, joyful women rend their collars.' },
+      { ar: 'وَكَانَ أَبِي عُتَيْبَةُ شَمّرِيّاً',                   en: 'My father Utayba was a man who strove,' },
+      { ar: 'فَلاَ تَلْقَاهُ يَدَّخِرُ النَّصِيبَا',                 en: 'you never found him hoarding back his share.' },
+      { ar: 'ضُرُوبًا لِلْكَمِيِّ إِذَا اشْمَعَلَّتْ',               en: 'a striker of the armored knight whenever' },
+      { ar: 'عَوَانُ الحَرْبِ لا وَرَعًا هُيُوبَا',                  en: 'the grinding war flared up — no timid, fearful soul.' },
+    ]
+  }
+];
+
+/* Split lines into stanzas of max 4 */
+function makeStanzas(lines) {
+  const stanzas = [];
+  for (let i = 0; i < lines.length; i += 4) {
+    stanzas.push(lines.slice(i, i + 4));
+  }
+  return stanzas;
+}
+
+/* =====================================================================
+   BUILD DOM — create one .panel per poem
+   ===================================================================== */
+const feed = document.getElementById('feed');
+
+POEMS.forEach((poem, pIdx) => {
+  const stanzas = makeStanzas(poem.lines);
+
+  const panel = document.createElement('article');
+  panel.className = 'panel';
+  panel.dataset.poemIdx = pIdx;
+  panel.dataset.totalStanzas = stanzas.length;
+  panel.dataset.revealedCount = 0; // how many stanzas revealed
+  panel.setAttribute('role', 'region');
+  panel.setAttribute('aria-label', `قصيدة: ${poem.title}`);
+
+  /* Aurora glow orbs */
+  panel.innerHTML = `
+    <div class="aurora" aria-hidden="true">
+      <div class="aurora-orb gold"></div>
+      <div class="aurora-orb lapis"></div>
+    </div>
+  `;
+
+  /* Poem inner */
+  const inner = document.createElement('div');
+  inner.className = 'poem-inner';
+
+  /* Header */
+  inner.insertAdjacentHTML('beforeend', `
+    <header class="poem-header">
+      <div class="poem-title" lang="ar">${poem.title}</div>
+      <div class="poem-poet" lang="ar">${poem.poet}</div>
+    </header>
+  `);
+
+  /* Stanzas */
+  const stanzasEl = document.createElement('div');
+  stanzasEl.className = 'stanzas';
+
+  stanzas.forEach((lines, sIdx) => {
+    const stanzaEl = document.createElement('div');
+    stanzaEl.className = 'stanza';
+    stanzaEl.dataset.stanzaIdx = sIdx;
+    stanzaEl.setAttribute('aria-hidden', 'true');
+
+    lines.forEach(({ ar, en }) => {
+      const lineEl = document.createElement('div');
+      lineEl.className = 'verse-line';
+      lineEl.innerHTML = `
+        <span class="verse-ar" lang="ar" dir="rtl">${ar}</span>
+        <span class="verse-en" lang="en" dir="ltr">${en}</span>
+      `;
+      stanzaEl.appendChild(lineEl);
+    });
+
+    stanzasEl.appendChild(stanzaEl);
+  });
+
+  inner.appendChild(stanzasEl);
+  panel.appendChild(inner);
+
+  /* Progress dots */
+  const dotsEl = document.createElement('div');
+  dotsEl.className = 'progress-dots';
+  dotsEl.setAttribute('aria-label', 'Stanza progress');
+  dotsEl.setAttribute('role', 'progressbar');
+  dotsEl.setAttribute('aria-valuemin', 0);
+  dotsEl.setAttribute('aria-valuemax', stanzas.length);
+  dotsEl.setAttribute('aria-valuenow', 0);
+  for (let i = 0; i < stanzas.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'dot';
+    dot.setAttribute('aria-hidden', 'true');
+    dotsEl.appendChild(dot);
+  }
+  panel.appendChild(dotsEl);
+
+  /* Tap-to-reveal hint (shown on load) */
+  panel.insertAdjacentHTML('beforeend', `
+    <div class="tap-hint visible" aria-hidden="true">
+      <div class="tap-hint-text">tap to reveal</div>
+      <div class="tap-hint-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5v14M5 12l7 7 7-7"/>
+        </svg>
+      </div>
+    </div>
+  `);
+
+  /* Swipe-up hint (shown after all stanzas done) */
+  panel.insertAdjacentHTML('beforeend', `
+    <div class="swipe-hint" aria-label="Swipe up for next poem">
+      <div class="swipe-hint-arrow">
+        <svg viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
+          <path d="M12 19V5M5 12l7-7 7 7"/>
+        </svg>
+      </div>
+      <div class="swipe-hint-text">next poem</div>
+    </div>
+  `);
+
+  /* Down-chevron navigation button */
+  panel.insertAdjacentHTML('beforeend', `
+    <button class="chevron-btn" aria-label="Go to next poem" title="Next poem">
+      <svg viewBox="0 0 24 24" stroke-width="1.8" aria-hidden="true">
+        <path d="M6 9l6 6 6-6"/>
+      </svg>
+    </button>
+  `);
+
+  feed.appendChild(panel);
+});
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+let currentPoem = 0;
+const totalPoems  = POEMS.length;
+
+/* Per-panel revealed stanza count (mirrors dataset) */
+const revealedCounts = new Array(totalPoems).fill(0);
+
+/* Feed scroll position */
+let feedY      = 0;
+let feedYTarget = 0;
+const LERP     = 0.072;
+let animFrameId = null;
+let isTransitioning = false;
+
+const panels   = Array.from(document.querySelectorAll('.panel'));
+const counter  = document.getElementById('poem-counter');
+const toggleBtn = document.getElementById('theme-toggle');
+const toggleLabel = document.getElementById('toggle-label');
+const toggleIcon  = document.getElementById('toggle-icon');
+let isDark = true;
+
+/* =====================================================================
+   THEME TOGGLE
+   ===================================================================== */
+function applyTheme(dark) {
+  isDark = dark;
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  toggleLabel.textContent = dark ? 'Light theme' : 'Dark theme';
+  /* swap sun ↔ moon icon */
+  if (dark) {
+    toggleIcon.innerHTML = `
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    `;
+  } else {
+    /* crescent moon */
+    toggleIcon.innerHTML = `<path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" stroke="currentColor" stroke-width="1.8" fill="none"/>`;
+  }
+}
+applyTheme(true); // default dark
+
+toggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  applyTheme(!isDark);
+});
+
+/* =====================================================================
+   AURORA BREATHING ANIMATION
+   ===================================================================== */
+function initAurora() {
+  if (reducedMotion) return;
+  panels.forEach(panel => {
+    const goldOrb  = panel.querySelector('.aurora-orb.gold');
+    const lapisOrb = panel.querySelector('.aurora-orb.lapis');
+    if (!goldOrb || !lapisOrb) return;
+
+    // Stagger each panel's breathing so they feel independent
+    const offset = parseFloat(panel.dataset.poemIdx) * 2.5;
+
+    gsap.to(goldOrb, {
+      scale: 1.18,
+      opacity: 1.4,
+      duration: 7 + offset * .4,
+      yoyo: true,
+      repeat: -1,
+      ease: 'sine.inOut',
+      delay: offset * .6
+    });
+    gsap.to(lapisOrb, {
+      scale: 1.25,
+      x: '8%',
+      opacity: 1.3,
+      duration: 9 + offset * .3,
+      yoyo: true,
+      repeat: -1,
+      ease: 'sine.inOut',
+      delay: offset * .4 + 1.2
+    });
+  });
+}
+
+/* =====================================================================
+   REVEAL STANZA — the core Aurora Bloom animation
+   ===================================================================== */
+function revealStanza(panel, stanzaIdx) {
+  const pIdx     = parseInt(panel.dataset.poemIdx);
+  const stanzaEl = panel.querySelectorAll('.stanza')[stanzaIdx];
+  if (!stanzaEl) return;
+
+  /* Mark all prior stanzas as dimmed */
+  panel.querySelectorAll('.stanza.revealed').forEach(s => {
+    s.classList.add('dimmed');
+  });
+
+  stanzaEl.classList.remove('dimmed');
+  stanzaEl.classList.add('revealed');
+  stanzaEl.setAttribute('aria-hidden', 'false');
+
+  if (reducedMotion) {
+    /* Accessible: plain opacity fade */
+    gsap.fromTo(stanzaEl, { opacity: 0 }, { opacity: 1, duration: .5, ease: 'power1.out' });
+    return;
+  }
+
+  /* --- SplitText word-by-word blur-to-focus reveal --- */
+  const arLines = stanzaEl.querySelectorAll('.verse-ar');
+  const enLines = stanzaEl.querySelectorAll('.verse-en');
+
+  /* Start with stanza invisible; we'll animate each word */
+  gsap.set(stanzaEl, { opacity: 1 });
+
+  arLines.forEach((lineEl, lineIdx) => {
+    if (splitTextAvailable) {
+      /* Split into words; RTL reading order = stagger from end */
+      let split;
+      try {
+        split = new SplitText(lineEl, { type: 'words', wordsClass: 'split-word' });
+      } catch(e) {
+        splitTextAvailable = false;
+      }
+
+      if (split && split.words && split.words.length) {
+        const words = split.words;
+        /* Reveal words right-to-left (Arabic reading order) = reversed array in DOM */
+        gsap.fromTo(words,
+          { opacity: 0, y: 16, filter: 'blur(12px)' },
+          {
+            opacity: 1,
+            y: 0,
+            filter: 'blur(0px)',
+            duration: .75,
+            ease: 'expo.out',
+            stagger: {
+              each: 0.042,
+              from: 'end'   /* RTL: animate from the "last" DOM word (right side) first */
+            },
+            delay: lineIdx * 0.13
+          }
+        );
+        return; /* success — skip fallback */
+      }
+    }
+
+    /* Fallback if SplitText unavailable: fade the whole line */
+    gsap.fromTo(lineEl,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: .65, ease: 'expo.out', delay: lineIdx * .12 }
+    );
+  });
+
+  /* English translations: simple fade-up, slightly after Arabic */
+  enLines.forEach((lineEl, lineIdx) => {
+    gsap.fromTo(lineEl,
+      { opacity: 0, y: 8 },
+      { opacity: 1, y: 0, duration: .55, ease: 'power2.out', delay: lineIdx * .13 + .22 }
+    );
+  });
+}
+
+/* =====================================================================
+   UPDATE UI (dots, hints)
+   ===================================================================== */
+function updatePanelUI(panel) {
+  const pIdx    = parseInt(panel.dataset.poemIdx);
+  const total   = parseInt(panel.dataset.totalStanzas);
+  const revealed = revealedCounts[pIdx];
+
+  /* Progress dots */
+  const dotsEl = panel.querySelector('.progress-dots');
+  const dots   = dotsEl ? dotsEl.querySelectorAll('.dot') : [];
+
+  if (revealed === 0) {
+    dotsEl && dotsEl.classList.remove('visible');
+  } else {
+    dotsEl && dotsEl.classList.add('visible');
+    dots.forEach((dot, i) => {
+      dot.classList.remove('active', 'done');
+      if (i === revealed - 1) dot.classList.add('active');
+      else if (i < revealed - 1) dot.classList.add('done');
+    });
+    dotsEl && dotsEl.setAttribute('aria-valuenow', revealed);
+  }
+
+  /* Tap hint: show only before first reveal */
+  const tapHint = panel.querySelector('.tap-hint');
+  if (tapHint) {
+    tapHint.classList.toggle('visible', revealed === 0);
+  }
+
+  /* Swipe hint: show when all stanzas revealed */
+  const swipeHint = panel.querySelector('.swipe-hint');
+  if (swipeHint) {
+    swipeHint.classList.toggle('visible', revealed >= total && pIdx < totalPoems - 1);
+  }
+}
+
+/* =====================================================================
+   HANDLE TAP / CLICK on panel — reveal next stanza
+   ===================================================================== */
+function handlePanelTap(panel) {
+  const pIdx   = parseInt(panel.dataset.poemIdx);
+  const total  = parseInt(panel.dataset.totalStanzas);
+  const count  = revealedCounts[pIdx];
+
+  if (count < total) {
+    /* Reveal next stanza */
+    revealStanza(panel, count);
+    revealedCounts[pIdx]++;
+    updatePanelUI(panel);
+  } else {
+    /* All stanzas revealed → navigate to next poem */
+    if (pIdx < totalPoems - 1) {
+      navigatePoem(currentPoem + 1);
+    }
+  }
+}
+
+/* =====================================================================
+   NAVIGATE BETWEEN POEMS — cross-fade + upward drift
+   ===================================================================== */
+function navigatePoem(targetIdx) {
+  if (targetIdx < 0 || targetIdx >= totalPoems) return;
+  if (isTransitioning) return;
+
+  isTransitioning = true;
+  const fromPanel = panels[currentPoem];
+  const toPanel   = panels[targetIdx];
+  const direction = targetIdx > currentPoem ? 1 : -1; // 1=down, -1=up
+
+  if (reducedMotion) {
+    /* Simple instant switch */
+    feedYTarget = targetIdx * window.innerHeight;
+    feedY       = feedYTarget;
+    feed.style.transform = `translateY(${-feedY}px)`;
+    currentPoem = targetIdx;
+    isTransitioning = false;
+    updateCounter();
+    updatePanelUI(toPanel);
+    return;
+  }
+
+  /* Fade out current, shift feed, fade in new */
+  gsap.to(fromPanel, {
+    opacity: 0,
+    y: direction * -30,
+    duration: .45,
+    ease: 'power2.in',
+    onComplete: () => {
+      feedYTarget = targetIdx * window.innerHeight;
+      feedY       = feedYTarget;
+      feed.style.transform = `translateY(${-feedY}px)`;
+      currentPoem = targetIdx;
+      updateCounter();
+
+      gsap.set(toPanel, { opacity: 0, y: direction * 24 });
+      gsap.to(toPanel, {
+        opacity: 1,
+        y: 0,
+        duration: .55,
+        ease: 'power2.out',
+        onComplete: () => {
+          /* Restore fromPanel for if we go back */
+          gsap.set(fromPanel, { opacity: 1, y: 0 });
+          isTransitioning = false;
+          updatePanelUI(toPanel);
+        }
+      });
+    }
+  });
+}
+
+function updateCounter() {
+  counter.textContent = `${currentPoem + 1} / ${totalPoems}`;
+}
+
+/* =====================================================================
+   SMOOTH LERP LOOP (for potential future scroll-driven use)
+   We use snap-based navigation so this is minimal.
+   ===================================================================== */
+function startLoop() {
+  function loop() {
+    animFrameId = requestAnimationFrame(loop);
+    const diff = feedYTarget - feedY;
+    if (Math.abs(diff) > 0.1) {
+      feedY += diff * LERP;
+      feed.style.transform = `translateY(${-feedY}px)`;
+    }
+  }
+  loop();
+}
+startLoop();
+
+/* =====================================================================
+   EVENT LISTENERS
+   ===================================================================== */
+
+/* Panel clicks (tap to reveal) — delegate from feed */
+feed.addEventListener('click', (e) => {
+  /* Ignore clicks on navigation buttons & toggle */
+  if (e.target.closest('.chevron-btn') || e.target.closest('#theme-toggle')) return;
+  const panel = e.target.closest('.panel');
+  if (panel && parseInt(panel.dataset.poemIdx) === currentPoem) {
+    handlePanelTap(panel);
+  }
+});
+
+/* Chevron buttons */
+document.querySelectorAll('.chevron-btn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    navigatePoem(currentPoem + 1);
+  });
+});
+
+/* ---- Keyboard ---- */
+document.addEventListener('keydown', (e) => {
+  switch (e.key) {
+    case ' ':
+    case 'Enter':
+      e.preventDefault();
+      handlePanelTap(panels[currentPoem]);
+      break;
+    case 'ArrowDown':
+    case 'PageDown':
+      e.preventDefault();
+      navigatePoem(currentPoem + 1);
+      break;
+    case 'ArrowUp':
+    case 'PageUp':
+      e.preventDefault();
+      navigatePoem(currentPoem - 1);
+      break;
+  }
+});
+
+/* ---- Wheel scroll — snap between poems ---- */
+let wheelCooldown = false;
+window.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  if (wheelCooldown || isTransitioning) return;
+  wheelCooldown = true;
+  setTimeout(() => { wheelCooldown = false; }, 750);
+
+  if (e.deltaY > 20) {
+    /* Scroll down → next poem (or next stanza) */
+    const panel = panels[currentPoem];
+    const pIdx  = parseInt(panel.dataset.poemIdx);
+    const total = parseInt(panel.dataset.totalStanzas);
+    if (revealedCounts[pIdx] < total) {
+      handlePanelTap(panel);
+    } else {
+      navigatePoem(currentPoem + 1);
+    }
+  } else if (e.deltaY < -20) {
+    navigatePoem(currentPoem - 1);
+  }
+}, { passive: false });
+
+/* ---- Touch support ---- */
+let touchStartY = 0;
+let touchStartX = 0;
+window.addEventListener('touchstart', (e) => {
+  touchStartY = e.touches[0].clientY;
+  touchStartX = e.touches[0].clientX;
+}, { passive: true });
+
+window.addEventListener('touchend', (e) => {
+  const dy = touchStartY - e.changedTouches[0].clientY;
+  const dx = Math.abs(touchStartX - e.changedTouches[0].clientX);
+  const isHorizontal = dx > Math.abs(dy);
+
+  if (isHorizontal) return; /* ignore horizontal swipes */
+
+  if (Math.abs(dy) < 12) {
+    /* Short tap — treat as reveal */
+    if (!e.target.closest('.chevron-btn') && !e.target.closest('#theme-toggle')) {
+      handlePanelTap(panels[currentPoem]);
+    }
+    return;
+  }
+
+  if (dy > 30) {
+    /* Swipe up → next */
+    const panel = panels[currentPoem];
+    const pIdx  = parseInt(panel.dataset.poemIdx);
+    const total = parseInt(panel.dataset.totalStanzas);
+    if (revealedCounts[pIdx] < total) {
+      handlePanelTap(panel);
+    } else {
+      navigatePoem(currentPoem + 1);
+    }
+  } else if (dy < -30) {
+    navigatePoem(currentPoem - 1);
+  }
+}, { passive: true });
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
+function init() {
+  /* Position feed at poem 0 */
+  feed.style.transform = 'translateY(0)';
+
+  /* Initialise aurora breathing */
+  initAurora();
+
+  /* Show first panel's tap hint */
+  panels.forEach((panel, i) => {
+    updatePanelUI(panel);
+    /* ensure non-active panels are at opacity 1 in DOM (transform handles visibility) */
+    gsap.set(panel, { opacity: 1, y: 0 });
+  });
+
+  /* Announce first poem to screen readers */
+  counter.textContent = `1 / ${totalPoems}`;
+}
+
+/* Wait for GSAP to be ready */
+gsap.registerEffect && init();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>

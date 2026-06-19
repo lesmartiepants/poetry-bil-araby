@@ -1,11 +1,4 @@
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import PoemReader from './PoemReader.jsx';
 
@@ -143,19 +136,16 @@ const PoemFeed = forwardRef(function PoemFeed(
         className="overflow-hidden w-full"
         role="region"
         aria-label="Poem feed"
-        style={{ touchAction: 'pan-y' }}
+        style={{ touchAction: 'pan-y', height: 'calc(100dvh - 220px)' }}
       >
-        <div
-          className="flex flex-col"
-          style={{ backfaceVisibility: 'hidden' }}
-        >
+        <div className="flex flex-col" style={{ backfaceVisibility: 'hidden', height: '100%' }}>
           {poems.map((poem, slideIdx) => {
             const isActive = slideIdx === currentIndex;
             return (
               <div
                 key={poem.id ?? slideIdx}
-                className="flex-shrink-0 w-full min-h-0"
-                style={{ minHeight: 0 }}
+                className="flex-shrink-0 w-full overflow-y-auto"
+                style={{ height: 'calc(100dvh - 220px)' }}
               >
                 <PoemReader
                   poem={poem}
@@ -184,7 +174,10 @@ const PoemFeed = forwardRef(function PoemFeed(
           style={{ opacity: showSwipeHint ? 0.45 : 0 }}
           aria-hidden="true"
         >
-          <span className="font-brand-en text-xs tracking-widest uppercase" style={{ color: goldColor }}>
+          <span
+            className="font-brand-en text-xs tracking-widest uppercase"
+            style={{ color: goldColor }}
+          >
             swipe up for next poem ↑
           </span>
         </div>

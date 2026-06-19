@@ -409,14 +409,16 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   if (isIOS()) {
     try {
       if ('audioSession' in navigator) navigator.audioSession.type = 'playback';
-    } catch { /* older iOS without the Audio Session API → buffered fallback still works */ }
+    } catch {
+      /* older iOS without the Audio Session API → buffered fallback still works */
+    }
     // Bless the reusable <audio> element NOW, inside the gesture, so the REST
     // path's play() after the generation await is allowed (otherwise silent first
     // play; #...). Web Audio (Live) doesn't need this, but it's a cheap no-op there.
     unlockIOSAudioElement();
   }
-  // Unlock the AudioContext after the user gesture (now on iOS too).
-  await toneStart();
+  // Unlock the AudioContext after the user gesture (skip on iOS — HTMLAudioElement handles playback there).
+  if (!isIOS()) await toneStart();
 
   setGenerating(true);
 
@@ -577,7 +579,11 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               if (!firstSound) {
                 firstSound = true;
                 const t = ((performance.now() - apiStart) / 1000).toFixed(2);
-                addLog('Audio API', `[Live 3.1] ▶ First sound (${t}s) | voice: ${liveVoice}`, 'success');
+                addLog(
+                  'Audio API',
+                  `[Live 3.1] ▶ First sound (${t}s) | voice: ${liveVoice}`,
+                  'success'
+                );
                 progress.dismiss('Recitation ready');
                 setPlayer(streamPlayer);
                 startPlayer(streamPlayer, 0);

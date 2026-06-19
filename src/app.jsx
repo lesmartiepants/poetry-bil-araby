@@ -171,6 +171,9 @@ export default function DiwanApp() {
   // the settings controls (Aa / sun icon), and a gentle floating listen button.
   // Only deliberate taps/clicks wake the chrome back — scroll is ignored.
   const { isIdle } = useIdleTimer(2_000, [listenButtonIdleRef, themeToggleRef, textSettingsRef]);
+  // In vertical-feed mode controls must stay visible: every stanza tap resets the idle timer
+  // causing controls to flash. Disable idle-hide in vertical feed mode.
+  const effectivelyIdle = isIdle && !FEATURES.verticalFeed;
 
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
@@ -1429,11 +1432,11 @@ export default function DiwanApp() {
       {/* Corner wordmark — top-right, fades out on scroll and when idle */}
       <motion.header
         animate={{
-          opacity: isIdle ? 0 : BRAND_HEADER.containerOpacity * (1 - headerOpacity),
-          y: isIdle ? -14 : 0,
+          opacity: effectivelyIdle ? 0 : BRAND_HEADER.containerOpacity * (1 - headerOpacity),
+          y: effectivelyIdle ? -14 : 0,
         }}
         transition={
-          isIdle
+          effectivelyIdle
             ? { duration: 0.7, ease: [0.16, 1, 0.3, 1] }
             : { type: 'spring', stiffness: 300, damping: 28, mass: 0.8 }
         }
@@ -1494,7 +1497,7 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-6 pr-14 md:px-8 md:pr-0 pb-28 pt-10 md:pt-12"
+            className={`flex-1 ${FEATURES.verticalFeed ? 'overflow-y-hidden' : 'overflow-y-auto'} overflow-x-hidden custom-scrollbar relative z-10 px-6 pr-14 md:px-8 md:pr-0 pb-28 pt-10 md:pt-12`}
             style={{ overscrollBehaviorX: 'none' }}
           >
             {/* Top scroll gradient removed — header is now a subtle corner wordmark */}
@@ -1618,7 +1621,11 @@ export default function DiwanApp() {
                             setCarouselIndex(idx);
                             const { player: activePlayer, resetAudio } = useAudioStore.getState();
                             if (activePlayer) {
-                              try { activePlayer.stop(); } catch { /* already stopped */ }
+                              try {
+                                activePlayer.stop();
+                              } catch {
+                                /* already stopped */
+                              }
                             }
                             if (audioUrl) URL.revokeObjectURL(audioUrl);
                             abortPlay();
@@ -1783,9 +1790,9 @@ export default function DiwanApp() {
           {/* Bottom fade — content fades out above the control bar; slides away with footer when idle */}
           <motion.div
             className="pointer-events-none fixed bottom-0 left-0 right-0 z-40"
-            animate={isIdle ? { opacity: 0, y: 60 } : { opacity: 1, y: 0 }}
+            animate={effectivelyIdle ? { opacity: 0, y: 60 } : { opacity: 1, y: 0 }}
             transition={
-              isIdle
+              effectivelyIdle
                 ? { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }
                 : { type: 'spring', stiffness: 280, damping: 26 }
             }
@@ -1797,13 +1804,13 @@ export default function DiwanApp() {
 
           <motion.footer
             className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom"
-            animate={isIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
+            animate={effectivelyIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
             transition={
-              isIdle
+              effectivelyIdle
                 ? { duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: 0.12 }
                 : { type: 'spring', stiffness: 280, damping: 26 }
             }
-            style={{ pointerEvents: isIdle ? 'none' : 'auto' }}
+            style={{ pointerEvents: effectivelyIdle ? 'none' : 'auto' }}
           >
             {/* Highlight mode: Listen (one-shot) → PlayControlsStrip (exclusive) */}
             {highlightStyle !== 'none' && (
@@ -2086,7 +2093,7 @@ export default function DiwanApp() {
               Attached to listenButtonIdleRef so tapping it does NOT wake the UI chrome;
               the user can control playback while staying in immersive zen mode. */}
           <AnimatePresence>
-            {isIdle && (
+            {effectivelyIdle && (
               <motion.div
                 ref={listenButtonIdleRef}
                 className="fixed z-[55] flex justify-center"
@@ -2208,7 +2215,7 @@ export default function DiwanApp() {
         isDownvoted={current ? isPoemDownvoted(current) : false}
         onUnflag={handleUndownvote}
         user={user}
-        isIdle={isIdle}
+        isIdle={effectivelyIdle}
       />
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}

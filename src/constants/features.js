@@ -9,4 +9,5 @@ export const FEATURES = {
   onboarding: true, // Show kinetic walkthrough (phases 1-3) on first visit
   forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
   designReview: false, // Show design review shortcut icon (still accessible via /design-review URL)
+  verticalFeed: true, // Vertical swipe feed + tap-to-reveal stanza blooms (replaces horizontal carousel)
 };

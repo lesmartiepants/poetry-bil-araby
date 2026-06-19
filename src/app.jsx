@@ -104,6 +104,7 @@ import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
+import PoemFeed from './components/feed/PoemFeed.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
@@ -1606,12 +1607,10 @@ export default function DiwanApp() {
                 </div>
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
-                  {carouselPoems.length > 0 && (
-                    <PoemCarousel
-                      ref={carouselRef}
-                      poems={carouselPoems}
-                      currentIndex={carouselIndex}
-                      onSlideChange={(idx, direction) => {
+                  {carouselPoems.length > 0 &&
+                    (() => {
+                      // Shared slide-change handler used by both PoemCarousel and PoemFeed
+                      const handleSlideChange = (idx, direction) => {
                         setCarouselIndex(idx);
                         // Stop audio and reset TTS state when navigating poems
                         const { player: activePlayer, resetAudio } = useAudioStore.getState();
@@ -1669,15 +1668,9 @@ export default function DiwanApp() {
                           explainedPoemIds.current.delete(newPoem.id);
                           setAutoExplainPending(true);
                         }
-                      }}
-                      darkMode={darkMode}
-                      showTranslation={showTranslation}
-                      showTransliteration={showTransliteration}
-                      textScale={textScale}
-                      currentFontClass={currentFontClass}
-                      POEM_META={POEM_META}
-                      DESIGN={DESIGN}
-                      onLoadMore={() => {
+                      };
+
+                      const handleLoadMore = () => {
                         if (!current?.poetArabic) return;
                         const existingIds = carouselPoems.map((p) => p.id);
                         fetchPoemsByPoet(current.poetArabic, 3, existingIds)
@@ -1688,13 +1681,33 @@ export default function DiwanApp() {
                             if (FEATURES.logging)
                               addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
                           });
-                      }}
-                      highlightStyle={highlightStyle}
-                      activeVersePairs={versePairs}
-                      wordRefs={wordRefs}
-                      wordOffsets={wordOffsets}
-                    />
-                  )}
+                      };
+
+                      const sharedProps = {
+                        ref: carouselRef,
+                        poems: carouselPoems,
+                        currentIndex: carouselIndex,
+                        onSlideChange: handleSlideChange,
+                        darkMode,
+                        showTranslation,
+                        showTransliteration,
+                        textScale,
+                        currentFontClass,
+                        POEM_META,
+                        DESIGN,
+                        onLoadMore: handleLoadMore,
+                        highlightStyle,
+                        activeVersePairs: versePairs,
+                        wordRefs,
+                        wordOffsets,
+                      };
+
+                      return FEATURES.verticalFeed ? (
+                        <PoemFeed {...sharedProps} />
+                      ) : (
+                        <PoemCarousel {...sharedProps} />
+                      );
+                    })()}
                 </div>
               </div>
             </div>

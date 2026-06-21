@@ -20,6 +20,8 @@ import { DESIGN, POEM_META } from '../../constants/index.js';
  *   showTransliteration {boolean}
  *   textScale     {number}
  *   currentFontClass {string}
+ *   revealStyle   {string}   — 'aurora' (GSAP blur reveal) | 'simple' (CSS fade)
+ *   onRevealStyleChange {Function} — called when user picks a different style
  *   // TTS highlight props (forwarded from app.jsx when isActive)
  *   highlightStyle   {string}
  *   activeVersePairs {Array}
@@ -36,6 +38,8 @@ const PoemReader = memo(function PoemReader({
   showTransliteration = false,
   textScale = 1,
   currentFontClass = 'font-amiri',
+  revealStyle = 'aurora',
+  onRevealStyleChange,
   highlightStyle = 'none',
   activeVersePairs = [],
   wordRefs = [],
@@ -69,11 +73,71 @@ const PoemReader = memo(function PoemReader({
 
   return (
     <div
-      className="flex flex-col items-center w-full h-full px-4 md:px-20 py-4 text-center overflow-y-auto"
+      className="relative flex flex-col items-center w-full h-full px-4 md:px-20 py-4 text-center overflow-y-auto"
       data-testid="poem-reader"
       data-poem-id={poem?.id}
     >
-      <div className="w-full max-w-4xl">
+      {/* Aurora ambient orbs — breathing gold + lapis gradients behind the poem card */}
+      {revealStyle === 'aurora' && (
+        <div
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
+          style={{ overflow: 'hidden', zIndex: 0 }}
+        >
+          <motion.div
+            animate={{ scale: [1, 1.18, 1] }}
+            transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
+            style={{
+              position: 'absolute',
+              top: '-15%',
+              left: '-5%',
+              width: '55%',
+              height: '55%',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(197,160,89,0.22) 0%, transparent 68%)',
+              filter: 'blur(48px)',
+            }}
+          />
+          <motion.div
+            animate={{ scale: [1, 1.28, 1], x: ['0%', '6%', '0%'] }}
+            transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 1.4 }}
+            style={{
+              position: 'absolute',
+              bottom: '-15%',
+              right: '-5%',
+              width: '65%',
+              height: '65%',
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(46,80,144,0.26) 0%, transparent 68%)',
+              filter: 'blur(56px)',
+            }}
+          />
+        </div>
+      )}
+
+      <div className="relative z-10 w-full max-w-4xl">
+        {/* Style selector — Aurora / Simple */}
+        {isActive && onRevealStyleChange && (
+          <div className="flex justify-center gap-2 mb-3" dir="ltr">
+            {['aurora', 'simple'].map((style) => (
+              <button
+                key={style}
+                onClick={() => onRevealStyleChange(style)}
+                aria-label={`Switch to ${style} reveal style`}
+                aria-pressed={revealStyle === style}
+                className={[
+                  'px-3 py-0.5 rounded-full border font-brand-en text-[0.68rem] tracking-widest uppercase cursor-pointer transition-all duration-200 active:scale-95',
+                  revealStyle === style
+                    ? 'border-gold text-gold bg-gold/10'
+                    : 'border-gold/25 text-gold/40 hover:border-gold/40 hover:text-gold/60',
+                ].join(' ')}
+              >
+                {style === 'aurora' ? '✦ Aurora' : '○ Simple'}
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* Card box wrapping all poem content */}
         <div
           className="rounded-2xl px-6 py-6 md:px-10 md:py-8"
@@ -139,6 +203,7 @@ const PoemReader = memo(function PoemReader({
                   showTransliteration={showTransliteration}
                   textScale={textScale}
                   currentFontClass={currentFontClass}
+                  revealStyle={revealStyle}
                   data-testid={`stanza-${stanzaIdx}`}
                 />
               ))}
@@ -219,6 +284,7 @@ const PoemReader = memo(function PoemReader({
         </div>
         {/* end card box */}
       </div>
+      {/* end relative z-10 */}
     </div>
   );
 });

@@ -54,9 +54,10 @@ const PoemFeed = forwardRef(function PoemFeed(
     loop: false,
     startIndex: currentIndex,
     duration: 20,
-    // Prevent horizontal drag from accidentally triggering vertical scroll
     watchDrag: true,
   });
+
+  const [revealStyle, setRevealStyle] = useState('aurora');
 
   useImperativeHandle(
     ref,
@@ -136,15 +137,18 @@ const PoemFeed = forwardRef(function PoemFeed(
         className="overflow-hidden w-full"
         role="region"
         aria-label="Poem feed"
-        style={{ touchAction: 'pan-y', height: 'calc(100dvh - 220px)' }}
+        style={{ touchAction: 'none', height: 'calc(100dvh - 220px)' }}
       >
-        <div className="flex flex-col" style={{ backfaceVisibility: 'hidden', height: '100%' }}>
+        {/* touchAction:none lets Embla own ALL pointer events so short taps fire as
+            clicks (triggering stanza reveal) and long drags navigate between poems.
+            height:'auto' (no explicit height) lets the flex column grow to N slides. */}
+        <div className="flex flex-col" style={{ backfaceVisibility: 'hidden' }}>
           {poems.map((poem, slideIdx) => {
             const isActive = slideIdx === currentIndex;
             return (
               <div
                 key={poem.id ?? slideIdx}
-                className="flex-shrink-0 w-full overflow-y-auto"
+                className="flex-shrink-0 w-full overflow-hidden"
                 style={{ height: 'calc(100dvh - 220px)' }}
               >
                 <PoemReader
@@ -160,6 +164,8 @@ const PoemFeed = forwardRef(function PoemFeed(
                   wordRefs={isActive ? wordRefs : []}
                   wordOffsets={isActive ? wordOffsets : []}
                   onRevealAllReady={(fn) => handleRevealAllReady(poem.id, fn)}
+                  revealStyle={revealStyle}
+                  onRevealStyleChange={setRevealStyle}
                 />
               </div>
             );

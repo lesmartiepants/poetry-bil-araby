@@ -53,7 +53,7 @@ export const CATEGORY_MAP = {
 const initialState = {
   darkMode: true,
   font: 'Amiri',
-  textSize: 2, // 0=S, 1=M, 2=L, 3=XL
+  textSize: 0, // 0=S, 1=M, 2=L, 3=XL — default Small to match aurora mockup on mobile
   showTranslation: true,
   showTransliteration: false,
   showDebugLogs: FEATURES.debug,

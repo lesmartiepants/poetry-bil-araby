@@ -116,39 +116,8 @@ const PoemReader = memo(function PoemReader({
       )}
 
       <div className="relative z-10 w-full max-w-4xl">
-        {/* Style selector — Aurora / Simple */}
-        {isActive && onRevealStyleChange && (
-          <div className="flex justify-center gap-2 mb-3" dir="ltr">
-            {['aurora', 'simple'].map((style) => (
-              <button
-                key={style}
-                onClick={() => onRevealStyleChange(style)}
-                aria-label={`Switch to ${style} reveal style`}
-                aria-pressed={revealStyle === style}
-                className={[
-                  'px-3 py-0.5 rounded-full border font-brand-en text-[0.68rem] tracking-widest uppercase cursor-pointer transition-all duration-200 active:scale-95',
-                  revealStyle === style
-                    ? 'border-gold text-gold bg-gold/10'
-                    : 'border-gold/25 text-gold/40 hover:border-gold/40 hover:text-gold/60',
-                ].join(' ')}
-              >
-                {style === 'aurora' ? '✦ Aurora' : '○ Simple'}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Card box wrapping all poem content */}
-        <div
-          className="rounded-2xl px-6 py-6 md:px-10 md:py-8"
-          style={{
-            background: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-            border: `1px solid ${darkMode ? 'rgba(197,160,89,0.15)' : 'rgba(139,100,48,0.12)'}`,
-            boxShadow: darkMode
-              ? '0 4px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05)'
-              : '0 4px 24px rgba(0,0,0,0.08), inset 0 1px 0 rgba(255,255,255,0.8)',
-          }}
-        >
+        {/* Poem content — open layout matching aurora mockup (no glass card, no style toggle) */}
+        <div className="px-2 py-2 md:px-4 md:py-4">
           {useHighlight ? (
             // TTS is playing — show all verses with word highlighting
             <div className={`flex flex-col gap-5 md:gap-7 tts-style-${highlightStyle}`}>

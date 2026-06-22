@@ -57,8 +57,6 @@ const PoemFeed = forwardRef(function PoemFeed(
     watchDrag: true,
   });
 
-  const [revealStyle, setRevealStyle] = useState('aurora');
-
   useImperativeHandle(
     ref,
     () => ({
@@ -164,8 +162,7 @@ const PoemFeed = forwardRef(function PoemFeed(
                   wordRefs={isActive ? wordRefs : []}
                   wordOffsets={isActive ? wordOffsets : []}
                   onRevealAllReady={(fn) => handleRevealAllReady(poem.id, fn)}
-                  revealStyle={revealStyle}
-                  onRevealStyleChange={setRevealStyle}
+                  revealStyle="aurora"
                 />
               </div>
             );

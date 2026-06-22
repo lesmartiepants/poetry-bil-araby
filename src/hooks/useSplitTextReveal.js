@@ -15,30 +15,41 @@ const prefersReducedMotion = () => reducedMotionMQ?.matches ?? false;
 /**
  * useSplitTextReveal — drives a word-by-word blur-up cascade for one stanza DOM node.
  *
+ * Implements the Aurora Bloom reveal pattern:
+ * - Each Arabic line (row) cascades after the previous with a lineDelay gap
+ * - Within each line, words animate right-to-left (Arabic reading order: first DOM
+ *   word = rightmost visual position in RTL) via default stagger from: 'start'
+ * - Uses expo.out easing and a 12px → 0 blur for the aurora sparkle effect
+ *
  * @param {boolean} active  — trigger the reveal animation
  * @param {Object}  options
- * @param {number}  options.stagger  — seconds between each word (default 0.04)
- * @param {number}  options.duration — per-word duration in seconds (default 0.5)
- * @param {boolean} options.skip     — permanently bypass (e.g. user scrolled past)
+ * @param {number}  options.stagger   — seconds between each word (default 0.05)
+ * @param {number}  options.duration  — per-word fade duration in seconds (default 0.7)
+ * @param {number}  options.lineDelay — delay between each row/line (default 0.15)
+ * @param {boolean} options.skip      — permanently bypass (e.g. user scrolled past)
  *
  * @returns {{ containerRef: React.RefObject }} — attach to the stanza container div
  */
-export function useSplitTextReveal(active, { stagger = 0.04, duration = 0.5, skip = false } = {}) {
+export function useSplitTextReveal(
+  active,
+  { stagger = 0.05, duration = 0.7, lineDelay = 0.15, skip = false } = {}
+) {
   const containerRef = useRef(null);
-  const splitRef = useRef(null);
+  // Array of SplitText instances (one per line) — cleaned up on unmount
+  const splitsRef = useRef([]);
   const hasRunRef = useRef(false);
 
-  // Clean up split on unmount
+  // Clean up all splits on unmount
   useEffect(() => {
     return () => {
-      if (splitRef.current) {
+      splitsRef.current.forEach((s) => {
         try {
-          splitRef.current.revert();
+          s.revert();
         } catch {
           /* already reverted */
         }
-        splitRef.current = null;
-      }
+      });
+      splitsRef.current = [];
     };
   }, []);
 
@@ -53,40 +64,57 @@ export function useSplitTextReveal(active, { stagger = 0.04, duration = 0.5, ski
         return;
       }
 
-      // Split Arabic text by words only (chars would break RTL ligatures)
-      const wordEls = containerRef.current.querySelectorAll('[data-split-target]');
-      if (wordEls.length === 0) {
+      // Each [data-split-target] is one Arabic line (row) within the stanza
+      const lineEls = containerRef.current.querySelectorAll('[data-split-target]');
+      if (lineEls.length === 0) {
         // Fallback: fade the whole container
         gsap.fromTo(containerRef.current, { opacity: 0 }, { opacity: 1, duration: 0.4 });
         return;
       }
 
       try {
-        splitRef.current = new SplitText(wordEls, { type: 'words', wordsClass: 'gsap-word' });
-        const words = splitRef.current.words;
-        if (!words || words.length === 0) {
-          gsap.fromTo(containerRef.current, { opacity: 0 }, { opacity: 1, duration: 0.4 });
-          return;
-        }
+        const splits = [];
 
-        // Initial hidden state
-        gsap.set(words, { opacity: 0, filter: 'blur(8px)', y: 6 });
+        lineEls.forEach((lineEl, lineIdx) => {
+          // Split each line into words; 'words' mode preserves RTL Arabic ligatures
+          const split = new SplitText(lineEl, { type: 'words', wordsClass: 'gsap-word' });
+          splits.push(split);
 
-        gsap.to(words, {
-          opacity: 1,
-          filter: 'blur(0px)',
-          y: 0,
-          duration,
-          stagger,
-          ease: 'power2.out',
-          onComplete: () => {
-            // Revert after animation so DOM is clean for re-renders
-            if (splitRef.current) {
-              splitRef.current.revert();
-              splitRef.current = null;
-            }
-          },
+          const words = split.words;
+          if (!words || words.length === 0) return;
+
+          // Start invisible with bloom blur for aurora sparkle
+          gsap.set(words, { opacity: 0, filter: 'blur(12px)', y: 8 });
+
+          // Animate words right-to-left (Arabic reading order):
+          // In a dir="rtl" element, DOM index 0 = first Arabic word = rightmost visual.
+          // stagger from: 'start' (default) → index 0 animates first → right-to-left visually.
+          gsap.to(words, {
+            opacity: 1,
+            filter: 'blur(0px)',
+            y: 0,
+            duration,
+            stagger: { each: stagger, from: 'start' },
+            ease: 'expo.out',
+            delay: lineIdx * lineDelay,
+            onComplete:
+              lineIdx === lineEls.length - 1
+                ? () => {
+                    // Revert all splits after last line finishes so DOM stays clean
+                    splits.forEach((s) => {
+                      try {
+                        s.revert();
+                      } catch {
+                        /* already reverted */
+                      }
+                    });
+                    splitsRef.current = [];
+                  }
+                : undefined,
+          });
         });
+
+        splitsRef.current = splits;
       } catch (err) {
         // SplitText might fail on unusual Arabic text — fall back gracefully
         if (FEATURES.logging) console.warn('[StanzaReveal] SplitText fallback:', err);

@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useSplitTextReveal } from '../../hooks/useSplitTextReveal.js';
 import { transliterate } from '../../utils/transliterate.js';
@@ -36,25 +36,22 @@ const StanzaReveal = memo(function StanzaReveal({
   'data-testid': testId,
 }) {
   const { containerRef } = useSplitTextReveal(active, {
-    stagger: 0.035,
-    duration: 0.5,
     skip: revealStyle !== 'aurora',
+    // Use aurora bloom defaults: stagger 0.05, duration 0.7, lineDelay 0.15
   });
 
-  return (
-    <motion.div
-      ref={containerRef}
-      data-testid={testId}
-      initial={{ opacity: 0, y: revealStyle === 'simple' ? 12 : 0 }}
-      animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: 0 }}
-      transition={
-        revealStyle === 'aurora'
-          ? { duration: 0.15 } // GSAP handles word-level animation; container fades in fast
-          : { duration: 0.5, ease: 'easeOut' } // simple: elegant fade-up
-      }
-      className={`flex flex-col gap-5 md:gap-7 ${active ? '' : 'pointer-events-none'}`}
-      aria-hidden={!active}
-    >
+  // Outer wrapper ref — applies CSS opacity directly so inactive stanzas are always
+  // hidden regardless of framer-motion behaviour (framer may skip opacity:0 when
+  // initial === animate target, leaving the element visible at default opacity:1).
+  const wrapperRef = useRef(null);
+  useEffect(() => {
+    if (!wrapperRef.current) return;
+    wrapperRef.current.style.opacity = active ? '' : '0';
+    wrapperRef.current.style.pointerEvents = active ? '' : 'none';
+  }, [active]);
+
+  const verses = (
+    <>
       {pairs.map((pair, idx) => (
         <div key={idx} className="flex flex-col gap-0.5">
           {/* Arabic verse — mark for SplitText targeting */}
@@ -99,7 +96,36 @@ const StanzaReveal = memo(function StanzaReveal({
           )}
         </div>
       ))}
-    </motion.div>
+    </>
+  );
+
+  return (
+    // Outer div — starts hidden via inline style; useEffect syncs CSS on active change.
+    <div
+      ref={wrapperRef}
+      data-testid={testId}
+      aria-hidden={!active}
+      style={{ opacity: active ? undefined : 0, pointerEvents: active ? undefined : 'none' }}
+      className="flex flex-col gap-5 md:gap-7"
+    >
+      {revealStyle === 'aurora' ? (
+        // Aurora: GSAP drives word-level blur-up; inner div is the GSAP scope container
+        <div ref={containerRef} className="flex flex-col gap-5 md:gap-7">
+          {verses}
+        </div>
+      ) : (
+        // Simple: framer-motion fade-up on the whole stanza
+        <motion.div
+          ref={containerRef}
+          initial={{ opacity: 0, y: 12 }}
+          animate={active ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+          className="flex flex-col gap-5 md:gap-7"
+        >
+          {verses}
+        </motion.div>
+      )}
+    </div>
   );
 });
 

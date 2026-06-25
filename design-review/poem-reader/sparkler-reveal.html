@@ -13,7 +13,7 @@
     --gold:#c5a059; --gold-bright:#d4b463; --amber:#e8923a; --ember:#c2410c;
     --bg:#0a0a0c; --bg2:#101016;
     --text:rgba(236,232,224,.94); --muted:rgba(236,232,224,.4);
-    --unit-h: clamp(85px, 13.5vh, 109px);   /* grows with the +20% verse so inter-line whitespace stays constant */
+    --unit-h: clamp(89px, 14vh, 114px);   /* grows with the verse so inter-line whitespace stays constant */
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
@@ -42,7 +42,7 @@
   .track{position:absolute;left:0;right:0;top:0;will-change:transform}
   .unit{height:var(--unit-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.08rem;text-align:center}
   .unit .ar{font-family:'Amiri',serif;direction:rtl;color:var(--text);line-height:1.45;white-space:nowrap;
-    font-size:clamp(1.38rem,5.2vw,1.94rem);  /* fitLine() shrinks only if a verse would overflow */
+    font-size:clamp(1.52rem,5.7vw,2.13rem);  /* fitLine() shrinks only if a verse would overflow */
     clip-path:inset(0 0 0 100%);             /* hidden until ignited (revealed right→left) */
     text-shadow:0 0 0 transparent;will-change:clip-path}
   .unit .en{font-family:'Cormorant Garamond',serif;font-style:italic;direction:ltr;color:rgba(236,232,224,.62);white-space:nowrap;
@@ -85,8 +85,7 @@
 </head>
 <body>
 <div id="feed"></div>
-<div id="switch"><span data-m="header" class="seg on">Header</span><span data-m="top" class="seg">Top</span></div>
-<div id="footer">Sparkler Reveal — tap to read · pull up for the next poem · try the meta layouts ↖</div>
+<div id="footer">Sparkler Reveal — tap to read · pull up for the next poem</div>
 
 <script>
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -347,9 +346,9 @@ const H = () => window.innerHeight;
 function setFeed(y){ feedY=y; feed.style.transform = `translate3d(0,${-y}px,0)`; }
 function goCard(idx){
   idx = Math.max(0, Math.min(cards.length-1, idx));
-  const changed = idx !== cur; cur = idx;
+  const changed = idx !== cur; const prev = cur; cur = idx;
   gsap.to({y:feedY},{y:cur*H(),duration:.85,ease:'power4.out',onUpdate(){setFeed(this.targets()[0].y);}});
-  if (changed) controllers[cur].start();
+  if (changed){ controllers[prev].reset(); controllers[cur].reset(); controllers[cur].start(); } // each poem starts its reveal over
 }
 
 /* gesture: tap = advance reveal; vertical pull = magnetic next/prev */

@@ -2166,6 +2166,21 @@ export default function DiwanApp() {
       />
 
       {/* Design Review + Bug — stacked bottom-left utility buttons */}
+      {/* TEMP: jump to the poem-reader prototype in design-review (remove before launch) */}
+      <a
+        href="/design-review/poem-reader/landing-reveal.html"
+        className="fixed z-[200] left-2 bottom-2 px-3 py-1.5 rounded-full text-xs font-brand-en no-underline backdrop-blur-xl border transition-all"
+        style={{
+          borderColor: 'var(--gold)',
+          color: 'var(--gold)',
+          background: darkMode ? 'rgba(12,12,14,0.6)' : 'rgba(253,252,248,0.7)',
+        }}
+        title="Open the Poem Reader prototype"
+        aria-label="Open poem reader prototype"
+      >
+        ✦ Poem Reader
+      </a>
+
       {FEATURES.designReview && (
         <div
           className="fixed z-[200] flex flex-col items-center gap-1"

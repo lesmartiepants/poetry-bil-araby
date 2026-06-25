@@ -28,11 +28,13 @@
     align-items:center;justify-content:center;overflow:hidden;cursor:pointer;user-select:none}
 
   /* compact meta — small, quiet */
-  .meta{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:0;right:0;
-    display:flex;flex-direction:column;align-items:center;gap:2px;z-index:5;pointer-events:none;direction:rtl;
-    opacity:0}
-  .meta .t{font-family:'Reem Kufi',sans-serif;font-size:clamp(.95rem,3.6vw,1.2rem);color:var(--gold-bright);letter-spacing:.01em}
-  .meta .p{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(.72rem,2.8vw,.9rem);color:var(--muted);direction:ltr}
+  .meta{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:50%;
+    display:flex;flex-direction:column;align-items:center;gap:1px;z-index:5;pointer-events:none;
+    opacity:0;white-space:nowrap}
+  .meta .t-ar{font-family:'Reem Kufi',sans-serif;direction:rtl;font-size:clamp(1.05rem,4.4vw,1.45rem);color:var(--gold-bright);letter-spacing:.01em}
+  .meta .t-en{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(.76rem,3vw,1rem);color:rgba(212,180,99,.85);margin-top:1px}
+  .meta .byline{display:flex;gap:.4rem;align-items:center;font-family:'Cormorant Garamond',serif;font-size:clamp(.64rem,2.6vw,.8rem);color:var(--muted);direction:ltr;margin-top:2px}
+  .meta .byline .dot{opacity:.5}
 
   /* reveal stage — masks to exactly 4 line-units */
   .stage{position:relative;width:min(760px,92vw);height:calc(var(--unit-h) * 4);overflow:hidden;z-index:2}
@@ -73,7 +75,7 @@
 
   #footer{position:fixed;bottom:6px;right:12px;z-index:9;color:var(--muted);font-style:italic;font-size:.66rem;opacity:.5;direction:ltr}
 
-  #switch{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;z-index:9;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(197,160,89,.25);backdrop-filter:blur(8px);direction:ltr}
+  #switch{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:10px;z-index:9;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(197,160,89,.25);backdrop-filter:blur(8px);direction:ltr}
   #switch .seg{font-family:'Cormorant Garamond',serif;font-size:.7rem;color:var(--muted);padding:4px 10px;border-radius:999px;cursor:pointer}
   #switch .seg.on{background:var(--gold);color:#1a1408}
 
@@ -87,10 +89,11 @@
 
 <script>
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const SPARK_COLORS = ['#ffffff','#ffe9b0','#ffd277','#d4b463','#e8923a','#c2410c'];
+// shiny gold → white-hot only (no amber/ember/multicolour)
+const SPARK_COLORS = ['#ffffff','#fff6da','#ffe6a3','#ffd277','#e9c069'];
 
 const POEMS = [
-  { title:'زوال ملك الدنيا', poet:'Abu Ishaq al-Ilbiri', lines:[
+  { titleAr:'زوال ملك الدنيا', titleEn:'The Passing of Earthly Kingship', poetAr:'أبو إسحاق الإلبيري', poetEn:'Abu Ishaq al-Ilbiri', lines:[
     {ar:'أَيْنَ المُلُوكُ وَأَيْنَ مَا جَمَعُوا', en:'Where are the kings, and all they amassed,'},
     {ar:'ذَخَرُوهُ مِنْ ذَهَبِ الْمَتَاعِ الذَّاهِبِ', en:'the gold they hoarded — wealth that passes?'},
     {ar:'وَمِنَ السَّوَابِغِ وَالصَّوَارِمِ وَالقَنَا', en:'Where are the coats of mail, the swords, the lances,'},
@@ -102,7 +105,7 @@ const POEMS = [
     {ar:'قَصَفَتْهُمْ رِيحُ الرَّدَى وَرَمَتْهُمْ', en:'The wind of doom snapped them; they fell,'},
     {ar:'كَفُّ الْمَنُونِ بِكُلِّ سَهْمٍ صَائِبٍ', en:'struck by fate with every unerring arrow.'},
   ]},
-  { title:'جدول ونسيم', poet:'Abu al-Baqa al-Rundi', lines:[
+  { titleAr:'جدول ونسيم', titleEn:'Brook & Breeze', poetAr:'أبو البقاء الرندي', poetEn:'Abu al-Baqa al-Rundi', lines:[
     {ar:'وَجَدْوَلٍ كُلَّمَا مَرَّ النَّسِيمُ بِهِ', en:'A brook — whenever the breeze passed over it,'},
     {ar:'كَسَاهُ دَرْعًا لَهَا حَبَابُهُ حُلَقُ', en:'it clothed it in mail whose bubbles were rings.'},
     {ar:'حَتَّى إِذَا انْطَبَعَتْ لَيْلًا بِهِ شُهْبُ', en:'Until, when stars were stamped on it at night,'},
@@ -116,7 +119,11 @@ const cards = POEMS.map((poem, pi) => {
   const card = document.createElement('section');
   card.className = 'card'; card.dataset.pi = pi;
   card.innerHTML = `
-    <div class="meta"><div class="t" lang="ar">${poem.title}</div><div class="p">${poem.poet}</div></div>
+    <div class="meta">
+      <div class="t-ar" lang="ar">${poem.titleAr}</div>
+      <div class="t-en">${poem.titleEn}</div>
+      <div class="byline"><span lang="ar">${poem.poetAr}</span><span class="dot">·</span><span>${poem.poetEn}</span></div>
+    </div>
     <div class="stage">
       <div class="track"></div>
       <div class="head"></div>
@@ -156,6 +163,8 @@ function makeController(card, poem) {
   const head_state = { x:0, y:0, alive:false };
   let particles = [];
   let activeTween = null;
+  let activeMetaTween = null;
+  const wait = (ms) => new Promise(r=>setTimeout(r,ms));
 
   // dots = one per page
   for (let i=0;i<pages;i++){ const d=document.createElement('div'); d.className='dot'; dotsEl.appendChild(d); }
@@ -171,26 +180,37 @@ function makeController(card, poem) {
     const dt = Math.min(40, now - last); last = now;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     if (head_state.alive && !reduce){
-      for (let k=0;k<4;k++){
-        const ang = Math.random()*Math.PI*2;
-        const sp = 0.02 + Math.random()*0.10;
-        particles.push({ x:head_state.x, y:head_state.y,
-          vx:Math.cos(ang)*sp*60, vy:Math.sin(ang)*sp*60 - 0.6,
-          life:1, decay:0.0018 + Math.random()*0.0022,
-          size:0.6 + Math.random()*1.8, color:SPARK_COLORS[(Math.random()*SPARK_COLORS.length)|0] });
+      for (let k=0;k<5;k++){
+        // emit into the LEFT semicircle — the reveal travels right→left, so sparks
+        // spray forward (toward the reveal) and rise like embers, not a full ring.
+        const ang = Math.PI*0.5 + Math.random()*Math.PI;     // 90°→270° (left half)
+        const sp  = 0.7 + Math.random()*1.8;
+        particles.push({ x:head_state.x + (Math.random()-0.5)*3, y:head_state.y + (Math.random()-0.5)*3,
+          vx:Math.cos(ang)*sp - 0.6, vy:Math.sin(ang)*sp - 0.9,
+          life:1, decay:0.010 + Math.random()*0.016,
+          size:0.9 + Math.random()*1.8, tw:Math.random()*6.28,
+          color:SPARK_COLORS[(Math.random()*SPARK_COLORS.length)|0] });
       }
     }
     ctx.globalCompositeOperation = 'lighter';
     for (let i=particles.length-1;i>=0;i--){
       const p = particles[i];
       p.life -= p.decay*dt; if (p.life<=0){ particles.splice(i,1); continue; }
-      p.vy += 0.045*dt*0.06;           // gravity
+      p.vy += 0.013*dt;                                       // gentle gravity
       p.x += p.vx*dt*0.06; p.y += p.vy*dt*0.06;
-      ctx.globalAlpha = Math.max(0,p.life);
-      ctx.fillStyle = p.color;
-      ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,Math.PI*2); ctx.fill();
+      const tw = 0.45 + 0.55*Math.sin(p.tw + now*0.018);      // twinkle
+      const s  = p.size * (0.5 + 0.7*p.life);
+      ctx.globalAlpha = Math.max(0, p.life) * tw;
+      ctx.strokeStyle = p.color; ctx.fillStyle = p.color;
+      ctx.shadowBlur = 6; ctx.shadowColor = p.color;
+      ctx.lineWidth = Math.max(0.5, s*0.34);
+      ctx.beginPath();                                        // 4-point sparkle (twinkles)
+      ctx.moveTo(p.x - s*1.7, p.y); ctx.lineTo(p.x + s*1.7, p.y);
+      ctx.moveTo(p.x, p.y - s*1.7); ctx.lineTo(p.x, p.y + s*1.7);
+      ctx.stroke();
+      ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(0.4, s*0.5), 0, 6.283); ctx.fill();
     }
-    ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
+    ctx.shadowBlur=0; ctx.globalAlpha=1; ctx.globalCompositeOperation='source-over';
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
@@ -230,26 +250,35 @@ function makeController(card, poem) {
 
   async function start(){
     hidePrompt();
+    busy = true;                                   // block taps through the whole intro + first reveal
     const mode = window.META_MODE || 'top';
-    gsap.set(meta,{clearProps:'transform'});
+    if (activeMetaTween) activeMetaTween.kill();
+    gsap.set(stage,{opacity:1});
+    gsap.set(meta,{left:'50%', xPercent:-50, x:0, y:0, scale:1, opacity:0,
+      top:'calc(env(safe-area-inset-top,0px) + 18px)'});
+
     if (mode === 'header'){
-      // C — show large & centred for a beat, then settle up into the top bar
-      gsap.set(meta,{opacity:0, y:Math.round(window.innerHeight*0.30), scale:1.7, transformOrigin:'center center'});
-      await gsapTo(meta,{opacity:1, duration:1.1, ease:'power2.out'});
-      await new Promise(r=>setTimeout(r,500));
-      await gsapTo(meta,{y:0, scale:1, duration:1.0, ease:'power3.inOut'});
+      // Show the title alone, centred — THEN move it up and let the poem take the space.
+      gsap.set(stage,{opacity:0});
+      gsap.set(meta,{y:Math.round(window.innerHeight*0.30), scale:1.6});
+      await gsapTo(meta,{opacity:1, duration:1.0, ease:'power2.out'});
+      await wait(1100);
+      await gsapTo(meta,{y:0, scale:1, duration:0.9, ease:'power3.inOut'});
+      await gsapTo(stage,{opacity:1, duration:0.5, ease:'power2.out'});
     } else {
-      gsap.set(meta,{opacity:0, y:0, scale:1, x:0});
       await gsapTo(meta,{opacity:1, duration:1.0, ease:'power2.out'});
     }
+
     await ignite(0); revealed=1; syncDots();
     if (mode === 'corner'){
-      // B — after the first line ignites, shrink the credit into the top corner
-      const rightX = Math.round(window.innerWidth/2 - meta.offsetWidth/2 - 14);
-      gsap.to(meta,{x:rightX, scale:.78, opacity:.72, duration:.9, ease:'power3.inOut', transformOrigin:'top right'});
+      // shrink the credit into the top-right corner once reading begins (content-width → it really travels)
+      activeMetaTween = gsap.to(meta,{ left:'100%', xPercent:-100, x:-14,
+        top:'calc(env(safe-area-inset-top,0px) + 14px)', scale:.7, opacity:.7,
+        duration:.9, ease:'power3.inOut' });
     }
-    await new Promise(r=>setTimeout(r,250));
+    await wait(250);
     await ignite(1); revealed=2; syncDots();
+    busy = false;
     showPrompt('tap to continue');
   }
 
@@ -280,9 +309,9 @@ function makeController(card, poem) {
   insightBtn.addEventListener('click',(e)=>{ e.stopPropagation(); insightBtn.textContent='✦ (insight panel would open here)'; });
 
   return { start, advance, reset(){ revealed=0; windowTop=0; busy=false; particles=[]; head_state.alive=false;
-    if(activeTween) activeTween.kill();
-    gsap.killTweensOf([track,meta,head]);
-    head.style.opacity=0; gsap.set(track,{y:0}); gsap.set(meta,{clearProps:'all'}); meta.style.opacity=0;
+    if(activeTween) activeTween.kill(); if(activeMetaTween) activeMetaTween.kill();
+    gsap.killTweensOf([track,meta,head,stage]);
+    head.style.opacity=0; gsap.set(track,{y:0}); gsap.set(stage,{opacity:1}); gsap.set(meta,{clearProps:'all'}); meta.style.opacity=0;
     units.forEach(u=>{const ar=u.querySelector('.ar'),en=u.querySelector('.en'); gsap.killTweensOf([ar,en]); u.classList.remove('lit'); ar.style.clipPath='inset(0 0 0 100%)'; en.style.opacity=0;});
     dots.forEach(d=>d.classList.remove('on')); insightBtn.classList.remove('show'); card.querySelector('.scrollcue').classList.remove('show'); } };
 }

@@ -13,7 +13,7 @@
     --gold:#c5a059; --gold-bright:#d4b463; --amber:#e8923a; --ember:#c2410c;
     --bg:#0a0a0c; --bg2:#101016;
     --text:rgba(236,232,224,.94); --muted:rgba(236,232,224,.4);
-    --unit-h: clamp(132px, 21vh, 162px);
+    --unit-h: clamp(72px, 12vh, 96px);
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
@@ -40,22 +40,22 @@
   /* reveal stage — masks to exactly 4 line-units */
   .stage{position:relative;width:min(760px,92vw);height:calc(var(--unit-h) * 4);overflow:hidden;z-index:2}
   .track{position:absolute;left:0;right:0;top:0;will-change:transform}
-  .unit{height:var(--unit-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;text-align:center}
-  .unit .ar{font-family:'Amiri',serif;direction:rtl;color:var(--text);line-height:1.55;white-space:nowrap;
-    font-size:clamp(1.9rem,7vw,2.7rem);      /* ~2× — fitLine() shrinks only if a verse would overflow */
+  .unit{height:var(--unit-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.08rem;text-align:center}
+  .unit .ar{font-family:'Amiri',serif;direction:rtl;color:var(--text);line-height:1.45;white-space:nowrap;
+    font-size:clamp(1.15rem,4.3vw,1.62rem);  /* fitLine() shrinks only if a verse would overflow */
     clip-path:inset(0 0 0 100%);             /* hidden until ignited (revealed right→left) */
     text-shadow:0 0 0 transparent;will-change:clip-path}
-  .unit .en{font-family:'Cormorant Garamond',serif;font-style:italic;direction:ltr;color:rgba(236,232,224,.66);white-space:nowrap;
-    font-size:clamp(1.7rem,6.4vw,2.3rem);line-height:1.25;opacity:0}  /* ~3× — near co-equal with the Arabic */
+  .unit .en{font-family:'Cormorant Garamond',serif;font-style:italic;direction:ltr;color:rgba(236,232,224,.62);white-space:nowrap;
+    font-size:clamp(1rem,3.9vw,1.4rem);line-height:1.2;opacity:0}
   .unit.lit .ar{text-shadow:0 0 18px rgba(212,180,99,.28)}
 
   /* sparkler head + canvas */
   .sparks{position:absolute;inset:0;z-index:3;pointer-events:none}
-  .head{position:absolute;top:0;left:0;width:30px;height:30px;margin:-15px 0 0 -15px;z-index:4;pointer-events:none;
+  .head{position:absolute;top:0;left:0;width:18px;height:18px;margin:-9px 0 0 -9px;z-index:4;pointer-events:none;
     opacity:0;will-change:transform,opacity;
-    background:radial-gradient(circle, #fff 0%, #ffe9b0 28%, rgba(212,180,99,.7) 50%, transparent 72%);
-    filter:blur(.5px) drop-shadow(0 0 10px rgba(255,210,120,.9));mix-blend-mode:screen}
-  .head::after{content:'';position:absolute;inset:9px;border-radius:50%;background:#fff;filter:blur(1px)}
+    background:radial-gradient(circle, #fff 0%, #ffe9b0 32%, rgba(212,180,99,.55) 54%, transparent 76%);
+    filter:blur(.4px) drop-shadow(0 0 6px rgba(255,210,120,.8));mix-blend-mode:screen}
+  .head::after{content:'';position:absolute;inset:6px;border-radius:50%;background:#fff;filter:blur(.7px)}
 
   /* progress + prompt */
   .dots{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 116px);left:0;right:0;display:flex;justify-content:center;gap:7px;z-index:5;direction:ltr}

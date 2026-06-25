@@ -44,6 +44,7 @@
     "@vercel/analytics": "^1.6.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
+    "driver.js": "^1.5.0",
     "embla-carousel-react": "^8.6.0",
     "express": "^5.2.1",
     "express-rate-limit": "^8.2.2",

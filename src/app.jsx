@@ -107,6 +107,7 @@ import PoemCarousel from './components/PoemCarousel.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
+import TourLauncher from './components/tour/TourLauncher.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
 import PlayControlsStrip from './components/PlayControlsStrip.jsx';
@@ -1752,6 +1753,7 @@ export default function DiwanApp() {
                       exit={{ opacity: 0, y: 8 }}
                       transition={{ duration: 0.2, ease: 'easeOut' }}
                       onClick={togglePlay}
+                      data-tour="listen"
                       aria-label="Start recitation"
                       className={`min-h-[44px] px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
                       style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
@@ -1845,6 +1847,7 @@ export default function DiwanApp() {
                     <>
                       <button
                         onClick={togglePlay}
+                        data-tour="listen"
                         aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
                         style={{ willChange: 'transform' }}
                         className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
@@ -1926,6 +1929,7 @@ export default function DiwanApp() {
                     }
                   }}
                   disabled={isFetching}
+                  data-tour="discover"
                   aria-label="Open discover"
                   className={`relative w-[46px] h-[46px] bg-transparent border-none cursor-pointer flex items-center justify-center rounded-full hover:scale-105 ${fireTapped ? 'fire-tap' : ''}`}
                   style={{
@@ -1947,6 +1951,7 @@ export default function DiwanApp() {
                   onClick={() =>
                     isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
                   }
+                  data-tour="save"
                   aria-label={isPoemSaved(displayedPoem) ? 'Unsave poem' : 'Save poem'}
                   className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                 >
@@ -1978,6 +1983,7 @@ export default function DiwanApp() {
                     }
                   }}
                   disabled={isInterpreting}
+                  data-tour="explain"
                   aria-label="Explain poem meaning"
                   className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${isInterpreting ? 'opacity-50' : ''}`}
                 >
@@ -2139,6 +2145,9 @@ export default function DiwanApp() {
           </Suspense>
         )}
       </AnimatePresence>
+
+      {/* Interactive walkthrough launcher — only once the splash is dismissed. */}
+      {FEATURES.tour && !showSplash && <TourLauncher />}
 
       {/* Share Card Modal */}
       {showShareCard && displayedPoem && (

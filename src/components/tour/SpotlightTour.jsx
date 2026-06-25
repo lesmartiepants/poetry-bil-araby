@@ -2,23 +2,28 @@ import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUIStore } from '../../stores/uiStore';
+import { useModalStore } from '../../stores/modalStore';
 
 /**
  * SpotlightTour — bespoke, on-brand walkthrough engine (no external library).
  *
- * Design goals (per product feedback):
- *  - The overlay NEVER blocks the page (pointer-events:none end-to-end), so the
- *    user genuinely taps the real Listen / Discover / Explain controls.
- *  - Steps don't auto-advance. Performing the real action UNLOCKS the Next
- *    button (which then pulses for attention); the user stays in control and
- *    can keep interacting (e.g. play → pause) before moving on.
- *  - The coachmark POPS into place at the target (no slow slide) and draws
- *    attention to itself with a gold glow + a pulsing ring on the target.
+ * Behavior:
+ *  - The overlay NEVER blocks the page (pointer-events:none), so the user
+ *    genuinely taps the real Listen / Discover / Explain controls.
+ *  - Steps don't auto-advance. Performing the real action UNLOCKS Next; the
+ *    user stays in control (e.g. play → pause) before moving on.
+ *  - The coachmark pops into place with a CONSTANT subtle glow (no flashing).
+ *    The only thing that flashes — subtly — is the ring around the action.
+ *  - The card sits fully ABOVE the control bar (never overlapping it). When a
+ *    step opens a tray (Discover), the card moves in front of the tray, centered
+ *    in the bottom two-thirds, and Next dismisses the tray.
  */
 
-const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
+// Above the Discover drawer (z-202) and everything else.
+const Z = 9999;
 const PAD = 8; // breathing room around the spotlighted element
-const GAP = 16; // distance between the element and the coachmark card
+const GAP = 18; // distance between the control bar / element and the card
+const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
 
 function measure(selector) {
   if (!selector) return null;
@@ -31,10 +36,10 @@ function measure(selector) {
 
 export default function SpotlightTour({ steps, onClose }) {
   const darkMode = useUIStore((s) => s.darkMode);
+  const discoverOpen = useModalStore((s) => s.discoverDrawer);
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState(null);
-  // Keys of steps whose real action the user has performed. Derived `unlocked`
-  // avoids resetting state in an effect on every step change.
+  const [barTop, setBarTop] = useState(null);
   const [actioned, setActioned] = useState(() => new Set());
   const rafRef = useRef(0);
 
@@ -43,6 +48,7 @@ export default function SpotlightTour({ steps, onClose }) {
   const total = steps.length;
   const needsAction = !!step?.advanceOn;
   const unlocked = !needsAction || actioned.has(step?.key);
+  const trayOpen = step?.tray === 'discover' && discoverOpen;
 
   const finish = useCallback(() => {
     try {
@@ -54,6 +60,10 @@ export default function SpotlightTour({ steps, onClose }) {
   }, [onClose]);
 
   const next = useCallback(() => {
+    // If this step opened a tray, dismiss it as we move on.
+    if (step?.tray === 'discover' && useModalStore.getState().discoverDrawer) {
+      useModalStore.getState().setDiscoverDrawer(false);
+    }
     setIndex((i) => {
       if (i >= steps.length - 1) {
         finish();
@@ -61,12 +71,11 @@ export default function SpotlightTour({ steps, onClose }) {
       }
       return i + 1;
     });
-  }, [steps.length, finish]);
+  }, [steps.length, finish, step]);
 
   const back = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
 
-  // Keep the app chrome awake: the idle timer hides the control bar after ~2s
-  // of no taps/keys, which would yank the very elements we're pointing at.
+  // Keep the app chrome awake (the idle timer would otherwise hide the bar).
   useEffect(() => {
     const id = setInterval(() => {
       window.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
@@ -74,13 +83,14 @@ export default function SpotlightTour({ steps, onClose }) {
     return () => clearInterval(id);
   }, []);
 
-  // Track the target's live position (the footer animates / the control morphs
-  // play↔pause), so the spotlight and card follow it every frame.
+  // Track the target + the control bar's top edge every frame.
   useLayoutEffect(() => {
     let active = true;
     const tick = () => {
       if (!active) return;
       setRect(measure(step?.target));
+      const bar = document.querySelector('[data-tour-anchor="controlbar"]');
+      setBarTop(bar ? bar.getBoundingClientRect().top : null);
       rafRef.current = requestAnimationFrame(tick);
     };
     tick();
@@ -90,8 +100,7 @@ export default function SpotlightTour({ steps, onClose }) {
     };
   }, [step?.target]);
 
-  // Dynamic unlock: when the user actually performs the action on the real
-  // control, light up the Next button instead of jumping ahead.
+  // Dynamic unlock: performing the real action lights up Next.
   useEffect(() => {
     if (!needsAction || !step?.target) return;
     const el = document.querySelector(step.target);
@@ -111,22 +120,21 @@ export default function SpotlightTour({ steps, onClose }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [finish, next, back, needsAction, unlocked]);
 
-  const centered = !rect;
+  // Layout mode: tray (centered in front of an open drawer) > spotlight > centered.
+  const mode = trayOpen ? 'tray' : rect ? 'spotlight' : 'centered';
 
   return createPortal(
-    // pointer-events:none on the root → every click falls through to the real
-    // app. Only the card (and the centered tap-catcher) opt back in.
     <div
-      className="fixed inset-0 z-[120]"
-      style={{ pointerEvents: 'none' }}
+      className="fixed inset-0"
+      style={{ zIndex: Z, pointerEvents: 'none' }}
       aria-live="polite"
       role="dialog"
       aria-label="App walkthrough"
     >
       <AnimatePresence>
-        {rect ? (
+        {mode === 'spotlight' ? (
           <Spotlight key="spot" rect={rect} />
-        ) : (
+        ) : mode === 'centered' ? (
           <motion.div
             key="scrim"
             className="absolute inset-0"
@@ -136,11 +144,11 @@ export default function SpotlightTour({ steps, onClose }) {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
           />
-        )}
+        ) : null}
       </AnimatePresence>
 
       {/* Centered intro/outro: a faint tap-catcher keeps focus on the card. */}
-      {centered && <div className="absolute inset-0" style={{ pointerEvents: 'auto' }} aria-hidden />}
+      {mode === 'centered' && <div className="absolute inset-0" style={{ pointerEvents: 'auto' }} aria-hidden />}
 
       <AnimatePresence mode="wait">
         <CoachCard
@@ -150,7 +158,9 @@ export default function SpotlightTour({ steps, onClose }) {
           total={total}
           isLast={isLast}
           darkMode={darkMode}
+          mode={mode}
           rect={rect}
+          barTop={barTop}
           locked={needsAction && !unlocked}
           unlocked={unlocked}
           onNext={next}
@@ -163,7 +173,7 @@ export default function SpotlightTour({ steps, onClose }) {
   );
 }
 
-/** Dim panels framing the target + a glowing, pulsing ring around it. */
+/** Dim panels framing the target + a SUBTLY pulsing ring (the only flash). */
 function Spotlight({ rect }) {
   const t = rect.top - PAD;
   const l = rect.left - PAD;
@@ -186,7 +196,6 @@ function Spotlight({ rect }) {
       {panel({ top: t, left: 0, width: Math.max(0, l), height: h })}
       {panel({ top: t, left: l + w, right: 0, height: h })}
       {panel({ top: t + h, left: 0, right: 0, bottom: 0 })}
-      {/* glowing, breathing ring — re-positions instantly (no layout slide) */}
       <motion.div
         style={{
           position: 'absolute',
@@ -195,23 +204,23 @@ function Spotlight({ rect }) {
           width: w,
           height: h,
           borderRadius: 16,
-          border: '1.5px solid rgba(197,160,89,0.95)',
+          border: '1.5px solid rgba(197,160,89,0.9)',
           pointerEvents: 'none',
         }}
         animate={{
           boxShadow: [
-            '0 0 0 1px rgba(197,160,89,0.25), 0 0 18px 2px rgba(197,160,89,0.30), inset 0 0 10px rgba(197,160,89,0.12)',
-            '0 0 0 1px rgba(197,160,89,0.45), 0 0 34px 8px rgba(197,160,89,0.55), inset 0 0 16px rgba(197,160,89,0.22)',
-            '0 0 0 1px rgba(197,160,89,0.25), 0 0 18px 2px rgba(197,160,89,0.30), inset 0 0 10px rgba(197,160,89,0.12)',
+            '0 0 14px 1px rgba(197,160,89,0.28), inset 0 0 8px rgba(197,160,89,0.10)',
+            '0 0 22px 3px rgba(197,160,89,0.42), inset 0 0 12px rgba(197,160,89,0.16)',
+            '0 0 14px 1px rgba(197,160,89,0.28), inset 0 0 8px rgba(197,160,89,0.10)',
           ],
         }}
-        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
       />
     </motion.div>
   );
 }
 
-function CoachCard({ step, index, total, isLast, darkMode, rect, locked, unlocked, onNext, onBack, onSkip }) {
+function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, locked, unlocked, onNext, onBack, onSkip }) {
   const [size, setSize] = useState({ w: 320, h: 200 });
   const ref = useRef(null);
 
@@ -220,9 +229,9 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, locked, unlocke
       const r = ref.current.getBoundingClientRect();
       setSize({ w: r.width, h: r.height });
     }
-  }, [index]);
+  }, [index, mode]);
 
-  const pos = computePosition(rect, size, step?.side, step?.align);
+  const pos = computePosition({ mode, rect, barTop, size, side: step?.side, align: step?.align });
 
   const surface = darkMode
     ? { bg: 'rgba(12,12,14,0.94)', text: '#e7e5e4', dim: 'rgba(231,229,228,0.62)' }
@@ -243,31 +252,14 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, locked, unlocke
         background: surface.bg,
         backdropFilter: 'blur(24px) saturate(150%)',
         WebkitBackdropFilter: 'blur(24px) saturate(150%)',
-        border: '1px solid rgba(197,160,89,0.28)',
+        border: '1px solid rgba(197,160,89,0.3)',
         borderRadius: 18,
         padding: '18px 18px 14px',
         color: surface.text,
+        // Constant, subtle gold glow — no flashing on the popup itself.
+        boxShadow: '0 0 28px rgba(197,160,89,0.16), 0 12px 40px rgba(0,0,0,0.55)',
       }}
     >
-      {/* Attention halo — a soft gold glow that breathes around the whole card. */}
-      <motion.div
-        aria-hidden
-        style={{
-          position: 'absolute',
-          inset: -1,
-          borderRadius: 18,
-          pointerEvents: 'none',
-        }}
-        animate={{
-          boxShadow: [
-            '0 0 22px rgba(197,160,89,0.10), 0 12px 40px rgba(0,0,0,0.55)',
-            '0 0 46px rgba(197,160,89,0.30), 0 12px 40px rgba(0,0,0,0.55)',
-            '0 0 22px rgba(197,160,89,0.10), 0 12px 40px rgba(0,0,0,0.55)',
-          ],
-        }}
-        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
-      />
-
       <button
         onClick={onSkip}
         aria-label="Close walkthrough"
@@ -281,7 +273,6 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, locked, unlocke
           cursor: 'pointer',
           fontSize: 18,
           lineHeight: 1,
-          zIndex: 1,
         }}
       >
         ×
@@ -319,22 +310,13 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, locked, unlocke
           {unlocked ? (
             <span style={{ fontSize: '0.9rem', lineHeight: 1 }}>✓</span>
           ) : (
-            <span
-              style={{
-                width: 6,
-                height: 6,
-                borderRadius: 999,
-                background: 'var(--gold)',
-                animation: 'tourPulse 1.4s ease-in-out infinite',
-              }}
-            />
+            <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--gold)', animation: 'tourPulse 1.4s ease-in-out infinite' }} />
           )}
           {locked ? step.hint : unlocked && step.advanceOn ? 'Done — tap Next' : step.hint}
         </div>
       )}
 
-      {/* Progress + controls */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, position: 'relative', zIndex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {Array.from({ length: total }).map((_, i) => (
             <span
@@ -355,20 +337,9 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, locked, unlocke
               Back
             </button>
           )}
-          <motion.button
-            onClick={locked ? undefined : onNext}
-            disabled={locked}
-            aria-disabled={locked}
-            style={{ ...goldBtn, ...(locked ? lockedBtn : null) }}
-            animate={
-              unlocked && step.advanceOn && !isLast
-                ? { scale: [1, 1.06, 1], boxShadow: ['0 0 0 rgba(197,160,89,0)', '0 0 18px rgba(197,160,89,0.6)', '0 0 0 rgba(197,160,89,0)'] }
-                : { scale: 1 }
-            }
-            transition={unlocked ? { duration: 1.4, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
-          >
+          <button onClick={locked ? undefined : onNext} disabled={locked} aria-disabled={locked} style={{ ...goldBtn, ...(locked ? lockedBtn : null) }}>
             {isLast ? 'Done' : 'Next'}
-          </motion.button>
+          </button>
         </div>
       </div>
 
@@ -388,13 +359,7 @@ const goldBtn = {
   cursor: 'pointer',
   fontWeight: 600,
 };
-
-const lockedBtn = {
-  background: 'rgba(197,160,89,0.18)',
-  color: 'rgba(231,229,228,0.4)',
-  cursor: 'not-allowed',
-};
-
+const lockedBtn = { background: 'rgba(197,160,89,0.18)', color: 'rgba(231,229,228,0.4)', cursor: 'not-allowed' };
 const ghostBtn = (surface) => ({
   fontFamily: "'Forum', serif",
   fontSize: '0.85rem',
@@ -407,10 +372,14 @@ const ghostBtn = (surface) => ({
 });
 
 /**
- * Place the card relative to the target on the requested side/align, clamped
- * into the viewport so it never covers the element it points at.
+ * Place the card.
+ *  - tray:   centered horizontally, centered within the bottom two-thirds.
+ *  - center: dead center (intro/outro).
+ *  - spotlight: beside the target on the requested side. For bottom controls
+ *    (side 'top') we anchor to the TOP of the control bar so the card clears the
+ *    whole bar instead of partially overlapping individual buttons.
  */
-function computePosition(rect, size, side = 'auto', align = 'center') {
+function computePosition({ mode, rect, barTop, size, side = 'auto', align = 'center' }) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const cardW = Math.min(340, vw - 32);
@@ -418,11 +387,14 @@ function computePosition(rect, size, side = 'auto', align = 'center') {
   const clampX = (x) => Math.min(Math.max(12, x), vw - cardW - 12);
   const clampY = (y) => Math.min(Math.max(12, y), vh - cardH - 12);
 
-  if (!rect || side === 'center') {
+  if (mode === 'tray') {
+    // Centered within the bottom two-thirds (its center sits at 2/3 height).
+    return { left: clampX(vw / 2 - cardW / 2), top: clampY((2 * vh) / 3 - cardH / 2) };
+  }
+  if (mode === 'centered' || !rect || side === 'center') {
     return { top: Math.max(24, vh / 2 - cardH / 2), left: Math.max(16, vw / 2 - cardW / 2) };
   }
 
-  // Resolve 'auto' to whichever vertical side has more room.
   let s = side;
   if (s === 'auto') s = rect.top > vh - rect.bottom ? 'top' : 'bottom';
 
@@ -435,8 +407,9 @@ function computePosition(rect, size, side = 'auto', align = 'center') {
     return { left: clampX(left), top: clampY(top) };
   }
 
-  // top / bottom
-  const top = s === 'top' ? rect.top - cardH - GAP : rect.bottom + GAP;
+  // top / bottom. For 'top', clear the whole control bar when we know its edge.
+  const refTop = s === 'top' && barTop != null ? barTop : rect.top;
+  const top = s === 'top' ? refTop - cardH - GAP : rect.bottom + GAP;
   let left;
   if (align === 'start') left = rect.left;
   else if (align === 'end') left = rect.right - cardW;

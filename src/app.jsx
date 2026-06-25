@@ -1717,6 +1717,7 @@ export default function DiwanApp() {
           />
 
           <motion.footer
+            data-tour-anchor="controlbar"
             className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom"
             animate={isIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
             transition={

@@ -68,13 +68,16 @@ export const TOUR_STEPS = [
     advanceOn: 'click',
     side: 'top',
     align: 'center',
+    // Opening Discover slides up a tray; the engine then centers the card in
+    // front of it and closes the tray on Next.
+    tray: 'discover',
   },
   {
     key: 'explain',
     target: '[data-tour="explain"]',
     arabic: 'اشرح',
     title: 'Understand the meaning',
-    body: 'Not sure what a verse means? Explain gives you an AI reading of the imagery, themes, and historical context.',
+    body: 'Explain helps you understand by explaining the imagery and poetic nuance of the poem.',
     hint: 'Tap for an explanation',
     advanceOn: 'click',
     side: 'top',

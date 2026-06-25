@@ -92,12 +92,12 @@ describe('SpotlightTour engine', () => {
 });
 
 describe('TourLauncher', () => {
-  it('shows the "Take a tour" chip and opens the engine chooser', async () => {
+  it('shows the "Take a tour" chip and launches the branded tour on click', async () => {
     render(<TourLauncher />);
     const chip = screen.getByRole('button', { name: 'Take a tour' });
     expect(chip).toBeInTheDocument();
     await userEvent.click(chip);
-    expect(screen.getByText('Branded spotlight')).toBeInTheDocument();
-    expect(screen.getByText('Classic guide')).toBeInTheDocument();
+    // SpotlightTour is lazy-loaded; its welcome card appears.
+    expect(await screen.findByText('Welcome to Poetry بالعربي')).toBeInTheDocument();
   });
 });

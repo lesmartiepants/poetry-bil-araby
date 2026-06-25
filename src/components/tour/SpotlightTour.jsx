@@ -6,17 +6,19 @@ import { useUIStore } from '../../stores/uiStore';
 /**
  * SpotlightTour — bespoke, on-brand walkthrough engine (no external library).
  *
- * Why this exists alongside DriverTour: it is fully styled in the app's
- * gold / glass language and is *dynamic* — the dim overlay never blocks the
- * page (pointer-events: none), so the user genuinely clicks the real Listen /
- * Discover / Explain controls. When a step declares `advanceOn`, performing
- * that real interaction auto-advances the tour. That is the "they actually
- * navigate the app" experience, as opposed to a passive Next-button slideshow.
+ * Design goals (per product feedback):
+ *  - The overlay NEVER blocks the page (pointer-events:none end-to-end), so the
+ *    user genuinely taps the real Listen / Discover / Explain controls.
+ *  - Steps don't auto-advance. Performing the real action UNLOCKS the Next
+ *    button (which then pulses for attention); the user stays in control and
+ *    can keep interacting (e.g. play → pause) before moving on.
+ *  - The coachmark POPS into place at the target (no slow slide) and draws
+ *    attention to itself with a gold glow + a pulsing ring on the target.
  */
 
-const EASE = [0.16, 1, 0.3, 1];
+const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
 const PAD = 8; // breathing room around the spotlighted element
-const GAP = 14; // distance between the element and the coachmark card
+const GAP = 16; // distance between the element and the coachmark card
 
 function measure(selector) {
   if (!selector) return null;
@@ -24,18 +26,23 @@ function measure(selector) {
   if (!el) return null;
   const r = el.getBoundingClientRect();
   if (r.width === 0 && r.height === 0) return null;
-  return { el, top: r.top, left: r.left, width: r.width, height: r.height, bottom: r.bottom, right: r.right };
+  return { top: r.top, left: r.left, width: r.width, height: r.height, bottom: r.bottom, right: r.right };
 }
 
 export default function SpotlightTour({ steps, onClose }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState(null);
+  // Keys of steps whose real action the user has performed. Derived `unlocked`
+  // avoids resetting state in an effect on every step change.
+  const [actioned, setActioned] = useState(() => new Set());
   const rafRef = useRef(0);
 
   const step = steps[index];
   const isLast = index === steps.length - 1;
   const total = steps.length;
+  const needsAction = !!step?.advanceOn;
+  const unlocked = !needsAction || actioned.has(step?.key);
 
   const finish = useCallback(() => {
     try {
@@ -59,8 +66,7 @@ export default function SpotlightTour({ steps, onClose }) {
   const back = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
 
   // Keep the app chrome awake: the idle timer hides the control bar after ~2s
-  // of no taps/keys, which would yank the very elements we're pointing at. A
-  // gentle synthetic interaction on a slow cadence keeps everything on screen.
+  // of no taps/keys, which would yank the very elements we're pointing at.
   useEffect(() => {
     const id = setInterval(() => {
       window.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
@@ -68,8 +74,8 @@ export default function SpotlightTour({ steps, onClose }) {
     return () => clearInterval(id);
   }, []);
 
-  // Track the target's live position (the footer slides / animates), so the
-  // spotlight and card follow it smoothly every frame while this step is shown.
+  // Track the target's live position (the footer animates / the control morphs
+  // play↔pause), so the spotlight and card follow it every frame.
   useLayoutEffect(() => {
     let active = true;
     const tick = () => {
@@ -84,47 +90,39 @@ export default function SpotlightTour({ steps, onClose }) {
     };
   }, [step?.target]);
 
-  // Dynamic advance: when the step opts in, listen for the user actually doing
-  // the thing (e.g. clicking the real Discover button) and move on.
+  // Dynamic unlock: when the user actually performs the action on the real
+  // control, light up the Next button instead of jumping ahead.
   useEffect(() => {
-    if (!step?.advanceOn || !step?.target) return;
+    if (!needsAction || !step?.target) return;
     const el = document.querySelector(step.target);
     if (!el) return;
-    const handler = () => setTimeout(next, 420); // let the app's own animation start
-    el.addEventListener(step.advanceOn, handler, { once: true });
+    const handler = () => setActioned((prev) => new Set(prev).add(step.key));
+    el.addEventListener(step.advanceOn, handler);
     return () => el.removeEventListener(step.advanceOn, handler);
-  }, [index, step, next]);
+  }, [index, step, needsAction]);
 
-  // Esc closes; arrows navigate.
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') finish();
-      else if (e.key === 'ArrowRight') next();
+      else if (e.key === 'ArrowRight' && !(needsAction && !unlocked)) next();
       else if (e.key === 'ArrowLeft') back();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [finish, next, back]);
+  }, [finish, next, back, needsAction, unlocked]);
 
   const centered = !rect;
-  const card = (
-    <CoachCard
-      step={step}
-      index={index}
-      total={total}
-      isLast={isLast}
-      darkMode={darkMode}
-      rect={rect}
-      onNext={next}
-      onBack={back}
-      onSkip={finish}
-    />
-  );
 
   return createPortal(
-    <div className="fixed inset-0 z-[120]" aria-live="polite" role="dialog" aria-label="App walkthrough">
-      {/* Dim layer. pointer-events:none everywhere so the REAL app stays fully
-          interactive underneath — the spotlight only directs the eye. */}
+    // pointer-events:none on the root → every click falls through to the real
+    // app. Only the card (and the centered tap-catcher) opt back in.
+    <div
+      className="fixed inset-0 z-[120]"
+      style={{ pointerEvents: 'none' }}
+      aria-live="polite"
+      role="dialog"
+      aria-label="App walkthrough"
+    >
       <AnimatePresence>
         {rect ? (
           <Spotlight key="spot" rect={rect} />
@@ -136,22 +134,36 @@ export default function SpotlightTour({ steps, onClose }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.4, ease: EASE }}
+            transition={{ duration: 0.3 }}
           />
         )}
       </AnimatePresence>
 
-      {/* Tap-catcher behind the card for centered steps so a stray click on the
-          backdrop doesn't fall through to the app and dismiss focus. */}
+      {/* Centered intro/outro: a faint tap-catcher keeps focus on the card. */}
       {centered && <div className="absolute inset-0" style={{ pointerEvents: 'auto' }} aria-hidden />}
 
-      <AnimatePresence mode="wait">{card}</AnimatePresence>
+      <AnimatePresence mode="wait">
+        <CoachCard
+          key={step.key}
+          step={step}
+          index={index}
+          total={total}
+          isLast={isLast}
+          darkMode={darkMode}
+          rect={rect}
+          locked={needsAction && !unlocked}
+          unlocked={unlocked}
+          onNext={next}
+          onBack={back}
+          onSkip={finish}
+        />
+      </AnimatePresence>
     </div>,
     document.body
   );
 }
 
-/** Four dim panels framing the target + a glowing ring around it. */
+/** Dim panels framing the target + a glowing, pulsing ring around it. */
 function Spotlight({ rect }) {
   const t = rect.top - PAD;
   const l = rect.left - PAD;
@@ -166,16 +178,16 @@ function Spotlight({ rect }) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.35, ease: EASE }}
+      transition={{ duration: 0.3 }}
       className="absolute inset-0"
+      style={{ pointerEvents: 'none' }}
     >
       {panel({ top: 0, left: 0, right: 0, height: Math.max(0, t) })}
       {panel({ top: t, left: 0, width: Math.max(0, l), height: h })}
       {panel({ top: t, left: l + w, right: 0, height: h })}
       {panel({ top: t + h, left: 0, right: 0, bottom: 0 })}
-      {/* glowing ring */}
+      {/* glowing, breathing ring — re-positions instantly (no layout slide) */}
       <motion.div
-        layout
         style={{
           position: 'absolute',
           top: t,
@@ -183,18 +195,23 @@ function Spotlight({ rect }) {
           width: w,
           height: h,
           borderRadius: 16,
-          border: '1.5px solid rgba(197,160,89,0.9)',
-          boxShadow: '0 0 0 1px rgba(197,160,89,0.25), 0 0 24px 4px rgba(197,160,89,0.35), inset 0 0 12px rgba(197,160,89,0.15)',
+          border: '1.5px solid rgba(197,160,89,0.95)',
           pointerEvents: 'none',
         }}
-        animate={{ opacity: [0.85, 1, 0.85] }}
-        transition={{ duration: 2.2, repeat: Infinity, ease: 'easeInOut' }}
+        animate={{
+          boxShadow: [
+            '0 0 0 1px rgba(197,160,89,0.25), 0 0 18px 2px rgba(197,160,89,0.30), inset 0 0 10px rgba(197,160,89,0.12)',
+            '0 0 0 1px rgba(197,160,89,0.45), 0 0 34px 8px rgba(197,160,89,0.55), inset 0 0 16px rgba(197,160,89,0.22)',
+            '0 0 0 1px rgba(197,160,89,0.25), 0 0 18px 2px rgba(197,160,89,0.30), inset 0 0 10px rgba(197,160,89,0.12)',
+          ],
+        }}
+        transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
       />
     </motion.div>
   );
 }
 
-function CoachCard({ step, index, total, isLast, darkMode, rect, onNext, onBack, onSkip }) {
+function CoachCard({ step, index, total, isLast, darkMode, rect, locked, unlocked, onNext, onBack, onSkip }) {
   const [size, setSize] = useState({ w: 320, h: 200 });
   const ref = useRef(null);
 
@@ -205,7 +222,7 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, onNext, onBack,
     }
   }, [index]);
 
-  const pos = computePosition(rect, size, step?.placement);
+  const pos = computePosition(rect, size, step?.side, step?.align);
 
   const surface = darkMode
     ? { bg: 'rgba(12,12,14,0.94)', text: '#e7e5e4', dim: 'rgba(231,229,228,0.62)' }
@@ -214,11 +231,10 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, onNext, onBack,
   return (
     <motion.div
       ref={ref}
-      key={step.key}
-      initial={{ opacity: 0, y: 12, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -8, scale: 0.98 }}
-      transition={{ duration: 0.4, ease: EASE }}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={POP}
       style={{
         position: 'absolute',
         ...pos,
@@ -230,10 +246,28 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, onNext, onBack,
         border: '1px solid rgba(197,160,89,0.28)',
         borderRadius: 18,
         padding: '18px 18px 14px',
-        boxShadow: '0 0 50px rgba(197,160,89,0.08), 0 12px 40px rgba(0,0,0,0.55)',
         color: surface.text,
       }}
     >
+      {/* Attention halo — a soft gold glow that breathes around the whole card. */}
+      <motion.div
+        aria-hidden
+        style={{
+          position: 'absolute',
+          inset: -1,
+          borderRadius: 18,
+          pointerEvents: 'none',
+        }}
+        animate={{
+          boxShadow: [
+            '0 0 22px rgba(197,160,89,0.10), 0 12px 40px rgba(0,0,0,0.55)',
+            '0 0 46px rgba(197,160,89,0.30), 0 12px 40px rgba(0,0,0,0.55)',
+            '0 0 22px rgba(197,160,89,0.10), 0 12px 40px rgba(0,0,0,0.55)',
+          ],
+        }}
+        transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut' }}
+      />
+
       <button
         onClick={onSkip}
         aria-label="Close walkthrough"
@@ -247,6 +281,7 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, onNext, onBack,
           cursor: 'pointer',
           fontSize: 18,
           lineHeight: 1,
+          zIndex: 1,
         }}
       >
         ×
@@ -273,20 +308,33 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, onNext, onBack,
             gap: 6,
             fontFamily: "'Forum', serif",
             fontSize: '0.78rem',
-            color: 'var(--gold)',
-            background: 'rgba(197,160,89,0.1)',
-            border: '1px solid rgba(197,160,89,0.3)',
+            color: unlocked ? '#7bbf7b' : 'var(--gold)',
+            background: unlocked ? 'rgba(123,191,123,0.12)' : 'rgba(197,160,89,0.1)',
+            border: `1px solid ${unlocked ? 'rgba(123,191,123,0.4)' : 'rgba(197,160,89,0.3)'}`,
             borderRadius: 999,
             padding: '4px 12px',
+            transition: 'all 0.3s ease',
           }}
         >
-          <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--gold)', animation: 'tourPulse 1.4s ease-in-out infinite' }} />
-          {step.hint}
+          {unlocked ? (
+            <span style={{ fontSize: '0.9rem', lineHeight: 1 }}>✓</span>
+          ) : (
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 999,
+                background: 'var(--gold)',
+                animation: 'tourPulse 1.4s ease-in-out infinite',
+              }}
+            />
+          )}
+          {locked ? step.hint : unlocked && step.advanceOn ? 'Done — tap Next' : step.hint}
         </div>
       )}
 
       {/* Progress + controls */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, position: 'relative', zIndex: 1 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {Array.from({ length: total }).map((_, i) => (
             <span
@@ -307,9 +355,20 @@ function CoachCard({ step, index, total, isLast, darkMode, rect, onNext, onBack,
               Back
             </button>
           )}
-          <button onClick={onNext} style={goldBtn}>
+          <motion.button
+            onClick={locked ? undefined : onNext}
+            disabled={locked}
+            aria-disabled={locked}
+            style={{ ...goldBtn, ...(locked ? lockedBtn : null) }}
+            animate={
+              unlocked && step.advanceOn && !isLast
+                ? { scale: [1, 1.06, 1], boxShadow: ['0 0 0 rgba(197,160,89,0)', '0 0 18px rgba(197,160,89,0.6)', '0 0 0 rgba(197,160,89,0)'] }
+                : { scale: 1 }
+            }
+            transition={unlocked ? { duration: 1.4, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
+          >
             {isLast ? 'Done' : 'Next'}
-          </button>
+          </motion.button>
         </div>
       </div>
 
@@ -330,6 +389,12 @@ const goldBtn = {
   fontWeight: 600,
 };
 
+const lockedBtn = {
+  background: 'rgba(197,160,89,0.18)',
+  color: 'rgba(231,229,228,0.4)',
+  cursor: 'not-allowed',
+};
+
 const ghostBtn = (surface) => ({
   fontFamily: "'Forum', serif",
   fontSize: '0.85rem',
@@ -341,25 +406,40 @@ const ghostBtn = (surface) => ({
   cursor: 'pointer',
 });
 
-/** Place the card relative to the target, clamped into the viewport. */
-function computePosition(rect, size, placement) {
+/**
+ * Place the card relative to the target on the requested side/align, clamped
+ * into the viewport so it never covers the element it points at.
+ */
+function computePosition(rect, size, side = 'auto', align = 'center') {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  if (!rect) {
-    // Centered intro/outro card.
-    return { top: Math.max(24, vh / 2 - size.h / 2), left: Math.max(16, vw / 2 - size.w / 2) };
-  }
   const cardW = Math.min(340, vw - 32);
   const cardH = size.h || 200;
-  const centerX = rect.left + rect.width / 2;
-  let left = centerX - cardW / 2;
-  left = Math.min(Math.max(12, left), vw - cardW - 12);
+  const clampX = (x) => Math.min(Math.max(12, x), vw - cardW - 12);
+  const clampY = (y) => Math.min(Math.max(12, y), vh - cardH - 12);
 
-  const spaceAbove = rect.top;
-  const spaceBelow = vh - rect.bottom;
-  const wantTop = placement === 'top' || (placement !== 'bottom' && spaceAbove > spaceBelow);
+  if (!rect || side === 'center') {
+    return { top: Math.max(24, vh / 2 - cardH / 2), left: Math.max(16, vw / 2 - cardW / 2) };
+  }
 
-  let top = wantTop ? rect.top - cardH - GAP : rect.bottom + GAP;
-  top = Math.min(Math.max(12, top), vh - cardH - 12);
-  return { top, left };
+  // Resolve 'auto' to whichever vertical side has more room.
+  let s = side;
+  if (s === 'auto') s = rect.top > vh - rect.bottom ? 'top' : 'bottom';
+
+  if (s === 'left' || s === 'right') {
+    const left = s === 'left' ? rect.left - cardW - GAP : rect.right + GAP;
+    let top;
+    if (align === 'start') top = rect.top;
+    else if (align === 'end') top = rect.bottom - cardH;
+    else top = rect.top + rect.height / 2 - cardH / 2;
+    return { left: clampX(left), top: clampY(top) };
+  }
+
+  // top / bottom
+  const top = s === 'top' ? rect.top - cardH - GAP : rect.bottom + GAP;
+  let left;
+  if (align === 'start') left = rect.left;
+  else if (align === 'end') left = rect.right - cardW;
+  else left = rect.left + rect.width / 2 - cardW / 2;
+  return { top: clampY(top), left: clampX(left) };
 }

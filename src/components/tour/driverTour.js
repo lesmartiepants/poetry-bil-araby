@@ -67,17 +67,18 @@ function injectTheme() {
 function toDriverSteps() {
   return TOUR_STEPS.map((s) => {
     const description = s.hint ? `${s.body}<br/><span style="color:var(--gold)">↳ ${s.hint}</span>` : s.body;
-    const title = s.arabic ? `${s.title}` : s.title;
     if (!s.target) {
-      return { popover: { title, description, popoverClass: 'poetry-tour' } };
+      return { popover: { title: s.title, description, popoverClass: 'poetry-tour' } };
     }
     return {
       element: s.target,
       popover: {
-        title,
+        title: s.title,
         description,
-        side: s.placement === 'top' ? 'top' : 'bottom',
-        align: 'center',
+        // Per-step placement keeps the popover off the control and guides the
+        // eye toward it (e.g. sit above-left of the Listen button).
+        side: s.side && s.side !== 'center' ? s.side : 'top',
+        align: s.align || 'center',
         popoverClass: 'poetry-tour',
       },
     };

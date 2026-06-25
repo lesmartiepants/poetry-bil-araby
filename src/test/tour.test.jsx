@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { forwardRef } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TOUR_STEPS, anchoredSteps } from '../constants/tourSteps.js';
 
@@ -8,15 +8,19 @@ import { TOUR_STEPS, anchoredSteps } from '../constants/tourSteps.js';
 // interfere with assertions. We only render the lightweight motion.div.
 vi.mock('framer-motion', () => ({
   AnimatePresence: ({ children }) => <>{children}</>,
+  // Render the real underlying tag (motion.button -> <button>) so role queries work.
   motion: new Proxy(
     {},
     {
-      get: () =>
-        forwardRef(({ children, ...rest }, ref) => (
-          <div ref={ref} {...stripMotionProps(rest)}>
-            {children}
-          </div>
-        )),
+      get: (_t, tag) =>
+        forwardRef(({ children, ...rest }, ref) => {
+          const Tag = typeof tag === 'string' ? tag : 'div';
+          return (
+            <Tag ref={ref} {...stripMotionProps(rest)}>
+              {children}
+            </Tag>
+          );
+        }),
     }
   ),
 }));
@@ -61,6 +65,22 @@ describe('SpotlightTour engine', () => {
     expect(screen.getByText('Welcome to Poetry بالعربي')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByText('Listen to the poem')).toBeInTheDocument();
+  });
+
+  it('locks Next until the user performs the real action, then unlocks it', async () => {
+    const target = document.createElement('button');
+    target.setAttribute('data-tour', 'listen');
+    document.body.appendChild(target);
+    render(<SpotlightTour steps={TOUR_STEPS} onClose={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' })); // welcome -> listen
+    expect(screen.getByText('Listen to the poem')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+
+    // Performing the real interaction on the live control unlocks Next.
+    target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
+    target.remove();
   });
 
   it('closes via the × button', async () => {

@@ -6,14 +6,14 @@
 <title>Sparkler Reveal — شعر بالعربي</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;600&family=Cormorant+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
 <script src="./vendor/gsap.min.js"></script>
 <style>
   :root{
     --gold:#c5a059; --gold-bright:#d4b463; --amber:#e8923a; --ember:#c2410c;
     --bg:#0a0a0c; --bg2:#101016;
     --text:rgba(236,232,224,.94); --muted:rgba(236,232,224,.4);
-    --unit-h: clamp(78px, 13.5vh, 104px);
+    --unit-h: clamp(132px, 21vh, 162px);
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
@@ -31,21 +31,22 @@
   .meta{position:absolute;top:calc(env(safe-area-inset-top,0px) + 18px);left:50%;
     display:flex;flex-direction:column;align-items:center;gap:1px;z-index:5;pointer-events:none;
     opacity:0;white-space:nowrap}
-  .meta .t-ar{font-family:'Reem Kufi',sans-serif;direction:rtl;font-size:clamp(1.05rem,4.4vw,1.45rem);color:var(--gold-bright);letter-spacing:.01em}
-  .meta .t-en{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(.76rem,3vw,1rem);color:rgba(212,180,99,.85);margin-top:1px}
-  .meta .byline{display:flex;gap:.4rem;align-items:center;font-family:'Cormorant Garamond',serif;font-size:clamp(.64rem,2.6vw,.8rem);color:var(--muted);direction:ltr;margin-top:2px}
-  .meta .byline .dot{opacity:.5}
+  .meta .t-ar{font-family:'Reem Kufi',sans-serif;direction:rtl;font-size:clamp(1.6rem,6.6vw,2.25rem);color:var(--gold-bright);letter-spacing:.01em}
+  .meta .t-en{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(1.1rem,4.4vw,1.5rem);color:rgba(212,180,99,.9);margin-top:3px}
+  .meta .byline{display:flex;gap:.45rem;align-items:center;font-family:'Cormorant Garamond',serif;font-weight:700;font-size:clamp(.98rem,3.9vw,1.22rem);color:var(--gold);direction:ltr;margin-top:6px}
+  .meta .byline span[lang="ar"]{font-family:'Reem Kufi',sans-serif;font-weight:600}
+  .meta .byline .dot{opacity:.6;font-weight:400}
 
   /* reveal stage — masks to exactly 4 line-units */
   .stage{position:relative;width:min(760px,92vw);height:calc(var(--unit-h) * 4);overflow:hidden;z-index:2}
   .track{position:absolute;left:0;right:0;top:0;will-change:transform}
   .unit{height:var(--unit-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.15rem;text-align:center}
-  .unit .ar{font-family:'Amiri',serif;direction:rtl;color:var(--text);line-height:1.7;
-    font-size:clamp(1.3rem,4.6vw,2rem);
+  .unit .ar{font-family:'Amiri',serif;direction:rtl;color:var(--text);line-height:1.55;white-space:nowrap;
+    font-size:clamp(1.9rem,7vw,2.7rem);      /* ~2× — fitLine() shrinks only if a verse would overflow */
     clip-path:inset(0 0 0 100%);             /* hidden until ignited (revealed right→left) */
     text-shadow:0 0 0 transparent;will-change:clip-path}
-  .unit .en{font-family:'Cormorant Garamond',serif;font-style:italic;direction:ltr;color:var(--muted);
-    font-size:clamp(.74rem,3vw,.98rem);line-height:1.35;opacity:0;max-width:92%}
+  .unit .en{font-family:'Cormorant Garamond',serif;font-style:italic;direction:ltr;color:rgba(236,232,224,.66);white-space:nowrap;
+    font-size:clamp(1.7rem,6.4vw,2.3rem);line-height:1.25;opacity:0}  /* ~3× — near co-equal with the Arabic */
   .unit.lit .ar{text-shadow:0 0 18px rgba(212,180,99,.28)}
 
   /* sparkler head + canvas */
@@ -84,7 +85,7 @@
 </head>
 <body>
 <div id="feed"></div>
-<div id="switch"><span data-m="top" class="seg on">Top</span><span data-m="corner" class="seg">Corner</span><span data-m="header" class="seg">Header</span></div>
+<div id="switch"><span data-m="header" class="seg on">Header</span><span data-m="top" class="seg">Top</span></div>
 <div id="footer">Sparkler Reveal — tap to read · pull up for the next poem · try the meta layouts ↖</div>
 
 <script>
@@ -180,15 +181,16 @@ function makeController(card, poem) {
     const dt = Math.min(40, now - last); last = now;
     ctx.clearRect(0,0,canvas.width,canvas.height);
     if (head_state.alive && !reduce){
-      for (let k=0;k<5;k++){
+      for (let k=0;k<8;k++){
         // emit into the LEFT semicircle — the reveal travels right→left, so sparks
         // spray forward (toward the reveal) and rise like embers, not a full ring.
+        // Wider, longer-lived spray (≈2–4× reach) for a dramatic sparkler.
         const ang = Math.PI*0.5 + Math.random()*Math.PI;     // 90°→270° (left half)
-        const sp  = 0.7 + Math.random()*1.8;
-        particles.push({ x:head_state.x + (Math.random()-0.5)*3, y:head_state.y + (Math.random()-0.5)*3,
-          vx:Math.cos(ang)*sp - 0.6, vy:Math.sin(ang)*sp - 0.9,
-          life:1, decay:0.010 + Math.random()*0.016,
-          size:0.9 + Math.random()*1.8, tw:Math.random()*6.28,
+        const sp  = 1.6 + Math.random()*4.8;
+        particles.push({ x:head_state.x + (Math.random()-0.5)*4, y:head_state.y + (Math.random()-0.5)*4,
+          vx:Math.cos(ang)*sp - 1.1, vy:Math.sin(ang)*sp - 1.0,
+          life:1, decay:0.008 + Math.random()*0.013,
+          size:1.0 + Math.random()*2.2, tw:Math.random()*6.28,
           color:SPARK_COLORS[(Math.random()*SPARK_COLORS.length)|0] });
       }
     }
@@ -219,6 +221,7 @@ function makeController(card, poem) {
   function ignite(i){
     return new Promise((res)=>{
       const u = units[i]; if(!u){res();return;}
+      sizeCanvas();                          // ensure the spark canvas is measured before the FIRST line (was 0×0 → "orb")
       const ar = u.querySelector('.ar'); const en = u.querySelector('.en');
       if (reduce){
         gsap.set(ar,{clipPath:'inset(0 0 0 0)'}); gsap.fromTo(u,{opacity:0},{opacity:1,duration:.45});
@@ -319,7 +322,7 @@ function makeController(card, poem) {
 const controllers = cards.map((c,i)=>makeController(c, POEMS[i]));
 
 /* meta-layout switcher (prototype control) — Top / Corner / Header-fade */
-window.META_MODE = 'top';
+window.META_MODE = 'header';
 document.querySelectorAll('#switch .seg').forEach(seg=>{
   seg.addEventListener('click', e=>{
     e.stopPropagation();
@@ -364,7 +367,20 @@ addEventListener('keydown',e=>{ if(e.key===' '||e.key==='Enter'){e.preventDefaul
   else if(e.key==='ArrowDown'){e.preventDefault();goCard(cur+1);} else if(e.key==='ArrowUp'){e.preventDefault();goCard(cur-1);} });
 
 /* boot */
-function boot(){ setFeed(0); controllers[0].start(); }
+/* keep each verse on one line: shrink only if a verse would overflow (no mid-sentence breaks) */
+function fitAll(){
+  document.querySelectorAll('.unit').forEach(u=>{
+    const w = u.clientWidth * 0.97;
+    u.querySelectorAll('.ar,.en').forEach(el=>{
+      el.style.fontSize = '';
+      const sw = el.scrollWidth;
+      if (sw > w){ const fs = parseFloat(getComputedStyle(el).fontSize); el.style.fontSize = (fs * w / sw) + 'px'; }
+    });
+  });
+}
+addEventListener('resize', fitAll);
+
+function boot(){ setFeed(0); fitAll(); controllers[0].start(); }
 if (window.gsap) boot(); else addEventListener('load', boot);
 </script>
 </body>

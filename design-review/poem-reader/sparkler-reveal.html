@@ -73,12 +73,17 @@
 
   #footer{position:fixed;bottom:6px;right:12px;z-index:9;color:var(--muted);font-style:italic;font-size:.66rem;opacity:.5;direction:ltr}
 
+  #switch{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:10px;z-index:9;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(197,160,89,.25);backdrop-filter:blur(8px);direction:ltr}
+  #switch .seg{font-family:'Cormorant Garamond',serif;font-size:.7rem;color:var(--muted);padding:4px 10px;border-radius:999px;cursor:pointer}
+  #switch .seg.on{background:var(--gold);color:#1a1408}
+
   @media (prefers-reduced-motion: reduce){ .head{display:none!important} }
 </style>
 </head>
 <body>
 <div id="feed"></div>
-<div id="footer">Sparkler Reveal — tap to read · pull up for the next poem</div>
+<div id="switch"><span data-m="top" class="seg on">Top</span><span data-m="corner" class="seg">Corner</span><span data-m="header" class="seg">Header</span></div>
+<div id="footer">Sparkler Reveal — tap to read · pull up for the next poem · try the meta layouts ↖</div>
 
 <script>
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -150,6 +155,7 @@ function makeController(card, poem) {
   let busy = false;
   const head_state = { x:0, y:0, alive:false };
   let particles = [];
+  let activeTween = null;
 
   // dots = one per page
   for (let i=0;i<pages;i++){ const d=document.createElement('div'); d.className='dot'; dotsEl.appendChild(d); }
@@ -200,7 +206,7 @@ function makeController(card, poem) {
       }
       head.style.opacity = '1'; head_state.alive = true;
       const obj = { p: 1 };
-      gsap.to(obj, { p: 0, duration: 1.4, ease:'power1.inOut',
+      activeTween = gsap.to(obj, { p: 0, duration: 1.4, ease:'power1.inOut',
         onUpdate(){
           const arRect = ar.getBoundingClientRect(); const cRect = canvas.getBoundingClientRect();
           ar.style.clipPath = `inset(0 0 0 ${obj.p*100}%)`;
@@ -223,9 +229,25 @@ function makeController(card, poem) {
   function hidePrompt(){ gsap.to(prompt,{opacity:0,duration:.25}); }
 
   async function start(){
-    gsap.to(meta,{opacity:1,duration:1.2,ease:'power2.out'});
     hidePrompt();
+    const mode = window.META_MODE || 'top';
+    gsap.set(meta,{clearProps:'transform'});
+    if (mode === 'header'){
+      // C — show large & centred for a beat, then settle up into the top bar
+      gsap.set(meta,{opacity:0, y:Math.round(window.innerHeight*0.30), scale:1.7, transformOrigin:'center center'});
+      await gsapTo(meta,{opacity:1, duration:1.1, ease:'power2.out'});
+      await new Promise(r=>setTimeout(r,500));
+      await gsapTo(meta,{y:0, scale:1, duration:1.0, ease:'power3.inOut'});
+    } else {
+      gsap.set(meta,{opacity:0, y:0, scale:1, x:0});
+      await gsapTo(meta,{opacity:1, duration:1.0, ease:'power2.out'});
+    }
     await ignite(0); revealed=1; syncDots();
+    if (mode === 'corner'){
+      // B — after the first line ignites, shrink the credit into the top corner
+      const rightX = Math.round(window.innerWidth/2 - meta.offsetWidth/2 - 14);
+      gsap.to(meta,{x:rightX, scale:.78, opacity:.72, duration:.9, ease:'power3.inOut', transformOrigin:'top right'});
+    }
     await new Promise(r=>setTimeout(r,250));
     await ignite(1); revealed=2; syncDots();
     showPrompt('tap to continue');
@@ -257,10 +279,27 @@ function makeController(card, poem) {
 
   insightBtn.addEventListener('click',(e)=>{ e.stopPropagation(); insightBtn.textContent='✦ (insight panel would open here)'; });
 
-  return { start, advance, reset(){ revealed=0; windowTop=0; gsap.set(track,{y:0}); units.forEach(u=>{u.classList.remove('lit'); u.querySelector('.ar').style.clipPath='inset(0 0 0 100%)'; u.querySelector('.en').style.opacity=0;}); dots.forEach(d=>d.classList.remove('on')); insightBtn.classList.remove('show'); card.querySelector('.scrollcue').classList.remove('show'); } };
+  return { start, advance, reset(){ revealed=0; windowTop=0; busy=false; particles=[]; head_state.alive=false;
+    if(activeTween) activeTween.kill();
+    gsap.killTweensOf([track,meta,head]);
+    head.style.opacity=0; gsap.set(track,{y:0}); gsap.set(meta,{clearProps:'all'}); meta.style.opacity=0;
+    units.forEach(u=>{const ar=u.querySelector('.ar'),en=u.querySelector('.en'); gsap.killTweensOf([ar,en]); u.classList.remove('lit'); ar.style.clipPath='inset(0 0 0 100%)'; en.style.opacity=0;});
+    dots.forEach(d=>d.classList.remove('on')); insightBtn.classList.remove('show'); card.querySelector('.scrollcue').classList.remove('show'); } };
 }
 
 const controllers = cards.map((c,i)=>makeController(c, POEMS[i]));
+
+/* meta-layout switcher (prototype control) — Top / Corner / Header-fade */
+window.META_MODE = 'top';
+document.querySelectorAll('#switch .seg').forEach(seg=>{
+  seg.addEventListener('click', e=>{
+    e.stopPropagation();
+    window.META_MODE = seg.dataset.m;
+    document.querySelectorAll('#switch .seg').forEach(s=>s.classList.toggle('on', s===seg));
+    controllers[cur].reset();
+    controllers[cur].start();
+  });
+});
 
 /* ---------- vertical magnetic feed ---------- */
 let cur = 0, feedY = 0;

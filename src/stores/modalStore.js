@@ -12,6 +12,7 @@ function computeOnboarding() {
 }
 
 function computeSplash() {
+  if (!FEATURES.splash) return false;
   try {
     return !localStorage.getItem('hasSeenOnboarding');
   } catch {

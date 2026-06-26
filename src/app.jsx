@@ -92,6 +92,7 @@ import {
   pauseOffset,
   playbackStartTime,
   isSeeking,
+  setWindowedReveal,
 } from './hooks/useTTSHighlight.js';
 import { useIdleTimer } from './hooks/useIdleTimer.js';
 import DebugPanel from './components/DebugPanel.jsx';
@@ -104,6 +105,7 @@ import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
+import PoemFeed from './components/feed/PoemFeed.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
@@ -170,6 +172,9 @@ export default function DiwanApp() {
   // the settings controls (Aa / sun icon), and a gentle floating listen button.
   // Only deliberate taps/clicks wake the chrome back — scroll is ignored.
   const { isIdle } = useIdleTimer(2_000, [listenButtonIdleRef, themeToggleRef, textSettingsRef]);
+  // In vertical-feed mode controls must stay visible: every stanza tap resets the idle timer
+  // causing controls to flash. Disable idle-hide in vertical feed mode.
+  const effectivelyIdle = isIdle && !FEATURES.verticalFeed;
 
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
@@ -233,6 +238,15 @@ export default function DiwanApp() {
   const liveVoice = useUIStore((s) => s.liveVoice);
   const setLiveVoice = useUIStore((s) => s.setLiveVoice);
   const highlightStyle = useUIStore((s) => s.highlightStyle);
+  const insightsMode = useUIStore((s) => s.insightsMode);
+  const setInsightsMode = useUIStore((s) => s.setInsightsMode);
+  // Sparkler reader: tell useTTSHighlight to skip page-scroll (the 4-line window scrolls itself);
+  // allow ?insightsMode=inline|drawer to flip the end-state insight surface for A/B testing.
+  useEffect(() => {
+    setWindowedReveal(FEATURES.verticalFeed);
+    const m = new URLSearchParams(window.location.search).get('insightsMode');
+    if (m === 'inline' || m === 'drawer') setInsightsMode(m);
+  }, [setInsightsMode]);
   const hasAutoLoaded = useRef(false);
   const longPressTimer = useRef(null);
   const pendingSaveHandled = useRef(false);
@@ -1428,11 +1442,11 @@ export default function DiwanApp() {
       {/* Corner wordmark — top-right, fades out on scroll and when idle */}
       <motion.header
         animate={{
-          opacity: isIdle ? 0 : BRAND_HEADER.containerOpacity * (1 - headerOpacity),
-          y: isIdle ? -14 : 0,
+          opacity: effectivelyIdle ? 0 : BRAND_HEADER.containerOpacity * (1 - headerOpacity),
+          y: effectivelyIdle ? -14 : 0,
         }}
         transition={
-          isIdle
+          effectivelyIdle
             ? { duration: 0.7, ease: [0.16, 1, 0.3, 1] }
             : { type: 'spring', stiffness: 300, damping: 28, mass: 0.8 }
         }
@@ -1493,72 +1507,79 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-6 pr-14 md:px-8 md:pr-0 pb-28 pt-10 md:pt-12"
+            className={`flex-1 ${FEATURES.verticalFeed ? 'overflow-y-hidden' : 'overflow-y-auto'} overflow-x-hidden custom-scrollbar relative z-10 px-6 pr-14 md:px-8 md:pr-0 pb-28 pt-10 md:pt-12`}
             style={{ overscrollBehaviorX: 'none' }}
           >
             {/* Top scroll gradient removed — header is now a subtle corner wordmark */}
             <div className="flex flex-col items-center pt-2">
               <div className="w-full max-w-4xl flex flex-col items-center">
-                {/* Poem meta: title (dominant) → poet → English combined → vertical separator */}
+                {/* Poem meta. In the vertical feed the title/poet text is gated off (each PoemReader
+                    renders its own per-poem title intro, big-center → top); the queue dots remain. */}
                 <div className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}>
                   <div className="flex flex-col items-center justify-center w-full" dir="rtl">
-                    {/* Line 1: Poem title */}
-                    <div
-                      className="text-center"
-                      style={{
-                        ...POEM_META.title,
-                        fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
-                        textShadow: darkMode
-                          ? POEM_META.titleShadow.dark
-                          : POEM_META.titleShadow.light,
-                      }}
-                    >
-                      {displayedPoem?.titleArabic || displayedPoem?.title}
-                    </div>
-                    {/* Line 2: Poet name */}
-                    <div
-                      className="text-center"
-                      style={{
-                        ...POEM_META.poet,
-                        fontSize: `calc(${POEM_META.poet.fontSize} * ${textScale})`,
-                        color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
-                      }}
-                    >
-                      {displayedPoem?.poetArabic || displayedPoem?.poet}
-                    </div>
-                    {/* Line 3: English title and poet — two distinct lines */}
-                    {(displayedPoem?.poet || displayedPoem?.title) && (
+                    {!FEATURES.verticalFeed && (
                       <>
-                        <div dir="ltr" style={POEM_META.separator} />
-                        {displayedPoem?.title && (
-                          <div
-                            className="text-center"
-                            dir="ltr"
-                            style={{
-                              fontFamily: "'Bodoni Moda', serif",
-                              fontSize: `calc(clamp(0.9rem, 1.8vw, 1.1rem) * ${textScale})`,
-                              color: darkMode ? 'var(--gold)' : 'var(--gold)',
-                              fontWeight: 500,
-                              letterSpacing: '0.02em',
-                            }}
-                          >
-                            {displayedPoem.title}
-                          </div>
-                        )}
-                        {displayedPoem?.poet && (
-                          <div
-                            className="text-center mt-0.5"
-                            dir="ltr"
-                            style={{
-                              fontFamily: "'Forum', serif",
-                              fontSize: `calc(clamp(0.75rem, 1.4vw, 0.9rem) * ${textScale})`,
-                              color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
-                              fontWeight: 400,
-                              letterSpacing: '0.03em',
-                            }}
-                          >
-                            {displayedPoem.poet}
-                          </div>
+                        {/* Line 1: Poem title */}
+                        <div
+                          className="text-center"
+                          style={{
+                            ...POEM_META.title,
+                            fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
+                            textShadow: darkMode
+                              ? POEM_META.titleShadow.dark
+                              : POEM_META.titleShadow.light,
+                          }}
+                        >
+                          {displayedPoem?.titleArabic || displayedPoem?.title}
+                        </div>
+                        {/* Line 2: Poet name */}
+                        <div
+                          className="text-center"
+                          style={{
+                            ...POEM_META.poet,
+                            fontSize: `calc(${POEM_META.poet.fontSize} * ${textScale})`,
+                            color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
+                          }}
+                        >
+                          {displayedPoem?.poetArabic || displayedPoem?.poet}
+                        </div>
+                        {/* Line 3: English title and poet — two distinct lines */}
+                        {(displayedPoem?.poet || displayedPoem?.title) && (
+                          <>
+                            <div dir="ltr" style={POEM_META.separator} />
+                            {displayedPoem?.title && (
+                              <div
+                                className="text-center"
+                                dir="ltr"
+                                style={{
+                                  fontFamily: "'Bodoni Moda', serif",
+                                  fontSize: `calc(clamp(0.9rem, 1.8vw, 1.1rem) * ${textScale})`,
+                                  color: darkMode ? 'var(--gold)' : 'var(--gold)',
+                                  fontWeight: 500,
+                                  letterSpacing: '0.02em',
+                                }}
+                              >
+                                {displayedPoem.title}
+                              </div>
+                            )}
+                            {displayedPoem?.poet && (
+                              <div
+                                className="text-center mt-0.5"
+                                dir="ltr"
+                                style={{
+                                  fontFamily: "'Forum', serif",
+                                  fontSize: `calc(clamp(0.75rem, 1.4vw, 0.9rem) * ${textScale})`,
+                                  color: darkMode
+                                    ? 'rgba(212,200,168,0.7)'
+                                    : 'rgba(120,100,60,0.7)',
+                                  fontWeight: 400,
+                                  letterSpacing: '0.03em',
+                                }}
+                              >
+                                {displayedPoem.poet}
+                              </div>
+                            )}
+                          </>
                         )}
                       </>
                     )}
@@ -1607,93 +1628,186 @@ export default function DiwanApp() {
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
                   {carouselPoems.length > 0 && (
-                    <PoemCarousel
-                      ref={carouselRef}
-                      poems={carouselPoems}
-                      currentIndex={carouselIndex}
-                      onSlideChange={(idx, direction) => {
-                        setCarouselIndex(idx);
-                        // Stop audio and reset TTS state when navigating poems
-                        const { player: activePlayer, resetAudio } = useAudioStore.getState();
-                        // Stop unconditionally. Streaming and iOS HTMLAudio players have no
-                        // `.state` property, so the old `state === 'started'` gate skipped
-                        // stop() for them and the audio kept playing in the background after a swipe.
-                        if (activePlayer) {
-                          try {
-                            activePlayer.stop();
-                          } catch {
-                            /* already stopped */
-                          }
-                        }
-                        if (audioUrl) URL.revokeObjectURL(audioUrl);
-                        abortPlay();
-                        resetAudio();
-                        isTogglingPlay.current = false;
-                        pauseOffset.value = 0;
-                        playbackStartTime.value = 0;
-                        document
-                          .querySelectorAll('.tts-active, .tts-past')
-                          .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
-                        dismissTTSProgress();
-                        cancelAnalysis();
-                        setInterpretation(null);
-                        // If an analysis was in-flight and got cancelled, un-mark it so
-                        // swiping back to that poem will re-trigger its translation.
-                        if (
-                          carouselExplainTargetId.current &&
-                          usePoemStore.getState().isInterpreting
-                        ) {
-                          explainedPoemIds.current.delete(carouselExplainTargetId.current);
-                        }
-                        carouselExplainTargetId.current = null;
-                        setShowTranslation(true);
-                        const newPoem = usePoemStore.getState().carouselPoems[idx];
-                        if (FEATURES.logging && newPoem) {
-                          const fromPoem = carouselPoems[carouselIndex];
-                          addLog(
-                            'Carousel',
-                            `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
-                            'user'
-                          );
-                        }
-                        if (newPoem?.id) {
-                          navigate('/poem/' + newPoem.id + window.location.search, {
-                            replace: true,
-                          });
-                          updateOGMetaTags(newPoem);
-                        }
-                        if (newPoem && !newPoem.english) {
-                          // Always (re-)queue translation for poems without one — this handles
-                          // the case where a previous analysis was cancelled mid-stream, leaving
-                          // the poem with no translation and its ID stuck in explainedPoemIds.
-                          explainedPoemIds.current.delete(newPoem.id);
-                          setAutoExplainPending(true);
-                        }
-                      }}
-                      darkMode={darkMode}
-                      showTranslation={showTranslation}
-                      showTransliteration={showTransliteration}
-                      textScale={textScale}
-                      currentFontClass={currentFontClass}
-                      POEM_META={POEM_META}
-                      DESIGN={DESIGN}
-                      onLoadMore={() => {
-                        if (!current?.poetArabic) return;
-                        const existingIds = carouselPoems.map((p) => p.id);
-                        fetchPoemsByPoet(current.poetArabic, 3, existingIds)
-                          .then((newPoems) => {
-                            newPoems.forEach((p) => addCarouselPoem(p));
-                          })
-                          .catch((err) => {
-                            if (FEATURES.logging)
-                              addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
-                          });
-                      }}
-                      highlightStyle={highlightStyle}
-                      activeVersePairs={versePairs}
-                      wordRefs={wordRefs}
-                      wordOffsets={wordOffsets}
-                    />
+                    <>
+                      {FEATURES.verticalFeed ? (
+                        <PoemFeed
+                          ref={carouselRef}
+                          poems={carouselPoems}
+                          currentIndex={carouselIndex}
+                          onSlideChange={(idx, direction) => {
+                            setCarouselIndex(idx);
+                            const { player: activePlayer, resetAudio } = useAudioStore.getState();
+                            if (activePlayer) {
+                              try {
+                                activePlayer.stop();
+                              } catch {
+                                /* already stopped */
+                              }
+                            }
+                            if (audioUrl) URL.revokeObjectURL(audioUrl);
+                            abortPlay();
+                            resetAudio();
+                            isTogglingPlay.current = false;
+                            pauseOffset.value = 0;
+                            playbackStartTime.value = 0;
+                            document
+                              .querySelectorAll('.tts-active, .tts-past')
+                              .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
+                            dismissTTSProgress();
+                            cancelAnalysis();
+                            setInterpretation(null);
+                            if (
+                              carouselExplainTargetId.current &&
+                              usePoemStore.getState().isInterpreting
+                            ) {
+                              explainedPoemIds.current.delete(carouselExplainTargetId.current);
+                            }
+                            carouselExplainTargetId.current = null;
+                            setShowTranslation(true);
+                            const newPoem = usePoemStore.getState().carouselPoems[idx];
+                            if (FEATURES.logging && newPoem) {
+                              const fromPoem = carouselPoems[carouselIndex];
+                              addLog(
+                                'Carousel',
+                                `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                                'user'
+                              );
+                            }
+                            if (newPoem?.id) {
+                              navigate('/poem/' + newPoem.id + window.location.search, {
+                                replace: true,
+                              });
+                              updateOGMetaTags(newPoem);
+                            }
+                            if (newPoem && !newPoem.english) {
+                              explainedPoemIds.current.delete(newPoem.id);
+                              setAutoExplainPending(true);
+                            }
+                          }}
+                          darkMode={darkMode}
+                          showTranslation={showTranslation}
+                          showTransliteration={showTransliteration}
+                          textScale={textScale}
+                          currentFontClass={currentFontClass}
+                          POEM_META={POEM_META}
+                          DESIGN={DESIGN}
+                          onLoadMore={() => {
+                            if (!current?.poetArabic) return;
+                            const existingIds = carouselPoems.map((p) => p.id);
+                            fetchPoemsByPoet(current.poetArabic, 3, existingIds)
+                              .then((newPoems) => {
+                                newPoems.forEach((p) => addCarouselPoem(p));
+                              })
+                              .catch((err) => {
+                                if (FEATURES.logging)
+                                  addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
+                              });
+                          }}
+                          highlightStyle={highlightStyle}
+                          currentVerseIndex={currentVerseIndex}
+                          wordRefs={wordRefs}
+                          wordOffsets={wordOffsets}
+                          insightsMode={insightsMode}
+                          isInterpreting={isInterpreting}
+                          insightParts={insightParts}
+                          interpretation={interpretation}
+                          onSeeInsight={() => {
+                            handleAnalyze();
+                            if (insightsMode === 'drawer') {
+                              useModalStore.getState().setInsightsDrawer(true);
+                            }
+                          }}
+                        />
+                      ) : (
+                        <PoemCarousel
+                          ref={carouselRef}
+                          poems={carouselPoems}
+                          currentIndex={carouselIndex}
+                          onSlideChange={(idx, direction) => {
+                            setCarouselIndex(idx);
+                            // Stop audio and reset TTS state when navigating poems
+                            const { player: activePlayer, resetAudio } = useAudioStore.getState();
+                            // Stop unconditionally. Streaming and iOS HTMLAudio players have no
+                            // `.state` property, so the old `state === 'started'` gate skipped
+                            // stop() for them and the audio kept playing in the background after a swipe.
+                            if (activePlayer) {
+                              try {
+                                activePlayer.stop();
+                              } catch {
+                                /* already stopped */
+                              }
+                            }
+                            if (audioUrl) URL.revokeObjectURL(audioUrl);
+                            abortPlay();
+                            resetAudio();
+                            isTogglingPlay.current = false;
+                            pauseOffset.value = 0;
+                            playbackStartTime.value = 0;
+                            document
+                              .querySelectorAll('.tts-active, .tts-past')
+                              .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
+                            dismissTTSProgress();
+                            cancelAnalysis();
+                            setInterpretation(null);
+                            // If an analysis was in-flight and got cancelled, un-mark it so
+                            // swiping back to that poem will re-trigger its translation.
+                            if (
+                              carouselExplainTargetId.current &&
+                              usePoemStore.getState().isInterpreting
+                            ) {
+                              explainedPoemIds.current.delete(carouselExplainTargetId.current);
+                            }
+                            carouselExplainTargetId.current = null;
+                            setShowTranslation(true);
+                            const newPoem = usePoemStore.getState().carouselPoems[idx];
+                            if (FEATURES.logging && newPoem) {
+                              const fromPoem = carouselPoems[carouselIndex];
+                              addLog(
+                                'Carousel',
+                                `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                                'user'
+                              );
+                            }
+                            if (newPoem?.id) {
+                              navigate('/poem/' + newPoem.id + window.location.search, {
+                                replace: true,
+                              });
+                              updateOGMetaTags(newPoem);
+                            }
+                            if (newPoem && !newPoem.english) {
+                              // Always (re-)queue translation for poems without one — this handles
+                              // the case where a previous analysis was cancelled mid-stream, leaving
+                              // the poem with no translation and its ID stuck in explainedPoemIds.
+                              explainedPoemIds.current.delete(newPoem.id);
+                              setAutoExplainPending(true);
+                            }
+                          }}
+                          darkMode={darkMode}
+                          showTranslation={showTranslation}
+                          showTransliteration={showTransliteration}
+                          textScale={textScale}
+                          currentFontClass={currentFontClass}
+                          POEM_META={POEM_META}
+                          DESIGN={DESIGN}
+                          onLoadMore={() => {
+                            if (!current?.poetArabic) return;
+                            const existingIds = carouselPoems.map((p) => p.id);
+                            fetchPoemsByPoet(current.poetArabic, 3, existingIds)
+                              .then((newPoems) => {
+                                newPoems.forEach((p) => addCarouselPoem(p));
+                              })
+                              .catch((err) => {
+                                if (FEATURES.logging)
+                                  addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
+                              });
+                          }}
+                          highlightStyle={highlightStyle}
+                          activeVersePairs={versePairs}
+                          wordRefs={wordRefs}
+                          wordOffsets={wordOffsets}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -1703,9 +1817,9 @@ export default function DiwanApp() {
           {/* Bottom fade — content fades out above the control bar; slides away with footer when idle */}
           <motion.div
             className="pointer-events-none fixed bottom-0 left-0 right-0 z-40"
-            animate={isIdle ? { opacity: 0, y: 60 } : { opacity: 1, y: 0 }}
+            animate={effectivelyIdle ? { opacity: 0, y: 60 } : { opacity: 1, y: 0 }}
             transition={
-              isIdle
+              effectivelyIdle
                 ? { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }
                 : { type: 'spring', stiffness: 280, damping: 26 }
             }
@@ -1717,13 +1831,13 @@ export default function DiwanApp() {
 
           <motion.footer
             className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom"
-            animate={isIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
+            animate={effectivelyIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
             transition={
-              isIdle
+              effectivelyIdle
                 ? { duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: 0.12 }
                 : { type: 'spring', stiffness: 280, damping: 26 }
             }
-            style={{ pointerEvents: isIdle ? 'none' : 'auto' }}
+            style={{ pointerEvents: effectivelyIdle ? 'none' : 'auto' }}
           >
             {/* Highlight mode: Listen (one-shot) → PlayControlsStrip (exclusive) */}
             {highlightStyle !== 'none' && (
@@ -2006,7 +2120,7 @@ export default function DiwanApp() {
               Attached to listenButtonIdleRef so tapping it does NOT wake the UI chrome;
               the user can control playback while staying in immersive zen mode. */}
           <AnimatePresence>
-            {isIdle && (
+            {effectivelyIdle && (
               <motion.div
                 ref={listenButtonIdleRef}
                 className="fixed z-[55] flex justify-center"
@@ -2079,6 +2193,21 @@ export default function DiwanApp() {
       />
 
       {/* Design Review + Bug — stacked bottom-left utility buttons */}
+      {/* TEMP: jump to the poem-reader prototype in design-review (remove before launch) */}
+      <a
+        href="/design-review/poem-reader/landing-reveal.html"
+        className="fixed z-[200] left-2 bottom-2 px-3 py-1.5 rounded-full text-xs font-brand-en no-underline backdrop-blur-xl border transition-all"
+        style={{
+          borderColor: 'var(--gold)',
+          color: 'var(--gold)',
+          background: darkMode ? 'rgba(12,12,14,0.6)' : 'rgba(253,252,248,0.7)',
+        }}
+        title="Open the Poem Reader prototype"
+        aria-label="Open poem reader prototype"
+      >
+        ✦ Poem Reader
+      </a>
+
       {FEATURES.designReview && (
         <div
           className="fixed z-[200] flex flex-col items-center gap-1"
@@ -2128,7 +2257,7 @@ export default function DiwanApp() {
         isDownvoted={current ? isPoemDownvoted(current) : false}
         onUnflag={handleUndownvote}
         user={user}
-        isIdle={isIdle}
+        isIdle={effectivelyIdle}
       />
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}

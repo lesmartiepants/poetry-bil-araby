@@ -359,8 +359,8 @@ describe('uiStore', () => {
       expect(useUIStore.getState().font).toBe('Amiri');
     });
 
-    it('starts at text size 2 (Large)', () => {
-      expect(useUIStore.getState().textSize).toBe(2);
+    it('starts at text size 0 (Small)', () => {
+      expect(useUIStore.getState().textSize).toBe(0);
     });
 
     it('starts with translation shown', () => {
@@ -443,14 +443,14 @@ describe('uiStore', () => {
     });
 
     it('cycleTextSize cycles 0-3 and wraps', () => {
-      useUIStore.getState().cycleTextSize(); // 2 -> 3
-      expect(useUIStore.getState().textSize).toBe(3);
-      useUIStore.getState().cycleTextSize(); // 3 -> 0
-      expect(useUIStore.getState().textSize).toBe(0);
       useUIStore.getState().cycleTextSize(); // 0 -> 1
       expect(useUIStore.getState().textSize).toBe(1);
       useUIStore.getState().cycleTextSize(); // 1 -> 2
       expect(useUIStore.getState().textSize).toBe(2);
+      useUIStore.getState().cycleTextSize(); // 2 -> 3
+      expect(useUIStore.getState().textSize).toBe(3);
+      useUIStore.getState().cycleTextSize(); // 3 -> 0 (wraps)
+      expect(useUIStore.getState().textSize).toBe(0);
     });
 
     it('toggleTranslation flips flag', () => {

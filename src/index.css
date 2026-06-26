@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Sparkler reader: bouncing "pull up for the next poem" cue arrow */
+@keyframes cueBounce {
+  0%,
+  100% {
+    transform: translateY(2px);
+    opacity: 0.65;
+  }
+  50% {
+    transform: translateY(-7px);
+    opacity: 1;
+  }
+}
+
 /* Theme tokens — gold + lapis lazuli palette */
 :root {
   --gold: #c5a059;

@@ -6,7 +6,7 @@
 //
 // Setup (once):  npm install --no-save playwright-core
 // Usage:         node .github/assets/render-header.mjs
-// Output:        .github/assets/header.png
+// Output:        .github/assets/header-banner.png
 import { existsSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -14,7 +14,7 @@ import { chromium } from 'playwright-core';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const html = resolve(here, 'header.source.html');
-const out = resolve(here, 'header.png');
+const out = resolve(here, 'header-banner.png');
 
 // Locate the Chromium binary shipped with Playwright's browser cache.
 function findChrome() {

@@ -208,8 +208,9 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
         ) : null}
       </AnimatePresence>
 
-      {/* Centered intro/outro: a faint tap-catcher keeps focus on the card. */}
-      {mode === 'centered' && <div className="absolute inset-0" style={{ pointerEvents: 'auto' }} aria-hidden />}
+      {/* No full-screen tap-catcher: the tour must NEVER block the app. Even on
+          the centered intro/outro the only interactive element is the card, so
+          play/pause and every other control stay tappable underneath. */}
 
       <AnimatePresence mode="wait">
         <CoachCard

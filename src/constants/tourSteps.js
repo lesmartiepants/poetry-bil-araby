@@ -91,7 +91,7 @@ export const TOUR_STEPS = [
     target: '[data-tour="save"]',
     arabic: 'احفظ',
     title: 'Save your favourites',
-    body: 'Tap the heart to keep a poem you love. Sign in with a free account and your favourites are saved to your library — on every device, waiting whenever you come back.',
+    body: 'Tap the heart to keep a poem you love. Sign in with a free account and your favourites are saved to your library.',
     hint: 'Tap the heart to save',
     advanceOn: 'click',
     side: 'top',

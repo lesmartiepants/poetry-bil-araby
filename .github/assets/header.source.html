@@ -1,0 +1,203 @@
+<!doctype html>
+<!--
+  Poetry Bil-Araby — README header banner (source of truth).
+  Render to PNG with .github/assets/render-header.mjs (or the headless Chromium
+  command documented there). Design draws directly on the app's own language:
+  lapis-and-gold palette (src/index.css), the splash wordmark (SplashScreen.jsx),
+  and the eightfold girih star tessellation from SquoctogonBackground.jsx.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  /* Brand fonts vendored locally (OFL) so the render is reproducible offline. */
+  @font-face {
+    font-family: 'Reem Kufi';
+    font-style: normal;
+    font-weight: 700;
+    font-display: block;
+    src: url('./fonts/ReemKufi-Bold-arabic.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'Forum';
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url('./fonts/Forum-Regular-latin.woff2') format('woff2');
+  }
+  :root {
+    --gold: #c5a059;
+    --gold-foil: linear-gradient(135deg, #b8922e 0%, #c5a059 28%, #e2c67a 52%, #c5a059 74%, #a07d38 100%);
+    --lapis-deep: #1e3a6e;
+    --lapis-medium: #2e5090;
+    --lapis-light: #4a7cc9;
+    --bg: #0c0c0e;
+    --cream: #d4d0c8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #000; }
+  #banner {
+    position: relative;
+    width: 1280px;
+    height: 380px;
+    overflow: hidden;
+    background:
+      radial-gradient(120% 140% at 50% -20%, rgba(46,80,144,0.40) 0%, rgba(30,58,110,0.16) 32%, rgba(12,12,14,0) 60%),
+      radial-gradient(80% 120% at 50% 120%, rgba(197,160,89,0.10) 0%, rgba(12,12,14,0) 55%),
+      linear-gradient(180deg, #0e1018 0%, #0c0c0e 55%, #0a0a0c 100%);
+    font-family: 'Forum', serif;
+  }
+  /* girih pattern layer */
+  #pattern {
+    position: absolute;
+    inset: 0;
+    -webkit-mask-image: radial-gradient(120% 95% at 50% 50%, transparent 0%, transparent 26%, rgba(0,0,0,0.65) 58%, #000 100%);
+    mask-image: radial-gradient(120% 95% at 50% 50%, transparent 0%, transparent 26%, rgba(0,0,0,0.65) 58%, #000 100%);
+  }
+  /* top + bottom hairlines in gold */
+  #banner::before, #banner::after {
+    content: "";
+    position: absolute; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(197,160,89,0.0) 8%, rgba(197,160,89,0.55) 50%, rgba(197,160,89,0.0) 92%, transparent 100%);
+  }
+  #banner::before { top: 0; }
+  #banner::after { bottom: 0; }
+
+  #content {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 2;
+  }
+  #wordmark {
+    display: flex; align-items: center; gap: 1.15rem;
+    line-height: 1;
+  }
+  .ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 700;
+    font-size: 5.4rem;
+    background: var(--gold-foil);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    filter: drop-shadow(0 0 34px rgba(197,160,89,0.28));
+    padding-bottom: 0.12em; /* room for descenders */
+  }
+  .en {
+    font-family: 'Forum', serif;
+    font-size: 4.6rem;
+    letter-spacing: -0.03em;
+    color: var(--cream);
+  }
+  .feather { width: 2.5rem; height: 2.5rem; color: var(--gold); filter: drop-shadow(0 0 14px rgba(197,160,89,0.35)); }
+  #rule {
+    width: 340px; height: 1px; margin: 1.5rem 0 1.15rem;
+    background: linear-gradient(90deg, transparent 0%, rgba(197,160,89,0.35) 18%, #c5a059 50%, rgba(197,160,89,0.35) 82%, transparent 100%);
+  }
+  #tagline {
+    font-family: 'Forum', serif;
+    font-size: 1.35rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(212,208,200,0.72);
+  }
+</style>
+</head>
+<body>
+  <div id="banner">
+    <svg id="pattern" viewBox="0 0 1280 380" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="content">
+      <div id="wordmark">
+        <span class="ar" dir="rtl" lang="ar">بالعربي</span>
+        <span class="en">poetry</span>
+        <svg class="feather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12.67 19a2 2 0 0 0 1.416-.588l6.154-6.172a6 6 0 0 0-8.49-8.49L5.586 9.914A2 2 0 0 0 5 11.328V18a1 1 0 0 0 1 1z"/>
+          <path d="M16 8 2 22"/><path d="M17.5 15H9"/>
+        </svg>
+      </div>
+      <div id="rule"></div>
+      <div id="tagline">Diacritized &nbsp;&middot;&nbsp; Recited &nbsp;&middot;&nbsp; Illuminated</div>
+    </div>
+  </div>
+
+<script>
+/* ---------------------------------------------------------------------------
+   Eightfold girih star tessellation.
+   Echoes SquoctogonBackground.jsx: an octagon/square grid where each octagon
+   carries an 8-pointed star (khatim) drawn as straight line segments. Rendered
+   as a single stroked path in lapis-light, low opacity, masked to recede behind
+   the wordmark.
+--------------------------------------------------------------------------- */
+(function () {
+  const svg = document.getElementById('pattern');
+  const W = 1280, H = 380;
+  const s = 96;            // grid cell pitch (star center spacing)
+  const R = s * 0.5;       // star circumradius (points nearly touch neighbours)
+  const segs = [];
+  const TAU = Math.PI * 2;
+
+  // 8-pointed star (octagram {8/3}) at (cx,cy): 8 points on a circle connected
+  // every third vertex — the sharp interlaced khatim seen across Islamic tiling.
+  function octagram(cx, cy, rad) {
+    const p = [];
+    for (let i = 0; i < 8; i++) {
+      const ang = (i / 8) * TAU - Math.PI / 8;
+      p.push([cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)]);
+    }
+    let i = 0;
+    for (let k = 0; k < 8; k++) {
+      const a = p[i], j = (i + 3) % 8, b = p[j];
+      segs.push([a[0], a[1], b[0], b[1]]);
+      i = j;
+    }
+  }
+
+  // Octagon framing each star, plus small squares on the interstitial lattice —
+  // together these read as the classic octagon-and-square ground.
+  function octagon(cx, cy, rad) {
+    const o = [];
+    for (let i = 0; i < 8; i++) {
+      const ang = (i / 8) * TAU;
+      o.push([cx + rad * Math.cos(ang), cy + rad * Math.sin(ang)]);
+    }
+    for (let i = 0; i < 8; i++) {
+      const a = o[i], b = o[(i + 1) % 8];
+      segs.push([a[0], a[1], b[0], b[1]]);
+    }
+  }
+  function square(cx, cy, q) {
+    const sq = [[cx - q, cy], [cx, cy - q], [cx + q, cy], [cx, cy + q]];
+    for (let i = 0; i < 4; i++) {
+      const a = sq[i], b = sq[(i + 1) % 4];
+      segs.push([a[0], a[1], b[0], b[1]]);
+    }
+  }
+
+  const cols = Math.ceil(W / s) + 2;
+  const rows = Math.ceil(H / s) + 2;
+  for (let r = -1; r < rows; r++) {
+    for (let c = -1; c < cols; c++) {
+      const cx = c * s + s / 2;
+      const cy = r * s + s / 2;
+      octagram(cx, cy, R * 0.92);
+      octagon(cx, cy, R * 0.40);
+      // interstitial square between four stars
+      square(cx + s / 2, cy + s / 2, R * 0.26);
+    }
+  }
+
+  let d = '';
+  for (const [x1, y1, x2, y2] of segs) {
+    d += `M${x1.toFixed(2)},${y1.toFixed(2)}L${x2.toFixed(2)},${y2.toFixed(2)}`;
+  }
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', d);
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', '#4a7cc9');
+  path.setAttribute('stroke-width', '1');
+  path.setAttribute('stroke-opacity', '0.34');
+  svg.appendChild(path);
+})();
+</script>
+</body>
+</html>

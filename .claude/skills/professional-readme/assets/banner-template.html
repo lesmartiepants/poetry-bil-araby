@@ -1,0 +1,135 @@
+<!doctype html>
+<!--
+  README header banner TEMPLATE.
+
+  Adapt to the project's identity:
+    1. Replace the palette variables with the repo's real tokens.
+    2. Vendor the brand fonts as woff2 next to this file and update @font-face.
+    3. Replace the wordmark, tagline, and (optional) keyword triad.
+    4. Swap or tune the generative background for the project's motif.
+
+  Render with render-banner.mjs (screenshots the #banner element at 2x).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<style>
+  /* Vendor brand fonts locally so the render is reproducible offline. */
+  @font-face {
+    font-family: 'BrandDisplay';
+    font-weight: 700;
+    font-display: block;
+    src: url('./BrandDisplay.woff2') format('woff2');
+  }
+  @font-face {
+    font-family: 'BrandText';
+    font-weight: 400;
+    font-display: block;
+    src: url('./BrandText.woff2') format('woff2');
+  }
+  :root {
+    /* TODO: replace with the project's real tokens */
+    --accent: #c5a059;            /* primary brand / wordmark color */
+    --accent-foil: linear-gradient(135deg, #b8922e 0%, #c5a059 30%, #e2c67a 55%, #c5a059 75%, #a07d38 100%);
+    --brand: #2e5090;             /* secondary brand */
+    --brand-light: #4a7cc9;       /* pattern / glow */
+    --bg-top: #0e1018;
+    --bg-mid: #0c0c0e;
+    --bg-bottom: #08080a;         /* keep a darker grounding so it doesn't wash flat */
+    --cream: #d4d0c8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: #000; }
+  #banner {
+    position: relative;
+    width: 1280px;
+    height: 400px;            /* tune so content fills with balanced margins */
+    overflow: hidden;
+    background:
+      radial-gradient(120% 135% at 50% -25%, rgba(46,80,144,0.42) 0%, rgba(30,58,110,0.16) 34%, rgba(12,12,14,0) 62%),
+      radial-gradient(85% 110% at 50% 122%, rgba(197,160,89,0.10) 0%, rgba(12,12,14,0) 58%),
+      linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 50%, var(--bg-bottom) 100%);
+    font-family: 'BrandText', serif;
+  }
+  /* Optional generative motif layer (swap path-builder in the script below). */
+  #pattern {
+    position: absolute; inset: 0;
+    -webkit-mask-image: radial-gradient(125% 130% at 50% 50%, transparent 0%, transparent 28%, rgba(0,0,0,0.7) 56%, #000 100%);
+    mask-image: radial-gradient(125% 130% at 50% 50%, transparent 0%, transparent 28%, rgba(0,0,0,0.7) 56%, #000 100%);
+  }
+  #banner::before, #banner::after {
+    content: ""; position: absolute; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 8%, rgba(197,160,89,0.55) 50%, transparent 92%);
+  }
+  #banner::before { top: 0; }  #banner::after { bottom: 0; }
+
+  #content {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 2;
+  }
+  #wordmark { display: flex; align-items: center; gap: 1.15rem; line-height: 1; }
+  .display {
+    font-family: 'BrandDisplay', sans-serif; font-weight: 700; font-size: 7rem;
+    background: var(--accent-foil);
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    filter: drop-shadow(0 0 40px rgba(197,160,89,0.30));
+    padding-bottom: 0.12em;
+  }
+  .subname { font-family: 'BrandText', serif; font-size: 6rem; letter-spacing: -0.03em; color: var(--cream); }
+  #rule {
+    width: 420px; height: 1px; margin: 1.7rem 0 1.25rem;
+    background: linear-gradient(90deg, transparent, rgba(197,160,89,0.35) 18%, var(--accent) 50%, rgba(197,160,89,0.35) 82%, transparent);
+  }
+  #tagline { font-family: 'BrandText', serif; font-size: 2.2rem; color: rgba(226,222,212,0.88); }
+  #triad {
+    margin-top: 1rem; font-family: 'BrandText', serif; font-size: 1.45rem;
+    letter-spacing: 0.32em; text-transform: uppercase; color: rgba(197,160,89,0.82);
+  }
+</style>
+</head>
+<body>
+  <div id="banner">
+    <svg id="pattern" viewBox="0 0 1280 400" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="content">
+      <div id="wordmark">
+        <span class="display">Brand</span>
+        <span class="subname">name</span>
+      </div>
+      <div id="rule"></div>
+      <div id="tagline">A one-line tagline that captures the experience</div>
+      <div id="triad">First &nbsp;&middot;&nbsp; Second &nbsp;&middot;&nbsp; Third</div>
+    </div>
+  </div>
+
+<script>
+/* Optional motif: a simple eightfold star (octagram {8/3}) tessellation in the
+   brand-light color. Replace with the project's own generative construction, or
+   delete the #pattern svg + this script for a clean gradient-only banner. */
+(function () {
+  const svg = document.getElementById('pattern');
+  if (!svg) return;
+  const W = 1280, H = 400, s = 96, R = s * 0.5, TAU = Math.PI * 2, segs = [];
+  const star = (cx, cy, rad) => {
+    const p = [];
+    for (let i = 0; i < 8; i++) { const a = (i / 8) * TAU - Math.PI / 8; p.push([cx + rad * Math.cos(a), cy + rad * Math.sin(a)]); }
+    let i = 0;
+    for (let k = 0; k < 8; k++) { const j = (i + 3) % 8; segs.push([...p[i], ...p[j]]); i = j; }
+  };
+  for (let r = -1; r < Math.ceil(H / s) + 1; r++)
+    for (let c = -1; c < Math.ceil(W / s) + 1; c++)
+      star(c * s + s / 2, r * s + s / 2, R * 0.92);
+  const d = segs.map(([x1, y1, x2, y2]) => `M${x1.toFixed(2)},${y1.toFixed(2)}L${x2.toFixed(2)},${y2.toFixed(2)}`).join('');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', d);
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', '#4a7cc9');
+  path.setAttribute('stroke-width', '1');
+  path.setAttribute('stroke-opacity', '0.32');
+  svg.appendChild(path);
+})();
+</script>
+</body>
+</html>

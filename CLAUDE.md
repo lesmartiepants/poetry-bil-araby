@@ -112,7 +112,7 @@ VERCEL_TOKEN                    // For Vercel CLI
 
 **Agents:** `test-orchestrator`, `test-suite-maintainer`, `test-coverage-reviewer`, `ci-test-guardian`, `git-workflow-manager`, `worktree-manager`, `github-issue-manager`, `docs-sync-reviewer`, `ui-ux-reviewer`, `design-review-agent`, `design-sprint-lead`, `design-generator`, `design-reviewer`, `design-review-setup`, `scroll-animation-designer`
 
-**Skills (`.claude/skills/`):** `/design-sprint`, `/screenshot-audit`, `/commit-push`
+**Skills (`.claude/skills/`):** `/design-sprint`, `/screenshot-audit`, `/commit-push`, `/professional-readme`
 
 **Maintenance Rule -- MANDATORY when creating or modifying agents:**
 1. Update `.cursor/rules/agents.mdc` -- keep the Agent Registry table, coordination flow, and file list in sync

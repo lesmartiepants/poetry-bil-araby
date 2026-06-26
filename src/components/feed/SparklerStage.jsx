@@ -47,14 +47,11 @@ export default function SparklerStage({
   useLayoutEffect(() => {
     const track = trackRef.current;
     if (!track) return;
+    let runMax = 0; // tallest measured this run — only grows (e.g. when Amiri loads), never shrinks
+    let cancelled = false;
     const measure = () => {
-      const inners = track.querySelectorAll('.unit-inner');
-      let max = 0;
-      inners.forEach((el) => {
-        max = Math.max(max, el.getBoundingClientRect().height);
-      });
-      if (max > 0) setUnitH(Math.ceil(max + 18)); // breathing room so tashkeel never clips
-      // fitLine: shrink any overflowing line to keep it on one row
+      if (cancelled || !track) return;
+      // fitLine first: shrink any overflowing line to keep it on one row (ligature-safe)
       track.querySelectorAll('.ar-line, .translit-line, .en-line').forEach((el) => {
         el.style.fontSize = '';
         const w = el.clientWidth * 0.97;
@@ -64,11 +61,31 @@ export default function SparklerStage({
           el.style.fontSize = (fs * w) / sw + 'px';
         }
       });
+      let max = 0;
+      track.querySelectorAll('.unit-inner').forEach((el) => {
+        max = Math.max(max, el.getBoundingClientRect().height);
+      });
+      if (max > 0) {
+        runMax = Math.max(runMax, Math.ceil(max + 18)); // breathing room so tashkeel never clips
+        setUnitH(runMax);
+      }
     };
     measure();
+    // Re-measure after layout settles and (crucially) after web fonts load — Amiri/Reem Kufi
+    // change line metrics, so a mount-time measure undersizes the rows.
+    const raf = requestAnimationFrame(measure);
+    const t = setTimeout(measure, 350);
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      document.fonts.ready.then(measure).catch(() => {});
+    }
     const onResize = () => measure();
     window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(raf);
+      clearTimeout(t);
+      window.removeEventListener('resize', onResize);
+    };
   }, [lines, showTranslation, showTransliteration, textScale, currentFontClass, trackRef]);
 
   const rowH = unitH ?? undefined;

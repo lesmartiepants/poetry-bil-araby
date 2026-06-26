@@ -183,7 +183,7 @@ const PoemReader = memo(function PoemReader({
         >
           {poem?.titleArabic || poem?.title}
         </div>
-        {poem?.title && (
+        {poem?.title && poem.title !== poem?.titleArabic && (
           <div
             dir="ltr"
             style={{
@@ -211,10 +211,12 @@ const PoemReader = memo(function PoemReader({
           <span lang="ar" style={{ fontFamily: "'Reem Kufi', sans-serif", fontWeight: 600 }}>
             {poem?.poetArabic || poem?.poet}
           </span>
-          {poem?.poet && poem?.poetArabic && (
+          {poem?.poet && poem?.poetArabic && poem.poet !== poem.poetArabic && (
             <span style={{ opacity: 0.6, fontWeight: 400 }}>·</span>
           )}
-          {poem?.poet && poem?.poetArabic && <span>{poem.poet}</span>}
+          {poem?.poet && poem?.poetArabic && poem.poet !== poem.poetArabic && (
+            <span>{poem.poet}</span>
+          )}
         </div>
       </div>
 

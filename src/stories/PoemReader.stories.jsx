@@ -7,8 +7,10 @@ const SEED_POEM = {
     'أَلا لَيتَ الشَّبابَ يَعودُ يَوماً\nفَأُخبِرَهُ بِما فَعَلَ المَشيبُ\nتَمَنّى المَرءُ في الصِّبا طِوالاً\nفَلَمّا نالَهُ أَبكى وَخابا',
   english:
     'Oh, if only youth would return one day\nThat I might tell it what old age has done\nIn youth a man wishes for endless days\nBut when he gains them, weeps — the hope undone',
-  poet: 'أبو تمام',
-  title: 'شكوى الشيب',
+  poet: 'Abu Tammam',
+  poetArabic: 'أبو تمام',
+  title: 'Lament for Grey Hair',
+  titleArabic: 'شكوى الشيب',
 };
 
 export default {
@@ -32,51 +34,30 @@ export default {
     showTransliteration: false,
     textScale: 1,
     currentFontClass: 'font-amiri',
-    revealStyle: 'aurora',
+    insightsMode: 'inline',
   },
 };
 
-export const AuroraBloomDark = {
-  name: 'Aurora Bloom — Dark',
-  args: {
-    darkMode: true,
-    revealStyle: 'aurora',
-  },
-  parameters: {
-    backgrounds: { default: 'dark' },
-  },
+export const SparklerDark = {
+  name: 'Sparkler — Dark',
+  args: { darkMode: true },
+  parameters: { backgrounds: { default: 'dark' } },
 };
 
-export const AuroraBloomLight = {
-  name: 'Aurora Bloom — Light',
-  args: {
-    darkMode: false,
-    revealStyle: 'aurora',
-  },
-  parameters: {
-    backgrounds: { default: 'light' },
-  },
+export const SparklerLight = {
+  name: 'Sparkler — Light',
+  args: { darkMode: false },
+  parameters: { backgrounds: { default: 'light' } },
 };
 
-export const WithoutTranslation = {
+export const WithTransliteration = {
+  name: 'With Transliteration (3-line units)',
+  args: { darkMode: true, showTransliteration: true },
+  parameters: { backgrounds: { default: 'dark' } },
+};
+
+export const ArabicOnly = {
   name: 'Arabic Only (no translation)',
-  args: {
-    darkMode: true,
-    showTranslation: false,
-    revealStyle: 'aurora',
-  },
-  parameters: {
-    backgrounds: { default: 'dark' },
-  },
-};
-
-export const SimpleFade = {
-  name: 'Simple Fade Style',
-  args: {
-    darkMode: true,
-    revealStyle: 'simple',
-  },
-  parameters: {
-    backgrounds: { default: 'dark' },
-  },
+  args: { darkMode: true, showTranslation: false },
+  parameters: { backgrounds: { default: 'dark' } },
 };

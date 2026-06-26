@@ -24,6 +24,8 @@ const Z = 9999;
 const PAD = 4; // breathing room around the spotlighted element (hugs the control)
 const GAP = 18; // distance between the control bar / element and the card
 const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
+const ARABIC_SIZE = '1.155rem'; // inline accent (Arabic) — +10%
+const ARABIC_SIZE_LG = '1.43rem'; // intro window, stacked Arabic — +10%
 
 // Steps can open an overlay (a "tray"): the engine then moves the card in front
 // of it (un-blurred, centered in the bottom two-thirds) and closes it on Next.
@@ -58,6 +60,7 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
   const [barTop, setBarTop] = useState(null);
   const [aboveRect, setAboveRect] = useState(null);
   const [actioned, setActioned] = useState(() => new Set());
+  const [nudge, setNudge] = useState(0); // bump → flash the target ring
   const rafRef = useRef(0);
 
   const step = steps[index];
@@ -95,6 +98,12 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
   }, [step, steps.length, complete]);
 
   const back = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
+
+  // Pressing Next before doing the step's action flashes the target instead of
+  // advancing — a glow that says "do this first".
+  const flash = useCallback(() => setNudge((n) => n + 1), []);
+  const locked = needsAction && !unlocked;
+  const onNextPress = locked ? flash : next;
 
   // Flag the tour as active so app overlays (e.g. the insight drawer) suppress
   // their outside-click dismissal and let the tour drive them.
@@ -144,12 +153,12 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') dismiss();
-      else if (e.key === 'ArrowRight' && !(needsAction && !unlocked)) next();
+      else if (e.key === 'ArrowRight') onNextPress();
       else if (e.key === 'ArrowLeft') back();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dismiss, next, back, needsAction, unlocked]);
+  }, [dismiss, onNextPress, back]);
 
   // Layout mode: tray (centered in front of an open drawer) > spotlight > centered.
   const mode = trayOpen ? 'tray' : rect ? 'spotlight' : 'centered';
@@ -164,7 +173,7 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
     >
       <AnimatePresence>
         {mode === 'spotlight' ? (
-          <Spotlight key="spot" rect={rect} />
+          <Spotlight key="spot" rect={rect} nudge={nudge} />
         ) : mode === 'centered' ? (
           <motion.div
             key="scrim"
@@ -193,9 +202,8 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
           rect={rect}
           barTop={barTop}
           aboveRect={aboveRect}
-          locked={needsAction && !unlocked}
-          unlocked={unlocked}
-          onNext={next}
+          locked={locked}
+          onNext={onNextPress}
           onBack={back}
           onSkip={dismiss}
         />
@@ -205,8 +213,9 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
   );
 }
 
-/** Dim panels framing the target + a SUBTLY pulsing ring (the only flash). */
-function Spotlight({ rect }) {
+/** Dim panels framing the target + a SUBTLY pulsing ring, plus a one-shot
+ *  brighter flash whenever `nudge` bumps (user pressed Next too early). */
+function Spotlight({ rect, nudge = 0 }) {
   const t = rect.top - PAD;
   const l = rect.left - PAD;
   const w = rect.width + PAD * 2;
@@ -250,11 +259,31 @@ function Spotlight({ rect }) {
         }}
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
       />
+      {/* One-shot attention flash — remounts on each nudge and plays once. */}
+      {nudge > 0 && (
+        <motion.div
+          key={nudge}
+          initial={{ opacity: 0.9, scale: 1 }}
+          animate={{ opacity: 0, scale: 1.22 }}
+          transition={{ duration: 0.55, ease: 'easeOut' }}
+          style={{
+            position: 'absolute',
+            top: t,
+            left: l,
+            width: w,
+            height: h,
+            borderRadius: radius,
+            border: '2.5px solid var(--gold)',
+            boxShadow: '0 0 34px 10px rgba(197,160,89,0.75)',
+            pointerEvents: 'none',
+          }}
+        />
+      )}
     </motion.div>
   );
 }
 
-function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, aboveRect, locked, unlocked, onNext, onBack, onSkip }) {
+function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, aboveRect, locked, onNext, onBack, onSkip }) {
   const [size, setSize] = useState({ w: 320, h: 200 });
   const ref = useRef(null);
 
@@ -320,57 +349,34 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
         ×
       </button>
 
-      {/* Scrollable content — header/body/hint scroll if space is tight so the
-          Back/Next footer below always stays visible. */}
+      {/* Scrollable content so the Back/Next footer below always stays visible. */}
       <div style={{ overflowY: 'auto', minHeight: 0 }}>
-        {/* Arabic on the left, English to the right, separated by an em dash —
-            one line where it fits, wrapping to multiple lines on large text. */}
-        <h3
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'baseline',
-            gap: '0 0.5rem',
-            margin: '0 28px 6px 0',
-          }}
-        >
-          {step.arabic && (
-            <span dir="rtl" style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: '1.05rem', fontWeight: 700 }}>
-              {step.arabic}
-            </span>
-          )}
-          {step.arabic && <span style={{ color: surface.dim, fontFamily: "'Forum', serif" }}>—</span>}
-          <span style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', color: surface.text }}>{step.title}</span>
-        </h3>
+        {step.target ? (
+          // Feature steps: Arabic left, English right, em dash between — one line
+          // where it fits, wrapping on large text.
+          <h3 style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0 0.5rem', margin: '0 28px 6px 0' }}>
+            {step.arabic && (
+              <span dir="rtl" style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: ARABIC_SIZE, fontWeight: 700 }}>
+                {step.arabic}
+              </span>
+            )}
+            {step.arabic && <span style={{ color: surface.dim, fontFamily: "'Forum', serif" }}>—</span>}
+            <span style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', color: surface.text }}>{step.title}</span>
+          </h3>
+        ) : (
+          // Intro window: Arabic and English stacked on two lines.
+          <div style={{ margin: '0 28px 8px 0' }}>
+            {step.arabic && (
+              <div dir="rtl" style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: ARABIC_SIZE_LG, fontWeight: 700, marginBottom: 3 }}>
+                {step.arabic}
+              </div>
+            )}
+            <h3 style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', margin: 0, color: surface.text }}>{step.title}</h3>
+          </div>
+        )}
         <p style={{ fontFamily: "'Forum', serif", fontSize: '0.92rem', lineHeight: 1.55, margin: 0, color: surface.dim }}>
           {step.body}
         </p>
-
-        {step.hint && (
-          <div
-            style={{
-              marginTop: 12,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              fontFamily: "'Forum', serif",
-              fontSize: '0.78rem',
-              color: unlocked ? '#7bbf7b' : 'var(--gold)',
-              background: unlocked ? 'rgba(123,191,123,0.12)' : 'rgba(197,160,89,0.1)',
-              border: `1px solid ${unlocked ? 'rgba(123,191,123,0.4)' : 'rgba(197,160,89,0.3)'}`,
-              borderRadius: 999,
-              padding: '4px 12px',
-              transition: 'all 0.3s ease',
-            }}
-          >
-            {unlocked ? (
-              <span style={{ fontSize: '0.9rem', lineHeight: 1 }}>✓</span>
-            ) : (
-              <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--gold)', animation: 'tourPulse 1.4s ease-in-out infinite' }} />
-            )}
-            {locked ? step.hint : unlocked && step.advanceOn ? 'Done — tap Next' : step.hint}
-          </div>
-        )}
       </div>
 
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
@@ -394,13 +400,13 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
               Back
             </button>
           )}
-          <button onClick={locked ? undefined : onNext} disabled={locked} aria-disabled={locked} style={{ ...goldBtn, ...(locked ? lockedBtn : null) }}>
+          {/* Always pressable and gold: when the step still needs its action,
+              pressing flashes the target (see onNextPress) rather than advancing. */}
+          <button onClick={onNext} aria-disabled={locked} style={goldBtn}>
             {isLast ? 'Done' : 'Next'}
           </button>
         </div>
       </div>
-
-      <style>{`@keyframes tourPulse { 0%,100% { opacity: 0.4; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.15); } }`}</style>
     </motion.div>
   );
 }
@@ -416,7 +422,6 @@ const goldBtn = {
   cursor: 'pointer',
   fontWeight: 600,
 };
-const lockedBtn = { background: 'rgba(197,160,89,0.18)', color: 'rgba(231,229,228,0.4)', cursor: 'not-allowed' };
 const ghostBtn = (surface) => ({
   fontFamily: "'Forum', serif",
   fontSize: '0.85rem',

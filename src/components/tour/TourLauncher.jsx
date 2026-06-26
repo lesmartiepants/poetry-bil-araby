@@ -13,15 +13,23 @@ const launchedFromURL = () => {
   }
 };
 
+// Predicates for conditional steps. `hasLibrary` keeps the library step out of a
+// brand-new visitor's tour, but shows it to anyone signed in or with saved poems
+// — so a returning reader is reminded where their collection lives.
+const WHEN = {
+  hasLibrary: (ctx) => !!ctx.user || ctx.savedCount > 0,
+};
+
 /**
  * TourLauncher — entry point for the branded walkthrough.
  *
- * A floating "Take a tour" chip (bottom-left) starts it; a `?tour=1` (or
- * `?tour=spotlight`) deep link auto-starts it. It does not auto-run — the chip
- * is the opt-in. Wire it to run for first-time users once you're happy with it.
+ * A floating "Take a tour" chip (bottom-left) starts it; a `?tour=1` deep link
+ * auto-starts it. `user` / `savedCount` drive which conditional steps appear.
  */
-export default function TourLauncher() {
+export default function TourLauncher({ user = null, savedCount = 0 }) {
   const [active, setActive] = useState(launchedFromURL);
+
+  const steps = TOUR_STEPS.filter((s) => !s.when || (WHEN[s.when] ? WHEN[s.when]({ user, savedCount }) : true));
 
   return (
     <>
@@ -48,7 +56,7 @@ export default function TourLauncher() {
 
       {active && (
         <Suspense fallback={null}>
-          <SpotlightTour steps={TOUR_STEPS} onClose={() => setActive(false)} />
+          <SpotlightTour steps={steps} onClose={() => setActive(false)} />
         </Suspense>
       )}
     </>

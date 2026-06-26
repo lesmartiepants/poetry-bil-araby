@@ -62,6 +62,7 @@ const initialState = {
   liveVoice: loadLiveVoice(), // selected speaking voice, persisted (default DEFAULT_VOICE)
   liveTemperature: 0,
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
+  tourActive: false, // walkthrough running — overlays suppress outside-dismiss so the tour drives them
   logs: [],
   headerOpacity: 0,
   // Background settings
@@ -98,6 +99,7 @@ export const useUIStore = create((set, get) => ({
   },
   setLiveTemperature: (liveTemperature) => set({ liveTemperature }),
   setHighlightStyle: (highlightStyle) => set({ highlightStyle }),
+  setTourActive: (tourActive) => set({ tourActive }),
   setDarkMode: (darkMode) => set({ darkMode }),
   toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
   setFont: (font) => set({ font }),

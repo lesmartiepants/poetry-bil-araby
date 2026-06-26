@@ -1883,7 +1883,7 @@ export default function DiwanApp() {
                 </div>
               )}
 
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]" data-tour="discover">
                 <button
                   onClick={() => {
                     setFireTapped(true);
@@ -1930,7 +1930,6 @@ export default function DiwanApp() {
                     }
                   }}
                   disabled={isFetching}
-                  data-tour="discover"
                   aria-label="Open discover"
                   className={`relative w-[46px] h-[46px] bg-transparent border-none cursor-pointer flex items-center justify-center rounded-full hover:scale-105 ${fireTapped ? 'fire-tap' : ''}`}
                   style={{
@@ -1947,12 +1946,11 @@ export default function DiwanApp() {
                 </span>
               </div>
 
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]" data-tour="save">
                 <button
                   onClick={() =>
                     isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
                   }
-                  data-tour="save"
                   aria-label={isPoemSaved(displayedPoem) ? 'Unsave poem' : 'Save poem'}
                   className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                 >
@@ -1972,7 +1970,7 @@ export default function DiwanApp() {
                 </span>
               </div>
 
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]" data-tour="explain">
                 <button
                   onClick={() => {
                     if (interpretation) {
@@ -1984,7 +1982,6 @@ export default function DiwanApp() {
                     }
                   }}
                   disabled={isInterpreting}
-                  data-tour="explain"
                   aria-label="Explain poem meaning"
                   className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${isInterpreting ? 'opacity-50' : ''}`}
                 >
@@ -2148,7 +2145,9 @@ export default function DiwanApp() {
       </AnimatePresence>
 
       {/* Interactive walkthrough launcher — only once the splash is dismissed. */}
-      {FEATURES.tour && !showSplash && <TourLauncher />}
+      {FEATURES.tour && !showSplash && (
+        <TourLauncher user={user} savedCount={savedPoems.length} />
+      )}
 
       {/* Share Card Modal */}
       {showShareCard && displayedPoem && (

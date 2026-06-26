@@ -82,6 +82,37 @@ export const TOUR_STEPS = [
     advanceOn: 'click',
     side: 'top',
     align: 'end',
+    // Tapping Explain opens the insight panel; the engine moves the card in
+    // front of it (un-blurred) and closes it on Next.
+    tray: 'insight',
+  },
+  {
+    key: 'favourite',
+    target: '[data-tour="save"]',
+    arabic: 'احفظ',
+    title: 'Save your favourites',
+    body: 'Tap the heart to keep a poem you love. Sign in with a free account and your favourites are saved to your library — on every device, waiting whenever you come back.',
+    hint: 'Tap the heart to save',
+    advanceOn: 'click',
+    side: 'top',
+    align: 'center',
+    // Tapping the heart while signed out opens the sign-in sheet; treat it like
+    // a tray so the card sits in front of it and Next dismisses it.
+    tray: 'auth',
+  },
+  {
+    // Only shown to returning / signed-in readers who actually have a library.
+    key: 'library',
+    target: '[data-tour="library"]',
+    arabic: 'مكتبتك',
+    title: 'Your library',
+    body: 'Everything you’ve saved lives here. It’ll be waiting for you the next time you come back.',
+    hint: 'Tap to open your library',
+    advanceOn: 'click',
+    side: 'left',
+    align: 'center',
+    when: 'hasLibrary',
+    tray: 'saved',
   },
   {
     key: 'finish',

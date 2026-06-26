@@ -25,6 +25,15 @@ const PAD = 8; // breathing room around the spotlighted element
 const GAP = 18; // distance between the control bar / element and the card
 const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
 
+// Steps can open an overlay (a "tray"): the engine then moves the card in front
+// of it (un-blurred, centered in the bottom two-thirds) and closes it on Next.
+const TRAYS = {
+  discover: { key: 'discoverDrawer', close: () => useModalStore.getState().setDiscoverDrawer(false) },
+  insight: { key: 'insightsDrawer', close: () => useModalStore.getState().setInsightsDrawer(false) },
+  auth: { key: 'authModal', close: () => useModalStore.getState().setAuthModal(false) },
+  saved: { key: 'savedPoems', close: () => useModalStore.getState().setSavedPoemsOpen(false) },
+};
+
 function measure(selector) {
   if (!selector) return null;
   const el = document.querySelector(selector);
@@ -36,7 +45,10 @@ function measure(selector) {
 
 export default function SpotlightTour({ steps, onClose }) {
   const darkMode = useUIStore((s) => s.darkMode);
-  const discoverOpen = useModalStore((s) => s.discoverDrawer);
+  const discoverDrawer = useModalStore((s) => s.discoverDrawer);
+  const insightsDrawer = useModalStore((s) => s.insightsDrawer);
+  const authModal = useModalStore((s) => s.authModal);
+  const savedPoems = useModalStore((s) => s.savedPoems);
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState(null);
   const [barTop, setBarTop] = useState(null);
@@ -48,7 +60,8 @@ export default function SpotlightTour({ steps, onClose }) {
   const total = steps.length;
   const needsAction = !!step?.advanceOn;
   const unlocked = !needsAction || actioned.has(step?.key);
-  const trayOpen = step?.tray === 'discover' && discoverOpen;
+  const tray = step?.tray ? TRAYS[step.tray] : null;
+  const trayOpen = !!(tray && { discoverDrawer, insightsDrawer, authModal, savedPoems }[tray.key]);
 
   const finish = useCallback(() => {
     try {
@@ -59,11 +72,7 @@ export default function SpotlightTour({ steps, onClose }) {
     onClose?.();
   }, [onClose]);
 
-  const next = useCallback(() => {
-    // If this step opened a tray, dismiss it as we move on.
-    if (step?.tray === 'discover' && useModalStore.getState().discoverDrawer) {
-      useModalStore.getState().setDiscoverDrawer(false);
-    }
+  const goNext = useCallback(() => {
     setIndex((i) => {
       if (i >= steps.length - 1) {
         finish();
@@ -71,9 +80,43 @@ export default function SpotlightTour({ steps, onClose }) {
       }
       return i + 1;
     });
-  }, [steps.length, finish, step]);
+  }, [steps.length, finish]);
+
+  // Next: when a tray/panel is open, just CLOSE it — advancing is driven by the
+  // tray-dismissed effect below. This works uniformly whether the tray is a
+  // modal Radix dialog (the insight panel, which intercepts the first outside
+  // click to close itself) or a plain drawer. Otherwise advance directly.
+  const next = useCallback(() => {
+    const t = step?.tray ? TRAYS[step.tray] : null;
+    if (t && useModalStore.getState()[t.key]) {
+      t.close();
+    } else {
+      goNext();
+    }
+  }, [step, goNext]);
+
+  // Advance the moment an opened tray gets dismissed — by Next, by the app's own
+  // close button, or by a Radix outside-click — so a single Next always moves on.
+  const prevTrayOpen = useRef(false);
+  useEffect(() => {
+    if (prevTrayOpen.current && !trayOpen && step?.tray) {
+      prevTrayOpen.current = false;
+      // Advance in response to an external store change (the dismissed overlay).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      goNext();
+    } else {
+      prevTrayOpen.current = trayOpen;
+    }
+  }, [trayOpen, step, goNext]);
 
   const back = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
+
+  // Flag the tour as active so app overlays (e.g. the insight drawer) suppress
+  // their outside-click dismissal and let the tour drive them.
+  useEffect(() => {
+    useUIStore.getState().setTourActive(true);
+    return () => useUIStore.getState().setTourActive(false);
+  }, []);
 
   // Keep the app chrome awake (the idle timer would otherwise hide the bar).
   useEffect(() => {
@@ -240,6 +283,12 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, l
   return (
     <motion.div
       ref={ref}
+      // Keep pointer events on the card from reaching Radix's document-level
+      // dismiss listener — otherwise tapping Next on a step whose tray is a Radix
+      // modal (the insight panel) is treated as an "outside" click that just
+      // closes the dialog, swallowing the first press. Stopping propagation lets
+      // the tour's own Next close the panel AND advance in a single tap.
+      onPointerDown={(e) => e.stopPropagation()}
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.96 }}

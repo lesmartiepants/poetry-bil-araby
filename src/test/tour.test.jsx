@@ -29,9 +29,12 @@ function stripMotionProps(p) {
   return rest;
 }
 
-vi.mock('../stores/uiStore', () => ({
-  useUIStore: (selector) => selector({ darkMode: true }),
-}));
+vi.mock('../stores/uiStore', () => {
+  const state = { darkMode: true, tourActive: false };
+  const useUIStore = (selector) => selector(state);
+  useUIStore.getState = () => ({ ...state, setTourActive: vi.fn() });
+  return { useUIStore };
+});
 
 import SpotlightTour from '../components/tour/SpotlightTour.jsx';
 import TourLauncher from '../components/tour/TourLauncher.jsx';

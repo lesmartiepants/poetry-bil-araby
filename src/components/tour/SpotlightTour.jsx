@@ -27,10 +27,13 @@ const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
 
 // Steps can open an overlay (a "tray"): the engine then moves the card in front
 // of it (un-blurred, centered in the bottom two-thirds) and closes it on Next.
+// `above` (a selector) marks a centered modal the card should sit fully ABOVE
+// rather than float over; the others are bottom drawers the card centers in
+// front of in the bottom two-thirds.
 const TRAYS = {
   discover: { key: 'discoverDrawer', close: () => useModalStore.getState().setDiscoverDrawer(false) },
   insight: { key: 'insightsDrawer', close: () => useModalStore.getState().setInsightsDrawer(false) },
-  auth: { key: 'authModal', close: () => useModalStore.getState().setAuthModal(false) },
+  auth: { key: 'authModal', close: () => useModalStore.getState().setAuthModal(false), above: '[data-tour-anchor="auth"]' },
   saved: { key: 'savedPoems', close: () => useModalStore.getState().setSavedPoemsOpen(false) },
 };
 
@@ -40,7 +43,8 @@ function measure(selector) {
   if (!el) return null;
   const r = el.getBoundingClientRect();
   if (r.width === 0 && r.height === 0) return null;
-  return { top: r.top, left: r.left, width: r.width, height: r.height, bottom: r.bottom, right: r.right };
+  const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+  return { top: r.top, left: r.left, width: r.width, height: r.height, bottom: r.bottom, right: r.right, radius };
 }
 
 export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onComplete, onStepChange }) {
@@ -52,6 +56,7 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
   const [index, setIndex] = useState(() => Math.min(Math.max(0, initialStep), Math.max(0, steps.length - 1)));
   const [rect, setRect] = useState(null);
   const [barTop, setBarTop] = useState(null);
+  const [aboveRect, setAboveRect] = useState(null);
   const [actioned, setActioned] = useState(() => new Set());
   const rafRef = useRef(0);
 
@@ -127,14 +132,17 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
     return () => clearInterval(id);
   }, []);
 
-  // Track the target + the control bar's top edge every frame.
+  // Track the target, the control bar's top edge, and any "above" modal (auth)
+  // every frame so the card follows them.
   useLayoutEffect(() => {
     let active = true;
+    const tk = step?.tray ? TRAYS[step.tray] : null;
     const tick = () => {
       if (!active) return;
       setRect(measure(step?.target));
       const bar = document.querySelector('[data-tour-anchor="controlbar"]');
       setBarTop(bar ? bar.getBoundingClientRect().top : null);
+      setAboveRect(tk?.above ? measure(tk.above) : null);
       rafRef.current = requestAnimationFrame(tick);
     };
     tick();
@@ -142,7 +150,7 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
       active = false;
       cancelAnimationFrame(rafRef.current);
     };
-  }, [step?.target]);
+  }, [step?.target, step?.tray]);
 
   // Dynamic unlock: performing the real action lights up Next.
   useEffect(() => {
@@ -205,6 +213,7 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
           mode={mode}
           rect={rect}
           barTop={barTop}
+          aboveRect={aboveRect}
           locked={needsAction && !unlocked}
           unlocked={unlocked}
           onNext={next}
@@ -223,6 +232,8 @@ function Spotlight({ rect }) {
   const l = rect.left - PAD;
   const w = rect.width + PAD * 2;
   const h = rect.height + PAD * 2;
+  // Match the target's own corner radius (a pill stays a pill) — concentric with PAD.
+  const radius = Math.min((rect.radius || 0) + PAD, h / 2);
   const dim = 'rgba(8,8,12,0.66)';
   const panel = (style) => (
     <div style={{ position: 'absolute', background: dim, backdropFilter: 'blur(1.5px)', pointerEvents: 'none', ...style }} />
@@ -247,7 +258,7 @@ function Spotlight({ rect }) {
           left: l,
           width: w,
           height: h,
-          borderRadius: 16,
+          borderRadius: radius,
           border: '1.5px solid rgba(197,160,89,0.9)',
           pointerEvents: 'none',
         }}
@@ -264,7 +275,7 @@ function Spotlight({ rect }) {
   );
 }
 
-function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, locked, unlocked, onNext, onBack, onSkip }) {
+function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, aboveRect, locked, unlocked, onNext, onBack, onSkip }) {
   const [size, setSize] = useState({ w: 320, h: 200 });
   const ref = useRef(null);
 
@@ -275,7 +286,7 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, l
     }
   }, [index, mode]);
 
-  const pos = computePosition({ mode, rect, barTop, size, side: step?.side, align: step?.align });
+  const pos = computePosition({ mode, rect, barTop, aboveRect, size, side: step?.side, align: step?.align });
 
   const surface = darkMode
     ? { bg: 'rgba(12,12,14,0.94)', text: '#e7e5e4', dim: 'rgba(231,229,228,0.62)' }
@@ -298,6 +309,7 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, l
         position: 'absolute',
         ...pos,
         width: 'min(340px, calc(100vw - 32px))',
+        overflowY: 'auto',
         pointerEvents: 'auto',
         background: surface.bg,
         backdropFilter: 'blur(24px) saturate(150%)',
@@ -328,13 +340,24 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, l
         ×
       </button>
 
-      {step.arabic && (
-        <div style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: '0.95rem', marginBottom: 4 }}>
-          {step.arabic}
-        </div>
-      )}
-      <h3 style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', margin: '0 0 6px', color: surface.text }}>
-        {step.title}
+      {/* Arabic on the left, English to the right, separated by an em dash — one
+          line where it fits, wrapping to multiple lines on large-text phones. */}
+      <h3
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'baseline',
+          gap: '0 0.5rem',
+          margin: '0 28px 6px 0',
+        }}
+      >
+        {step.arabic && (
+          <span dir="rtl" style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: '1.05rem', fontWeight: 700 }}>
+            {step.arabic}
+          </span>
+        )}
+        {step.arabic && <span style={{ color: surface.dim, fontFamily: "'Forum', serif" }}>—</span>}
+        <span style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', color: surface.text }}>{step.title}</span>
       </h3>
       <p style={{ fontFamily: "'Forum', serif", fontSize: '0.92rem', lineHeight: 1.55, margin: 0, color: surface.dim }}>
         {step.body}
@@ -422,47 +445,67 @@ const ghostBtn = (surface) => ({
 });
 
 /**
- * Place the card.
- *  - tray:   centered horizontally, centered within the bottom two-thirds.
+ * Place the card and return a maxHeight so it can scroll internally rather than
+ * ever overlap what it points at.
+ *  - tray + aboveRect (auth modal): sit fully ABOVE the modal, no overlap.
+ *  - tray (bottom drawers): centered in the bottom two-thirds, in front.
  *  - center: dead center (intro/outro).
- *  - spotlight: beside the target on the requested side. For bottom controls
- *    (side 'top') we anchor to the TOP of the control bar so the card clears the
- *    whole bar instead of partially overlapping individual buttons.
+ *  - spotlight side 'top': bottom-anchored a GAP above the control bar (or the
+ *    target) so the card never partially overlaps the controls.
  */
-function computePosition({ mode, rect, barTop, size, side = 'auto', align = 'center' }) {
+function computePosition({ mode, rect, barTop, aboveRect, size, side = 'auto', align = 'center' }) {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
   const cardW = Math.min(340, vw - 32);
-  const cardH = size.h || 200;
+  const measuredH = size.h || 200;
   const clampX = (x) => Math.min(Math.max(12, x), vw - cardW - 12);
-  const clampY = (y) => Math.min(Math.max(12, y), vh - cardH - 12);
+
+  // Anchor the card by its BOTTOM edge at `bottomY` (grows upward) so it can
+  // never cross `bottomY` regardless of height; cap height to the room above and
+  // scroll if tight.
+  const placeAbove = (bottomY, leftX) => ({
+    bottom: Math.max(12, vh - bottomY),
+    left: clampX(leftX),
+    maxHeight: Math.max(140, bottomY - 12),
+  });
+  const placeCentered = (centerY) => {
+    const maxHeight = Math.max(160, vh - 32);
+    const h = Math.min(measuredH, maxHeight);
+    return { top: Math.min(Math.max(12, centerY - h / 2), vh - h - 12), left: clampX(vw / 2 - cardW / 2), maxHeight };
+  };
 
   if (mode === 'tray') {
-    // Centered within the bottom two-thirds (its center sits at 2/3 height).
-    return { left: clampX(vw / 2 - cardW / 2), top: clampY((2 * vh) / 3 - cardH / 2) };
+    // A centered modal (auth) → sit fully above it. A bottom drawer → centered.
+    if (aboveRect) return placeAbove(aboveRect.top - GAP, vw / 2 - cardW / 2);
+    return placeCentered((2 * vh) / 3);
   }
   if (mode === 'centered' || !rect || side === 'center') {
-    return { top: Math.max(24, vh / 2 - cardH / 2), left: Math.max(16, vw / 2 - cardW / 2) };
+    return placeCentered(vh / 2);
   }
 
   let s = side;
   if (s === 'auto') s = rect.top > vh - rect.bottom ? 'top' : 'bottom';
 
+  const leftFor = () => (align === 'start' ? rect.left : align === 'end' ? rect.right - cardW : rect.left + rect.width / 2 - cardW / 2);
+
   if (s === 'left' || s === 'right') {
     const left = s === 'left' ? rect.left - cardW - GAP : rect.right + GAP;
+    const maxHeight = Math.max(160, vh - 24);
+    const h = Math.min(measuredH, maxHeight);
     let top;
     if (align === 'start') top = rect.top;
-    else if (align === 'end') top = rect.bottom - cardH;
-    else top = rect.top + rect.height / 2 - cardH / 2;
-    return { left: clampX(left), top: clampY(top) };
+    else if (align === 'end') top = rect.bottom - h;
+    else top = rect.top + rect.height / 2 - h / 2;
+    return { top: Math.min(Math.max(12, top), vh - h - 12), left: clampX(left), maxHeight };
   }
 
-  // top / bottom. For 'top', clear the whole control bar when we know its edge.
-  const refTop = s === 'top' && barTop != null ? barTop : rect.top;
-  const top = s === 'top' ? refTop - cardH - GAP : rect.bottom + GAP;
-  let left;
-  if (align === 'start') left = rect.left;
-  else if (align === 'end') left = rect.right - cardW;
-  else left = rect.left + rect.width / 2 - cardW / 2;
-  return { top: clampY(top), left: clampX(left) };
+  if (s === 'top') {
+    // Bottom-anchored above the whole control bar (or the target) — never overlaps.
+    const refTop = barTop != null ? barTop : rect.top;
+    return placeAbove(refTop - GAP, leftFor());
+  }
+  // bottom
+  const top = rect.bottom + GAP;
+  const maxHeight = Math.max(140, vh - top - 12);
+  return { top, left: clampX(leftFor()), maxHeight };
 }

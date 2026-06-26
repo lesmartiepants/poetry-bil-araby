@@ -361,16 +361,20 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   // the press and recitation kept going. Tone.Player uses stop() rather than
   // pause(); the streaming player's stop() fades + halts scheduled chunks.
   if (isPlaying) {
+    // Record the exact playback position and stop the audible output. We do NOT
+    // abort an in-flight Live stream: letting it finish builds + caches the full
+    // clip, so RESUME re-creates a player from that blob and starts at
+    // pauseOffset — i.e. it picks up mid-sentence instead of regenerating from
+    // the top. (A swipe to another poem still aborts via abortPlay().)
     recordPause();
-    abortCurrentStream(); // cancel an in-flight Live stream so it can't keep generating
     if (existingPlayer) {
       existingPlayer.stop();
     }
     setPlaying(false);
     track('audio_pause', { poet: current?.poet });
     addLog('UI Event', '⏸️ Pause button clicked', 'user');
-    // Note: do not touch isTogglingPlay here — if a stream is still in flight its
-    // own finally{} resets it once abortCurrentStream() unwinds the fetch.
+    // Note: do not touch isTogglingPlay here — a still-running stream's finally{}
+    // resets it when it completes.
     return;
   }
 

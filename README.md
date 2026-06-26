@@ -109,8 +109,8 @@ handled with Framer Motion for a calm, considered feel.
 - AI literary insight that reads a poem as a story, not an academic gloss
 
 **Discovery**
-- Dual sources: a curated **Database** of real poems and an **AI** generation mode (Gemini)
-- Random discovery, poet filtering, and a prefetched carousel of related work
+- A single tap surfaces a new poem from the curated library
+- Poet filtering and a prefetched carousel of related work by the same author
 - Deep-linkable poems and shareable cards with Open Graph previews
 
 **Personalization**
@@ -152,25 +152,25 @@ insight and TTS recitation), Mishkal (diacritization). Quality is enforced with 
 
 ## Architecture
 
-The app runs in two interchangeable poem sources, toggled at runtime:
+The app is a single-page React app backed by a small poem-serving API:
 
-- **Database mode** fetches real poems from PostgreSQL through a small Express API
-  (`server.js`) exposing random, by-poet, poets, and translation-cache endpoints.
-- **AI mode** generates poems and analysis directly from the Gemini API using the system
-  prompts in `src/prompts.js`.
-
-The frontend is a single-page React app. UI and domain state live in Zustand stores
-(`src/stores/`), side-effectful flows (fetch, play, analyze) are isolated as store actions,
-and cross-cutting concerns (auth, audio highlighting, shortcuts, query params) are React
-hooks (`src/hooks/`).
+- A lightweight Express API (`server.js`) serves the poem library from PostgreSQL,
+  exposing random, by-poet, poets, and translation-cache endpoints.
+- The frontend reads from that API. UI and domain state live in Zustand stores
+  (`src/stores/`), side-effectful flows (fetch, play, analyze) are isolated as store
+  actions, and cross-cutting concerns (auth, audio highlighting, shortcuts, query params)
+  are React hooks (`src/hooks/`).
+- Google Gemini powers on-demand literary insight, English translation, and audio
+  recitation, using the system prompts in `src/prompts.js`. Translations and insights are
+  cached back to the database so repeat reads are instant.
 
 ## Getting Started
 
 ### Prerequisites
 
 - Node.js 18 or newer
-- For AI mode: a Gemini API key ([Google AI Studio](https://aistudio.google.com/app/apikey))
-- For Database mode: PostgreSQL 15+ (17 recommended for the auth features)
+- PostgreSQL 15+ for the poem library (17 recommended for the auth features)
+- For insight, translation, and recitation: a Gemini API key ([Google AI Studio](https://aistudio.google.com/app/apikey))
 - For authentication (optional): a Supabase project
 
 ### Install
@@ -184,17 +184,17 @@ npm install
 Create a `.env` file in the project root with the variables your setup needs:
 
 ```bash
-# Frontend — AI mode
-VITE_GEMINI_API_KEY=your-gemini-api-key
-
-# Frontend — Database mode
+# Frontend — backend (poem library) API
 VITE_API_URL=http://localhost:3001
+
+# Frontend — insight, translation, and recitation
+VITE_GEMINI_API_KEY=your-gemini-api-key
 
 # Frontend — optional, enables auth and saved poems
 VITE_SUPABASE_URL=https://your-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-jwt-anon-key   # must start with "eyJ"
 
-# Backend (server.js) — Database mode
+# Backend (server.js) — poem library database
 DATABASE_URL=postgresql://user:pass@host:6543/postgres   # Supabase pooler host
 ```
 
@@ -204,16 +204,16 @@ the backend defaults to `localhost:5432/qafiyah` when `DATABASE_URL` is unset.
 ### Run
 
 ```bash
-npm run dev          # frontend only (AI mode) on http://localhost:5173
-npm run dev:server   # backend API on http://localhost:3001
-npm run dev:all      # both concurrently (Database mode)
+npm run dev:all      # frontend + backend together (recommended)
+npm run dev          # frontend only on http://localhost:5173
+npm run dev:server   # backend API only on http://localhost:3001
 ```
 
 ## Configuration
 
 | Variable | Scope | Purpose |
 |---|---|---|
-| `VITE_GEMINI_API_KEY` | Frontend | Gemini key for AI mode and recitation |
+| `VITE_GEMINI_API_KEY` | Frontend | Gemini key for insight, translation, and recitation |
 | `VITE_API_URL` | Frontend | Backend API base URL |
 | `VITE_SUPABASE_URL` | Frontend | Supabase project URL (optional) |
 | `VITE_SUPABASE_ANON_KEY` | Frontend | Supabase anon key, JWT format (optional) |
@@ -269,7 +269,7 @@ poetry-bil-araby/
 │   ├── constants/           # Design tokens, theme, fonts, patterns
 │   ├── utils/               # Transliteration, OG tags, audio helpers
 │   └── prompts.js           # AI system prompts
-├── server.js                # Express API for Database mode
+├── server.js                # Express API serving the poem library
 ├── scripts/                 # Diacritization pipeline (Python) and tooling
 ├── supabase/migrations/     # Auth and user-feature schema
 ├── e2e/                     # Playwright end-to-end suites

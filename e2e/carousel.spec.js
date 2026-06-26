@@ -176,11 +176,11 @@ test.describe('Poem Carousel', () => {
     await loadApp(page);
   });
 
-  // #1 — Carousel dots appear after Discover with a DB poem
-  test('carousel dots appear after Discover', async ({ page }) => {
+  // #1 — Carousel dots (LEGACY horizontal carousel only). The vertical feed has no dots;
+  // feed coverage lives in e2e/sparkler-reader.spec.js.
+  test.skip('carousel dots appear after Discover', async ({ page }) => {
     const dots = await discoverAndWaitForCarousel(page);
     const count = await dots.count();
-    // Carousel should have at least 2 poems (main + carousel) and at most 5 (capped)
     expect(count).toBeGreaterThan(1);
     expect(count).toBeLessThanOrEqual(5);
   });
@@ -306,8 +306,8 @@ test.describe('Poem Carousel', () => {
     expect(count).toBeLessThanOrEqual(5);
   });
 
-  // #8 — Previous/Next chevrons are present on desktop
-  test('previous and next chevron buttons render on desktop', async ({ page, viewport }) => {
+  // #8 — Previous/Next chevrons (LEGACY horizontal carousel only; the vertical feed uses swipe).
+  test.skip('previous and next chevron buttons render on desktop', async ({ page, viewport }) => {
     if (!viewport || viewport.width < 768) {
       test.skip();
     }
@@ -519,8 +519,8 @@ test.describe('Poem Carousel', () => {
     }
   });
 
-  // #17 — Carousel persists after multiple discover actions
-  test('carousel repopulates when discovering a new poem', async ({ page }) => {
+  // #17 — Carousel dots repopulate (LEGACY horizontal carousel only; no dots in the vertical feed).
+  test.skip('carousel repopulates when discovering a new poem', async ({ page }) => {
     // First discover
     await discoverAndWaitForCarousel(page);
     const dotsAfterFirst = await page.locator('button[aria-label^="Go to poem"]').count();

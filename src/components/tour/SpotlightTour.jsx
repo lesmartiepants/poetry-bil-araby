@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUIStore } from '../../stores/uiStore';
 import { useModalStore } from '../../stores/modalStore';
+import { TOUR_TRAYS } from '../../constants/tourTrays.js';
 
 /**
  * SpotlightTour — bespoke, on-brand walkthrough engine (no external library).
@@ -29,15 +30,16 @@ const ARABIC_SIZE_LG = '1.43rem'; // intro window, stacked Arabic — +10%
 
 // Steps can open an overlay (a "tray"): the engine then moves the card in front
 // of it (un-blurred, centered in the bottom two-thirds) and closes it on Next.
-// `above` (a selector) marks a centered modal the card should sit fully ABOVE
-// rather than float over; the others are bottom drawers the card centers in
-// front of in the bottom two-thirds.
-const TRAYS = {
-  discover: { key: 'discoverDrawer', close: () => useModalStore.getState().setDiscoverDrawer(false) },
-  insight: { key: 'insightsDrawer', close: () => useModalStore.getState().setInsightsDrawer(false) },
-  auth: { key: 'authModal', close: () => useModalStore.getState().setAuthModal(false), above: '[data-tour-anchor="auth"]' },
-  saved: { key: 'savedPoems', close: () => useModalStore.getState().setSavedPoemsOpen(false) },
-};
+// Built from the shared TOUR_TRAYS contract (see constants/tourTrays.js, which a
+// unit test validates against the store). `key` is the store boolean that means
+// "open", `close()` closes it, `above` (optional) is a centered modal to sit
+// above rather than float over.
+const TRAYS = Object.fromEntries(
+  Object.entries(TOUR_TRAYS).map(([name, { stateKey, setter, above }]) => [
+    name,
+    { key: stateKey, above, close: () => useModalStore.getState()[setter](false) },
+  ])
+);
 
 function measure(selector) {
   if (!selector) return null;
@@ -140,14 +142,33 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
     };
   }, [step?.target, step?.tray]);
 
-  // Dynamic unlock: performing the real action lights up Next.
+  // Dev-only drift warning: if a step expects an anchor that isn't in the DOM,
+  // surface it the moment the tour runs locally — it would otherwise silently
+  // fall back to a centered card. No-op in production builds and unit tests.
+  useEffect(() => {
+    if (!import.meta.env.DEV || import.meta.env.MODE === 'test' || !step?.target) return;
+    const id = setTimeout(() => {
+      if (!document.querySelector(step.target)) {
+        console.warn(
+          `[tour] step "${step.key}": target ${step.target} not found — anchor drift? Falling back to a centered card.`
+        );
+      }
+    }, 800);
+    return () => clearTimeout(id);
+  }, [index, step?.target, step?.key]);
+
+  // Dynamic unlock: performing the real action lights up Next. Delegated from
+  // the document (capture phase) so it keeps working even if the target element
+  // is swapped out mid-step (e.g. the Listen control morphing as audio loads).
   useEffect(() => {
     if (!needsAction || !step?.target) return;
-    const el = document.querySelector(step.target);
-    if (!el) return;
-    const handler = () => setActioned((prev) => new Set(prev).add(step.key));
-    el.addEventListener(step.advanceOn, handler);
-    return () => el.removeEventListener(step.advanceOn, handler);
+    const handler = (e) => {
+      if (e.target instanceof Element && e.target.closest(step.target)) {
+        setActioned((prev) => new Set(prev).add(step.key));
+      }
+    };
+    document.addEventListener(step.advanceOn, handler, true);
+    return () => document.removeEventListener(step.advanceOn, handler, true);
   }, [index, step, needsAction]);
 
   useEffect(() => {

@@ -97,8 +97,13 @@ test('every step anchors to a real element and the tour walks to completion', as
     // Feature steps: perform the real action the tour is guiding.
     if (step.advanceOn) {
       if (step.tray) {
-        // A real click lands on the control and OPENS its panel/drawer.
-        await page.locator(step.target).first().click({ force: true });
+        // Click the actual control button to OPEN its panel/drawer. The anchor
+        // may be a cell wrapper (icon + label); click the button inside it so
+        // the click reliably lands on the control, not the gap between them.
+        const anchor = page.locator(step.target).first();
+        const innerBtn = anchor.locator('button').first();
+        const control = (await innerBtn.count()) > 0 ? innerBtn : anchor;
+        await control.click({ force: true });
         // Behavioral coupling we can assert cleanly: tapping Save (signed out)
         // opens the auth sheet.
         if (step.tray === 'auth') {

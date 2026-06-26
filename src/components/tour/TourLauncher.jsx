@@ -1,5 +1,7 @@
 import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { Compass } from 'lucide-react';
+import { THEME } from '../../constants/theme.js';
+import { useUIStore } from '../../stores/uiStore';
 import { TOUR_STEPS } from '../../constants/tourSteps.js';
 
 const SpotlightTour = lazy(() => import('./SpotlightTour.jsx'));
@@ -41,6 +43,8 @@ function readPersisted() {
  *    that icon so readers know where to find a refresher.
  */
 export default function TourLauncher({ user = null, savedCount = 0 }) {
+  const darkMode = useUIStore((s) => s.darkMode);
+  const theme = darkMode ? THEME.dark : THEME.light;
   const steps = useMemo(
     () => TOUR_STEPS.filter((s) => !s.when || (WHEN[s.when] ? WHEN[s.when]({ user, savedCount }) : true)),
     [user, savedCount]
@@ -128,24 +132,18 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
         </button>
       )}
 
-      {/* Top-right restart icon — below the Aa text-settings pill. */}
+      {/* Top-right restart icon — below the Aa text-settings pill. Matches the
+          theme toggle / text-settings button format exactly. */}
       {showCornerIcon && (
         <div data-tour="restart" className="fixed top-[8.5rem] right-2 md:right-[25rem] z-[46]">
           <button
             onClick={restart}
             aria-label="Restart tour"
-            title="Restart the walkthrough"
-            className="w-11 h-11 rounded-full flex items-center justify-center border transition-transform hover:scale-105"
-            style={{
-              background: 'rgba(12,12,14,0.7)',
-              backdropFilter: 'blur(20px) saturate(150%)',
-              WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-              borderColor: 'rgba(197,160,89,0.35)',
-              color: 'var(--gold)',
-              boxShadow: '0 8px 28px rgba(0,0,0,0.35)',
-            }}
+            className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 backdrop-blur-xl border ${theme.border} ${
+              darkMode ? 'bg-black/70' : 'bg-white/80'
+            } ${theme.goldHoverBg15}`}
           >
-            <Compass size={16} />
+            <Compass size={18} style={{ color: theme.gold }} />
           </button>
         </div>
       )}

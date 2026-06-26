@@ -67,7 +67,7 @@
   .pdot.cur{background:var(--gold);width:16px;border-radius:3px}
   /* bar (proportional) */
   .pbar{position:relative;width:min(180px,52vw);height:3px;border-radius:3px;background:rgba(197,160,89,.16);overflow:hidden}
-  .pbar > i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--gold),var(--gold-bright));border-radius:3px;transition:width .5s cubic-bezier(.16,1,.3,1)}
+  .pbar > i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--gold),var(--gold-bright));border-radius:3px}
   /* count (Arabic-Indic fraction) */
   .pcount{font-family:'Reem Kufi',sans-serif;color:var(--gold);font-size:1.05rem;letter-spacing:.04em;display:flex;align-items:center;gap:.35rem}
   .pcount .sep{opacity:.4}.pcount .tot{opacity:.5}
@@ -79,12 +79,15 @@
   .pbead.cur{width:13px;height:13px;background:var(--gold-bright);border-color:var(--gold-bright);box-shadow:0 0 10px rgba(212,180,99,.7)}
   /* rail (vertical spine) */
   .prail{position:relative;width:3px;height:100%;border-radius:3px;background:rgba(197,160,89,.16)}
-  .prail > .fill{position:absolute;left:0;right:0;top:0;background:linear-gradient(180deg,var(--gold-bright),var(--gold));border-radius:3px;transition:height .5s cubic-bezier(.16,1,.3,1)}
-  .prail > .knob{position:absolute;left:50%;width:11px;height:11px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 10px rgba(212,180,99,.8);transform:translate(-50%,-50%);transition:top .5s cubic-bezier(.16,1,.3,1)}
+  .prail > .fill{position:absolute;left:0;right:0;top:0;background:linear-gradient(180deg,var(--gold-bright),var(--gold));border-radius:3px}
+  .prail > .knob{position:absolute;left:50%;width:11px;height:11px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 10px rgba(212,180,99,.8);transform:translate(-50%,-50%)}
   /* progress-style selector (prototype control) */
   #progsel{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);left:8px;z-index:9;display:flex;gap:3px;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(197,160,89,.25);backdrop-filter:blur(8px);direction:ltr}
   #progsel .pseg{font-family:'Cormorant Garamond',serif;font-size:.66rem;color:var(--muted);padding:3px 8px;border-radius:999px;cursor:pointer;white-space:nowrap}
   #progsel .pseg.on{background:var(--gold);color:#1a1408}
+  #progtiming{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 44px);left:8px;z-index:9;display:flex;gap:3px;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(197,160,89,.25);backdrop-filter:blur(8px);direction:ltr}
+  #progtiming .tseg{font-family:'Cormorant Garamond',serif;font-size:.62rem;color:var(--muted);padding:3px 8px;border-radius:999px;cursor:pointer;white-space:nowrap}
+  #progtiming .tseg.on{background:var(--gold);color:#1a1408}
   .prompt{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 64px);left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:.5rem;z-index:5;pointer-events:none}
   .prompt .glyph{color:var(--gold);font-size:1.1rem}
   .prompt .label{font-family:'Cormorant Garamond',serif;font-style:italic;letter-spacing:.16em;text-transform:uppercase;font-size:.95rem;color:var(--gold)}
@@ -116,6 +119,10 @@
   <span data-p="count" class="pseg">Count</span>
   <span data-p="beads" class="pseg">Beads</span>
   <span data-p="rail" class="pseg">Rail</span>
+</div>
+<div id="progtiming" aria-label="Progress timing">
+  <span data-t="done" class="tseg on">advance on done</span>
+  <span data-t="start" class="tseg">advance on start</span>
 </div>
 
 <script>
@@ -197,22 +204,25 @@ function makeController(card, poem) {
   let activeTween = null;
   let activeMetaTween = null;
   let promptPulse = null;
+  let revealing = -1;   // index of the line currently igniting (-1 when idle)
   const wait = (ms) => new Promise(r=>setTimeout(r,ms));
 
-  // dots = one per page
-  // Render the chosen progress style from the current (revealed / total) state.
+  // Render the chosen progress style. Discrete styles (dots/beads/count) advance on
+  // line-START or line-DONE per the timing toggle; bar/rail are driven *gradually* by
+  // tickLive() during each reveal (sentence progress), so they don't jump.
   function syncProgress(){
     const mode = window.PROGRESS_MODE || 'dots';
     const pagesN = pages;
-    const curPage = Math.max(0, Math.min(pagesN, Math.ceil(revealed/2)));
-    const frac = total ? Math.max(0, Math.min(1, revealed/total)) : 0;
+    const discreteRevealed = (window.PROGRESS_TIMING === 'start' && revealing >= 0) ? (revealing + 1) : revealed;
+    const curPage = Math.max(0, Math.min(pagesN, Math.ceil(discreteRevealed / 2)));
+    const baseFrac = total ? Math.max(0, Math.min(1, revealed / total)) : 0;
     progEl.className = 'progress' + (mode === 'rail' ? ' rail' : '');
     if (mode === 'bar'){
-      progEl.innerHTML = `<div class="pbar"><i style="width:${(frac*100).toFixed(1)}%"></i></div>`;
+      progEl.innerHTML = `<div class="pbar"><i style="width:${(baseFrac*100).toFixed(1)}%"></i></div>`;
     } else if (mode === 'count'){
       progEl.innerHTML = `<span class="pcount"><span class="cur">${arNum(curPage)}</span><span class="sep">/</span><span class="tot">${arNum(pagesN)}</span></span>`;
     } else if (mode === 'rail'){
-      progEl.innerHTML = `<div class="prail"><div class="fill" style="height:${(frac*100).toFixed(1)}%"></div><div class="knob" style="top:${(frac*100).toFixed(1)}%"></div></div>`;
+      progEl.innerHTML = `<div class="prail"><div class="fill" style="height:${(baseFrac*100).toFixed(1)}%"></div><div class="knob" style="top:${(baseFrac*100).toFixed(1)}%"></div></div>`;
     } else { // 'dots' or 'beads'
       const isBeads = mode === 'beads';
       let html = '';
@@ -222,6 +232,13 @@ function makeController(card, poem) {
       }
       progEl.innerHTML = isBeads ? `<div class="pbeads">${html}</div>` : html;
     }
+  }
+  // gradual fill for bar/rail during a line's reveal (frac = 0..1 of the whole poem)
+  function tickLive(frac){
+    const mode = window.PROGRESS_MODE;
+    const pct = (Math.max(0, Math.min(1, frac)) * 100).toFixed(2) + '%';
+    if (mode === 'bar'){ const i = progEl.querySelector('.pbar > i'); if (i) i.style.width = pct; }
+    else if (mode === 'rail'){ const f = progEl.querySelector('.prail > .fill'), k = progEl.querySelector('.prail > .knob'); if (f) f.style.height = pct; if (k) k.style.top = pct; }
   }
 
   function sizeCanvas(){ const r = stage.getBoundingClientRect(); canvas.width = r.width*devicePixelRatio; canvas.height = r.height*devicePixelRatio; canvas.style.width=r.width+'px'; canvas.style.height=r.height+'px'; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
@@ -280,6 +297,8 @@ function makeController(card, poem) {
         gsap.to(en,{opacity:.85,duration:.4,delay:.1}); u.classList.add('lit'); res(); return;
       }
       head.style.opacity = '1'; head_state.alive = true;
+      revealing = i;
+      if (window.PROGRESS_TIMING === 'start') syncProgress();   // discrete styles advance the instant the line starts
       const obj = { p: 1 };
       activeTween = gsap.to(obj, { p: 0, duration: 1.4, ease:'power1.inOut',
         onUpdate(){
@@ -289,9 +308,10 @@ function makeController(card, poem) {
           const hy = (arRect.top - cRect.top) + arRect.height/2;
           head_state.x = hx; head_state.y = hy;
           head.style.transform = `translate(${hx}px, ${hy}px)`;
+          tickLive((i + (1 - obj.p)) / total);                  // bar/rail grow gradually with the sentence
         },
         onComplete(){
-          u.classList.add('lit'); head_state.alive=false;
+          u.classList.add('lit'); head_state.alive=false; revealing = -1;
           gsap.to(head,{opacity:0,duration:.4});
           gsap.to(en,{opacity:.85,duration:.6,delay:.05});
           res();
@@ -316,6 +336,7 @@ function makeController(card, poem) {
     const mode = window.META_MODE || 'top';
     if (activeMetaTween) activeMetaTween.kill();
     gsap.set(stage,{opacity:1});
+    gsap.set(progEl,{opacity:0});                  // progress stays hidden until the header settles
     gsap.set(meta,{left:'50%', xPercent:-50, x:0, y:0, scale:1, opacity:0,
       top:'calc(env(safe-area-inset-top,0px) + 18px)'});
 
@@ -331,6 +352,7 @@ function makeController(card, poem) {
       await gsapTo(meta,{opacity:1, duration:1.0, ease:'power2.out'});
     }
 
+    gsap.to(progEl,{opacity:1,duration:.45});      // reveal progress now that the title has moved out of the way
     await ignite(0); revealed=1; syncProgress();
     if (mode === 'corner'){
       // shrink the credit into the top-right corner once reading begins (content-width → it really travels)
@@ -375,7 +397,7 @@ function makeController(card, poem) {
     gsap.killTweensOf([track,meta,head,stage]);
     head.style.opacity=0; gsap.set(track,{y:0}); gsap.set(stage,{opacity:1}); gsap.set(meta,{clearProps:'all'}); meta.style.opacity=0;
     units.forEach(u=>{const ar=u.querySelector('.ar'),en=u.querySelector('.en'); gsap.killTweensOf([ar,en]); u.classList.remove('lit'); ar.style.clipPath='inset(0 0 0 100%)'; en.style.opacity=0;});
-    syncProgress(); insightBtn.classList.remove('show'); card.querySelector('.scrollcue').classList.remove('show'); } };
+    revealing=-1; gsap.set(progEl,{opacity:0}); syncProgress(); insightBtn.classList.remove('show'); card.querySelector('.scrollcue').classList.remove('show'); } };
 }
 
 const controllers = cards.map((c,i)=>makeController(c, POEMS[i]));
@@ -390,6 +412,17 @@ document.querySelectorAll('#progsel .pseg').forEach(seg=>{
     e.stopPropagation();
     window.PROGRESS_MODE = seg.dataset.p;
     document.querySelectorAll('#progsel .pseg').forEach(s=>s.classList.toggle('on', s===seg));
+    controllers[cur].syncProgress();
+  });
+});
+
+/* progress timing toggle — advance discrete styles on line START vs DONE */
+window.PROGRESS_TIMING = 'done';
+document.querySelectorAll('#progtiming .tseg').forEach(seg=>{
+  seg.addEventListener('click', e=>{
+    e.stopPropagation();
+    window.PROGRESS_TIMING = seg.dataset.t;
+    document.querySelectorAll('#progtiming .tseg').forEach(s=>s.classList.toggle('on', s===seg));
     controllers[cur].syncProgress();
   });
 });

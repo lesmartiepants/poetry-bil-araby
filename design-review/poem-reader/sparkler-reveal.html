@@ -13,7 +13,7 @@
     --gold:#c5a059; --gold-bright:#d4b463; --amber:#e8923a; --ember:#c2410c;
     --bg:#0a0a0c; --bg2:#101016;
     --text:rgba(236,232,224,.94); --muted:rgba(236,232,224,.4);
-    --unit-h: clamp(89px, 14vh, 114px);   /* grows with the verse so inter-line whitespace stays constant */
+    --unit-h: clamp(98px, 15vh, 122px);   /* grows with the verse so inter-line whitespace stays constant; tall enough that Amiri tashkeel never clips at the stage edge */
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
@@ -41,7 +41,7 @@
   .stage{position:relative;width:min(760px,92vw);height:calc(var(--unit-h) * 4);overflow:hidden;z-index:2}
   .track{position:absolute;left:0;right:0;top:0;will-change:transform}
   .unit{height:var(--unit-h);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.08rem;text-align:center}
-  .unit .ar{font-family:'Amiri',serif;direction:rtl;color:var(--text);line-height:1.45;white-space:nowrap;
+  .unit .ar{font-family:'Amiri',serif;direction:rtl;color:var(--text);line-height:1.75;white-space:nowrap;
     font-size:clamp(1.52rem,5.7vw,2.13rem);  /* fitLine() shrinks only if a verse would overflow */
     clip-path:inset(0 0 0 100%);             /* hidden until ignited (revealed right→left) */
     text-shadow:0 0 0 transparent;will-change:clip-path}
@@ -268,7 +268,9 @@ function makeController(card, poem) {
     const visRows = 4, maxTop = Math.max(0, total - visRows), uh = unitH();
     const contTop = Math.min(maxTop, Math.max(0, (line + within) - (visRows - 1)));
     gsap.set(track, { y: -contTop * uh });
-    windowTop = Math.max(0, Math.min(maxTop, Math.round(contTop)));   // row-aligned top to settle to on release
+    // Settle so the dropped-on line sits on the bottom row (line - 3), matching advance()'s
+    // windowing. This keeps the pair rhythm correct on the taps that follow a scrub.
+    windowTop = Math.max(0, Math.min(maxTop, line - (visRows - 1)));
     units.forEach((u, idx)=>{
       const ar=u.querySelector('.ar'), en=u.querySelector('.en'); gsap.killTweensOf([ar, en]);
       if (idx < line){ u.classList.add('lit'); ar.style.clipPath='inset(0 0 0 0%)'; en.style.opacity='0.66'; }
@@ -431,14 +433,21 @@ function makeController(card, poem) {
     }
     busy = true; hidePrompt();
 
-    // If the window already holds 4 lines, slide up by one page (2 units) first
-    if (revealed - windowTop >= 4){
-      windowTop += 2;
+    // Scroll BEFORE revealing so the newest line of this tap's pair lands on the
+    // bottom row (row 3) and is always inside the 4-row window. Computing the target
+    // from the line index (not a pair counter) keeps this correct after a scrub, where
+    // windowTop/revealed are no longer pair-aligned (was the off-by-one "reveal below
+    // the viewport" bug). max(windowTop, …) means we only ever scroll down, never up.
+    const visRows = 4, maxTop = Math.max(0, total - visRows);
+    const lastLine = Math.min(revealed + 1, total - 1);          // last line this tap reveals
+    const newTop = Math.max(0, Math.min(maxTop, Math.max(windowTop, lastLine - (visRows - 1))));
+    if (newTop !== windowTop){
+      windowTop = newTop;
       await gsapTo(track, { y: -windowTop * unitH(), duration: .7, ease:'power3.inOut' });
     }
     // reveal the next pair (or single trailing line)
     await ignite(revealed); revealed++; syncProgress();
-    if (revealed < total){ await new Promise(r=>setTimeout(r,200)); await ignite(revealed); revealed++; syncProgress(); }
+    if (revealed < total){ await wait(200); await ignite(revealed); revealed++; syncProgress(); }
 
     busy = false;
     if (revealed >= total){ showEndCue(); } else { showPrompt('tap to continue'); }

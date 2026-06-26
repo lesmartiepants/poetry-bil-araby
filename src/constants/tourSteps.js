@@ -29,7 +29,7 @@ export const TOUR_STEPS = [
   {
     key: 'welcome',
     target: null,
-    arabic: 'أهلاً وسهلاً',
+    arabic: 'أهلا',
     title: 'Welcome to Poetry بالعربي',
     body: 'A living diwan of 84,000+ Arabic poems. Take ten seconds — I’ll show you the core features, and you’ll try each one yourself.',
     hint: null,

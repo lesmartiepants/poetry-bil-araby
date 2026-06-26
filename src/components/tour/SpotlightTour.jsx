@@ -26,7 +26,6 @@ const PAD = 4; // breathing room around the spotlighted element (hugs the contro
 const GAP = 18; // distance between the control bar / element and the card
 const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
 const ARABIC_SIZE = '1.155rem'; // inline accent (Arabic) — +10%
-const ARABIC_SIZE_LG = '1.43rem'; // intro window, stacked Arabic — +10%
 
 // Steps can open an overlay (a "tray"): the engine then moves the card in front
 // of it (un-blurred, centered in the bottom two-thirds) and closes it on Next.
@@ -372,29 +371,18 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
 
       {/* Scrollable content so the Back/Next footer below always stays visible. */}
       <div style={{ overflowY: 'auto', minHeight: 0 }}>
-        {step.target ? (
-          // Feature steps: Arabic left, English right, em dash between — one line
-          // where it fits, wrapping on large text.
-          <h3 style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0 0.5rem', margin: '0 28px 6px 0' }}>
-            {step.arabic && (
-              <span dir="rtl" style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: ARABIC_SIZE, fontWeight: 700 }}>
-                {step.arabic}
-              </span>
-            )}
-            {step.arabic && <span style={{ color: surface.dim, fontFamily: "'Forum', serif" }}>—</span>}
-            <span style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', color: surface.text }}>{step.title}</span>
-          </h3>
-        ) : (
-          // Intro window: Arabic and English stacked on two lines.
-          <div style={{ margin: '0 28px 8px 0' }}>
-            {step.arabic && (
-              <div dir="rtl" style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: ARABIC_SIZE_LG, fontWeight: 700, marginBottom: 3 }}>
-                {step.arabic}
-              </div>
-            )}
-            <h3 style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', margin: 0, color: surface.text }}>{step.title}</h3>
-          </div>
-        )}
+        {/* Arabic left, English right, em dash between — one line where it fits,
+            wrapping on large text. (Keep the Arabic short enough to share the
+            line; e.g. the intro uses "أهلا".) */}
+        <h3 style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0 0.5rem', margin: '0 28px 6px 0' }}>
+          {step.arabic && (
+            <span dir="rtl" style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: ARABIC_SIZE, fontWeight: 700 }}>
+              {step.arabic}
+            </span>
+          )}
+          {step.arabic && <span style={{ color: surface.dim, fontFamily: "'Forum', serif" }}>—</span>}
+          <span style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', color: surface.text }}>{step.title}</span>
+        </h3>
         <p style={{ fontFamily: "'Forum', serif", fontSize: '0.92rem', lineHeight: 1.55, margin: 0, color: surface.dim }}>
           {step.body}
         </p>

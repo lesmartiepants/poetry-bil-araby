@@ -110,12 +110,12 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
         </Suspense>
       )}
 
-      {/* Bottom-left chip — only while the tour is closed and not yet completed. */}
+      {/* Top-left chip — only while the tour is closed and not yet completed. */}
       {!open && !completed && (
         <button
           onClick={() => setOpen(true)}
           aria-label={started ? 'Resume tour' : 'Take a tour'}
-          className="fixed bottom-4 left-4 z-[60] flex items-center gap-2 rounded-full pl-3 pr-4 py-2 border transition-transform hover:scale-105"
+          className="fixed top-4 left-4 z-[60] flex items-center gap-2 rounded-full pl-3 pr-4 py-2 border transition-transform hover:scale-105"
           style={{
             background: 'rgba(12,12,14,0.9)',
             backdropFilter: 'blur(20px) saturate(150%)',

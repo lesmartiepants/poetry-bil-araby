@@ -355,6 +355,25 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     setPlayer,
   } = useAudioStore.getState();
 
+  // PAUSE — must run BEFORE the debounce guard below. During a live stream the
+  // generation stays in flight (holding isTogglingPlay.current = true) the whole
+  // time audio is playing, so routing pause through the guard silently dropped
+  // the press and recitation kept going. Tone.Player uses stop() rather than
+  // pause(); the streaming player's stop() fades + halts scheduled chunks.
+  if (isPlaying) {
+    recordPause();
+    abortCurrentStream(); // cancel an in-flight Live stream so it can't keep generating
+    if (existingPlayer) {
+      existingPlayer.stop();
+    }
+    setPlaying(false);
+    track('audio_pause', { poet: current?.poet });
+    addLog('UI Event', '⏸️ Pause button clicked', 'user');
+    // Note: do not touch isTogglingPlay here — if a stream is still in flight its
+    // own finally{} resets it once abortCurrentStream() unwinds the fetch.
+    return;
+  }
+
   if (isTogglingPlay.current || isGenerating) {
     addLog('Audio', 'Play toggle already in progress — skipping', 'info');
     return;
@@ -366,20 +385,6 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     'user'
   );
   track('audio_play', { poet: current?.poet });
-
-  // PAUSE — Tone.Player uses stop() rather than pause()
-  if (isPlaying) {
-    recordPause();
-    abortCurrentStream(); // cancel an in-flight Live stream so it can't keep generating
-    if (existingPlayer) {
-      existingPlayer.stop();
-    }
-    setPlaying(false);
-    track('audio_pause', { poet: current?.poet });
-    addLog('UI Event', '⏸️ Pause button clicked', 'user');
-    isTogglingPlay.current = false;
-    return;
-  }
 
   // RESUME — Tone.Player.stop() discards position, so we restart from the stored blob URL.
   // Re-creating the player from the cached URL is cheaper than storing raw PCM buffers.

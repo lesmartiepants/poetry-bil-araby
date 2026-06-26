@@ -100,11 +100,14 @@
   .insight-btn.show{display:flex}
 
   /* scroll affordance between poems */
-  .scrollcue{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:0;right:0;text-align:center;z-index:5;
-    color:var(--muted);font-style:italic;font-size:.72rem;pointer-events:none;opacity:0;transition:opacity .4s}
-  .scrollcue.show{opacity:.7}
-
-  #footer{position:fixed;bottom:6px;right:12px;z-index:9;color:var(--muted);font-style:italic;font-size:.66rem;opacity:.5;direction:ltr}
+  .scrollcue{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);left:0;right:0;z-index:5;
+    display:flex;flex-direction:column;align-items:center;gap:1px;
+    color:var(--gold-bright);font-style:italic;font-size:clamp(.92rem,3.9vw,1.1rem);letter-spacing:.05em;
+    pointer-events:none;opacity:0;transition:opacity .45s ease}
+  .scrollcue.show{opacity:.96}
+  .scrollcue .cue-arrow{font-style:normal;font-size:1.6em;line-height:1;color:var(--gold-bright);
+    filter:drop-shadow(0 0 8px rgba(212,180,99,.55));animation:cueBounce 1.5s ease-in-out infinite}
+  @keyframes cueBounce{0%,100%{transform:translateY(2px);opacity:.65}50%{transform:translateY(-7px);opacity:1}}
 
   #switch{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:10px;z-index:9;display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(197,160,89,.25);backdrop-filter:blur(8px);direction:ltr}
   #switch .seg{font-family:'Cormorant Garamond',serif;font-size:.7rem;color:var(--muted);padding:4px 10px;border-radius:999px;cursor:pointer}
@@ -115,7 +118,6 @@
 </head>
 <body>
 <div id="feed"></div>
-<div id="footer">Sparkler Reveal — tap to read · pull up for the next poem · drag the bar handle to seek</div>
 
 <script>
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -163,7 +165,7 @@ const cards = POEMS.map((poem, pi) => {
     <div class="progress"></div>
     <div class="prompt"><span class="label">tap to begin</span></div>
     <button class="insight-btn">✦ see the meaning</button>
-    <div class="scrollcue">pull up for the next poem ↑</div>`;
+    <div class="scrollcue"><span class="cue-arrow">↑</span><span>pull up for the next poem</span></div>`;
   const track = card.querySelector('.track');
   poem.lines.forEach((ln, i) => {
     const u = document.createElement('div'); u.className = 'unit'; u.dataset.i = i;

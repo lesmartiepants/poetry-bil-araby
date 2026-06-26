@@ -62,6 +62,7 @@ const initialState = {
   liveVoice: loadLiveVoice(), // selected speaking voice, persisted (default DEFAULT_VOICE)
   liveTemperature: 0,
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
+  insightsMode: 'inline', // 'inline' = end-of-poem expand | 'drawer' = Vaul InsightOverlay (A/B test)
   logs: [],
   headerOpacity: 0,
   // Background settings
@@ -98,6 +99,9 @@ export const useUIStore = create((set, get) => ({
   },
   setLiveTemperature: (liveTemperature) => set({ liveTemperature }),
   setHighlightStyle: (highlightStyle) => set({ highlightStyle }),
+  setInsightsMode: (insightsMode) => set({ insightsMode }),
+  toggleInsightsMode: () =>
+    set((s) => ({ insightsMode: s.insightsMode === 'inline' ? 'drawer' : 'inline' })),
   setDarkMode: (darkMode) => set({ darkMode }),
   toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
   setFont: (font) => set({ font }),

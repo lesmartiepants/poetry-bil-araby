@@ -92,6 +92,7 @@ import {
   pauseOffset,
   playbackStartTime,
   isSeeking,
+  setWindowedReveal,
 } from './hooks/useTTSHighlight.js';
 import { useIdleTimer } from './hooks/useIdleTimer.js';
 import DebugPanel from './components/DebugPanel.jsx';
@@ -237,6 +238,15 @@ export default function DiwanApp() {
   const liveVoice = useUIStore((s) => s.liveVoice);
   const setLiveVoice = useUIStore((s) => s.setLiveVoice);
   const highlightStyle = useUIStore((s) => s.highlightStyle);
+  const insightsMode = useUIStore((s) => s.insightsMode);
+  const setInsightsMode = useUIStore((s) => s.setInsightsMode);
+  // Sparkler reader: tell useTTSHighlight to skip page-scroll (the 4-line window scrolls itself);
+  // allow ?insightsMode=inline|drawer to flip the end-state insight surface for A/B testing.
+  useEffect(() => {
+    setWindowedReveal(FEATURES.verticalFeed);
+    const m = new URLSearchParams(window.location.search).get('insightsMode');
+    if (m === 'inline' || m === 'drawer') setInsightsMode(m);
+  }, [setInsightsMode]);
   const hasAutoLoaded = useRef(false);
   const longPressTimer = useRef(null);
   const pendingSaveHandled = useRef(false);
@@ -1503,111 +1513,116 @@ export default function DiwanApp() {
             {/* Top scroll gradient removed — header is now a subtle corner wordmark */}
             <div className="flex flex-col items-center pt-2">
               <div className="w-full max-w-4xl flex flex-col items-center">
-                {/* Poem meta: title (dominant) → poet → English combined → vertical separator */}
-                <div className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}>
-                  <div className="flex flex-col items-center justify-center w-full" dir="rtl">
-                    {/* Line 1: Poem title */}
-                    <div
-                      className="text-center"
-                      style={{
-                        ...POEM_META.title,
-                        fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
-                        textShadow: darkMode
-                          ? POEM_META.titleShadow.dark
-                          : POEM_META.titleShadow.light,
-                      }}
-                    >
-                      {displayedPoem?.titleArabic || displayedPoem?.title}
-                    </div>
-                    {/* Line 2: Poet name */}
-                    <div
-                      className="text-center"
-                      style={{
-                        ...POEM_META.poet,
-                        fontSize: `calc(${POEM_META.poet.fontSize} * ${textScale})`,
-                        color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
-                      }}
-                    >
-                      {displayedPoem?.poetArabic || displayedPoem?.poet}
-                    </div>
-                    {/* Line 3: English title and poet — two distinct lines */}
-                    {(displayedPoem?.poet || displayedPoem?.title) && (
-                      <>
-                        <div dir="ltr" style={POEM_META.separator} />
-                        {displayedPoem?.title && (
-                          <div
-                            className="text-center"
-                            dir="ltr"
-                            style={{
-                              fontFamily: "'Bodoni Moda', serif",
-                              fontSize: `calc(clamp(0.9rem, 1.8vw, 1.1rem) * ${textScale})`,
-                              color: darkMode ? 'var(--gold)' : 'var(--gold)',
-                              fontWeight: 500,
-                              letterSpacing: '0.02em',
-                            }}
-                          >
-                            {displayedPoem.title}
-                          </div>
-                        )}
-                        {displayedPoem?.poet && (
-                          <div
-                            className="text-center mt-0.5"
-                            dir="ltr"
-                            style={{
-                              fontFamily: "'Forum', serif",
-                              fontSize: `calc(clamp(0.75rem, 1.4vw, 0.9rem) * ${textScale})`,
-                              color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
-                              fontWeight: 400,
-                              letterSpacing: '0.03em',
-                            }}
-                          >
-                            {displayedPoem.poet}
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {/* Carousel dot indicators — positioned under the English poet name */}
-                    {carouselPoems.length > 1 && (
-                      <div className="flex justify-center gap-1.5 mt-3" dir="ltr">
-                        {(() => {
-                          const maxDots = 5;
-                          const total = carouselPoems.length;
-                          const start = Math.max(0, Math.min(carouselIndex - 2, total - maxDots));
-                          const end = Math.min(start + maxDots, total);
-                          return carouselPoems.slice(start, end).map((_, i) => {
-                            const realIdx = start + i;
-                            return (
-                              <button
-                                key={realIdx}
-                                onClick={() => carouselRef.current?.scrollTo(realIdx)}
-                                aria-label={`Go to poem ${realIdx + 1}`}
-                                style={{
-                                  width: realIdx === carouselIndex ? 16 : 6,
-                                  height: 6,
-                                  borderRadius: 3,
-                                  background:
-                                    realIdx === carouselIndex
-                                      ? darkMode
-                                        ? 'rgba(197,160,89,1)'
-                                        : 'rgba(140,100,30,0.85)'
-                                      : darkMode
-                                        ? 'rgba(197,160,89,0.5)'
-                                        : 'rgba(140,100,30,0.4)',
-                                  transition: 'all 0.25s ease',
-                                  border: 'none',
-                                  padding: 0,
-                                  cursor: 'pointer',
-                                }}
-                              />
-                            );
-                          });
-                        })()}
+                {/* Poem meta block — gated off in the vertical feed, where each PoemReader renders
+                    its own per-poem title intro (big-center → top). Kept for the legacy carousel. */}
+                {!FEATURES.verticalFeed && (
+                  <div
+                    className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}
+                  >
+                    <div className="flex flex-col items-center justify-center w-full" dir="rtl">
+                      {/* Line 1: Poem title */}
+                      <div
+                        className="text-center"
+                        style={{
+                          ...POEM_META.title,
+                          fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
+                          textShadow: darkMode
+                            ? POEM_META.titleShadow.dark
+                            : POEM_META.titleShadow.light,
+                        }}
+                      >
+                        {displayedPoem?.titleArabic || displayedPoem?.title}
                       </div>
-                    )}
-                    {/* Bottom spacing before verses */}
-                    <div style={{ height: '0.5rem' }} />
+                      {/* Line 2: Poet name */}
+                      <div
+                        className="text-center"
+                        style={{
+                          ...POEM_META.poet,
+                          fontSize: `calc(${POEM_META.poet.fontSize} * ${textScale})`,
+                          color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
+                        }}
+                      >
+                        {displayedPoem?.poetArabic || displayedPoem?.poet}
+                      </div>
+                      {/* Line 3: English title and poet — two distinct lines */}
+                      {(displayedPoem?.poet || displayedPoem?.title) && (
+                        <>
+                          <div dir="ltr" style={POEM_META.separator} />
+                          {displayedPoem?.title && (
+                            <div
+                              className="text-center"
+                              dir="ltr"
+                              style={{
+                                fontFamily: "'Bodoni Moda', serif",
+                                fontSize: `calc(clamp(0.9rem, 1.8vw, 1.1rem) * ${textScale})`,
+                                color: darkMode ? 'var(--gold)' : 'var(--gold)',
+                                fontWeight: 500,
+                                letterSpacing: '0.02em',
+                              }}
+                            >
+                              {displayedPoem.title}
+                            </div>
+                          )}
+                          {displayedPoem?.poet && (
+                            <div
+                              className="text-center mt-0.5"
+                              dir="ltr"
+                              style={{
+                                fontFamily: "'Forum', serif",
+                                fontSize: `calc(clamp(0.75rem, 1.4vw, 0.9rem) * ${textScale})`,
+                                color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
+                                fontWeight: 400,
+                                letterSpacing: '0.03em',
+                              }}
+                            >
+                              {displayedPoem.poet}
+                            </div>
+                          )}
+                        </>
+                      )}
+                      {/* Carousel dot indicators — positioned under the English poet name */}
+                      {carouselPoems.length > 1 && (
+                        <div className="flex justify-center gap-1.5 mt-3" dir="ltr">
+                          {(() => {
+                            const maxDots = 5;
+                            const total = carouselPoems.length;
+                            const start = Math.max(0, Math.min(carouselIndex - 2, total - maxDots));
+                            const end = Math.min(start + maxDots, total);
+                            return carouselPoems.slice(start, end).map((_, i) => {
+                              const realIdx = start + i;
+                              return (
+                                <button
+                                  key={realIdx}
+                                  onClick={() => carouselRef.current?.scrollTo(realIdx)}
+                                  aria-label={`Go to poem ${realIdx + 1}`}
+                                  style={{
+                                    width: realIdx === carouselIndex ? 16 : 6,
+                                    height: 6,
+                                    borderRadius: 3,
+                                    background:
+                                      realIdx === carouselIndex
+                                        ? darkMode
+                                          ? 'rgba(197,160,89,1)'
+                                          : 'rgba(140,100,30,0.85)'
+                                        : darkMode
+                                          ? 'rgba(197,160,89,0.5)'
+                                          : 'rgba(140,100,30,0.4)',
+                                    transition: 'all 0.25s ease',
+                                    border: 'none',
+                                    padding: 0,
+                                    cursor: 'pointer',
+                                  }}
+                                />
+                              );
+                            });
+                          })()}
+                        </div>
+                      )}
+                      {/* Bottom spacing before verses */}
+                      <div style={{ height: '0.5rem' }} />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
                   {carouselPoems.length > 0 && (
@@ -1687,9 +1702,19 @@ export default function DiwanApp() {
                               });
                           }}
                           highlightStyle={highlightStyle}
-                          activeVersePairs={versePairs}
+                          currentVerseIndex={currentVerseIndex}
                           wordRefs={wordRefs}
                           wordOffsets={wordOffsets}
+                          insightsMode={insightsMode}
+                          isInterpreting={isInterpreting}
+                          insightParts={insightParts}
+                          interpretation={interpretation}
+                          onSeeInsight={() => {
+                            handleAnalyze();
+                            if (insightsMode === 'drawer') {
+                              useModalStore.getState().setInsightsDrawer(true);
+                            }
+                          }}
                         />
                       ) : (
                         <PoemCarousel

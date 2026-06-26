@@ -1,7 +1,6 @@
 import { useLayoutEffect, useMemo, useState } from 'react';
 import HighlightedVerse from '../HighlightedVerse.jsx';
 import { transliterate } from '../../utils/transliterate.js';
-import { POEM_META } from '../../constants/index.js';
 
 /**
  * SparklerStage — presentational teleprompter window for the sparkler reveal.
@@ -121,7 +120,7 @@ export default function SparklerStage({
                 verseIndex={i}
                 className={`ar-line ${currentFontClass} arabic-shadow`}
                 style={{
-                  fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})`,
+                  fontSize: `calc(clamp(1.52rem, 5.7vw, 2.13rem) * ${textScale})`,
                   lineHeight: 1.75,
                   whiteSpace: 'nowrap',
                   color: arColor,
@@ -135,7 +134,7 @@ export default function SparklerStage({
                   dir="ltr"
                   className="translit-line font-brand-en"
                   style={{
-                    fontSize: `calc(${POEM_META.verseTranslitSize} * ${textScale})`,
+                    fontSize: `calc(clamp(0.95rem, 3.6vw, 1.18rem) * ${textScale})`,
                     whiteSpace: 'nowrap',
                     fontStyle: 'italic',
                     letterSpacing: '0.02em',
@@ -151,7 +150,7 @@ export default function SparklerStage({
                   dir="ltr"
                   className="en-line font-brand-en"
                   style={{
-                    fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
+                    fontSize: `calc(clamp(1.2rem, 4.7vw, 1.68rem) * ${textScale})`,
                     whiteSpace: 'nowrap',
                     fontStyle: 'italic',
                     lineHeight: 1.2,

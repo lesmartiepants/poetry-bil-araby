@@ -1507,124 +1507,122 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className={`flex-1 ${FEATURES.verticalFeed ? 'overflow-y-hidden' : 'overflow-y-auto'} overflow-x-hidden custom-scrollbar relative z-10 px-6 pr-14 md:px-8 md:pr-0 pb-28 pt-10 md:pt-12`}
+            className={`flex-1 ${FEATURES.verticalFeed ? 'overflow-y-hidden' : 'overflow-y-auto'} overflow-x-hidden custom-scrollbar relative z-10 px-6 pr-14 md:px-8 md:pr-0 ${FEATURES.verticalFeed ? 'pt-2 pb-24' : 'pb-28 pt-10 md:pt-12'}`}
             style={{ overscrollBehaviorX: 'none' }}
           >
             {/* Top scroll gradient removed — header is now a subtle corner wordmark */}
             <div className="flex flex-col items-center pt-2">
               <div className="w-full max-w-4xl flex flex-col items-center">
-                {/* Poem meta. In the vertical feed the title/poet text is gated off (each PoemReader
-                    renders its own per-poem title intro, big-center → top); the queue dots remain. */}
-                <div className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}>
-                  <div className="flex flex-col items-center justify-center w-full" dir="rtl">
-                    {!FEATURES.verticalFeed && (
-                      <>
-                        {/* Line 1: Poem title */}
-                        <div
-                          className="text-center"
-                          style={{
-                            ...POEM_META.title,
-                            fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
-                            textShadow: darkMode
-                              ? POEM_META.titleShadow.dark
-                              : POEM_META.titleShadow.light,
-                          }}
-                        >
-                          {displayedPoem?.titleArabic || displayedPoem?.title}
-                        </div>
-                        {/* Line 2: Poet name */}
-                        <div
-                          className="text-center"
-                          style={{
-                            ...POEM_META.poet,
-                            fontSize: `calc(${POEM_META.poet.fontSize} * ${textScale})`,
-                            color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
-                          }}
-                        >
-                          {displayedPoem?.poetArabic || displayedPoem?.poet}
-                        </div>
-                        {/* Line 3: English title and poet — two distinct lines */}
-                        {(displayedPoem?.poet || displayedPoem?.title) && (
-                          <>
-                            <div dir="ltr" style={POEM_META.separator} />
-                            {displayedPoem?.title && (
-                              <div
-                                className="text-center"
-                                dir="ltr"
-                                style={{
-                                  fontFamily: "'Bodoni Moda', serif",
-                                  fontSize: `calc(clamp(0.9rem, 1.8vw, 1.1rem) * ${textScale})`,
-                                  color: darkMode ? 'var(--gold)' : 'var(--gold)',
-                                  fontWeight: 500,
-                                  letterSpacing: '0.02em',
-                                }}
-                              >
-                                {displayedPoem.title}
-                              </div>
-                            )}
-                            {displayedPoem?.poet && (
-                              <div
-                                className="text-center mt-0.5"
-                                dir="ltr"
-                                style={{
-                                  fontFamily: "'Forum', serif",
-                                  fontSize: `calc(clamp(0.75rem, 1.4vw, 0.9rem) * ${textScale})`,
-                                  color: darkMode
-                                    ? 'rgba(212,200,168,0.7)'
-                                    : 'rgba(120,100,60,0.7)',
-                                  fontWeight: 400,
-                                  letterSpacing: '0.03em',
-                                }}
-                              >
-                                {displayedPoem.poet}
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </>
-                    )}
-                    {/* Carousel dot indicators — positioned under the English poet name */}
-                    {carouselPoems.length > 1 && (
-                      <div className="flex justify-center gap-1.5 mt-3" dir="ltr">
-                        {(() => {
-                          const maxDots = 5;
-                          const total = carouselPoems.length;
-                          const start = Math.max(0, Math.min(carouselIndex - 2, total - maxDots));
-                          const end = Math.min(start + maxDots, total);
-                          return carouselPoems.slice(start, end).map((_, i) => {
-                            const realIdx = start + i;
-                            return (
-                              <button
-                                key={realIdx}
-                                onClick={() => carouselRef.current?.scrollTo(realIdx)}
-                                aria-label={`Go to poem ${realIdx + 1}`}
-                                style={{
-                                  width: realIdx === carouselIndex ? 16 : 6,
-                                  height: 6,
-                                  borderRadius: 3,
-                                  background:
-                                    realIdx === carouselIndex
-                                      ? darkMode
-                                        ? 'rgba(197,160,89,1)'
-                                        : 'rgba(140,100,30,0.85)'
-                                      : darkMode
-                                        ? 'rgba(197,160,89,0.5)'
-                                        : 'rgba(140,100,30,0.4)',
-                                  transition: 'all 0.25s ease',
-                                  border: 'none',
-                                  padding: 0,
-                                  cursor: 'pointer',
-                                }}
-                              />
-                            );
-                          });
-                        })()}
+                {/* Poem meta — legacy carousel only. In the vertical feed each PoemReader renders its
+                    own per-poem title intro, so this whole block (incl. old carousel dots) is hidden. */}
+                {!FEATURES.verticalFeed && (
+                  <div
+                    className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}
+                  >
+                    <div className="flex flex-col items-center justify-center w-full" dir="rtl">
+                      {/* Line 1: Poem title */}
+                      <div
+                        className="text-center"
+                        style={{
+                          ...POEM_META.title,
+                          fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
+                          textShadow: darkMode
+                            ? POEM_META.titleShadow.dark
+                            : POEM_META.titleShadow.light,
+                        }}
+                      >
+                        {displayedPoem?.titleArabic || displayedPoem?.title}
                       </div>
-                    )}
-                    {/* Bottom spacing before verses */}
-                    <div style={{ height: '0.5rem' }} />
+                      {/* Line 2: Poet name */}
+                      <div
+                        className="text-center"
+                        style={{
+                          ...POEM_META.poet,
+                          fontSize: `calc(${POEM_META.poet.fontSize} * ${textScale})`,
+                          color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
+                        }}
+                      >
+                        {displayedPoem?.poetArabic || displayedPoem?.poet}
+                      </div>
+                      {/* Line 3: English title and poet — two distinct lines */}
+                      {(displayedPoem?.poet || displayedPoem?.title) && (
+                        <>
+                          <div dir="ltr" style={POEM_META.separator} />
+                          {displayedPoem?.title && (
+                            <div
+                              className="text-center"
+                              dir="ltr"
+                              style={{
+                                fontFamily: "'Bodoni Moda', serif",
+                                fontSize: `calc(clamp(0.9rem, 1.8vw, 1.1rem) * ${textScale})`,
+                                color: darkMode ? 'var(--gold)' : 'var(--gold)',
+                                fontWeight: 500,
+                                letterSpacing: '0.02em',
+                              }}
+                            >
+                              {displayedPoem.title}
+                            </div>
+                          )}
+                          {displayedPoem?.poet && (
+                            <div
+                              className="text-center mt-0.5"
+                              dir="ltr"
+                              style={{
+                                fontFamily: "'Forum', serif",
+                                fontSize: `calc(clamp(0.75rem, 1.4vw, 0.9rem) * ${textScale})`,
+                                color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
+                                fontWeight: 400,
+                                letterSpacing: '0.03em',
+                              }}
+                            >
+                              {displayedPoem.poet}
+                            </div>
+                          )}
+                        </>
+                      )}
+                      {/* Carousel dot indicators (legacy carousel) */}
+                      {carouselPoems.length > 1 && (
+                        <div className="flex justify-center gap-1.5 mt-3" dir="ltr">
+                          {(() => {
+                            const maxDots = 5;
+                            const total = carouselPoems.length;
+                            const start = Math.max(0, Math.min(carouselIndex - 2, total - maxDots));
+                            const end = Math.min(start + maxDots, total);
+                            return carouselPoems.slice(start, end).map((_, i) => {
+                              const realIdx = start + i;
+                              return (
+                                <button
+                                  key={realIdx}
+                                  onClick={() => carouselRef.current?.scrollTo(realIdx)}
+                                  aria-label={`Go to poem ${realIdx + 1}`}
+                                  style={{
+                                    width: realIdx === carouselIndex ? 16 : 6,
+                                    height: 6,
+                                    borderRadius: 3,
+                                    background:
+                                      realIdx === carouselIndex
+                                        ? darkMode
+                                          ? 'rgba(197,160,89,1)'
+                                          : 'rgba(140,100,30,0.85)'
+                                        : darkMode
+                                          ? 'rgba(197,160,89,0.5)'
+                                          : 'rgba(140,100,30,0.4)',
+                                    transition: 'all 0.25s ease',
+                                    border: 'none',
+                                    padding: 0,
+                                    cursor: 'pointer',
+                                  }}
+                                />
+                              );
+                            });
+                          })()}
+                        </div>
+                      )}
+                      {/* Bottom spacing before verses */}
+                      <div style={{ height: '0.5rem' }} />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
                   {carouselPoems.length > 0 && (
@@ -1839,280 +1837,183 @@ export default function DiwanApp() {
             }
             style={{ pointerEvents: effectivelyIdle ? 'none' : 'auto' }}
           >
-            {/* Highlight mode: Listen (one-shot) → PlayControlsStrip (exclusive) */}
-            {highlightStyle !== 'none' && (
-              <div className="mb-2 flex flex-wrap items-center justify-center gap-2">
-                <AnimatePresence mode="wait">
-                  {isPlaying || isGeneratingAudio || audioPlayer !== null ? (
-                    <PlayControlsStrip
-                      key="play-controls"
-                      player={audioPlayer}
-                      isPlaying={isPlaying}
-                      isLoading={isGeneratingAudio}
-                      verseStartTimes={verseStartTimes}
-                      currentVerseIndex={currentVerseIndex}
-                      onPlayPause={togglePlay}
-                      wordRefs={wordRefs}
-                      wordOffsets={wordOffsets}
-                      timings={wordTimings}
-                      totalDuration={effectiveDuration}
-                      onVerseChange={setCurrentVerseIndex}
-                    />
-                  ) : (
-                    <motion.button
-                      key="listen-trigger"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      transition={{ duration: 0.2, ease: 'easeOut' }}
-                      onClick={togglePlay}
-                      aria-label="Start recitation"
-                      className={`min-h-[44px] px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
-                      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
-                    >
-                      Listen
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-                {/* Voice cycle pill — persistent so the voice can be changed mid-playback
-                    (tapping restarts in the new voice). 44px target per the design spec. */}
-                <button
-                  onClick={cycleVoice}
-                  aria-label={`Reading voice: ${liveVoice}. Tap to change.`}
-                  title="Change reading voice"
-                  className={`min-h-[44px] flex items-center gap-1.5 pl-3 pr-3.5 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-xs font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
-                  style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
-                >
-                  <Mic
-                    size={16}
-                    style={{ color: voiceGender(liveVoice) === 'f' ? '#c084fc' : '#60a5fa' }}
-                  />
-                  {liveVoice}
-                </button>
-              </div>
-            )}
-            <div
-              ref={controlBarRef}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${DESIGN.glass} ${theme.border} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
-              style={{
-                boxShadow:
-                  'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3)',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-              }}
-            >
-              {highlightStyle === 'none' && (
+            {/* Single nav pill (Listen / Save / Explain / Discover) + voice cycle pinned right */}
+            <div className="relative w-full flex items-center justify-center">
+              <div
+                ref={controlBarRef}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${DESIGN.glass} ${theme.border} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
+                style={{
+                  boxShadow:
+                    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3)',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                }}
+              >
+                {/* Listen (play / pause) */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                  {isGeneratingAudio ? (
-                    <>
-                      <button
-                        disabled
-                        aria-label="Preparing audio"
-                        className="min-w-[46px] min-h-[46px] p-[11px] bg-gold/8 border border-gold/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
-                      >
-                        <div className="flex items-center justify-center gap-0.5 h-[21px]">
-                          <div
-                            className="w-[2px] h-[6px] bg-gold rounded-full"
-                            style={{
-                              animation: 'wave 1.2s ease-in-out infinite',
-                              animationDelay: '0s',
-                            }}
-                          />
-                          <div
-                            className="w-[2px] h-[10px] bg-gold rounded-full"
-                            style={{
-                              animation: 'wave 1.2s ease-in-out infinite',
-                              animationDelay: '0.15s',
-                            }}
-                          />
-                          <div
-                            className="w-[2px] h-[14px] bg-gold rounded-full"
-                            style={{
-                              animation: 'wave 1.2s ease-in-out infinite',
-                              animationDelay: '0.3s',
-                            }}
-                          />
-                          <div
-                            className="w-[2px] h-[10px] bg-gold rounded-full"
-                            style={{
-                              animation: 'wave 1.2s ease-in-out infinite',
-                              animationDelay: '0.45s',
-                            }}
-                          />
-                          <div
-                            className="w-[2px] h-[6px] bg-gold rounded-full"
-                            style={{
-                              animation: 'wave 1.2s ease-in-out infinite',
-                              animationDelay: '0.6s',
-                            }}
-                          />
-                        </div>
-                      </button>
-                      <span
-                        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
-                      >
-                        Loading
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={togglePlay}
-                        aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                        style={{ willChange: 'transform' }}
-                        className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
-                      >
-                        {audioError ? (
-                          <Volume2 className={theme.error} size={21} />
-                        ) : isPlaying ? (
-                          <>
-                            <PulseGlowBars volumePulseRef={volumePulseRef} isPlaying={true} />
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
-                              <Pause fill={GOLD.gold} size={14} />
-                            </div>
-                          </>
-                        ) : audioUrl ? (
-                          <>
-                            <PulseGlowBars volumePulseRef={null} isPlaying={false} />
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-200 pointer-events-none">
-                              <Play fill={GOLD.gold} size={14} />
-                            </div>
-                          </>
-                        ) : (
-                          <Volume2 className={GOLD.goldText} size={21} />
-                        )}
-                      </button>
-                      <span
-                        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                      >
-                        {isPlaying ? 'Playing' : audioUrl ? 'Paused' : 'Listen'}
-                      </span>
-                    </>
-                  )}
+                  <button
+                    onClick={togglePlay}
+                    disabled={isGeneratingAudio}
+                    aria-label={
+                      isGeneratingAudio
+                        ? 'Preparing audio'
+                        : isPlaying
+                          ? 'Pause recitation'
+                          : 'Start recitation'
+                    }
+                    className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                  >
+                    {isGeneratingAudio ? (
+                      <Loader2 className="animate-spin" style={{ color: GOLD.gold }} size={21} />
+                    ) : isPlaying ? (
+                      <Pause style={{ color: GOLD.gold }} size={21} />
+                    ) : (
+                      <Play style={{ color: GOLD.gold }} size={21} />
+                    )}
+                  </button>
+                  <span
+                    className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                  >
+                    {isGeneratingAudio ? 'Loading' : isPlaying ? 'Pause' : 'Listen'}
+                  </span>
                 </div>
-              )}
-
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                <button
-                  onClick={() => {
-                    setFireTapped(true);
-                    setTimeout(() => setFireTapped(false), 400);
-                    dismissTTSProgress();
-                    setDiscoverDrawerOpen(true);
-                  }}
-                  onTouchStart={() => {
-                    longPressTimer.current = setTimeout(() => {
-                      const willEnable = !useUIStore.getState().ratchetMode;
-                      useUIStore.getState().toggleRatchetMode();
-                      if (willEnable) {
-                        toast('🔥 Ratchet Mode activated fr fr', {
-                          style: {
-                            background: 'linear-gradient(135deg, #ff5000, #ff9000)',
-                            color: 'white',
-                            border: 'none',
-                          },
-                          duration: 2500,
-                        });
-                      } else {
-                        toast('Back to scholarly mode', {
-                          style: {
-                            background: 'rgba(60,60,70,0.92)',
-                            color: 'white',
-                            border: 'none',
-                          },
-                          duration: 2500,
-                        });
-                      }
-                      longPressTimer.current = null;
-                    }, 2000);
-                  }}
-                  onTouchEnd={() => {
-                    if (longPressTimer.current) {
-                      clearTimeout(longPressTimer.current);
-                      longPressTimer.current = null;
+                <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                  <button
+                    onClick={() =>
+                      isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
                     }
-                  }}
-                  onTouchMove={() => {
-                    if (longPressTimer.current) {
-                      clearTimeout(longPressTimer.current);
-                      longPressTimer.current = null;
-                    }
-                  }}
-                  disabled={isFetching}
-                  aria-label="Open discover"
-                  className={`relative w-[46px] h-[46px] bg-transparent border-none cursor-pointer flex items-center justify-center rounded-full hover:scale-105 ${fireTapped ? 'fire-tap' : ''}`}
-                  style={{
-                    background: isFetching ? 'rgba(197,160,89,0.08)' : 'transparent',
-                    transition: fireTapped ? 'none' : 'transform 0.3s',
-                  }}
-                >
-                  <GoldenFireIcon size={34} />
-                </button>
-                <span
-                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                >
-                  Discover
-                </span>
-              </div>
-
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                <button
-                  onClick={() =>
-                    isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
-                  }
-                  aria-label={isPoemSaved(displayedPoem) ? 'Unsave poem' : 'Save poem'}
-                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-                >
-                  <Heart
-                    size={21}
-                    style={
-                      isPoemSaved(displayedPoem)
-                        ? { fill: '#ef4444', stroke: '#ef4444' }
-                        : { fill: 'none', stroke: GOLD.gold }
-                    }
-                  />
-                </button>
-                <span
-                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                >
-                  {isPoemSaved(displayedPoem) ? 'Saved' : 'Save'}
-                </span>
-              </div>
-
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                <button
-                  onClick={() => {
-                    if (interpretation) {
-                      useModalStore.getState().toggleInsightsDrawer();
-                      useModalStore.getState().showToastTimed('insight', 1500);
-                    } else {
-                      handleAnalyze();
-                      setInsightsDrawerOpen(true);
-                    }
-                  }}
-                  disabled={isInterpreting}
-                  aria-label="Explain poem meaning"
-                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${isInterpreting ? 'opacity-50' : ''}`}
-                >
-                  {isInterpreting ? (
-                    <Loader2 className="animate-spin" style={{ color: GOLD.gold }} size={21} />
-                  ) : showInsightSuccess ? (
-                    <Check style={{ color: GOLD.gold }} size={21} />
-                  ) : (
-                    <Lightbulb
-                      className={GOLD.goldText}
+                    aria-label={isPoemSaved(displayedPoem) ? 'Unsave poem' : 'Save poem'}
+                    className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                  >
+                    <Heart
                       size={21}
-                      style={{ opacity: interpretation ? 1 : 0.7 }}
+                      style={
+                        isPoemSaved(displayedPoem)
+                          ? { fill: '#ef4444', stroke: '#ef4444' }
+                          : { fill: 'none', stroke: GOLD.gold }
+                      }
                     />
-                  )}
-                </button>
-                <span
-                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                >
-                  Explain
-                </span>
+                  </button>
+                  <span
+                    className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                  >
+                    {isPoemSaved(displayedPoem) ? 'Saved' : 'Save'}
+                  </span>
+                </div>
+
+                <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                  <button
+                    onClick={() => {
+                      if (interpretation) {
+                        useModalStore.getState().toggleInsightsDrawer();
+                        useModalStore.getState().showToastTimed('insight', 1500);
+                      } else {
+                        handleAnalyze();
+                        setInsightsDrawerOpen(true);
+                      }
+                    }}
+                    disabled={isInterpreting}
+                    aria-label="Explain poem meaning"
+                    className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${isInterpreting ? 'opacity-50' : ''}`}
+                  >
+                    {isInterpreting ? (
+                      <Loader2 className="animate-spin" style={{ color: GOLD.gold }} size={21} />
+                    ) : showInsightSuccess ? (
+                      <Check style={{ color: GOLD.gold }} size={21} />
+                    ) : (
+                      <Lightbulb
+                        className={GOLD.goldText}
+                        size={21}
+                        style={{ opacity: interpretation ? 1 : 0.7 }}
+                      />
+                    )}
+                  </button>
+                  <span
+                    className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                  >
+                    Explain
+                  </span>
+                </div>
+
+                {/* Discover */}
+                <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                  <button
+                    onClick={() => {
+                      setFireTapped(true);
+                      setTimeout(() => setFireTapped(false), 400);
+                      dismissTTSProgress();
+                      setDiscoverDrawerOpen(true);
+                    }}
+                    onTouchStart={() => {
+                      longPressTimer.current = setTimeout(() => {
+                        const willEnable = !useUIStore.getState().ratchetMode;
+                        useUIStore.getState().toggleRatchetMode();
+                        if (willEnable) {
+                          toast('🔥 Ratchet Mode activated fr fr', {
+                            style: {
+                              background: 'linear-gradient(135deg, #ff5000, #ff9000)',
+                              color: 'white',
+                              border: 'none',
+                            },
+                            duration: 2500,
+                          });
+                        } else {
+                          toast('Back to scholarly mode', {
+                            style: {
+                              background: 'rgba(60,60,70,0.92)',
+                              color: 'white',
+                              border: 'none',
+                            },
+                            duration: 2500,
+                          });
+                        }
+                        longPressTimer.current = null;
+                      }, 2000);
+                    }}
+                    onTouchEnd={() => {
+                      if (longPressTimer.current) {
+                        clearTimeout(longPressTimer.current);
+                        longPressTimer.current = null;
+                      }
+                    }}
+                    onTouchMove={() => {
+                      if (longPressTimer.current) {
+                        clearTimeout(longPressTimer.current);
+                        longPressTimer.current = null;
+                      }
+                    }}
+                    disabled={isFetching}
+                    aria-label="Open discover"
+                    className={`relative w-[46px] h-[46px] bg-transparent border-none cursor-pointer flex items-center justify-center rounded-full hover:scale-105 ${fireTapped ? 'fire-tap' : ''}`}
+                    style={{
+                      background: isFetching ? 'rgba(197,160,89,0.08)' : 'transparent',
+                      transition: fireTapped ? 'none' : 'transform 0.3s',
+                    }}
+                  >
+                    <GoldenFireIcon size={34} />
+                  </button>
+                  <span
+                    className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                  >
+                    Discover
+                  </span>
+                </div>
               </div>
+
+              {/* Voice cycle — pinned right, at the nav's vertical level */}
+              <button
+                onClick={cycleVoice}
+                aria-label={`Reading voice: ${liveVoice}. Tap to change.`}
+                title="Change reading voice"
+                className={`absolute right-1 md:right-3 top-1/2 -translate-y-1/2 min-h-[40px] flex items-center gap-1.5 pl-2.5 pr-3 py-1.5 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-xs font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
+                style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+              >
+                <Mic
+                  size={15}
+                  style={{ color: voiceGender(liveVoice) === 'f' ? '#c084fc' : '#60a5fa' }}
+                />
+                {liveVoice}
+              </button>
             </div>
           </motion.footer>
 

@@ -124,7 +124,7 @@ const PoemFeed = forwardRef(function PoemFeed(
         className="overflow-hidden w-full"
         role="region"
         aria-label="Poem feed"
-        style={{ touchAction: 'none', height: 'calc(100dvh - 220px)' }}
+        style={{ touchAction: 'none', height: 'calc(100dvh - 168px)' }}
       >
         <div className="flex flex-col" style={{ backfaceVisibility: 'hidden' }}>
           {poems.map((poem, slideIdx) => {
@@ -133,7 +133,7 @@ const PoemFeed = forwardRef(function PoemFeed(
               <div
                 key={poem.id ?? slideIdx}
                 className="flex-shrink-0 w-full overflow-hidden"
-                style={{ height: 'calc(100dvh - 220px)' }}
+                style={{ height: 'calc(100dvh - 168px)' }}
               >
                 <PoemReader
                   poem={poem}

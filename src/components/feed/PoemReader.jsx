@@ -160,6 +160,7 @@ const PoemReader = memo(function PoemReader({
   return (
     <div
       className="relative flex flex-col items-center justify-center w-full h-full px-4 md:px-12 text-center select-none"
+      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + clamp(72px, 10vh, 104px))' }}
       data-testid="poem-reader"
       data-poem-id={poemId}
       onClick={handleTap}
@@ -170,7 +171,7 @@ const PoemReader = memo(function PoemReader({
       <div
         ref={metaRef}
         className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-[2px] pointer-events-none whitespace-nowrap"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 14px)', zIndex: 5 }}
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 18px)', zIndex: 5 }}
         data-testid="poem-meta"
       >
         <div
@@ -178,7 +179,7 @@ const PoemReader = memo(function PoemReader({
           dir="rtl"
           style={{
             ...POEM_META.title,
-            fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
+            fontSize: `calc(clamp(1.6rem, 6.6vw, 2.25rem) * ${textScale})`,
           }}
         >
           {poem?.titleArabic || poem?.title}
@@ -189,7 +190,7 @@ const PoemReader = memo(function PoemReader({
             style={{
               fontFamily: "'Cormorant Garamond', serif",
               fontStyle: 'italic',
-              fontSize: `calc(clamp(1.05rem, 4.2vw, 1.45rem) * ${textScale})`,
+              fontSize: `calc(clamp(1.1rem, 4.4vw, 1.5rem) * ${textScale})`,
               color: 'rgba(212,180,99,0.9)',
               marginTop: 2,
             }}
@@ -203,7 +204,7 @@ const PoemReader = memo(function PoemReader({
           style={{
             fontFamily: "'Cormorant Garamond', serif",
             fontWeight: 700,
-            fontSize: `calc(clamp(0.95rem, 3.8vw, 1.2rem) * ${textScale})`,
+            fontSize: `calc(clamp(0.98rem, 3.9vw, 1.22rem) * ${textScale})`,
             color: goldColor,
             marginTop: 5,
           }}

@@ -13,7 +13,7 @@
     --gold:#c5a059; --gold-bright:#d4b463; --amber:#e8923a; --ember:#c2410c;
     --bg:#0a0a0c; --bg2:#101016;
     --text:rgba(236,232,224,.94); --muted:rgba(236,232,224,.4);
-    --unit-h: clamp(98px, 15vh, 122px);   /* grows with the verse so inter-line whitespace stays constant; tall enough that Amiri tashkeel never clips at the stage edge */
+    --unit-h: clamp(95px, 14.3vh, 116px);  /* grows with the verse so inter-line whitespace stays constant; tall enough that Amiri tashkeel never clips at the stage edge. Whitespace = unit-h − line-box, so trimming ~5px tightens the gap ~10%. */
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
   html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);

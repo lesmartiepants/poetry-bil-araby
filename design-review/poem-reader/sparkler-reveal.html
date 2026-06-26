@@ -66,8 +66,10 @@
   .pdot.done{background:var(--gold)}
   .pdot.cur{background:var(--gold);width:16px;border-radius:3px}
   /* bar (proportional) */
-  .pbar{position:relative;width:min(180px,52vw);height:3px;border-radius:3px;background:rgba(197,160,89,.16);overflow:hidden}
+  .pbar{position:relative;width:min(190px,56vw);height:3px;border-radius:3px;background:rgba(197,160,89,.16)}
   .pbar > i{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--gold),var(--gold-bright));border-radius:3px}
+  .pbar > .handle{position:absolute;top:50%;width:15px;height:15px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 8px rgba(212,180,99,.85);transform:translate(-50%,-50%);pointer-events:auto;cursor:grab;touch-action:none;z-index:2}
+  .pbar > .handle:active{cursor:grabbing}
   /* count (Arabic-Indic fraction) */
   .pcount{font-family:'Reem Kufi',sans-serif;color:var(--gold);font-size:1.05rem;letter-spacing:.04em;display:flex;align-items:center;gap:.35rem}
   .pcount .sep{opacity:.4}.pcount .tot{opacity:.5}
@@ -80,7 +82,8 @@
   /* rail (vertical spine) */
   .prail{position:relative;width:3px;height:100%;border-radius:3px;background:rgba(197,160,89,.16)}
   .prail > .fill{position:absolute;left:0;right:0;top:0;background:linear-gradient(180deg,var(--gold-bright),var(--gold));border-radius:3px}
-  .prail > .knob{position:absolute;left:50%;width:11px;height:11px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 10px rgba(212,180,99,.8);transform:translate(-50%,-50%)}
+  .prail > .knob{position:absolute;left:50%;width:14px;height:14px;border-radius:50%;background:var(--gold-bright);box-shadow:0 0 10px rgba(212,180,99,.85);transform:translate(-50%,-50%);pointer-events:auto;cursor:grab;touch-action:none;z-index:2}
+  .prail > .knob:active{cursor:grabbing}
   /* progress-style selector (prototype control) */
   #progsel{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);left:8px;z-index:9;display:flex;gap:3px;padding:3px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(197,160,89,.25);backdrop-filter:blur(8px);direction:ltr}
   #progsel .pseg{font-family:'Cormorant Garamond',serif;font-size:.66rem;color:var(--muted);padding:3px 8px;border-radius:999px;cursor:pointer;white-space:nowrap}
@@ -205,6 +208,7 @@ function makeController(card, poem) {
   let activeMetaTween = null;
   let promptPulse = null;
   let revealing = -1;   // index of the line currently igniting (-1 when idle)
+  let scrubbing = false; // true while the user is dragging the bar/rail handle
   const wait = (ms) => new Promise(r=>setTimeout(r,ms));
 
   // Render the chosen progress style. Discrete styles (dots/beads/count) advance on
@@ -217,12 +221,15 @@ function makeController(card, poem) {
     const curPage = Math.max(0, Math.min(pagesN, Math.ceil(discreteRevealed / 2)));
     const baseFrac = total ? Math.max(0, Math.min(1, revealed / total)) : 0;
     progEl.className = 'progress' + (mode === 'rail' ? ' rail' : '');
+    const bp = (baseFrac*100).toFixed(1) + '%';
     if (mode === 'bar'){
-      progEl.innerHTML = `<div class="pbar"><i style="width:${(baseFrac*100).toFixed(1)}%"></i></div>`;
+      progEl.innerHTML = `<div class="pbar"><i style="width:${bp}"></i><span class="handle" style="left:${bp}"></span></div>`;
+      const h = progEl.querySelector('.pbar > .handle'); if (h) attachScrub(h);
     } else if (mode === 'count'){
       progEl.innerHTML = `<span class="pcount"><span class="cur">${arNum(curPage)}</span><span class="sep">/</span><span class="tot">${arNum(pagesN)}</span></span>`;
     } else if (mode === 'rail'){
-      progEl.innerHTML = `<div class="prail"><div class="fill" style="height:${(baseFrac*100).toFixed(1)}%"></div><div class="knob" style="top:${(baseFrac*100).toFixed(1)}%"></div></div>`;
+      progEl.innerHTML = `<div class="prail"><div class="fill" style="height:${bp}"></div><div class="knob" style="top:${bp}"></div></div>`;
+      const k = progEl.querySelector('.prail > .knob'); if (k) attachScrub(k);
     } else { // 'dots' or 'beads'
       const isBeads = mode === 'beads';
       let html = '';
@@ -237,8 +244,62 @@ function makeController(card, poem) {
   function tickLive(frac){
     const mode = window.PROGRESS_MODE;
     const pct = (Math.max(0, Math.min(1, frac)) * 100).toFixed(2) + '%';
-    if (mode === 'bar'){ const i = progEl.querySelector('.pbar > i'); if (i) i.style.width = pct; }
+    if (mode === 'bar'){ const i = progEl.querySelector('.pbar > i'); const h = progEl.querySelector('.pbar > .handle'); if (i) i.style.width = pct; if (h) h.style.left = pct; }
     else if (mode === 'rail'){ const f = progEl.querySelector('.prail > .fill'), k = progEl.querySelector('.prail > .knob'); if (f) f.style.height = pct; if (k) k.style.top = pct; }
+  }
+
+  // ---- draggable scrub (bar & rail): drag the handle to jump anywhere in the poem ----
+  function pointFrac(e){
+    if (window.PROGRESS_MODE === 'rail'){ const el=progEl.querySelector('.prail'); if(!el) return 0; const r=el.getBoundingClientRect(); return (e.clientY - r.top)/r.height; }
+    const el=progEl.querySelector('.pbar'); if(!el) return 0; const r=el.getBoundingClientRect(); return (e.clientX - r.left)/r.width;
+  }
+  function attachScrub(handleEl){
+    handleEl.addEventListener('pointerdown', e=>{
+      e.stopPropagation(); e.preventDefault();
+      scrubbing = true; busy = true;
+      if (activeTween) activeTween.kill();
+      if (promptPulse){ promptPulse.kill(); promptPulse = null; }
+      hidePrompt();
+      try { handleEl.setPointerCapture(e.pointerId); } catch(_){}
+      scrubTo(pointFrac(e), false);
+    });
+    handleEl.addEventListener('pointermove', e=>{ if(!scrubbing) return; e.preventDefault(); scrubTo(pointFrac(e), false); });
+    const end = e=>{ if(!scrubbing) return; scrubbing = false; e.preventDefault(); scrubTo(pointFrac(e), true); };
+    handleEl.addEventListener('pointerup', end);
+    handleEl.addEventListener('pointercancel', end);
+  }
+  // Jump the reveal to `frac` of the poem. Lines before the target show fully; the target
+  // line is clipped to the drop point; on commit the sparkler resumes from there.
+  function scrubTo(frac, commit){
+    frac = Math.max(0, Math.min(1, frac));
+    let pos = frac * total, line = Math.floor(pos), within = pos - line;
+    if (line >= total){ line = total - 1; within = 1; }
+    if (line < 0){ line = 0; within = 0; }
+    windowTop = Math.max(0, Math.floor(line/2)*2 - 2);
+    gsap.set(track, { y: -windowTop * unitH() });
+    units.forEach((u, idx)=>{
+      const ar=u.querySelector('.ar'), en=u.querySelector('.en'); gsap.killTweensOf([ar, en]);
+      if (idx < line){ u.classList.add('lit'); ar.style.clipPath='inset(0 0 0 0%)'; en.style.opacity='0.66'; }
+      else if (idx === line){ u.classList.remove('lit'); ar.style.clipPath=`inset(0 0 0 ${((1-within)*100).toFixed(1)}%)`; en.style.opacity = within>0.92?'0.66':'0'; }
+      else { u.classList.remove('lit'); ar.style.clipPath='inset(0 0 0 100%)'; en.style.opacity='0'; }
+    });
+    const ar = units[line].querySelector('.ar');
+    const arRect = ar.getBoundingClientRect(), cRect = canvas.getBoundingClientRect(), p = 1 - within;
+    head_state.x = (arRect.left - cRect.left) + arRect.width*p;
+    head_state.y = (arRect.top - cRect.top) + arRect.height/2;
+    head.style.opacity = '1'; head_state.alive = !commit;   // sparkle while dragging; resumeScrub re-lights it on commit
+    head.style.transform = `translate(${head_state.x}px, ${head_state.y}px)`;
+    revealed = line; revealing = -1;
+    tickLive(frac);
+    if (commit) resumeScrub(line, within);
+  }
+  async function resumeScrub(line, within){
+    busy = true;
+    await ignite(line, 1 - within);     // finish revealing the dropped-on line from that point
+    revealed = line + 1; revealing = -1; busy = false;
+    syncProgress();
+    if (revealed >= total){ insightBtn.classList.add('show'); card.querySelector('.scrollcue').classList.add('show'); }
+    else showPrompt('tap to continue');
   }
 
   function sizeCanvas(){ const r = stage.getBoundingClientRect(); canvas.width = r.width*devicePixelRatio; canvas.height = r.height*devicePixelRatio; canvas.style.width=r.width+'px'; canvas.style.height=r.height+'px'; ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0); }
@@ -287,7 +348,7 @@ function makeController(card, poem) {
   requestAnimationFrame(loop);
 
   // ignite a single unit: clip-mask reveal R→L with the sparkler head riding the edge
-  function ignite(i){
+  function ignite(i, fromP = 1){   // fromP = clip start (1 = whole line; <1 = resume partway after a scrub)
     return new Promise((res)=>{
       const u = units[i]; if(!u){res();return;}
       sizeCanvas();                          // ensure the spark canvas is measured before the FIRST line (was 0×0 → "orb")
@@ -299,8 +360,8 @@ function makeController(card, poem) {
       head.style.opacity = '1'; head_state.alive = true;
       revealing = i;
       if (window.PROGRESS_TIMING === 'start') syncProgress();   // discrete styles advance the instant the line starts
-      const obj = { p: 1 };
-      activeTween = gsap.to(obj, { p: 0, duration: 1.4, ease:'power1.inOut',
+      const obj = { p: fromP };
+      activeTween = gsap.to(obj, { p: 0, duration: Math.max(0.05, 1.4*fromP), ease:'power1.inOut',
         onUpdate(){
           const arRect = ar.getBoundingClientRect(); const cRect = canvas.getBoundingClientRect();
           ar.style.clipPath = `inset(0 0 0 ${obj.p*100}%)`;

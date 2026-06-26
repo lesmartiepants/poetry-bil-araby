@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef } from 'react';
+import { memo, useEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import SparklerStage from './SparklerStage.jsx';
 import ProgressScrubber from './ProgressScrubber.jsx';
@@ -14,10 +14,10 @@ const REDUCED_MOTION =
 /**
  * PoemReader — one poem panel in the vertical feed, rendered as the sparkler teleprompter.
  *
- * A big centered title animates up to the top, then the poem reveals line-by-line with the
- * sparkler. Tap advances the reveal (4-line sliding window); a draggable scrubber seeks. When
- * TTS plays, the window follows the spoken line. At the end, an inline insight (or drawer)
- * surfaces the meaning + author.
+ * Layout matches the prototype: the title settles at the top, the verses sit in the centre, and
+ * the progress scrubber + tap prompt are anchored near the bottom. Tapping drives everything —
+ * it advances the reveal, then ("tap for meaning") opens the inline insight (The Meaning → tap →
+ * About the Author). Pull up for the next poem.
  */
 const PoemReader = memo(function PoemReader({
   poem,
@@ -33,13 +33,11 @@ const PoemReader = memo(function PoemReader({
   wordRefs = [],
   wordOffsets = [],
   // Insights
-  insightsMode = 'inline',
   isInterpreting = false,
   insightParts = null,
   interpretation = null,
   onSeeInsight,
-  onNextPoem,
-  // Reveal controller registration (replaces onRevealAllReady)
+  // Reveal controller registration
   onRevealReady,
 }) {
   const poemId = poem?.id;
@@ -53,6 +51,8 @@ const PoemReader = memo(function PoemReader({
   const lineCount = lines.length;
 
   const { revealedCount, isAllRevealed, setRevealed, reset } = useRevealWindow(lineCount, poemId);
+  // End-of-poem insight stage: 'idle' (reading done) → 'meaning' → 'author'. Reset on poem change.
+  const [endStage, setEndStage] = useState('idle');
 
   // DOM refs the controller animates.
   const stageRef = useRef(null);
@@ -81,7 +81,6 @@ const PoemReader = memo(function PoemReader({
     refs,
   });
 
-  // Register the controller with the feed (TTS / programmatic control).
   useEffect(() => {
     if (onRevealReady) onRevealReady(poemId, controller);
   }, [poemId, onRevealReady, controller]);
@@ -95,6 +94,7 @@ const PoemReader = memo(function PoemReader({
     if (introForRef.current === poemId) return; // run once per poem activation
     introForRef.current = poemId;
     reset();
+    setEndStage('idle');
     const ctrl = controller;
     ctrl?.reset();
     const meta = metaRef.current;
@@ -113,7 +113,7 @@ const PoemReader = memo(function PoemReader({
     gsap.set(scrub, { opacity: 0 });
     gsap.set(meta, {
       opacity: 0,
-      y: Math.round((typeof window !== 'undefined' ? window.innerHeight : 700) * 0.24),
+      y: Math.round((typeof window !== 'undefined' ? window.innerHeight : 700) * 0.22),
       scale: 1.4,
       transformOrigin: 'center top',
     });
@@ -131,7 +131,6 @@ const PoemReader = memo(function PoemReader({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, poemId, lineCount]);
 
-  // Allow the intro to replay if this slide is scrolled away and back.
   useEffect(() => {
     if (!isActive) introForRef.current = null;
   }, [isActive]);
@@ -143,31 +142,40 @@ const PoemReader = memo(function PoemReader({
   }, [isActive, isPlaying, highlightStyle, currentVerseIndex, controller]);
 
   const handleTap = (e) => {
-    if (e.target.closest('[data-scrub], [data-insight-ui], .sparkler-head, button, a')) return;
-    if (isAllRevealed) return; // end-state uses explicit buttons
-    controller?.advance();
-  };
-
-  const handleBackToPoem = () => {
-    reset();
-    const ctrl = controller;
-    ctrl?.reset();
-    ctrl?.start();
+    if (e.target.closest('[data-scrub], button, a')) return; // scrubber/controls handle themselves
+    if (!isAllRevealed) {
+      controller?.advance();
+      return;
+    }
+    // End-of-poem: tap progresses through the insight (no buttons — same tap rhythm).
+    if (endStage === 'idle') {
+      onSeeInsight?.(poem);
+      setEndStage('meaning');
+    } else if (endStage === 'meaning' && insightParts?.author) {
+      setEndStage('author');
+    }
   };
 
   const showInitialPrompt = revealedCount === 1 && lineCount > 1;
+  const inInsight = endStage !== 'idle';
+
+  // Bottom prompt text — keeps the single "tap" rhythm across reading + insight.
+  let promptText = null;
+  if (!isAllRevealed) promptText = showInitialPrompt ? 'tap to begin' : 'tap to continue';
+  else if (endStage === 'idle') promptText = 'tap for meaning';
+  else if (endStage === 'meaning' && insightParts?.author) promptText = 'tap for the poet';
+  const showCue = isActive && isAllRevealed && (endStage === 'idle' || endStage === 'author');
 
   return (
     <div
-      className="relative flex flex-col items-center justify-center w-full h-full px-4 md:px-12 text-center select-none"
-      style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + clamp(72px, 10vh, 104px))' }}
+      className="relative w-full h-full select-none"
       data-testid="poem-reader"
       data-poem-id={poemId}
       onClick={handleTap}
       role={!isAllRevealed ? 'button' : undefined}
       aria-label={!isAllRevealed ? 'Tap to reveal the next lines' : undefined}
     >
-      {/* Title intro / resting meta */}
+      {/* Title intro / resting meta — pinned at the top (prototype location) */}
       <div
         ref={metaRef}
         className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-[2px] pointer-events-none whitespace-nowrap"
@@ -221,72 +229,98 @@ const PoemReader = memo(function PoemReader({
         </div>
       </div>
 
-      {/* Reveal stage */}
-      <div ref={stageWrapRef} className="w-full" style={{ maxWidth: 'min(760px, 92vw)' }}>
-        <SparklerStage
-          lines={lines}
-          isActive={isActive}
-          darkMode={darkMode}
-          showTranslation={showTranslation}
-          showTransliteration={showTransliteration}
-          textScale={textScale}
-          currentFontClass={currentFontClass}
-          revealedCount={revealedCount}
-          wordRefs={wordRefs}
-          wordOffsets={wordOffsets}
-          stageRef={stageRef}
-          trackRef={trackRef}
-          headRef={headRef}
-          canvasRef={canvasRef}
-          unitRefs={unitRefs}
-        />
+      {/* Central body — verses (reading) or the inline insight (end), vertically centred,
+          padded to clear the top meta and the bottom chrome band. */}
+      <div
+        className="absolute inset-0 flex items-center justify-center px-4 md:px-12"
+        style={{
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + clamp(90px, 14vh, 132px))',
+          paddingBottom: 'clamp(124px, 20vh, 184px)',
+        }}
+      >
+        {/* Stage stays mounted (refs persist); hidden when the insight is showing. */}
+        <div
+          ref={stageWrapRef}
+          className="w-full"
+          style={{
+            maxWidth: 'min(760px, 92vw)',
+            opacity: 0,
+            display: inInsight ? 'none' : 'block',
+          }}
+        >
+          <SparklerStage
+            lines={lines}
+            isActive={isActive}
+            darkMode={darkMode}
+            showTranslation={showTranslation}
+            showTransliteration={showTransliteration}
+            textScale={textScale}
+            currentFontClass={currentFontClass}
+            revealedCount={revealedCount}
+            wordRefs={wordRefs}
+            wordOffsets={wordOffsets}
+            stageRef={stageRef}
+            trackRef={trackRef}
+            headRef={headRef}
+            canvasRef={canvasRef}
+            unitRefs={unitRefs}
+          />
+        </div>
+
+        {inInsight && (
+          <div
+            className="w-full max-w-xl mx-auto overflow-y-auto text-center"
+            style={{ maxHeight: '100%' }}
+            data-insight-ui
+          >
+            <InlineInsights
+              stage={endStage}
+              poem={poem}
+              darkMode={darkMode}
+              isInterpreting={isInterpreting}
+              insightParts={insightParts}
+              interpretation={interpretation}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Progress scrubber */}
-      <div ref={scrubWrapRef} className="w-full mt-7" style={{ opacity: 0 }}>
-        <ProgressScrubber
-          total={lineCount}
-          goldColor={goldColor}
-          visible={isActive}
-          scrubFillRef={scrubFillRef}
-          scrubHandleRef={scrubHandleRef}
-          onScrub={(f) => controller?.scrubTo(f, false)}
-          onScrubEnd={(f) => controller?.scrubTo(f, true)}
-        />
-      </div>
+      {/* Bottom chrome band — scrubber + tap prompt + pull-up cue, anchored near the bottom */}
+      <div
+        className="absolute left-0 right-0 flex flex-col items-center gap-3 px-4"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', zIndex: 5 }}
+      >
+        {!inInsight && (
+          <div ref={scrubWrapRef} className="w-full" style={{ opacity: 0 }}>
+            <ProgressScrubber
+              total={lineCount}
+              goldColor={goldColor}
+              visible={isActive}
+              scrubFillRef={scrubFillRef}
+              scrubHandleRef={scrubHandleRef}
+              onScrub={(f) => controller?.scrubTo(f, false)}
+              onScrubEnd={(f) => controller?.scrubTo(f, true)}
+            />
+          </div>
+        )}
 
-      {/* Tap-to-continue prompt (mid-poem) */}
-      {isActive && !isAllRevealed && (
-        <div className="mt-6 flex flex-col items-center gap-1" aria-hidden="true">
+        {isActive && promptText && (
           <span
             className="font-brand-en text-xs tracking-[0.16em] uppercase"
-            style={{ color: goldColor, opacity: 0.8 }}
+            style={{ color: goldColor, opacity: 0.85 }}
+            aria-hidden="true"
           >
-            {showInitialPrompt ? 'tap to begin' : 'tap to continue'}
+            {promptText}
           </span>
-        </div>
-      )}
+        )}
 
-      {/* End-state: see the meaning + pull-up cue */}
-      {isActive && isAllRevealed && (
-        <div className="mt-6 flex flex-col items-center gap-3 w-full" data-insight-ui>
-          <InlineInsights
-            mode={insightsMode}
-            poem={poem}
-            darkMode={darkMode}
-            isInterpreting={isInterpreting}
-            insightParts={insightParts}
-            interpretation={interpretation}
-            onSeeInsight={() => onSeeInsight?.(poem)}
-            onBackToPoem={handleBackToPoem}
-            onNextPoem={() => onNextPoem?.()}
-          />
-          <div className="flex flex-col items-center gap-[1px] mt-1" aria-hidden="true">
+        {showCue && (
+          <div className="flex flex-col items-center gap-[1px]" aria-hidden="true">
             <span
               className="cue-arrow"
               style={{
                 color: goldColor,
-                fontSize: '1.5em',
+                fontSize: '1.4em',
                 lineHeight: 1,
                 animation: 'cueBounce 1.5s ease-in-out infinite',
               }}
@@ -305,8 +339,8 @@ const PoemReader = memo(function PoemReader({
               pull up for the next poem
             </span>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 });

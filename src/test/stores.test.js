@@ -359,8 +359,8 @@ describe('uiStore', () => {
       expect(useUIStore.getState().font).toBe('Amiri');
     });
 
-    it('starts at text size 0 (Small)', () => {
-      expect(useUIStore.getState().textSize).toBe(0);
+    it('starts at text size 1 (Medium)', () => {
+      expect(useUIStore.getState().textSize).toBe(1);
     });
 
     it('starts with translation shown', () => {
@@ -443,6 +443,7 @@ describe('uiStore', () => {
     });
 
     it('cycleTextSize cycles 0-3 and wraps', () => {
+      useUIStore.getState().setTextSize(0); // start from Small regardless of default
       useUIStore.getState().cycleTextSize(); // 0 -> 1
       expect(useUIStore.getState().textSize).toBe(1);
       useUIStore.getState().cycleTextSize(); // 1 -> 2

@@ -1,16 +1,26 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import useEmblaCarousel from 'embla-carousel-react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
+import { gsap } from 'gsap';
 import PoemReader from './PoemReader.jsx';
 
+const VIEWPORT_H = 'calc(100dvh - 168px)';
+
 /**
- * PoemFeed — vertical swipe feed of poems (swipe up = next, swipe down = prev).
+ * PoemFeed — vertical magnetic feed of poems, ported from the prototype.
  *
- * Each slide is a <PoemReader> running the sparkler teleprompter reveal. Embla owns vertical
- * pointer drag for poem-to-poem navigation; a `watchDrag` predicate ignores drags that start
- * on the progress scrubber ([data-scrub]) so seeking never navigates poems. Easing is tuned
- * heavier for a weightier, magnetic feel.
+ * A stacked track is translated by `-cur * H`; a pointer drag follows the finger with magnetic
+ * resistance (light until a threshold, then looser) and, past a commit threshold, accelerates to
+ * the next/previous poem. Taps (tiny movement) fall through to the PoemReader's onClick so the
+ * reveal still advances. The scrubber ([data-scrub]) is excluded from drag.
  *
- * Ref: scrollTo(index) — programmatic navigation (dot indicators, "Surprise Me", "next poem").
+ * Ref: scrollTo(index) — programmatic navigation (Surprise Me / deep link).
  */
 const PoemFeed = forwardRef(function PoemFeed(
   {
@@ -29,7 +39,6 @@ const PoemFeed = forwardRef(function PoemFeed(
     wordRefs = [],
     wordOffsets = [],
     // Insights
-    insightsMode = 'inline',
     isInterpreting = false,
     insightParts = null,
     interpretation = null,
@@ -37,103 +46,147 @@ const PoemFeed = forwardRef(function PoemFeed(
   },
   ref
 ) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    axis: 'y',
-    dragFree: false,
-    loop: false,
-    startIndex: currentIndex,
-    duration: 32, // heavier glide for a magnetic feel (Embla units; higher = slower)
-    watchDrag: (_api, evt) => !evt?.target?.closest?.('[data-scrub]'),
-  });
-
-  useImperativeHandle(
-    ref,
-    () => ({
-      scrollTo: (index) => emblaApi?.scrollTo(index),
-    }),
-    [emblaApi]
-  );
+  const viewportRef = useRef(null);
+  const trackRef = useRef(null);
+  const feedYRef = useRef(0);
+  const curRef = useRef(currentIndex);
+  const tweenRef = useRef(null);
+  const drag = useRef({ down: false, sy: 0, base: 0, moved: 0, startT: 0 });
 
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [hasSwiped, setHasSwiped] = useState(false);
 
-  useEffect(() => {
-    if (poems.length <= 1) return;
-    const timer = setTimeout(() => setShowSwipeHint(false), 3000);
-    return () => clearTimeout(timer);
-  }, [poems.length]);
+  const H = () =>
+    viewportRef.current?.clientHeight || (typeof window !== 'undefined' ? window.innerHeight : 800);
 
-  const onSelect = useCallback(() => {
-    if (!emblaApi) return;
-    const prev = emblaApi.previousScrollSnap();
-    const idx = emblaApi.selectedScrollSnap();
-    const direction = idx > prev ? 'next' : idx < prev ? 'prev' : 'same';
-    onSlideChange(idx, direction);
-    setHasSwiped(true);
-    setShowSwipeHint(false);
-  }, [emblaApi, onSlideChange]);
+  const setFeed = (y) => {
+    feedYRef.current = y;
+    if (trackRef.current) trackRef.current.style.transform = `translate3d(0, ${-y}px, 0)`;
+  };
 
-  useEffect(() => {
-    if (!emblaApi) return;
-    emblaApi.on('select', onSelect);
-    return () => emblaApi.off('select', onSelect);
-  }, [emblaApi, onSelect]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    if (emblaApi.selectedScrollSnap() !== currentIndex) {
-      emblaApi.scrollTo(currentIndex, true);
-    }
-  }, [emblaApi, currentIndex]);
-
-  const onFetchMore = useCallback(() => {
-    if (!emblaApi || !onLoadMore) return;
-    const idx = emblaApi.selectedScrollSnap();
-    const total = emblaApi.scrollSnapList().length;
-    if (total > 0 && idx >= total - 2) onLoadMore();
-  }, [emblaApi, onLoadMore]);
-
-  useEffect(() => {
-    if (!emblaApi) return;
-    emblaApi.on('select', onFetchMore);
-    return () => emblaApi.off('select', onFetchMore);
-  }, [emblaApi, onFetchMore]);
-
-  useEffect(() => {
-    if (emblaApi) emblaApi.reInit();
-  }, [emblaApi, poems.length]);
-
-  // Reveal controllers indexed by poem id (programmatic control if needed).
-  const controllerMap = useRef({});
-  const handleRevealReady = useCallback((poemId, controller) => {
-    controllerMap.current[poemId] = controller;
+  const animateFeed = useCallback((toY, duration = 0.85, ease = 'power4.out') => {
+    tweenRef.current?.kill();
+    const o = { y: feedYRef.current };
+    tweenRef.current = gsap.to(o, {
+      y: toY,
+      duration,
+      ease,
+      onUpdate() {
+        setFeed(o.y);
+      },
+    });
   }, []);
 
-  // "next poem" from the end-state insight — advance the feed.
-  const goNextPoem = useCallback(() => {
-    if (!emblaApi) return;
-    emblaApi.scrollTo(emblaApi.selectedScrollSnap() + 1);
-  }, [emblaApi]);
+  const goCard = useCallback(
+    (idx) => {
+      const clamped = Math.max(0, Math.min(poems.length - 1, idx));
+      const prev = curRef.current;
+      const changed = clamped !== prev;
+      curRef.current = clamped;
+      animateFeed(clamped * H());
+      if (changed) {
+        const dir = clamped > prev ? 'next' : 'prev';
+        onSlideChange?.(clamped, dir);
+        setHasSwiped(true);
+        setShowSwipeHint(false);
+        if (onLoadMore && clamped >= poems.length - 2) onLoadMore();
+      }
+    },
+    [poems.length, onSlideChange, onLoadMore, animateFeed]
+  );
+
+  useImperativeHandle(ref, () => ({ scrollTo: (idx) => goCard(idx) }), [goCard]);
+
+  // Snap to the initial slide on mount and whenever the list length changes.
+  useLayoutEffect(() => {
+    setFeed(curRef.current * H());
+  }, [poems.length]);
+
+  // External index changes (deep link, etc.) — animate without re-notifying the parent.
+  useEffect(() => {
+    if (currentIndex !== curRef.current) {
+      curRef.current = currentIndex;
+      animateFeed(currentIndex * H());
+    }
+  }, [currentIndex, animateFeed]);
+
+  // Keep alignment correct across resize / orientation changes.
+  useEffect(() => {
+    const onResize = () => setFeed(curRef.current * H());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  useEffect(() => {
+    if (poems.length <= 1) return;
+    const t = setTimeout(() => setShowSwipeHint(false), 3000);
+    return () => clearTimeout(t);
+  }, [poems.length]);
+
+  // ── magnetic pointer feed (ported from the prototype) ──
+  const onPointerDown = (e) => {
+    if (e.target.closest?.('[data-scrub]')) return; // let the scrubber own its drag
+    const d = drag.current;
+    d.down = true;
+    d.sy = e.clientY;
+    d.base = feedYRef.current;
+    d.moved = 0;
+    d.startT = typeof performance !== 'undefined' ? performance.now() : 0;
+    tweenRef.current?.kill();
+  };
+  const onPointerMove = (e) => {
+    const d = drag.current;
+    if (!d.down) return;
+    const dy = e.clientY - d.sy;
+    d.moved = Math.max(d.moved, Math.abs(dy));
+    const h = H();
+    const thresh = h * 0.16;
+    const pull = -dy; // positive = pulling up (toward next)
+    const eff =
+      Math.sign(pull) * Math.min(Math.abs(pull), thresh) * 0.35 +
+      Math.sign(pull) * Math.max(0, Math.abs(pull) - thresh) * 0.7;
+    setFeed(d.base + eff);
+  };
+  const onPointerUp = (e) => {
+    const d = drag.current;
+    if (!d.down) return;
+    d.down = false;
+    if (d.moved < 10) return; // tap → click falls through to PoemReader (advance reveal / insight)
+    const dy = e.clientY - d.sy;
+    const h = H();
+    const thresh = h * 0.18;
+    if (-dy > thresh) goCard(curRef.current + 1);
+    else if (dy > thresh) goCard(curRef.current - 1);
+    else animateFeed(curRef.current * h, 0.5, 'power3.out'); // not enough → magnet back
+  };
 
   const goldColor = darkMode ? '#c5a059' : '#8B6430';
 
   return (
     <div className="w-full relative" data-testid="poem-feed">
       <div
-        ref={emblaRef}
+        ref={viewportRef}
         className="overflow-hidden w-full"
         role="region"
         aria-label="Poem feed"
-        style={{ touchAction: 'none', height: 'calc(100dvh - 168px)' }}
+        style={{ touchAction: 'none', height: VIEWPORT_H }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
       >
-        <div className="flex flex-col" style={{ backfaceVisibility: 'hidden' }}>
+        <div
+          ref={trackRef}
+          className="flex flex-col"
+          style={{ willChange: 'transform', backfaceVisibility: 'hidden' }}
+        >
           {poems.map((poem, slideIdx) => {
             const isActive = slideIdx === currentIndex;
             return (
               <div
                 key={poem.id ?? slideIdx}
                 className="flex-shrink-0 w-full overflow-hidden"
-                style={{ height: 'calc(100dvh - 168px)' }}
+                style={{ height: VIEWPORT_H }}
               >
                 <PoemReader
                   poem={poem}
@@ -147,13 +200,10 @@ const PoemFeed = forwardRef(function PoemFeed(
                   currentVerseIndex={isActive ? currentVerseIndex : 0}
                   wordRefs={isActive ? wordRefs : []}
                   wordOffsets={isActive ? wordOffsets : []}
-                  insightsMode={insightsMode}
                   isInterpreting={isActive ? isInterpreting : false}
                   insightParts={isActive ? insightParts : null}
                   interpretation={isActive ? interpretation : null}
                   onSeeInsight={onSeeInsight}
-                  onNextPoem={goNextPoem}
-                  onRevealReady={handleRevealReady}
                 />
               </div>
             );

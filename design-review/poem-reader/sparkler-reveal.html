@@ -115,18 +115,7 @@
 </head>
 <body>
 <div id="feed"></div>
-<div id="footer">Sparkler Reveal — tap to read · pull up for the next poem</div>
-<div id="progsel" aria-label="Progress style">
-  <span data-p="dots" class="pseg on">Dots</span>
-  <span data-p="bar" class="pseg">Bar</span>
-  <span data-p="count" class="pseg">Count</span>
-  <span data-p="beads" class="pseg">Beads</span>
-  <span data-p="rail" class="pseg">Rail</span>
-</div>
-<div id="progtiming" aria-label="Progress timing">
-  <span data-t="done" class="tseg on">advance on done</span>
-  <span data-t="start" class="tseg">advance on start</span>
-</div>
+<div id="footer">Sparkler Reveal — tap to read · pull up for the next poem · drag the bar handle to seek</div>
 
 <script>
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -275,8 +264,11 @@ function makeController(card, poem) {
     let pos = frac * total, line = Math.floor(pos), within = pos - line;
     if (line >= total){ line = total - 1; within = 1; }
     if (line < 0){ line = 0; within = 0; }
-    windowTop = Math.max(0, Math.floor(line/2)*2 - 2);
-    gsap.set(track, { y: -windowTop * unitH() });
+    // continuous teleprompter scroll — old lines slide up gradually as you drag (no abrupt swap)
+    const visRows = 4, maxTop = Math.max(0, total - visRows), uh = unitH();
+    const contTop = Math.min(maxTop, Math.max(0, (line + within) - (visRows - 1)));
+    gsap.set(track, { y: -contTop * uh });
+    windowTop = Math.max(0, Math.min(maxTop, Math.round(contTop)));   // row-aligned top to settle to on release
     units.forEach((u, idx)=>{
       const ar=u.querySelector('.ar'), en=u.querySelector('.en'); gsap.killTweensOf([ar, en]);
       if (idx < line){ u.classList.add('lit'); ar.style.clipPath='inset(0 0 0 0%)'; en.style.opacity='0.66'; }
@@ -291,7 +283,10 @@ function makeController(card, poem) {
     head.style.transform = `translate(${head_state.x}px, ${head_state.y}px)`;
     revealed = line; revealing = -1;
     tickLive(frac);
-    if (commit) resumeScrub(line, within);
+    if (commit){
+      gsap.to(track, { y: -windowTop * uh, duration: .28, ease: 'power2.out' });  // settle to row alignment
+      resumeScrub(line, within);
+    }
   }
   async function resumeScrub(line, within){
     busy = true;
@@ -466,27 +461,9 @@ const controllers = cards.map((c,i)=>makeController(c, POEMS[i]));
 /* meta layout is fixed to 'header' now (switcher removed) */
 window.META_MODE = 'header';
 
-/* progress-style selector (prototype control) — Dots / Bar / Count / Beads / Rail */
-window.PROGRESS_MODE = 'dots';
-document.querySelectorAll('#progsel .pseg').forEach(seg=>{
-  seg.addEventListener('click', e=>{
-    e.stopPropagation();
-    window.PROGRESS_MODE = seg.dataset.p;
-    document.querySelectorAll('#progsel .pseg').forEach(s=>s.classList.toggle('on', s===seg));
-    controllers[cur].syncProgress();
-  });
-});
-
-/* progress timing toggle — advance discrete styles on line START vs DONE */
+/* progress is fixed to the draggable bar, advancing on line-done */
+window.PROGRESS_MODE = 'bar';
 window.PROGRESS_TIMING = 'done';
-document.querySelectorAll('#progtiming .tseg').forEach(seg=>{
-  seg.addEventListener('click', e=>{
-    e.stopPropagation();
-    window.PROGRESS_TIMING = seg.dataset.t;
-    document.querySelectorAll('#progtiming .tseg').forEach(s=>s.classList.toggle('on', s===seg));
-    controllers[cur].syncProgress();
-  });
-});
 
 /* ---------- vertical magnetic feed ---------- */
 let cur = 0, feedY = 0;

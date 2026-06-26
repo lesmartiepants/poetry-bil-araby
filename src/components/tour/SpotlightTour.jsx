@@ -61,7 +61,6 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
   const [barTop, setBarTop] = useState(null);
   const [aboveRect, setAboveRect] = useState(null);
   const [actioned, setActioned] = useState(() => new Set());
-  const [nudge, setNudge] = useState(0); // bump → flash the target ring
   const rafRef = useRef(0);
 
   const step = steps[index];
@@ -100,11 +99,9 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
 
   const back = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
 
-  // Pressing Next before doing the step's action flashes the target instead of
-  // advancing — a glow that says "do this first".
-  const flash = useCallback(() => setNudge((n) => n + 1), []);
+  // Next is disabled until the step's action is done; the spotlighted control is
+  // what the user taps to make progress.
   const locked = needsAction && !unlocked;
-  const onNextPress = locked ? flash : next;
 
   // Flag the tour as active so app overlays (e.g. the insight drawer) suppress
   // their outside-click dismissal and let the tour drive them.
@@ -173,12 +170,12 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') dismiss();
-      else if (e.key === 'ArrowRight') onNextPress();
+      else if (e.key === 'ArrowRight' && !locked) next();
       else if (e.key === 'ArrowLeft') back();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dismiss, onNextPress, back]);
+  }, [dismiss, next, back, locked]);
 
   // Layout mode: tray (centered in front of an open drawer) > spotlight > centered.
   const mode = trayOpen ? 'tray' : rect ? 'spotlight' : 'centered';
@@ -193,7 +190,7 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
     >
       <AnimatePresence>
         {mode === 'spotlight' ? (
-          <Spotlight key="spot" rect={rect} nudge={nudge} />
+          <Spotlight key="spot" rect={rect} />
         ) : mode === 'centered' ? (
           <motion.div
             key="scrim"
@@ -223,7 +220,7 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
           barTop={barTop}
           aboveRect={aboveRect}
           locked={locked}
-          onNext={onNextPress}
+          onNext={next}
           onBack={back}
           onSkip={dismiss}
         />
@@ -233,9 +230,9 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
   );
 }
 
-/** Dim panels framing the target + a SUBTLY pulsing ring, plus a one-shot
- *  brighter flash whenever `nudge` bumps (user pressed Next too early). */
-function Spotlight({ rect, nudge = 0 }) {
+/** Dim panels framing the target + a SUBTLY pulsing ring drawing the eye to the
+ *  action the user must tap. */
+function Spotlight({ rect }) {
   const t = rect.top - PAD;
   const l = rect.left - PAD;
   const w = rect.width + PAD * 2;
@@ -279,26 +276,6 @@ function Spotlight({ rect, nudge = 0 }) {
         }}
         transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
       />
-      {/* One-shot attention flash — remounts on each nudge and plays once. */}
-      {nudge > 0 && (
-        <motion.div
-          key={nudge}
-          initial={{ opacity: 0.9, scale: 1 }}
-          animate={{ opacity: 0, scale: 1.22 }}
-          transition={{ duration: 0.55, ease: 'easeOut' }}
-          style={{
-            position: 'absolute',
-            top: t,
-            left: l,
-            width: w,
-            height: h,
-            borderRadius: radius,
-            border: '2.5px solid var(--gold)',
-            boxShadow: '0 0 34px 10px rgba(197,160,89,0.75)',
-            pointerEvents: 'none',
-          }}
-        />
-      )}
     </motion.div>
   );
 }
@@ -386,6 +363,19 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
         <p style={{ fontFamily: "'Forum', serif", fontSize: '0.92rem', lineHeight: 1.55, margin: 0, color: surface.dim }}>
           {step.body}
         </p>
+        {step.note && (
+          <p
+            style={{
+              fontFamily: "'Forum', serif",
+              fontSize: '0.85rem',
+              lineHeight: 1.45,
+              margin: '10px 0 0',
+              color: 'var(--gold)',
+            }}
+          >
+            {step.note}
+          </p>
+        )}
       </div>
 
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
@@ -409,9 +399,8 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
               Back
             </button>
           )}
-          {/* Always pressable and gold: when the step still needs its action,
-              pressing flashes the target (see onNextPress) rather than advancing. */}
-          <button onClick={onNext} aria-disabled={locked} style={goldBtn}>
+          {/* Disabled until the step's spotlighted action is done. */}
+          <button onClick={locked ? undefined : onNext} disabled={locked} style={{ ...goldBtn, ...(locked ? lockedBtn : null) }}>
             {isLast ? 'Done' : 'Next'}
           </button>
         </div>
@@ -431,6 +420,7 @@ const goldBtn = {
   cursor: 'pointer',
   fontWeight: 600,
 };
+const lockedBtn = { background: 'rgba(197,160,89,0.18)', color: 'rgba(231,229,228,0.4)', cursor: 'not-allowed' };
 const ghostBtn = (surface) => ({
   fontFamily: "'Forum', serif",
   fontSize: '0.85rem',

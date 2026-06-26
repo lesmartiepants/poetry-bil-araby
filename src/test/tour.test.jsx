@@ -86,7 +86,7 @@ describe('SpotlightTour engine', () => {
     await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
   });
 
-  it('does not advance until the user performs the action (Next flashes instead)', async () => {
+  it('keeps Next disabled until the user performs the action, then advances', async () => {
     const target = document.createElement('button');
     target.setAttribute('data-tour', 'listen');
     document.body.appendChild(target);
@@ -95,15 +95,12 @@ describe('SpotlightTour engine', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Next' })); // welcome -> listen
     expect(screen.getByText('Listen to the poem')).toBeInTheDocument();
 
-    // Pressing Next before the action does NOT advance (it flashes the target).
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('Listen to the poem')).toBeInTheDocument();
+    // Next is disabled until the step's action is done.
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
 
-    // After performing the real interaction, Next advances.
+    // Performing the real interaction enables Next, which then advances.
     target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await waitFor(() => {
-      // state flush
-    });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByText('Pause anytime')).toBeInTheDocument();
     target.remove();

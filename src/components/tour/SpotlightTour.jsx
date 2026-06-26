@@ -43,13 +43,13 @@ function measure(selector) {
   return { top: r.top, left: r.left, width: r.width, height: r.height, bottom: r.bottom, right: r.right };
 }
 
-export default function SpotlightTour({ steps, onClose }) {
+export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onComplete, onStepChange }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const discoverDrawer = useModalStore((s) => s.discoverDrawer);
   const insightsDrawer = useModalStore((s) => s.insightsDrawer);
   const authModal = useModalStore((s) => s.authModal);
   const savedPoems = useModalStore((s) => s.savedPoems);
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => Math.min(Math.max(0, initialStep), Math.max(0, steps.length - 1)));
   const [rect, setRect] = useState(null);
   const [barTop, setBarTop] = useState(null);
   const [actioned, setActioned] = useState(() => new Set());
@@ -63,24 +63,25 @@ export default function SpotlightTour({ steps, onClose }) {
   const tray = step?.tray ? TRAYS[step.tray] : null;
   const trayOpen = !!(tray && { discoverDrawer, insightsDrawer, authModal, savedPoems }[tray.key]);
 
-  const finish = useCallback(() => {
-    try {
-      localStorage.setItem('hasSeenTour', 'true');
-    } catch {
-      /* private mode — ignore */
-    }
-    onClose?.();
-  }, [onClose]);
+  // Dismiss = user closed it early (× / Esc) → can resume later.
+  // Complete = reached the end (Done) → terminal; entry point moves to the corner.
+  const dismiss = useCallback(() => onDismiss?.(), [onDismiss]);
+  const complete = useCallback(() => onComplete?.(), [onComplete]);
+
+  // Persist the current step so a resume picks up exactly where they left off.
+  useEffect(() => {
+    onStepChange?.(index);
+  }, [index, onStepChange]);
 
   const goNext = useCallback(() => {
     setIndex((i) => {
       if (i >= steps.length - 1) {
-        finish();
+        complete();
         return i;
       }
       return i + 1;
     });
-  }, [steps.length, finish]);
+  }, [steps.length, complete]);
 
   // Next: when a tray/panel is open, just CLOSE it — advancing is driven by the
   // tray-dismissed effect below. This works uniformly whether the tray is a
@@ -155,13 +156,13 @@ export default function SpotlightTour({ steps, onClose }) {
 
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') finish();
+      if (e.key === 'Escape') dismiss();
       else if (e.key === 'ArrowRight' && !(needsAction && !unlocked)) next();
       else if (e.key === 'ArrowLeft') back();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [finish, next, back, needsAction, unlocked]);
+  }, [dismiss, next, back, needsAction, unlocked]);
 
   // Layout mode: tray (centered in front of an open drawer) > spotlight > centered.
   const mode = trayOpen ? 'tray' : rect ? 'spotlight' : 'centered';
@@ -208,7 +209,7 @@ export default function SpotlightTour({ steps, onClose }) {
           unlocked={unlocked}
           onNext={next}
           onBack={back}
-          onSkip={finish}
+          onSkip={dismiss}
         />
       </AnimatePresence>
     </div>,

@@ -116,13 +116,15 @@ export const TOUR_STEPS = [
   },
   {
     key: 'finish',
-    target: null,
+    // Highlights the restart button that lives in the top-right once the tour is
+    // done — so readers know where to come back for a refresher.
+    target: '[data-tour="restart"]',
     arabic: 'في أمان الله',
-    title: 'That’s the core loop',
-    body: 'Listen, Discover, Explain — everything else builds on those. Save poems with the heart, and find sharing and settings along the right edge whenever you’re ready.',
+    title: 'You’re all set',
+    body: 'That’s the heart of it. If you ever want a refresher on the features, come back to this button any time to restart the tour.',
     hint: null,
-    side: 'center',
-    align: 'center',
+    side: 'left',
+    align: 'start',
   },
 ];
 

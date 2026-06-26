@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { forwardRef } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -45,12 +45,22 @@ describe('TOUR_STEPS (shared source of truth)', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('intro/outro steps are centered (no target); feature steps anchor + auto-advance', () => {
-    const intro = TOUR_STEPS.filter((s) => !s.target);
-    expect(intro.length).toBeGreaterThanOrEqual(2); // welcome + finish
-    for (const s of anchoredSteps()) {
+  it('welcome is centered; finish highlights the restart control; feature steps auto-advance', () => {
+    const welcome = TOUR_STEPS[0];
+    expect(welcome.target).toBeNull();
+    expect(welcome.advanceOn).toBeUndefined();
+
+    // The final step highlights the restart button but needs no interaction.
+    const finish = TOUR_STEPS[TOUR_STEPS.length - 1];
+    expect(finish.key).toBe('finish');
+    expect(finish.target).toMatch(/^\[data-tour=/);
+    expect(finish.advanceOn).toBeUndefined();
+
+    // Interactive feature steps anchor to a real control, auto-advance, and hint.
+    const interactive = TOUR_STEPS.filter((s) => s.advanceOn);
+    expect(interactive.length).toBeGreaterThanOrEqual(3);
+    for (const s of interactive) {
       expect(s.target).toMatch(/^\[data-tour=/);
-      expect(s.advanceOn).toBeTruthy(); // the "dynamic" interaction hook
       expect(s.hint).toBeTruthy();
     }
   });
@@ -63,18 +73,24 @@ describe('TOUR_STEPS (shared source of truth)', () => {
 
 describe('SpotlightTour engine', () => {
   it('renders the welcome step and advances on Next', async () => {
-    const onClose = vi.fn();
-    render(<SpotlightTour steps={TOUR_STEPS} onClose={onClose} />);
+    render(<SpotlightTour steps={TOUR_STEPS} onDismiss={vi.fn()} onComplete={vi.fn()} />);
     expect(screen.getByText('Welcome to Poetry بالعربي')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByText('Listen to the poem')).toBeInTheDocument();
+  });
+
+  it('starts at initialStep (resume) and reports step changes', async () => {
+    const onStepChange = vi.fn();
+    render(<SpotlightTour steps={TOUR_STEPS} initialStep={1} onStepChange={onStepChange} onDismiss={vi.fn()} onComplete={vi.fn()} />);
+    expect(screen.getByText('Listen to the poem')).toBeInTheDocument(); // step 1, not welcome
+    await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
   });
 
   it('locks Next until the user performs the real action, then unlocks it', async () => {
     const target = document.createElement('button');
     target.setAttribute('data-tour', 'listen');
     document.body.appendChild(target);
-    render(<SpotlightTour steps={TOUR_STEPS} onClose={vi.fn()} />);
+    render(<SpotlightTour steps={TOUR_STEPS} onDismiss={vi.fn()} onComplete={vi.fn()} />);
 
     await userEvent.click(screen.getByRole('button', { name: 'Next' })); // welcome -> listen
     expect(screen.getByText('Listen to the poem')).toBeInTheDocument();
@@ -86,21 +102,35 @@ describe('SpotlightTour engine', () => {
     target.remove();
   });
 
-  it('closes via the × button', async () => {
-    const onClose = vi.fn();
-    render(<SpotlightTour steps={TOUR_STEPS} onClose={onClose} />);
+  it('dismisses via the × button (not a completion)', async () => {
+    const onDismiss = vi.fn();
+    const onComplete = vi.fn();
+    render(<SpotlightTour steps={TOUR_STEPS} onDismiss={onDismiss} onComplete={onComplete} />);
     await userEvent.click(screen.getByRole('button', { name: 'Close walkthrough' }));
-    expect(onClose).toHaveBeenCalled();
+    expect(onDismiss).toHaveBeenCalled();
+    expect(onComplete).not.toHaveBeenCalled();
   });
 });
 
 describe('TourLauncher', () => {
-  it('shows the "Take a tour" chip and launches the branded tour on click', async () => {
+  beforeEach(() => {
+    try {
+      localStorage.clear();
+    } catch {
+      /* ignore */
+    }
+  });
+
+  it('auto-opens the tour on landing (no chip while open)', async () => {
     render(<TourLauncher />);
-    const chip = screen.getByRole('button', { name: 'Take a tour' });
-    expect(chip).toBeInTheDocument();
-    await userEvent.click(chip);
-    // SpotlightTour is lazy-loaded; its welcome card appears.
     expect(await screen.findByText('Welcome to Poetry بالعربي')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /tour/i })).not.toBeInTheDocument();
+  });
+
+  it('shows a "Resume tour" chip after the tour is dismissed', async () => {
+    render(<TourLauncher />);
+    await screen.findByText('Welcome to Poetry بالعربي');
+    await userEvent.click(screen.getByRole('button', { name: 'Close walkthrough' }));
+    expect(await screen.findByRole('button', { name: 'Resume tour' })).toBeInTheDocument();
   });
 });

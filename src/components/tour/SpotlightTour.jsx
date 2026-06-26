@@ -21,7 +21,7 @@ import { useModalStore } from '../../stores/modalStore';
 
 // Above the Discover drawer (z-202) and everything else.
 const Z = 9999;
-const PAD = 8; // breathing room around the spotlighted element
+const PAD = 4; // breathing room around the spotlighted element (hugs the control)
 const GAP = 18; // distance between the control bar / element and the card
 const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
 
@@ -78,7 +78,13 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
     onStepChange?.(index);
   }, [index, onStepChange]);
 
-  const goNext = useCallback(() => {
+  // Next closes any open tray/panel AND advances in a single tap. The tour
+  // suppresses those overlays' own outside-dismiss (see tourActive), so tapping a
+  // feature control merely OPENS its panel — the tour stays on this slide until
+  // the user presses Next, rather than auto-advancing when the panel appears.
+  const next = useCallback(() => {
+    const t = step?.tray ? TRAYS[step.tray] : null;
+    if (t && useModalStore.getState()[t.key]) t.close();
     setIndex((i) => {
       if (i >= steps.length - 1) {
         complete();
@@ -86,34 +92,7 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
       }
       return i + 1;
     });
-  }, [steps.length, complete]);
-
-  // Next: when a tray/panel is open, just CLOSE it — advancing is driven by the
-  // tray-dismissed effect below. This works uniformly whether the tray is a
-  // modal Radix dialog (the insight panel, which intercepts the first outside
-  // click to close itself) or a plain drawer. Otherwise advance directly.
-  const next = useCallback(() => {
-    const t = step?.tray ? TRAYS[step.tray] : null;
-    if (t && useModalStore.getState()[t.key]) {
-      t.close();
-    } else {
-      goNext();
-    }
-  }, [step, goNext]);
-
-  // Advance the moment an opened tray gets dismissed — by Next, by the app's own
-  // close button, or by a Radix outside-click — so a single Next always moves on.
-  const prevTrayOpen = useRef(false);
-  useEffect(() => {
-    if (prevTrayOpen.current && !trayOpen && step?.tray) {
-      prevTrayOpen.current = false;
-      // Advance in response to an external store change (the dismissed overlay).
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      goNext();
-    } else {
-      prevTrayOpen.current = trayOpen;
-    }
-  }, [trayOpen, step, goNext]);
+  }, [step, steps.length, complete]);
 
   const back = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
 
@@ -309,7 +288,8 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
         position: 'absolute',
         ...pos,
         width: 'min(340px, calc(100vw - 32px))',
-        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
         pointerEvents: 'auto',
         background: surface.bg,
         backdropFilter: 'blur(24px) saturate(150%)',
@@ -340,56 +320,60 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
         ×
       </button>
 
-      {/* Arabic on the left, English to the right, separated by an em dash — one
-          line where it fits, wrapping to multiple lines on large-text phones. */}
-      <h3
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'baseline',
-          gap: '0 0.5rem',
-          margin: '0 28px 6px 0',
-        }}
-      >
-        {step.arabic && (
-          <span dir="rtl" style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: '1.05rem', fontWeight: 700 }}>
-            {step.arabic}
-          </span>
-        )}
-        {step.arabic && <span style={{ color: surface.dim, fontFamily: "'Forum', serif" }}>—</span>}
-        <span style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', color: surface.text }}>{step.title}</span>
-      </h3>
-      <p style={{ fontFamily: "'Forum', serif", fontSize: '0.92rem', lineHeight: 1.55, margin: 0, color: surface.dim }}>
-        {step.body}
-      </p>
-
-      {step.hint && (
-        <div
+      {/* Scrollable content — header/body/hint scroll if space is tight so the
+          Back/Next footer below always stays visible. */}
+      <div style={{ overflowY: 'auto', minHeight: 0 }}>
+        {/* Arabic on the left, English to the right, separated by an em dash —
+            one line where it fits, wrapping to multiple lines on large text. */}
+        <h3
           style={{
-            marginTop: 12,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-            fontFamily: "'Forum', serif",
-            fontSize: '0.78rem',
-            color: unlocked ? '#7bbf7b' : 'var(--gold)',
-            background: unlocked ? 'rgba(123,191,123,0.12)' : 'rgba(197,160,89,0.1)',
-            border: `1px solid ${unlocked ? 'rgba(123,191,123,0.4)' : 'rgba(197,160,89,0.3)'}`,
-            borderRadius: 999,
-            padding: '4px 12px',
-            transition: 'all 0.3s ease',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'baseline',
+            gap: '0 0.5rem',
+            margin: '0 28px 6px 0',
           }}
         >
-          {unlocked ? (
-            <span style={{ fontSize: '0.9rem', lineHeight: 1 }}>✓</span>
-          ) : (
-            <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--gold)', animation: 'tourPulse 1.4s ease-in-out infinite' }} />
+          {step.arabic && (
+            <span dir="rtl" style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: '1.05rem', fontWeight: 700 }}>
+              {step.arabic}
+            </span>
           )}
-          {locked ? step.hint : unlocked && step.advanceOn ? 'Done — tap Next' : step.hint}
-        </div>
-      )}
+          {step.arabic && <span style={{ color: surface.dim, fontFamily: "'Forum', serif" }}>—</span>}
+          <span style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', color: surface.text }}>{step.title}</span>
+        </h3>
+        <p style={{ fontFamily: "'Forum', serif", fontSize: '0.92rem', lineHeight: 1.55, margin: 0, color: surface.dim }}>
+          {step.body}
+        </p>
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+        {step.hint && (
+          <div
+            style={{
+              marginTop: 12,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              fontFamily: "'Forum', serif",
+              fontSize: '0.78rem',
+              color: unlocked ? '#7bbf7b' : 'var(--gold)',
+              background: unlocked ? 'rgba(123,191,123,0.12)' : 'rgba(197,160,89,0.1)',
+              border: `1px solid ${unlocked ? 'rgba(123,191,123,0.4)' : 'rgba(197,160,89,0.3)'}`,
+              borderRadius: 999,
+              padding: '4px 12px',
+              transition: 'all 0.3s ease',
+            }}
+          >
+            {unlocked ? (
+              <span style={{ fontSize: '0.9rem', lineHeight: 1 }}>✓</span>
+            ) : (
+              <span style={{ width: 6, height: 6, borderRadius: 999, background: 'var(--gold)', animation: 'tourPulse 1.4s ease-in-out infinite' }} />
+            )}
+            {locked ? step.hint : unlocked && step.advanceOn ? 'Done — tap Next' : step.hint}
+          </div>
+        )}
+      </div>
+
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
         <div style={{ display: 'flex', gap: 6 }}>
           {Array.from({ length: total }).map((_, i) => (
             <span

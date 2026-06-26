@@ -1,15 +1,16 @@
 // Render the README header banner to PNG.
 //
-// Uses the pre-installed Chromium (no node_modules required). Drives it in
-// headless screenshot mode at 2x device scale so the wordmark and girih
-// pattern stay crisp on high-DPI displays and when GitHub downscales.
+// Uses playwright-core driving the pre-installed Chromium (no browser download).
+// Screenshots the #banner element directly at 2x device scale, so the output
+// dimensions always match the banner exactly — no viewport/window-size guesswork.
 //
-// Usage:  node .github/assets/render-header.mjs
-// Output: .github/assets/header.png
-import { execFileSync } from 'node:child_process';
+// Setup (once):  npm install --no-save playwright-core
+// Usage:         node .github/assets/render-header.mjs
+// Output:        .github/assets/header.png
 import { existsSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { chromium } from 'playwright-core';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const html = resolve(here, 'header.source.html');
@@ -26,19 +27,13 @@ function findChrome() {
   return bin;
 }
 
-const chrome = findChrome();
-const args = [
-  '--headless=new',
-  '--no-sandbox',
-  '--disable-gpu',
-  '--hide-scrollbars',
-  '--force-device-scale-factor=2',
-  '--window-size=1280,430',
-  '--default-background-color=00000000',
-  '--virtual-time-budget=12000', // give web fonts time to load before capture
-  `--screenshot=${out}`,
-  `file://${html}`,
-];
-
-execFileSync(chrome, args, { stdio: 'inherit' });
+const browser = await chromium.launch({
+  executablePath: findChrome(),
+  args: ['--no-sandbox', '--disable-gpu'],
+});
+const page = await browser.newPage({ deviceScaleFactor: 2 });
+await page.goto(pathToFileURL(html).href, { waitUntil: 'networkidle' });
+await page.evaluate(() => document.fonts.ready);
+await page.locator('#banner').screenshot({ path: out });
+await browser.close();
 console.log(`Rendered ${out}`);

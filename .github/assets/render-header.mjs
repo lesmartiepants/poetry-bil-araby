@@ -33,7 +33,7 @@ const args = [
   '--disable-gpu',
   '--hide-scrollbars',
   '--force-device-scale-factor=2',
-  '--window-size=1280,380',
+  '--window-size=1280,430',
   '--default-background-color=00000000',
   '--virtual-time-budget=12000', // give web fonts time to load before capture
   `--screenshot=${out}`,

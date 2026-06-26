@@ -39,7 +39,7 @@
   #banner {
     position: relative;
     width: 1280px;
-    height: 380px;
+    height: 430px;
     overflow: hidden;
     background:
       radial-gradient(120% 140% at 50% -20%, rgba(46,80,144,0.40) 0%, rgba(30,58,110,0.16) 32%, rgba(12,12,14,0) 60%),
@@ -51,8 +51,8 @@
   #pattern {
     position: absolute;
     inset: 0;
-    -webkit-mask-image: radial-gradient(120% 95% at 50% 50%, transparent 0%, transparent 26%, rgba(0,0,0,0.65) 58%, #000 100%);
-    mask-image: radial-gradient(120% 95% at 50% 50%, transparent 0%, transparent 26%, rgba(0,0,0,0.65) 58%, #000 100%);
+    -webkit-mask-image: radial-gradient(115% 92% at 50% 50%, transparent 0%, transparent 33%, rgba(0,0,0,0.7) 62%, #000 100%);
+    mask-image: radial-gradient(115% 92% at 50% 50%, transparent 0%, transparent 33%, rgba(0,0,0,0.7) 62%, #000 100%);
   }
   /* top + bottom hairlines in gold */
   #banner::before, #banner::after {
@@ -67,6 +67,7 @@
     position: absolute; inset: 0;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
+    transform: translateY(-22px); /* nudge the wordmark up, room below for tagline */
     z-index: 2;
   }
   #wordmark {
@@ -76,36 +77,43 @@
   .ar {
     font-family: 'Reem Kufi', sans-serif;
     font-weight: 700;
-    font-size: 5.4rem;
+    font-size: 7.6rem;
     background: var(--gold-foil);
     -webkit-background-clip: text; background-clip: text;
     -webkit-text-fill-color: transparent; color: transparent;
-    filter: drop-shadow(0 0 34px rgba(197,160,89,0.28));
+    filter: drop-shadow(0 0 40px rgba(197,160,89,0.30));
     padding-bottom: 0.12em; /* room for descenders */
   }
   .en {
     font-family: 'Forum', serif;
-    font-size: 4.6rem;
+    font-size: 6.4rem;
     letter-spacing: -0.03em;
     color: var(--cream);
   }
-  .feather { width: 2.5rem; height: 2.5rem; color: var(--gold); filter: drop-shadow(0 0 14px rgba(197,160,89,0.35)); }
+  .feather { width: 3.4rem; height: 3.4rem; color: var(--gold); filter: drop-shadow(0 0 16px rgba(197,160,89,0.38)); }
   #rule {
-    width: 340px; height: 1px; margin: 1.5rem 0 1.15rem;
+    width: 420px; height: 1px; margin: 1.7rem 0 1.25rem;
     background: linear-gradient(90deg, transparent 0%, rgba(197,160,89,0.35) 18%, #c5a059 50%, rgba(197,160,89,0.35) 82%, transparent 100%);
   }
   #tagline {
     font-family: 'Forum', serif;
-    font-size: 1.35rem;
-    letter-spacing: 0.16em;
+    font-size: 2.25rem;
+    letter-spacing: 0.01em;
+    color: rgba(226,222,212,0.88);
+  }
+  #triad {
+    margin-top: 1.05rem;
+    font-family: 'Forum', serif;
+    font-size: 1.5rem;
+    letter-spacing: 0.32em;
     text-transform: uppercase;
-    color: rgba(212,208,200,0.72);
+    color: rgba(197,160,89,0.82);
   }
 </style>
 </head>
 <body>
   <div id="banner">
-    <svg id="pattern" viewBox="0 0 1280 380" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
+    <svg id="pattern" viewBox="0 0 1280 430" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg"></svg>
     <div id="content">
       <div id="wordmark">
         <span class="ar" dir="rtl" lang="ar">بالعربي</span>
@@ -116,7 +124,8 @@
         </svg>
       </div>
       <div id="rule"></div>
-      <div id="tagline">Diacritized &nbsp;&middot;&nbsp; Recited &nbsp;&middot;&nbsp; Illuminated</div>
+      <div id="tagline">Take a journey through a thousand years of Arabic verse</div>
+      <div id="triad">Discover &nbsp;&middot;&nbsp; Listen &nbsp;&middot;&nbsp; Understand &nbsp;&middot;&nbsp; Savour</div>
     </div>
   </div>
 
@@ -130,7 +139,7 @@
 --------------------------------------------------------------------------- */
 (function () {
   const svg = document.getElementById('pattern');
-  const W = 1280, H = 380;
+  const W = 1280, H = 430;
   const s = 96;            // grid cell pitch (star center spacing)
   const R = s * 0.5;       // star circumradius (points nearly touch neighbours)
   const segs = [];

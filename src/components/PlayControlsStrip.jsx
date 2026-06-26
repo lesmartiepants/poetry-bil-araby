@@ -87,6 +87,7 @@ const PlayControlsStrip = ({
       <button
         aria-label={isLoading ? 'Loading' : isPlaying ? 'Pause' : 'Play'}
         onClick={onPlayPause}
+        data-tour="listen"
         disabled={isLoading}
         className="w-9 h-9 flex items-center justify-center rounded-xl transition-all duration-150 hover:bg-white/10 disabled:opacity-50"
         style={{ color: 'var(--gold, #c9a84c)' }}

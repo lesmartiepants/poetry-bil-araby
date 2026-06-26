@@ -107,6 +107,7 @@ import PoemCarousel from './components/PoemCarousel.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
+import TourLauncher from './components/tour/TourLauncher.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
 import PlayControlsStrip from './components/PlayControlsStrip.jsx';
@@ -1716,6 +1717,7 @@ export default function DiwanApp() {
           />
 
           <motion.footer
+            data-tour-anchor="controlbar"
             className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom"
             animate={isIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
             transition={
@@ -1752,6 +1754,7 @@ export default function DiwanApp() {
                       exit={{ opacity: 0, y: 8 }}
                       transition={{ duration: 0.2, ease: 'easeOut' }}
                       onClick={togglePlay}
+                      data-tour="listen"
                       aria-label="Start recitation"
                       className={`min-h-[44px] px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
                       style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
@@ -1845,6 +1848,7 @@ export default function DiwanApp() {
                     <>
                       <button
                         onClick={togglePlay}
+                        data-tour="listen"
                         aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
                         style={{ willChange: 'transform' }}
                         className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
@@ -1879,7 +1883,7 @@ export default function DiwanApp() {
                 </div>
               )}
 
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]" data-tour="discover">
                 <button
                   onClick={() => {
                     setFireTapped(true);
@@ -1942,7 +1946,7 @@ export default function DiwanApp() {
                 </span>
               </div>
 
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]" data-tour="save">
                 <button
                   onClick={() =>
                     isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
@@ -1966,7 +1970,7 @@ export default function DiwanApp() {
                 </span>
               </div>
 
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]" data-tour="explain">
                 <button
                   onClick={() => {
                     if (interpretation) {
@@ -2139,6 +2143,11 @@ export default function DiwanApp() {
           </Suspense>
         )}
       </AnimatePresence>
+
+      {/* Interactive walkthrough launcher — only once the splash is dismissed. */}
+      {FEATURES.tour && !showSplash && (
+        <TourLauncher user={user} savedCount={savedPoems.length} />
+      )}
 
       {/* Share Card Modal */}
       {showShareCard && displayedPoem && (

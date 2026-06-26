@@ -536,7 +536,7 @@ describe('modalStore', () => {
       expect(state.authModal).toBe(false);
       expect(state.authMessage).toBe('');
       expect(state.savedPoems).toBe(false);
-      expect(state.splash).toBe(true); // splash always starts open
+      expect(state.splash).toBe(false); // splash/landing disabled via FEATURES.landing
       expect(state.insightsDrawer).toBe(false);
       expect(state.shortcutHelp).toBe(false);
       expect(state.poetPicker).toBe(false);
@@ -673,6 +673,9 @@ describe('modalStore', () => {
       useModalStore.getState().toggleShortcutHelp();
       useModalStore.getState().openPoetPicker();
       useModalStore.getState().openShareCard();
+      // Force splash open to prove closeAll leaves it untouched regardless of the
+      // FEATURES.landing default.
+      useModalStore.setState({ splash: true });
       useModalStore.getState().closeAll();
       const state = useModalStore.getState();
       expect(state.authModal).toBe(false);

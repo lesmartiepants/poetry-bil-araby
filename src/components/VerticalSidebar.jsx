@@ -60,6 +60,7 @@ const VerticalSidebar = ({
         {/* My Poems button */}
         <button
           onClick={onOpenSavedPoems}
+          data-tour="library"
           aria-label={savedPoemsCount > 0 ? `My poems, ${savedPoemsCount} saved` : 'My poems'}
           className={`${btnBase} ${btnHover} relative`}
         >

@@ -7,8 +7,15 @@ export default function InsightOverlay({
   onClose, ratchetMode, handleAnalyze,
 }) {
   const darkMode = useUIStore((s) => s.darkMode);
+  const tourActive = useUIStore((s) => s.tourActive);
   const theme = darkMode ? THEME.dark : THEME.light;
   const o = theme.overlay;
+  // While the walkthrough is running, the tour card sits above this drawer; a tap
+  // on it must not be treated as an outside-click that dismisses the drawer (the
+  // tour drives open/close itself). Suppress outside + escape dismissal then.
+  const blockDismiss = (e) => {
+    if (tourActive) e.preventDefault();
+  };
 
   return (
     <Drawer.Root
@@ -30,6 +37,9 @@ export default function InsightOverlay({
           data-vaul-drawer
           className="fixed bottom-0 left-0 right-0 z-[61] h-[95dvh] rounded-t-2xl flex flex-col"
           style={{ background: o.bg, borderTop: '1px solid rgba(197,160,89,0.25)' }}
+          onPointerDownOutside={blockDismiss}
+          onInteractOutside={blockDismiss}
+          onEscapeKeyDown={blockDismiss}
         >
           <Drawer.Handle
             className="mx-auto mt-3 mb-1 w-8 h-[3px] rounded-full"

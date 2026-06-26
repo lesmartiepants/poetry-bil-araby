@@ -1,242 +1,245 @@
-# Poetry Bil-Araby | بالعربي
+<p align="center">
+  <img src="./.github/assets/header.png" alt="Poetry Bil-Araby — بالعربي" width="100%" />
+</p>
 
-A beautiful React application for exploring Arabic poetry with AI-powered insights, audio recitation, and translations.
+<p align="center">
+  <strong>Classical Arabic poetry, made discoverable, accessible, and pleasurable to read.</strong>
+</p>
+
+<p align="center">
+  <a href="https://poetry-bil-araby.vercel.app"><img src="https://img.shields.io/badge/Live_Demo-poetry--bil--araby.vercel.app-c5a059?style=flat-square&labelColor=0c0c0e" alt="Live Demo" /></a>
+  <a href="https://github.com/lesmartiepants/poetry-bil-araby/actions/workflows/ci.yml"><img src="https://github.com/lesmartiepants/poetry-bil-araby/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/React-18-2e5090?style=flat-square&labelColor=0c0c0e" alt="React 18" />
+  <img src="https://img.shields.io/badge/Vite-6-2e5090?style=flat-square&labelColor=0c0c0e" alt="Vite 6" />
+  <img src="https://img.shields.io/badge/PWA-installable-2e5090?style=flat-square&labelColor=0c0c0e" alt="PWA" />
+  <img src="https://img.shields.io/badge/tested_with-Vitest_%2B_Playwright-4a7cc9?style=flat-square&labelColor=0c0c0e" alt="Tested with Vitest and Playwright" />
+</p>
+
+---
+
+## Philosophy
+
+Arabic poetry is one of the deepest literary traditions in the world, and one of the
+hardest to approach. The text is often printed without diacritics, the meter is invisible
+to a new reader, and translations tend to flatten living verse into footnotes. Poetry
+Bil-Araby exists to remove those barriers without diminishing the work.
+
+Three principles guide every feature:
+
+- **Discoverable.** A vast, curated library and a single tap surface poems you would never
+  have found on your own — by poet, by theme, or at random.
+- **Accessible.** Full diacritics for correct pronunciation and meter, faithful bilingual
+  translation, Latin transliteration, and spoken recitation meet readers wherever they are.
+  Translations follow a strict rule borrowed from the app's own prompt: *every word choice
+  must sound like it belongs in a living poem* — no archaic English, no invented imagery.
+- **Pleasurable.** A lapis-and-gold visual language drawn from Islamic illumination, generative
+  geometric backgrounds, kinetic onboarding, and fluid motion make reading feel like an
+  occasion rather than a lookup.
+
+## The Library
+
+The poem corpus holds **84,000+ classical Arabic poems** sourced from the open
+[Qafiyah](https://github.com/WTFoss/qafiyah) dataset and stored in PostgreSQL. To protect
+the reading experience, the API only serves poems above a quality threshold
+(`quality_score >= 75`, see `server.js`), so what reaches the reader is a curated slice of
+the full archive rather than raw bulk text.
+
+Each poem carries its Arabic title, the poet's name (Arabic and English), theme, and the
+verse body. Readers can pull a random poem, filter by poet, or browse a prefetched carousel
+of more work by the same author.
+
+## Harakat — Diacritization
+
+Tashkeel (the short-vowel marks, *harakat*) is the single most important accessibility layer
+in the app. A misplaced mark changes a word's meaning and breaks the poem's meter, so
+diacritization is treated as a first-class data pipeline rather than an afterthought.
+
+Raw text such as `بذات المكارم ذاك الألم` becomes `بِذَاتِ الْمَكَارِمِ ذَاكَ الْأَلَمِ`.
+
+The pipeline (`scripts/tashkeel-pipeline.py`) runs in stages:
+
+1. **Export** poems from the database to local Parquet.
+2. **Diacritize** with [Mishkal](https://github.com/linuxscout/mishkal), a rule-based engine.
+3. **Post-process** with eight correction rules learned from manual Arabic review — fixing
+   systematic engine errors such as incorrect line-ending vowels, over-diacritized
+   punctuation, and broken hamza patterns.
+4. **Audit** coverage, mark density, and regression against known-good samples.
+5. **Report** with an HTML before/after view for human verification.
+6. **Upload** back to the database with byte-exact verification.
+
+The API serves `COALESCE(diacritized_content, content)`, so any poem can safely fall back to
+raw text if its diacritized version is ever rolled back.
+
+```bash
+pip install -r scripts/requirements-diacritize.txt
+
+# Full pipeline: export, diacritize, post-process, audit, report, verified upload
+python scripts/tashkeel-pipeline.py run-all --force --verify --open
+
+# Or run a single stage
+python scripts/tashkeel-pipeline.py diacritize
+python scripts/tashkeel-pipeline.py audit
+
+# Incremental: only process newly added poems
+python scripts/tashkeel-pipeline.py run-all --only-missing --verify
+```
+
+## Islamic Art and Geometry
+
+The interface is built on a deliberate contemporary-meets-classical visual language. The
+palette is lapis lazuli and gold — `#1e3a6e`, `#2e5090`, `#4a7cc9` against a near-black
+canvas, with a warm gold foil (`#c5a059`) reserved for titles and the wordmark, echoing the
+illuminated manuscripts the poems come from.
+
+The animated backgrounds are not stock textures: `SquoctogonBackground.jsx` generates true
+Islamic geometric tessellations — eightfold girih stars and octagon-and-square grids — as
+live SVG, the same construction reused in this README's header banner. A kinetic splash
+sequence introduces the wordmark before the first poem appears, and motion throughout is
+handled with Framer Motion for a calm, considered feel.
 
 ## Features
 
-- 📖 Browse classic and modern Arabic poetry
-- 🗄️ **NEW:** Database mode with 4,600+ curated Arabic poems (fully diacritized)
-- 🔐 **NEW:** User authentication with Google/Apple SSO (Supabase)
-- ❤️ **NEW:** Save favorite poems to your personal collection
-- ⚙️ **NEW:** Persistent user settings (theme, font preferences)
-- 🎙️ AI-powered audio recitation with emotional context
-- 🤖 Deep analysis and interpretation using AI
-- 🔄 Toggle between Database mode (local PostgreSQL) and AI mode (Gemini API)
-- 🌙 Dark/Light mode toggle
-- 🎨 Beautiful Arabic typography and design (Amiri font)
-- 🔍 Filter by poet and category
-- 📋 Copy poems to clipboard
-- ✅ Comprehensive test coverage (136 unit + 193 E2E tests)
-- 🚀 Optimized CI/CD pipeline (3-minute builds)
-- 🛡️ Robust error handling with user-friendly error messages
+**Reading**
+- Full diacritics (harakat) for accurate pronunciation and meter
+- Faithful English translation (cached, or generated on demand)
+- Latin transliteration toggle
+- AI audio recitation with word-by-word highlighting synced to the voice
+- Eight Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh)
+- Dark and light themes
+- AI literary insight that reads a poem as a story, not an academic gloss
 
-## Setup
+**Discovery**
+- Dual sources: a curated **Database** of real poems and an **AI** generation mode (Gemini)
+- Random discovery, poet filtering, and a prefetched carousel of related work
+- Deep-linkable poems and shareable cards with Open Graph previews
+
+**Personalization**
+- Optional Google and Apple sign-in (Supabase)
+- Save poems to a personal library with pinning, sorting, and in-library search
+- Persistent settings (theme, font) that follow you across sessions
+- Flag low-quality poems to improve the corpus
+- Keyboard shortcuts everywhere — press `?` for the full list
+
+**Platform**
+- Installable PWA with offline support
+- IndexedDB caching and smart prefetching for instant navigation
+- Error tracking (Sentry) and product analytics (Vercel)
+
+### Keyboard shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Space` | Play / pause recitation |
+| `→` | Next poem |
+| `E` | Seek insight (AI analysis) |
+| `T` | Toggle English translation |
+| `R` | Toggle transliteration |
+| `?` | Show all shortcuts |
+| `Esc` | Close overlay |
+
+## Tech Stack
+
+**Frontend** — React 18, Vite 6, Tailwind CSS 3, Zustand (state), wouter (routing),
+Framer Motion (animation), Tone.js (audio), Radix UI and Vaul (accessible primitives),
+Embla (carousel), Sonner (toasts), Lucide (icons).
+
+**Backend** — Express 5 with Helmet, CORS, rate limiting, and input validation; PostgreSQL
+via `pg`.
+
+**Data and services** — Supabase (auth, user data, Postgres hosting), Google Gemini (text
+insight and TTS recitation), Mishkal (diacritization). Quality is enforced with Vitest
+(unit) and Playwright (end-to-end), wired into GitHub Actions CI.
+
+## Architecture
+
+The app runs in two interchangeable poem sources, toggled at runtime:
+
+- **Database mode** fetches real poems from PostgreSQL through a small Express API
+  (`server.js`) exposing random, by-poet, poets, and translation-cache endpoints.
+- **AI mode** generates poems and analysis directly from the Gemini API using the system
+  prompts in `src/prompts.js`.
+
+The frontend is a single-page React app. UI and domain state live in Zustand stores
+(`src/stores/`), side-effectful flows (fetch, play, analyze) are isolated as store actions,
+and cross-cutting concerns (auth, audio highlighting, shortcuts, query params) are React
+hooks (`src/hooks/`).
+
+## Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- **For AI Mode:** A Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
-- **For Database Mode:** PostgreSQL 15+ (optional, but recommended for full functionality)
-- **For Authentication (Optional):** A Supabase account and project ([supabase.com](https://supabase.com))
 
-### Installation
+- Node.js 18 or newer
+- For AI mode: a Gemini API key ([Google AI Studio](https://aistudio.google.com/app/apikey))
+- For Database mode: PostgreSQL 15+ (17 recommended for the auth features)
+- For authentication (optional): a Supabase project
 
-1. Install dependencies:
+### Install
+
 ```bash
 npm install
 ```
 
-2. Configure environment variables:
+### Configure
 
-   Create a `.env` file in the project root with the variables your setup needs:
-
-   ```bash
-   # Frontend — required for AI mode
-   VITE_GEMINI_API_KEY=your-gemini-api-key
-
-   # Frontend — required for Database mode
-   VITE_API_URL=http://localhost:3001          # Points to backend API
-
-   # Frontend — optional, enables auth / saved poems
-   VITE_SUPABASE_URL=https://your-ref.supabase.co
-   VITE_SUPABASE_ANON_KEY=your-jwt-anon-key   # Must start with "eyJ"
-
-   # Backend (server.js) — required for Database mode
-   DATABASE_URL=postgresql://user:pass@host:6543/postgres  # Supabase pooler
-   ```
-
-   **Local PostgreSQL alternative** (instead of Supabase):
-   - Install PostgreSQL 15+ and run `createdb qafiyah`
-   - The backend defaults to `localhost:5432/qafiyah` when `DATABASE_URL` is not set
-
-   **Authentication (optional):**
-   - Install the Supabase CLI: `brew install supabase/tap/supabase`
-   - Link and push migrations: `supabase link --project-ref <ref> && supabase db push`
-   - Enable Google/Apple OAuth in the Supabase Dashboard under Authentication → Providers
-
-3. Start the development server:
-
-   **Option A: Frontend only (AI mode):**
-   ```bash
-   npm run dev
-   ```
-
-   **Option B: Frontend + Backend (Database mode):**
-   ```bash
-   # Terminal 1: Start backend API server
-   npm run dev:server
-
-   # Terminal 2: Start frontend dev server
-   npm run dev
-   ```
-
-   **Option C: Both concurrently:**
-   ```bash
-   npm run dev:all
-   ```
-
-4. Open your browser to the URL shown (usually `http://localhost:5173`)
-
-## Usage
-
-### Mode Switching
-- **Database Mode** (Library icon 📚): Fetches poems from PostgreSQL database (4,600+ curated poems)
-- **AI Mode** (Sparkles icon ✨): Generates poems using Gemini API
-- Toggle between modes using the control bar button or overflow menu (mobile)
-
-### Core Features
-- **Discover**: Click the rabbit/sparkles button to fetch new poems
-- **Navigate**: Use arrow buttons to browse through poems
-- **Play**: Click the play button to hear AI-generated recitation (AI mode only)
-- **Analyze**: Click "Seek Insight" to get deep analysis (AI mode only)
-- **Copy**: Click the copy icon to save poem text
-- **Filter**: Select specific poets from the category dropdown
-- **Theme**: Toggle between dark and light modes
-
-### Authentication Features (Optional)
-When Supabase is configured, the app provides:
-- **Sign In**: Click the "Sign In" button to authenticate with Google or Apple
-- **Save Poems**: Click the heart ❤️ button to save poems to your personal collection
-- **My Poems**: View and browse all your saved poems from the account menu
-- **Settings**: Customize theme and font preferences with live preview
-- **Persistent Settings**: Your preferences are automatically saved across sessions
-- **User Profile**: Access your account menu to view settings and sign out
-
-**Note**: Authentication features only appear when Supabase environment variables are configured. The app works fully without authentication.
-
-### Arabic Diacritics (Tashkeel)
-
-Every poem in the database is enriched with full Arabic diacritics (tashkeel) — the short vowel marks that make classical poetry readable and recitable. Raw text like `بذات المكارم ذاك الألم` becomes `بِذَاتِ الْمَكَارِمِ ذَاكَ الْأَلَمِ`.
-
-Accurate diacritization matters because a single misplaced mark changes meaning and breaks poetic meter. The pipeline uses [Mishkal](https://github.com/linuxscout/mishkal) (rule-based engine) as a starting point, then applies 8 post-processing rules learned from manual Arabic review to fix systematic errors — things like incorrect line-ending vowels, over-diacritized punctuation, and broken hamza patterns.
-
-**Quality gates:**
-- Automated audit checks coverage, mark density, and regression against known-good samples
-- HTML report with before/after comparisons for human review
-- Upload verification confirms byte-exact match between local output and DB content
-- `COALESCE` fallback in the API means any poem can be safely rolled back to raw text
+Create a `.env` file in the project root with the variables your setup needs:
 
 ```bash
-# Install Python dependencies
-pip install -r scripts/requirements-diacritize.txt
+# Frontend — AI mode
+VITE_GEMINI_API_KEY=your-gemini-api-key
 
-# Full pipeline (export from DB, diacritize, post-process, audit, report, upload)
-python scripts/tashkeel-pipeline.py run-all --force --verify --open
+# Frontend — Database mode
+VITE_API_URL=http://localhost:3001
 
-# Or run individual steps
-python scripts/tashkeel-pipeline.py export             # DB -> local parquet
-python scripts/tashkeel-pipeline.py diacritize          # Mishkal processing
-python scripts/tashkeel-pipeline.py postprocess         # Apply 8 fix rules
-python scripts/tashkeel-pipeline.py audit               # Quality checks
-python scripts/tashkeel-pipeline.py report --open       # HTML report
-python scripts/tashkeel-pipeline.py upload --verify     # Push to DB + verify
+# Frontend — optional, enables auth and saved poems
+VITE_SUPABASE_URL=https://your-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-jwt-anon-key   # must start with "eyJ"
 
-# Incremental: only process newly added poems
-python scripts/tashkeel-pipeline.py export --only-missing
-python scripts/tashkeel-pipeline.py run-all --only-missing --verify
+# Backend (server.js) — Database mode
+DATABASE_URL=postgresql://user:pass@host:6543/postgres   # Supabase pooler host
 ```
 
-The API automatically serves diacritized content when available, falling back to raw content (`COALESCE(diacritized_content, content)`).
+For a local database instead of Supabase, install PostgreSQL 15+ and run `createdb qafiyah`;
+the backend defaults to `localhost:5432/qafiyah` when `DATABASE_URL` is unset.
 
-### Database Mode Benefits
-- 4,600+ curated Arabic poems with full diacritics
-- Instant fetching (no API latency)
-- Works offline (after database setup)
-- Filter by poet (50+ poets available)
-- Proper line break formatting
+### Run
 
-## Building with Claude
-
-### Recommended Workflow
-
-1. **Start with clear goals**: Tell me what feature you want to add or what issue you're facing
-2. **Let me explore first**: I'll read and understand the existing code structure
-3. **Iterate together**: We'll make changes incrementally and test as we go
-4. **Use the tools**: I can search, edit files, run tests, and commit changes
-
-### Tips for Working Together
-
-- Be specific about what you want to change
-- Let me know your preferences (styling, architecture, etc.)
-- I'll ask clarifying questions when needed
-- Tell me if something doesn't look right - we can iterate!
-
-## Tech Stack
-
-### Frontend
-- React 18
-- Vite
-- Tailwind CSS
-- Lucide React (icons)
-- Gemini API (AI features)
-- Supabase (authentication & user data - optional)
-- Structured logging (captured by Vercel/browser console)
-
-### Backend (Database Mode)
-- Express.js 5 (API server)
-- PostgreSQL 15+ (poem database, requires 17 for auth features)
-- node-postgres (pg) client
-- CORS middleware
-- Structured logging with LOG_ENABLED/LOG_DEBUG flags
-
-### Authentication & User Data (Optional)
-- Supabase Auth (Google & Apple OAuth)
-- Supabase Database (user settings, saved poems, discussions)
-- Row Level Security (RLS) policies for data protection
-
-## Project Structure
-
+```bash
+npm run dev          # frontend only (AI mode) on http://localhost:5173
+npm run dev:server   # backend API on http://localhost:3001
+npm run dev:all      # both concurrently (Database mode)
 ```
-poetry-bil-araby/
-├── src/                     # Source code
-│   ├── app.jsx             # Main application component (1500+ lines)
-│   ├── main.jsx            # React entry point
-│   ├── index.css           # Global styles (Tailwind)
-│   └── test/               # Unit tests (136 tests)
-│       ├── components.test.jsx
-│       ├── database-components.test.jsx  # NEW: Database integration tests
-│       ├── utils.test.jsx
-│       └── App.test.jsx
-├── e2e/                     # End-to-end tests (Playwright)
-│   ├── app.spec.js         # Core functionality tests
-│   ├── database-integration.spec.js  # Database E2E tests
-│   ├── ui-ux.spec.js       # UI/UX quality tests
-│   ├── design-review-prod.spec.js   # Design review UI + API tests
-│   └── mockup-screenshots.spec.js
-├── server.js                # Express API server for database mode
-├── scripts/                 # Pipeline tooling
-│   ├── tashkeel-pipeline.py          # Master orchestrator (8 subcommands)
-│   ├── batch-diacritize.py           # Mishkal parallel diacritization
-│   ├── postprocess-tashkeel.py       # 8 fix rules from Arabic review
-│   ├── audit-tashkeel.py             # Quality audit
-│   ├── generate-tashkeel-report.py   # HTML quality report
-│   ├── upload-diacritized.py         # Parallel upload with checkpointing
-│   └── requirements-diacritize.txt   # Python deps
-├── supabase/migrations/     # Database schema migrations
-├── .github/                 # GitHub configuration
-│   ├── workflows/ci.yml    # CI/CD pipeline (PostgreSQL service added)
-│   ├── TESTING_STRATEGY.md # Comprehensive testing guide
-│   └── CI_CD_GUIDE.md      # CI/CD operational reference
-├── docs/                    # Documentation
-│   └── CI_PERFORMANCE_OPTIMIZATION.md
-├── package.json             # Dependencies and scripts
-├── vitest.config.js         # Unit test configuration
-├── playwright.config.js     # E2E test configuration
-└── vercel.json             # Vercel deployment config
+
+## Configuration
+
+| Variable | Scope | Purpose |
+|---|---|---|
+| `VITE_GEMINI_API_KEY` | Frontend | Gemini key for AI mode and recitation |
+| `VITE_API_URL` | Frontend | Backend API base URL |
+| `VITE_SUPABASE_URL` | Frontend | Supabase project URL (optional) |
+| `VITE_SUPABASE_ANON_KEY` | Frontend | Supabase anon key, JWT format (optional) |
+| `DATABASE_URL` | Backend | PostgreSQL connection (Supabase pooler in production) |
+| `PORT` | Backend | API port (default 3001) |
+| `API_SECRET_KEY` | Backend | Protects write endpoints via `X-API-Key` (optional) |
+
+Never commit secrets. The `DATABASE_URL` must use the Supabase **connection pooler** host
+(`aws-N-region.pooler.supabase.com:6543`), not the direct host. Supabase anon keys must be in
+JWT format (they start with `eyJ`).
+
+## Testing
+
+```bash
+npm run test:run        # unit tests (Vitest)
+npm run test:coverage   # unit tests with coverage
+npm run test:e2e        # end-to-end tests (Playwright)
+npm run test:e2e:full   # full device matrix (local)
 ```
+
+Unit tests cover components, utilities, and database integration with Vitest and React
+Testing Library. End-to-end suites in `e2e/` exercise core flows, audio and TTS highlighting,
+the carousel, translation caching, PWA behavior, and UI/UX quality. The GitHub Actions
+pipeline builds, runs unit tests, then runs the E2E suite against a PostgreSQL service.
 
 ## Deployment
-
-### Environment Variables by Service
 
 | Variable | Vercel | Render | GitHub Actions |
 |---|---|---|---|
@@ -245,81 +248,47 @@ poetry-bil-araby/
 | `VITE_SUPABASE_URL` | Yes | — | — |
 | `VITE_SUPABASE_ANON_KEY` | Yes | — | — |
 | `DATABASE_URL` | — | Yes | Yes |
-| `SUPABASE_SECRET_KEY` | — | Yes | — |
-| `SUPABASE_PROJECT_URL` | — | Yes | — |
-| `SUPABASE_ACCESS_TOKEN` | — | — | Yes |
-| `SUPABASE_PROJECT_REF` | — | — | Yes |
 
-### Vercel (Frontend)
+**Frontend (Vercel)** — framework preset Vite, build `npm run build`, output `dist`.
+Auto-deploys on push to `main` with preview URLs for pull requests.
 
-Framework preset: **Vite** | Build: `npm run build` | Output: `dist`
+**Backend (Render)** — runtime Node, build `npm install`, start `node server.js`. The
+`DATABASE_URL` must point at the Supabase pooler host; the direct host is not reachable from
+external services.
 
-Set the four `VITE_*` variables above for Production, Preview, and Development environments. Vercel auto-deploys on push to `main` and creates preview URLs for PRs.
+## Project Structure
 
-### Render (Backend API)
-
-Runtime: **Node** | Build: `npm install` | Start: `node server.js`
-
-The `DATABASE_URL` must use the Supabase **connection pooler** host (e.g. `aws-1-us-east-1.pooler.supabase.com:6543`), not the direct host. The direct host (`db.*.supabase.co`) is not reachable from external services.
-
-## Testing
-
-### Run Tests
-
-```bash
-# Unit tests
-npm test                    # Watch mode
-npm run test:run            # Single run
-npm run test:coverage       # With coverage
-
-# E2E tests
-npm run test:e2e            # All E2E tests
-npm run test:e2e:ui         # UI/UX tests only
-npm run test:e2e:headed     # With browser visible
-npm run test:e2e:debug      # Debug mode
-npm run test:e2e:report     # View HTML report
-npm run test:e2e:full       # Full device matrix (local)
+```
+poetry-bil-araby/
+├── src/
+│   ├── app.jsx              # Main application shell
+│   ├── components/          # UI: splash, poem card, carousel, auth, backgrounds
+│   ├── stores/              # Zustand state and side-effect actions
+│   ├── hooks/               # Auth, TTS highlighting, shortcuts, query params
+│   ├── services/            # Gemini, database client, cache, prefetch
+│   ├── constants/           # Design tokens, theme, fonts, patterns
+│   ├── utils/               # Transliteration, OG tags, audio helpers
+│   └── prompts.js           # AI system prompts
+├── server.js                # Express API for Database mode
+├── scripts/                 # Diacritization pipeline (Python) and tooling
+├── supabase/migrations/     # Auth and user-feature schema
+├── e2e/                     # Playwright end-to-end suites
+└── .github/                 # CI workflows and README assets
 ```
 
-### Test Coverage
+## Roadmap
 
-- **Unit Tests:** 168 tests covering components, utilities, design-review, and integration
-- **E2E Tests:** 5 suites across up to 7 device configs
-  - `app.spec.js` — core user flows
-  - `database-integration.spec.js` — database mode toggle, fetching, errors
-  - `ui-ux.spec.js` — responsive design, accessibility, typography
-  - `design-review-prod.spec.js` — design-review UI + prod API round-trip
-  - `mockup-screenshots.spec.js` — screenshot capture
-- **CI/CD:** Optimized pipeline with PostgreSQL service
-- **Documentation:** See `.github/TESTING_STRATEGY.md` for details
+Planned and in-progress work, in rough priority order:
 
-## Documentation
+- Full-text search across the entire library
+- Curated collections and reading playlists
+- An expanded poet and theme catalog
+- Pagination for browsing large result sets
+- Native social-platform sharing
 
-- `.github/TESTING_STRATEGY.md` - Comprehensive testing strategy
-- `.github/CI_CD_GUIDE.md` - CI/CD pipeline reference
-- `.github/copilot-instructions.md` - GitHub Copilot custom instructions
-- `.github/instructions/` - Path-specific Copilot instructions
-- `CLAUDE.md` - Comprehensive guide for Claude AI
-- `docs/CI_PERFORMANCE_OPTIMIZATION.md` - Performance optimization journey
-- `e2e/README.md` - E2E testing guide
+## Acknowledgements
 
-## TODO
-
-### Features
-- [x] Add poem favorites and bookmarks
-- [x] Saved Poems view to browse collection
-- [x] Settings view for theme and font preferences
-- [ ] Implement search functionality
-- [ ] Add social media sharing
-- [ ] Create poem collections and playlists
-- [ ] Expand poet and category library
-- [ ] Add keyboard shortcuts
-- [ ] Implement pagination for large datasets
-
-### Developer Experience
-- [x] Set up GitHub Copilot instructions
-- [ ] Configure ESLint and Prettier
-- [ ] Set up pre-commit hooks
-- [ ] Consider TypeScript migration
-- [ ] Add JSDoc comments to functions
-- [ ] Create CONTRIBUTING.md
+- **[Qafiyah](https://github.com/WTFoss/qafiyah)** — the open Arabic poetry dataset behind the library.
+- **[Mishkal](https://github.com/linuxscout/mishkal)** — the rule-based diacritization engine.
+- The type designers behind Reem Kufi, Forum, Amiri, and the other open fonts that give the
+  app its voice.

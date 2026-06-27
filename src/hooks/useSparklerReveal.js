@@ -354,6 +354,10 @@ export function useSparklerReveal({
       }
       s.revealed = effectiveFull; // monotonic — only ever grows
       s.revealing = -1;
+      // Sync React's revealedCount so English + transliteration fade in for lines the scrub just
+      // revealed (their opacity is React-driven by revealedCount). setState bails out when the
+      // count is unchanged, so per-move calls are cheap.
+      emitRevealed();
       writeProgress(frac);
       if (commit) {
         if (track) gsap.to(track, { y: -s.windowTop * uh, duration: 0.28, ease: 'power2.out' });

@@ -28,6 +28,8 @@ export default function ProgressScrubber({
     return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
   };
 
+  // Pointer handlers live on a tall, full-width hit area (not the thin bar) so the scrubber is
+  // easy to grab and tapping anywhere along the row seeks. The visible bar + handle stay thin.
   const onDown = (e) => {
     if (!total) return;
     e.stopPropagation();
@@ -66,54 +68,66 @@ export default function ProgressScrubber({
         direction: 'ltr',
       }}
     >
+      {/* Generous hit area: tall + wide so the thin bar is easy to grab on touch. */}
       <div
-        ref={barRef}
-        className="relative"
+        role="slider"
+        aria-label="Seek through the poem"
+        aria-valuemin={0}
+        aria-valuemax={total}
+        tabIndex={0}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
+        className="relative flex items-center justify-center"
         style={{
-          width: 'min(190px, 56vw)',
-          height: 3,
-          borderRadius: 3,
-          background: 'rgba(197,160,89,0.16)',
+          width: 'min(230px, 66vw)',
+          paddingTop: 18,
+          paddingBottom: 18,
+          cursor: 'grab',
+          touchAction: 'none',
         }}
       >
-        <i
-          ref={scrubFillRef}
+        <div
+          ref={barRef}
+          className="relative w-full"
           style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            bottom: 0,
-            width: '0%',
+            height: 3,
             borderRadius: 3,
-            background: `linear-gradient(90deg, ${goldColor}, #d4b463)`,
+            background: 'rgba(197,160,89,0.16)',
           }}
-        />
-        <span
-          ref={scrubHandleRef}
-          role="slider"
-          aria-label="Seek through the poem"
-          aria-valuemin={0}
-          aria-valuemax={total}
-          tabIndex={0}
-          onPointerDown={onDown}
-          onPointerMove={onMove}
-          onPointerUp={onUp}
-          onPointerCancel={onUp}
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '0%',
-            width: 15,
-            height: 15,
-            borderRadius: '50%',
-            background: '#d4b463',
-            boxShadow: '0 0 8px rgba(212,180,99,0.85)',
-            transform: 'translate(-50%, -50%)',
-            cursor: 'grab',
-            touchAction: 'none',
-            zIndex: 2,
-          }}
-        />
+        >
+          <i
+            ref={scrubFillRef}
+            style={{
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: '0%',
+              borderRadius: 3,
+              background: `linear-gradient(90deg, ${goldColor}, #d4b463)`,
+              pointerEvents: 'none',
+            }}
+          />
+          <span
+            ref={scrubHandleRef}
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '0%',
+              width: 16,
+              height: 16,
+              borderRadius: '50%',
+              background: '#d4b463',
+              boxShadow: '0 0 8px rgba(212,180,99,0.85)',
+              transform: 'translate(-50%, -50%)',
+              pointerEvents: 'none',
+              zIndex: 2,
+            }}
+          />
+        </div>
       </div>
     </div>
   );

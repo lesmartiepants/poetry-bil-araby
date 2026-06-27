@@ -64,11 +64,16 @@ export default function RevealText({
     const pct = (clamped * 100).toFixed(2) + '%';
     if (scrubFillRef.current) scrubFillRef.current.style.width = pct;
     if (scrubHandleRef.current) scrubHandleRef.current.style.left = pct;
-    // Follow the reveal front so the newest words stay visible (only while auto-revealing/scrubbing).
+    // Only scroll once the reveal front reaches the BOTTOM of the viewable area (like the poem
+    // teleprompter) — not continuously mid-reveal. Scroll just enough to bring the front back in.
     const sc = scrollRef.current;
     if (sc && frontEl && autoScrollRef.current) {
-      const target = frontEl.offsetTop - sc.clientHeight * 0.62;
-      sc.scrollTop = Math.max(0, target);
+      const scRect = sc.getBoundingClientRect();
+      const elBottomInView = frontEl.getBoundingClientRect().bottom - scRect.top;
+      const margin = 8;
+      if (elBottomInView > sc.clientHeight - margin) {
+        sc.scrollTop += elBottomInView - (sc.clientHeight - margin);
+      }
     }
   };
 
@@ -141,20 +146,25 @@ export default function RevealText({
 
   return (
     <div className="flex flex-col w-full" style={{ height: '100%', minHeight: 0 }}>
+      {/* Pinned header — title/byline + section label stay fixed; only the paragraph scrolls. */}
+      {(before || label) && (
+        <div className="shrink-0">
+          {before}
+          {label && (
+            <div
+              className="text-[9px] uppercase tracking-[0.18em] mb-2"
+              style={{ color: goldColor, opacity: 0.8 }}
+            >
+              {label}
+            </div>
+          )}
+        </div>
+      )}
       <div
         ref={scrollRef}
         className="flex-1 overflow-y-auto text-center px-1"
         style={{ minHeight: 0 }}
       >
-        {before}
-        {label && (
-          <div
-            className="text-[9px] uppercase tracking-[0.18em] mb-2"
-            style={{ color: goldColor, opacity: 0.8 }}
-          >
-            {label}
-          </div>
-        )}
         <p className="font-fell leading-[1.8] text-[clamp(0.95rem,1.5vw,1.1rem)]" style={{ color }}>
           {words.map((w, i) => (
             <span

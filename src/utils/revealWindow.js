@@ -62,6 +62,17 @@ export function commitTop(line, total, visRows = 4) {
 }
 
 /**
+ * Window top for TTS follow-along. Keeps the spoken line one row down from the top (line - 1) so
+ * there's a line of read context above and lookahead below (room to sparkle-reveal the next line
+ * on a visible row). NOT clamped to a previous top: playback restarting at line 0 must be able to
+ * scroll the window back to the top, then track the spoken line down one line at a time.
+ */
+export function ttsWindowTop(line, total, visRows = 4) {
+  const maxTop = maxWindowTop(total, visRows);
+  return Math.max(0, Math.min(maxTop, line - 1));
+}
+
+/**
  * Clip percentage for a unit's Arabic line given the current scrub position:
  * fully revealed (0%) before the target line, partially clipped on the target line,
  * fully hidden (100%) after it. Matches the clip-path inset(0 0 0 X%) reveal (R→L).

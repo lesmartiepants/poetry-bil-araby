@@ -6,6 +6,7 @@ import {
   contTop,
   commitTop,
   clipPercentForLine,
+  ttsWindowTop,
 } from '../utils/revealWindow.js';
 
 describe('maxWindowTop', () => {
@@ -83,6 +84,23 @@ describe('commitTop', () => {
     expect(commitTop(5, 10)).toBe(2); // rows 2..5
     expect(commitTop(9, 10)).toBe(6); // clamp to maxTop
     expect(commitTop(1, 10)).toBe(0); // clamp to 0
+  });
+});
+
+describe('ttsWindowTop', () => {
+  it('keeps the spoken line one row down from the top, no scroll for the first two lines', () => {
+    expect(ttsWindowTop(0, 10, 4)).toBe(0); // line 0 → top 0
+    expect(ttsWindowTop(1, 10, 4)).toBe(0); // line 1 → top 0
+  });
+  it('scrolls up one line at a time from the third spoken line on', () => {
+    expect(ttsWindowTop(2, 10, 4)).toBe(1); // third line → scroll one (rows 1..4)
+    expect(ttsWindowTop(3, 10, 4)).toBe(2);
+  });
+  it('clamps to maxWindowTop near the end', () => {
+    expect(ttsWindowTop(9, 10, 4)).toBe(6); // maxTop = 6
+  });
+  it('is not clamped to a previous top — playback restart can scroll back to the top', () => {
+    expect(ttsWindowTop(0, 10, 4)).toBe(0);
   });
 });
 

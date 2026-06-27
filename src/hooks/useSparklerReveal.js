@@ -6,7 +6,7 @@ import {
   scrubResolve,
   contTop,
   commitTop,
-  clipPercentForLine,
+  ttsWindowTop,
 } from '../utils/revealWindow.js';
 
 /**
@@ -24,7 +24,7 @@ import {
  * @param {boolean} opts.reducedMotion  - skip head/canvas, instant clip + fade
  * @param {(n:number)=>void} opts.onRevealedChange
  * @param {object} opts.refs            - { stageRef, trackRef, headRef, canvasRef, unitRefs, scrubFillRef, scrubHandleRef }
- * @returns {React.MutableRefObject} controller ref with { start, advance, scrubTo, revealUpTo, reset, getState }
+ * @returns {React.MutableRefObject} controller ref with { start, advance, scrubTo, ttsFollow, reset, getState }
  */
 export function useSparklerReveal({
   isActive,
@@ -301,13 +301,21 @@ export function useSparklerReveal({
       s.busy = false;
     };
 
-    // Drag-to-seek. `commit=false` while dragging, `true` on release (resumes the reveal).
+    // Drag-to-seek — MONOTONIC. The reveal never un-animates: lines already revealed stay
+    // revealed. Dragging left simply scrolls the window up over already-revealed lines; dragging
+    // right scrolls down and only ignites NEW territory (lines past the high-water mark). The
+    // high-water mark is `s.revealed`, which this never decreases. `commit=false` while dragging,
+    // `true` on release (resumes the reveal from the frontier when it's in new territory).
     const scrubTo = (frac, commit) => {
       const s = st.current;
       const T = total();
       if (!T) return;
+      const hw = s.revealed; // high-water mark of revealed lines at the start of this scrub
       const { line, within } = scrubResolve(frac, T);
       const uh = unitH();
+      const inNewTerritory = line >= hw; // dragging into not-yet-revealed lines
+      // Lines fully revealed after this scrub: never fewer than the high-water mark (monotonic).
+      const effectiveFull = Math.max(hw, line);
       const ct = contTop(line, within, T, VIS);
       const track = R().trackRef?.current;
       if (track) gsap.set(track, { y: -ct * uh });
@@ -316,29 +324,42 @@ export function useSparklerReveal({
         const e = els(idx);
         if (!e?.ar) continue;
         gsap.killTweensOf([e.ar].filter(Boolean));
-        paintLine(idx, clipPercentForLine(idx, line, within), { lit: idx < line });
+        // Revealed lines stay at clip 0 (never reverted). Only the frontier line in new territory
+        // shows a partial clip; everything past it stays hidden.
+        let clip;
+        if (idx < effectiveFull) clip = 0;
+        else if (idx === line && inNewTerritory) clip = (1 - within) * 100;
+        else clip = 100;
+        paintLine(idx, clip, { lit: idx < effectiveFull });
       }
-      // Head sits at the drop point on the target line.
-      const e = els(line);
-      const canvas = R().canvasRef?.current;
-      if (e?.ar && canvas) {
-        const arRect = e.ar.getBoundingClientRect();
-        const cRect = canvas.getBoundingClientRect();
-        const p = 1 - within;
-        setHead(
-          arRect.left - cRect.left + arRect.width * p,
-          arRect.top - cRect.top + arRect.height / 2
-        );
-      }
+      // Head only rides the frontier when revealing new territory; in the revealed zone we just scroll.
       const head = R().headRef?.current;
-      if (head) head.style.opacity = '1';
-      s.head.alive = !commit; // sparkle while dragging; resume re-lights on commit
-      s.revealed = line;
+      if (inNewTerritory) {
+        const e = els(line);
+        const canvas = R().canvasRef?.current;
+        if (e?.ar && canvas) {
+          const arRect = e.ar.getBoundingClientRect();
+          const cRect = canvas.getBoundingClientRect();
+          const p = 1 - within;
+          setHead(
+            arRect.left - cRect.left + arRect.width * p,
+            arRect.top - cRect.top + arRect.height / 2
+          );
+        }
+        if (head) head.style.opacity = '1';
+        s.head.alive = !commit; // sparkle while dragging new lines; resume re-lights on commit
+      } else {
+        if (head) head.style.opacity = '0';
+        s.head.alive = false;
+      }
+      s.revealed = effectiveFull; // monotonic — only ever grows
       s.revealing = -1;
       writeProgress(frac);
       if (commit) {
         if (track) gsap.to(track, { y: -s.windowTop * uh, duration: 0.28, ease: 'power2.out' });
-        resumeScrub(line, within);
+        // Only finish/resume the reveal when the frontier is in new territory; in the revealed
+        // zone a release is a pure seek (no re-ignite).
+        if (inNewTerritory) resumeScrub(line, within);
       }
     };
 
@@ -352,33 +373,35 @@ export function useSparklerReveal({
       emitRevealed();
     };
 
-    // TTS line-sync: ensure lines [0..target] are visible (un-clipped) and the target sits
-    // on the bottom row. No sparkler theatrics — instant, follows the spoken word.
-    const revealUpTo = async (target, { animate = true } = {}) => {
+    // TTS follow-along. Called as the spoken line (`spokenLine` = currentVerseIndex) advances.
+    //  • Window scrolls one line at a time, keeping the spoken line one row down from the top so a
+    //    line of context shows above and the next line(s) have room below. Playback starting at
+    //    line 0 scrolls the window back to the top (not clamped to a previous top).
+    //  • If the spoken line catches the reveal frontier (partial-reveal case), sparkle-reveal ahead
+    //    so the spoken line plus a one-line buffer are always lit. When the poem is already fully
+    //    revealed (listen-after-full case) there's nothing to ignite — it only scrolls.
+    const ttsFollow = async (spokenLine) => {
       const s = st.current;
       const T = total();
-      if (target < 0 || !T) return;
-      const tgt = Math.min(target, T - 1);
-      for (let i = 0; i <= tgt; i++) {
-        const e = els(i);
-        if (!e?.ar) continue;
-        gsap.killTweensOf(e.ar);
-        paintLine(i, 0, { lit: true });
+      if (T === 0 || spokenLine < 0) return;
+      const line = Math.min(spokenLine, T - 1);
+      const newTop = ttsWindowTop(line, T, VIS);
+      if (newTop !== s.windowTop) {
+        s.windowTop = newTop;
+        const track = R().trackRef?.current;
+        if (track) gsap.to(track, { y: -newTop * unitH(), duration: 0.5, ease: 'power2.inOut' });
       }
-      s.revealed = Math.max(s.revealed, tgt + 1);
-      const head = R().headRef?.current;
-      if (head) head.style.opacity = '0';
-      s.head.alive = false;
-      s.windowTop = computeWindowTop(tgt, T, VIS, s.windowTop);
-      const track = R().trackRef?.current;
-      if (track)
-        gsap.to(track, {
-          y: -s.windowTop * unitH(),
-          duration: animate ? 0.4 : 0,
-          ease: 'power2.out',
-        });
-      writeProgress((tgt + 1) / T);
-      emitRevealed();
+      writeProgress((line + 1) / T);
+      // Sparkle-reveal ahead so the spoken line + one buffer line are revealed before they're read.
+      if (!s.busy && s.revealed < T && s.revealed <= line + 1) {
+        s.busy = true;
+        while (s.revealed < T && s.revealed <= line + 1) {
+          await ignite(s.revealed);
+          s.revealed++;
+          emitRevealed();
+        }
+        s.busy = false;
+      }
     };
 
     const reset = () => {
@@ -417,7 +440,7 @@ export function useSparklerReveal({
       start,
       advance,
       scrubTo,
-      revealUpTo,
+      ttsFollow,
       reset,
       sizeCanvas,
       _startLoop: startLoop,

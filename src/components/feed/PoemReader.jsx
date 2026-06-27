@@ -66,8 +66,6 @@ const PoemReader = memo(function PoemReader({
   const stageWrapRef = useRef(null);
   const scrubWrapRef = useRef(null);
   const introForRef = useRef(null);
-  const insightScrollRef = useRef(null);
-  const prevStageRef = useRef('idle');
 
   const refs = useMemo(
     () => ({ stageRef, trackRef, headRef, canvasRef, unitRefs, scrubFillRef, scrubHandleRef }),
@@ -138,33 +136,12 @@ const PoemReader = memo(function PoemReader({
   }, [isActive]);
 
   // ── TTS line-sync: follow the spoken line while playing, keeping the 4-line frame ──
+  // The window scrolls one line at a time to keep the spoken line visible; if the reveal hasn't
+  // reached it yet (Listen pressed mid-reveal) the controller sparkle-reveals ahead of the voice.
   useEffect(() => {
     if (!isActive || !isPlaying || highlightStyle === 'none') return;
-    controller?.revealUpTo(currentVerseIndex, { animate: true });
+    controller?.ttsFollow(currentVerseIndex);
   }, [isActive, isPlaying, highlightStyle, currentVerseIndex, controller]);
-
-  // Insight reveal: "tap for meaning" scrolls the meaning up into view (fade + rise); the next
-  // tap scrolls down to reveal the poet section so it isn't hidden below the fold.
-  useEffect(() => {
-    const el = insightScrollRef.current;
-    const prev = prevStageRef.current;
-    prevStageRef.current = endStage;
-    if (!el) return;
-    if (endStage === 'meaning' && prev !== 'meaning') {
-      el.scrollTop = 0;
-      if (!REDUCED_MOTION) {
-        gsap.fromTo(
-          el,
-          { opacity: 0, y: 44 },
-          { opacity: 1, y: 0, duration: 0.55, ease: 'power2.out' }
-        );
-      }
-    } else if (endStage === 'author') {
-      requestAnimationFrame(() =>
-        el.scrollTo({ top: el.scrollHeight, behavior: REDUCED_MOTION ? 'auto' : 'smooth' })
-      );
-    }
-  }, [endStage]);
 
   const handleTap = (e) => {
     if (e.target.closest('[data-scrub], button, a')) return; // scrubber/controls handle themselves
@@ -294,12 +271,7 @@ const PoemReader = memo(function PoemReader({
         </div>
 
         {inInsight && (
-          <div
-            ref={insightScrollRef}
-            className="w-full max-w-xl mx-auto overflow-y-auto text-center"
-            style={{ maxHeight: '100%' }}
-            data-insight-ui
-          >
+          <div className="w-full max-w-xl mx-auto h-full" data-insight-ui>
             <InlineInsights
               stage={endStage}
               poem={poem}

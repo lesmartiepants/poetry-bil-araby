@@ -355,7 +355,11 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     setPlayer,
   } = useAudioStore.getState();
 
-  if (isTogglingPlay.current || isGenerating) {
+  // Allow pause to bypass the debounce guard: when the user is pausing (isPlaying=true)
+  // the guard must not block them — during live streaming isTogglingPlay.current stays
+  // true for the full stream duration, so the first pause press would be silently
+  // dropped otherwise (#589).
+  if (!isPlaying && (isTogglingPlay.current || isGenerating)) {
     addLog('Audio', 'Play toggle already in progress — skipping', 'info');
     return;
   }
@@ -409,7 +413,9 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   if (isIOS()) {
     try {
       if ('audioSession' in navigator) navigator.audioSession.type = 'playback';
-    } catch { /* older iOS without the Audio Session API → buffered fallback still works */ }
+    } catch {
+      /* older iOS without the Audio Session API → buffered fallback still works */
+    }
     // Bless the reusable <audio> element NOW, inside the gesture, so the REST
     // path's play() after the generation await is allowed (otherwise silent first
     // play; #...). Web Audio (Live) doesn't need this, but it's a cheap no-op there.
@@ -577,7 +583,11 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               if (!firstSound) {
                 firstSound = true;
                 const t = ((performance.now() - apiStart) / 1000).toFixed(2);
-                addLog('Audio API', `[Live 3.1] ▶ First sound (${t}s) | voice: ${liveVoice}`, 'success');
+                addLog(
+                  'Audio API',
+                  `[Live 3.1] ▶ First sound (${t}s) | voice: ${liveVoice}`,
+                  'success'
+                );
                 progress.dismiss('Recitation ready');
                 setPlayer(streamPlayer);
                 startPlayer(streamPlayer, 0);

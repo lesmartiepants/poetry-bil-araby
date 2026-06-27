@@ -95,7 +95,7 @@ describe('togglePlay guard — behaviour (#589)', () => {
     useAudioStore.getState().reset();
   });
 
-  it('allows pause when isTogglingPlay.current is true and isPlaying is true (live stream in flight)', async () => {
+  it('allows pause during active live streaming (first pause must not be dropped)', async () => {
     // Simulate the state that exists once the first chunk arrives during live streaming:
     // - isPlaying=true  (setPlaying(true) was called by onChunk)
     // - isGenerating=false (setGenerating(false) was called by onChunk)
@@ -122,7 +122,7 @@ describe('togglePlay guard — behaviour (#589)', () => {
     expect(mockPlayer.stop).toHaveBeenCalled();
   });
 
-  it('blocks a new play when isTogglingPlay.current is true and isPlaying is false', async () => {
+  it('prevents concurrent play operations when generation is already in progress', async () => {
     // isPlaying=false means the user is trying to start playback, not pause.
     // isTogglingPlay.current=true means a prior play/generate is in progress.
     // The guard must block this to prevent concurrent generation.

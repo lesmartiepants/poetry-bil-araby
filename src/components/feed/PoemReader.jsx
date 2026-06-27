@@ -69,6 +69,9 @@ const PoemReader = memo(function PoemReader({
   const stageWrapRef = useRef(null);
   const scrubWrapRef = useRef(null);
   const introForRef = useRef(null);
+  // True while the user is actively dragging the scrubber — suppresses TTS auto-follow so the
+  // scrub owns the scroll; on release we snap back to the spoken line.
+  const scrubbingRef = useRef(false);
 
   const refs = useMemo(
     () => ({ stageRef, trackRef, headRef, canvasRef, unitRefs, scrubFillRef, scrubHandleRef }),
@@ -144,6 +147,7 @@ const PoemReader = memo(function PoemReader({
   // reached it yet (Listen pressed mid-reveal) the controller sparkle-reveals ahead of the voice.
   useEffect(() => {
     if (!isActive || !isPlaying || highlightStyle === 'none') return;
+    if (scrubbingRef.current) return; // user is dragging the scrubber — let it own the scroll
     controller?.ttsFollow(currentVerseIndex);
   }, [isActive, isPlaying, highlightStyle, currentVerseIndex, controller]);
 
@@ -302,8 +306,18 @@ const PoemReader = memo(function PoemReader({
               visible={isActive}
               scrubFillRef={scrubFillRef}
               scrubHandleRef={scrubHandleRef}
+              onScrubStart={() => {
+                scrubbingRef.current = true;
+              }}
               onScrub={(f) => controller?.scrubTo(f, false)}
-              onScrubEnd={(f) => controller?.scrubTo(f, true)}
+              onScrubEnd={(f) => {
+                scrubbingRef.current = false;
+                const ttsActive = isPlaying && highlightStyle !== 'none';
+                // During TTS the reveal is voice-driven: a scrub is a temporary seek, so on release
+                // snap the window back to the currently-spoken line instead of resuming the reveal.
+                if (ttsActive) controller?.ttsFollow(currentVerseIndex);
+                else controller?.scrubTo(f, true);
+              }}
             />
           </div>
         )}

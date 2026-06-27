@@ -50,15 +50,15 @@ export default function SparklerStage({
     let cancelled = false;
     const measure = () => {
       if (cancelled || !track) return;
-      // fitLine first: shrink any overflowing line to keep it on one row (ligature-safe)
+      // fitLine: shrink an overflowing line to keep it on one row (ligature-safe) via a `--fit`
+      // multiplier. We must NOT clear el.style.fontSize — that base value is React-owned and
+      // carries textScale; writing a px size there breaks live text-size changes. Reset --fit to 1,
+      // measure at the true size, then set the shrink ratio.
       track.querySelectorAll('.ar-line, .translit-line, .en-line').forEach((el) => {
-        el.style.fontSize = '';
+        el.style.setProperty('--fit', '1');
         const w = el.clientWidth * 0.97;
         const sw = el.scrollWidth;
-        if (sw > w && w > 0) {
-          const fs = parseFloat(getComputedStyle(el).fontSize);
-          el.style.fontSize = (fs * w) / sw + 'px';
-        }
+        if (sw > w && w > 0) el.style.setProperty('--fit', (w / sw).toFixed(4));
       });
       let max = 0;
       track.querySelectorAll('.unit-inner').forEach((el) => {
@@ -120,7 +120,7 @@ export default function SparklerStage({
                 verseIndex={i}
                 className={`ar-line ${currentFontClass} arabic-shadow`}
                 style={{
-                  fontSize: `calc(clamp(1.52rem, 5.7vw, 2.13rem) * ${textScale})`,
+                  fontSize: `calc(clamp(1.52rem, 5.7vw, 2.13rem) * ${textScale} * var(--fit, 1))`,
                   lineHeight: 1.75,
                   whiteSpace: 'nowrap',
                   color: arColor,
@@ -134,7 +134,7 @@ export default function SparklerStage({
                   dir="ltr"
                   className="translit-line font-brand-en"
                   style={{
-                    fontSize: `calc(clamp(0.95rem, 3.6vw, 1.18rem) * ${textScale})`,
+                    fontSize: `calc(clamp(0.95rem, 3.6vw, 1.18rem) * ${textScale} * var(--fit, 1))`,
                     whiteSpace: 'nowrap',
                     fontStyle: 'italic',
                     letterSpacing: '0.02em',
@@ -150,7 +150,7 @@ export default function SparklerStage({
                   dir="ltr"
                   className="en-line font-brand-en"
                   style={{
-                    fontSize: `calc(clamp(1.2rem, 4.7vw, 1.68rem) * ${textScale})`,
+                    fontSize: `calc(clamp(1.2rem, 4.7vw, 1.68rem) * ${textScale} * var(--fit, 1))`,
                     whiteSpace: 'nowrap',
                     fontStyle: 'italic',
                     lineHeight: 1.2,

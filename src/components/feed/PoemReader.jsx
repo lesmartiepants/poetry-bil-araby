@@ -66,6 +66,8 @@ const PoemReader = memo(function PoemReader({
   const stageWrapRef = useRef(null);
   const scrubWrapRef = useRef(null);
   const introForRef = useRef(null);
+  const insightScrollRef = useRef(null);
+  const prevStageRef = useRef('idle');
 
   const refs = useMemo(
     () => ({ stageRef, trackRef, headRef, canvasRef, unitRefs, scrubFillRef, scrubHandleRef }),
@@ -141,6 +143,29 @@ const PoemReader = memo(function PoemReader({
     controller?.revealUpTo(currentVerseIndex, { animate: true });
   }, [isActive, isPlaying, highlightStyle, currentVerseIndex, controller]);
 
+  // Insight reveal: "tap for meaning" scrolls the meaning up into view (fade + rise); the next
+  // tap scrolls down to reveal the poet section so it isn't hidden below the fold.
+  useEffect(() => {
+    const el = insightScrollRef.current;
+    const prev = prevStageRef.current;
+    prevStageRef.current = endStage;
+    if (!el) return;
+    if (endStage === 'meaning' && prev !== 'meaning') {
+      el.scrollTop = 0;
+      if (!REDUCED_MOTION) {
+        gsap.fromTo(
+          el,
+          { opacity: 0, y: 44 },
+          { opacity: 1, y: 0, duration: 0.55, ease: 'power2.out' }
+        );
+      }
+    } else if (endStage === 'author') {
+      requestAnimationFrame(() =>
+        el.scrollTo({ top: el.scrollHeight, behavior: REDUCED_MOTION ? 'auto' : 'smooth' })
+      );
+    }
+  }, [endStage]);
+
   const handleTap = (e) => {
     if (e.target.closest('[data-scrub], button, a')) return; // scrubber/controls handle themselves
     if (!isAllRevealed) {
@@ -156,12 +181,11 @@ const PoemReader = memo(function PoemReader({
     }
   };
 
-  const showInitialPrompt = revealedCount === 1 && lineCount > 1;
   const inInsight = endStage !== 'idle';
 
-  // Bottom prompt text — keeps the single "tap" rhythm across reading + insight.
+  // Bottom prompt — single "tap to continue" rhythm (no "tap to begin").
   let promptText = null;
-  if (!isAllRevealed) promptText = showInitialPrompt ? 'tap to begin' : 'tap to continue';
+  if (!isAllRevealed) promptText = 'tap to continue';
   else if (endStage === 'idle') promptText = 'tap for meaning';
   else if (endStage === 'meaning' && insightParts?.author) promptText = 'tap for the poet';
   const showCue = isActive && isAllRevealed && (endStage === 'idle' || endStage === 'author');
@@ -234,8 +258,9 @@ const PoemReader = memo(function PoemReader({
       <div
         className="absolute inset-0 flex items-center justify-center px-4 md:px-12"
         style={{
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + clamp(90px, 14vh, 132px))',
-          paddingBottom: 'clamp(124px, 20vh, 184px)',
+          // Asymmetric so the verses sit centred between the (taller) header and the bottom bar.
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + clamp(116px, 16vh, 148px))',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + clamp(60px, 9vh, 92px))',
         }}
       >
         {/* Stage stays mounted (refs persist); hidden when the insight is showing. */}
@@ -269,6 +294,7 @@ const PoemReader = memo(function PoemReader({
 
         {inInsight && (
           <div
+            ref={insightScrollRef}
             className="w-full max-w-xl mx-auto overflow-y-auto text-center"
             style={{ maxHeight: '100%' }}
             data-insight-ui

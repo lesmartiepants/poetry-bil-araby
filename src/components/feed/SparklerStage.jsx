@@ -21,6 +21,7 @@ export default function SparklerStage({
   showTransliteration,
   textScale = 1,
   currentFontClass = 'font-amiri',
+  highlightStyle = 'none',
   revealedCount = 0,
   wordRefs = [],
   wordOffsets = [],
@@ -53,8 +54,8 @@ export default function SparklerStage({
       // fitLine: shrink an overflowing line to keep it on one row (ligature-safe) via a `--fit`
       // multiplier. We must NOT clear el.style.fontSize — that base value is React-owned and
       // carries textScale; writing a px size there breaks live text-size changes. Reset --fit to 1,
-      // measure at the true size, then set the shrink ratio.
-      track.querySelectorAll('.ar-line, .translit-line, .en-line').forEach((el) => {
+      // measure at the true size, then set the shrink ratio. English is excluded — it wraps instead.
+      track.querySelectorAll('.ar-line, .translit-line').forEach((el) => {
         el.style.setProperty('--fit', '1');
         const w = el.clientWidth * 0.97;
         const sw = el.scrollWidth;
@@ -93,7 +94,9 @@ export default function SparklerStage({
     <div
       ref={stageRef}
       data-testid="sparkler-stage"
-      className="relative w-full overflow-hidden"
+      className={`relative w-full overflow-hidden${
+        highlightStyle && highlightStyle !== 'none' ? ` tts-style-${highlightStyle}` : ''
+      }`}
       style={{ height: rowH ? rowH * 4 : 'auto', zIndex: 2 }}
     >
       <div
@@ -139,7 +142,10 @@ export default function SparklerStage({
                     fontStyle: 'italic',
                     letterSpacing: '0.02em',
                     color: translitColor,
-                    opacity: 0,
+                    // Opacity is React-driven by revealedCount so toggling Romanize after a line is
+                    // revealed (or a late reveal) shows it immediately, with a soft fade.
+                    opacity: i < revealedCount ? 1 : 0,
+                    transition: 'opacity 0.55s ease',
                   }}
                 >
                   {translits[i]}
@@ -150,12 +156,17 @@ export default function SparklerStage({
                   dir="ltr"
                   className="en-line font-brand-en"
                   style={{
-                    fontSize: `calc(clamp(1.2rem, 4.7vw, 1.68rem) * ${textScale} * var(--fit, 1))`,
-                    whiteSpace: 'nowrap',
+                    fontSize: `calc(clamp(1.2rem, 4.7vw, 1.68rem) * ${textScale})`,
+                    // English wraps to a new line when it overflows (no shrink-to-fit).
+                    whiteSpace: 'normal',
+                    maxWidth: '94%',
+                    margin: '0 auto',
                     fontStyle: 'italic',
-                    lineHeight: 1.2,
+                    lineHeight: 1.3,
                     color: enColor,
-                    opacity: 0,
+                    // React-driven so a translation that streams in after the line is revealed shows up.
+                    opacity: i < revealedCount ? 1 : 0,
+                    transition: 'opacity 0.55s ease',
                   }}
                 >
                   {ln.en}

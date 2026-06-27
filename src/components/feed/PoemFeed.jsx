@@ -51,7 +51,7 @@ const PoemFeed = forwardRef(function PoemFeed(
   const feedYRef = useRef(0);
   const curRef = useRef(currentIndex);
   const tweenRef = useRef(null);
-  const drag = useRef({ down: false, sy: 0, base: 0, moved: 0, startT: 0 });
+  const drag = useRef({ down: false, sx: 0, sy: 0, base: 0, moved: 0, startT: 0, axis: null });
 
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [hasSwiped, setHasSwiped] = useState(false);
@@ -128,9 +128,11 @@ const PoemFeed = forwardRef(function PoemFeed(
     if (e.target.closest?.('[data-scrub]')) return; // let the scrubber own its drag
     const d = drag.current;
     d.down = true;
+    d.sx = e.clientX;
     d.sy = e.clientY;
     d.base = feedYRef.current;
     d.moved = 0;
+    d.axis = null; // decided on first significant move
     d.startT = typeof performance !== 'undefined' ? performance.now() : 0;
     tweenRef.current?.kill();
   };
@@ -138,6 +140,13 @@ const PoemFeed = forwardRef(function PoemFeed(
     const d = drag.current;
     if (!d.down) return;
     const dy = e.clientY - d.sy;
+    const dx = e.clientX - d.sx;
+    // Lock the gesture axis once it's clearly moving: only navigate the feed when the swipe is
+    // within 45° of vertical (|dy| >= |dx|). Horizontal-dominant drags are ignored by the feed.
+    if (d.axis == null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
+      d.axis = Math.abs(dy) >= Math.abs(dx) ? 'v' : 'h';
+    }
+    if (d.axis === 'h') return;
     d.moved = Math.max(d.moved, Math.abs(dy));
     const h = H();
     const thresh = h * 0.16;
@@ -151,6 +160,7 @@ const PoemFeed = forwardRef(function PoemFeed(
     const d = drag.current;
     if (!d.down) return;
     d.down = false;
+    if (d.axis === 'h') return; // horizontal gesture → not a feed navigation
     if (d.moved < 10) return; // tap → click falls through to PoemReader (advance reveal / insight)
     const dy = e.clientY - d.sy;
     const h = H();

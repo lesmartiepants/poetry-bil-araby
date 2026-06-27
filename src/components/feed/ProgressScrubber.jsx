@@ -43,12 +43,14 @@ export default function ProgressScrubber({
   };
   const onMove = (e) => {
     if (!draggingRef.current) return;
+    e.stopPropagation(); // keep the vertical feed from also handling the scrub (horizontal-locked)
     e.preventDefault();
     onScrub?.(frac(e));
   };
   const onUp = (e) => {
     if (!draggingRef.current) return;
     draggingRef.current = false;
+    e.stopPropagation();
     e.preventDefault();
     onScrubEnd?.(frac(e));
   };

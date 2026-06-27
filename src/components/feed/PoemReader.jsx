@@ -281,6 +281,7 @@ const PoemReader = memo(function PoemReader({
             showTransliteration={showTransliteration}
             textScale={textScale}
             currentFontClass={currentFontClass}
+            highlightStyle={isActive ? highlightStyle : 'none'}
             revealedCount={revealedCount}
             wordRefs={wordRefs}
             wordOffsets={wordOffsets}

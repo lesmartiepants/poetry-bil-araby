@@ -191,16 +191,14 @@ export function useSparklerReveal({
       if (head) head.style.transform = `translate(${x}px, ${y}px)`;
     };
 
-    // Paint a line to a given clip percent (used by scrub + instant reveal).
-    const paintLine = (i, clipPct, { lit, fadeText } = {}) => {
+    // Paint a line to a given clip percent (used by scrub + instant reveal). English/transliteration
+    // opacity is React-driven (revealedCount) so it stays correct for late translations / toggles —
+    // the controller only owns the Arabic clip + the `lit` glow class.
+    const paintLine = (i, clipPct, { lit } = {}) => {
       const e = els(i);
       if (!e?.ar) return;
       e.ar.style.clipPath = `inset(0 0 0 ${clipPct}%)`;
       if (lit != null) e.u.classList.toggle('lit', !!lit);
-      if (fadeText != null) {
-        if (e.en) e.en.style.opacity = fadeText ? '0.66' : '0';
-        if (e.translit) e.translit.style.opacity = fadeText ? '0.7' : '0';
-      }
     };
 
     // Ignite a single line: clip-mask reveal R→L with the sparkler head riding the edge.
@@ -212,12 +210,10 @@ export function useSparklerReveal({
           return;
         }
         sizeCanvas();
-        const { ar, en, translit, u } = e;
+        const { ar, u } = e;
         if (cfg.current.reducedMotion) {
           gsap.set(ar, { clipPath: 'inset(0 0 0 0%)' });
           gsap.fromTo(u, { opacity: 0 }, { opacity: 1, duration: 0.45 });
-          if (en) gsap.to(en, { opacity: 0.66, duration: 0.4, delay: 0.1 });
-          if (translit) gsap.to(translit, { opacity: 0.7, duration: 0.4, delay: 0.1 });
           u.classList.add('lit');
           res();
           return;
@@ -246,8 +242,6 @@ export function useSparklerReveal({
             st.current.head.alive = false;
             st.current.revealing = -1;
             if (head) gsap.to(head, { opacity: 0, duration: 0.4 });
-            if (en) gsap.to(en, { opacity: 0.66, duration: 0.6, delay: 0.05 });
-            if (translit) gsap.to(translit, { opacity: 0.7, duration: 0.6, delay: 0.05 });
             res();
           },
         });
@@ -321,11 +315,8 @@ export function useSparklerReveal({
       for (let idx = 0; idx < T; idx++) {
         const e = els(idx);
         if (!e?.ar) continue;
-        gsap.killTweensOf([e.ar, e.en, e.translit].filter(Boolean));
-        paintLine(idx, clipPercentForLine(idx, line, within), {
-          lit: idx < line,
-          fadeText: idx < line || (idx === line && within > 0.92),
-        });
+        gsap.killTweensOf([e.ar].filter(Boolean));
+        paintLine(idx, clipPercentForLine(idx, line, within), { lit: idx < line });
       }
       // Head sits at the drop point on the target line.
       const e = els(line);
@@ -371,8 +362,8 @@ export function useSparklerReveal({
       for (let i = 0; i <= tgt; i++) {
         const e = els(i);
         if (!e?.ar) continue;
-        gsap.killTweensOf([e.ar, e.en, e.translit].filter(Boolean));
-        paintLine(i, 0, { lit: true, fadeText: true });
+        gsap.killTweensOf(e.ar);
+        paintLine(i, 0, { lit: true });
       }
       s.revealed = Math.max(s.revealed, tgt + 1);
       const head = R().headRef?.current;
@@ -414,10 +405,8 @@ export function useSparklerReveal({
       for (let i = 0; i < T; i++) {
         const e = els(i);
         if (!e?.ar) continue;
-        gsap.killTweensOf([e.ar, e.en, e.translit].filter(Boolean));
+        gsap.killTweensOf(e.ar);
         e.ar.style.clipPath = 'inset(0 0 0 100%)';
-        if (e.en) e.en.style.opacity = '0';
-        if (e.translit) e.translit.style.opacity = '0';
         e.u.classList.remove('lit');
       }
       writeProgress(0);

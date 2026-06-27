@@ -25,6 +25,7 @@ export default function SparklerStage({
   revealedCount = 0,
   wordRefs = [],
   wordOffsets = [],
+  onVisChange,
   stageRef,
   trackRef,
   headRef,
@@ -32,6 +33,7 @@ export default function SparklerStage({
   unitRefs,
 }) {
   const [unitH, setUnitH] = useState(null);
+  const [visRows, setVisRows] = useState(4);
 
   const arColor = darkMode ? 'rgba(236,232,224,0.94)' : 'rgba(28,25,23,0.92)';
   const enColor = darkMode ? 'rgba(236,232,224,0.62)' : 'rgba(28,25,23,0.6)';
@@ -68,6 +70,26 @@ export default function SparklerStage({
       if (max > 0) {
         runMax = Math.max(runMax, Math.ceil(max + 18)); // breathing room so tashkeel never clips
         setUnitH(runMax);
+        // Fit the window to the REAL space between the fixed header and the scrub bar: how many
+        // units of height `runMax` fit in the padded body box. Tall units (translit + translation)
+        // → fewer rows → the window scrolls up sooner instead of bleeding into the chrome.
+        const stage = stageRef.current;
+        const padBox = stage?.parentElement?.parentElement; // stage → maxW wrap → padded body box
+        if (padBox && padBox.clientHeight > 0) {
+          const cs =
+            typeof getComputedStyle !== 'undefined'
+              ? getComputedStyle(padBox)
+              : { paddingTop: '0', paddingBottom: '0' };
+          const avail =
+            padBox.clientHeight -
+            parseFloat(cs.paddingTop || 0) -
+            parseFloat(cs.paddingBottom || 0);
+          if (avail > 0) {
+            const fit = Math.max(1, Math.min(lines.length || 1, Math.floor(avail / runMax)));
+            setVisRows(fit);
+            onVisChange?.(fit);
+          }
+        }
       }
     };
     measure();
@@ -97,7 +119,7 @@ export default function SparklerStage({
       className={`relative w-full overflow-hidden${
         highlightStyle && highlightStyle !== 'none' ? ` tts-style-${highlightStyle}` : ''
       }`}
-      style={{ height: rowH ? rowH * 4 : 'auto', zIndex: 2 }}
+      style={{ height: rowH ? rowH * visRows : 'auto', zIndex: 2 }}
     >
       <div
         ref={trackRef}

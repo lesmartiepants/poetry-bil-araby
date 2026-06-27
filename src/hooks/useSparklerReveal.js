@@ -30,6 +30,7 @@ export function useSparklerReveal({
   isActive,
   poemId,
   lineCount,
+  visRows = 4,
   reducedMotion = false,
   onRevealedChange,
   refs,
@@ -37,9 +38,9 @@ export function useSparklerReveal({
   // Latest config, read inside the imperative closures so the stable controller never goes stale.
   // Updated in an effect (not during render) so we never write a ref mid-render. The controller's
   // methods only run from effects/handlers/timeouts, which fire after this effect commits.
-  const cfg = useRef({ lineCount, reducedMotion, onRevealedChange, refs, isActive });
+  const cfg = useRef({ lineCount, visRows, reducedMotion, onRevealedChange, refs, isActive });
   useEffect(() => {
-    cfg.current = { lineCount, reducedMotion, onRevealedChange, refs, isActive };
+    cfg.current = { lineCount, visRows, reducedMotion, onRevealedChange, refs, isActive };
   });
 
   // Mutable controller state (never triggers re-render).
@@ -59,7 +60,9 @@ export function useSparklerReveal({
   // Build the imperative controller once. Its closures read the latest config/state through the
   // stable `cfg`/`st` refs, so a single instance stays correct across renders.
   const controller = useMemo(() => {
-    const VIS = 4;
+    // Visible rows are dynamic: PoemReader measures how many units fit between the fixed header
+    // and the scrub bar and feeds it in (so tall units with translit+translation scroll sooner).
+    const VIS = () => Math.max(1, cfg.current.visRows || 4);
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
     const total = () => cfg.current.lineCount || 0;
@@ -284,7 +287,7 @@ export function useSparklerReveal({
       s.busy = true;
       // Scroll BEFORE revealing so the newest line of this tap's pair lands on the bottom row.
       const lastLine = Math.min(s.revealed + 1, total() - 1);
-      const newTop = computeWindowTop(lastLine, total(), VIS, s.windowTop);
+      const newTop = computeWindowTop(lastLine, total(), VIS(), s.windowTop);
       if (newTop !== s.windowTop) {
         s.windowTop = newTop;
         await scrollTrack(newTop);
@@ -316,10 +319,10 @@ export function useSparklerReveal({
       const inNewTerritory = line >= hw; // dragging into not-yet-revealed lines
       // Lines fully revealed after this scrub: never fewer than the high-water mark (monotonic).
       const effectiveFull = Math.max(hw, line);
-      const ct = contTop(line, within, T, VIS);
+      const ct = contTop(line, within, T, VIS());
       const track = R().trackRef?.current;
       if (track) gsap.set(track, { y: -ct * uh });
-      s.windowTop = commitTop(line, T, VIS);
+      s.windowTop = commitTop(line, T, VIS());
       for (let idx = 0; idx < T; idx++) {
         const e = els(idx);
         if (!e?.ar) continue;
@@ -389,7 +392,7 @@ export function useSparklerReveal({
       const T = total();
       if (T === 0 || spokenLine < 0) return;
       const line = Math.min(spokenLine, T - 1);
-      const newTop = ttsWindowTop(line, T, VIS);
+      const newTop = ttsWindowTop(line, T, VIS());
       if (newTop !== s.windowTop) {
         s.windowTop = newTop;
         const track = R().trackRef?.current;

@@ -53,6 +53,9 @@ const PoemReader = memo(function PoemReader({
   const { revealedCount, isAllRevealed, setRevealed, reset } = useRevealWindow(lineCount, poemId);
   // End-of-poem insight stage: 'idle' (reading done) → 'meaning' → 'author'. Reset on poem change.
   const [endStage, setEndStage] = useState('idle');
+  // Visible row count — measured by SparklerStage to fit the space between header and scrub bar,
+  // and fed into the reveal controller so the window scrolls up sooner when units are tall.
+  const [visRows, setVisRows] = useState(4);
 
   // DOM refs the controller animates.
   const stageRef = useRef(null);
@@ -76,6 +79,7 @@ const PoemReader = memo(function PoemReader({
     isActive,
     poemId,
     lineCount,
+    visRows,
     reducedMotion: REDUCED_MOTION,
     onRevealedChange: setRevealed,
     refs,
@@ -262,6 +266,7 @@ const PoemReader = memo(function PoemReader({
             revealedCount={revealedCount}
             wordRefs={wordRefs}
             wordOffsets={wordOffsets}
+            onVisChange={setVisRows}
             stageRef={stageRef}
             trackRef={trackRef}
             headRef={headRef}

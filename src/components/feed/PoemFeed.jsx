@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { gsap } from 'gsap';
 import PoemReader from './PoemReader.jsx';
+import { useModalStore } from '../../stores/modalStore';
 
 const VIEWPORT_H = 'calc(100dvh - 168px)';
 
@@ -52,6 +53,24 @@ const PoemFeed = forwardRef(function PoemFeed(
   const curRef = useRef(currentIndex);
   const tweenRef = useRef(null);
   const drag = useRef({ down: false, sx: 0, sy: 0, base: 0, moved: 0, startT: 0, axis: null });
+
+  // Swipe-to-navigate is handled at the window level (see the effect below) so a vertical swipe
+  // anywhere — over the nav buttons, the rails, the empty bottom band — changes poems, not just on
+  // the poem text. It's disabled while any blocking modal/drawer is open.
+  const blockingModalOpen = useModalStore(
+    (s) =>
+      s.authModal ||
+      s.savedPoems ||
+      s.splash ||
+      s.insightsDrawer ||
+      s.discoverDrawer ||
+      s.shortcutHelp ||
+      s.poetPicker ||
+      s.shareCard ||
+      s.onboarding
+  );
+  const blockingRef = useRef(false);
+  const handlersRef = useRef({});
 
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [hasSwiped, setHasSwiped] = useState(false);
@@ -123,8 +142,22 @@ const PoemFeed = forwardRef(function PoemFeed(
     return () => clearTimeout(t);
   }, [poems.length]);
 
+  // After a real drag, swallow the click that would otherwise fire on whatever was under the
+  // finger (e.g. a nav button) so a swipe-over-a-button navigates instead of activating it. Taps
+  // (tiny movement) never call this, so buttons stay tappable.
+  const suppressNextClick = () => {
+    const sc = (ev) => {
+      ev.stopPropagation();
+      ev.preventDefault();
+      window.removeEventListener('click', sc, true);
+    };
+    window.addEventListener('click', sc, true);
+    setTimeout(() => window.removeEventListener('click', sc, true), 400);
+  };
+
   // ── magnetic pointer feed (ported from the prototype) ──
   const onPointerDown = (e) => {
+    if (blockingRef.current) return; // a modal/drawer owns the screen
     if (e.target.closest?.('[data-scrub]')) return; // let the scrubber own its drag
     const d = drag.current;
     d.down = true;
@@ -148,6 +181,7 @@ const PoemFeed = forwardRef(function PoemFeed(
       d.axis = Math.abs(dy) >= Math.abs(dx) * 0.5774 ? 'v' : 'h';
     }
     if (d.axis === 'h') return;
+    if (e.cancelable) e.preventDefault(); // stop native scroll / pull-to-refresh during a vertical swipe
     d.moved = Math.max(d.moved, Math.abs(dy));
     const h = H();
     const pull = -dy; // positive = pulling up (toward next)
@@ -164,6 +198,7 @@ const PoemFeed = forwardRef(function PoemFeed(
     d.down = false;
     if (d.axis === 'h') return; // horizontal gesture → not a feed navigation
     if (d.moved < 10) return; // tap → click falls through to PoemReader (advance reveal / insight)
+    suppressNextClick(); // a real swipe — don't also trigger a button underneath the finger
     const dy = e.clientY - d.sy;
     const h = H();
     // Require real commitment to change poems (~28% of the viewport of finger travel) so the feed
@@ -173,6 +208,32 @@ const PoemFeed = forwardRef(function PoemFeed(
     else if (dy > thresh) goCard(curRef.current - 1);
     else animateFeed(curRef.current * h, 0.6, 'back.out(1.2)'); // not enough → springy magnet back
   };
+
+  // Keep the gesture refs current (written in an effect, never during render). The window
+  // listeners below call through handlersRef, and onPointerDown reads blockingRef.
+  useEffect(() => {
+    blockingRef.current = blockingModalOpen;
+    handlersRef.current = { onPointerDown, onPointerMove, onPointerUp };
+  });
+
+  // Drive the gesture from the WHOLE window (not just the feed viewport) so a vertical swipe over
+  // the bottom nav, the side rail, or anywhere else still changes poems. The handlers run through a
+  // ref so the listeners (attached once) always call the latest closures.
+  useEffect(() => {
+    const down = (e) => handlersRef.current.onPointerDown(e);
+    const move = (e) => handlersRef.current.onPointerMove(e);
+    const up = (e) => handlersRef.current.onPointerUp(e);
+    window.addEventListener('pointerdown', down);
+    window.addEventListener('pointermove', move, { passive: false });
+    window.addEventListener('pointerup', up);
+    window.addEventListener('pointercancel', up);
+    return () => {
+      window.removeEventListener('pointerdown', down);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      window.removeEventListener('pointercancel', up);
+    };
+  }, []);
 
   const goldColor = darkMode ? '#c5a059' : '#8B6430';
 
@@ -184,10 +245,6 @@ const PoemFeed = forwardRef(function PoemFeed(
         role="region"
         aria-label="Poem feed"
         style={{ touchAction: 'none', height: VIEWPORT_H }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
       >
         <div
           ref={trackRef}

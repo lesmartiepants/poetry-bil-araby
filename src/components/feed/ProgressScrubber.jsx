@@ -12,6 +12,7 @@ export default function ProgressScrubber({
   total,
   goldColor = '#c5a059',
   visible = true,
+  showHandle = true,
   scrubFillRef,
   scrubHandleRef,
   onScrubStart,
@@ -124,6 +125,9 @@ export default function ProgressScrubber({
               boxShadow: '0 0 8px rgba(212,180,99,0.85)',
               transform: 'translate(-50%, -50%)',
               pointerEvents: 'none',
+              // Hidden when there's nothing to scrub/scroll to (e.g. insight text that fits).
+              opacity: showHandle ? 1 : 0,
+              transition: 'opacity 0.2s ease',
               zIndex: 2,
             }}
           />

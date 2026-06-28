@@ -3,22 +3,24 @@ import RevealText from './RevealText.jsx';
 /**
  * InlineInsights — presentational end-of-poem insight, driven by `stage` from PoemReader.
  *
- * The tap rhythm lives in the parent: tap "for meaning" → stage 'meaning' (The Meaning / depth),
- * tap "for the poet" → stage 'author' (About the Author / bio). No buttons here.
+ * The tap rhythm lives in the parent: tap "for meaning" → 'meaning' (The Meaning / depth), tap
+ * "for the poet" → 'author' (About the Author / bio). One section shows at a time; its paragraph
+ * reveals word-by-word via RevealText. The section label is pinned above the (non-scrolling)
+ * RevealText viewport — scrolling happens only through the parent's scrub bar. The poet's name is
+ * NOT repeated here; it already lives in the page header.
  *
- * Each section sparkle-reveals its paragraph (RevealText): words fade in left→right with a gold
- * shimmer; if the text overflows, the box scrolls as it reveals and a scoped scrubber appears
- * (spec #6/#7). Only the section for the current stage is shown so its reveal owns the view.
- *
- * Content comes from the parent's parsed insightParts ({ poeticTranslation, depth, author }).
+ * `revealRef` + onProgress/onScrollMeta are forwarded to the active RevealText so the parent's
+ * persistent scrubber can show load progress + drive scrolling.
  */
 export default function InlineInsights({
   stage = 'meaning',
-  poem,
   darkMode = true,
   isInterpreting = false,
   insightParts = null,
   interpretation = null,
+  revealRef,
+  onProgress,
+  onScrollMeta,
 }) {
   const gold = darkMode ? '#d4b463' : '#8B6430';
   const textLight = darkMode ? 'rgba(236,232,224,0.9)' : 'rgba(28,25,23,0.88)';
@@ -38,77 +40,44 @@ export default function InlineInsights({
     );
   }
 
-  // About the Author — name header rendered above the reveal paragraph.
-  const authorHeader = (
-    <div className="pb-2 text-center">
-      <div
-        lang="ar"
-        dir="rtl"
-        style={{
-          fontFamily: "'Fustat', sans-serif",
-          fontWeight: 500,
-          fontSize: 'clamp(1.15rem,2.5vw,1.45rem)',
-          color: darkMode ? '#D4D0C8' : '#6B5C3E',
-        }}
-      >
-        {poem?.poetArabic || poem?.poet}
-      </div>
-      {poem?.poet && poem?.poet !== poem?.poetArabic && (
-        <div
-          dir="ltr"
-          style={{
-            fontFamily: "'Forum', serif",
-            fontSize: 'clamp(0.75rem,1.4vw,0.9rem)',
-            letterSpacing: '0.03em',
-            color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
-            marginTop: 2,
-          }}
-        >
-          {poem.poet}
-        </div>
-      )}
-    </div>
-  );
+  const isAuthor = stage === 'author';
+  const text = isAuthor ? insightParts?.author : insightParts?.depth;
+  const label = isAuthor ? 'About the Author' : 'The Meaning';
 
-  if (stage === 'author') {
-    if (!insightParts?.author) {
-      return (
-        <div className="flex items-center justify-center h-full">
-          <span className="font-brand-en italic text-sm py-6" style={{ color: textDim }}>
-            No author note available.
-          </span>
-        </div>
-      );
-    }
-    return (
-      <RevealText
-        text={insightParts.author}
-        active
-        goldColor={gold}
-        color={textDim}
-        label="About the Author"
-        before={authorHeader}
-      />
-    );
-  }
-
-  // stage === 'meaning'
-  if (!insightParts?.depth) {
+  if (!text) {
     return (
       <div className="flex items-center justify-center h-full">
         <span className="font-brand-en italic text-sm py-6" style={{ color: textDim }}>
-          {interpretation ? 'No meaning available.' : 'Tap to seek the meaning.'}
+          {isAuthor
+            ? 'No author note available.'
+            : interpretation
+              ? 'No meaning available.'
+              : 'Tap to seek the meaning.'}
         </span>
       </div>
     );
   }
+
   return (
-    <RevealText
-      text={insightParts.depth}
-      active
-      goldColor={gold}
-      color={textLight}
-      label="The Meaning"
-    />
+    <div className="flex flex-col h-full w-full">
+      {/* Pinned section label — stays fixed; only the paragraph below is scrolled (via the scrubber). */}
+      <div
+        className="shrink-0 text-[9px] uppercase tracking-[0.18em] mb-2 text-center"
+        style={{ color: gold, opacity: 0.8 }}
+      >
+        {label}
+      </div>
+      <div className="flex-1 min-h-0">
+        <RevealText
+          ref={revealRef}
+          key={stage}
+          text={text}
+          active
+          color={isAuthor ? textDim : textLight}
+          onProgress={onProgress}
+          onScrollMeta={onScrollMeta}
+        />
+      </div>
+    </div>
   );
 }

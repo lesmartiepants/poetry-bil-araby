@@ -33,14 +33,31 @@ export function useSparklerReveal({
   visRows = 4,
   reducedMotion = false,
   onRevealedChange,
+  onBusyChange,
   refs,
 }) {
   // Latest config, read inside the imperative closures so the stable controller never goes stale.
   // Updated in an effect (not during render) so we never write a ref mid-render. The controller's
   // methods only run from effects/handlers/timeouts, which fire after this effect commits.
-  const cfg = useRef({ lineCount, visRows, reducedMotion, onRevealedChange, refs, isActive });
+  const cfg = useRef({
+    lineCount,
+    visRows,
+    reducedMotion,
+    onRevealedChange,
+    onBusyChange,
+    refs,
+    isActive,
+  });
   useEffect(() => {
-    cfg.current = { lineCount, visRows, reducedMotion, onRevealedChange, refs, isActive };
+    cfg.current = {
+      lineCount,
+      visRows,
+      reducedMotion,
+      onRevealedChange,
+      onBusyChange,
+      refs,
+      isActive,
+    };
   });
 
   // Mutable controller state (never triggers re-render).
@@ -85,6 +102,12 @@ export function useSparklerReveal({
     };
 
     const emitRevealed = () => cfg.current.onRevealedChange?.(st.current.revealed);
+    // Busy = a pair/line is currently animating. Surfaced to React so the tap prompt only appears
+    // once the current reveal settles (the reader can't run ahead of what's animated).
+    const setBusy = (b) => {
+      st.current.busy = b;
+      cfg.current.onBusyChange?.(b);
+    };
 
     // ── progress scrubber: write fill width + handle position directly (no React) ──
     const writeProgress = (frac) => {
@@ -267,7 +290,7 @@ export function useSparklerReveal({
 
     const start = async () => {
       const s = st.current;
-      s.busy = true;
+      setBusy(true);
       writeProgress(0);
       await ignite(0);
       s.revealed = 1;
@@ -278,13 +301,13 @@ export function useSparklerReveal({
         s.revealed = 2;
         emitRevealed();
       }
-      s.busy = false;
+      setBusy(false);
     };
 
     const advance = async () => {
       const s = st.current;
       if (s.busy || s.revealed >= total()) return;
-      s.busy = true;
+      setBusy(true);
       // Scroll BEFORE revealing so the newest line of this tap's pair lands on the bottom row.
       const lastLine = Math.min(s.revealed + 1, total() - 1);
       const newTop = computeWindowTop(lastLine, total(), VIS(), s.windowTop);
@@ -301,7 +324,7 @@ export function useSparklerReveal({
         s.revealed++;
         emitRevealed();
       }
-      s.busy = false;
+      setBusy(false);
     };
 
     // Drag-to-seek — MONOTONIC. The reveal never un-animates: lines already revealed stay
@@ -372,11 +395,11 @@ export function useSparklerReveal({
 
     const resumeScrub = async (line, within) => {
       const s = st.current;
-      s.busy = true;
+      setBusy(true);
       await ignite(line, 1 - within);
       s.revealed = line + 1;
       s.revealing = -1;
-      s.busy = false;
+      setBusy(false);
       emitRevealed();
     };
 
@@ -401,13 +424,13 @@ export function useSparklerReveal({
       writeProgress((line + 1) / T);
       // Sparkle-reveal ahead so the spoken line + one buffer line are revealed before they're read.
       if (!s.busy && s.revealed < T && s.revealed <= line + 1) {
-        s.busy = true;
+        setBusy(true);
         while (s.revealed < T && s.revealed <= line + 1) {
           await ignite(s.revealed);
           s.revealed++;
           emitRevealed();
         }
-        s.busy = false;
+        setBusy(false);
       }
     };
 
@@ -428,7 +451,7 @@ export function useSparklerReveal({
       }
       s.revealed = 0;
       s.windowTop = 0;
-      s.busy = false;
+      setBusy(false);
       s.revealing = -1;
       s.head.alive = false;
       const track = R().trackRef?.current;

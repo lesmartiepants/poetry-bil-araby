@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef } from 'react';
 import { useAudioStore } from '../stores/audioStore';
 import { FEATURES } from '../constants/features';
 
@@ -9,6 +9,64 @@ import { FEATURES } from '../constants/features';
  */
 export const playbackStartTime = { value: 0 };
 export const pauseOffset = { value: 0 };
+export const playbackPlayerRef = { value: null };
+
+// Highlight lag (seconds). The transcript-derived word start times run slightly
+// AHEAD of the audio: the Live API streams a word's text before that word's audio
+// settles into the byte stream, so each word's start is stamped a touch early and
+// the highlight skips to the next word before it's finished being recited. Subtract
+// a small lag from the playback clock so a word lights up while it's actually spoken.
+// Overridable live (no redeploy) via localStorage('ttsHighlightLag') for tuning.
+const DEFAULT_HIGHLIGHT_LAG = 0.25;
+export function getHighlightLag() {
+  try {
+    const v = parseFloat(localStorage.getItem('ttsHighlightLag'));
+    return Number.isFinite(v) ? v : DEFAULT_HIGHLIGHT_LAG;
+  } catch {
+    return DEFAULT_HIGHLIGHT_LAG;
+  }
+}
+/**
+ * Dev-only debug bridge for reproducing highlight-timing issues in the running app
+ * (Playwright / manual). Gated by localStorage('ttsHighlightDebug') — a complete
+ * no-op otherwise, so production playback is untouched. When enabled it:
+ *   - lets the playback clock be driven from the page (window.__ttsSetClock)
+ *   - exposes the audio store so a test can push streaming timing updates
+ *   - records every active-word transition to window.__ttsHighlightLog with the
+ *     clock + the target word's start, so on→off→on (a flash) is visible.
+ */
+const debugClock = { value: null };
+function ttsDebugEnabled() {
+  try {
+    return typeof window !== 'undefined' && !!localStorage.getItem('ttsHighlightDebug');
+  } catch {
+    return false;
+  }
+}
+if (ttsDebugEnabled()) {
+  window.__ttsHighlightLog = [];
+  window.__ttsSetClock = (s) => {
+    debugClock.value = Number.isFinite(s) ? s : null;
+  };
+  // Start the REAL wall-clock playback path (no override): elapsed advances in
+  // real seconds from now, exactly as a live recitation drives it. Used by the
+  // UX QA harness to exercise the natural estimate→aligned handoff timing.
+  window.__ttsStartWallClock = () => {
+    debugClock.value = null;
+    pauseOffset.value = 0;
+    playbackStartTime.value = Date.now() / 1000;
+  };
+  // The exact playhead the tick uses, so the QA harness can compare what's being
+  // recited (aligned-transcript window at this elapsed) against what's highlighted.
+  window.__ttsGetElapsed = getPlaybackElapsed;
+  window.__ttsGetLag = getHighlightLag;
+  window.__ttsAudioStore = useAudioStore;
+  // uiStore holds liveVoice; lazy import keeps it out of the prod path.
+  import('../stores/uiStore.js').then((m) => {
+    window.__ttsUIStore = m.useUIStore;
+  }).catch(() => {});
+}
+
 /**
  * Seek guard — set true before player.stop() in a seek operation so the
  * onstop handler skips its setPlaying(false) call. Reset after startPlayer().
@@ -31,10 +89,21 @@ export const lastStopWasPause = { value: false };
  * @param {number} offset - seconds into the audio to start from
  */
 export function startPlayer(player, offset) {
+  playbackPlayerRef.value = player ?? null;
   pauseOffset.value = offset;
   playbackStartTime.value = Date.now() / 1000;
   if (FEATURES.logging) console.log(`[Playback:startPlayer] offset=${offset.toFixed(2)}s`);
   player.start(undefined, offset);
+}
+
+/** Read playback position in seconds; prefers player-provided content clock. */
+export function getPlaybackElapsed() {
+  if (debugClock.value != null) return Math.max(0, debugClock.value); // dev-only override
+  const playerElapsed = playbackPlayerRef.value?.getCurrentTime?.();
+  if (Number.isFinite(playerElapsed)) {
+    return Math.max(0, pauseOffset.value + playerElapsed);
+  }
+  return Date.now() / 1000 - playbackStartTime.value + pauseOffset.value;
 }
 
 /**
@@ -47,9 +116,12 @@ export function startPlayer(player, offset) {
  */
 export function recordPause() {
   lastStopWasPause.value = true; // this stop is a pause → freeze highlight, don't snap to end
-  const elapsed = Date.now() / 1000 - playbackStartTime.value;
-  const newOffset = pauseOffset.value + Math.max(0, elapsed);
-  if (FEATURES.logging) console.log(`[Playback:recordPause] elapsed=${elapsed.toFixed(2)}s → offset=${newOffset.toFixed(2)}s`);
+  const newOffset = Math.max(0, getPlaybackElapsed());
+  const elapsed = Math.max(0, newOffset - pauseOffset.value);
+  if (FEATURES.logging)
+    console.log(
+      `[Playback:recordPause] elapsed=${elapsed.toFixed(2)}s → offset=${newOffset.toFixed(2)}s`
+    );
   pauseOffset.value = newOffset;
   // Reset start time so subsequent recordPause calls are safe
   playbackStartTime.value = Date.now() / 1000;
@@ -66,7 +138,14 @@ export function recordPause() {
  * @param {number} totalDuration
  * @param {function} onVerseChange
  */
-export function applyHighlightsOnce(offset, wordRefs, wordOffsets, timings, totalDuration, onVerseChange) {
+export function applyHighlightsOnce(
+  offset,
+  wordRefs,
+  wordOffsets,
+  timings,
+  totalDuration,
+  onVerseChange
+) {
   // Clear all existing highlight classes
   for (let i = 0; i < wordRefs.length; i++) {
     const el = wordRefs[i]?.current;
@@ -76,7 +155,7 @@ export function applyHighlightsOnce(offset, wordRefs, wordOffsets, timings, tota
   }
 
   // Compute elapsed time from global playback state
-  const elapsed = Date.now() / 1000 - playbackStartTime.value + pauseOffset.value;
+  const elapsed = Number.isFinite(offset) ? Math.max(0, offset) : getPlaybackElapsed();
 
   // Find active word index
   let newIndex = -1;
@@ -140,14 +219,35 @@ export function applyHighlightsOnce(offset, wordRefs, wordOffsets, timings, tota
  * @param {number[]} params.wordOffsets             - First word index for each verse
  * @param {function} params.onVerseChange           - Called with verseIdx when verse changes
  */
-export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets = [], onVerseChange }) {
+export function useTTSHighlight({
+  wordRefs,
+  timings,
+  totalDuration,
+  wordOffsets = [],
+  onVerseChange,
+}) {
   const rafRef = useRef(null);
   const activeIndexRef = useRef(-1);
   const activeVerseRef = useRef(-1);
   const lastScrollRef = useRef(0);
   // Stable ref to onVerseChange so tick closure doesn't go stale
   const onVerseChangeRef = useRef(onVerseChange);
-  useEffect(() => { onVerseChangeRef.current = onVerseChange; });
+  useEffect(() => {
+    onVerseChangeRef.current = onVerseChange;
+  });
+
+  // Keep timing inputs in refs so the rAF loop reads the latest values WITHOUT
+  // the main effect re-running on every update. During Live streaming, `timings`
+  // updates ~once per word as partial transcripts arrive; if the effect tore down
+  // and re-created the loop each time (its cleanup clears the highlight classes),
+  // the active word flickered off-and-on for the first ~2s. Reading from refs
+  // keeps the loop alive and the highlight stable across streaming refinements.
+  const timingsRef = useRef(timings);
+  timingsRef.current = timings;
+  const totalDurationRef = useRef(totalDuration);
+  totalDurationRef.current = totalDuration;
+  const wordOffsetsRef = useRef(wordOffsets);
+  wordOffsetsRef.current = wordOffsets;
 
   // Start the rAF loop — called when isPlaying becomes true
   function startLoop() {
@@ -156,7 +256,12 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
     // even if the user has scrolled away while paused.
     let firstTick = true;
     function tick() {
-      const elapsed = Date.now() / 1000 - playbackStartTime.value + pauseOffset.value;
+      const elapsed = Math.max(0, getPlaybackElapsed() - getHighlightLag());
+      // Read latest timing inputs from refs (updated by streaming partials) so the
+      // loop never has to restart — which is what caused the start-of-playback flicker.
+      const timings = timingsRef.current;
+      const totalDuration = totalDurationRef.current;
+      const wordOffsets = wordOffsetsRef.current;
 
       // Find the word index whose window contains elapsed
       let newIndex = -1;
@@ -171,7 +276,27 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
         newIndex = timings.length - 1;
       }
 
+      // Monotonic hold: once a word has been highlighted, never fall back to
+      // "nothing" mid-playback. The first-word flash came from exactly this — the
+      // char-count estimate lights word0 at start=0, then the aligned+verse-delayed
+      // timing moves word0.start to ~0.125 while the lag-floored clock is still ~0,
+      // so the window search returns -1 and word0 goes dark (on→off→on). Holding the
+      // last active word until the playhead actually reaches the next one removes the
+      // flicker and naturally lets the first word dwell, which is what we want.
+      if (newIndex === -1 && activeIndexRef.current >= 0) {
+        newIndex = activeIndexRef.current;
+      }
+
       if (newIndex !== activeIndexRef.current) {
+        if (typeof window !== 'undefined' && window.__ttsHighlightLog) {
+          window.__ttsHighlightLog.push({
+            t: Math.round((globalThis.performance?.now?.() ?? 0)),
+            prevIdx: activeIndexRef.current,
+            idx: newIndex,
+            elapsed: Number(elapsed.toFixed(3)),
+            start: newIndex >= 0 ? Number((timings[newIndex]?.start ?? 0).toFixed(3)) : null,
+          });
+        }
         activeIndexRef.current = newIndex;
         for (let i = 0; i < wordRefs.length; i++) {
           const el = wordRefs[i]?.current;
@@ -201,7 +326,10 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
                 lastScrollRef.current = now;
                 const fontSize = parseFloat(getComputedStyle(activeEl).fontSize) || 28;
                 const lineHeight = fontSize * 2.2; // matches leading-[2.2]
-                window.scrollBy({ top: Math.min(overflow + lineHeight * 0.5, lineHeight * 2), behavior: 'smooth' });
+                window.scrollBy({
+                  top: Math.min(overflow + lineHeight * 0.5, lineHeight * 2),
+                  behavior: 'smooth',
+                });
               }
             }
           }
@@ -279,10 +407,13 @@ export function useTTSHighlight({ wordRefs, timings, totalDuration, wordOffsets 
       stopLoop();
       clearAllClasses();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     // Safe: wordRefs and onVerseChangeRef.current are accessed by reference inside
     // the closure. wordRefs is recreated only when allWords.length changes, which
     // also causes timings to change (new poem) — so the effect re-runs and the
     // closure is refreshed. onVerseChange is kept current via onVerseChangeRef.
-  }, [timings, totalDuration, wordOffsets]);
+    // Depend only on wordRefs (recreated when the poem / word count changes). Timing
+    // refinements during streaming flow through the refs above without restarting the
+    // loop or clearing classes, so the highlight no longer flickers as partials arrive.
+  }, [wordRefs]);
 }

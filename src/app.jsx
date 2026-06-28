@@ -86,9 +86,16 @@ import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
 import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
+import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
+import { smoothWordTimings } from './utils/smoothWordTimings.js';
+import { evenDistributeTimings } from './utils/evenDistributeTimings.js';
+import { verseLetterWeightedTimings } from './utils/verseLetterWeightedTimings.js';
+import { verseSyllableWeightedTimings } from './utils/verseSyllableWeightedTimings.js';
+import { applyVerseDelays } from './utils/applyVerseDelays.js';
 import {
   useTTSHighlight,
   startPlayer,
+  getPlaybackElapsed,
   pauseOffset,
   playbackStartTime,
   isSeeking,
@@ -231,6 +238,8 @@ export default function DiwanApp() {
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
   const audioPlayer = useAudioStore((s) => s.player);
+  // Real per-word timings from the Live TTS transcript (null in REST mode / pre-audio).
+  const serverWordTimings = useAudioStore((s) => s.wordTimings);
   const liveVoice = useUIStore((s) => s.liveVoice);
   const setLiveVoice = useUIStore((s) => s.setLiveVoice);
   const highlightStyle = useUIStore((s) => s.highlightStyle);
@@ -859,6 +868,100 @@ export default function DiwanApp() {
   );
 
   const wordTimings = useMemo(() => {
+    // Best source: REAL per-word timings from the Live TTS transcript, aligned onto
+    // the displayed tokens. These are exact (the model reported what it said and the
+    // audio byte position tells us when), so they beat every estimate. Used when the
+    // alignment confidently covers the line; otherwise we fall through to VAD.
+    if (serverWordTimings && serverWordTimings.length > 0) {
+      if (FEATURES.logging) {
+        const lastSrv = serverWordTimings[serverWordTimings.length - 1];
+        const first3 = serverWordTimings
+          .slice(0, 3)
+          .map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`)
+          .join(' ');
+        useUIStore
+          .getState()
+          .addLog(
+            'WordTiming:Server',
+            `${serverWordTimings.length} words | span=0–${lastSrv?.end?.toFixed(2) ?? '?'}s | ${first3}`
+          );
+      }
+      const aligned = alignTranscriptTimings(allWords, serverWordTimings);
+      // Gate on how well the TRANSCRIBED words matched the display (a right-poem
+      // check), not whole-line coverage. While streaming, only a prefix of the poem
+      // is transcribed — but that prefix always leads the playhead by seconds, so the
+      // lit word is exact and the rest fills in before playback reaches it. Requiring
+      // whole-line confidence here would reject every partial update and keep us on
+      // the estimate until the poem was nearly over (the original bug).
+      const transcriptMatchRatio =
+        aligned && serverWordTimings.length ? aligned.matchedCount / serverWordTimings.length : 0;
+      if (
+        aligned &&
+        aligned.timings.length === allWords.length &&
+        aligned.matchedCount >= 1 &&
+        transcriptMatchRatio >= 0.5
+      ) {
+        if (FEATURES.logging) {
+          const lastAligned = aligned.timings[aligned.timings.length - 1];
+          const first3 = aligned.timings
+            .slice(0, 3)
+            .map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`)
+            .join(' ');
+          const last3 = aligned.timings
+            .slice(-3)
+            .map((t) => `${t.word}@${t.start.toFixed(2)}-${t.end.toFixed(2)}`)
+            .join(' ');
+          useUIStore
+            .getState()
+            .addLog(
+              'WordTiming:Aligned',
+              `matched=${aligned.matchedCount}/${serverWordTimings.length} transcript (${(transcriptMatchRatio * 100).toFixed(0)}%) | ${allWords.length} display words | span=0–${lastAligned?.end?.toFixed(2) ?? '?'}s | eff=${effectiveDuration.toFixed(2)}s | [${first3}] … [${last3}]`
+            );
+        }
+        // A/B smoothing of the per-word spans to kill the bursty flash/stick pattern.
+        // Toggle live via localStorage('ttsSmoothMode'): 'smooth' (min-dwell redistribute,
+        // default), 'even' (verse-anchored even distribution), or 'raw' (transcript as-is).
+        let mode = 'even';
+        try {
+          mode = localStorage.getItem('ttsSmoothMode') || 'even';
+        } catch {
+          /* localStorage unavailable */
+        }
+        try {
+          let timingMode = 'even';
+          try {
+            timingMode = localStorage.getItem('ttsTimingMode') || 'even';
+          } catch {}
+
+          let result = aligned.timings;
+          if (timingMode === 'smooth') result = smoothWordTimings(result);
+          else if (timingMode === 'verseLetterWeighted') result = verseLetterWeightedTimings(result, wordOffsets);
+          else if (timingMode === 'verseSyllableWeighted') result = verseSyllableWeightedTimings(result, wordOffsets);
+          else if (timingMode === 'even') result = evenDistributeTimings(result, wordOffsets, { charWeighted: false, minDwell: 0.18 });
+
+          // Apply verse delays (for verse-anchored modes: even, verse+letters, verse+syllables)
+          if ((timingMode === 'even' || timingMode === 'verseLetterWeighted' || timingMode === 'verseSyllableWeighted') && wordOffsets && wordOffsets.length > 0) {
+            let verseDelayMs = 0;
+            try { verseDelayMs = parseFloat(localStorage.getItem('ttsVerseDelayMs') || '0'); } catch {}
+            const verseDelaySeconds = Math.max(0, verseDelayMs / 1000);
+            if (verseDelaySeconds > 0) {
+              result = applyVerseDelays(result, wordOffsets, verseDelaySeconds);
+            }
+          }
+          return result;
+        } catch (err) {
+          if (FEATURES.logging) console.warn('[WordTiming] timing mode failed, using raw', err);
+        }
+        return aligned.timings;
+      }
+      if (FEATURES.logging)
+        useUIStore
+          .getState()
+          .addLog(
+            'WordTiming',
+            `Live alignment rejected (transcript match ${(transcriptMatchRatio * 100).toFixed(0)}%, matched ${aligned?.matchedCount ?? 0}/${serverWordTimings.length}) — using VAD`
+          );
+    }
     // When actual audio is loaded, derive timings from the waveform (VAD alignment).
     // This is far more accurate than character-count estimation because it uses the
     // real pauses between verses detected in the audio signal.
@@ -867,20 +970,41 @@ export default function DiwanApp() {
         const vadTimings = computeWordTimingsFromAudio(audioPlayer.buffer, verseWords);
         if (vadTimings && vadTimings.length === allWords.length) {
           if (FEATURES.logging) {
-            console.log(
-              `[WordTiming] VAD timings computed for ${vadTimings.length} words from audio buffer`
-            );
+            useUIStore
+              .getState()
+              .addLog('WordTiming', `VAD timings: ${vadTimings.length} words from audio buffer`);
           }
           return vadTimings;
         }
       } catch (err) {
         if (FEATURES.logging)
-          console.warn('[WordTiming] VAD failed, falling back to char-weighted:', err.message);
+          useUIStore
+            .getState()
+            .addLog('WordTiming', `VAD failed: ${err.message} — using char-weighted`, 'error');
       }
     }
     // Fallback: character-count proportional distribution (used pre-audio or on VAD failure)
     return computeWordTimings(allWords, effectiveDuration);
-  }, [audioPlayer, verseWords, allWords, effectiveDuration]);
+  }, [audioPlayer, verseWords, allWords, wordOffsets, effectiveDuration, serverWordTimings]);
+
+  // When the streaming player is active, audioPlayer.buffer is undefined so
+  // effectiveDuration falls back to a char-count estimate (~0.65s/word). That
+  // estimate is shorter than real recitation time, causing useTTSHighlight's
+  // "snap to last word" guard (elapsed >= totalDuration) to fire prematurely —
+  // the highlight jumps to the end while the voice still has words left.
+  // Fix: use the actual end time from word timings when available.
+  // IMPORTANT: take the MAX of the estimate and the timings' last end, never the
+  // raw last end. While streaming, the aligned array's not-yet-transcribed tail
+  // collapses onto the last matched word's end (e.g. ~3s early in the stream), so
+  // wordTimings[last].end is tiny until the full transcript lands. Using it raw
+  // pushed the snap-to-last-word threshold down to a few seconds → instant
+  // jump-to-end. The char estimate is a sane floor; the real (full) span exceeds
+  // it once the stream completes, and generation outruns playback so the full
+  // span is in place long before the playhead reaches it.
+  const highlightTotalDuration = useMemo(() => {
+    const lastEnd = wordTimings.length > 0 ? wordTimings[wordTimings.length - 1].end : 0;
+    return Math.max(effectiveDuration, lastEnd > 0 ? lastEnd : 0);
+  }, [wordTimings, effectiveDuration]);
 
   // Per-verse start times — first word of each verse's timing.start
   const verseStartTimes = useMemo(() => {
@@ -901,10 +1025,78 @@ export default function DiwanApp() {
   useTTSHighlight({
     wordRefs,
     timings: wordTimings,
-    totalDuration: effectiveDuration,
+    totalDuration: highlightTotalDuration,
     wordOffsets,
     onVerseChange: setCurrentVerseIndex,
   });
+
+  // Periodic playback-position diagnostic — logs elapsed time, the active word, and
+  // the highlight duration ceiling every 3 s during playback. Paste the output to
+  // see if highlight timing tracks the voice or drifts.
+  // Latest timing snapshot in a ref so the playback-diagnostic effect can key on
+  // isPlaying alone (start/end fire once per playback) while still reading fresh
+  // timings on each tick — during streaming wordTimings updates ~once per word.
+  const timingDiagRef = useRef(null);
+  useEffect(() => {
+    timingDiagRef.current = { wordTimings, allWords, highlightTotalDuration, effectiveDuration };
+  }, [wordTimings, allWords, highlightTotalDuration, effectiveDuration]);
+
+  const matchIdx = (wt, elapsed) => {
+    for (let i = 0; i < wt.length; i++) {
+      if (elapsed >= wt[i].start && elapsed < wt[i].end) return i;
+    }
+    return -1;
+  };
+
+  useEffect(() => {
+    if (!FEATURES.logging || !isPlaying) return;
+    const addLog = useUIStore.getState().addLog;
+    const voice = useUIStore.getState().liveVoice;
+    const snap = () => timingDiagRef.current || { wordTimings, allWords, highlightTotalDuration, effectiveDuration };
+    const spanOf = (wt) => (wt.length ? wt[wt.length - 1].end : 0);
+
+    const s0 = snap();
+    addLog(
+      'Highlight:start',
+      `words=${s0.allWords.length} | timings=${s0.wordTimings.length} | span=0–${spanOf(s0.wordTimings).toFixed(2)}s | eff=${s0.effectiveDuration.toFixed(2)}s | total=${s0.highlightTotalDuration.toFixed(2)}s | voice=${voice}`
+    );
+
+    let snapLogged = false;
+    const id = setInterval(() => {
+      const { wordTimings: wt, allWords: aw, highlightTotalDuration: total } = snap();
+      const elapsed = getPlaybackElapsed();
+      const clock = useAudioStore.getState().player?.getCurrentTime ? 'player' : 'wall';
+      const idx = matchIdx(wt, elapsed);
+      const snapped = wt.length > 0 && elapsed >= total;
+      addLog(
+        'Highlight:tick',
+        `t=${elapsed.toFixed(2)}s (${clock}) | word[${idx}]="${aw[idx] ?? 'none'}" | total=${total.toFixed(2)}s | span=${spanOf(wt).toFixed(2)}s | snap=${snapped}`
+      );
+      // Capture the moment the snap-to-last-word guard engages. If t is well short
+      // of the real audio length, this is a premature jump-to-end.
+      if (snapped && !snapLogged) {
+        snapLogged = true;
+        addLog(
+          'Highlight:SNAP',
+          `snapped to last word @ t=${elapsed.toFixed(2)}s | total=${total.toFixed(2)}s | span=${spanOf(wt).toFixed(2)}s — premature if t ≪ audio length`
+        );
+      }
+    }, 2000);
+
+    return () => {
+      clearInterval(id);
+      // End-of-playback snapshot (issue #571): where was the highlight when audio
+      // stopped? Compare t against the audio length to see the async gap.
+      const { wordTimings: wt, allWords: aw, highlightTotalDuration: total } = snap();
+      const elapsed = getPlaybackElapsed();
+      const idx = matchIdx(wt, elapsed);
+      addLog(
+        'Highlight:end',
+        `playback stopped @ t=${elapsed.toFixed(2)}s | highlight word[${idx}]/${aw.length} | total=${total.toFixed(2)}s | span=${spanOf(wt).toFixed(2)}s`
+      );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPlaying]);
 
   // pcm16ToWav imported from ./utils/audio.js (used directly below)
 
@@ -1743,7 +1935,7 @@ export default function DiwanApp() {
                       wordRefs={wordRefs}
                       wordOffsets={wordOffsets}
                       timings={wordTimings}
-                      totalDuration={effectiveDuration}
+                      totalDuration={highlightTotalDuration}
                       onVerseChange={setCurrentVerseIndex}
                     />
                   ) : (

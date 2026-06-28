@@ -141,10 +141,11 @@ const PoemFeed = forwardRef(function PoemFeed(
     if (!d.down) return;
     const dy = e.clientY - d.sy;
     const dx = e.clientX - d.sx;
-    // Lock the gesture axis once it's clearly moving: only navigate the feed when the swipe is
-    // within 45° of vertical (|dy| >= |dx|). Horizontal-dominant drags are ignored by the feed.
+    // Lock the gesture axis once it's clearly moving: navigate the feed when the swipe is within
+    // 60° of the vertical axis (|dy| >= |dx| * tan(30°)), so fairly diagonal up/down swipes still
+    // count as "next poem". Only near-horizontal drags (>60° off vertical) are ignored by the feed.
     if (d.axis == null && (Math.abs(dx) > 6 || Math.abs(dy) > 6)) {
-      d.axis = Math.abs(dy) >= Math.abs(dx) ? 'v' : 'h';
+      d.axis = Math.abs(dy) >= Math.abs(dx) * 0.5774 ? 'v' : 'h';
     }
     if (d.axis === 'h') return;
     d.moved = Math.max(d.moved, Math.abs(dy));

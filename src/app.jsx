@@ -1828,7 +1828,7 @@ export default function DiwanApp() {
           />
 
           <motion.footer
-            className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom"
+            className="fixed bottom-0 left-0 right-0 py-2 pb-0.5 md:pb-1 px-4 flex flex-col items-center z-50 safe-bottom"
             animate={effectivelyIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
             transition={
               effectivelyIdle

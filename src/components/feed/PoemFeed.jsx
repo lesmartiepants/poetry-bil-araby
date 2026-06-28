@@ -11,7 +11,9 @@ import { gsap } from 'gsap';
 import PoemReader from './PoemReader.jsx';
 import { useModalStore } from '../../stores/modalStore';
 
-const VIEWPORT_H = 'calc(100dvh - 168px)';
+// Reserve just enough at the bottom for the nav pill (+ the device safe area, so the chrome sits
+// right above the nav on notched devices instead of floating with a big gap).
+const VIEWPORT_H = 'calc(100dvh - 110px - env(safe-area-inset-bottom, 0px))';
 
 /**
  * PoemFeed — vertical magnetic feed of poems, ported from the prototype.

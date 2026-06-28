@@ -1,0 +1,138 @@
+name: README Auto-Update
+
+# On merge to main, run Claude Code with the /professional-readme skill to keep
+# README.md accurate to the change that just landed, and record what it did in
+# readme_ci_changelog.md. Changes are proposed as a PR (never pushed to main).
+#
+# Loop prevention: paths-ignore excludes README.md and readme_ci_changelog.md, so
+# when the bot's own PR is later merged (it touches only those two files) this
+# workflow does not re-trigger. paths-ignore only skips when ALL changed files
+# match, so feature merges that also touch the README still run.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'readme_ci_changelog.md'
+
+concurrency:
+  group: readme-autoupdate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+  actions: read
+
+jobs:
+  refresh-readme:
+    name: Refresh README from merged change
+    runs-on: ubuntu-latest
+    # Belt-and-suspenders: never act on the bot's own commits.
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # merge commit + parent, for context/diff
+
+      - name: Collect triggering-commit context
+        id: ctx
+        run: |
+          echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+          # Multiline values via heredoc delimiters
+          {
+            echo 'subject<<__EOF__'; git log -1 --pretty=%s; echo '__EOF__'
+            echo 'body<<__EOF__';    git log -1 --pretty=%b; echo '__EOF__'
+            echo 'stat<<__EOF__';    git show --stat --oneline HEAD | head -n 60; echo '__EOF__'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Ensure changelog file exists
+        run: |
+          if [ ! -f readme_ci_changelog.md ]; then
+            cat > readme_ci_changelog.md <<'EOF'
+          # README CI Changelog
+
+          Automated record of README updates made by the `README Auto-Update` workflow.
+          On each merge to `main`, Claude Code applies the `/professional-readme` skill to
+          keep the README accurate, and appends an entry below (newest first) describing
+          why it changed and a concise before -> after summary. The exact line diff lives
+          in the accompanying pull request.
+
+          EOF
+          fi
+
+      - name: Run Claude Code (professional-readme skill)
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Restrict to read/edit + read-only git so the agent inspects code and edits
+          # docs only. It must NOT commit, push, or open a PR — the next step does that.
+          claude_args: >-
+            --allowedTools "Read,Edit,Grep,Glob,Bash(git diff:*),Bash(git show:*),Bash(git log:*),Bash(grep:*),Bash(ls:*),Bash(cat:*)"
+          prompt: |
+            You are running headlessly in CI after a merge to `main`. Your job is to keep
+            the project's README accurate to the change that just landed, and to log what
+            you did. Be efficient and conservative.
+
+            Triggering commit: ${{ steps.ctx.outputs.sha }} — ${{ steps.ctx.outputs.subject }}
+            Commit body:
+            ${{ steps.ctx.outputs.body }}
+
+            Files changed in this commit:
+            ${{ steps.ctx.outputs.stat }}
+
+            Steps:
+            1. Read `.claude/skills/professional-readme/SKILL.md` and apply its principles
+               (treat the code as the source of truth; verify every claim; no emojis; no
+               invented metrics). Reference the SKILL file directly — do not rely on slash
+               commands.
+            2. Update `README.md` ONLY where the merged change makes it inaccurate or
+               incomplete (features, counts, stack, commands, architecture, structure).
+               Make minimal, targeted edits. If the change does not affect the README at
+               all, make NO edits to README.md.
+            3. Do NOT regenerate the header banner image (no browser is available here). If
+               branding/identity changed such that the banner is now stale, do not edit the
+               image — instead note in the changelog that the banner needs a manual refresh
+               via `node .github/assets/render-header.mjs`.
+            4. If (and only if) you changed README.md, PREPEND a new entry to
+               `readme_ci_changelog.md` immediately under the header, newest first, in this
+               exact format:
+
+               ## <YYYY-MM-DD> — ${{ steps.ctx.outputs.sha }} ${{ steps.ctx.outputs.subject }}
+
+               **Why:** <how this merged change affects what the README should say>
+
+               **README changes:**
+               - <section>: <before> -> <after>
+
+               _Full diff: see the accompanying PR._
+
+            5. Do NOT run git commit, git push, or open a pull request. Only edit files in
+               the working tree. A later workflow step opens the PR.
+
+      - name: Open or update PR with the refreshed README
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          branch: chore/readme-autoupdate
+          delete-branch: true
+          add-paths: |
+            README.md
+            readme_ci_changelog.md
+          commit-message: "docs(readme): sync README from ${{ steps.ctx.outputs.sha }} [skip ci]"
+          title: "docs(readme): sync README from ${{ steps.ctx.outputs.sha }}"
+          body: |
+            Automated README refresh after merge of `${{ steps.ctx.outputs.sha }}` —
+            ${{ steps.ctx.outputs.subject }}.
+
+            Claude Code applied the `/professional-readme` skill to keep the README accurate
+            to the merged change. See `readme_ci_changelog.md` for the rationale and a
+            before -> after summary; the full diff is below.
+
+            If no README changes were warranted, this PR will not be created.
+
+            > Generated by the `README Auto-Update` workflow.

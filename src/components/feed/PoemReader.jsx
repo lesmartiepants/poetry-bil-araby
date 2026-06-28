@@ -79,6 +79,8 @@ const PoemReader = memo(function PoemReader({
   const scrubbingRef = useRef(false);
   // Imperative handle to the active inline-insight paragraph (scroll control).
   const revealRef = useRef(null);
+  const insightDoneRef = useRef(true); // mirror of insightDone for the rapid reveal callbacks
+  const lastAtFracRef = useRef(1); // latest in-view fraction reported by RevealText
 
   const refs = useMemo(
     () => ({ stageRef, trackRef, headRef, canvasRef, unitRefs, scrubFillRef, scrubHandleRef }),
@@ -162,19 +164,34 @@ const PoemReader = memo(function PoemReader({
   // Reset the per-section insight gating whenever the stage changes (a new paragraph must finish
   // revealing before the next "tap for…" is offered).
   useEffect(() => {
-    setInsightDone(endStage === 'idle');
+    const done = endStage === 'idle';
+    insightDoneRef.current = done;
+    lastAtFracRef.current = 1;
+    setInsightDone(done);
     setInsightCanScroll(false);
   }, [endStage, poemId]);
 
-  // Insight RevealText → scrub bar wiring. Reveal progress drives the fill; scroll metrics drive
-  // the handle (shown only when the text overflows) and the "fully rendered" gate.
+  // Insight RevealText → scrub bar wiring.
+  //  • While the paragraph is rendering: the bar FILL = render/load progress (gold growing); the
+  //    handle stays hidden.
+  //  • Once fully rendered: the fill follows the SCROLL position (gold up to the handle), so the
+  //    not-yet-scrolled remainder reads as the grey track; the handle appears (if it overflows).
   const onInsightProgress = (frac) => {
-    if (scrubFillRef.current) scrubFillRef.current.style.width = (frac * 100).toFixed(2) + '%';
-    if (frac >= 1) setInsightDone(true);
+    if (!insightDoneRef.current && scrubFillRef.current)
+      scrubFillRef.current.style.width = (frac * 100).toFixed(2) + '%';
+    if (frac >= 1) {
+      insightDoneRef.current = true;
+      setInsightDone(true);
+      if (scrubFillRef.current)
+        scrubFillRef.current.style.width = (lastAtFracRef.current * 100).toFixed(2) + '%';
+    }
   };
   const onInsightScrollMeta = ({ canScroll, atFrac }) => {
+    lastAtFracRef.current = atFrac;
     setInsightCanScroll(canScroll);
     if (scrubHandleRef.current) scrubHandleRef.current.style.left = (atFrac * 100).toFixed(2) + '%';
+    if (insightDoneRef.current && scrubFillRef.current)
+      scrubFillRef.current.style.width = (atFrac * 100).toFixed(2) + '%';
   };
 
   const handleTap = (e) => {
@@ -205,7 +222,12 @@ const PoemReader = memo(function PoemReader({
   } else if (endStage === 'idle') promptText = 'tap for meaning';
   else if (endStage === 'meaning' && insightParts?.author && insightDone)
     promptText = 'tap for the poet';
-  const showCue = isActive && isAllRevealed && (endStage === 'idle' || endStage === 'author');
+  // "pull up for the next poem" shows only once the current content has finished animating: in the
+  // idle end-state after the poem reveal settles, and in the author end-state once the bio renders.
+  const showCue =
+    isActive &&
+    isAllRevealed &&
+    ((endStage === 'idle' && !isRevealing) || (endStage === 'author' && insightDone));
 
   return (
     <div
@@ -277,7 +299,7 @@ const PoemReader = memo(function PoemReader({
         style={{
           // Asymmetric so the verses sit centred between the (taller) header and the bottom bar.
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + clamp(116px, 16vh, 148px))',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + clamp(74px, 11vh, 100px))',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + clamp(116px, 15vh, 140px))',
         }}
       >
         {/* Stage stays mounted (refs persist); hidden when the insight is showing. */}
@@ -327,39 +349,6 @@ const PoemReader = memo(function PoemReader({
         )}
       </div>
 
-      {/* Pull-up cue — positioned ABOVE the bar/prompt so it appears at the end without shifting
-          the scrub bar or the tap prompt (which stay pinned at their reading-state height). */}
-      {showCue && (
-        <div
-          className="absolute left-0 right-0 flex flex-col items-center gap-[1px] px-4"
-          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)', zIndex: 5 }}
-          aria-hidden="true"
-        >
-          <span
-            className="cue-arrow"
-            style={{
-              color: goldColor,
-              fontSize: '1.4em',
-              lineHeight: 1,
-              animation: 'cueBounce 1.5s ease-in-out infinite',
-            }}
-          >
-            ↑
-          </span>
-          <span
-            className="font-brand-en italic"
-            style={{
-              color: goldColor,
-              fontSize: 'clamp(0.85rem, 3.6vw, 1rem)',
-              letterSpacing: '0.05em',
-              opacity: 0.95,
-            }}
-          >
-            pull up for the next poem
-          </span>
-        </div>
-      )}
-
       {/* One persistent scrub bar + tap prompt — pinned as low as possible, same position in every
           state. Reading: it seeks the reveal. Insight: it scrolls the paragraph (fill = render
           progress, handle shown only when the text overflows). The prompt is the bottom-most child
@@ -373,7 +362,7 @@ const PoemReader = memo(function PoemReader({
             total={inInsight ? 100 : lineCount}
             goldColor={goldColor}
             visible={isActive}
-            showHandle={inInsight ? insightCanScroll : true}
+            showHandle={inInsight ? insightCanScroll && insightDone : true}
             scrubFillRef={scrubFillRef}
             scrubHandleRef={scrubHandleRef}
             onScrubStart={() => {
@@ -412,6 +401,36 @@ const PoemReader = memo(function PoemReader({
         >
           {promptText || ' '}
         </span>
+
+        {/* pull-up cue — below the prompt; always reserves its height (only opacity toggles) so the
+            bar/prompt above stay put. Shown only once the poem / insight has finished animating. */}
+        <div
+          className="flex flex-col items-center gap-[1px]"
+          style={{ opacity: showCue ? 0.95 : 0, transition: 'opacity 0.3s ease' }}
+          aria-hidden="true"
+        >
+          <span
+            className="cue-arrow"
+            style={{
+              color: goldColor,
+              fontSize: '1.25em',
+              lineHeight: 1,
+              animation: 'cueBounce 1.5s ease-in-out infinite',
+            }}
+          >
+            ↑
+          </span>
+          <span
+            className="font-brand-en italic"
+            style={{
+              color: goldColor,
+              fontSize: 'clamp(0.85rem, 3.6vw, 1rem)',
+              letterSpacing: '0.05em',
+            }}
+          >
+            pull up for the next poem
+          </span>
+        </div>
       </div>
     </div>
   );

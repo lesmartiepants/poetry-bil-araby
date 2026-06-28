@@ -95,7 +95,9 @@ export default function ProgressScrubber({
           style={{
             height: 3,
             borderRadius: 3,
-            background: 'rgba(197,160,89,0.16)',
+            // Neutral grey track — the un-filled / un-scrolled portion reads as grey behind the
+            // gold fill (reveal progress while reading, scroll position once an insight is loaded).
+            background: 'rgba(160,160,160,0.3)',
           }}
         >
           <i

@@ -415,7 +415,17 @@ export function useSparklerReveal({
       const s = st.current;
       if (s.activeTween) s.activeTween.kill();
       s.activeTween = null;
-      stopLoop();
+      // Clear sparks + canvas but DON'T cancel the rAF loop — its lifecycle belongs to the
+      // isActive effect. (reset runs on every poem change, including mount right after the loop
+      // starts; calling stopLoop here would kill the loop before its first frame, so the orb would
+      // show but no sparks ever draw.)
+      s.particles = [];
+      s.head.alive = false;
+      {
+        const canvas = R().canvasRef?.current;
+        const ctx = canvas?.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
       s.revealed = 0;
       s.windowTop = 0;
       s.busy = false;

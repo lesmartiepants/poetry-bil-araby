@@ -168,10 +168,13 @@ const PoemReader = memo(function PoemReader({
 
   const inInsight = endStage !== 'idle';
 
-  // Bottom prompt — single "tap to continue" rhythm (no "tap to begin").
+  // Bottom prompt — single "tap to continue" rhythm (no "tap to begin"). While reading, it only
+  // appears once the title intro has settled and the first two sentences are shown (revealedCount
+  // has reached the opening pair) — not during the intro.
   let promptText = null;
-  if (!isAllRevealed) promptText = 'tap to continue';
-  else if (endStage === 'idle') promptText = 'tap for meaning';
+  if (!isAllRevealed) {
+    if (revealedCount >= Math.min(2, lineCount)) promptText = 'tap to continue';
+  } else if (endStage === 'idle') promptText = 'tap for meaning';
   else if (endStage === 'meaning' && insightParts?.author) promptText = 'tap for the poet';
   const showCue = isActive && isAllRevealed && (endStage === 'idle' || endStage === 'author');
 
@@ -245,7 +248,7 @@ const PoemReader = memo(function PoemReader({
         style={{
           // Asymmetric so the verses sit centred between the (taller) header and the bottom bar.
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + clamp(116px, 16vh, 148px))',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + clamp(60px, 9vh, 92px))',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + clamp(74px, 11vh, 100px))',
         }}
       >
         {/* Stage stays mounted (refs persist); hidden when the insight is showing. */}
@@ -293,10 +296,44 @@ const PoemReader = memo(function PoemReader({
         )}
       </div>
 
-      {/* Bottom chrome band — scrubber + tap prompt + pull-up cue, anchored near the bottom */}
+      {/* Pull-up cue — positioned ABOVE the bar/prompt so it appears at the end without shifting
+          the scrub bar or the tap prompt (which stay pinned at their reading-state height). */}
+      {showCue && (
+        <div
+          className="absolute left-0 right-0 flex flex-col items-center gap-[1px] px-4"
+          style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 84px)', zIndex: 5 }}
+          aria-hidden="true"
+        >
+          <span
+            className="cue-arrow"
+            style={{
+              color: goldColor,
+              fontSize: '1.4em',
+              lineHeight: 1,
+              animation: 'cueBounce 1.5s ease-in-out infinite',
+            }}
+          >
+            ↑
+          </span>
+          <span
+            className="font-brand-en italic"
+            style={{
+              color: goldColor,
+              fontSize: 'clamp(0.85rem, 3.6vw, 1rem)',
+              letterSpacing: '0.05em',
+              opacity: 0.95,
+            }}
+          >
+            pull up for the next poem
+          </span>
+        </div>
+      )}
+
+      {/* Scrub bar + tap prompt — pinned as low as possible; the prompt is the bottom-most child
+          so it stays at a constant height whether or not the scrubber is shown. */}
       <div
-        className="absolute left-0 right-0 flex flex-col items-center gap-3 px-4"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 12px)', zIndex: 5 }}
+        className="absolute left-0 right-0 flex flex-col items-center gap-2 px-4"
+        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)', zIndex: 5 }}
       >
         {!inInsight && (
           <div ref={scrubWrapRef} className="w-full" style={{ opacity: 0 }}>
@@ -330,33 +367,6 @@ const PoemReader = memo(function PoemReader({
           >
             {promptText}
           </span>
-        )}
-
-        {showCue && (
-          <div className="flex flex-col items-center gap-[1px]" aria-hidden="true">
-            <span
-              className="cue-arrow"
-              style={{
-                color: goldColor,
-                fontSize: '1.4em',
-                lineHeight: 1,
-                animation: 'cueBounce 1.5s ease-in-out infinite',
-              }}
-            >
-              ↑
-            </span>
-            <span
-              className="font-brand-en italic"
-              style={{
-                color: goldColor,
-                fontSize: 'clamp(0.85rem, 3.6vw, 1rem)',
-                letterSpacing: '0.05em',
-                opacity: 0.95,
-              }}
-            >
-              pull up for the next poem
-            </span>
-          </div>
         )}
       </div>
     </div>

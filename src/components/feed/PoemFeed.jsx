@@ -149,12 +149,13 @@ const PoemFeed = forwardRef(function PoemFeed(
     if (d.axis === 'h') return;
     d.moved = Math.max(d.moved, Math.abs(dy));
     const h = H();
-    const thresh = h * 0.16;
     const pull = -dy; // positive = pulling up (toward next)
-    const eff =
-      Math.sign(pull) * Math.min(Math.abs(pull), thresh) * 0.35 +
-      Math.sign(pull) * Math.max(0, Math.abs(pull) - thresh) * 0.7;
-    setFeed(d.base + eff);
+    const ax = Math.abs(pull);
+    // Rubber-band: the card follows ~1:1 at first, then resistance grows so movement asymptotes
+    // toward MAX — the further you pull the harder it gets, building anticipation before commit.
+    const MAX = h * 0.5;
+    const damped = (1 - 1 / (ax / MAX + 1)) * MAX;
+    setFeed(d.base + Math.sign(pull) * damped);
   };
   const onPointerUp = (e) => {
     const d = drag.current;
@@ -164,10 +165,12 @@ const PoemFeed = forwardRef(function PoemFeed(
     if (d.moved < 10) return; // tap → click falls through to PoemReader (advance reveal / insight)
     const dy = e.clientY - d.sy;
     const h = H();
-    const thresh = h * 0.18;
+    // Require real commitment to change poems (~28% of the viewport of finger travel) so the feed
+    // isn't too eager; otherwise rubber-band back with a soft spring.
+    const thresh = h * 0.28;
     if (-dy > thresh) goCard(curRef.current + 1);
     else if (dy > thresh) goCard(curRef.current - 1);
-    else animateFeed(curRef.current * h, 0.5, 'power3.out'); // not enough → magnet back
+    else animateFeed(curRef.current * h, 0.6, 'back.out(1.2)'); // not enough → springy magnet back
   };
 
   const goldColor = darkMode ? '#c5a059' : '#8B6430';

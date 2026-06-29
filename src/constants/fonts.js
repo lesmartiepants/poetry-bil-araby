@@ -7,4 +7,5 @@ export const FONTS = [
   { id: 'Fustat', label: 'Fustat', labelAr: 'فسطاط', family: 'font-fustat' },
   { id: 'Kufam', label: 'Kufam', labelAr: 'كوفام', family: 'font-kufam' },
   { id: 'Katibeh', label: 'Katibeh', labelAr: 'كاتبة', family: 'font-katibeh' },
+  { id: 'Scheherazade New', label: 'Scheherazade New', labelAr: 'شهرزاد', family: 'font-scheherazade' },
 ];

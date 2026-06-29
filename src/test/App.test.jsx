@@ -16,13 +16,18 @@ import {
 // Mock Vaul so its Portal renders inline in jsdom (no real DOM portals)
 vi.mock('vaul', () => ({
   Drawer: {
-    Root: ({ children, open, ...props }) => open ? <div data-testid="drawer-root">{children}</div> : null,
+    Root: ({ children, open, ...props }) =>
+      open ? <div data-testid="drawer-root">{children}</div> : null,
     Portal: ({ children }) => <div>{children}</div>,
     Overlay: (props) => <div data-testid="drawer-overlay" {...props} />,
     Content: ({ children, ...props }) => <div data-testid="drawer-content">{children}</div>,
     Handle: (props) => <div data-testid="drawer-handle" {...props} />,
     Close: ({ children }) => children,
-    Title: ({ children, className, ...props }) => <h2 className={className} {...props}>{children}</h2>,
+    Title: ({ children, className, ...props }) => (
+      <h2 className={className} {...props}>
+        {children}
+      </h2>
+    ),
   },
 }));
 
@@ -72,14 +77,18 @@ describe('DiwanApp', () => {
   // ── Feature 1: Poem loads with correct structure ──────────────────────
 
   describe('Poem Structure', () => {
-    it('renders the default poem with Arabic text longer than 10 characters', () => {
+    it('renders the default poem with Arabic text longer than 10 characters', async () => {
+      // This is the first DiwanApp mount in the file; the poem's verses can paint a
+      // tick after mount, so mock the auto-load fetch and await the rtl verses rather
+      // than querying synchronously (which flaked only for this first-render case).
+      mockAutoLoadFetch();
       render(<DiwanApp />);
-      // The default poem's Arabic text is rendered across verse lines with dir="rtl"
-      const rtlElements = document.querySelectorAll('p[dir="rtl"]');
-      expect(rtlElements.length).toBeGreaterThan(0);
+      await waitFor(() =>
+        expect(document.querySelectorAll('p[dir="rtl"]').length).toBeGreaterThan(0)
+      );
 
       // Gather all Arabic verse text
-      const arabicText = Array.from(rtlElements)
+      const arabicText = Array.from(document.querySelectorAll('p[dir="rtl"]'))
         .map((el) => el.textContent)
         .join('');
       expect(arabicText.length).toBeGreaterThan(10);
@@ -338,9 +347,12 @@ describe('DiwanApp', () => {
         await userEvent.click(screen.getByLabelText('Discover new poem'));
 
         // Auto-explain pre-fetches insight in background; open overlay to view it
-        await waitFor(() => expect(screen.getByLabelText('Explain poem meaning')).toBeInTheDocument(), {
-          timeout: 5000,
-        });
+        await waitFor(
+          () => expect(screen.getByLabelText('Explain poem meaning')).toBeInTheDocument(),
+          {
+            timeout: 5000,
+          }
+        );
         await userEvent.click(screen.getByLabelText('Explain poem meaning'));
         await waitFor(
           () => {
@@ -1114,6 +1126,4 @@ describe('DiwanApp', () => {
       expect(screen.queryByLabelText(/Account menu/)).toBeNull();
     });
   });
-
 });
-

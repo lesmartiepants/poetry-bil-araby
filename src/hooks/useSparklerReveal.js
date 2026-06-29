@@ -434,6 +434,33 @@ export function useSparklerReveal({
       }
     };
 
+    // Reveal the whole poem at once (used when the reader starts listening — the full text loads
+    // and the right action becomes "Poem Insights" since bayt-by-bayt advance is moot).
+    const revealAll = () => {
+      const s = st.current;
+      const T = total();
+      if (!T) return;
+      if (s.activeTween) s.activeTween.kill();
+      const head = R().headRef?.current;
+      if (head) {
+        gsap.killTweensOf(head);
+        head.style.opacity = '0';
+      }
+      s.head.alive = false;
+      for (let i = 0; i < T; i++) {
+        const e = els(i);
+        if (!e?.ar) continue;
+        gsap.killTweensOf(e.ar);
+        paintLine(i, 0, { lit: true });
+      }
+      s.revealed = T;
+      s.windowTop = computeWindowTop(T - 1, T, VIS(), s.windowTop);
+      const track = R().trackRef?.current;
+      if (track) gsap.to(track, { y: -s.windowTop * unitH(), duration: 0.4, ease: 'power2.out' });
+      writeProgress(1);
+      emitRevealed();
+    };
+
     const reset = () => {
       const s = st.current;
       if (s.activeTween) s.activeTween.kill();
@@ -481,6 +508,7 @@ export function useSparklerReveal({
       advance,
       scrubTo,
       ttsFollow,
+      revealAll,
       reset,
       sizeCanvas,
       _startLoop: startLoop,

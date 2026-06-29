@@ -63,9 +63,10 @@ export default function ReaderActions({
   onBackToPoem,
   onBackToInsights,
   onShare,
+  onListen,
   onTogglePlay,
-  onPrevPoem,
-  onNextPoem,
+  onPrevVerse,
+  onNextVerse,
 }) {
   const [listenActive, setListenActive] = useState(false);
 
@@ -74,9 +75,9 @@ export default function ReaderActions({
     setListenActive(false);
   }, [poemId]);
 
-  const onListen = () => {
+  const handleListen = () => {
     setListenActive(true);
-    onTogglePlay?.();
+    onListen?.();
   };
 
   const reading = mode === 'reading';
@@ -89,7 +90,7 @@ export default function ReaderActions({
   if (showTransport) {
     left = (
       <div className="ra-transport" role="group" aria-label="Playback controls">
-        <button className="ra-disc ra-disc-ghost" onClick={onPrevPoem} aria-label="Previous poem">
+        <button className="ra-disc ra-disc-ghost" onClick={onPrevVerse} aria-label="Previous verse">
           <IconPrev />
         </button>
         <button
@@ -99,14 +100,18 @@ export default function ReaderActions({
         >
           {isGeneratingAudio ? <IconSpinner /> : isPlaying ? <IconPause /> : <IconPlay />}
         </button>
-        <button className="ra-disc ra-disc-ghost" onClick={onNextPoem} aria-label="Next poem">
+        <button className="ra-disc ra-disc-ghost" onClick={onNextVerse} aria-label="Next verse">
           <IconNext />
         </button>
       </div>
     );
   } else if (onPoem) {
     left = (
-      <button className="ra-btn ra-btn-secondary" onClick={onListen} aria-label="Start recitation">
+      <button
+        className="ra-btn ra-btn-secondary"
+        onClick={handleListen}
+        aria-label="Start recitation"
+      >
         <span className="ra-label">Listen</span>
       </button>
     );

@@ -93,6 +93,7 @@ import {
   playbackStartTime,
   isSeeking,
   setWindowedReveal,
+  applyHighlightsOnce,
 } from './hooks/useTTSHighlight.js';
 import { useIdleTimer } from './hooks/useIdleTimer.js';
 import DebugPanel from './components/DebugPanel.jsx';
@@ -950,6 +951,42 @@ export default function DiwanApp() {
   const togglePlay = () =>
     togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track });
 
+  // Seek the recitation to a given second offset (ported from PlayControlsStrip). Used by the
+  // reader's transport prev/next to jump between verses while listening.
+  const seekToOffset = (offset) => {
+    const { player, isPlaying: wasPlaying, setPlaying } = useAudioStore.getState();
+    if (!player) return;
+    isSeeking.value = true;
+    if (wasPlaying) setPlaying(true);
+    try {
+      player.stop();
+    } catch {
+      /* already stopped */
+    }
+    if (wasPlaying) {
+      startPlayer(player, offset);
+    } else {
+      pauseOffset.value = offset;
+      playbackStartTime.value = Date.now() / 1000;
+      applyHighlightsOnce(
+        offset,
+        wordRefs,
+        wordOffsets,
+        wordTimings,
+        effectiveDuration,
+        setCurrentVerseIndex
+      );
+    }
+  };
+  const handlePrevVerse = () => {
+    const idx = useAudioStore.getState().player ? currentVerseIndex : 0;
+    seekToOffset(idx > 0 ? verseStartTimes[idx - 1] : 0);
+  };
+  const handleNextVerse = () => {
+    const next = currentVerseIndex + 1;
+    if (next < verseStartTimes.length) seekToOffset(verseStartTimes[next]);
+  };
+
   // Cycle the reading voice (the pill next to Listen). Voice is part of the audio
   // cache key, so playback regenerates in the new voice. If audio is currently
   // playing or generating, stop it and restart in the new voice so the change is
@@ -1717,6 +1754,8 @@ export default function DiwanApp() {
                           }}
                           isGeneratingAudio={isGeneratingAudio}
                           onTogglePlay={togglePlay}
+                          onPrevVerse={handlePrevVerse}
+                          onNextVerse={handleNextVerse}
                           onStopAudio={() => {
                             const { player, resetAudio } = useAudioStore.getState();
                             try {

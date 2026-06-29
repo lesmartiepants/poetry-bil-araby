@@ -42,8 +42,8 @@ const PoemReader = memo(function PoemReader({
   isGeneratingAudio = false,
   onTogglePlay,
   onStopAudio,
-  onPrevPoem,
-  onNextPoem,
+  onPrev,
+  onNext,
   onShare,
   // Reveal controller registration
   onRevealReady,
@@ -210,6 +210,12 @@ const PoemReader = memo(function PoemReader({
 
   const handleAdvance = () => {
     if (!isRevealing) controller?.advance();
+  };
+  // Tapping Listen loads the whole poem (advancing bayt-by-bayt is moot once you're listening) and
+  // starts playback; the right action then becomes "Poem Insights" (poem is fully revealed → idle).
+  const handleListen = () => {
+    controller?.revealAll();
+    onTogglePlay?.();
   };
   const handleSeeMeaning = () => {
     onStopAudio?.(); // entering insights stops the recitation (it's prose, not the poem)
@@ -400,9 +406,10 @@ const PoemReader = memo(function PoemReader({
               onBackToPoem={handleBackToPoem}
               onBackToInsights={handleBackToInsights}
               onShare={onShare}
+              onListen={handleListen}
               onTogglePlay={onTogglePlay}
-              onPrevPoem={onPrevPoem}
-              onNextPoem={onNextPoem}
+              onPrevVerse={onPrev}
+              onNextVerse={onNext}
             />
           </div>
         )}

@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=412px, initial-scale=1.0">
+<title>FINAL — Molten Gold × Option 2 transport · قافية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Reem+Kufi:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   DESIGN TOKENS — ALL VALUES VIA CSS CUSTOM PROPERTIES
+   ============================================================ */
+:root {
+  /* Palette */
+  --color-bg:             #0c0c0e;
+  --color-surface:        #111115;
+  --color-surface-raised: #16161b;
+  --color-text-primary:   rgba(236, 232, 224, 0.92);
+  --color-text-dim:       rgba(236, 232, 224, 0.55);
+  --color-text-muted:     rgba(236, 232, 224, 0.28);
+
+  /* Gold system */
+  --gold-core:   #c5a059;
+  --gold-light:  #d4b463;
+  --gold-bright: #e8cc7a;
+  --gold-deep:   #a8853d;
+  --gold-shadow: rgba(197, 160, 89, 0.18);
+  --gold-glow:   rgba(212, 180, 99, 0.22);
+
+  /* Molten gold gradient — the signature cast-metal material */
+  --gradient-molten:
+    linear-gradient(
+      135deg,
+      #a8853d 0%,
+      #c5a059 22%,
+      #e0c97a 38%,
+      #d4b463 48%,
+      #b8924a 62%,
+      #d8bc6e 78%,
+      #c5a059 100%
+    );
+
+  /* Cooled gold (secondary) — matte, oxidised */
+  --gradient-cooled:
+    linear-gradient(
+      135deg,
+      rgba(160, 128, 60, 0.08) 0%,
+      rgba(197, 160, 89, 0.05) 100%
+    );
+
+  /* Specular sheen — the drifting highlight layer */
+  --gradient-sheen:
+    linear-gradient(
+      105deg,
+      transparent 0%,
+      transparent 28%,
+      rgba(255, 248, 220, 0.28) 42%,
+      rgba(255, 252, 235, 0.18) 50%,
+      transparent 62%,
+      transparent 100%
+    );
+
+  /* Track + chrome */
+  --color-track:        rgba(160, 160, 160, 0.3);
+  --color-chrome-border: rgba(197, 160, 89, 0.12);
+  --color-chrome-bg:    rgba(12, 12, 14, 0.96);
+
+  /* Typography */
+  --font-arabic:  'Amiri', 'Reem Kufi', serif;
+  --font-ui:      'Reem Kufi', system-ui, sans-serif;
+  --font-english: 'Cormorant Garamond', Georgia, serif;
+  --font-system:  system-ui, -apple-system, sans-serif;
+
+  /* Type scale */
+  --size-poem-arabic:  clamp(1.25rem, 3.5vw, 1.5rem);
+  --size-poem-english: clamp(0.88rem, 2.5vw, 1rem);
+  --size-btn-label:    clamp(0.68rem, 1.9vw, 0.78rem);
+  --size-cue:          clamp(0.63rem, 1.7vw, 0.7rem);
+  --size-handle:       14px;
+
+  /* Spacing (4px base) */
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* Radii */
+  --radius-pill:   999px;
+  --radius-circle: 50%;
+  --radius-track:  3px;
+
+  /* Motion — premium cubic-bezier only, no default ease */
+  --ease-out-expo:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart:  cubic-bezier(0.25, 1, 0.5, 1);
+  --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-in-quart:   cubic-bezier(0.5, 0, 0.75, 0);
+  --ease-molten:     cubic-bezier(0.22, 0.61, 0.36, 1);
+
+  /* Motion durations */
+  --dur-hero:    0.7s;
+  --dur-section: 0.45s;
+  --dur-content: 0.32s;
+  --dur-hover:   0.18s;
+  --dur-press:   0.1s;
+  --dur-morph:   0.42s;
+  --dur-sheen:   2.8s;
+
+  /* Layout */
+  --phone-width:      412px;
+  --progress-height:  3px;
+  --btn-height:       52px;
+  --touch-target:     44px;
+  /* Transport round buttons */
+  --transport-disc:   46px;
+  --transport-gap:    9px;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-size: 16px;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-system);
+  direction: ltr;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--sp-10) var(--sp-4) var(--sp-8);
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* ============================================================
+   PAGE TITLE
+   ============================================================ */
+.page-title {
+  font-family: var(--font-system);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-core);
+  text-align: center;
+  margin-bottom: var(--sp-6);
+  opacity: 0.85;
+}
+
+/* ============================================================
+   PHONE CANVAS SHELL
+   ============================================================ */
+.phone-canvas {
+  width: var(--phone-width);
+  max-width: 100%;
+  position: relative;
+  border-radius: 40px;
+  overflow: hidden;
+  background: var(--color-bg);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.08),
+    0 32px 80px rgba(0, 0, 0, 0.75),
+    0 8px 24px rgba(0, 0, 0, 0.5);
+  flex-shrink: 0;
+}
+
+/* Radial vignette behind chrome */
+.phone-canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at 50% 40%,
+    transparent 40%,
+    rgba(12, 12, 14, 0.5) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ============================================================
+   POEM READER AREA
+   ============================================================ */
+.poem-reader {
+  min-height: 460px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-12) var(--sp-8) var(--sp-6);
+  gap: var(--sp-5);
+  position: relative;
+}
+
+/* Nav dots — always LTR so active reads left-first */
+.reader-nav {
+  position: absolute;
+  top: var(--sp-6);
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: row;
+  direction: ltr;
+  justify-content: center;
+  gap: var(--sp-2);
+  opacity: 0.35;
+}
+
+.nav-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-text-primary);
+}
+
+.nav-dot.active {
+  width: 16px;
+  border-radius: 2px;
+  background: var(--gold-core);
+}
+
+/* Poem text */
+.poem-bayt {
+  text-align: center;
+  opacity: 0.35;
+}
+
+.poem-line-arabic {
+  font-family: var(--font-arabic);
+  font-size: var(--size-poem-arabic);
+  line-height: 1.9;
+  color: var(--color-text-primary);
+  letter-spacing: 0.01em;
+}
+
+.poem-line-english {
+  font-family: var(--font-english);
+  font-style: italic;
+  font-size: var(--size-poem-english);
+  line-height: 1.65;
+  color: var(--color-text-dim);
+  margin-top: var(--sp-1);
+  direction: ltr;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 360px;
+}
+
+/* Divider between bayts */
+.poem-divider {
+  width: 1px;
+  height: 20px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(197, 160, 89, 0.25),
+    transparent
+  );
+  opacity: 0.35;
+}
+
+/* ============================================================
+   BOTTOM CHROME
+   ============================================================ */
+.bottom-chrome {
+  position: relative;
+  z-index: 10;
+  background: var(--color-chrome-bg);
+  border-top: 1px solid var(--color-chrome-border);
+  padding:
+    var(--sp-4)
+    var(--sp-5)
+    calc(var(--sp-4) + env(safe-area-inset-bottom, 0px));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Top glow line */
+.bottom-chrome::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(197, 160, 89, 0.4),
+    transparent
+  );
+}
+
+/* ============================================================
+   PROGRESS / SCRUB BAR
+   ============================================================ */
+.progress-wrap {
+  position: relative;
+  height: var(--touch-target);
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--sp-3);
+  cursor: pointer;
+}
+
+.progress-track {
+  width: 100%;
+  height: var(--progress-height);
+  background: var(--color-track);
+  border-radius: var(--radius-track);
+  position: relative;
+  overflow: visible;
+}
+
+.progress-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 42%;
+  border-radius: var(--radius-track);
+  background: linear-gradient(
+    to right,
+    var(--gold-deep),
+    var(--gold-core),
+    var(--gold-light)
+  );
+  box-shadow: 0 0 6px rgba(197, 160, 89, 0.4);
+  transition: width var(--dur-content) var(--ease-out-quart);
+}
+
+.progress-handle {
+  position: absolute;
+  top: 50%;
+  left: 42%;
+  transform: translate(-50%, -50%);
+  width: var(--size-handle);
+  height: var(--size-handle);
+  border-radius: var(--radius-circle);
+  background: var(--gradient-molten);
+  box-shadow:
+    0 0 0 2px rgba(12, 12, 14, 0.9),
+    0 0 8px rgba(197, 160, 89, 0.5),
+    0 2px 4px rgba(0, 0, 0, 0.4);
+  transition:
+    transform var(--dur-hover) var(--ease-spring),
+    box-shadow var(--dur-hover) var(--ease-out-quart);
+  cursor: grab;
+  flex-shrink: 0;
+}
+
+.progress-wrap:hover .progress-handle {
+  transform: translate(-50%, -50%) scale(1.25);
+  box-shadow:
+    0 0 0 2px rgba(12, 12, 14, 0.9),
+    0 0 14px rgba(197, 160, 89, 0.7),
+    0 3px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================================
+   BUTTON ROW
+   LTR screen order enforced: LEFT = secondary/back, RIGHT = primary/forward
+   ============================================================ */
+.btn-row {
+  display: flex;
+  flex-direction: row;
+  direction: ltr;
+  gap: var(--sp-3);
+  align-items: center;
+  width: 100%;
+}
+
+/* ============================================================
+   BUTTON BASE
+   ============================================================ */
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--btn-height);
+  border-radius: var(--radius-pill);
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-ui);
+  font-size: var(--size-btn-label);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0 var(--sp-5);
+  white-space: nowrap;
+  overflow: hidden;
+  flex: 1 1 0;
+  min-width: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Expanded tap target */
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+/* ============================================================
+   PRIMARY BUTTON — MOLTEN GOLD (THE JEWEL)
+   Multi-stop gradient, drifting specular sheen, convex top highlight,
+   non-uniform scale press — the star of the design.
+   ============================================================ */
+.btn-primary {
+  background: var(--gradient-molten);
+  color: #1a1200;
+  background-size: 200% 200%;
+  background-position: 60% 40%;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.25) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset,
+    0 4px 16px rgba(197, 160, 89, 0.28),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+  transition:
+    transform var(--dur-hover) var(--ease-out-expo),
+    box-shadow var(--dur-hover) var(--ease-out-quart),
+    background-position var(--dur-hover) var(--ease-out-quart);
+}
+
+/* Drifting specular sheen — drifts left → right, pauses, repeats */
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-pill);
+  background: var(--gradient-sheen);
+  background-size: 200% 100%;
+  background-position: -100% 0;
+  animation: sheen-drift var(--dur-sheen) var(--ease-out-quart) infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Convex top highlight arc */
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 12%;
+  right: 12%;
+  height: 40%;
+  border-radius: var(--radius-pill) var(--radius-pill) 60% 60%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 252, 230, 0.22),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.btn-primary-label {
+  position: relative;
+  z-index: 3;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px) scale(1.01);
+  background-position: 40% 30%;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.3) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset,
+    0 8px 24px rgba(197, 160, 89, 0.38),
+    0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+/* THE SIGNATURE MOLTEN PRESS: non-uniform scale + vertical compress */
+.btn-primary:active {
+  animation: molten-press var(--dur-press) var(--ease-molten) forwards;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.15) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 2px 8px rgba(197, 160, 89, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================
+   SECONDARY BUTTON — COOLED GOLD (OXIDISED HAIRLINE RIM)
+   ============================================================ */
+.btn-secondary {
+  background: var(--gradient-cooled);
+  color: var(--gold-light);
+  border: none;
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.28) inset,
+    0 1px 0 rgba(255, 248, 210, 0.05) inset,
+    0 2px 8px rgba(0, 0, 0, 0.2);
+  transition:
+    transform var(--dur-hover) var(--ease-out-expo),
+    box-shadow var(--dur-hover) var(--ease-out-quart),
+    background var(--dur-hover) var(--ease-out-quart);
+}
+
+/* Hairline specular on top edge */
+.btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(197, 160, 89, 0.3),
+    transparent
+  );
+  border-radius: var(--radius-pill);
+  pointer-events: none;
+}
+
+/* ::after cleared — secondary has no highlight arc */
+.btn-secondary::after {
+  content: none;
+}
+
+.btn-secondary-label {
+  position: relative;
+  z-index: 1;
+}
+
+.btn-secondary:hover {
+  transform: translateY(-1px);
+  background: linear-gradient(
+    135deg,
+    rgba(160, 128, 60, 0.13) 0%,
+    rgba(197, 160, 89, 0.08) 100%
+  );
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.45) inset,
+    0 1px 0 rgba(255, 248, 210, 0.07) inset,
+    0 4px 14px rgba(0, 0, 0, 0.28),
+    0 0 12px rgba(197, 160, 89, 0.08);
+}
+
+.btn-secondary:active {
+  transform: translateY(0) scale(0.985);
+  transition-duration: var(--dur-press);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.35) inset,
+    0 1px 0 rgba(255, 248, 210, 0.04) inset,
+    0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================================
+   TRANSPORT MORPH — THREE-ROUND-BUTTON CLUSTER
+   Replaces the LEFT pill when Listen is tapped.
+   Occupies flex:1 (same slot as the secondary button).
+   Three separate discs: ⏮  ▶/⏸  ⏭
+   ============================================================ */
+
+/* Wrapper — takes the same flex:1 slot as .btn-secondary.
+   A subtle hairline pill container anchors the three discs visually,
+   matching the secondary pill's footprint opposite the primary.
+   Same inset-shadow rim treatment as .btn-secondary so the two
+   left-slot states (pill vs cluster) feel like the same material. */
+.transport-cluster {
+  flex: 1;
+  height: var(--btn-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  border-radius: var(--radius-pill);
+  /* Oxidised hairline rim — same as .btn-secondary */
+  background: var(--gradient-cooled);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.28) inset,
+    0 1px 0 rgba(255, 248, 210, 0.05) inset,
+    0 2px 8px rgba(0, 0, 0, 0.2);
+  /* Hairline specular via pseudo — same as .btn-secondary::before */
+  position: relative;
+  /* No overflow:hidden — play disc is slightly larger and must not clip */
+}
+
+/* Top-edge specular line matching .btn-secondary */
+.transport-cluster::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(197, 160, 89, 0.3),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Discs sit above the container pseudo layer */
+.transport-cluster .tdisc {
+  position: relative;
+  z-index: 1;
+}
+
+/* All three round buttons share base geometry */
+.tdisc {
+  width: var(--transport-disc);
+  height: var(--transport-disc);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  cursor: pointer;
+  border: none;
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  line-height: 1;
+  font-variant-emoji: text;
+  text-rendering: optimizeLegibility;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform;
+  transform: translateZ(0);
+  position: relative;
+  min-height: var(--touch-target);
+  min-width: var(--touch-target);
+}
+
+/* Tap target extension */
+.tdisc::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+
+/* Prev / Next: transparent inside the container pill.
+   The container pill provides the oxidised rim and surface.
+   Ghost discs carry only icon colour — no double-border. */
+.tdisc-ghost {
+  background: transparent;
+  color: rgba(197, 160, 89, 0.65);
+  box-shadow: none;
+  transition:
+    transform var(--dur-hover) var(--ease-out-expo),
+    color var(--dur-hover) var(--ease-out-quart),
+    background var(--dur-hover) var(--ease-out-quart);
+}
+
+/* No pseudo border — container provides hairline */
+.tdisc-ghost::before { content: none; }
+
+.tdisc-ghost:hover {
+  transform: scale(1.14);
+  color: var(--gold-bright);
+  background: rgba(197, 160, 89, 0.07);
+  border-radius: 50%;
+}
+
+.tdisc-ghost:active {
+  transform: scale(0.86);
+  transition-duration: var(--dur-press);
+  color: var(--gold-core);
+  background: transparent;
+}
+
+/* Play/Pause disc — small molten-gold cast-metal piece
+   Same gradient material as the primary button, scaled down to a circle.
+   +2px over ghost discs: just enough size hierarchy without crowding
+   the 52px btn-height container (leaves 3px breathing room each side). */
+.tdisc-play {
+  width: calc(var(--transport-disc) + 2px);
+  height: calc(var(--transport-disc) + 2px);
+  background: var(--gradient-molten);
+  color: #1a1200;
+  background-size: 200% 200%;
+  background-position: 60% 40%;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.28) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.32) inset,
+    0 5px 18px rgba(197, 160, 89, 0.38),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+  align-self: center;
+  transition:
+    transform var(--dur-hover) var(--ease-out-expo),
+    box-shadow var(--dur-hover) var(--ease-out-quart),
+    background-position var(--dur-hover) var(--ease-out-quart);
+  font-size: 0.78rem;
+}
+
+/* Specular sheen on play disc — same drift as primary, adapted for circle */
+.tdisc-play::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--gradient-sheen);
+  background-size: 200% 100%;
+  background-position: -100% 0;
+  animation: sheen-drift var(--dur-sheen) var(--ease-out-quart) 0.4s infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Convex arc highlight on play disc */
+.tdisc-play::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 15%;
+  right: 15%;
+  height: 35%;
+  border-radius: 50% 50% 60% 60%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 252, 230, 0.22),
+    transparent
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tdisc-play-icon {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.tdisc-play:hover {
+  transform: translateY(-1px) scale(1.05);
+  background-position: 40% 30%;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.3) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset,
+    0 8px 20px rgba(197, 160, 89, 0.42),
+    0 3px 8px rgba(0, 0, 0, 0.45);
+}
+
+.tdisc-play:active {
+  animation: molten-press-disc var(--dur-press) var(--ease-molten) forwards;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.15) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.4) inset,
+    0 2px 6px rgba(197, 160, 89, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================
+   PULL-UP CUE
+   ============================================================ */
+.pull-cue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+  padding-bottom: var(--sp-2);
+  color: var(--color-text-muted);
+  font-family: var(--font-system);
+  font-size: var(--size-cue);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  min-height: 28px;
+}
+
+.pull-cue-arrow {
+  font-size: 0.65rem;
+  display: inline-block;
+  animation: bob-up 2.2s var(--ease-spring) 0.3s infinite;
+}
+
+/* ============================================================
+   KEYFRAMES
+   ============================================================ */
+
+@keyframes sheen-drift {
+  0%   { background-position: -100% 0; opacity: 0; }
+  8%   { opacity: 1; }
+  55%  { background-position: 200% 0; opacity: 0; }
+  100% { background-position: 200% 0; opacity: 0; }
+}
+
+/* Signature molten press — non-uniform scale + vertical compress */
+@keyframes molten-press {
+  0%   { transform: translateY(0) scale(1, 1); }
+  30%  { transform: translateY(1.5px) scale(0.975, 0.97); }
+  65%  { transform: translateY(1px) scale(0.982, 0.978); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+/* Same energy for the circular play disc */
+@keyframes molten-press-disc {
+  0%   { transform: translateY(0) scale(1); }
+  35%  { transform: translateY(1px) scale(0.92); }
+  70%  { transform: translateY(0.5px) scale(0.95); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes bob-up {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-3px); }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .btn-primary::before,
+  .tdisc-play::before  { animation: none; }
+  .btn-primary:active  { animation: none; }
+  .tdisc-play:active   { animation: none; }
+  .pull-cue-arrow      { animation: none; }
+}
+
+/* ============================================================
+   STATE MATRIX (below phone canvas)
+   ============================================================ */
+.matrix-sheet {
+  width: var(--phone-width);
+  max-width: 100%;
+  margin-top: var(--sp-8);
+  background: var(--color-surface);
+  border-radius: 24px;
+  border: 1px solid rgba(197, 160, 89, 0.08);
+  padding: var(--sp-5) var(--sp-5) var(--sp-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.matrix-title {
+  font-family: var(--font-system);
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-core);
+  text-align: center;
+  padding-bottom: var(--sp-4);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.1);
+}
+
+.matrix-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.state-label {
+  font-family: var(--font-system);
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  padding-inline-start: var(--sp-1);
+  direction: ltr;
+  text-align: left;
+  margin-bottom: 2px;
+}
+
+.matrix-chrome {
+  background: rgba(197, 160, 89, 0.03);
+  border: 1px solid rgba(197, 160, 89, 0.07);
+  border-radius: 16px;
+  padding: var(--sp-3) var(--sp-4) var(--sp-4);
+}
+
+/* Condensed scrub in matrix */
+.matrix-chrome .progress-wrap {
+  height: 28px;
+  margin-bottom: var(--sp-2);
+}
+
+/* Slightly shorter buttons in matrix — applied to both pill buttons
+   and the transport cluster wrapper to keep row heights consistent */
+.matrix-chrome .btn,
+.matrix-chrome .transport-cluster {
+  height: 46px;
+}
+
+/* Within the matrix, transport discs scale down 2px to breathe
+   inside the shorter 46px cluster height */
+.matrix-chrome .tdisc {
+  width: calc(var(--transport-disc) - 2px);
+  height: calc(var(--transport-disc) - 2px);
+  min-width: calc(var(--transport-disc) - 2px);
+  min-height: calc(var(--transport-disc) - 2px);
+}
+
+.matrix-chrome .tdisc-play {
+  width: calc(var(--transport-disc));
+  height: calc(var(--transport-disc));
+}
+
+/* ============================================================
+   TRANSPORT MORPH ANNOTATION
+   ============================================================ */
+.morph-note {
+  font-family: var(--font-system);
+  font-size: 0.55rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold-core);
+  opacity: 0.55;
+  margin-top: var(--sp-2);
+  text-align: left;
+  direction: ltr;
+}
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+.footer-note {
+  width: var(--phone-width);
+  max-width: 100%;
+  margin-top: var(--sp-5);
+  padding: var(--sp-4) var(--sp-5) var(--sp-6);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+}
+
+.footer-philosophy {
+  font-family: var(--font-system);
+  font-size: 0.58rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold-core);
+  opacity: 0.7;
+}
+
+.footer-desc {
+  font-family: var(--font-english);
+  font-style: italic;
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+  line-height: 1.65;
+}
+</style>
+</head>
+<body>
+
+<div class="page-title">FINAL — Molten Gold × Option 2 Transport</div>
+
+<!-- ============================================================
+     HERO: PHONE CANVAS — READING STATE
+     ============================================================ -->
+<div class="phone-canvas" role="main" aria-label="Poem reader — Reading state">
+
+  <!-- Faint poem content — 35% opacity -->
+  <div class="poem-reader">
+
+    <!-- Nav progress dots (LTR enforced) -->
+    <div class="reader-nav" dir="ltr" aria-hidden="true">
+      <div class="nav-dot active"></div>
+      <div class="nav-dot"></div>
+      <div class="nav-dot"></div>
+    </div>
+
+    <!-- Bayt 1 -->
+    <div class="poem-bayt" dir="rtl" lang="ar">
+      <div class="poem-line-arabic">يا دارَ مَيَّةَ بالعَلياءِ فالسَّنَدِ</div>
+      <div class="poem-line-english" dir="ltr" lang="en">O house of Mayya, on the heights and slope</div>
+    </div>
+
+    <div class="poem-divider" aria-hidden="true"></div>
+
+    <!-- Bayt 2 -->
+    <div class="poem-bayt" dir="rtl" lang="ar">
+      <div class="poem-line-arabic">أقوَت وطالَ عليها سالِفُ الأمَدِ</div>
+      <div class="poem-line-english" dir="ltr" lang="en">Desolate — long ages have passed over it</div>
+    </div>
+
+  </div>
+
+  <!-- ===========================
+       BOTTOM CHROME — READING STATE
+       =========================== -->
+  <div class="bottom-chrome" role="region" aria-label="Playback controls">
+
+    <!-- Scrub bar -->
+    <div class="progress-wrap"
+         role="slider"
+         aria-label="Poem progress"
+         aria-valuenow="42"
+         aria-valuemin="0"
+         aria-valuemax="100">
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-fill"></div>
+        <div class="progress-handle"></div>
+      </div>
+    </div>
+
+    <!-- Reading: LEFT "Listen" | RIGHT "Next Bayt" -->
+    <div class="btn-row">
+      <button class="btn btn-secondary" aria-label="Listen to poem" type="button">
+        <span class="btn-secondary-label">Listen</span>
+      </button>
+      <button class="btn btn-primary" aria-label="Next verse" type="button">
+        <span class="btn-primary-label">Next Bayt</span>
+      </button>
+    </div>
+
+    <!-- Pull-up cue -->
+    <div class="pull-cue" aria-label="Pull up for next poem" role="status">
+      <span class="pull-cue-arrow" aria-hidden="true">↑</span>
+      <span>Pull up for next poem</span>
+    </div>
+
+  </div><!-- /bottom-chrome -->
+
+</div><!-- /phone-canvas hero -->
+
+
+<!-- ============================================================
+     STATE MATRIX
+     ============================================================ -->
+<div class="matrix-sheet" role="complementary" aria-label="All button states">
+
+  <div class="matrix-title">State Matrix — All Transitions</div>
+
+  <!-- State: Poem Fully Revealed -->
+  <div class="matrix-row">
+    <div class="state-label">Poem fully revealed</div>
+    <div class="matrix-chrome">
+      <div class="progress-wrap" aria-hidden="true">
+        <div class="progress-track">
+          <div class="progress-fill" style="width:100%;"></div>
+          <div class="progress-handle" style="left:calc(100% - 7px);"></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" type="button" aria-label="Listen">
+          <span class="btn-secondary-label">Listen</span>
+        </button>
+        <button class="btn btn-primary" type="button" aria-label="Poem Insights">
+          <span class="btn-primary-label">Poem Insights</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- State: Meaning Shown -->
+  <div class="matrix-row">
+    <div class="state-label">Meaning shown</div>
+    <div class="matrix-chrome">
+      <div class="progress-wrap" aria-hidden="true">
+        <div class="progress-track">
+          <div class="progress-fill" style="width:60%;"></div>
+          <div class="progress-handle" style="left:60%;"></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" type="button" aria-label="Back to Poem">
+          <span class="btn-secondary-label">Back to Poem</span>
+        </button>
+        <button class="btn btn-primary" type="button" aria-label="Author Insights">
+          <span class="btn-primary-label">Author Insights</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- State: Author Shown -->
+  <div class="matrix-row">
+    <div class="state-label">Author shown</div>
+    <div class="matrix-chrome">
+      <div class="progress-wrap" aria-hidden="true">
+        <div class="progress-track">
+          <div class="progress-fill" style="width:80%;"></div>
+          <div class="progress-handle" style="left:80%;"></div>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-secondary" type="button" aria-label="Back to Insights">
+          <span class="btn-secondary-label">Back to Insights</span>
+        </button>
+        <button class="btn btn-primary" type="button" aria-label="Share">
+          <span class="btn-primary-label">Share</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- State: Transport Morph (Listen → ⏮ ▶/⏸ ⏭) -->
+  <div class="matrix-row">
+    <div class="state-label">Transport — Listen morphed in place</div>
+    <div class="matrix-chrome">
+      <div class="progress-wrap" aria-hidden="true">
+        <div class="progress-track">
+          <div class="progress-fill" style="width:35%;"></div>
+          <div class="progress-handle" style="left:35%;"></div>
+        </div>
+      </div>
+      <div class="btn-row">
+
+        <!-- LEFT: Three-round transport cluster — fills the flex:1 slot -->
+        <div class="transport-cluster" role="group" aria-label="Audio transport controls">
+
+          <!-- Prev: skip-back glyph via SVG for crisp rendering -->
+          <button class="tdisc tdisc-ghost" type="button" aria-label="Previous">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <rect x="1.5" y="2" width="2" height="10" rx="1" fill="currentColor"/>
+              <path d="M11.5 3.2 L4.5 7 L11.5 10.8 Z" fill="currentColor"/>
+            </svg>
+          </button>
+
+          <!-- Play/Pause: molten disc -->
+          <button class="tdisc tdisc-play" type="button" aria-label="Pause playback">
+            <span class="tdisc-play-icon" aria-hidden="true">
+              <!-- Pause icon (two bars) -->
+              <svg width="13" height="14" viewBox="0 0 13 14" fill="none">
+                <rect x="1.5" y="2" width="3.5" height="10" rx="1.5" fill="currentColor"/>
+                <rect x="8" y="2" width="3.5" height="10" rx="1.5" fill="currentColor"/>
+              </svg>
+            </span>
+          </button>
+
+          <!-- Next: skip-forward glyph -->
+          <button class="tdisc tdisc-ghost" type="button" aria-label="Next">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+              <rect x="10.5" y="2" width="2" height="10" rx="1" fill="currentColor"/>
+              <path d="M2.5 3.2 L9.5 7 L2.5 10.8 Z" fill="currentColor"/>
+            </svg>
+          </button>
+
+        </div>
+
+        <!-- RIGHT: Primary — unchanged -->
+        <button class="btn btn-primary" type="button" aria-label="Next Bayt">
+          <span class="btn-primary-label">Next Bayt</span>
+        </button>
+
+      </div>
+      <div class="morph-note" aria-hidden="true">↖ left slot morphed from "Listen" pill → three round controls</div>
+    </div>
+  </div>
+
+</div><!-- /matrix-sheet -->
+
+
+<!-- Footer -->
+<div class="footer-note" aria-hidden="true">
+  <div class="footer-philosophy">Molten Gold × Option 2 Transport — Material / Physics</div>
+  <div class="footer-desc">
+    Cast-metal primary. Oxidised hairline secondary. When "Listen" is tapped, the left pill<br>
+    dissolves into three freestanding discs — ghost prev/next, molten play at centre.<br>
+    Every hover and press runs on professional cubic-bezier; no default ease anywhere.
+  </div>
+</div>
+
+</body>
+</html>

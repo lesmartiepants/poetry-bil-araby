@@ -104,7 +104,7 @@ handled with Framer Motion for a calm, considered feel.
 - Faithful English translation (cached, or generated on demand)
 - Latin transliteration toggle
 - AI audio recitation with word-by-word highlighting synced to the voice
-- Eight Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh)
+- Nine Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh, Scheherazade New)
 - Dark and light themes
 - AI literary insight that reads a poem as a story, not an academic gloss
 

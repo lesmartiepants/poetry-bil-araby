@@ -1715,6 +1715,19 @@ export default function DiwanApp() {
                               useModalStore.getState().setInsightsDrawer(true);
                             }
                           }}
+                          isGeneratingAudio={isGeneratingAudio}
+                          onTogglePlay={togglePlay}
+                          onStopAudio={() => {
+                            const { player, resetAudio } = useAudioStore.getState();
+                            try {
+                              player?.stop?.();
+                            } catch {
+                              /* already stopped */
+                            }
+                            abortPlay();
+                            resetAudio();
+                          }}
+                          onShare={handleShare}
                         />
                       ) : (
                         <PoemCarousel
@@ -1849,34 +1862,7 @@ export default function DiwanApp() {
                   WebkitUserSelect: 'none',
                 }}
               >
-                {/* Listen (play / pause) */}
-                <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                  <button
-                    onClick={togglePlay}
-                    disabled={isGeneratingAudio}
-                    aria-label={
-                      isGeneratingAudio
-                        ? 'Preparing audio'
-                        : isPlaying
-                          ? 'Pause recitation'
-                          : 'Start recitation'
-                    }
-                    className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-                  >
-                    {isGeneratingAudio ? (
-                      <Loader2 className="animate-spin" style={{ color: GOLD.gold }} size={21} />
-                    ) : isPlaying ? (
-                      <Pause style={{ color: GOLD.gold }} size={21} />
-                    ) : (
-                      <Play style={{ color: GOLD.gold }} size={21} />
-                    )}
-                  </button>
-                  <span
-                    className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                  >
-                    {isGeneratingAudio ? 'Loading' : isPlaying ? 'Pause' : 'Listen'}
-                  </span>
-                </div>
+                {/* Listen moved into the reader's action buttons (ReaderActions) — removed from nav. */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                   <button
                     onClick={() =>

@@ -46,6 +46,11 @@ const PoemFeed = forwardRef(function PoemFeed(
     insightParts = null,
     interpretation = null,
     onSeeInsight,
+    // Playback / transport / share (forwarded to the active reader's action buttons)
+    isGeneratingAudio = false,
+    onTogglePlay,
+    onStopAudio,
+    onShare,
   },
   ref
 ) {
@@ -277,6 +282,12 @@ const PoemFeed = forwardRef(function PoemFeed(
                   insightParts={isActive ? insightParts : null}
                   interpretation={isActive ? interpretation : null}
                   onSeeInsight={onSeeInsight}
+                  isGeneratingAudio={isActive ? isGeneratingAudio : false}
+                  onTogglePlay={onTogglePlay}
+                  onStopAudio={onStopAudio}
+                  onShare={onShare}
+                  onPrevPoem={() => goCard(curRef.current - 1)}
+                  onNextPoem={() => goCard(curRef.current + 1)}
                 />
               </div>
             );

@@ -3,6 +3,7 @@ import { gsap } from 'gsap';
 import SparklerStage from './SparklerStage.jsx';
 import ProgressScrubber from './ProgressScrubber.jsx';
 import InlineInsights from './InlineInsights.jsx';
+import ReaderActions from './ReaderActions.jsx';
 import { useRevealWindow } from '../../hooks/useRevealWindow.js';
 import { useSparklerReveal } from '../../hooks/useSparklerReveal.js';
 import { useAudioStore } from '../../stores/audioStore';
@@ -37,6 +38,13 @@ const PoemReader = memo(function PoemReader({
   insightParts = null,
   interpretation = null,
   onSeeInsight,
+  // Playback / transport (threaded from app via PoemFeed)
+  isGeneratingAudio = false,
+  onTogglePlay,
+  onStopAudio,
+  onPrevPoem,
+  onNextPoem,
+  onShare,
   // Reveal controller registration
   onRevealReady,
 }) {
@@ -194,34 +202,24 @@ const PoemReader = memo(function PoemReader({
       scrubFillRef.current.style.width = (atFrac * 100).toFixed(2) + '%';
   };
 
-  const handleTap = (e) => {
-    if (e.target.closest('[data-scrub], button, a')) return; // scrubber/controls handle themselves
-    if (!isAllRevealed) {
-      if (!isRevealing) controller?.advance(); // only advance once the current pair has animated
-      return;
-    }
-    // End-of-poem: tap progresses through the insight (no buttons — same tap rhythm). Each step is
-    // only allowed once the current section has fully rendered, so the reader can't skip ahead.
-    if (endStage === 'idle') {
-      onSeeInsight?.(poem);
-      setEndStage('meaning');
-    } else if (endStage === 'meaning' && insightParts?.author && insightDone) {
-      setEndStage('author');
-    }
-  };
-
   const inInsight = endStage !== 'idle';
 
-  // Bottom prompt — single "tap to continue" rhythm. It only appears when an advance is actually
-  // allowed: while reading, after the title intro settles, the opening pair is shown, and the
-  // current pair has finished animating (!isRevealing); in the insight, after the section is fully
-  // rendered. This forces the reader to keep pace instead of running ahead.
-  let promptText = null;
-  if (!isAllRevealed) {
-    if (revealedCount >= Math.min(2, lineCount) && !isRevealing) promptText = 'tap to continue';
-  } else if (endStage === 'idle') promptText = 'tap for meaning';
-  else if (endStage === 'meaning' && insightParts?.author && insightDone)
-    promptText = 'tap for the poet';
+  // Reader state drives the action buttons (buttons-only — the poem body no longer advances on tap).
+  const mode = !isAllRevealed ? 'reading' : endStage; // 'reading' | 'idle' | 'meaning' | 'author'
+  const hasAuthor = !!insightParts?.author;
+
+  const handleAdvance = () => {
+    if (!isRevealing) controller?.advance();
+  };
+  const handleSeeMeaning = () => {
+    onStopAudio?.(); // entering insights stops the recitation (it's prose, not the poem)
+    onSeeInsight?.(poem);
+    setEndStage('meaning');
+  };
+  const handleSeeAuthor = () => setEndStage('author');
+  const handleBackToPoem = () => setEndStage('idle');
+  const handleBackToInsights = () => setEndStage('meaning');
+
   // "pull up for the next poem" shows only once the current content has finished animating: in the
   // idle end-state after the poem reveal settles, and in the author end-state once the bio renders.
   const showCue =
@@ -234,9 +232,6 @@ const PoemReader = memo(function PoemReader({
       className="relative w-full h-full select-none"
       data-testid="poem-reader"
       data-poem-id={poemId}
-      onClick={handleTap}
-      role={!isAllRevealed ? 'button' : undefined}
-      aria-label={!isAllRevealed ? 'Tap to reveal the next lines' : undefined}
     >
       {/* Title intro / resting meta — pinned at the top (prototype location) */}
       <div
@@ -387,20 +382,30 @@ const PoemReader = memo(function PoemReader({
           />
         </div>
 
-        {/* Always rendered (reserves its line height) so the bar above never shifts when the prompt
-            is hidden — only its opacity changes. */}
-        <span
-          className="font-brand-en text-xs tracking-[0.16em] uppercase"
-          style={{
-            color: goldColor,
-            opacity: isActive && promptText ? 0.85 : 0,
-            minHeight: '1em',
-            lineHeight: 1,
-          }}
-          aria-hidden="true"
-        >
-          {promptText || ' '}
-        </span>
+        {/* Action buttons — replace the old "tap to continue" prompt. State-driven pair with the
+            Listen->transport morph; sits between the scrub bar and the pull-up cue. */}
+        {isActive && (
+          <div className="w-full" style={{ maxWidth: 'min(420px, 92vw)' }}>
+            <ReaderActions
+              mode={mode}
+              poemId={poemId}
+              isRevealing={isRevealing}
+              insightDone={insightDone}
+              hasAuthor={hasAuthor}
+              isPlaying={isPlaying}
+              isGeneratingAudio={isGeneratingAudio}
+              onAdvance={handleAdvance}
+              onSeeMeaning={handleSeeMeaning}
+              onSeeAuthor={handleSeeAuthor}
+              onBackToPoem={handleBackToPoem}
+              onBackToInsights={handleBackToInsights}
+              onShare={onShare}
+              onTogglePlay={onTogglePlay}
+              onPrevPoem={onPrevPoem}
+              onNextPoem={onNextPoem}
+            />
+          </div>
+        )}
 
         {/* pull-up cue — below the prompt; always reserves its height (only opacity toggles) so the
             bar/prompt above stay put. Shown only once the poem / insight has finished animating. */}

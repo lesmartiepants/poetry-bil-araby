@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useUIStore } from '../../stores/uiStore';
 import '../../styles/reader-actions.css';
 
 /* ── transport icons (inline SVG so they render consistently) ── */
@@ -69,6 +70,7 @@ export default function ReaderActions({
   onNextVerse,
 }) {
   const [listenActive, setListenActive] = useState(false);
+  const actionWeight = useUIStore((s) => s.actionWeight);
 
   // Reset the transport back to a plain "Listen" pill on poem change.
   useEffect(() => {
@@ -159,7 +161,7 @@ export default function ReaderActions({
   }
 
   return (
-    <div className="reader-actions" data-testid="reader-actions">
+    <div className="reader-actions" data-weight={actionWeight} data-testid="reader-actions">
       {left}
       {right}
     </div>

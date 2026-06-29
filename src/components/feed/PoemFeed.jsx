@@ -62,6 +62,8 @@ const PoemFeed = forwardRef(function PoemFeed(
   const curRef = useRef(currentIndex);
   const tweenRef = useRef(null);
   const drag = useRef({ down: false, sx: 0, sy: 0, base: 0, moved: 0, startT: 0, axis: null });
+  // The incoming poem's title we're currently enlarging as a drag preview ({ el, idx }).
+  const previewRef = useRef(null);
 
   // Swipe-to-navigate is handled at the window level (see the effect below) so a vertical swipe
   // anywhere — over the nav buttons, the rails, the empty bottom band — changes poems, not just on
@@ -92,6 +94,49 @@ const PoemFeed = forwardRef(function PoemFeed(
     if (trackRef.current) trackRef.current.style.transform = `translate3d(0, ${-y}px, 0)`;
   };
 
+  // ── drag preview: enlarge the incoming poem's title as you pull toward it ──
+  const metaElAt = (idx) =>
+    trackRef.current?.children?.[idx]?.querySelector?.('[data-testid="poem-meta"]') || null;
+
+  // Clear the current preview, restoring the title to its resting size. `animate` springs it back
+  // smoothly (used when the drag is abandoned); otherwise it snaps (used on commit / direction flip).
+  const clearPreview = (animate) => {
+    const p = previewRef.current;
+    previewRef.current = null;
+    if (!p?.el) return;
+    gsap.killTweensOf(p.el);
+    if (animate) {
+      gsap.to(p.el, {
+        scale: 1,
+        duration: 0.35,
+        ease: 'power3.out',
+        onComplete: () => gsap.set(p.el, { clearProps: 'transform' }),
+      });
+    } else {
+      gsap.set(p.el, { clearProps: 'transform' });
+    }
+  };
+
+  // Enlarge poem `idx`'s title to reflect drag progress (0→1). idx === null clears any preview.
+  const updatePreview = (idx, prog) => {
+    if (idx == null || idx < 0 || idx >= poems.length) {
+      clearPreview(false);
+      return;
+    }
+    let p = previewRef.current;
+    if (p && p.idx !== idx) {
+      clearPreview(false); // direction changed across zero — drop the old title first
+      p = null;
+    }
+    let el = p?.el;
+    if (!el) {
+      el = metaElAt(idx);
+      if (!el) return;
+      previewRef.current = { el, idx };
+    }
+    gsap.set(el, { scale: 1 + 0.22 * prog, transformOrigin: 'center top' });
+  };
+
   const animateFeed = useCallback((toY, duration = 0.85, ease = 'power4.out') => {
     tweenRef.current?.kill();
     const o = { y: feedYRef.current };
@@ -111,7 +156,7 @@ const PoemFeed = forwardRef(function PoemFeed(
       const prev = curRef.current;
       const changed = clamped !== prev;
       curRef.current = clamped;
-      animateFeed(clamped * H());
+      animateFeed(clamped * H(), 0.6, 'power4.out'); // snappy flip to the committed poem
       if (changed) {
         const dir = clamped > prev ? 'next' : 'prev';
         onSlideChange?.(clamped, dir);
@@ -195,27 +240,55 @@ const PoemFeed = forwardRef(function PoemFeed(
     const h = H();
     const pull = -dy; // positive = pulling up (toward next)
     const ax = Math.abs(pull);
-    // Rubber-band: the card follows ~1:1 at first, then resistance grows so movement asymptotes
-    // toward MAX — the further you pull the harder it gets, building anticipation before commit.
-    const MAX = h * 0.5;
-    const damped = (1 - 1 / (ax / MAX + 1)) * MAX;
-    setFeed(d.base + Math.sign(pull) * damped);
+    const dir = pull > 0 ? 1 : -1;
+    const atEnd =
+      (dir > 0 && curRef.current >= poems.length - 1) || (dir < 0 && curRef.current <= 0);
+    // Track the finger nearly 1:1 so the feed feels light and moves a lot per drag; only past ~55%
+    // of the viewport does a gentle resistance kick in, so you can pull far to preview the next poem
+    // without it feeling unbounded — and reversing returns you to exactly where you were.
+    const soft = h * 0.55;
+    let travel = ax <= soft ? ax : soft + (ax - soft) * 0.5;
+    travel = Math.min(travel, h * 0.9);
+    if (atEnd) travel = Math.min(ax, soft) * 0.3; // stiff overscroll at the first / last poem
+    setFeed(d.base + Math.sign(pull) * travel);
+    // Pop the incoming poem's title large as the drag grows (ramps over the first ~35% of the
+    // viewport, then holds). Abandoning the drag springs it back; reversing clears it for an exact
+    // return to the current poem.
+    if (atEnd) updatePreview(null, 0);
+    else updatePreview(curRef.current + dir, Math.min(1, ax / (h * 0.35)));
   };
   const onPointerUp = (e) => {
     const d = drag.current;
     if (!d.down) return;
     d.down = false;
     if (d.axis === 'h') return; // horizontal gesture → not a feed navigation
-    if (d.moved < 10) return; // tap → click falls through to PoemReader (advance reveal / insight)
+    if (d.moved < 10) {
+      clearPreview(false);
+      return; // tap → click falls through to PoemReader (advance reveal / insight)
+    }
     suppressNextClick(); // a real swipe — don't also trigger a button underneath the finger
     const dy = e.clientY - d.sy;
     const h = H();
-    // Require real commitment to change poems (~28% of the viewport of finger travel) so the feed
-    // isn't too eager; otherwise rubber-band back with a soft spring.
-    const thresh = h * 0.28;
-    if (-dy > thresh) goCard(curRef.current + 1);
-    else if (dy > thresh) goCard(curRef.current - 1);
-    else animateFeed(curRef.current * h, 0.6, 'back.out(1.2)'); // not enough → springy magnet back
+    const now = typeof performance !== 'undefined' ? performance.now() : 0;
+    const dt = now - d.startT;
+    const vel = dt > 0 ? -dy / dt : 0; // px/ms, positive = flicking up (toward next)
+    // Commit on either real travel (~32% of the viewport) OR a quick decisive flick, so a confident
+    // short swipe still flips while a slow tentative drag rubber-bands back — letting you preview
+    // and return to exactly where you were.
+    const thresh = h * 0.32;
+    const flick = Math.abs(vel) > 0.55 && d.moved > 24;
+    const goNext = (-dy > thresh || (flick && vel > 0)) && curRef.current < poems.length - 1;
+    const goPrev = (dy > thresh || (flick && vel < 0)) && curRef.current > 0;
+    if (goNext) {
+      clearPreview(false);
+      goCard(curRef.current + 1);
+    } else if (goPrev) {
+      clearPreview(false);
+      goCard(curRef.current - 1);
+    } else {
+      clearPreview(true); // shrink the previewed title back as the feed springs home
+      animateFeed(curRef.current * h, 0.55, 'back.out(1.3)');
+    }
   };
 
   // Keep the gesture refs current (written in an effect, never during render). The window

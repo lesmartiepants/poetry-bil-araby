@@ -118,6 +118,7 @@ const TextSettingsPill = () => {
   }, [sparkleColor]);
 
   const highlightStyle = useUIStore((s) => s.highlightStyle);
+  const actionWeight = useUIStore((s) => s.actionWeight);
 
   const HIGHLIGHT_STYLES = [
     { value: 'none', label: 'Off' },
@@ -125,6 +126,12 @@ const TextSettingsPill = () => {
     { value: 'underline', label: 'Line' },
     { value: 'pill', label: 'Pill' },
     { value: 'focus-blur', label: 'Blur' },
+  ];
+
+  const ACTION_WEIGHTS = [
+    { value: 'quiet', label: 'Quiet' },
+    { value: 'balanced', label: 'Balanced' },
+    { value: 'bold', label: 'Bold' },
   ];
 
   const getStore = useUIStore.getState;
@@ -327,6 +334,43 @@ const TextSettingsPill = () => {
                     style={{ color: gold }}
                   >
                     {s.label}
+                  </ToggleGroup.Item>
+                ))}
+              </ToggleGroup.Root>
+            </div>
+
+            {/* Row 6: Button weight (reader action buttons) */}
+            <div className="mt-3">
+              <span
+                className="text-xs uppercase tracking-wider opacity-60 mb-1.5 block"
+                style={{ color: gold }}
+              >
+                Buttons
+              </span>
+              <ToggleGroup.Root
+                type="single"
+                value={actionWeight}
+                onValueChange={(v) => {
+                  if (v) {
+                    getStore().setActionWeight(v);
+                    getStore().addLog('UI', `Button weight: ${v}`, 'user');
+                  }
+                }}
+                className="flex gap-1"
+              >
+                {ACTION_WEIGHTS.map((w) => (
+                  <ToggleGroup.Item
+                    key={w.value}
+                    value={w.value}
+                    data-action-weight={w.value}
+                    className={`flex-1 px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 border ${
+                      actionWeight === w.value
+                        ? 'bg-gold/20 border-gold/40'
+                        : 'opacity-50 hover:opacity-80 border-transparent'
+                    }`}
+                    style={{ color: gold }}
+                  >
+                    {w.label}
                   </ToggleGroup.Item>
                 ))}
               </ToggleGroup.Root>

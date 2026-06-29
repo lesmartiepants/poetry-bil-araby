@@ -79,22 +79,65 @@
   filter: saturate(0.7);
 }
 
-/* ── primary — Weight 2 "Balanced": soft gold-tint fill + ring + faint glow ──
-   (Switch the whole reader to W3 "Bold molten" by giving .ra-btn-primary the molten
-   gradient + dark label, or to W1 "Quiet" by dropping the fill to transparent.) */
+/* ── primary action button — three selectable weights ──
+   The weight is chosen in the Aa menu (uiStore.actionWeight) and applied via the
+   data-weight attribute on .reader-actions. Default = "bold" (molten gold).
+     • bold     — solid molten-gold fill, dark label (loudest / most premium)
+     • balanced — soft gold-tint fill + ring + faint glow
+     • quiet    — transparent, thin brighter-gold ring (most editorial) */
 .ra-btn-primary {
+  transition:
+    transform var(--ra-dur-hover) var(--ra-ease-out-expo),
+    box-shadow var(--ra-dur-hover) var(--ra-ease-out-quart),
+    background var(--ra-dur-hover) var(--ra-ease-out-quart);
+}
+.ra-btn-primary:not(:disabled):active {
+  transform: scale(0.985);
+  transition-duration: var(--ra-dur-press);
+}
+
+/* — Weight: BOLD (molten, default) — */
+.reader-actions[data-weight='bold'] .ra-btn-primary {
+  background: var(--ra-gradient-molten);
+  color: #1a1200;
+  font-weight: 600;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.25) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset,
+    0 4px 16px rgba(197, 160, 89, 0.28),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.reader-actions[data-weight='bold'] .ra-btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 12%;
+  right: 12%;
+  height: 40%;
+  border-radius: 999px 999px 60% 60%;
+  background: linear-gradient(to bottom, rgba(255, 252, 230, 0.22), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+.reader-actions[data-weight='bold'] .ra-btn-primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.3) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset,
+    0 6px 22px rgba(197, 160, 89, 0.36),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* — Weight: BALANCED — */
+.reader-actions[data-weight='balanced'] .ra-btn-primary {
   background: rgba(197, 160, 89, 0.16);
   color: var(--ra-gold-bright);
   box-shadow:
     0 0 0 1px rgba(197, 160, 89, 0.55) inset,
     0 1px 0 rgba(255, 248, 210, 0.06) inset,
     0 2px 10px rgba(197, 160, 89, 0.12);
-  transition:
-    transform var(--ra-dur-hover) var(--ra-ease-out-expo),
-    box-shadow var(--ra-dur-hover) var(--ra-ease-out-quart),
-    background var(--ra-dur-hover) var(--ra-ease-out-quart);
 }
-.ra-btn-primary:not(:disabled):hover {
+.reader-actions[data-weight='balanced'] .ra-btn-primary:not(:disabled):hover {
   transform: translateY(-1px);
   background: rgba(197, 160, 89, 0.22);
   box-shadow:
@@ -102,10 +145,20 @@
     0 1px 0 rgba(255, 248, 210, 0.08) inset,
     0 4px 16px rgba(197, 160, 89, 0.2);
 }
-.ra-btn-primary:not(:disabled):active {
-  transform: scale(0.985);
-  transition-duration: var(--ra-dur-press);
+.reader-actions[data-weight='balanced'] .ra-btn-primary:not(:disabled):active {
   background: rgba(197, 160, 89, 0.12);
+}
+
+/* — Weight: QUIET — */
+.reader-actions[data-weight='quiet'] .ra-btn-primary {
+  background: transparent;
+  color: var(--ra-gold-bright);
+  box-shadow: 0 0 0 1.5px rgba(197, 160, 89, 0.6) inset;
+}
+.reader-actions[data-weight='quiet'] .ra-btn-primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  background: rgba(197, 160, 89, 0.08);
+  box-shadow: 0 0 0 1.5px rgba(197, 160, 89, 0.8) inset;
 }
 
 /* ── secondary — cooled / oxidised ── */
@@ -227,12 +280,6 @@
 .ra-disc-play {
   width: calc(var(--ra-disc) + 2px);
   height: calc(var(--ra-disc) + 2px);
-  background: rgba(197, 160, 89, 0.18);
-  color: var(--ra-gold-bright);
-  box-shadow:
-    0 0 0 1px rgba(197, 160, 89, 0.6) inset,
-    0 1px 0 rgba(255, 248, 210, 0.08) inset,
-    0 2px 10px rgba(197, 160, 89, 0.15);
   transition:
     transform var(--ra-dur-hover) var(--ra-ease-out-expo),
     box-shadow var(--ra-dur-hover) var(--ra-ease-out-quart),
@@ -244,12 +291,43 @@
   width: 17px;
   height: 17px;
 }
-.ra-disc-play:hover {
+.ra-disc-play:active {
+  animation: ra-molten-press var(--ra-dur-press) var(--ra-ease-molten) forwards;
+}
+
+/* — disc weights, mirroring the primary button — */
+.reader-actions[data-weight='bold'] .ra-disc-play {
+  background: var(--ra-gradient-molten);
+  color: #1a1200;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.3) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset,
+    0 3px 12px rgba(197, 160, 89, 0.3),
+    0 2px 5px rgba(0, 0, 0, 0.3);
+}
+.reader-actions[data-weight='bold'] .ra-disc-play:hover {
+  transform: translateY(-1px) scale(1.05);
+}
+.reader-actions[data-weight='balanced'] .ra-disc-play {
+  background: rgba(197, 160, 89, 0.18);
+  color: var(--ra-gold-bright);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.6) inset,
+    0 1px 0 rgba(255, 248, 210, 0.08) inset,
+    0 2px 10px rgba(197, 160, 89, 0.15);
+}
+.reader-actions[data-weight='balanced'] .ra-disc-play:hover {
   transform: translateY(-1px) scale(1.05);
   background: rgba(197, 160, 89, 0.26);
 }
-.ra-disc-play:active {
-  animation: ra-molten-press var(--ra-dur-press) var(--ra-ease-molten) forwards;
+.reader-actions[data-weight='quiet'] .ra-disc-play {
+  background: transparent;
+  color: var(--ra-gold-bright);
+  box-shadow: 0 0 0 1.5px rgba(197, 160, 89, 0.6) inset;
+}
+.reader-actions[data-weight='quiet'] .ra-disc-play:hover {
+  transform: translateY(-1px) scale(1.05);
+  background: rgba(197, 160, 89, 0.08);
 }
 .ra-spin {
   animation: ra-spin 0.9s linear infinite;

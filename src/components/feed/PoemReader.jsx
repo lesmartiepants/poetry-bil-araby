@@ -9,8 +9,11 @@ import { useSparklerReveal } from '../../hooks/useSparklerReveal.js';
 import { useAudioStore } from '../../stores/audioStore';
 import { POEM_META } from '../../constants/index.js';
 
+// Treat a missing matchMedia (jsdom/SSR) as reduced motion so the intro collapses to its instant
+// path — the GSAP timeline can't run reliably without a real animation environment, and the action
+// buttons would otherwise stay gated behind an intro that never completes.
 const REDUCED_MOTION =
-  typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  typeof matchMedia === 'undefined' || matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
  * PoemReader — one poem panel in the vertical feed, rendered as the sparkler teleprompter.
@@ -66,6 +69,9 @@ const PoemReader = memo(function PoemReader({
   const [visRows, setVisRows] = useState(4);
   // True while a pair/line is animating — gates the tap prompt so the reader can't run ahead.
   const [isRevealing, setIsRevealing] = useState(false);
+  // False until the title intro has lifted the header to the top — gates the action buttons so
+  // they don't appear over the big centered title during the intro.
+  const [introDone, setIntroDone] = useState(false);
   // Insight reveal/scroll state, surfaced to the persistent scrub bar + tap gating.
   const [insightDone, setInsightDone] = useState(false); // current insight paragraph fully rendered
   const [insightCanScroll, setInsightCanScroll] = useState(false); // overflowing → show scroll handle
@@ -120,6 +126,7 @@ const PoemReader = memo(function PoemReader({
     introForRef.current = poemId;
     reset();
     setEndStage('idle');
+    setIntroDone(false); // hide the action buttons until the header settles up top
     const ctrl = controller;
     ctrl?.reset();
     const meta = metaRef.current;
@@ -130,6 +137,7 @@ const PoemReader = memo(function PoemReader({
     if (REDUCED_MOTION) {
       gsap.set(meta, { opacity: 1, y: 0, scale: 1 });
       gsap.set([stageWrap, scrub], { opacity: 1 });
+      setIntroDone(true);
       ctrl?.start();
       return;
     }
@@ -149,6 +157,7 @@ const PoemReader = memo(function PoemReader({
       .add(() => {
         gsap.to(stageWrap, { opacity: 1, duration: 0.5, ease: 'power2.out' });
         gsap.to(scrub, { opacity: 1, duration: 0.4, ease: 'power2.out' });
+        setIntroDone(true); // header is up → reveal the action buttons
       })
       .add(() => ctrl?.start(), '-=0.05');
 
@@ -391,7 +400,14 @@ const PoemReader = memo(function PoemReader({
         {/* Action buttons — replace the old "tap to continue" prompt. State-driven pair with the
             Listen->transport morph; sits between the scrub bar and the pull-up cue. */}
         {isActive && (
-          <div className="w-full" style={{ maxWidth: 'min(420px, 92vw)' }}>
+          <div
+            className="w-full"
+            style={{
+              maxWidth: 'min(420px, 92vw)',
+              opacity: introDone ? 1 : 0,
+              transition: 'opacity 0.4s ease',
+            }}
+          >
             <ReaderActions
               mode={mode}
               poemId={poemId}

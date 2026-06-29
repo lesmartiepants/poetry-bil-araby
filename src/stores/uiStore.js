@@ -62,6 +62,7 @@ const initialState = {
   liveVoice: loadLiveVoice(), // selected speaking voice, persisted (default DEFAULT_VOICE)
   liveTemperature: 0,
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
+  actionWeight: 'bold', // reader action buttons: 'quiet' | 'balanced' | 'bold' (molten) — visual intensity
   insightsMode: 'inline', // 'inline' = end-of-poem expand | 'drawer' = Vaul InsightOverlay (A/B test)
   logs: [],
   headerOpacity: 0,
@@ -99,6 +100,7 @@ export const useUIStore = create((set, get) => ({
   },
   setLiveTemperature: (liveTemperature) => set({ liveTemperature }),
   setHighlightStyle: (highlightStyle) => set({ highlightStyle }),
+  setActionWeight: (actionWeight) => set({ actionWeight }),
   setInsightsMode: (insightsMode) => set({ insightsMode }),
   toggleInsightsMode: () =>
     set((s) => ({ insightsMode: s.insightsMode === 'inline' ? 'drawer' : 'inline' })),

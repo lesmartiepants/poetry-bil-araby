@@ -2111,7 +2111,7 @@ export default function DiwanApp() {
 
       {/* TEMP: design-sprint button-pair mockups viewer (remove before launch) */}
       <a
-        href="/design-lab/"
+        href="/design-lab/index.html"
         target="_blank"
         rel="noopener"
         className="fixed z-[200] left-2 bottom-12 px-3 py-1.5 rounded-full text-xs font-brand-en no-underline backdrop-blur-xl border transition-all"

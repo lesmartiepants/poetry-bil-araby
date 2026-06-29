@@ -89,6 +89,11 @@
     html {
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      /* overflow-y: scroll forces a stable scrollbar gutter so that
+         width:100% on children always resolves to viewport - scrollbar.
+         This is the only reliable way to prevent layout shift AND
+         ensure 100% never accidentally exceeds the visible area. */
+      overflow-y: scroll;
       overflow-x: hidden;
     }
 
@@ -98,6 +103,8 @@
       font-family: var(--font-ui);
       min-height: 100vh;
       overscroll-behavior-y: contain;
+      /* Must not be overflow:hidden — that would swallow the scrollbar
+         and break html's stable gutter */
       overflow-x: hidden;
     }
 
@@ -110,10 +117,9 @@
       align-items: center;
       gap: var(--sp-12);
       padding: var(--sp-12) var(--sp-4) var(--sp-16);
-      /* Never overflow the viewport at any width */
+      /* 100% of body content box — stable because html has overflow-y:scroll */
       width: 100%;
-      max-width: 100vw;
-      overflow-x: hidden;
+      box-sizing: border-box;
     }
 
     /* ================================================================
@@ -121,9 +127,10 @@
     ================================================================ */
     .phone-canvas {
       position: relative;
-      /* Shrinks below 412px without overflowing */
-      width: min(var(--phone-w), calc(100vw - var(--sp-8)));
-      height: min(820px, calc((100vw - var(--sp-8)) * 2));
+      /* Never wider than the page content box */
+      width: min(var(--phone-w), 100%);
+      /* Fixed height; phone is aspect-independent mockup scaffold */
+      height: 820px;
       background: var(--color-bg);
       border-radius: var(--phone-radius);
       overflow: hidden;
@@ -594,11 +601,10 @@
        STATE MATRIX — below the phone
     ================================================================ */
     .matrix-sheet {
-      /* stretch to fill the flex column regardless of align-items: center */
-      align-self: stretch;
+      width: 100%;
       max-width: 880px;
-      /* hard cap so it never exceeds the viewport */
-      width: min(880px, 100%);
+      /* On wide screens, don't stretch past max-width but stay centered */
+      align-self: center;
       background: rgba(18, 18, 20, 0.95);
       border: 1px solid rgba(197, 160, 89, 0.10);
       border-radius: var(--radius-matrix);
@@ -607,6 +613,7 @@
       flex-direction: column;
       gap: var(--sp-6);
       box-sizing: border-box;
+      overflow: hidden;
     }
 
     .matrix-title {
@@ -635,11 +642,12 @@
 
     .matrix-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      /* Two columns on wide screens, collapses to one when < 280px each */
+      grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
       gap: var(--sp-5);
-      /* grid columns never overflow their container */
       width: 100%;
       min-width: 0;
+      overflow: hidden;
     }
 
     .matrix-cell {
@@ -787,8 +795,10 @@
        RESPONSIVE — never break at 412px or narrower
     ================================================================ */
 
-    /* Narrow: tighten page padding so nothing bleeds right */
+    /* ---- Narrow viewport: ≤ 440px ---- */
     @media (max-width: 440px) {
+
+      /* Tighten page gutter */
       .page {
         padding-left: var(--sp-2);
         padding-right: var(--sp-2);
@@ -798,53 +808,63 @@
         border-radius: 36px;
       }
 
-      /* Hero chrome buttons: tighter padding */
+      /* Hero chrome buttons */
       .action-btn {
         font-size: 13px;
         padding: 0 var(--sp-3);
         letter-spacing: 0;
       }
 
-      /* Matrix: single column, tighter padding */
+      /* Matrix sheet: tighter padding; width stays 100% of .page content box */
       .matrix-sheet {
-        padding: var(--sp-6) var(--sp-3);
+        padding: var(--sp-5) var(--sp-3);
         border-radius: var(--sp-4);
       }
 
+      /* Single column */
       .matrix-grid {
         grid-template-columns: 1fr;
         gap: var(--sp-3);
       }
 
       .matrix-cell {
-        padding: var(--sp-4) var(--sp-3);
+        padding: var(--sp-3) var(--sp-3);
       }
 
-      /* Mini buttons: smaller font + padding so labels fit in one column */
+      /*
+        STACK buttons vertically at narrow widths.
+        Primary goes on top (reverse row order so primary reads first),
+        secondary below. Each button fills full width — no truncation possible.
+      */
+      .mini-row {
+        flex-direction: column-reverse;
+        gap: var(--sp-2);
+      }
+
       .mini-btn {
-        font-size: 11.5px;
-        padding: 0 10px;
-        gap: 5px;
+        width: 100%;
+        flex: none;
+        justify-content: center;
+        font-size: 12px;
+        padding: 0 var(--sp-4);
+        height: 38px;
       }
 
-      /* Ensure mini-icon doesn't push content off */
-      .mini-icon {
-        width: 11px;
-        height: 11px;
-      }
-    }
-
-    /* Very narrow (< 380px): drop to minimum viable label sizes */
-    @media (max-width: 380px) {
-      .mini-btn {
-        font-size: 11px;
-        padding: 0 var(--sp-2);
-        gap: 4px;
+      /* Transport row stays horizontal — icons only, no text to truncate */
+      .mini-row:has(.mini-transport) {
+        flex-direction: row;
       }
 
-      .action-btn {
-        font-size: 12.5px;
-        padding: 0 var(--sp-2);
+      .mini-transport {
+        flex: 1 1 0;
+        min-width: 0;
+      }
+
+      /* Primary next to transport stays as a pill */
+      .mini-row:has(.mini-transport) .mini-btn {
+        width: auto;
+        flex: 1 1 0;
+        min-width: 0;
       }
     }
 
@@ -883,13 +903,14 @@
     .page-header-title {
       font-family: var(--font-english);
       font-style: italic;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       font-weight: 300;
-      font-size: 1.5rem;
+      /* Scales from 1.1rem at 375px to 1.5rem at 600px+ */
+      font-size: clamp(1.1rem, 0.5rem + 2.5vw, 1.5rem);
       color: rgba(236, 232, 224, 0.55);
       letter-spacing: 0.02em;
+      /* Allow wrap on very narrow — title is decorative, not critical */
+      white-space: normal;
+      line-height: 1.3;
     }
 
     /* ================================================================

@@ -226,11 +226,16 @@ body {
   margin: 0 var(--sp-6);
   border-radius: var(--radius-pill);
   cursor: pointer;
-  /* Expanded touch hit area */
-  padding-top: calc((var(--touch-min) - var(--progress-h)) / 2);
-  padding-bottom: calc((var(--touch-min) - var(--progress-h)) / 2);
-  margin-top: calc(-1 * (var(--touch-min) - var(--progress-h)) / 2);
-  margin-bottom: calc(-1 * (var(--touch-min) - var(--progress-h)) / 2);
+}
+/* Expanded 44px touch hit area — invisible overlay, keeps groove a hairline */
+.progress-track::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: var(--touch-min);
+  transform: translateY(-50%);
 }
 
 .progress-fill {
@@ -270,12 +275,13 @@ body {
 /* Actions row */
 .actions-row {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: stretch;
   padding: 0 var(--sp-5);
   margin-top: var(--sp-2);
   gap: var(--sp-3);
 }
+.actions-row > .transport-wrap { flex: 1; }
+.actions-row > .action-btn      { flex: 1; }
 
 /* ============================================================
    ACTION BUTTONS — CORE
@@ -288,57 +294,68 @@ body {
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--sp-2);
   font-family: var(--font-ui);
   font-size: var(--fs-action);
   letter-spacing: 0.04em;
-  border: none;
-  background: none;
   cursor: pointer;
-  padding: 0;
-  /* Visual padding for breathing room, hit area handled by ::after */
+  /* Real pill affordance — restrained, but unmistakably a button */
   height: var(--touch-min);
+  min-height: var(--touch-min);
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid transparent;
+  background: none;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
   white-space: nowrap;
-  flex-shrink: 1;
+  flex: 1;
   min-width: 0;
+  transition:
+    background var(--dur-fast) var(--ease-quart),
+    border-color var(--dur-fast) var(--ease-quart),
+    color var(--dur-fast) var(--ease-quart),
+    transform var(--dur-micro) var(--ease-quart);
 }
 
-/* Invisible hit area expansion to ensure 44px minimum */
-.action-btn::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-sm);
-}
-
-/* ——— SECONDARY (LEFT) button ——— */
+/* ——— SECONDARY (LEFT) button — quiet ghost pill ——— */
 .btn-secondary {
   font-weight: 400;
   color: var(--c-text-dim);
-  transition: color var(--dur-fast) var(--ease-quart);
-  justify-content: flex-start;
+  border-color: rgba(236,232,224,0.14);
+  background: rgba(236,232,224,0.02);
 }
 
 .btn-secondary:hover {
   color: var(--c-text-primary);
+  border-color: rgba(236,232,224,0.26);
+  background: rgba(236,232,224,0.05);
 }
 
 .btn-secondary:active {
   color: var(--c-gold);
   transform: scale(0.97);
-  transition:
-    color var(--dur-micro) var(--ease-quart),
-    transform var(--dur-micro) var(--ease-quart);
 }
 
-/* ——— PRIMARY (RIGHT) button ——— */
+/* ——— PRIMARY (RIGHT) button — gold-tint filled pill ——— */
 .btn-primary {
   font-weight: 600;
-  color: var(--c-text-primary);
-  justify-content: flex-end;
-  /* Signature: the gold dot is the sole indicator of primacy */
+  color: var(--c-gold-light);
+  border-color: rgba(197,160,89,0.42);
+  background: rgba(197,160,89,0.10);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 0 18px rgba(197,160,89,0.06);
+  /* Signature: gold dot + extending underline on the label */
+}
+.btn-primary:hover {
+  color: #e0c478;
+  border-color: rgba(197,160,89,0.66);
+  background: rgba(197,160,89,0.16);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.05),
+    0 0 26px rgba(197,160,89,0.14);
 }
 
 /* Gold accent dot — the only solid gold in the chrome */
@@ -407,6 +424,7 @@ body {
 .transport-listen {
   display: flex;
   align-items: center;
+  width: 100%;
   height: 100%;
   transition:
     opacity var(--dur-fast) var(--ease-quart),
@@ -417,9 +435,17 @@ body {
 .transport-controls {
   position: absolute;
   left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
   display: flex;
   align-items: center;
+  justify-content: space-evenly;
   gap: 0;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(197,160,89,0.30);
+  background: rgba(197,160,89,0.05);
   opacity: 0;
   transform: translateY(6px);
   pointer-events: none;
@@ -450,7 +476,7 @@ body {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--c-text-dim);
+  color: var(--c-gold);
   font-size: var(--fs-transport);
   border-radius: var(--radius-sm);
   transition:
@@ -587,8 +613,16 @@ body {
   gap: var(--sp-3);
 }
 
-/* Secondary labels in matrix */
+/* Secondary labels in matrix — ghost pill */
 .m-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(236,232,224,0.14);
+  background: rgba(236,232,224,0.02);
   font-family: var(--font-ui);
   font-size: var(--fs-action);
   font-weight: 400;
@@ -597,15 +631,21 @@ body {
   letter-spacing: 0.03em;
 }
 
-/* Primary labels in matrix */
+/* Primary labels in matrix — gold-tint pill */
 .m-primary {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: var(--sp-2);
+  height: 38px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(197,160,89,0.42);
+  background: rgba(197,160,89,0.10);
   font-family: var(--font-ui);
   font-size: var(--fs-action);
   font-weight: 600;
-  color: var(--c-text-primary);
+  color: var(--c-gold-light);
   white-space: nowrap;
   letter-spacing: 0.03em;
 }
@@ -619,20 +659,31 @@ body {
   flex-shrink: 0;
 }
 
-/* Mini transport in matrix */
+/* Mini transport in matrix — unified ghost pill */
 .m-transport {
   display: flex;
   align-items: center;
   gap: 0;
+  height: 38px;
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(197,160,89,0.30);
+  background: rgba(197,160,89,0.05);
 }
 
 .m-transport-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
   width: 36px;
   height: 36px;
-  color: var(--c-text-dim);
+  color: var(--c-gold);
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: color var(--dur-fast) var(--ease-quart);

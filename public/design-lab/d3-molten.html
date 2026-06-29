@@ -143,7 +143,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: var(--sp-6) var(--sp-4) var(--sp-6);
+  /* Extra top padding so phone canvas rounded corners are never clipped */
+  padding: var(--sp-10) var(--sp-4) var(--sp-8);
   overflow-x: hidden;
   max-width: 100vw;
 }
@@ -491,9 +492,10 @@ body {
 .btn-secondary {
   background: var(--gradient-cooled);
   color: var(--gold-light);
-  border: 1px solid rgba(197, 160, 89, 0.28);
-  /* box-sizing: border-box already set globally — border included in height */
+  /* Inset shadow border — same box model as primary (no border property) */
+  border: none;
   box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.28) inset,
     0 1px 0 rgba(255, 248, 210, 0.05) inset,
     0 2px 8px rgba(0, 0, 0, 0.2);
   transition:
@@ -523,13 +525,13 @@ body {
 
 .btn-secondary:hover {
   transform: translateY(-1px);
-  border-color: rgba(197, 160, 89, 0.45);
   background: linear-gradient(
     135deg,
     rgba(160, 128, 60, 0.13) 0%,
     rgba(197, 160, 89, 0.08) 100%
   );
   box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.45) inset,
     0 1px 0 rgba(255, 248, 210, 0.07) inset,
     0 4px 14px rgba(0, 0, 0, 0.28),
     0 0 12px rgba(197, 160, 89, 0.08);
@@ -538,7 +540,10 @@ body {
 .btn-secondary:active {
   transform: translateY(0) scale(0.985);
   transition-duration: var(--dur-press);
-  border-color: rgba(197, 160, 89, 0.35);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.35) inset,
+    0 1px 0 rgba(255, 248, 210, 0.04) inset,
+    0 1px 4px rgba(0, 0, 0, 0.2);
 }
 
 .btn-secondary-label {
@@ -552,8 +557,10 @@ body {
 .btn-transport {
   background: var(--gradient-cooled);
   color: var(--gold-light);
-  border: 1px solid rgba(197, 160, 89, 0.28);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border: none;
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.28) inset,
+    0 2px 8px rgba(0, 0, 0, 0.2);
   padding: 0 var(--sp-2);
   transition:
     transform var(--dur-hover) var(--ease-out-expo),

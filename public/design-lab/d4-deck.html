@@ -461,22 +461,46 @@ body {
   color: var(--text-dim);
 }
 
-/* PRIMARY button (right) */
+/* PRIMARY button (right) — engraved BRASS key: filled, unmistakable.
+   Brushed-metal gradient + fine vertical grain, near-black engraved label. */
 .btn-primary {
-  border-color: var(--gold-hairline);
-  background: linear-gradient(135deg, var(--surface-03) 0%, #1c1a14 100%);
-  box-shadow: inset 0 1px 0 rgba(197,160,89,.12);
+  border-color: rgba(212,180,99,.65);
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(255,255,255,.05) 0px, rgba(255,255,255,.05) 1px,
+      rgba(0,0,0,.04) 1px, rgba(0,0,0,.04) 2px),
+    linear-gradient(160deg, #e2ca74 0%, #c9a84c 38%, #b8923f 70%, #a87f30 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,245,210,.55),
+    inset 0 -1px 0 rgba(120,86,20,.5),
+    0 2px 10px rgba(0,0,0,.45),
+    0 0 18px rgba(197,160,89,.18);
 }
 .btn-primary .btn-icon,
 .btn-primary .btn-text {
-  color: var(--gold-light);
+  color: #1a1306;
+  text-shadow: 0 1px 0 rgba(255,245,210,.35);
 }
+.btn-primary .btn-tag { color: rgba(26,19,6,.55); }
 .btn-primary:hover {
-  border-color: rgba(197,160,89,.55);
+  border-color: rgba(226,202,116,.85);
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(255,255,255,.06) 0px, rgba(255,255,255,.06) 1px,
+      rgba(0,0,0,.04) 1px, rgba(0,0,0,.04) 2px),
+    linear-gradient(160deg, #efd98a 0%, #d6b65c 40%, #c5a04a 72%, #b48d38 100%);
   box-shadow:
-    0 2px 12px rgba(0,0,0,.35),
-    0 0 16px rgba(197,160,89,.12),
-    inset 0 1px 0 rgba(197,160,89,.18);
+    inset 0 1px 0 rgba(255,248,220,.7),
+    inset 0 -1px 0 rgba(120,86,20,.5),
+    0 3px 14px rgba(0,0,0,.4),
+    0 0 26px rgba(197,160,89,.32);
+}
+.btn-primary:active {
+  background:
+    linear-gradient(160deg, #c9a84c 0%, #b8923f 60%, #a87f30 100%);
+  box-shadow:
+    inset 0 2px 5px rgba(90,64,12,.55),
+    0 1px 4px rgba(0,0,0,.5);
 }
 
 /* ─────────────────────────────────────────────────────────
@@ -716,15 +740,28 @@ body {
 }
 
 .m-btn.primary {
-  border-color: var(--gold-hairline);
-  background: linear-gradient(135deg, var(--surface-03) 0%, #1c1a14 100%);
+  border-color: rgba(212,180,99,.65);
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(255,255,255,.05) 0px, rgba(255,255,255,.05) 1px,
+      rgba(0,0,0,.04) 1px, rgba(0,0,0,.04) 2px),
+    linear-gradient(160deg, #e2ca74 0%, #c9a84c 38%, #b8923f 70%, #a87f30 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,245,210,.5),
+    inset 0 -1px 0 rgba(120,86,20,.5);
 }
 .m-btn.primary .m-btn-text,
 .m-btn.primary .m-btn-icon {
-  color: var(--gold-light);
+  color: #1a1306;
+  text-shadow: 0 1px 0 rgba(255,245,210,.3);
 }
 .m-btn.primary:hover {
-  border-color: rgba(197,160,89,.55);
+  border-color: rgba(226,202,116,.85);
+  background:
+    repeating-linear-gradient(90deg,
+      rgba(255,255,255,.06) 0px, rgba(255,255,255,.06) 1px,
+      rgba(0,0,0,.04) 1px, rgba(0,0,0,.04) 2px),
+    linear-gradient(160deg, #efd98a 0%, #d6b65c 40%, #c5a04a 72%, #b48d38 100%);
 }
 
 /* Transport compact display in matrix */

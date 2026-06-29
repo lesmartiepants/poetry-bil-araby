@@ -2109,6 +2109,23 @@ export default function DiwanApp() {
         ✦ Poem Reader
       </a>
 
+      {/* TEMP: design-sprint button-pair mockups viewer (remove before launch) */}
+      <a
+        href="/design-lab/"
+        target="_blank"
+        rel="noopener"
+        className="fixed z-[200] left-2 bottom-12 px-3 py-1.5 rounded-full text-xs font-brand-en no-underline backdrop-blur-xl border transition-all"
+        style={{
+          borderColor: 'var(--gold)',
+          color: 'var(--gold)',
+          background: darkMode ? 'rgba(12,12,14,0.6)' : 'rgba(253,252,248,0.7)',
+        }}
+        title="Open the button-pair design lab"
+        aria-label="Open design lab"
+      >
+        ✦ Design Lab
+      </a>
+
       {FEATURES.designReview && (
         <div
           className="fixed z-[200] flex flex-col items-center gap-1"

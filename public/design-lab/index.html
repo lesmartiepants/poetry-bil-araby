@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Design Lab — Button Pair Sprint</title>
+<style>
+  :root {
+    --bg: #0c0c0e;
+    --gold: #c5a059;
+    --gold-lt: #d4b463;
+    --text: rgba(236, 232, 224, 0.92);
+    --dim: rgba(236, 232, 224, 0.55);
+    --line: rgba(213, 180, 99, 0.22);
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+  .wrap { display: flex; flex-direction: column; height: 100dvh; }
+
+  /* top bar */
+  .bar { display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+    padding-top: calc(10px + env(safe-area-inset-top, 0px));
+    border-bottom: 1px solid rgba(255,255,255,.06); background: rgba(12,12,14,.85); backdrop-filter: blur(10px); }
+  .nav { width: 44px; height: 44px; flex: none; border-radius: 999px; border: 1.5px solid var(--line);
+    background: transparent; color: var(--gold-lt); font-size: 18px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; transition: transform .15s var(--ease), background .2s; }
+  .nav:hover { background: rgba(213,180,99,.12); }
+  .nav:active { transform: scale(.92); }
+  .meta { flex: 1; text-align: center; min-width: 0; }
+  .meta .n { font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--dim); }
+  .meta .t { font: 600 15px/1.2 "Cormorant Garamond", Georgia, serif; color: var(--gold-lt);
+    font-style: italic; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .raw { font: 500 10px/1 -apple-system; color: var(--dim); text-decoration: none; border: 1px solid var(--line);
+    border-radius: 999px; padding: 7px 10px; flex: none; }
+  .raw:hover { color: var(--gold-lt); }
+
+  /* dots */
+  .dots { display: flex; gap: 7px; justify-content: center; padding: 9px 0; background: rgba(12,12,14,.85);
+    border-bottom: 1px solid rgba(255,255,255,.05); }
+  .dot { width: 8px; height: 8px; border-radius: 999px; background: rgba(213,180,99,.25);
+    border: none; cursor: pointer; padding: 0; transition: transform .2s var(--ease), background .2s; }
+  .dot.on { background: var(--gold); transform: scale(1.25); }
+
+  /* frame */
+  .stage { flex: 1; position: relative; overflow: hidden; }
+  iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: var(--bg);
+    opacity: 0; transition: opacity .35s var(--ease); }
+  iframe.on { opacity: 1; }
+  .hint { position: absolute; left: 50%; bottom: calc(10px + env(safe-area-inset-bottom,0px)); transform: translateX(-50%);
+    font: 500 10px/1 -apple-system; letter-spacing: .12em; text-transform: uppercase; color: var(--dim);
+    background: rgba(12,12,14,.7); padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,.06);
+    pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="bar">
+    <button class="nav" id="prev" aria-label="Previous design">‹</button>
+    <div class="meta"><div class="n" id="count">1 / 6</div><div class="t" id="title">Mihrab Arch</div></div>
+    <a class="raw" id="raw" target="_blank" rel="noopener">open ↗</a>
+    <button class="nav" id="next" aria-label="Next design">›</button>
+  </div>
+  <div class="dots" id="dots"></div>
+  <div class="stage" id="stage"></div>
+  <div class="hint">tap the buttons inside — they're live · ← → to switch</div>
+</div>
+<script>
+  const DESIGNS = [
+    { file: 'd1-mihrab.html',  title: 'Mihrab Arch' },
+    { file: 'd2-qalam.html',   title: 'Qalam Ink' },
+    { file: 'd3-molten.html',  title: 'Molten Gold' },
+    { file: 'd4-deck.html',    title: 'Brass Deck' },
+    { file: 'd5-vellum.html',  title: 'Vellum Minimal' },
+    { file: 'd6-starlit.html', title: 'Starlit Geometric' },
+  ];
+  const stage = document.getElementById('stage');
+  const dots = document.getElementById('dots');
+  const frames = DESIGNS.map((d, i) => {
+    const f = document.createElement('iframe');
+    f.src = d.file; f.title = d.title; if (i === 0) f.classList.add('on');
+    stage.appendChild(f);
+    const dot = document.createElement('button'); dot.className = 'dot' + (i === 0 ? ' on' : '');
+    dot.setAttribute('aria-label', 'Design ' + (i + 1)); dot.onclick = () => go(i);
+    dots.appendChild(dot);
+    return f;
+  });
+  let cur = 0;
+  function go(i) {
+    cur = (i + DESIGNS.length) % DESIGNS.length;
+    frames.forEach((f, k) => f.classList.toggle('on', k === cur));
+    [...dots.children].forEach((d, k) => d.classList.toggle('on', k === cur));
+    document.getElementById('count').textContent = (cur + 1) + ' / ' + DESIGNS.length;
+    document.getElementById('title').textContent = DESIGNS[cur].title;
+    document.getElementById('raw').href = DESIGNS[cur].file;
+  }
+  document.getElementById('prev').onclick = () => go(cur - 1);
+  document.getElementById('next').onclick = () => go(cur + 1);
+  document.getElementById('raw').href = DESIGNS[0].file;
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') go(cur - 1);
+    if (e.key === 'ArrowRight') go(cur + 1);
+  });
+</script>
+</body>
+</html>

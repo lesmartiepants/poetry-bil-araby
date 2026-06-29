@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Starlit Geometric — Bottom Chrome</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@1,400;1,500&family=Reem+Kufi:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ================================================================
+   DESIGN TOKENS
+   ================================================================ */
+:root {
+  --bg:              #0c0c0e;
+  --surface:         #111116;
+  --surface-raised:  #17171e;
+  --text-primary:    rgba(236,232,224,.92);
+  --text-secondary:  rgba(236,232,224,.68);
+  --text-dim:        rgba(236,232,224,.38);
+  --text-ghost:      rgba(236,232,224,.55);
+  --gold:            #c5a059;
+  --gold-light:      #d4b463;
+  --gold-bright:     #e0c070;
+  --gold-glow:       rgba(197,160,89,.22);
+  --gold-glow-hi:    rgba(212,180,99,.50);
+  --gold-trace:      rgba(197,160,89,.10);
+  --gold-border:     rgba(197,160,89,.28);
+  --gold-fill-dim:   rgba(197,160,89,.08);
+  --track-bg:        rgba(160,160,160,.28);
+  --border-faint:    rgba(255,255,255,.065);
+  --border-mid:      rgba(255,255,255,.10);
+
+  --notch:           6px;
+  --r-xs:            6px;
+  --r-sm:            10px;
+  --r-md:            14px;
+  --r-lg:            20px;
+  --r-pill:          999px;
+
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px;  --sp-4: 16px;
+  --sp-5: 20px; --sp-6: 24px; --sp-8: 32px;  --sp-10: 40px;
+
+  --font-ar:    'Amiri', 'Reem Kufi', serif;
+  --font-en:    'Cormorant Garamond', Georgia, serif;
+  --font-ui:    system-ui, -apple-system, sans-serif;
+  --font-label: 'Reem Kufi', system-ui, sans-serif;
+
+  --ease-expo:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quart:  cubic-bezier(.25, 1, .5, 1);
+  --ease-in4:    cubic-bezier(.5, 0, .75, 0);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-ui:     cubic-bezier(.4, 0, .2, 1);
+
+  --dur-hero:    680ms;
+  --dur-sec:     400ms;
+  --dur-content: 300ms;
+  --dur-hover:   160ms;
+  --dur-active:   90ms;
+  --dur-morph:   360ms;
+  --dur-ignite:  580ms;
+
+  --btn-h:       52px;
+  --touch:       44px;
+}
+
+/* ================================================================
+   RESET
+   ================================================================ */
+*, *::before, *::after {
+  box-sizing: border-box; margin: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+html { overflow-x: hidden; -webkit-text-size-adjust: 100%; }
+body {
+  background: #070709;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  overscroll-behavior-y: contain;
+}
+
+/* ================================================================
+   PAGE
+   ================================================================ */
+.page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44px 20px 72px;
+  gap: 44px;
+  position: relative;
+}
+
+/* ================================================================
+   FULL-PAGE STAR TESSELLATION
+   ================================================================ */
+.bg-stars {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0.75;
+}
+.bg-stars svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* Individual twinkle stars scattered across page bg */
+.twinkle {
+  position: fixed;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: twinkle 3.5s ease-in-out infinite;
+}
+@keyframes twinkle {
+  0%, 100% { opacity: .04; transform: scale(1); }
+  50%       { opacity: .20; transform: scale(1.4); }
+}
+
+/* ================================================================
+   PHONE CANVAS
+   ================================================================ */
+.phone-wrap {
+  position: relative;
+  width: 412px;
+  max-width: calc(100vw - 40px);
+  z-index: 1;
+  animation: entranceUp var(--dur-hero) var(--ease-expo) both;
+}
+
+.phone-shell {
+  width: 100%;
+  background: var(--bg);
+  border-radius: 46px;
+  overflow: hidden;
+  box-shadow:
+    0 0 0 1.5px rgba(255,255,255,.08),
+    0 0 0 3px rgba(0,0,0,.6),
+    0 40px 100px rgba(0,0,0,.95),
+    0 12px 32px rgba(0,0,0,.7);
+  aspect-ratio: 9 / 19.5;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Star pattern inside the phone */
+.phone-shell::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 80 80'%3E%3Cpath d='M40 6 L43.5 20 L56 12 L51.5 25.5 L66 24 L55 33.5 L63.5 46 L49 42.5 L49.5 58 L40 50 L30.5 58 L31 42.5 L16.5 46 L25 33.5 L14 24 L28.5 25.5 L24 12 L36.5 20 Z' fill='none' stroke='%23c5a059' stroke-width='0.55'/%3E%3Ccircle cx='40' cy='34' r='1.2' fill='%23c5a059' opacity='0.6'/%3E%3Ccircle cx='0' cy='0' r='0.7' fill='%23c5a059' opacity='0.4'/%3E%3Ccircle cx='80' cy='0' r='0.7' fill='%23c5a059' opacity='0.4'/%3E%3Ccircle cx='0' cy='80' r='0.7' fill='%23c5a059' opacity='0.4'/%3E%3Ccircle cx='80' cy='80' r='0.7' fill='%23c5a059' opacity='0.4'/%3E%3C/svg%3E");
+  background-size: 80px 80px;
+  opacity: 0.055;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Status bar */
+.status-bar {
+  height: 50px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+.status-pill {
+  width: 126px;
+  height: 36px;
+  background: #050507;
+  border-radius: 0 0 22px 22px;
+}
+
+/* Poem body */
+.poem-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 28px 8px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.poem-meta { margin-bottom: 14px; opacity: 0.38; }
+.poem-title {
+  font-family: var(--font-label);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--gold);
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.poem-poet {
+  font-family: var(--font-ui);
+  font-size: 0.7rem;
+  color: var(--text-ghost);
+}
+.poem-rule {
+  width: 56%;
+  height: 1px;
+  background: linear-gradient(to right,
+    transparent, rgba(197,160,89,.22), transparent);
+  margin: 12px auto 18px;
+  opacity: 0.45;
+}
+
+.verse-ar {
+  font-family: var(--font-ar);
+  font-size: clamp(1.1rem, 4vw, 1.3rem);
+  line-height: 2.15;
+  color: var(--text-primary);
+  opacity: 0.36;
+  direction: rtl;
+  letter-spacing: 0.01em;
+}
+.verse-en {
+  font-family: var(--font-en);
+  font-style: italic;
+  font-size: clamp(.85rem, 2.8vw, .97rem);
+  line-height: 1.85;
+  color: var(--text-ghost);
+  opacity: 0.36;
+  max-width: 90%;
+  margin: 12px auto 0;
+}
+
+/* ================================================================
+   BOTTOM CHROME
+   ================================================================ */
+.chrome {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 0 16px;
+  padding-bottom: max(16px, calc(16px + env(safe-area-inset-bottom)));
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  /* Glass scrim */
+  background: linear-gradient(to bottom,
+    rgba(12,12,14,0) 0%,
+    rgba(12,12,14,.72) 22%,
+    rgba(12,12,14,.95) 52%,
+    rgba(12,12,14,1) 100%);
+  position: relative;
+  z-index: 2;
+}
+
+/* ──────────────────────────────────────────
+   (a) SCRUB BAR
+   ────────────────────────────────────────── */
+.scrub-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 1px;
+}
+.scrub-time {
+  font-size: 0.63rem;
+  color: var(--text-ghost);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  min-width: 26px;
+  flex-shrink: 0;
+  font-family: var(--font-ui);
+  opacity: 0.75;
+}
+.scrub-time.r { text-align: right; }
+
+.scrub-track {
+  flex: 1;
+  position: relative;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  touch-action: none;
+}
+.track-bg {
+  position: absolute;
+  left: 0; right: 0;
+  height: 3px;
+  background: var(--track-bg);
+  border-radius: var(--r-pill);
+  overflow: visible;
+}
+.track-fill {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  width: 38%;
+  background: linear-gradient(to right, var(--gold), var(--gold-light));
+  border-radius: var(--r-pill);
+}
+.scrub-handle {
+  position: absolute;
+  left: 38%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 13px;
+  height: 13px;
+  background: var(--gold-light);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2.5px rgba(12,12,14,.95),
+    0 0 10px var(--gold-glow-hi);
+  transition:
+    transform var(--dur-hover) var(--ease-expo),
+    box-shadow var(--dur-hover) var(--ease-expo);
+  will-change: transform;
+}
+.scrub-track:hover .scrub-handle,
+.scrub-track:focus .scrub-handle {
+  transform: translate(-50%, -50%) scale(1.4);
+  box-shadow:
+    0 0 0 2.5px rgba(12,12,14,.95),
+    0 0 16px var(--gold-glow-hi),
+    0 0 30px rgba(197,160,89,.22);
+}
+
+/* ──────────────────────────────────────────
+   (b) BUTTON PAIR BASE
+   ────────────────────────────────────────── */
+.btn-row {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+
+.cbtn {
+  position: relative;
+  height: var(--btn-h);
+  min-height: var(--touch);
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.022em;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  overflow: hidden;
+  /* Signature geometric corner-notch */
+  clip-path: polygon(
+    var(--notch) 0%,
+    calc(100% - var(--notch)) 0%,
+    100% var(--notch),
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    var(--notch) 100%,
+    0% calc(100% - var(--notch)),
+    0% var(--notch)
+  );
+  transition:
+    transform var(--dur-hover) var(--ease-expo),
+    box-shadow var(--dur-hover) var(--ease-expo),
+    background var(--dur-hover) var(--ease-ui);
+  will-change: transform;
+  -webkit-user-select: none;
+  user-select: none;
+  white-space: nowrap;
+}
+.cbtn:active {
+  transform: scale(0.961) !important;
+  transition:
+    transform var(--dur-active) var(--ease-ui),
+    box-shadow var(--dur-active) var(--ease-ui) !important;
+}
+
+/* SECONDARY */
+.sec {
+  background: var(--gold-fill-dim);
+  color: var(--gold);
+  border: 1px solid var(--gold-border);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(197,160,89,.1),
+    0 1px 6px rgba(0,0,0,.32);
+}
+.sec:hover {
+  background: rgba(197,160,89,.13);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(197,160,89,.20),
+    0 2px 14px rgba(0,0,0,.44),
+    0 0 18px rgba(197,160,89,.07);
+  transform: translateY(-1.5px);
+}
+
+/* PRIMARY */
+.pri {
+  --notch: 7px;
+  background: linear-gradient(148deg,
+    #b08028 0%, #c9a84c 30%, #d4b463 58%, #c5a059 100%);
+  color: #0d0b07;
+  font-weight: 600;
+  box-shadow:
+    0 0 0 1px rgba(212,180,99,.32),
+    0 4px 22px rgba(197,160,89,.38),
+    0 2px 8px rgba(0,0,0,.55);
+  clip-path: polygon(
+    var(--notch) 0%,
+    calc(100% - var(--notch)) 0%,
+    100% var(--notch),
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    var(--notch) 100%,
+    0% calc(100% - var(--notch)),
+    0% var(--notch)
+  );
+}
+.pri:hover {
+  background: linear-gradient(148deg,
+    #c9a84c 0%, #d4b463 35%, #e0c870 62%, #d4b463 100%);
+  box-shadow:
+    0 0 0 1px rgba(224,200,112,.5),
+    0 6px 30px rgba(197,160,89,.58),
+    0 2px 8px rgba(0,0,0,.4),
+    0 0 48px rgba(197,160,89,.16);
+  transform: translateY(-2px);
+}
+
+/* Faint 8-point star watermark on primary */
+.pri::before {
+  content: '';
+  position: absolute;
+  right: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 17px;
+  height: 17px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2L18.6 11L26 6L22.6 14.2L32 13L24 17.2L30.2 24.8L21 21.8L20 32L16 24.5L12 32L11 21.8L1.8 24.8L8 17.2L0 13L9.4 14.2L6 6L13.4 11Z' fill='%230d0b07' opacity='0.2'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  opacity: 0.55;
+}
+
+/* STARLIGHT IGNITE — signature press animation */
+@keyframes igniteRay {
+  0%   { opacity: 0;   transform: translate(-50%,-50%) scale(.25) rotate(0deg); }
+  30%  { opacity: .95; transform: translate(-50%,-50%) scale(1.5) rotate(20deg); }
+  65%  { opacity: .45; transform: translate(-50%,-50%) scale(2.7) rotate(45deg); }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(4.2) rotate(67.5deg); }
+}
+@keyframes igniteRing {
+  0%   { opacity: 0;   transform: translate(-50%,-50%) scale(.3); }
+  18%  { opacity: .55; }
+  100% { opacity: 0;   transform: translate(-50%,-50%) scale(2.8); }
+}
+
+.pri::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 44px; height: 44px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 44 44'%3E%3Cpath d='M22 2L25.3 16L35 8L31 21.5L44 19.5L33 25L41.8 33.8L28.5 30.5L27 44L22 35L17 44L15.5 30.5L2.2 33.8L11 25L0 19.5L13 21.5L9 8L18.7 16Z' fill='rgba(224,200,112,0.85)'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%,-50%) scale(.25) rotate(0deg);
+  will-change: transform, opacity;
+}
+.pri .ring {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(224,200,112,.55) 0%, transparent 68%);
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%,-50%) scale(.3);
+  will-change: transform, opacity;
+}
+.pri.igniting::after {
+  animation: igniteRay var(--dur-ignite) var(--ease-expo) forwards;
+}
+.pri.igniting .ring {
+  animation: igniteRing 0.48s var(--ease-quart) forwards;
+}
+
+/* ICON */
+.ico {
+  width: 15px; height: 15px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.85;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.lbl { line-height: 1; }
+
+/* ──────────────────────────────────────────
+   TRANSPORT (Listen morphed)
+   ────────────────────────────────────────── */
+.transport {
+  background: var(--gold-fill-dim);
+  border: 1px solid rgba(197,160,89,.32);
+  box-shadow:
+    inset 0 0 0 0.5px rgba(197,160,89,.16),
+    0 1px 8px rgba(0,0,0,.32);
+  gap: 0;
+  padding: 0 3px;
+}
+.transport:hover {
+  background: rgba(197,160,89,.11);
+}
+.t-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+}
+.tbtn {
+  flex: 1;
+  height: 44px;
+  min-height: var(--touch);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  color: var(--gold);
+  border-radius: var(--r-xs);
+  transition:
+    background var(--dur-hover) var(--ease-ui),
+    transform var(--dur-active) var(--ease-ui);
+}
+.tbtn:hover  { background: rgba(197,160,89,.13); }
+.tbtn:active { transform: scale(.86); transition: transform var(--dur-active) var(--ease-ui); }
+.tbtn.pp     { flex: 1.25; }
+.t-div {
+  width: 1px; height: 18px;
+  background: rgba(197,160,89,.22);
+  flex-shrink: 0;
+}
+
+/* Morph animation */
+@keyframes morphIn  { from { opacity:0; transform:scale(.86); } to { opacity:1; transform:scale(1); } }
+@keyframes morphOut { from { opacity:1; transform:scale(1); }  to { opacity:0; transform:scale(.86); } }
+.morph-in  { animation: morphIn  var(--dur-morph) var(--ease-spring) forwards; }
+.morph-out { animation: morphOut var(--dur-morph) var(--ease-in4) forwards; }
+
+/* ──────────────────────────────────────────
+   (c) PULL-UP CUE
+   ────────────────────────────────────────── */
+.pull-cue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding-bottom: 3px;
+}
+.pull-txt {
+  font-size: 0.685rem;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  font-family: var(--font-ui);
+}
+.pull-arrow {
+  display: flex;
+  align-items: center;
+  animation: floatUp 2.6s ease-in-out infinite;
+}
+@keyframes floatUp {
+  0%,100% { transform: translateY(0);   opacity: .38; }
+  50%      { transform: translateY(-3px); opacity: .7; }
+}
+.pull-arrow svg {
+  width: 11px; height: 11px;
+  stroke: var(--gold);
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ================================================================
+   STATES MATRIX SHEET
+   ================================================================ */
+.sheet {
+  width: 412px;
+  max-width: calc(100vw - 40px);
+  background: var(--surface);
+  border: 1px solid var(--border-faint);
+  border-radius: 26px;
+  padding: 28px 18px 32px;
+  position: relative;
+  z-index: 1;
+  animation: entranceUp var(--dur-hero) var(--ease-expo) 0.14s both;
+}
+
+/* Gold star at sheet top-right corner */
+.sheet::after {
+  content: '';
+  position: absolute;
+  top: 18px; right: 18px;
+  width: 16px; height: 16px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2L18.6 11L26 6L22.6 14.2L32 13L24 17.2L30.2 24.8L21 21.8L20 32L16 24.5L12 32L11 21.8L1.8 24.8L8 17.2L0 13L9.4 14.2L6 6L13.4 11Z' fill='%23c5a059'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.sheet-head {
+  font-size: 0.67rem;
+  font-family: var(--font-ui);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.52;
+  margin-bottom: 22px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.sheet-head::before,
+.sheet-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(to right,
+    transparent, rgba(197,160,89,.22), transparent);
+}
+
+.state {
+  margin-bottom: 22px;
+}
+.state:last-child { margin-bottom: 0; }
+.state-lbl {
+  font-size: 0.6rem;
+  color: var(--text-ghost);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+  padding-left: 1px;
+  font-family: var(--font-ui);
+  opacity: 0.8;
+}
+
+/* Mini scrub for transport row */
+.mini-scrub {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 7px;
+  padding: 0 1px;
+}
+.mini-time {
+  font-size: 0.59rem;
+  color: var(--text-ghost);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-ui);
+  opacity: 0.72;
+}
+.mini-track {
+  flex: 1;
+  height: 2px;
+  background: var(--track-bg);
+  border-radius: var(--r-pill);
+  position: relative;
+}
+.mini-fill {
+  position: absolute;
+  left: 0; top: 0;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: linear-gradient(to right, var(--gold), var(--gold-light));
+}
+
+/* Scale all matrix buttons to compact 44px */
+.mini-row { display: flex; gap: 9px; }
+.mini-row .cbtn {
+  --btn-h: 44px;
+  --notch: 5px;
+  font-size: 0.765rem;
+}
+.mini-row .pri { --notch: 6px; }
+.mini-row .transport { --btn-h: 44px; }
+.mini-row .tbtn { height: 40px; }
+
+/* Divider line between states */
+.state-divider {
+  height: 1px;
+  background: linear-gradient(to right,
+    transparent, var(--border-faint), transparent);
+  margin: 20px 0;
+}
+
+/* ================================================================
+   PHILOSOPHY TAG
+   ================================================================ */
+.philosophy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.philosophy-star {
+  width: 18px; height: 18px;
+  opacity: 0.3;
+}
+.philosophy-name {
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.38;
+  font-family: var(--font-ui);
+}
+
+/* ================================================================
+   ENTRANCE
+   ================================================================ */
+@keyframes entranceUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================================================
+   REDUCED MOTION
+   ================================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+/* ================================================================
+   OVERFLOW GUARD
+   ================================================================ */
+@media (max-width: 452px) {
+  .phone-wrap, .sheet {
+    width: calc(100vw - 40px);
+  }
+  .phone-shell { border-radius: 34px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ================================================
+     FULL-PAGE 8-POINT STAR TESSELLATION BACKGROUND
+     ================================================ -->
+<div class="bg-stars" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+    <defs>
+      <pattern id="p8" x="0" y="0" width="100" height="100"
+               patternUnits="userSpaceOnUse">
+        <!-- Primary 8-point star -->
+        <path d="M50 8 L53.4 22 L64 13 L60.2 26.8 L75 24
+                 L64.5 34.5 L73.5 46 L59.2 43.8 L60 60
+                 L50 53 L40 60 L40.8 43.8 L26.5 46
+                 L35.5 34.5 L25 24 L39.8 26.8 L36 13
+                 L46.6 22 Z"
+              fill="none" stroke="#c5a059" stroke-width="0.55" opacity="1"/>
+        <!-- Inner octagon ring -->
+        <path d="M50 22 L55.5 28 L62 28 L66 34 L62 40
+                 L55.5 40 L50 46 L44.5 40 L38 40 L34 34
+                 L38 28 L44.5 28 Z"
+              fill="none" stroke="#c5a059" stroke-width="0.28" opacity="0.55"/>
+        <!-- Center dot -->
+        <circle cx="50" cy="34" r="1.4" fill="#c5a059" opacity="0.7"/>
+        <!-- Corner nodes (tessellation joints) -->
+        <circle cx="0"   cy="0"   r="0.9" fill="#c5a059" opacity="0.45"/>
+        <circle cx="100" cy="0"   r="0.9" fill="#c5a059" opacity="0.45"/>
+        <circle cx="0"   cy="100" r="0.9" fill="#c5a059" opacity="0.45"/>
+        <circle cx="100" cy="100" r="0.9" fill="#c5a059" opacity="0.45"/>
+        <!-- Midpoint connector lines -->
+        <line x1="0"  y1="34" x2="7"  y2="34" stroke="#c5a059" stroke-width="0.3" opacity="0.4"/>
+        <line x1="93" y1="34" x2="100" y2="34" stroke="#c5a059" stroke-width="0.3" opacity="0.4"/>
+        <line x1="50" y1="0"  x2="50" y2="7"  stroke="#c5a059" stroke-width="0.3" opacity="0.4"/>
+        <line x1="50" y1="93" x2="50" y2="100" stroke="#c5a059" stroke-width="0.3" opacity="0.4"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#p8)" opacity="0.072"/>
+  </svg>
+</div>
+
+<!-- Scattered twinkle stars -->
+<div class="twinkle" style="width:3px;height:3px;top:12%;left:16%;animation-delay:0s"></div>
+<div class="twinkle" style="width:2px;height:2px;top:28%;right:10%;animation-delay:1.4s"></div>
+<div class="twinkle" style="width:4px;height:4px;top:55%;left:7%;animation-delay:2.1s"></div>
+<div class="twinkle" style="width:2px;height:2px;top:71%;right:14%;animation-delay:0.6s"></div>
+<div class="twinkle" style="width:3px;height:3px;top:8%;right:22%;animation-delay:3.0s"></div>
+<div class="twinkle" style="width:2px;height:2px;top:84%;left:20%;animation-delay:1.8s"></div>
+<div class="twinkle" style="width:3px;height:3px;top:40%;right:5%;animation-delay:2.7s"></div>
+<div class="twinkle" style="width:2px;height:2px;top:65%;left:28%;animation-delay:0.3s"></div>
+
+<!-- ================================================
+     PAGE
+     ================================================ -->
+<main class="page">
+
+  <!-- ============================================
+       HERO PHONE — READING STATE
+       ============================================ -->
+  <div class="phone-wrap" role="img" aria-label="Poem reader — Reading state">
+    <div class="phone-shell">
+
+      <!-- Status bar notch -->
+      <div class="status-bar" aria-hidden="true">
+        <div class="status-pill"></div>
+      </div>
+
+      <!-- Poem body (faint, 35% dim) -->
+      <div class="poem-body" dir="rtl" lang="ar" aria-hidden="true">
+        <div class="poem-meta">
+          <div class="poem-title">قصيدة في الليل</div>
+          <div class="poem-poet">أبو العلاء المعري</div>
+        </div>
+        <div class="poem-rule"></div>
+
+        <p class="verse-ar">يا سَاهِرَ اللَّيلِ مَسرورًا بِأَوَّلِهِ</p>
+        <p class="verse-ar">إِنَّ الدُّجى رُبَّمَا جَاءَتْ عَوَاقِبُهُ</p>
+
+        <p class="verse-en" dir="ltr" lang="en">
+          O you who wake through the night, joyful at its start —<br>
+          darkness sometimes brings hard endings to its heart.
+        </p>
+      </div>
+
+      <!-- ============================================
+           BOTTOM CHROME — READING STATE
+           ============================================ -->
+      <div class="chrome" aria-label="Player controls, reading state">
+
+        <!-- (a) Scrub -->
+        <div class="scrub-row">
+          <span class="scrub-time">0:38</span>
+          <div class="scrub-track"
+               role="slider"
+               aria-label="Playback position"
+               aria-valuenow="38"
+               aria-valuemin="0"
+               aria-valuemax="100"
+               tabindex="0"
+               id="hero-scrub">
+            <div class="track-bg">
+              <div class="track-fill" id="hero-fill"></div>
+            </div>
+            <div class="scrub-handle" id="hero-handle"></div>
+          </div>
+          <span class="scrub-time r">1:42</span>
+        </div>
+
+        <!-- (b) Button pair -->
+        <div class="btn-row" id="hero-buttons">
+
+          <!-- LEFT: secondary — Listen -->
+          <button class="cbtn sec"
+                  aria-label="Listen to poem"
+                  id="hero-listen"
+                  onclick="activateTransport(this)">
+            <!-- Headphones -->
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 18v-6a9 9 0 0118 0v6"/>
+              <path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>
+            </svg>
+            <span class="lbl">Listen</span>
+          </button>
+
+          <!-- RIGHT: primary — Next Bayt -->
+          <button class="cbtn pri"
+                  aria-label="Next verse"
+                  id="hero-primary"
+                  onclick="triggerIgnite(this)">
+            <div class="ring" aria-hidden="true"></div>
+            <span class="lbl">Next Bayt</span>
+            <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- (c) Pull-up cue -->
+        <div class="pull-cue" aria-label="Pull up for next poem">
+          <div class="pull-arrow" aria-hidden="true">
+            <svg viewBox="0 0 11 11">
+              <polyline points="1.5 7.5 5.5 3.5 9.5 7.5"/>
+            </svg>
+          </div>
+          <span class="pull-txt">pull up for the next poem</span>
+        </div>
+
+      </div><!-- /chrome -->
+    </div><!-- /phone-shell -->
+  </div><!-- /phone-wrap -->
+
+
+  <!-- ============================================
+       STATES REFERENCE MATRIX
+       ============================================ -->
+  <div class="sheet" role="region" aria-label="Button state reference matrix">
+
+    <div class="sheet-head">State Matrix</div>
+
+    <!-- STATE: Poem fully revealed -->
+    <div class="state">
+      <div class="state-lbl">Poem fully revealed</div>
+      <div class="mini-row">
+        <button class="cbtn sec" aria-label="Listen">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 18v-6a9 9 0 0118 0v6"/>
+            <path d="M21 19a2 2 0 01-2 2h-1a2 2 0 01-2-2v-3a2 2 0 012-2h3zM3 19a2 2 0 002 2h1a2 2 0 002-2v-3a2 2 0 00-2-2H3z"/>
+          </svg>
+          <span class="lbl">Listen</span>
+        </button>
+        <button class="cbtn pri" aria-label="Poem Insights" onclick="triggerIgnite(this)">
+          <div class="ring" aria-hidden="true"></div>
+          <span class="lbl">Poem Insights</span>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 21h6M12 3a6 6 0 016 6c0 2.22-1.21 4.16-3 5.19V17H9v-2.81C7.21 13.16 6 11.22 6 9a6 6 0 016-6z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="state-divider"></div>
+
+    <!-- STATE: Meaning shown -->
+    <div class="state">
+      <div class="state-lbl">Meaning shown</div>
+      <div class="mini-row">
+        <button class="cbtn sec" aria-label="Back to Poem">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span class="lbl">Back to Poem</span>
+        </button>
+        <button class="cbtn pri" aria-label="Author Insights" onclick="triggerIgnite(this)">
+          <div class="ring" aria-hidden="true"></div>
+          <span class="lbl">Author Insights</span>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="state-divider"></div>
+
+    <!-- STATE: Author shown -->
+    <div class="state">
+      <div class="state-lbl">Author shown</div>
+      <div class="mini-row">
+        <button class="cbtn sec" aria-label="Back to Insights">
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          <span class="lbl">Back to Insights</span>
+        </button>
+        <button class="cbtn pri" aria-label="Share" onclick="triggerIgnite(this)">
+          <div class="ring" aria-hidden="true"></div>
+          <span class="lbl">Share</span>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="18" cy="5" r="3"/>
+            <circle cx="6" cy="12" r="3"/>
+            <circle cx="18" cy="19" r="3"/>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="state-divider"></div>
+
+    <!-- STATE: Transport (Listen morphed) -->
+    <div class="state">
+      <div class="state-lbl">Listen → Transport (morphed)</div>
+      <!-- Mini scrub shown when transport is active -->
+      <div class="mini-scrub">
+        <span class="mini-time">0:38</span>
+        <div class="mini-track"><div class="mini-fill" style="width:38%"></div></div>
+        <span class="mini-time">1:42</span>
+      </div>
+      <div class="mini-row">
+        <!-- Transport (morphed) -->
+        <button class="cbtn transport" aria-label="Audio transport">
+          <div class="t-inner">
+            <button class="tbtn" aria-label="Previous verse">
+              <svg width="13" height="13" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor"
+                   stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"
+                   aria-hidden="true">
+                <polygon points="19 20 9 12 19 4 19 20"/>
+                <line x1="5" y1="19" x2="5" y2="5"/>
+              </svg>
+            </button>
+            <div class="t-div" aria-hidden="true"></div>
+            <button class="tbtn pp" aria-label="Pause">
+              <svg width="15" height="15" viewBox="0 0 24 24"
+                   fill="currentColor" stroke="none" aria-hidden="true">
+                <rect x="6"  y="4" width="4" height="16" rx="1"/>
+                <rect x="14" y="4" width="4" height="16" rx="1"/>
+              </svg>
+            </button>
+            <div class="t-div" aria-hidden="true"></div>
+            <button class="tbtn" aria-label="Next verse">
+              <svg width="13" height="13" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor"
+                   stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"
+                   aria-hidden="true">
+                <polygon points="5 4 15 12 5 20 5 4"/>
+                <line x1="19" y1="5" x2="19" y2="19"/>
+              </svg>
+            </button>
+          </div>
+        </button>
+
+        <!-- Primary stays in place -->
+        <button class="cbtn pri" aria-label="Next Bayt" onclick="triggerIgnite(this)">
+          <div class="ring" aria-hidden="true"></div>
+          <span class="lbl">Next Bayt</span>
+          <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /sheet -->
+
+  <!-- Philosophy tag -->
+  <div class="philosophy" aria-hidden="true">
+    <svg class="philosophy-star" viewBox="0 0 32 32">
+      <path d="M16 2L18.6 11L26 6L22.6 14.2L32 13L24 17.2L30.2 24.8L21 21.8L20 32L16 24.5L12 32L11 21.8L1.8 24.8L8 17.2L0 13L9.4 14.2L6 6L13.4 11Z"
+            fill="var(--gold)"/>
+    </svg>
+    <span class="philosophy-name">Starlit Geometric</span>
+  </div>
+
+</main>
+
+<!-- ================================================
+     INTERACTION
+     ================================================ -->
+<script>
+/* ── Starlight Ignite ── */
+function triggerIgnite(btn) {
+  btn.classList.remove('igniting');
+  void btn.offsetWidth; /* reflow to restart */
+  btn.classList.add('igniting');
+  btn.addEventListener('animationend', () => {
+    btn.classList.remove('igniting');
+  }, { once: true });
+}
+
+/* ── Listen → Transport morph ── */
+function activateTransport(listenBtn) {
+  const row = listenBtn.closest('.btn-row') || listenBtn.closest('.mini-row');
+  if (!row) return;
+
+  /* Build transport */
+  const t = document.createElement('button');
+  t.className = 'cbtn transport morph-in';
+  t.setAttribute('aria-label', 'Audio transport');
+  t.innerHTML = `
+    <div class="t-inner">
+      <button class="tbtn" aria-label="Previous verse">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5"/>
+        </svg>
+      </button>
+      <div class="t-div" aria-hidden="true"></div>
+      <button class="tbtn pp" id="tp-play" aria-label="Play">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+      </button>
+      <div class="t-div" aria-hidden="true"></div>
+      <button class="tbtn" aria-label="Next verse">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19"/>
+        </svg>
+      </button>
+    </div>`;
+
+  /* Play/pause toggle inside transport */
+  let playing = false;
+  t.addEventListener('click', (e) => {
+    const pp = t.querySelector('#tp-play');
+    if (!pp) return;
+    playing = !playing;
+    pp.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+    pp.innerHTML = playing
+      ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+           <rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/>
+         </svg>`
+      : `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true">
+           <polygon points="5 3 19 12 5 21 5 3"/>
+         </svg>`;
+    e.stopPropagation();
+  });
+
+  /* Morph out listen, swap in transport */
+  listenBtn.classList.add('morph-out');
+  listenBtn.addEventListener('animationend', () => {
+    listenBtn.replaceWith(t);
+  }, { once: true });
+}
+
+/* ── Draggable scrub ── */
+function initScrub(trackId, fillId, handleId) {
+  const track  = document.getElementById(trackId);
+  const fill   = document.getElementById(fillId);
+  const handle = document.getElementById(handleId);
+  if (!track) return;
+
+  let dragging = false;
+
+  function moveTo(clientX) {
+    const r = track.getBoundingClientRect();
+    const pct = Math.min(Math.max((clientX - r.left) / r.width * 100, 0), 100);
+    if (fill)   fill.style.width  = pct + '%';
+    if (handle) handle.style.left = pct + '%';
+    track.setAttribute('aria-valuenow', Math.round(pct));
+  }
+
+  track.addEventListener('mousedown',  e => { dragging = true; moveTo(e.clientX); });
+  track.addEventListener('touchstart', e => { dragging = true; moveTo(e.touches[0].clientX); },
+    { passive: true });
+  window.addEventListener('mousemove',  e => { if (dragging) moveTo(e.clientX); });
+  window.addEventListener('touchmove',  e => { if (dragging) moveTo(e.touches[0].clientX); },
+    { passive: true });
+  window.addEventListener('mouseup',   () => { dragging = false; });
+  window.addEventListener('touchend',  () => { dragging = false; });
+}
+
+initScrub('hero-scrub', 'hero-fill', 'hero-handle');
+</script>
+
+</body>
+</html>

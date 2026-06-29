@@ -13,6 +13,6 @@ prepends an entry below (newest first) describing **why** it changed and a conci
 **Why:** The commit adds Scheherazade New to `src/constants/fonts.js`, bringing the total typeface count from 8 to 9. The README's Features section listed the old count and omitted the new font.
 
 **README changes:**
-- Features > Typography: "Eight Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh)" -> "Nine Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh, Scheherazade New)"
+- Features > Reading: "Eight Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh)" -> "Nine Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh, Scheherazade New)"
 
 _Full diff: see the accompanying PR._

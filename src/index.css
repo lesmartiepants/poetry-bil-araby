@@ -16,14 +16,16 @@
 }
 
 /* Sparkler reader: per-letter wave for the "scroll up for next poem" cue. Each letter carries a
-   staggered animation-delay so the bounce travels across the words like a wave. */
+   staggered animation-delay so the bounce travels across the words like a wave. The bounce occupies
+   only the first third of the cycle; the flat remainder (~2s at a 3s duration) is the pause between
+   waves. */
 @keyframes cueWave {
   0%,
-  55%,
+  33%,
   100% {
     transform: translateY(0);
   }
-  27% {
+  16% {
     transform: translateY(-5px);
   }
 }

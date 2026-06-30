@@ -109,8 +109,8 @@ const RevealText = forwardRef(function RevealText(
       applyReveal(0);
       tweenRef.current?.kill();
       const obj = { p: 0 };
-      // 3× faster than the original reveal pace (0.9 + wordCount·0.085).
-      const duration = Math.max(0.2, (0.9 + wordCount * 0.085) / 3);
+      // 2× the previous (3×-fast) pace → 1.5× faster than the original (0.9 + wordCount·0.085).
+      const duration = Math.max(0.3, (0.9 + wordCount * 0.085) / 1.5);
       tweenRef.current = gsap.to(obj, {
         p: 1,
         duration,

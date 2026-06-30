@@ -42,7 +42,7 @@ const IconSpinner = () => (
  * ReaderActions — the two-button bottom chrome that replaces the old "tap to continue" prompt.
  * Design: "Molten Gold × Option-2 transport" (design-sprint winner). State-driven:
  *
- *   reading  → [Listen]            [Next Bayt]
+ *   reading  → [Listen]            [Next Verse]
  *   idle     → [Listen]            [Poem Insights]
  *   meaning  → [Back to Poem]      [Author Insights]  (or [Share] when the poem has no bio)
  *   author   → [Back to Insights]  [Share]
@@ -136,7 +136,7 @@ export default function ReaderActions({
   if (reading) {
     right = (
       <button className="ra-btn ra-btn-primary" onClick={onAdvance} disabled={isRevealing}>
-        <span className="ra-label">Next Bayt</span>
+        <span className="ra-label">Next Verse</span>
       </button>
     );
   } else if (idle) {

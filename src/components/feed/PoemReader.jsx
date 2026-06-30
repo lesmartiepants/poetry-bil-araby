@@ -235,12 +235,17 @@ const PoemReader = memo(function PoemReader({
   const handleBackToPoem = () => setEndStage('idle');
   const handleBackToInsights = () => setEndStage('meaning');
 
-  // "pull up for the next poem" shows only once the current content has finished animating: in the
-  // idle end-state after the poem reveal settles, and in the author end-state once the bio renders.
+  // "scroll up for next poem" is shown at two moments:
+  //  • on landing — while the title is centred / lifting (before introDone), so the reader knows
+  //    they can skip to the next poem if the title doesn't grab them; it fades out as the header
+  //    settles up top and the poem starts to show.
+  //  • at the end — in the idle end-state after the reveal settles, and in the author end-state once
+  //    the bio renders (the original behaviour).
   const showCue =
     isActive &&
-    isAllRevealed &&
-    ((endStage === 'idle' && !isRevealing) || (endStage === 'author' && insightDone));
+    (!introDone ||
+      (isAllRevealed &&
+        ((endStage === 'idle' && !isRevealing) || (endStage === 'author' && insightDone))));
 
   return (
     <div
@@ -459,7 +464,7 @@ const PoemReader = memo(function PoemReader({
                 style={{
                   display: 'inline-block',
                   whiteSpace: 'pre',
-                  animation: 'cueWave 1.7s ease-in-out infinite',
+                  animation: 'cueWave 3s ease-in-out infinite',
                   animationDelay: `${(i * 0.05).toFixed(2)}s`,
                 }}
               >

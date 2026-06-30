@@ -103,6 +103,10 @@ jobs:
              **README changes:**
              - <section>: <before> -> <after>
 
+             For <section>, use the EXACT heading text as it appears in README.md (e.g. the
+             literal Features subsection like "Reading" or "Platform") — do not paraphrase or
+             invent a section name.
+
              _Full diff: see the accompanying PR._
           5. Do NOT run git commit, git push, or open a pull request, and do not edit any
              file other than README.md and readme_ci_changelog.md. A later workflow step

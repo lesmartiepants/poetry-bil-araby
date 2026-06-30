@@ -306,24 +306,39 @@ export function useSparklerReveal({
 
     const advance = async () => {
       const s = st.current;
-      if (s.busy || s.revealed >= total()) return;
+      if (s.busy) return;
+      const T = total();
+      if (!T) return;
+      const V = VIS();
+      // The pair "in view" is anchored on the bottom-most REVEALED line currently visible in the
+      // window (not the global reveal frontier). Advancing targets the next pair after it:
+      //   • if those lines were already revealed (e.g. the reader scrubbed back up), we only SCROLL
+      //     down to them — no re-animation;
+      //   • if they're past the reveal frontier, we IGNITE them.
+      // This makes "Next Verse" step one pair at a time from wherever the view is, instead of always
+      // skipping ahead to the unrevealed frontier after a scrub-back.
+      const viewBottom = Math.min(s.revealed - 1, s.windowTop + V - 1);
+      if (viewBottom >= T - 1) return; // already showing the last line — nothing after
+      const target = Math.min(viewBottom + 2, T - 1);
       setBusy(true);
-      // Scroll BEFORE revealing so the newest line of this tap's pair lands on the bottom row.
-      const lastLine = Math.min(s.revealed + 1, total() - 1);
-      const newTop = computeWindowTop(lastLine, total(), VIS(), s.windowTop);
+      // Scroll BEFORE revealing so a freshly-lit line lands on the bottom row. computeWindowTop never
+      // scrolls up, so stepping through already-read lines doesn't make earlier lines jump back.
+      const newTop = computeWindowTop(target, T, V, s.windowTop);
       if (newTop !== s.windowTop) {
         s.windowTop = newTop;
         await scrollTrack(newTop);
       }
-      await ignite(s.revealed);
-      s.revealed++;
-      emitRevealed();
-      if (s.revealed < total()) {
-        await wait(200);
+      // Ignite only lines past the frontier; already-revealed lines in [.., target] just scrolled in.
+      let firstIgnite = true;
+      while (s.revealed <= target) {
+        if (!firstIgnite) await wait(200);
+        firstIgnite = false;
         await ignite(s.revealed);
         s.revealed++;
         emitRevealed();
       }
+      // Keep the scrubber in sync with the view position (whether we scrolled or revealed).
+      writeProgress((target + 1) / T);
       setBusy(false);
     };
 

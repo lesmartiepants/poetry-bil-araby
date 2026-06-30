@@ -308,8 +308,9 @@ const PoemReader = memo(function PoemReader({
         className="absolute inset-0 flex items-center justify-center px-4 md:px-12"
         style={{
           // Asymmetric so the verses sit centred between the (taller) header and the bottom bar.
+          // The one-line cue freed ~a line at the bottom, so the verses get a bit more room there.
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + clamp(116px, 16vh, 148px))',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + clamp(116px, 15vh, 140px))',
+          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + clamp(96px, 13vh, 120px))',
         }}
       >
         {/* Stage stays mounted (refs persist); hidden when the insight is showing. */}
@@ -430,24 +431,14 @@ const PoemReader = memo(function PoemReader({
           </div>
         )}
 
-        {/* pull-up cue — below the prompt; always reserves its height (only opacity toggles) so the
-            bar/prompt above stay put. Shown only once the poem / insight has finished animating. */}
+        {/* pull-up cue — a single line below the prompt with the arrow inline at the end; always
+            reserves its height (only opacity toggles) so the bar/prompt above stay put. Shown only
+            once the poem / insight has finished animating. */}
         <div
-          className="flex flex-col items-center gap-[1px]"
+          className="flex flex-row items-center justify-center gap-[0.4em]"
           style={{ opacity: showCue ? 0.95 : 0, transition: 'opacity 0.3s ease' }}
           aria-hidden="true"
         >
-          <span
-            className="cue-arrow"
-            style={{
-              color: goldColor,
-              fontSize: '1.25em',
-              lineHeight: 1,
-              animation: 'cueBounce 1.5s ease-in-out infinite',
-            }}
-          >
-            ↑
-          </span>
           <span
             className="font-brand-en italic"
             style={{
@@ -456,7 +447,18 @@ const PoemReader = memo(function PoemReader({
               letterSpacing: '0.05em',
             }}
           >
-            pull up for the next poem
+            pull up for new poem
+          </span>
+          <span
+            className="cue-arrow"
+            style={{
+              color: goldColor,
+              fontSize: '1.1em',
+              lineHeight: 1,
+              animation: 'cueBounce 1.5s ease-in-out infinite',
+            }}
+          >
+            ↑
           </span>
         </div>
       </div>

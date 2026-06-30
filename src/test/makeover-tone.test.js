@@ -110,11 +110,19 @@ describe('iOS silent switch bypass', () => {
     expect(content).toMatch(/isIOS\(\).*createHTMLAudioPlayer|createHTMLAudioPlayer.*isIOS\(\)/s);
   });
 
-  it('toneStart() is skipped on iOS in both playback paths', () => {
+  it('RESUME path skips toneStart() on iOS; GENERATE path unlocks the context on iOS too', () => {
     const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
-    // Both the RESUME and GENERATE paths should guard toneStart() with !isIOS()
-    const matches = content.match(/if\s*\(!isIOS\(\)\)\s*await\s*toneStart/g) || [];
-    expect(matches.length).toBeGreaterThanOrEqual(2);
+    // The RESUME path re-creates the player from the cached blob URL and, on iOS,
+    // uses an HTMLAudioElement (no AudioContext), so it guards toneStart with !isIOS().
+    const guarded = content.match(/if\s*\(!isIOS\(\)\)\s*await\s*toneStart/g) || [];
+    expect(guarded.length).toBeGreaterThanOrEqual(1);
+
+    // The GENERATE path intentionally unlocks the AudioContext on iOS too (set the
+    // audio session to 'playback' inside the gesture so Web Audio plays through the
+    // hardware silent switch — verified on a real iPhone). So there must also be an
+    // UNGUARDED `await toneStart()` reached on the generate path.
+    const allToneStart = content.match(/await\s*toneStart\s*\(/g) || [];
+    expect(allToneStart.length).toBeGreaterThan(guarded.length);
   });
 
   // Behavioural unit tests for createHTMLAudioPlayer.

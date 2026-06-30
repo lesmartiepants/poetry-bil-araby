@@ -63,7 +63,7 @@ html, body {
   min-height: 100vh;
   background: var(--bg-app);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   font-family: var(--font-ui);
   -webkit-text-size-adjust: 100%;
@@ -91,8 +91,8 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-lg);
-  padding: var(--space-xl);
+  gap: 2px;
+  padding: 2px var(--space-xl) 0;
 }
 
 .backdrop-caption {
@@ -100,20 +100,20 @@ button:focus-visible {
   color: rgba(197,160,89,0.35);
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: 13px;
+  font-size: 11px;
   letter-spacing: 0.04em;
-  line-height: 1.6;
+  line-height: 1.3;
 }
 
 .backdrop-caption strong {
-  display: block;
-  font-size: 15px;
+  display: inline;
+  font-size: 12px;
   color: rgba(197,160,89,0.5);
   font-style: normal;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  margin-bottom: 3px;
+  margin-right: 4px;
 }
 
 /* ============================================================
@@ -277,7 +277,7 @@ button:focus-visible {
 .modal-inner {
   position: relative;
   z-index: 1;
-  padding: var(--space-md) var(--space-md) calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
+  padding: var(--space-sm) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
 }
 
 /* ============================================================
@@ -349,13 +349,13 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: var(--space-sm);
+  margin-bottom: 4px;
   position: relative;
 }
 
 /* Envelope base (bottom) — decorative container */
 .envelope-base {
-  width: 252px;
+  width: 212px;
   height: 14px;
   background: linear-gradient(180deg, #1a1410 0%, #111008 100%);
   border: 1px solid rgba(197,160,89,0.2);
@@ -378,7 +378,7 @@ button:focus-visible {
 
 /* Envelope sides */
 .envelope-sides {
-  width: 252px;
+  width: 212px;
   height: 8px;
   position: relative;
   z-index: 1;
@@ -399,7 +399,7 @@ button:focus-visible {
 
 /* Envelope flap (the V-shaped fold above card) */
 .envelope-flap {
-  width: 252px;
+  width: 212px;
   position: relative;
   z-index: 3;
   overflow: hidden;
@@ -449,15 +449,15 @@ button:focus-visible {
    CARD PREVIEW — the letter emerging
    ============================================================ */
 .card-preview-wrap {
-  width: 252px;
+  width: 212px;
   position: relative;
   z-index: 2;
 }
 
 .card-preview {
-  width: 240px;
+  width: 200px;
+  height: 220px;
   margin: 0 auto;
-  aspect-ratio: 4 / 5;
   border-radius: var(--radius-md);
   position: relative;
   overflow: hidden;
@@ -633,8 +633,8 @@ button:focus-visible {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 28px 22px;
-  gap: 12px;
+  padding: 16px 18px;
+  gap: 8px;
   text-align: center;
 }
 
@@ -739,25 +739,25 @@ button:focus-visible {
    STAMP GRID — style picker
    ============================================================ */
 .stamp-section {
-  margin-bottom: var(--space-sm);
+  margin-bottom: 4px;
 }
 
 .stamp-label {
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: 11px;
+  font-size: 10px;
   color: rgba(197,160,89,0.45);
   letter-spacing: 0.08em;
   text-align: center;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .stamp-grid {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  padding: 4px 0;
+  gap: 8px;
+  padding: 2px 0;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -767,12 +767,12 @@ button:focus-visible {
 }
 
 .stamp {
-  width: 54px;
+  width: 50px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   cursor: pointer;
   position: relative;
   min-height: 44px;
@@ -789,8 +789,8 @@ button:focus-visible {
 }
 
 .stamp-img {
-  width: 54px;
-  height: 66px;
+  width: 50px;
+  height: 58px;
   border-radius: 2px;
   position: relative;
   overflow: hidden;
@@ -933,8 +933,8 @@ button:focus-visible {
 
 /* PRIMARY — Wax Seal Share button */
 .btn-wax-seal {
-  width: 68px;
-  height: 68px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   background: var(--molten-gold);
   position: relative;
@@ -956,7 +956,7 @@ button:focus-visible {
     transform 0.2s var(--ease-spring),
     box-shadow 0.2s var(--ease-quart),
     filter 0.2s var(--ease-quart);
-  min-width: 68px;
+  min-width: 50px;
   overflow: hidden;
 }
 
@@ -1159,17 +1159,7 @@ button:focus-visible {
    FOOTER BYLINE
    ============================================================ */
 .modal-footer {
-  text-align: center;
-  padding: 4px 0 2px;
-  margin-top: 2px;
-}
-
-.footer-byline {
-  font-family: var(--font-editorial);
-  font-style: italic;
-  font-size: 10px;
-  color: rgba(197,160,89,0.2);
-  letter-spacing: 0.08em;
+  display: none;
 }
 
 /* ============================================================

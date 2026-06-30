@@ -139,33 +139,33 @@ const TextSettingsPill = () => {
             style={{ zIndex: 46, maxHeight: '90vh' }}
           >
             {/* ── Text section ───────────────────────────────────────── */}
-            {/* Row 1: Translation Toggle */}
-            <button
-              onClick={() => getStore().toggleTranslation()}
-              className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 ${
-                showTranslation
-                  ? 'bg-gold/20 border border-gold/40'
-                  : 'opacity-40 border border-transparent'
-              }`}
-              style={{ color: gold }}
-            >
-              <Languages size={14} style={{ color: gold }} />
-              <span>Translation</span>
-            </button>
-
-            {/* Row 2: Romanize Toggle */}
-            <button
-              onClick={() => getStore().toggleTransliteration()}
-              className={`w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 mt-1 ${
-                showTransliteration
-                  ? 'bg-gold/20 border border-gold/40'
-                  : 'opacity-40 border border-transparent'
-              }`}
-              style={{ color: gold }}
-            >
-              <ALargeSmall size={14} style={{ color: gold }} />
-              <span>Romanize</span>
-            </button>
+            {/* Row 1: Translation + Romanize toggles — paired on one line */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => getStore().toggleTranslation()}
+                className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm transition-all duration-200 ${
+                  showTranslation
+                    ? 'bg-gold/20 border border-gold/40'
+                    : 'opacity-40 border border-transparent'
+                }`}
+                style={{ color: gold }}
+              >
+                <Languages size={14} style={{ color: gold }} className="flex-shrink-0" />
+                <span className="truncate">Translation</span>
+              </button>
+              <button
+                onClick={() => getStore().toggleTransliteration()}
+                className={`flex-1 min-w-0 flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-sm transition-all duration-200 ${
+                  showTransliteration
+                    ? 'bg-gold/20 border border-gold/40'
+                    : 'opacity-40 border border-transparent'
+                }`}
+                style={{ color: gold }}
+              >
+                <ALargeSmall size={14} style={{ color: gold }} className="flex-shrink-0" />
+                <span className="truncate">Romanize</span>
+              </button>
+            </div>
 
             {/* Row 3: Font Size + Font — paired on one line */}
             <div className="mt-3 flex gap-2 items-start">

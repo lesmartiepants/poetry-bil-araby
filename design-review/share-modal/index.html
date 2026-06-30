@@ -2,325 +2,136 @@
 <html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-<title>Share Modal — Design Review Viewer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Reem+Kufi:wght@400;600&display=swap" rel="stylesheet" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Share Modal — Design Directions</title>
 <style>
-/* ── Design Tokens ───────────────────────────── */
-:root {
-  --gold:          #c5a059;
-  --gold-bright:   #d4b463;
-  --lapis-light:   #4a7cc9;
-  --bg:            #0c0c0e;
-  --surface:       rgba(20,18,15,0.96);
-  --gold-border:   rgba(197,160,89,0.22);
-  --gold-rule:     linear-gradient(90deg, transparent, rgba(160,128,64,0.4) 20%, #C5A059 50%, rgba(160,128,64,0.4) 80%, transparent);
-  --ease-out-expo: cubic-bezier(0.16,1,0.3,1);
-  --ease-standard: cubic-bezier(.4,0,.2,1);
-}
+  :root {
+    --gold: #c5a059;
+    --gold-bright: #d4b463;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; width: 100%; background: #04040a; overflow: hidden; font-family: system-ui, -apple-system, sans-serif; }
 
-/* ── Reset ───────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  height: 100%; background: var(--bg);
-  color: rgba(236,232,224,0.9);
-  font-family: system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  overflow: hidden;
-}
+  /* Each option fills the whole screen */
+  .frame {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    border: none; opacity: 0; pointer-events: none;
+    transition: opacity 0.3s var(--ease);
+  }
+  .frame.active { opacity: 1; pointer-events: auto; }
 
-/* ── Ambient backdrop ────────────────────────── */
-body::before {
-  content: '';
-  position: fixed; inset: 0; pointer-events: none; z-index: 0;
-  background:
-    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(197,160,89,0.05), transparent 60%),
-    radial-gradient(ellipse 40% 30% at 10% 100%, rgba(30,58,110,0.08), transparent 55%);
-}
+  /* Floating side-nav arrows */
+  .nav-btn {
+    position: fixed; top: 50%; transform: translateY(-50%);
+    z-index: 50; width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(197,160,89,0.45);
+    background: rgba(7,7,12,0.6); backdrop-filter: blur(10px);
+    color: var(--gold); font-size: 22px; line-height: 1; cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    transition: background 0.18s var(--ease), color 0.18s var(--ease), transform 0.18s var(--ease), opacity 0.18s;
+  }
+  .nav-btn:hover { background: rgba(197,160,89,0.18); color: var(--gold-bright); transform: translateY(-50%) scale(1.08); }
+  .nav-btn:active { transform: translateY(-50%) scale(0.92); }
+  .nav-btn:disabled { opacity: 0.18; pointer-events: none; }
+  .nav-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .nav-prev { left: calc(8px + env(safe-area-inset-left, 0px)); }
+  .nav-next { right: calc(8px + env(safe-area-inset-right, 0px)); }
 
-/* ── Layout ──────────────────────────────────── */
-.viewer {
-  position: relative; z-index: 1;
-  height: 100dvh; height: 100vh;
-  display: grid;
-  /* Four rows: header, direction-strip, iframe-stage (fills), footer. (Was 3 rows for 4 children,
-     which put the 1fr on the direction-strip and collapsed the iframe stage to 0 height.) */
-  grid-template-rows: auto auto 1fr auto;
-  gap: 0;
-}
+  /* Compact label pill (top-center) */
+  .label {
+    position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); left: 50%;
+    transform: translateX(-50%); z-index: 50;
+    display: flex; align-items: center; gap: 8px; max-width: 80vw;
+    padding: 6px 14px; border-radius: 999px;
+    background: rgba(7,7,12,0.72); backdrop-filter: blur(10px);
+    border: 1px solid rgba(197,160,89,0.28);
+    font-size: 12px; color: var(--gold); white-space: nowrap; overflow: hidden;
+  }
+  .label .num { opacity: 0.55; font-weight: 700; letter-spacing: 0.04em; }
+  .label .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+  .label .flag {
+    font-size: 8.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #1a1200;
+    background: linear-gradient(135deg, #a8853d, #c5a059 30%, #e0c97a 50%, #c5a059 70%, #a8853d);
+    border-radius: 4px; padding: 2px 6px; display: none;
+  }
+  .label.is-flag .flag { display: inline-block; }
 
-/* ── Header ──────────────────────────────────── */
-.header {
-  padding: 12px 16px 10px;
-  border-bottom: 1px solid var(--gold-border);
-  display: flex; align-items: center; justify-content: space-between;
-  gap: 12px; flex-shrink: 0;
-  background: rgba(12,11,10,0.6);
-  backdrop-filter: blur(12px);
-  min-height: 56px;
-}
-.header-left {
-  display: flex; flex-direction: column; gap: 2px;
-  min-width: 0; flex: 1;
-}
-.header-brand {
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic; font-size: 1rem; font-weight: 600;
-  color: var(--gold); letter-spacing: 0.02em;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.header-context {
-  font-family: system-ui; font-size: 0.6rem;
-  color: rgba(197,160,89,0.45); letter-spacing: 0.07em;
-  text-transform: uppercase; white-space: nowrap;
-}
-.header-nav {
-  display: flex; align-items: center; gap: 0;
-}
-.nav-btn {
-  display: flex; align-items: center; justify-content: center;
-  width: 44px; height: 44px;
-  background: none; border: 1px solid var(--gold-border);
-  color: rgba(197,160,89,0.7); font-size: 1.1rem;
-  cursor: pointer;
-  transition: background 0.15s var(--ease-standard),
-              color 0.15s var(--ease-standard),
-              border-color 0.15s var(--ease-standard);
-}
-.nav-btn:first-child { border-radius: 8px 0 0 8px; }
-.nav-btn:last-child  { border-radius: 0 8px 8px 0; border-inline-start: none; }
-.nav-btn:hover {
-  background: rgba(197,160,89,0.1);
-  color: var(--gold-bright);
-  border-color: rgba(197,160,89,0.45);
-}
-.nav-btn:active { background: rgba(197,160,89,0.18); }
-.nav-btn:focus-visible { outline: 2px solid var(--lapis-light); outline-offset: 2px; }
-.nav-btn:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
-
-/* ── Direction label strip ───────────────────── */
-.direction-strip {
-  display: flex; align-items: center; justify-content: center;
-  padding: 6px 8px;
-  gap: 4px;
-  flex-shrink: 0;
-  position: relative;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-.direction-strip::-webkit-scrollbar { display: none; }
-.direction-strip::after {
-  content: '';
-  position: absolute; bottom: 0; left: 0; right: 0;
-  height: 1px;
-  background: var(--gold-rule);
-}
-.direction-pill {
-  display: flex; flex-direction: column; align-items: center; gap: 1px;
-  cursor: pointer; background: none; border: none; padding: 4px 8px;
-  border-radius: 6px;
-  transition: background 0.15s;
-  min-height: 44px; justify-content: center;
-  flex-shrink: 0;
-}
-.direction-pill:hover { background: rgba(197,160,89,0.07); }
-.direction-pill:focus-visible { outline: 2px solid var(--lapis-light); outline-offset: 2px; border-radius: 6px; }
-.pill-name {
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic; font-size: 0.95rem; font-weight: 600;
-  color: rgba(197,160,89,0.55);
-  transition: color 0.2s;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-.pill-concept {
-  font-family: system-ui; font-size: 0.55rem;
-  color: rgba(197,160,89,0.3); letter-spacing: 0.04em;
-  text-transform: uppercase; white-space: nowrap;
-  transition: color 0.2s;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.direction-pill.active .pill-name { color: var(--gold-bright); }
-.direction-pill.active .pill-concept { color: rgba(197,160,89,0.6); }
-.direction-pill.active {
-  background: rgba(197,160,89,0.08);
-}
-/* Active indicator dot */
-.direction-pill.active::after {
-  content: '';
-  display: block;
-  width: 4px; height: 4px; border-radius: 50%;
-  background: var(--gold);
-  margin: 2px auto 0;
-}
-
-/* ── Iframe stage ────────────────────────────── */
-.iframe-stage {
-  position: relative; overflow: hidden;
-  min-height: 0;
-  display: flex; align-items: stretch;
-}
-.frame-slot {
-  position: absolute; inset: 0;
-  opacity: 0; pointer-events: none;
-  transition: opacity 0.35s var(--ease-standard);
-}
-.frame-slot.active {
-  opacity: 1; pointer-events: auto;
-}
-.frame-slot iframe {
-  width: 100%; height: 100%;
-  border: none; display: block;
-  background: var(--bg);
-}
-
-/* ── Footer ──────────────────────────────────── */
-.footer {
-  border-top: 1px solid var(--gold-border);
-  padding: 8px 16px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
-  background: rgba(12,11,10,0.5);
-  min-height: 36px;
-}
-.footer-count {
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic; font-size: 0.82rem;
-  color: rgba(197,160,89,0.45);
-  letter-spacing: 0.04em;
-}
-.footer-hint {
-  font-family: system-ui; font-size: 0.6rem;
-  color: rgba(197,160,89,0.25); letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
+  /* Dots */
+  .dots {
+    position: fixed; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); left: 50%;
+    transform: translateX(-50%); z-index: 50;
+    display: flex; gap: 8px; padding: 8px 12px; border-radius: 999px;
+    background: rgba(7,7,12,0.6); backdrop-filter: blur(8px); border: 1px solid rgba(197,160,89,0.18);
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(197,160,89,0.25); cursor: pointer; transition: all 0.25s var(--ease); }
+  .dot.active { background: var(--gold); width: 22px; border-radius: 4px; box-shadow: 0 0 6px rgba(197,160,89,0.4); }
+  .dot:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 </style>
 </head>
 <body>
+  <iframe class="frame active" src="s1.html" title="S1 — Folio (Flagship)" loading="eager"></iframe>
+  <iframe class="frame" src="s2.html" title="S2 — Majlis" loading="lazy"></iframe>
+  <iframe class="frame" src="s3.html" title="S3 — Maktuba" loading="lazy"></iframe>
 
-<div class="viewer">
+  <button class="nav-btn nav-prev" id="prev" aria-label="Previous design" disabled>‹</button>
+  <button class="nav-btn nav-next" id="next" aria-label="Next design">›</button>
 
-  <!-- Header -->
-  <header class="header">
-    <div class="header-left">
-      <span class="header-brand">شعر بالعربي — Share Modal</span>
-      <span class="header-context">Design Review · 3 Directions</span>
-    </div>
-    <nav class="header-nav" aria-label="Design navigation">
-      <button class="nav-btn" id="prevBtn" aria-label="Previous direction" disabled>◀</button>
-      <button class="nav-btn" id="nextBtn" aria-label="Next direction">▶</button>
-    </nav>
-  </header>
-
-  <!-- Direction label strip -->
-  <div class="direction-strip" role="tablist" aria-label="Design directions">
-    <button class="direction-pill active" role="tab" data-index="0" aria-selected="true" aria-controls="frame-0">
-      <span class="pill-name">Folio</span>
-      <span class="pill-concept">Full-bleed card · chrome dissolves into art</span>
-    </button>
-    <button class="direction-pill" role="tab" data-index="1" aria-selected="false" aria-controls="frame-1">
-      <span class="pill-name">Majlis</span>
-      <span class="pill-concept">Horizontal style carousel · architectural chrome</span>
-    </button>
-    <button class="direction-pill" role="tab" data-index="2" aria-selected="false" aria-controls="frame-2">
-      <span class="pill-name">Maktuba</span>
-      <span class="pill-concept">Envelope &amp; stamp motif · letter-as-art</span>
-    </button>
+  <div class="label is-flag" id="label">
+    <span class="num" id="num">S1</span>
+    <span class="name" id="name">Folio</span>
+    <span class="flag">Flagship</span>
   </div>
 
-  <!-- Iframe stage -->
-  <main class="iframe-stage" aria-live="polite">
-    <div class="frame-slot active" id="frame-0" role="tabpanel">
-      <iframe src="s1.html" title="Folio — Share Modal Direction 1" loading="eager"></iframe>
-    </div>
-    <div class="frame-slot" id="frame-1" role="tabpanel">
-      <iframe src="s2.html" title="Majlis — Share Modal Direction 2" loading="lazy"></iframe>
-    </div>
-    <div class="frame-slot" id="frame-2" role="tabpanel">
-      <iframe src="s3.html" title="Maktuba — Share Modal Direction 3" loading="lazy"></iframe>
-    </div>
-  </main>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <span class="footer-count" id="footerCount">1 of 3</span>
-    <span class="footer-hint">← → arrow keys to navigate</span>
-  </footer>
-
-</div>
+  <div class="dots" id="dots" role="tablist" aria-label="Design directions"></div>
 
 <script>
-(function () {
-  'use strict';
+  const dirs = [
+    { num: 'S1', name: 'Folio', flagship: true },
+    { num: 'S2', name: 'Majlis', flagship: false },
+    { num: 'S3', name: 'Maktuba', flagship: false },
+  ];
+  const frames = Array.from(document.querySelectorAll('.frame'));
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  const label = document.getElementById('label');
+  const num = document.getElementById('num');
+  const name = document.getElementById('name');
+  const dotsWrap = document.getElementById('dots');
+  let cur = 0;
 
-  let current = 0;
-  const total = 3;
+  dirs.forEach((d, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('role', 'tab');
+    dot.setAttribute('aria-label', `${d.num}: ${d.name}`);
+    dot.addEventListener('click', () => go(i));
+    dotsWrap.appendChild(dot);
+  });
+  const dots = Array.from(dotsWrap.children);
 
-  const slots  = document.querySelectorAll('.frame-slot');
-  const pills  = document.querySelectorAll('.direction-pill');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
-  const footerCount = document.getElementById('footerCount');
-
-  function go(index) {
-    if (index < 0 || index >= total) return;
-    current = index;
-
-    // Update slots
-    slots.forEach((slot, i) => {
-      const isActive = i === current;
-      slot.classList.toggle('active', isActive);
-    });
-
-    // Update pills
-    pills.forEach((pill, i) => {
-      const isActive = i === current;
-      pill.classList.toggle('active', isActive);
-      pill.setAttribute('aria-selected', isActive ? 'true' : 'false');
-    });
-
-    // Nav button states
-    prevBtn.disabled = current === 0;
-    nextBtn.disabled = current === total - 1;
-
-    // Footer count
-    footerCount.textContent = (current + 1) + ' of ' + total;
-
-    // Eagerly load the adjacent iframe if not already done
-    const adjacentIndices = [current - 1, current + 1];
-    adjacentIndices.forEach(ai => {
-      if (ai >= 0 && ai < total) {
-        const iframe = slots[ai].querySelector('iframe');
-        if (iframe && iframe.getAttribute('loading') === 'lazy') {
-          iframe.setAttribute('loading', 'eager');
-        }
-      }
-    });
+  function go(i) {
+    if (i < 0 || i >= dirs.length) return;
+    frames[cur].classList.remove('active');
+    dots[cur].classList.remove('active');
+    cur = i;
+    frames[cur].classList.add('active');
+    dots[cur].classList.add('active');
+    const d = dirs[cur];
+    num.textContent = d.num;
+    name.textContent = d.name;
+    label.classList.toggle('is-flag', d.flagship);
+    prev.disabled = cur === 0;
+    next.disabled = cur === dirs.length - 1;
   }
 
-  prevBtn.addEventListener('click', () => go(current - 1));
-  nextBtn.addEventListener('click', () => go(current + 1));
-
-  pills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      go(parseInt(pill.dataset.index, 10));
-    });
+  prev.addEventListener('click', () => go(cur - 1));
+  next.addEventListener('click', () => go(cur + 1));
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') go(cur - 1);
+    if (e.key === 'ArrowRight') go(cur + 1);
   });
-
-  // Keyboard navigation
-  document.addEventListener('keydown', e => {
-    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(current - 1);
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(current + 1);
-    if (e.key === '1') go(0);
-    if (e.key === '2') go(1);
-    if (e.key === '3') go(2);
-  });
-}());
 </script>
 </body>
 </html>

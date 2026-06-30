@@ -1,6 +1,3 @@
-import { createElement } from 'react';
-import { Rabbit } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { Player, start as toneStart, getContext } from 'tone';
 import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
@@ -32,102 +29,18 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  */
 const estimateTTSSeconds = (arabicCharCount) => Math.max(8, Math.ceil(arabicCharCount * 0.06));
 
-const TTS_LOADING_MESSAGES = [
-  'Preparing recitation',
-  'Clearing my throat',
-  'The poet is getting ready',
-  'Wise voice awakening',
-  'Summoning the muse',
-  'The poet steadies their breath',
-  'The majlis is gathering',
-  'Ink drying on the qasida',
-];
-
 /**
- * Create a Sonner toast for TTS generation.
+ * TTS generation progress toast — intentionally disabled (no-op).
  *
- * Two shapes:
- *  - countdown (default): "Recitation ready in Xs" ticking down to "Almost ready...".
- *    Right for REST and buffered paths, which must generate the whole clip before
- *    playback, so the wait is real and roughly predictable (~0.06 s/char).
- *  - indeterminate: "Starting recitation…" with no number. Right for the Live stream,
- *    which plays its first words in ~1s — there's no meaningful countdown, and the
- *    first-sound handler dismisses it. Showing a full-generation countdown there
- *    (e.g. "ready in 59s") was just wrong.
- *
- * Returns { dismiss } for cleanup. Auto-dismisses if isGenerating goes false
- * externally (e.g. poem navigation).
+ * With the Live API (first sound in ~1s) and the reader's header intro animation, the wait is not
+ * perceptible, so the "Starting recitation…" / "The recitation begins" notifications were just
+ * noise. Kept as a no-op (rather than removed) so the dismiss plumbing — `_activeProgressDismiss`
+ * and the poem-change / drawer-open cleanup that calls it — stays intact. Error toasts elsewhere
+ * are unaffected.
  */
-function createProgressToast(estimatedSeconds, arabicText, { indeterminate = false } = {}) {
-  const toastId = `tts-progress-${Date.now()}`;
-  const startTime = Date.now();
-  const lineCount = arabicText ? arabicText.split('\n').filter((l) => l.trim()).length : 0;
-  const lineInfo =
-    lineCount > 0
-      ? `Preparing ${lineCount} line${lineCount !== 1 ? 's' : ''}`
-      : 'Preparing recitation';
-
-  const bounceIcon = () =>
-    createElement(
-      motion.div,
-      {
-        animate: { y: [0, -5, 0] },
-        transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
-      },
-      createElement(Rabbit, { size: 16 })
-    );
-
-  const STARTING = 'Starting recitation…';
-
-  toast.loading(indeterminate ? STARTING : `Recitation ready in ${estimatedSeconds}s`, {
-    id: toastId,
-    description: lineInfo,
-    duration: Infinity,
-    icon: bounceIcon(),
-  });
-
-  const interval = setInterval(() => {
-    // Auto-dismiss if generation was cancelled externally (poem change, etc.)
-    if (!useAudioStore.getState().isGenerating) {
-      clearInterval(interval);
-      toast.dismiss(toastId);
-      return;
-    }
-
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const subtitle = TTS_LOADING_MESSAGES[Math.floor(elapsed / 5) % TTS_LOADING_MESSAGES.length];
-
-    let label;
-    if (indeterminate) {
-      label = STARTING;
-    } else {
-      const remaining = estimatedSeconds - elapsed;
-      label = remaining > 0 ? `Recitation ready in ${remaining}s` : 'Almost ready...';
-    }
-
-    toast.loading(label, {
-      id: toastId,
-      description: subtitle,
-      duration: Infinity,
-      icon: bounceIcon(),
-    });
-  }, 1000);
-
-  let dismissed = false;
-  const dismiss = (successMsg) => {
-    if (dismissed) return;
-    dismissed = true;
-    clearInterval(interval);
-    if (successMsg) {
-      toast.success('The recitation begins', { id: toastId, duration: 2000 });
-    } else {
-      toast.dismiss(toastId);
-    }
-  };
-
-  // Store globally so it can be dismissed from outside (e.g. drawer open, poem change)
+function createProgressToast() {
+  const dismiss = () => {};
   _activeProgressDismiss = dismiss;
-
   return { dismiss };
 }
 

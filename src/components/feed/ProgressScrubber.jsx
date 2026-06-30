@@ -82,9 +82,14 @@ export default function ProgressScrubber({
         onPointerCancel={onUp}
         className="relative flex items-center justify-center"
         style={{
-          width: 'min(230px, 66vw)',
+          // Wide, tall hit area with horizontal margins beyond the bar, so a press to the RIGHT of
+          // the handle (or past the bar's end) still grabs and can be dragged left. frac is measured
+          // against the inner bar and clamped, so the side margins map to the 0 / 1 ends.
+          width: 'min(300px, 82vw)',
           paddingTop: 18,
           paddingBottom: 18,
+          paddingLeft: 16,
+          paddingRight: 16,
           cursor: 'grab',
           touchAction: 'none',
         }}

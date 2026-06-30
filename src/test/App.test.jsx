@@ -314,181 +314,12 @@ describe('DiwanApp', () => {
 
   // ── Feature 4: Insights ──────────────────────────────────────────────
 
-  describe('Insights', () => {
-    const mockInsightText =
-      'POEM:\nTranslation line\nTHE DEPTH: Deep meaning here.\nTHE AUTHOR: Celebrated poet info.';
+  // Insights tests removed — the standalone "Explain" button and the insight drawer (InsightOverlay)
+  // are gone; insights now render inline inside the reader (covered by the reader components), which
+  // isn't exercisable through this jsdom App harness.
 
-    it(
-      'shows parsed insight sections after auto-explain on a DB poem without cached translation',
-      { timeout: 10000 },
-      async () => {
-        // Mount with seed poem (has cachedTranslation — no auto-explain fires on init)
-        mockAutoLoadFetch();
-        render(<DiwanApp />);
-
-        await waitFor(() => {
-          expect(document.body.textContent).toContain('Nizar Qabbani');
-        });
-
-        // Set URL-aware mock: DB poem without cachedTranslation triggers auto-explain;
-        // streaming insight mock answers the Gemini call fired by auto-explain.
-        global.fetch.mockImplementation((url) => {
-          if (typeof url === 'string' && url.includes('/api/poems/')) {
-            return Promise.resolve({
-              ok: true,
-              json: async () => createDbPoem(101, { cachedTranslation: undefined }),
-              text: async () => '',
-            });
-          }
-          if (typeof url === 'string' && url.includes('/api/ai/')) {
-            return Promise.resolve(createStreamingMock(mockInsightText));
-          }
-          return Promise.resolve({ ...defaultFetchResponse });
-        });
-
-        // Discover a poem with no cachedTranslation → auto-explain fires automatically
-        await userEvent.click(screen.getByLabelText('Open discover'));
-        await userEvent.click(screen.getByLabelText('Discover new poem'));
-
-        // Auto-explain pre-fetches insight in background; open overlay to view it
-        await waitFor(
-          () => expect(screen.getByLabelText('Explain poem meaning')).toBeInTheDocument(),
-          {
-            timeout: 5000,
-          }
-        );
-        await userEvent.click(screen.getByLabelText('Explain poem meaning'));
-        await waitFor(
-          () => {
-            expect(document.body.textContent).toContain('Deep meaning here.');
-          },
-          { timeout: 8000 }
-        );
-      }
-    );
-
-    it('Explain button is enabled for a DB poem', async () => {
-      mockAutoLoadFetch();
-      render(<DiwanApp />);
-
-      // Wait for mount-time fetches to settle
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Nizar Qabbani');
-      });
-
-      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(100) });
-      await userEvent.click(screen.getByLabelText('Open discover'));
-      await userEvent.click(screen.getByLabelText('Discover new poem'));
-      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
-        timeout: 3000,
-      });
-
-      expect(screen.getByLabelText('Explain poem meaning')).not.toBeDisabled();
-    });
-
-    it('shows cached insight sections for a DB poem with pre-existing analysis', async () => {
-      mockAutoLoadFetch();
-      render(<DiwanApp />);
-
-      // Wait for mount-time fetches to settle
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Nizar Qabbani');
-      });
-
-      // Load a DB poem with all cached insight fields (depth + author)
-      // Use URL-based mock so fetchPoets (/api/poets) uses the default mock
-      // and fetchRandomPoem (/api/poems/random) gets the poem with cached analysis.
-      const poemWithInsights = createDbPoem(101, {
-        cachedExplanation: 'Deep meaning here.',
-        cachedAuthorBio: 'Celebrated poet info.',
-      });
-      global.fetch.mockImplementation((url) => {
-        if (typeof url === 'string' && url.includes('/api/poems/random')) {
-          global.fetch.mockImplementation(() => Promise.resolve({ ...defaultFetchResponse }));
-          return Promise.resolve({ ok: true, json: async () => poemWithInsights });
-        }
-        return Promise.resolve({ ...defaultFetchResponse });
-      });
-      await userEvent.click(screen.getByLabelText('Open discover'));
-      await userEvent.click(screen.getByLabelText('Discover new poem'));
-      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
-        timeout: 3000,
-      });
-
-      // Cached insight available — open overlay via Explain button to view it
-      const explainBtn = screen.getByLabelText('Explain poem meaning');
-      await userEvent.click(explainBtn);
-
-      await waitFor(
-        () => {
-          expect(document.body.textContent).toContain('Deep meaning here.');
-        },
-        { timeout: 3000 }
-      );
-    });
-  });
-
-  // ── Feature 5: Copy ───────────────────────────────────────────────────
-
-  describe('Copy Functionality', () => {
-    it('copies poem text to clipboard with Arabic text, poet, and separator', async () => {
-      mockAutoLoadFetch();
-      render(<DiwanApp />);
-
-      // Wait for auto-load to settle
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Nizar Qabbani');
-      });
-
-      await userEvent.click(screen.getByLabelText('Copy poem to clipboard'));
-
-      await waitFor(() => {
-        expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1);
-      });
-
-      const copiedText = navigator.clipboard.writeText.mock.calls[0][0];
-      // Should contain Arabic poem text
-      expect(copiedText).toContain('حُبُّكِ');
-      // Should contain poet name
-      expect(copiedText).toContain('نزار قباني');
-      // Should contain the separator
-      expect(copiedText).toContain('---');
-    });
-
-    it('shows success indicator after copying', async () => {
-      mockAutoLoadFetch();
-      render(<DiwanApp />);
-
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Nizar Qabbani');
-      });
-
-      await userEvent.click(screen.getByLabelText('Copy poem to clipboard'));
-
-      // The Check icon replaces the Copy icon on success — look for it in the button
-      await waitFor(() => {
-        const copyBtn = screen.getByLabelText('Copy poem to clipboard');
-        const svg = copyBtn.querySelector('svg');
-        expect(svg).toBeTruthy();
-      });
-    });
-
-    it('does not crash when clipboard write fails', async () => {
-      mockAutoLoadFetch();
-      navigator.clipboard.writeText.mockRejectedValueOnce(new Error('Clipboard denied'));
-
-      render(<DiwanApp />);
-
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Nizar Qabbani');
-      });
-
-      await userEvent.click(screen.getByLabelText('Copy poem to clipboard'));
-
-      // App should still be rendered (no crash)
-      expect(screen.getAllByText('poetry').length).toBeGreaterThanOrEqual(1);
-    });
-  });
+  // Copy Functionality tests removed — the copy action is retired (feature-flagged off) and its
+  // icon (formerly in the vertical sidebar) no longer exists.
 
   // ── Feature 6: Theme toggle ───────────────────────────────────────────
 
@@ -1084,39 +915,7 @@ describe('DiwanApp', () => {
   // Note: AI/DB toggle was removed (DB mode is now the permanent default).
   // Tests that switched to AI mode via the UI toggle have been removed.
 
-  describe('AI Mode', () => {
-    it('logs error when AI Insights fails with an HTTP error', async () => {
-      mockAutoLoadFetch();
-      render(<DiwanApp />);
-
-      // Wait for mount-time fetches to settle
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Nizar Qabbani');
-      });
-
-      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(102) });
-      await userEvent.click(screen.getByLabelText('Open discover'));
-      await userEvent.click(screen.getByLabelText('Discover new poem'));
-      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
-        timeout: 3000,
-      });
-
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 400,
-        json: async () => ({ error: { message: 'API key not valid' } }),
-      });
-
-      await userEvent.click(screen.getByLabelText('Explain poem meaning'));
-
-      await waitFor(
-        () => {
-          expect(document.body.textContent).toContain('API key not valid');
-        },
-        { timeout: 3000 }
-      );
-    });
-  });
+  // AI Mode insight-error test removed — it triggered analysis via the now-removed "Explain" button.
 
   // ── Debug Panel ───────────────────────────────────────────────────────
 
@@ -1131,11 +930,13 @@ describe('DiwanApp', () => {
   // ── Account Submenu (Signed Out) ─────────────────────────────────────
 
   describe('Account Submenu - Signed Out', () => {
-    it('shows Sign In button (not Account avatar) when user is not signed in', () => {
+    it('shows the account menu with a Sign In option when signed out', async () => {
       render(<DiwanApp />);
-      // The sidebar should show a "Sign in" aria-label button, not an Account avatar
+      // The account menu trigger is always present (rightmost nav item); Sign In lives inside it.
+      const accountBtn = screen.getByLabelText('Account menu');
+      expect(accountBtn).toBeTruthy();
+      await userEvent.click(accountBtn);
       expect(screen.getByLabelText('Sign in')).toBeTruthy();
-      expect(screen.queryByLabelText(/Account menu/)).toBeNull();
     });
   });
 });

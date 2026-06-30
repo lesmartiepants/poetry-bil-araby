@@ -124,6 +124,9 @@ const PoemReader = memo(function PoemReader({
 
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const goldColor = darkMode ? '#c5a059' : '#8B6430';
+  // The poem title header reads a touch small at the smaller text sizes — boost it 15% for S/M
+  // (textScale ≤ 1.0); leave L/XL as-is.
+  const headerScale = textScale <= 1 ? textScale * 1.15 : textScale;
 
   // ── Title intro: big centered header → settles to top → poem reveals ──
   useEffect(() => {
@@ -201,10 +204,10 @@ const PoemReader = memo(function PoemReader({
   }, [endStage, poemId]);
 
   // Insight RevealText → scrub bar wiring.
-  //  • While the paragraph is rendering: the bar FILL = render/load progress (gold growing); the
-  //    handle stays hidden.
-  //  • Once fully rendered: the fill follows the SCROLL position (gold up to the handle), so the
-  //    not-yet-scrolled remainder reads as the grey track; the handle appears (if it overflows).
+  //  • While the paragraph is rendering: the bar FILL = render/load progress (gold growing).
+  //  • Once fully rendered: if the text OVERFLOWS, the fill follows the SCROLL position (handle
+  //    appears); if it does NOT overflow (nothing to scroll), the bar stays FULL — there's nothing
+  //    left to read, so emptying it would be misleading.
   const onInsightProgress = (frac) => {
     if (!insightDoneRef.current && scrubFillRef.current)
       scrubFillRef.current.style.width = (frac * 100).toFixed(2) + '%';
@@ -215,8 +218,9 @@ const PoemReader = memo(function PoemReader({
       // (on completion) rather than on stage-change means async-loaded insights still animate the
       // first time (the section often mounts only after the text arrives).
       if (endStage !== 'idle') seenStagesRef.current[endStage] = true;
-      if (scrubFillRef.current)
-        scrubFillRef.current.style.width = (lastAtFracRef.current * 100).toFixed(2) + '%';
+      // Leave the bar full; onInsightScrollMeta (fires right after) drops it to the scroll position
+      // only if the text actually overflows.
+      if (scrubFillRef.current) scrubFillRef.current.style.width = '100%';
     }
   };
   const onInsightScrollMeta = ({ canScroll, atFrac }) => {
@@ -224,7 +228,8 @@ const PoemReader = memo(function PoemReader({
     setInsightCanScroll(canScroll);
     if (scrubHandleRef.current) scrubHandleRef.current.style.left = (atFrac * 100).toFixed(2) + '%';
     if (insightDoneRef.current && scrubFillRef.current)
-      scrubFillRef.current.style.width = (atFrac * 100).toFixed(2) + '%';
+      // Overflowing → fill tracks scroll position; non-overflowing → keep it full.
+      scrubFillRef.current.style.width = (canScroll ? atFrac * 100 : 100).toFixed(2) + '%';
   };
 
   const inInsight = endStage !== 'idle';
@@ -286,7 +291,12 @@ const PoemReader = memo(function PoemReader({
       <div
         ref={metaRef}
         className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-[2px] pointer-events-none whitespace-nowrap"
-        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 18px)', zIndex: 5 }}
+        style={{
+          top: 'calc(env(safe-area-inset-top, 0px) + 18px)',
+          zIndex: 5,
+          // Light mode: a soft dark shadow lifts the gold header off the pale background.
+          textShadow: darkMode ? undefined : '0 1px 3px rgba(0,0,0,0.35)',
+        }}
         data-testid="poem-meta"
       >
         <div
@@ -294,7 +304,7 @@ const PoemReader = memo(function PoemReader({
           dir="rtl"
           style={{
             ...POEM_META.title,
-            fontSize: `calc(clamp(1.6rem, 6.6vw, 2.25rem) * ${textScale})`,
+            fontSize: `calc(clamp(1.6rem, 6.6vw, 2.25rem) * ${headerScale})`,
           }}
         >
           {poem?.titleArabic || poem?.title}
@@ -305,7 +315,7 @@ const PoemReader = memo(function PoemReader({
             style={{
               fontFamily: "'Cormorant Garamond', serif",
               fontStyle: 'italic',
-              fontSize: `calc(clamp(1.1rem, 4.4vw, 1.5rem) * ${textScale})`,
+              fontSize: `calc(clamp(1.1rem, 4.4vw, 1.5rem) * ${headerScale})`,
               color: 'rgba(212,180,99,0.9)',
               marginTop: 2,
             }}
@@ -319,7 +329,7 @@ const PoemReader = memo(function PoemReader({
           style={{
             fontFamily: "'Cormorant Garamond', serif",
             fontWeight: 700,
-            fontSize: `calc(clamp(0.98rem, 3.9vw, 1.22rem) * ${textScale})`,
+            fontSize: `calc(clamp(0.98rem, 3.9vw, 1.22rem) * ${headerScale})`,
             color: goldColor,
             marginTop: 5,
           }}

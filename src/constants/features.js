@@ -11,4 +11,6 @@ export const FEATURES = {
   splash: false, // Show animated splash on first visit — disabled during reader preview
   designReview: false, // Show design review shortcut icon (still accessible via /design-review URL)
   verticalFeed: true, // Vertical swipe feed + tap-to-reveal stanza blooms (replaces horizontal carousel)
+  share: false, // Sharing (share card + reader Share action) — disabled for now
+  copy: false, // Copy-to-clipboard action — disabled for now
 };

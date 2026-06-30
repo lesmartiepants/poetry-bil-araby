@@ -363,3 +363,17 @@
     animation: none;
   }
 }
+
+/* ── light-mode foreground pattern ──
+   Gold text/icons read poorly on the pale light background, so use the dark ink (the same warm
+   near-black as the bold molten label) for the Listen (secondary) button, the quieter primary
+   weights, and the transport discs — matching the bottom-nav light pattern. The bold/molten weight
+   already uses a dark label, so it's left untouched. */
+.light .reader-actions .ra-btn-secondary,
+.light .reader-actions[data-weight='balanced'] .ra-btn-primary,
+.light .reader-actions[data-weight='quiet'] .ra-btn-primary,
+.light .reader-actions[data-weight='balanced'] .ra-disc-play,
+.light .reader-actions[data-weight='quiet'] .ra-disc-play,
+.light .reader-actions .ra-disc-ghost {
+  color: #1a1200;
+}

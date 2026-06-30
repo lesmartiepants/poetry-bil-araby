@@ -126,7 +126,7 @@ describe('Account Submenu - Signed In', () => {
     });
 
     // Saved poems count is reflected in the "My poems" button aria-label (separate from Account menu trigger)
-    const myPoemsBtn = screen.getByLabelText(/My poems, 2 saved/);
+    const myPoemsBtn = screen.getByLabelText(/Library, 2 saved/);
     expect(myPoemsBtn).toBeTruthy();
   });
 
@@ -139,7 +139,7 @@ describe('Account Submenu - Signed In', () => {
     });
 
     // The "My poems" sidebar button aria-label includes the count for screen readers
-    const myPoemsBtn = screen.getByLabelText(/My poems, 2 saved/);
+    const myPoemsBtn = screen.getByLabelText(/Library, 2 saved/);
     expect(myPoemsBtn).toBeTruthy();
   });
 
@@ -167,7 +167,7 @@ describe('Account Submenu - Signed In', () => {
     });
 
     // Click the "My poems" button directly (it opens the saved poems view)
-    const myPoemsBtn = screen.getByLabelText(/My poems/);
+    const myPoemsBtn = screen.getByLabelText(/Library/);
     await userEvent.click(myPoemsBtn);
 
     // SavedPoemsView modal should open — it shows the header text

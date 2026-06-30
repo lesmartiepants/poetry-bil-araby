@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useUIStore } from '../../stores/uiStore';
+import { FEATURES } from '../../constants/features';
 import '../../styles/reader-actions.css';
 
 /* ── transport icons (inline SVG so they render consistently) ── */
@@ -152,13 +153,16 @@ export default function ReaderActions({
         <span className="ra-label">Author Insights</span>
       </button>
     );
-  } else {
-    // author stage, or meaning stage with no bio → Share is the forward action
+  } else if (FEATURES.share) {
+    // author stage, or meaning stage with no bio → Share is the forward action (when enabled)
     right = (
       <button className="ra-btn ra-btn-primary" onClick={onShare}>
         <span className="ra-label">Share</span>
       </button>
     );
+  } else {
+    // Share disabled → no forward action in the terminal state; the pull-up cue carries on.
+    right = null;
   }
 
   return (

@@ -9,13 +9,12 @@ import {
   ChevronDown,
   Loader2,
   Feather,
-  Lightbulb,
   Paintbrush,
   Check,
   X,
-  Rabbit,
   Heart,
-  Mic,
+  LibraryBig,
+  ThumbsDown,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -107,7 +106,7 @@ import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
 import PoemFeed from './components/feed/PoemFeed.jsx';
-import VerticalSidebar from './components/VerticalSidebar.jsx';
+import AccountMenu from './components/AccountMenu.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
@@ -285,6 +284,10 @@ export default function DiwanApp() {
   const showShareCard = useModalStore((s) => s.shareCard);
 
   const theme = darkMode ? THEME.dark : THEME.light;
+  // Light-mode control pattern: foreground icons/labels in the bottom nav, account menu and dislike
+  // use a dark ink (matching the Next-Verse molten label) instead of gold, for legibility on the
+  // pale background. In dark mode they stay gold.
+  const ink = darkMode ? GOLD.gold : '#1a1200';
 
   const currentFontClass = useMemo(() => {
     const font = FONTS.find((f) => f.id === currentFont);
@@ -354,32 +357,8 @@ export default function DiwanApp() {
     return () => clearTimeout(timer);
   }, [current?.id, user]);
 
-  // Show a loading toast while the translation is streaming, dismiss when done
-  const prevIsInterpretingRef = useRef(false);
-  useEffect(() => {
-    const prev = prevIsInterpretingRef.current;
-    prevIsInterpretingRef.current = isInterpreting;
-    if (!prev && isInterpreting) {
-      toast.loading('Translating poem…', {
-        id: 'translation-progress',
-        duration: Infinity,
-        icon: (
-          <motion.div
-            animate={{ y: [0, -5, 0] }}
-            transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
-          >
-            <Rabbit size={16} />
-          </motion.div>
-        ),
-      });
-    } else if (prev && !isInterpreting) {
-      if (interpretation) {
-        toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });
-      } else {
-        toast.dismiss('translation-progress');
-      }
-    }
-  }, [isInterpreting]);
+  // Translation progress toast intentionally removed: with the live API + the header intro
+  // animation, the translation is ready by the time the reader looks for it — the toast was noise.
 
   useEffect(() => {
     if (selectedCategory !== 'All') {
@@ -1046,36 +1025,8 @@ export default function DiwanApp() {
     } catch {} // silent fail — prefetch is best-effort
   }
 
-  const handleCopy = async () => {
-    addLog(
-      'UI Event',
-      `📋 Copy button clicked | Poem: ${displayedPoem?.poet} - ${displayedPoem?.title}`,
-      'user'
-    );
-
-    const englishText = insightParts?.poeticTranslation || displayedPoem?.english || '';
-    const textToCopy = `${displayedPoem?.titleArabic || ''}\n${displayedPoem?.poetArabic || ''}\n\n${displayedPoem?.arabic || ''}\n\n---\n\n${displayedPoem?.title || ''}\n${displayedPoem?.poet || ''}\n\n${englishText}`;
-    const copyChars = textToCopy.length;
-    const arabicChars = displayedPoem?.arabic?.length || 0;
-    const englishChars = englishText.length;
-
-    try {
-      await navigator.clipboard.writeText(textToCopy);
-      track('poem_copied', { poet: displayedPoem?.poet });
-      if (displayedPoem?.id) {
-        emitEvent(displayedPoem?.id, 'copy');
-        addLog('Event', `→ copy event emitted | poem_id: ${displayedPoem?.id}`, 'info');
-      }
-      useModalStore.getState().showToastTimed('copy', 2000);
-      addLog(
-        'Copy',
-        `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`,
-        'success'
-      );
-    } catch (e) {
-      addLog('Copy Error', e.message, 'error');
-    }
-  };
+  // handleCopy removed — the copy action is retired (FEATURES.copy = false) and its sidebar icon
+  // no longer exists.
 
   const handleShare = async () => {
     addLog('UI Event', 'Share button clicked', 'user');
@@ -1544,7 +1495,7 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className={`flex-1 ${FEATURES.verticalFeed ? 'overflow-y-hidden' : 'overflow-y-auto'} overflow-x-hidden custom-scrollbar relative z-10 px-6 pr-14 md:px-8 md:pr-0 ${FEATURES.verticalFeed ? 'pt-2 pb-24' : 'pb-28 pt-10 md:pt-12'}`}
+            className={`flex-1 ${FEATURES.verticalFeed ? 'overflow-y-hidden' : 'overflow-y-auto'} overflow-x-hidden custom-scrollbar relative z-10 px-6 md:px-8 ${FEATURES.verticalFeed ? 'pt-2 pb-24' : 'pb-28 pt-10 md:pt-12'}`}
             style={{ overscrollBehaviorX: 'none' }}
           >
             {/* Top scroll gradient removed — header is now a subtle corner wordmark */}
@@ -1727,31 +1678,34 @@ export default function DiwanApp() {
                           POEM_META={POEM_META}
                           DESIGN={DESIGN}
                           onLoadMore={() => {
-                            if (!current?.poetArabic) return;
-                            const existingIds = carouselPoems.map((p) => p.id);
-                            fetchPoemsByPoet(current.poetArabic, 3, existingIds)
-                              .then((newPoems) => {
-                                newPoems.forEach((p) => addCarouselPoem(p));
-                              })
-                              .catch((err) => {
+                            // Endless feed: pull NEW RANDOM poems so scrolling keeps surfacing
+                            // variety instead of staying on the current author. If a poet filter is
+                            // active (Discover by poet), keep drawing random poems from that poet.
+                            (async () => {
+                              try {
+                                const exclude = carouselPoems.map((p) => p.id);
+                                const poet =
+                                  selectedCategory !== 'All' ? selectedCategory : undefined;
+                                for (let i = 0; i < 3; i++) {
+                                  const p = await fetchRandomPoem({ poet, excludeIds: exclude });
+                                  if (!p?.id || exclude.includes(p.id)) continue;
+                                  exclude.push(p.id);
+                                  addCarouselPoem(p);
+                                }
+                              } catch (err) {
                                 if (FEATURES.logging)
                                   addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
-                              });
+                              }
+                            })();
                           }}
                           highlightStyle={highlightStyle}
                           currentVerseIndex={currentVerseIndex}
                           wordRefs={wordRefs}
                           wordOffsets={wordOffsets}
-                          insightsMode={insightsMode}
                           isInterpreting={isInterpreting}
                           insightParts={insightParts}
                           interpretation={interpretation}
-                          onSeeInsight={() => {
-                            handleAnalyze();
-                            if (insightsMode === 'drawer') {
-                              useModalStore.getState().setInsightsDrawer(true);
-                            }
-                          }}
+                          onSeeInsight={() => handleAnalyze()}
                           isGeneratingAudio={isGeneratingAudio}
                           onTogglePlay={togglePlay}
                           onPrevVerse={handlePrevVerse}
@@ -1840,16 +1794,25 @@ export default function DiwanApp() {
                           POEM_META={POEM_META}
                           DESIGN={DESIGN}
                           onLoadMore={() => {
-                            if (!current?.poetArabic) return;
-                            const existingIds = carouselPoems.map((p) => p.id);
-                            fetchPoemsByPoet(current.poetArabic, 3, existingIds)
-                              .then((newPoems) => {
-                                newPoems.forEach((p) => addCarouselPoem(p));
-                              })
-                              .catch((err) => {
+                            // Endless feed: pull NEW RANDOM poems so scrolling keeps surfacing
+                            // variety instead of staying on the current author. If a poet filter is
+                            // active (Discover by poet), keep drawing random poems from that poet.
+                            (async () => {
+                              try {
+                                const exclude = carouselPoems.map((p) => p.id);
+                                const poet =
+                                  selectedCategory !== 'All' ? selectedCategory : undefined;
+                                for (let i = 0; i < 3; i++) {
+                                  const p = await fetchRandomPoem({ poet, excludeIds: exclude });
+                                  if (!p?.id || exclude.includes(p.id)) continue;
+                                  exclude.push(p.id);
+                                  addCarouselPoem(p);
+                                }
+                              } catch (err) {
                                 if (FEATURES.logging)
                                   addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
-                              });
+                              }
+                            })();
                           }}
                           highlightStyle={highlightStyle}
                           activeVersePairs={versePairs}
@@ -1915,48 +1878,45 @@ export default function DiwanApp() {
                       style={
                         isPoemSaved(displayedPoem)
                           ? { fill: '#ef4444', stroke: '#ef4444' }
-                          : { fill: 'none', stroke: GOLD.gold }
+                          : { fill: 'none', stroke: ink }
                       }
                     />
                   </button>
                   <span
-                    className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                    className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                    style={{ color: ink }}
                   >
                     {isPoemSaved(displayedPoem) ? 'Saved' : 'Save'}
                   </span>
                 </div>
 
+                {/* Library — opens the saved-poems drawer (Khazana) */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                   <button
-                    onClick={() => {
-                      if (interpretation) {
-                        useModalStore.getState().toggleInsightsDrawer();
-                        useModalStore.getState().showToastTimed('insight', 1500);
-                      } else {
-                        handleAnalyze();
-                        setInsightsDrawerOpen(true);
-                      }
-                    }}
-                    disabled={isInterpreting}
-                    aria-label="Explain poem meaning"
-                    className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${isInterpreting ? 'opacity-50' : ''}`}
+                    onClick={handleOpenSavedPoems}
+                    aria-label={
+                      savedPoems.length > 0 ? `Library, ${savedPoems.length} saved` : 'Library'
+                    }
+                    className={`relative min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                   >
-                    {isInterpreting ? (
-                      <Loader2 className="animate-spin" style={{ color: GOLD.gold }} size={21} />
-                    ) : showInsightSuccess ? (
-                      <Check style={{ color: GOLD.gold }} size={21} />
-                    ) : (
-                      <Lightbulb
-                        className={GOLD.goldText}
-                        size={21}
-                        style={{ opacity: interpretation ? 1 : 0.7 }}
-                      />
+                    <LibraryBig size={21} style={{ color: ink }} />
+                    {savedPoems.length > 0 && (
+                      <span
+                        className="absolute top-0.5 right-0.5 min-w-[1rem] h-4 rounded-full flex items-center justify-center text-[0.5625rem] font-bold px-0.5 font-brand-en"
+                        style={{
+                          background: 'linear-gradient(135deg, var(--gold), #B8943E)',
+                          color: '#000',
+                        }}
+                      >
+                        {savedPoems.length > 99 ? '99+' : savedPoems.length}
+                      </span>
                     )}
                   </button>
                   <span
-                    className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                    className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                    style={{ color: ink }}
                   >
-                    Explain
+                    Library
                   </span>
                 </div>
 
@@ -2018,26 +1978,48 @@ export default function DiwanApp() {
                     <GoldenFireIcon size={34} />
                   </button>
                   <span
-                    className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                    className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                    style={{ color: ink }}
                   >
                     Discover
                   </span>
                 </div>
+
+                {/* Account — rightmost: expandable menu with voice cycle + sign in/out */}
+                <AccountMenu
+                  user={user}
+                  onSignIn={handleSignIn}
+                  onSignOut={handleSignOut}
+                  liveVoice={liveVoice}
+                  onCycleVoice={cycleVoice}
+                  ink={ink}
+                />
               </div>
 
-              {/* Voice cycle — pinned right, at the nav's vertical level */}
+              {/* Dislike — pinned left, in the gap between the nav pill and the screen edge */}
               <button
-                onClick={cycleVoice}
-                aria-label={`Reading voice: ${liveVoice}. Tap to change.`}
-                title="Change reading voice"
-                className={`absolute right-1 md:right-3 top-1/2 -translate-y-1/2 min-h-[40px] flex items-center gap-1.5 pl-2.5 pr-3 py-1.5 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-xs font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
-                style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
+                onClick={() =>
+                  current && isPoemDownvoted(current) ? handleUndownvote() : handleDownvote()
+                }
+                aria-label={current && isPoemDownvoted(current) ? 'Remove dislike' : 'Dislike poem'}
+                className="absolute left-0 md:left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5"
               >
-                <Mic
-                  size={15}
-                  style={{ color: voiceGender(liveVoice) === 'f' ? '#c084fc' : '#60a5fa' }}
-                />
-                {liveVoice}
+                <span className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full hover:scale-105 transition-transform">
+                  <ThumbsDown
+                    size={19}
+                    style={
+                      current && isPoemDownvoted(current)
+                        ? { fill: '#f87171', stroke: '#f87171' }
+                        : { fill: 'none', stroke: ink }
+                    }
+                  />
+                </span>
+                <span
+                  className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                  style={{ color: ink }}
+                >
+                  dislike
+                </span>
               </button>
             </div>
           </motion.footer>
@@ -2070,17 +2052,7 @@ export default function DiwanApp() {
         </div>
       </div>
 
-      {/* Insights Overlay (replaces drawer + desktop pane) */}
-      <InsightOverlay
-        open={insightsDrawerOpen}
-        insightParts={insightParts}
-        currentPoem={current}
-        isInterpreting={isInterpreting}
-        interpretation={interpretation}
-        onClose={() => setInsightsDrawerOpen(false)}
-        ratchetMode={ratchetMode}
-        handleAnalyze={handleAnalyze}
-      />
+      {/* Insight drawer (InsightOverlay) removed — insights now live inline in the reader only. */}
 
       {/* Discover Drawer */}
       <AnimatePresence>
@@ -2118,39 +2090,6 @@ export default function DiwanApp() {
         darkMode={darkMode}
       />
 
-      {/* Design Review + Bug — stacked bottom-left utility buttons */}
-      {/* TEMP: jump to the poem-reader prototype in design-review (remove before launch) */}
-      <a
-        href="/design-review/poem-reader/landing-reveal.html"
-        className="fixed z-[200] left-2 bottom-2 px-3 py-1.5 rounded-full text-xs font-brand-en no-underline backdrop-blur-xl border transition-all"
-        style={{
-          borderColor: 'var(--gold)',
-          color: 'var(--gold)',
-          background: darkMode ? 'rgba(12,12,14,0.6)' : 'rgba(253,252,248,0.7)',
-        }}
-        title="Open the Poem Reader prototype"
-        aria-label="Open poem reader prototype"
-      >
-        ✦ Poem Reader
-      </a>
-
-      {/* TEMP: design-sprint button-pair mockups viewer (remove before launch) */}
-      <a
-        href="/design-lab/index.html"
-        target="_blank"
-        rel="noopener"
-        className="fixed z-[200] left-2 bottom-12 px-3 py-1.5 rounded-full text-xs font-brand-en no-underline backdrop-blur-xl border transition-all"
-        style={{
-          borderColor: 'var(--gold)',
-          color: 'var(--gold)',
-          background: darkMode ? 'rgba(12,12,14,0.6)' : 'rgba(253,252,248,0.7)',
-        }}
-        title="Open the button-pair design lab"
-        aria-label="Open design lab"
-      >
-        ✦ Design Lab
-      </a>
-
       {FEATURES.designReview && (
         <div
           className="fixed z-[200] flex flex-col items-center gap-1"
@@ -2185,23 +2124,8 @@ export default function DiwanApp() {
         <TextSettingsPill />
       </div>
 
-      {/* Vertical Sidebar — hides in zen idle mode */}
-      <VerticalSidebar
-        onCopy={handleCopy}
-        onShare={handleShare}
-        onSave={handleSavePoem}
-        onUnsave={handleUnsavePoem}
-        isSaved={displayedPoem ? isPoemSaved(displayedPoem) : false}
-        onSignIn={handleSignIn}
-        onSignOut={handleSignOut}
-        onOpenSavedPoems={handleOpenSavedPoems}
-        savedPoemsCount={savedPoems.length}
-        onFlag={handleDownvote}
-        isDownvoted={current ? isPoemDownvoted(current) : false}
-        onUnflag={handleUndownvote}
-        user={user}
-        isIdle={effectivelyIdle}
-      />
+      {/* Vertical sidebar removed — Library + Account moved into the bottom nav, Dislike to the
+          bottom-left, Share/Copy retired (feature-flagged off). */}
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}
       <AnimatePresence>
@@ -2212,8 +2136,8 @@ export default function DiwanApp() {
         )}
       </AnimatePresence>
 
-      {/* Share Card Modal */}
-      {showShareCard && displayedPoem && (
+      {/* Share Card Modal — gated behind the share feature flag */}
+      {FEATURES.share && showShareCard && displayedPoem && (
         <ShareCardModal
           poem={{
             ...displayedPoem,

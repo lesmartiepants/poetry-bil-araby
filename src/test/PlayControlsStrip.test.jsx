@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import PlayControlsStrip from '../components/PlayControlsStrip';
 import { useUIStore } from '../stores/uiStore';
+import { useAudioStore } from '../stores/audioStore';
 
 // Mock framer-motion AnimatePresence + motion so tests work without the full library
 vi.mock('framer-motion', () => ({
@@ -9,8 +10,8 @@ vi.mock('framer-motion', () => ({
   motion: new Proxy(
     {},
     {
-      get: (_, tag) =>
-        // eslint-disable-next-line react/display-name
+      get:
+        (_, tag) =>
         ({ children, ...rest }) => {
           const { initial, animate, exit, transition, ...domProps } = rest;
           return createElement(tag, domProps, children);
@@ -22,11 +23,17 @@ vi.mock('framer-motion', () => ({
 // Import createElement after the mock so it's available in the proxy factory
 import { createElement } from 'react';
 
-// Mock useTTSHighlight — only startPlayer and pauseOffset are used by the strip
+// Mock useTTSHighlight — the strip imports startPlayer, pauseOffset, playbackStartTime,
+// isSeeking and applyHighlightsOnce. The signal-like values must be objects with a
+// settable `.value` because seek() assigns to them (e.g. `pauseOffset.value = offset`).
 const mockStartPlayer = vi.fn();
+const mockApplyHighlightsOnce = vi.fn();
 vi.mock('../hooks/useTTSHighlight', () => ({
   startPlayer: (...args) => mockStartPlayer(...args),
-  pauseOffset: 0,
+  applyHighlightsOnce: (...args) => mockApplyHighlightsOnce(...args),
+  pauseOffset: { value: 0 },
+  playbackStartTime: { value: 0 },
+  isSeeking: { value: false },
 }));
 
 // Minimal mock player object
@@ -36,13 +43,17 @@ const VERSE_TIMES = [0, 12.5, 25.0, 40.0];
 
 beforeEach(() => {
   useUIStore.getState().reset();
+  useAudioStore.getState().reset();
   mockStartPlayer.mockClear();
+  mockApplyHighlightsOnce.mockClear();
   mockPlayer.start.mockClear();
   mockPlayer.stop.mockClear();
 });
 
 describe('PlayControlsStrip — visibility', () => {
-  it('is hidden when highlightStyle is "none"', () => {
+  it('renders its transport regardless of highlightStyle (parent gates visibility)', () => {
+    // The strip itself does not read highlightStyle — the parent (app.jsx) only mounts
+    // it when highlightStyle !== 'none'. So when rendered directly it always shows.
     useUIStore.getState().setHighlightStyle('none');
     const { container } = render(
       <PlayControlsStrip
@@ -53,8 +64,8 @@ describe('PlayControlsStrip — visibility', () => {
         onPlayPause={vi.fn()}
       />
     );
-    // AnimatePresence is mocked; when style is none the strip should not render
-    expect(container.firstChild).toBeNull();
+    expect(container.firstChild).not.toBeNull();
+    expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
   });
 
   it('renders when highlightStyle is active and player is loaded', () => {
@@ -135,6 +146,9 @@ describe('PlayControlsStrip — play/pause button', () => {
 describe('PlayControlsStrip — prev/next verse navigation', () => {
   it('calls startPlayer with previous verse time when Prev is clicked', () => {
     useUIStore.getState().setHighlightStyle('glow');
+    // seek() reads wasPlaying from the audio store (the isPlaying prop is stale by the
+    // time onstop fires), so the store must report playing for it to restart playback.
+    useAudioStore.getState().setPlaying(true);
     render(
       <PlayControlsStrip
         player={mockPlayer}
@@ -150,6 +164,7 @@ describe('PlayControlsStrip — prev/next verse navigation', () => {
 
   it('calls startPlayer with next verse time when Next is clicked', () => {
     useUIStore.getState().setHighlightStyle('glow');
+    useAudioStore.getState().setPlaying(true);
     render(
       <PlayControlsStrip
         player={mockPlayer}
@@ -163,18 +178,24 @@ describe('PlayControlsStrip — prev/next verse navigation', () => {
     expect(mockStartPlayer).toHaveBeenCalledWith(mockPlayer, VERSE_TIMES[2]);
   });
 
-  it('Prev is disabled at first verse', () => {
+  it('Prev stays enabled at first verse and restarts from the beginning', () => {
     useUIStore.getState().setHighlightStyle('glow');
+    // seek() restarts playback only when the store reports playing.
+    useAudioStore.getState().setPlaying(true);
     render(
       <PlayControlsStrip
         player={mockPlayer}
-        isPlaying={false}
+        isPlaying={true}
         verseStartTimes={VERSE_TIMES}
         currentVerseIndex={0}
         onPlayPause={vi.fn()}
       />
     );
-    expect(screen.getByRole('button', { name: /prev/i })).toBeDisabled();
+    // Prev is intentionally NOT disabled at verse 0 — it restarts from the start.
+    const prev = screen.getByRole('button', { name: /prev/i });
+    expect(prev).not.toBeDisabled();
+    fireEvent.click(prev);
+    expect(mockStartPlayer).toHaveBeenCalledWith(mockPlayer, 0);
   });
 
   it('Next is disabled at last verse', () => {

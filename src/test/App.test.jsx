@@ -99,17 +99,18 @@ describe('DiwanApp', () => {
       expect(document.body.textContent).toContain('Nizar Qabbani');
     });
 
-    it('renders tags for the default poem', () => {
-      render(<DiwanApp />);
-      expect(screen.getByText('Modern')).toBeInTheDocument();
-      expect(screen.getByText('Romantic')).toBeInTheDocument();
-      expect(screen.getByText('Ghazal')).toBeInTheDocument();
-    });
+    // NOTE: genre-tag chips ('Modern', 'Romantic', …) are no longer rendered in the
+    // main poem view. They lived in components/PoemCard.jsx, which app.jsx no longer
+    // mounts (verse rendering was inlined). The former "renders tags for the default
+    // poem" test asserted that removed UI and has been dropped accordingly.
 
-    it('renders poem verses with dir="rtl" attribute', () => {
+    it('renders poem verses with dir="rtl" attribute', async () => {
+      mockAutoLoadFetch();
       render(<DiwanApp />);
+      await waitFor(() =>
+        expect(document.querySelectorAll('p[dir="rtl"]').length).toBeGreaterThan(0)
+      );
       const rtlVerses = document.querySelectorAll('p[dir="rtl"]');
-      expect(rtlVerses.length).toBeGreaterThan(0);
       // Each verse line should have RTL direction
       rtlVerses.forEach((el) => {
         expect(el.getAttribute('dir')).toBe('rtl');
@@ -246,6 +247,10 @@ describe('DiwanApp', () => {
 
   describe('Audio Playback', () => {
     it('calls fetch when Play is clicked', async () => {
+      // Use the 'none' highlight mode so the control bar shows the single
+      // "Play recitation" button (the default 'pill' mode swaps in the
+      // PlayControlsStrip via AnimatePresence, whose label differs).
+      useUIStore.getState().setHighlightStyle('none');
       mockAutoLoadFetch();
       render(<DiwanApp />);
 
@@ -264,6 +269,7 @@ describe('DiwanApp', () => {
     });
 
     it('shows loading state when generating audio', async () => {
+      useUIStore.getState().setHighlightStyle('none');
       mockAutoLoadFetch();
       render(<DiwanApp />);
 
@@ -273,7 +279,6 @@ describe('DiwanApp', () => {
 
       // Replace fetch with a version that hangs for audio (TTS) calls
       // but resolves normally for everything else (auto-explain, streaming, etc.)
-      const originalMock = global.fetch;
       global.fetch = vi.fn((url) => {
         if (typeof url === 'string' && url.includes('/api/ai/gemini')) {
           // Gemini TTS / audio call — hang forever to keep loading state
@@ -283,19 +288,22 @@ describe('DiwanApp', () => {
         return Promise.resolve({ ok: true, body: null, json: async () => ({}) });
       });
 
-      const playBtn = screen.getByLabelText('Play recitation');
-      await userEvent.click(playBtn);
+      await userEvent.click(screen.getByLabelText('Play recitation'));
 
-      // The button should be disabled while generating
+      // While generating, the play button is replaced by the disabled
+      // "Preparing audio" loading control.
       await waitFor(() => {
-        expect(playBtn).toBeDisabled();
+        expect(screen.getByLabelText('Preparing audio')).toBeInTheDocument();
       });
+      expect(screen.getByLabelText('Preparing audio')).toBeDisabled();
     });
     it('iOS Safari audio unlock is handled by Tone.start() — no raw Audio mute/play/pause needed', async () => {
       // Tone.js now handles iOS Safari audio context unlock via Tone.start()
       // instead of the old mute/play/pause trick on a raw Audio element.
       // audioRef is useRef(null) — the Tone.Player lives in audioStore.
       // This test verifies the play button is clickable and doesn't crash.
+      useUIStore.getState().setHighlightStyle('none');
+      mockAutoLoadFetch();
       render(<DiwanApp />);
 
       await waitFor(() => {
@@ -1035,24 +1043,31 @@ describe('DiwanApp', () => {
   // ── Feature 8: Arabic RTL & fonts ─────────────────────────────────────
 
   describe('Arabic RTL & Fonts', () => {
-    it('renders Arabic verses with dir="rtl"', () => {
+    it('renders Arabic verses with dir="rtl"', async () => {
+      mockAutoLoadFetch();
       render(<DiwanApp />);
-      const rtlElements = document.querySelectorAll('p[dir="rtl"]');
-      expect(rtlElements.length).toBeGreaterThan(0);
+      await waitFor(() =>
+        expect(document.querySelectorAll('p[dir="rtl"]').length).toBeGreaterThan(0)
+      );
     });
 
-    it('applies font-amiri class by default', () => {
+    it('applies font-amiri class by default', async () => {
+      mockAutoLoadFetch();
       render(<DiwanApp />);
-      // The currentFontClass is applied to the verse container
-      const amiriElements = document.querySelectorAll('.font-amiri');
-      expect(amiriElements.length).toBeGreaterThan(0);
+      // The currentFontClass is applied to the verse container, which paints after mount
+      await waitFor(() =>
+        expect(document.querySelectorAll('.font-amiri').length).toBeGreaterThan(0)
+      );
     });
 
     it('changes font class when font is changed via store', async () => {
+      mockAutoLoadFetch();
       render(<DiwanApp />);
 
-      // Verify initial font is Amiri
-      expect(document.querySelectorAll('.font-amiri').length).toBeGreaterThan(0);
+      // Verify initial font is Amiri (verse container paints a tick after mount)
+      await waitFor(() =>
+        expect(document.querySelectorAll('.font-amiri').length).toBeGreaterThan(0)
+      );
 
       // Change font via store (Radix Select portal doesn't render reliably in jsdom)
       const { useUIStore } = await import('../stores/uiStore');

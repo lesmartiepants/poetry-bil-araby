@@ -50,6 +50,7 @@
 
 html, body {
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
@@ -58,11 +59,12 @@ html, body {
 body {
   background: #080808;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   font-family: var(--font-ui);
-  min-height: 100vh;
-  padding: 24px 16px;
+  height: 100vh;
+  height: 100dvh;
+  padding: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -77,34 +79,21 @@ body {
    ============================================ */
 .phone-frame {
   position: relative;
-  width: 390px;
-  height: 844px;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
   background: var(--bg-app);
-  border-radius: 52px;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.08),
-    0 0 0 10px #1a1a1a,
-    0 0 0 11px rgba(255,255,255,0.06),
-    0 40px 80px rgba(0,0,0,0.8),
-    0 20px 40px rgba(0,0,0,0.6);
+  border-radius: 0;
+  box-shadow: none;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
 }
 
-/* Notch */
+/* Notch — hidden; real device chrome already provides this */
 .phone-frame::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 126px;
-  height: 34px;
-  background: #111;
-  border-radius: 0 0 20px 20px;
-  z-index: 100;
+  display: none;
 }
 
 /* Subtle ambient glow on phone */
@@ -112,7 +101,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 52px;
+  border-radius: 0;
   background: radial-gradient(ellipse at 30% 20%, rgba(197,160,89,0.04) 0%, transparent 60%);
   pointer-events: none;
   z-index: 1;
@@ -134,12 +123,9 @@ body {
   padding: 52px 20px 20px;
 }
 
-/* Caption label outside modal */
+/* Caption label — hidden; the real viewer already shows a label for this mockup */
 .caption-label {
-  position: absolute;
-  top: 52px;
-  left: 20px;
-  z-index: 5;
+  display: none;
 }
 
 .caption-title {
@@ -171,9 +157,12 @@ body {
   inset: 0;
   background: rgba(0,0,0,0.65);
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   z-index: 50;
-  border-radius: 52px;
+  border-radius: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ============================================
@@ -181,15 +170,15 @@ body {
    ============================================ */
 .modal-panel {
   width: 100%;
-  max-height: 90%;
+  min-height: 100%;
+  max-height: none;
   background: var(--panel-bg);
-  border: 1px solid var(--gold-border);
-  border-bottom: none;
-  border-radius: var(--radius-modal) var(--radius-modal) 0 0;
+  border: none;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
+  justify-content: space-between;
   position: relative;
-  overflow: hidden;
 
   animation: modalEnter var(--duration-entrance) var(--ease-out-expo) forwards;
 }
@@ -256,7 +245,7 @@ body {
    MODAL HEADER
    ============================================ */
 .modal-header {
-  padding: 20px 20px 12px;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 20px 10px;
   position: relative;
   z-index: 3;
   animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.3s both;
@@ -270,12 +259,12 @@ body {
 .header-arch-ornament {
   display: flex;
   justify-content: center;
-  margin-bottom: 16px;
+  margin-bottom: 8px;
 }
 
 .arch-icon {
-  width: 48px;
-  height: 32px;
+  width: 36px;
+  height: 24px;
   position: relative;
   display: flex;
   align-items: flex-end;
@@ -283,8 +272,8 @@ body {
 }
 
 .arch-icon svg {
-  width: 48px;
-  height: 32px;
+  width: 36px;
+  height: 24px;
 }
 
 .header-content {
@@ -587,16 +576,17 @@ body {
   flex: 1;
   padding: 4px 20px;
   min-height: 140px;
-  max-height: 200px;
+  max-height: 240px;
+  display: flex;
+  align-items: center;
   animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.7s both;
   overflow: hidden;
 }
 
 .preview-card-wrapper {
   width: 100%;
-  height: 100%;
+  height: 180px;
   min-height: 140px;
-  max-height: 200px;
   position: relative;
   border-radius: 12px;
   overflow: hidden;
@@ -611,7 +601,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 16px 20px;
+  padding: 14px 20px 34px;
   position: absolute;
   inset: 0;
   transition: opacity var(--duration-transition) var(--ease-out-quart);
@@ -779,7 +769,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
   width: 100%;
 }
 
@@ -1589,37 +1579,6 @@ body {
     if (e.key === 'ArrowLeft') navigate(-1);
   });
 </script>
-
-<style id="full-screen-fit-override">
-/* ── full-screen fit (review on a real phone) ──
-   Drop the fake phone-device frame and bottom-anchored layout that left a big empty band at the top
-   and clipped the bottom. Fill the screen, center the modal, and let the panel scroll so the whole
-   thing (header → card → style picker → actions) is reachable with nothing cut off. */
-html, body {
-  height: 100dvh !important; min-height: 100dvh !important; overflow: hidden !important;
-  align-items: stretch !important; justify-content: stretch !important; padding: 0 !important;
-}
-.caption-label, .caption-title, .caption-subtitle, .backdrop-caption,
-.phone-statusbar, .phone-dynamic-island { display: none !important; }
-.app-backdrop { position: relative !important; width: 100% !important; height: 100dvh !important; padding: 0 !important; gap: 0 !important; }
-.phone-frame {
-  width: 100% !important; max-width: 100% !important; min-width: 0 !important;
-  height: 100dvh !important; max-height: 100dvh !important; min-height: 100dvh !important;
-  border: none !important; border-radius: 0 !important; box-shadow: none !important;
-}
-.phone-frame::before, .phone-frame::after { display: none !important; }
-.phone-screen { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0 !important; }
-.modal-overlay {
-  position: absolute !important; inset: 0 !important;
-  display: flex !important; align-items: center !important; justify-content: center !important;
-  overflow-y: auto !important; padding: 14px 0 !important;
-}
-.modal-panel {
-  max-height: calc(100dvh - 28px) !important; height: auto !important;
-  overflow-y: auto !important; -webkit-overflow-scrolling: touch !important;
-  border-radius: 18px !important;
-}
-</style>
 
 </body>
 </html>

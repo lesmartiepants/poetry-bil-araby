@@ -57,16 +57,18 @@
 }
 
 html {
+  height: 100%;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
 body {
   background: var(--bg-app);
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   font-family: var(--font-ui);
   overflow: hidden;
   position: relative;
@@ -88,16 +90,7 @@ body::before {
    STAGE LABEL
    ============================================================ */
 .stage-label {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  pointer-events: none;
+  display: none;
 }
 
 .stage-label__title {
@@ -127,21 +120,17 @@ body::before {
 .phone-frame {
   position: relative;
   z-index: 2;
-  width: 390px;
-  height: 844px;
-  border-radius: var(--radius-phone);
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  border-radius: 0;
   background: #111113;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.07),
-    0 0 0 2px rgba(0,0,0,0.8),
-    0 40px 100px rgba(0,0,0,0.95),
-    0 8px 24px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(255,255,255,0.05);
+  box-shadow: none;
   overflow: hidden;
 
   /* Spring entrance */
   opacity: 0;
-  transform: scale(0.88) translateY(16px);
+  transform: scale(0.98);
   animation: phoneEntrance var(--duration-entrance) var(--ease-spring) 0.08s forwards;
 }
 
@@ -152,68 +141,28 @@ body::before {
   }
 }
 
-/* Phone volume/side buttons (decorative) */
+/* Phone volume/side buttons (decorative) — hidden in full-bleed mobile view */
 .phone-frame::before {
-  content: '';
-  position: absolute;
-  top: 120px;
-  right: -3px;
-  width: 3px;
-  height: 58px;
-  background: #1e1e22;
-  border-radius: 0 2px 2px 0;
-  box-shadow: 0 70px 0 #1e1e22;
+  display: none;
 }
 
-/* Dynamic Island */
+/* Dynamic Island — hidden; real device chrome already provides this */
 .phone-dynamic-island {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 126px;
-  height: 36px;
-  background: #000;
-  border-radius: 20px;
-  z-index: 100;
+  display: none;
 }
 
 /* Phone screen area */
 .phone-screen {
   position: absolute;
   inset: 0;
-  border-radius: var(--radius-phone);
+  border-radius: 0;
   overflow: hidden;
   background: var(--bg-app);
 }
 
-/* Status bar */
+/* Status bar — hidden; real device chrome already provides this */
 .phone-statusbar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 60px;
-  z-index: 10;
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  padding: 0 24px 8px;
-}
-
-.phone-statusbar__time {
-  font-family: var(--font-ui);
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: rgba(255,255,255,0.8);
-  letter-spacing: 0.02em;
-}
-
-.phone-statusbar__icons {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: rgba(255,255,255,0.8);
+  display: none;
 }
 
 /* ============================================================
@@ -225,7 +174,7 @@ body::before {
   inset: 0;
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-phone);
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -233,8 +182,9 @@ body::before {
 .card-preview-wrapper {
   position: absolute;
   inset: 0;
-  border-radius: var(--radius-phone);
-  overflow: hidden;
+  border-radius: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 /* ============================================================
@@ -679,7 +629,7 @@ body::before {
    ============================================================ */
 .btn-close {
   position: absolute;
-  top: 64px;
+  top: calc(16px + env(safe-area-inset-top, 0px));
   right: 16px;
   z-index: 50;
   width: 44px;
@@ -738,8 +688,8 @@ body::before {
   );
   backdrop-filter: blur(22px) saturate(140%);
   -webkit-backdrop-filter: blur(22px) saturate(140%);
-  padding: 28px 18px 30px;
-  border-radius: 0 0 var(--radius-phone) var(--radius-phone);
+  padding: 28px 18px calc(22px + env(safe-area-inset-bottom, 0px));
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   gap: 16px;

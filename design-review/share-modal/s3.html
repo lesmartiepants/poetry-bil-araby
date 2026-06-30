@@ -60,15 +60,16 @@
 
 html, body {
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
   background: var(--bg-app);
   display: flex;
-  align-items: flex-start;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: stretch;
   font-family: var(--font-ui);
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 button {
@@ -92,44 +93,25 @@ button:focus-visible {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 2px var(--space-xl) 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
 }
 
+/* Backdrop caption — hidden; the real viewer already shows a label for this mockup */
 .backdrop-caption {
-  text-align: center;
-  color: rgba(197,160,89,0.35);
-  font-family: var(--font-editorial);
-  font-style: italic;
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  line-height: 1.3;
-}
-
-.backdrop-caption strong {
-  display: inline;
-  font-size: 12px;
-  color: rgba(197,160,89,0.5);
-  font-style: normal;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  margin-right: 4px;
+  display: none;
 }
 
 /* ============================================================
    PHONE FRAME
    ============================================================ */
 .phone-frame {
-  width: 390px;
-  height: 844px;
+  width: 100%;
+  height: 100%;
   background: #111113;
-  border-radius: 54px;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.06),
-    0 0 0 10px #1a1a1c,
-    0 0 0 11px rgba(255,255,255,0.04),
-    0 40px 80px rgba(0,0,0,0.8),
-    0 20px 40px rgba(0,0,0,0.5);
+  border-radius: 0;
+  box-shadow: none;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -138,18 +120,9 @@ button:focus-visible {
   justify-content: flex-end;
 }
 
-/* Phone notch */
+/* Phone notch — hidden; real device chrome already provides this */
 .phone-frame::before {
-  content: '';
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120px;
-  height: 34px;
-  background: #0c0c0e;
-  border-radius: 20px;
-  z-index: 100;
+  display: none;
 }
 
 /* Screen background (app UI behind modal) */
@@ -190,9 +163,12 @@ button:focus-visible {
   inset: 0;
   background: rgba(0,0,0,0.72);
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
   z-index: 10;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -211,14 +187,15 @@ button:focus-visible {
    ============================================================ */
 .modal-panel {
   width: 100%;
+  min-height: 100%;
   background: var(--panel-bg);
-  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-  border-top: 1px solid var(--gold-border);
-  border-left: 1px solid rgba(197,160,89,0.08);
-  border-right: 1px solid rgba(197,160,89,0.08);
+  border-radius: 0;
+  border: none;
   position: relative;
   overflow: hidden;
   padding: 0 0 env(safe-area-inset-bottom, 0px);
+  display: flex;
+  flex-direction: column;
 }
 
 /* Warm parchment overlay */
@@ -277,7 +254,11 @@ button:focus-visible {
 .modal-inner {
   position: relative;
   z-index: 1;
-  padding: var(--space-sm) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  padding: calc(var(--space-sm) + env(safe-area-inset-top, 0px)) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 /* ============================================================
@@ -1517,37 +1498,6 @@ button:focus-visible {
 
 })();
 </script>
-
-<style id="full-screen-fit-override">
-/* ── full-screen fit (review on a real phone) ──
-   Drop the fake phone-device frame and bottom-anchored layout that left a big empty band at the top
-   and clipped the bottom. Fill the screen, center the modal, and let the panel scroll so the whole
-   thing is reachable with nothing cut off. */
-html, body {
-  height: 100dvh !important; min-height: 100dvh !important; overflow: hidden !important;
-  align-items: stretch !important; justify-content: stretch !important; padding: 0 !important;
-}
-.caption-label, .caption-title, .caption-subtitle, .backdrop-caption,
-.phone-statusbar, .phone-dynamic-island { display: none !important; }
-.app-backdrop { position: relative !important; width: 100% !important; height: 100dvh !important; padding: 0 !important; gap: 0 !important; }
-.phone-frame {
-  width: 100% !important; max-width: 100% !important; min-width: 0 !important;
-  height: 100dvh !important; max-height: 100dvh !important; min-height: 100dvh !important;
-  border: none !important; border-radius: 0 !important; box-shadow: none !important;
-}
-.phone-frame::before, .phone-frame::after { display: none !important; }
-.phone-screen { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0 !important; }
-.modal-overlay {
-  position: absolute !important; inset: 0 !important;
-  display: flex !important; align-items: center !important; justify-content: center !important;
-  overflow-y: auto !important; padding: 14px 0 !important;
-}
-.modal-panel {
-  max-height: calc(100dvh - 28px) !important; height: auto !important;
-  overflow-y: auto !important; -webkit-overflow-scrolling: touch !important;
-  border-radius: 18px !important;
-}
-</style>
 
 </body>
 </html>

@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Folio — Share Modal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Reem+Kufi:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --gold: #c5a059;
+  --gold-bright: #d4b463;
+  --gold-foil: linear-gradient(135deg, #b8922e, #c5a059 30%, #e2c67a 55%, #c5a059 75%, #a07d38);
+  --molten-gold: linear-gradient(135deg, #a8853d, #c5a059 22%, #e0c97a 38%, #d4b463 48%, #b8924a 62%, #d8bc6e 78%, #c5a059);
+  --lapis-deep: #1e3a6e;
+  --lapis-medium: #2e5090;
+  --lapis-light: #4a7cc9;
+  --bg-app: #0c0c0e;
+  --panel-bg: linear-gradient(145deg, rgba(20,18,15,0.97), rgba(12,12,14,0.98));
+  --gold-border: rgba(197,160,89,0.25);
+  --gold-rule: linear-gradient(90deg, transparent, rgba(160,128,64,0.4) 20%, #C5A059 50%, rgba(160,128,64,0.4) 80%, transparent);
+
+  --font-arabic-display: 'Reem Kufi', serif;
+  --font-arabic-body: 'Amiri', serif;
+  --font-english-editorial: 'Cormorant Garamond', Georgia, serif;
+  --font-ui: system-ui, -apple-system, sans-serif;
+
+  /* Premium easing */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(.4, 0, .2, 1);
+  --ease-in-quart: cubic-bezier(.7, 0, 1, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --duration-entrance: 0.7s;
+  --duration-shelf: 0.5s;
+  --duration-transition: 0.3s;
+  --duration-hover: 0.18s;
+  --duration-micro: 0.1s;
+
+  --radius-phone: 48px;
+  --radius-chip: 50%;
+  --radius-btn: 10px;
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg-app);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Ambient radial glow behind the phone */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 70% 50% at 50% 60%, rgba(197,160,89,0.05) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 20% 100%, rgba(30,58,110,0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================================
+   STAGE LABEL
+   ============================================================ */
+.stage-label {
+  position: fixed;
+  top: 32px;
+  left: 40px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.stage-label__title {
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.stage-label__sub {
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(197,160,89,0.45);
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   PHONE FRAME
+   ============================================================ */
+.phone-frame {
+  position: relative;
+  z-index: 2;
+  width: 390px;
+  height: 844px;
+  border-radius: var(--radius-phone);
+  background: #111113;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.07),
+    0 0 0 2px rgba(0,0,0,0.8),
+    0 40px 100px rgba(0,0,0,0.95),
+    0 8px 24px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+  overflow: hidden;
+
+  /* Spring entrance */
+  opacity: 0;
+  transform: scale(0.88) translateY(16px);
+  animation: phoneEntrance var(--duration-entrance) var(--ease-spring) 0.08s forwards;
+}
+
+@keyframes phoneEntrance {
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Phone volume/side buttons (decorative) */
+.phone-frame::before {
+  content: '';
+  position: absolute;
+  top: 120px;
+  right: -3px;
+  width: 3px;
+  height: 58px;
+  background: #1e1e22;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0 70px 0 #1e1e22;
+}
+
+/* Dynamic Island */
+.phone-dynamic-island {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 36px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 100;
+}
+
+/* Phone screen area */
+.phone-screen {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-phone);
+  overflow: hidden;
+  background: var(--bg-app);
+}
+
+/* Status bar */
+.phone-statusbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 24px 8px;
+}
+
+.phone-statusbar__time {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+  letter-spacing: 0.02em;
+}
+
+.phone-statusbar__icons {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: rgba(255,255,255,0.8);
+}
+
+/* ============================================================
+   SHARE MODAL — FOLIO
+   The card IS the modal. No background container visible.
+   ============================================================ */
+.share-modal {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-phone);
+  overflow: hidden;
+}
+
+/* Full-bleed card wrapper */
+.card-preview-wrapper {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-phone);
+  overflow: hidden;
+}
+
+/* ============================================================
+   ISLAMIC GEOMETRY CANVAS BAND
+   Animated 8-pointed star tessellation in the card header
+   ============================================================ */
+.geometry-canvas-band {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 90px;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+#geometryCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ============================================================
+   CARD PREVIEW
+   ============================================================ */
+.card-preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px 175px;
+  transition:
+    opacity var(--duration-transition) var(--ease-out-quart),
+    background-color var(--duration-transition) var(--ease-out-quart);
+}
+
+/* Islamic geometry texture — static CSS layer (very subtle) */
+.card-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.035;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 34px, rgba(197,160,89,0.9) 34px, rgba(197,160,89,0.9) 35px),
+    repeating-linear-gradient(90deg, transparent, transparent 34px, rgba(197,160,89,0.9) 34px, rgba(197,160,89,0.9) 35px),
+    repeating-linear-gradient(45deg, transparent, transparent 23px, rgba(197,160,89,0.5) 23px, rgba(197,160,89,0.5) 24px),
+    repeating-linear-gradient(-45deg, transparent, transparent 23px, rgba(197,160,89,0.5) 23px, rgba(197,160,89,0.5) 24px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-preview > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Cross-dissolve when style changes */
+.card-preview.transitioning {
+  opacity: 0;
+}
+
+/* ---- CARD BORDER — gold foil shimmer pulse ---- */
+.card-foil-border {
+  position: absolute;
+  inset: 14px;
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 1;
+  animation: foilBorderPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes foilBorderPulse {
+  0%   { box-shadow: 0 0 0 1px rgba(197,160,89,0.18), 0 0 12px rgba(197,160,89,0.06); }
+  100% { box-shadow: 0 0 0 1px rgba(226,198,122,0.32), 0 0 24px rgba(197,160,89,0.14); }
+}
+
+/* ---- STYLE: Dīwān (default) ---- */
+.card-preview[data-style="diwan"] {
+  background-color: #0c0c0e;
+}
+
+.card-preview[data-style="diwan"] .card-accent-bar {
+  background: var(--lapis-deep);
+  opacity: 1;
+}
+
+.card-preview[data-style="diwan"] .card-ornament {
+  border-color: var(--gold-border);
+  opacity: 1;
+}
+
+.card-preview[data-style="diwan"] .arabic-poetry {
+  color: #ece8e0;
+}
+
+.card-preview[data-style="diwan"] .english-translation {
+  color: rgba(236,232,224,0.55);
+}
+
+.card-preview[data-style="diwan"] .poet-name {
+  color: var(--gold);
+}
+
+/* ---- STYLE: Ibn Muqla ---- */
+.card-preview[data-style="ibn-muqla"] {
+  background-color: #1a1208;
+}
+
+.card-preview[data-style="ibn-muqla"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 30% 20%, rgba(80,50,10,0.45) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 70% at 80% 80%, rgba(40,20,5,0.55) 0%, transparent 70%),
+    radial-gradient(ellipse 100% 100% at 50% 50%, transparent 40%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-preview[data-style="ibn-muqla"] .card-accent-bar {
+  opacity: 0;
+}
+
+.card-preview[data-style="ibn-muqla"] .card-ornament {
+  border-color: rgba(180,130,60,0.2);
+  opacity: 0.5;
+}
+
+.card-preview[data-style="ibn-muqla"] .arabic-poetry {
+  color: #f0e8d8;
+}
+
+.card-preview[data-style="ibn-muqla"] .english-translation {
+  color: rgba(220,200,160,0.5);
+}
+
+.card-preview[data-style="ibn-muqla"] .poet-name {
+  color: rgba(197,160,89,0.8);
+}
+
+/* ---- STYLE: Sinan ---- */
+.card-preview[data-style="sinan"] {
+  background-color: #f8f6f0;
+}
+
+.card-preview[data-style="sinan"]::before {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 34px, rgba(197,160,89,0.18) 34px, rgba(197,160,89,0.18) 35px),
+    repeating-linear-gradient(90deg, transparent, transparent 34px, rgba(197,160,89,0.18) 34px, rgba(197,160,89,0.18) 35px);
+  opacity: 0.9;
+}
+
+.card-preview[data-style="sinan"] .card-accent-bar {
+  background: var(--gold);
+  height: 2px;
+  opacity: 1;
+}
+
+.card-preview[data-style="sinan"] .card-ornament {
+  border-color: rgba(197,160,89,0.4);
+  opacity: 1;
+}
+
+.card-preview[data-style="sinan"] .arabic-poetry {
+  color: #111115;
+}
+
+.card-preview[data-style="sinan"] .english-translation {
+  color: rgba(17,17,21,0.45);
+}
+
+.card-preview[data-style="sinan"] .poet-name {
+  color: var(--gold);
+}
+
+.card-preview[data-style="sinan"] .card-rule {
+  background: linear-gradient(90deg, transparent, rgba(197,160,89,0.6) 20%, var(--gold) 50%, rgba(197,160,89,0.6) 80%, transparent);
+}
+
+/* ---- STYLE: Zaha Hadid ---- */
+.card-preview[data-style="zaha"] {
+  background-color: #111115;
+}
+
+.card-preview[data-style="zaha"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, transparent 60%, rgba(80,80,110,0.15) 100%),
+    linear-gradient(-45deg, transparent 70%, rgba(60,60,90,0.12) 100%);
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 85% 100%, 0 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-preview[data-style="zaha"] .card-accent-bar {
+  background: linear-gradient(90deg, rgba(150,150,180,0.3), rgba(200,200,220,0.6));
+  opacity: 1;
+}
+
+.card-preview[data-style="zaha"] .card-ornament {
+  border-color: rgba(180,180,210,0.15);
+  transform: skewX(-2deg);
+  opacity: 1;
+}
+
+.card-preview[data-style="zaha"] .arabic-poetry {
+  color: #d8d8e8;
+}
+
+.card-preview[data-style="zaha"] .english-translation {
+  color: rgba(200,200,218,0.42);
+}
+
+.card-preview[data-style="zaha"] .poet-name {
+  color: rgba(180,180,210,0.7);
+}
+
+.card-preview[data-style="zaha"] .card-rule {
+  background: linear-gradient(90deg, transparent, rgba(180,180,210,0.3) 20%, rgba(200,200,220,0.5) 50%, rgba(180,180,210,0.3) 80%, transparent);
+  transform: skewX(-2deg);
+}
+
+/* ---- STYLE: Hassan Fathy ---- */
+.card-preview[data-style="fathy"] {
+  background-color: #2d1b0e;
+}
+
+.card-preview[data-style="fathy"]::before {
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(180,120,60,0.22) 28px, rgba(180,120,60,0.22) 29px),
+    repeating-linear-gradient(90deg, transparent, transparent 28px, rgba(180,120,60,0.22) 28px, rgba(180,120,60,0.22) 29px);
+  opacity: 0.5;
+}
+
+.card-preview[data-style="fathy"]::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(0deg, rgba(45,27,14,0.9) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.card-preview[data-style="fathy"] .card-accent-bar {
+  background: linear-gradient(90deg, #8b4513, #c5872a, #8b4513);
+  opacity: 0.8;
+}
+
+.card-preview[data-style="fathy"] .card-ornament {
+  border-color: rgba(180,120,50,0.35);
+  border-radius: 12px;
+  opacity: 1;
+}
+
+.card-preview[data-style="fathy"] .arabic-poetry {
+  color: #f0d8b0;
+}
+
+.card-preview[data-style="fathy"] .english-translation {
+  color: rgba(220,190,140,0.5);
+}
+
+.card-preview[data-style="fathy"] .poet-name {
+  color: #c5872a;
+}
+
+.card-preview[data-style="fathy"] .card-rule {
+  background: linear-gradient(90deg, transparent, rgba(180,120,50,0.4) 20%, rgba(197,135,42,0.7) 50%, rgba(180,120,50,0.4) 80%, transparent);
+}
+
+/* ============================================================
+   CARD INNER ELEMENTS
+   ============================================================ */
+.card-accent-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--lapis-deep);
+  transition:
+    background var(--duration-transition) var(--ease-out-quart),
+    opacity var(--duration-transition) var(--ease-out-quart),
+    height var(--duration-transition) var(--ease-out-quart);
+  z-index: 3;
+}
+
+.card-ornament {
+  position: absolute;
+  inset: 20px;
+  border: 1px solid var(--gold-border);
+  pointer-events: none;
+  z-index: 1;
+  transition:
+    border-color var(--duration-transition) var(--ease-out-quart),
+    border-radius var(--duration-transition) var(--ease-out-quart),
+    opacity var(--duration-transition) var(--ease-out-quart),
+    transform var(--duration-transition) var(--ease-out-quart);
+}
+
+.card-ornament::before,
+.card-ornament::after {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-color: inherit;
+  border-style: solid;
+}
+
+.card-ornament::before {
+  top: -1px;
+  left: -1px;
+  border-width: 2px 0 0 2px;
+}
+
+.card-ornament::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 2px 2px 0;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.card-bismillah {
+  font-family: var(--font-arabic-display);
+  font-weight: 700;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  opacity: 0.75;
+  text-align: center;
+  direction: rtl;
+  lang: ar;
+}
+
+.card-rule {
+  width: 100%;
+  height: 1px;
+  background: var(--gold-rule);
+  border: none;
+  transition:
+    background var(--duration-transition) var(--ease-out-quart),
+    transform var(--duration-transition) var(--ease-out-quart);
+}
+
+/* Arabic verse — Amiri 400, generous line-height */
+.arabic-poetry {
+  font-family: var(--font-arabic-body);
+  font-size: 1.375rem;
+  font-weight: 400;
+  line-height: 2;
+  color: #ece8e0;
+  text-align: center;
+  direction: rtl;
+  transition: color var(--duration-transition) var(--ease-out-quart);
+}
+
+.arabic-poetry .verse {
+  display: block;
+}
+
+.card-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.card-divider::before,
+.card-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--gold-rule);
+}
+
+.card-divider-ornament {
+  color: var(--gold);
+  font-size: 0.6875rem;
+  opacity: 0.55;
+}
+
+/* English translation — Cormorant Garamond italic, noticeably smaller */
+.english-translation {
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.75;
+  color: rgba(236,232,224,0.55);
+  text-align: center;
+  transition: color var(--duration-transition) var(--ease-out-quart);
+}
+
+.english-translation .verse {
+  display: block;
+}
+
+.poet-attribution {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-block-start: 6px;
+}
+
+.poet-rule {
+  width: 36px;
+  height: 1px;
+  background: var(--gold-rule);
+  margin-block-end: 6px;
+}
+
+/* Poet name — Reem Kufi 700, display weight */
+.poet-name {
+  font-family: var(--font-arabic-display);
+  font-weight: 700;
+  font-size: clamp(1.4rem, 4vw, 1.8rem);
+  color: var(--gold);
+  letter-spacing: 0.03em;
+  direction: rtl;
+  transition: color var(--duration-transition) var(--ease-out-quart);
+}
+
+/* Latin name — Cormorant italic, deliberately subordinate */
+.poet-name-latin {
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(197,160,89,0.45);
+  letter-spacing: 0.07em;
+  transition: color var(--duration-transition) var(--ease-out-quart);
+}
+
+/* ============================================================
+   CLOSE BUTTON — FLOATING ON CARD
+   ============================================================ */
+.btn-close {
+  position: absolute;
+  top: 58px;
+  right: 12px;
+  z-index: 50;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(12,12,14,0.52);
+  border: 1px solid rgba(197,160,89,0.18);
+  color: rgba(236,232,224,0.75);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition:
+    background var(--duration-hover) var(--ease-out-quart),
+    border-color var(--duration-hover) var(--ease-out-quart),
+    transform var(--duration-micro) var(--ease-out-quart);
+  /* Expanded tap target via padding + compensation */
+  min-width: 44px;
+  min-height: 44px;
+  line-height: 1;
+}
+
+.btn-close:hover {
+  background: rgba(197,160,89,0.14);
+  border-color: rgba(197,160,89,0.38);
+}
+
+.btn-close:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 2px;
+}
+
+.btn-close:active {
+  transform: scale(0.93);
+}
+
+/* ============================================================
+   FROSTED CHROME SHELF — MELTS INTO CARD
+   ============================================================ */
+.chrome-shelf {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  /* Folio: dissolve — no hard edge at top */
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(12,12,14,0.35) 12%,
+    rgba(12,12,14,0.72) 36%,
+    rgba(12,12,14,0.88) 60%,
+    rgba(12,12,14,0.96) 100%
+  );
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  padding: 28px 18px 30px;
+  border-radius: 0 0 var(--radius-phone) var(--radius-phone);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  /* Slides up on entrance */
+  transform: translateY(100%);
+  animation: shelfRise var(--duration-shelf) var(--ease-out-expo) 0.55s forwards;
+}
+
+@keyframes shelfRise {
+  to { transform: translateY(0); }
+}
+
+/* Soft gradient bridge from card to shelf */
+.chrome-shelf::before {
+  content: '';
+  position: absolute;
+  top: -56px;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background: linear-gradient(180deg, transparent 0%, rgba(12,12,14,0.12) 100%);
+  pointer-events: none;
+}
+
+/* ============================================================
+   STYLE PICKER CHIPS
+   ============================================================ */
+.style-picker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.style-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+}
+
+.style-chip:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+.chip-swatch {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  position: relative;
+  transition:
+    transform var(--duration-hover) var(--ease-out-expo),
+    box-shadow var(--duration-hover) var(--ease-out-quart);
+  border: 2px solid transparent;
+  flex-shrink: 0;
+}
+
+/* Active gold ring */
+.style-chip[aria-pressed="true"] .chip-swatch {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 2px rgba(12,12,14,0.85),
+    0 0 0 4px var(--gold),
+    0 0 14px rgba(197,160,89,0.45);
+}
+
+.style-chip:hover:not([aria-pressed="true"]) .chip-swatch {
+  transform: scale(1.1) translateY(-1px);
+  box-shadow: 0 4px 14px rgba(197,160,89,0.25), 0 0 0 1.5px rgba(197,160,89,0.25);
+}
+
+.style-chip:active .chip-swatch {
+  transform: scale(0.94);
+}
+
+/* Swatch color palettes */
+.chip-swatch--diwan    { background: radial-gradient(circle at 35% 30%, #1e3a6e 0%, #0c0c0e 100%); }
+.chip-swatch--ibn-muqla { background: radial-gradient(circle at 35% 30%, #3a2a10 0%, #1a1208 100%); }
+.chip-swatch--sinan    { background: radial-gradient(circle at 35% 30%, #f0ece4 0%, #d4cfc5 100%); }
+.chip-swatch--zaha     { background: radial-gradient(circle at 35% 30%, #252535 0%, #111115 100%); }
+.chip-swatch--fathy    { background: radial-gradient(circle at 35% 30%, #5c3018 0%, #2d1b0e 100%); }
+
+/* Gold accent dot on each swatch */
+.chip-swatch::after {
+  content: '';
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold);
+  opacity: 0.65;
+}
+
+/* Style chip labels — system-ui, deliberately subordinate */
+.chip-label {
+  font-family: var(--font-ui);
+  font-size: 0.5rem;
+  color: rgba(197,160,89,0.55);
+  letter-spacing: 0.05em;
+  text-align: center;
+  white-space: nowrap;
+  text-transform: uppercase;
+  line-height: 1;
+  max-width: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.style-chip[aria-pressed="true"] .chip-label {
+  color: var(--gold-bright);
+}
+
+/* ============================================================
+   ACTION BUTTONS
+   ============================================================ */
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+/* ---- HERO CTA: Molten Gold Share Button ---- */
+.btn-share {
+  flex: 2;
+  height: 50px;
+  min-height: 44px;
+  border-radius: var(--radius-btn);
+  background: var(--molten-gold);
+  border: none;
+  color: #1a1200;
+  font-family: var(--font-ui);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  /* Convex metallic surface */
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.25),
+    inset 0 -1px 2px rgba(0,0,0,0.4),
+    0 4px 20px rgba(197,160,89,0.35);
+  transition:
+    transform var(--duration-micro) var(--ease-out-quart),
+    filter var(--duration-hover) var(--ease-out-quart),
+    box-shadow var(--duration-hover) var(--ease-out-quart);
+}
+
+/* Convex top highlight — simulates 3D metallic surface */
+.btn-share::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 55%;
+  background: radial-gradient(ellipse 80% 100% at 50% 0%, rgba(255,255,255,0.18) 0%, transparent 100%);
+  border-radius: 999px 999px 60% 60%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Gold sheen sweep — loops every 3s */
+.btn-share::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255,255,255,0.3) 50%,
+    transparent 100%
+  );
+  transform: skewX(-15deg) translateX(-150%);
+  animation: goldSheen 3s var(--ease-out-quart) 1.2s infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes goldSheen {
+  0%   { transform: skewX(-15deg) translateX(-150%); }
+  45%  { transform: skewX(-15deg) translateX(350%); }
+  100% { transform: skewX(-15deg) translateX(350%); }
+}
+
+.btn-share:hover {
+  filter: brightness(1.07) saturate(1.05);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.28),
+    inset 0 -1px 2px rgba(0,0,0,0.38),
+    0 6px 28px rgba(197,160,89,0.5);
+}
+
+.btn-share:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 2px;
+}
+
+.btn-share:active {
+  transform: scale(0.97);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.18),
+    inset 0 -1px 2px rgba(0,0,0,0.45),
+    0 2px 10px rgba(197,160,89,0.25);
+}
+
+/* ---- Ghost gold secondary buttons ---- */
+.btn-ghost {
+  flex: 1;
+  height: 50px;
+  min-height: 44px;
+  border-radius: var(--radius-btn);
+  background: rgba(197,160,89,0.07);
+  border: 1px solid var(--gold-border);
+  color: var(--gold);
+  font-family: var(--font-ui);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    background var(--duration-hover) var(--ease-out-quart),
+    border-color var(--duration-hover) var(--ease-out-quart),
+    transform var(--duration-micro) var(--ease-out-quart);
+  white-space: nowrap;
+  padding-inline: 6px;
+}
+
+.btn-ghost:hover {
+  background: rgba(197,160,89,0.13);
+  border-color: rgba(197,160,89,0.42);
+}
+
+.btn-ghost:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 2px;
+}
+
+.btn-ghost:active {
+  transform: scale(0.97);
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .phone-frame {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .chrome-shelf {
+    animation: none;
+    transform: translateY(0);
+  }
+
+  .btn-share::after {
+    animation: none;
+  }
+
+  .card-foil-border {
+    animation: none;
+  }
+
+  .card-preview {
+    transition: none;
+  }
+
+  .style-chip:hover .chip-swatch {
+    transform: none;
+  }
+
+  #geo-canvas {
+    display: none;
+  }
+}
+
+/* ── Live Islamic geometry canvas ── */
+#geo-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  /* sits behind card content but above card bg */
+}
+</style>
+</head>
+
+<body>
+
+  <!-- Stage label — outside phone -->
+  <div class="stage-label" aria-hidden="true">
+    <span class="stage-label__title">Folio</span>
+    <span class="stage-label__sub">Full-bleed card — chrome dissolves into art</span>
+  </div>
+
+  <!-- Phone Frame -->
+  <div class="phone-frame" role="presentation">
+
+    <!-- Dynamic Island -->
+    <div class="phone-dynamic-island" role="presentation" aria-hidden="true"></div>
+
+    <!-- Phone Screen -->
+    <div class="phone-screen">
+
+      <!-- Status Bar -->
+      <div class="phone-statusbar" aria-hidden="true">
+        <span class="phone-statusbar__time">9:41</span>
+        <div class="phone-statusbar__icons">
+          <svg width="18" height="12" viewBox="0 0 18 12" fill="none" aria-hidden="true">
+            <rect x="0" y="8" width="3" height="4" rx="0.5" fill="currentColor"/>
+            <rect x="4.5" y="5.5" width="3" height="6.5" rx="0.5" fill="currentColor"/>
+            <rect x="9" y="3" width="3" height="9" rx="0.5" fill="currentColor"/>
+            <rect x="13.5" y="0" width="3" height="12" rx="0.5" fill="currentColor" opacity="0.3"/>
+          </svg>
+          <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden="true">
+            <path d="M8 10C8.55228 10 9 10.4477 9 11C9 11.5523 8.55228 12 8 12C7.44772 12 7 11.5523 7 11C7 10.4477 7.44772 10 8 10Z" fill="currentColor"/>
+            <path d="M5.17 7.83C5.95 7.05 7.03 6.6 8 6.6C8.97 6.6 10.05 7.05 10.83 7.83L12 6.5C10.9 5.56 9.49 5 8 5C6.51 5 5.1 5.56 4 6.5L5.17 7.83Z" fill="currentColor"/>
+            <path d="M2.34 5.16C3.83 3.79 5.87 3 8 3C10.13 3 12.17 3.79 13.66 5.16L15 3.66C13.19 1.96 10.72 1 8 1C5.28 1 2.81 1.96 1 3.66L2.34 5.16Z" fill="currentColor"/>
+          </svg>
+          <svg width="25" height="12" viewBox="0 0 25 12" fill="none" aria-hidden="true">
+            <rect x="0.5" y="0.5" width="21" height="11" rx="2.5" stroke="currentColor" stroke-opacity="0.35"/>
+            <rect x="1.5" y="1.5" width="18" height="9" rx="1.5" fill="currentColor"/>
+            <path d="M23 4V8C23.8047 7.66122 24.328 6.87313 24.328 6C24.328 5.12687 23.8047 4.33878 23 4Z" fill="currentColor" opacity="0.4"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Share Modal — Folio: card IS the modal -->
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Share poem"
+        class="share-modal"
+      >
+
+        <!-- Card Preview — full bleed -->
+        <div class="card-preview-wrapper">
+
+          <!-- Live animated Islamic geometry tessellation (z-index 0, behind all card content) -->
+          <canvas id="geo-canvas" aria-hidden="true"></canvas>
+
+          <div class="card-preview" data-style="diwan" id="cardPreview">
+
+            <!-- Accent bar -->
+            <div class="card-accent-bar" aria-hidden="true"></div>
+
+            <!-- Animated Islamic geometry canvas band -->
+            <div class="geometry-canvas-band" aria-hidden="true">
+              <canvas id="geometryCanvas"></canvas>
+            </div>
+
+            <!-- Gold foil border shimmer -->
+            <div class="card-foil-border" aria-hidden="true"></div>
+
+            <!-- Ornamental corner frame -->
+            <div class="card-ornament" aria-hidden="true"></div>
+
+            <!-- Poetry Content -->
+            <div class="card-content">
+              <div class="card-bismillah" dir="rtl" lang="ar" aria-hidden="true">بِسۡمِ ٱللَّهِ</div>
+              <hr class="card-rule" aria-hidden="true">
+
+              <!-- Arabic couplet — Amiri 400, generous line-height -->
+              <p class="arabic-poetry" dir="rtl" lang="ar">
+                <span class="verse">أَنا لا أُريدُكِ كامِلَةً، أُريدُكِ حَقيقيَّة</span>
+                <span class="verse">أُريدُكِ كَما أَنتِ، في كُلِّ فَوضاكِ الجَميلة</span>
+              </p>
+
+              <!-- Ornamental divider -->
+              <div class="card-divider" aria-hidden="true">
+                <span class="card-divider-ornament">✦</span>
+              </div>
+
+              <!-- English translation — Cormorant italic, noticeably smaller -->
+              <p class="english-translation" lang="en">
+                <span class="verse">I do not want you perfect, I want you real</span>
+                <span class="verse">I want you as you are, in all your beautiful chaos</span>
+              </p>
+
+              <!-- Poet attribution -->
+              <div class="poet-attribution">
+                <div class="poet-rule" aria-hidden="true"></div>
+                <!-- Reem Kufi 700 — the editorial crown -->
+                <span class="poet-name" dir="rtl" lang="ar">نزار قباني</span>
+                <!-- Cormorant italic — deliberately subordinate -->
+                <span class="poet-name-latin" lang="en">Nizar Qabbani</span>
+              </div>
+            </div>
+
+          </div><!-- /card-preview -->
+        </div><!-- /card-preview-wrapper -->
+
+        <!-- Close button — floats over card -->
+        <button class="btn-close" aria-label="Close share dialog" id="btnClose">✕</button>
+
+        <!-- Frosted Chrome Shelf — dissolves upward into card -->
+        <div class="chrome-shelf" role="group" aria-label="Share options">
+
+          <!-- Style Picker -->
+          <div class="style-picker" role="radiogroup" aria-label="Card style">
+
+            <button
+              class="style-chip"
+              role="radio"
+              aria-pressed="true"
+              aria-label="Dīwān style"
+              data-style="diwan"
+            >
+              <div class="chip-swatch chip-swatch--diwan" aria-hidden="true"></div>
+              <span class="chip-label">Dīwān</span>
+            </button>
+
+            <button
+              class="style-chip"
+              role="radio"
+              aria-pressed="false"
+              aria-label="Ibn Muqla style"
+              data-style="ibn-muqla"
+            >
+              <div class="chip-swatch chip-swatch--ibn-muqla" aria-hidden="true"></div>
+              <span class="chip-label">Ibn Muqla</span>
+            </button>
+
+            <button
+              class="style-chip"
+              role="radio"
+              aria-pressed="false"
+              aria-label="Sinan style"
+              data-style="sinan"
+            >
+              <div class="chip-swatch chip-swatch--sinan" aria-hidden="true"></div>
+              <span class="chip-label">Sinan</span>
+            </button>
+
+            <button
+              class="style-chip"
+              role="radio"
+              aria-pressed="false"
+              aria-label="Zaha Hadid style"
+              data-style="zaha"
+            >
+              <div class="chip-swatch chip-swatch--zaha" aria-hidden="true"></div>
+              <span class="chip-label">Zaha</span>
+            </button>
+
+            <button
+              class="style-chip"
+              role="radio"
+              aria-pressed="false"
+              aria-label="Hassan Fathy style"
+              data-style="fathy"
+            >
+              <div class="chip-swatch chip-swatch--fathy" aria-hidden="true"></div>
+              <span class="chip-label">H. Fathy</span>
+            </button>
+
+          </div><!-- /style-picker -->
+
+          <!-- Action Buttons -->
+          <div class="action-buttons" role="group" aria-label="Share actions">
+            <button class="btn-share" aria-label="Share poem">
+              Share
+            </button>
+            <button class="btn-ghost" aria-label="Download as PNG" id="btnDownload">
+              Download
+            </button>
+            <button class="btn-ghost" aria-label="Copy link" id="btnCopyLink">
+              Copy Link
+            </button>
+          </div>
+
+        </div><!-- /chrome-shelf -->
+
+      </div><!-- /share-modal -->
+
+    </div><!-- /phone-screen -->
+  </div><!-- /phone-frame -->
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     ANIMATED ISLAMIC GEOMETRY CANVAS
+     8-pointed star tessellation, drifts sinusoidally
+     ============================================================ */
+  (function initGeometryCanvas() {
+    var canvas = document.getElementById('geometryCanvas');
+    if (!canvas) return;
+
+    var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var ctx = canvas.getContext('2d');
+    var raf;
+    var startTime = performance.now();
+
+    function resize() {
+      var band = canvas.parentElement;
+      var dpr = window.devicePixelRatio || 1;
+      canvas.width  = band.offsetWidth  * dpr;
+      canvas.height = band.offsetHeight * dpr;
+      ctx.scale(dpr, dpr);
+    }
+
+    // Draw a single 8-pointed star centered at (cx, cy) with outer radius r
+    function draw8Star(cx, cy, r) {
+      var innerR = r * 0.414; // ratio for a regular 8-star
+      var points = 8;
+      ctx.beginPath();
+      for (var i = 0; i < points * 2; i++) {
+        var angle = (Math.PI / points) * i - Math.PI / 2;
+        var radius = (i % 2 === 0) ? r : innerR;
+        var x = cx + Math.cos(angle) * radius;
+        var y = cy + Math.sin(angle) * radius;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+    }
+
+    function drawGrid(offsetX, offsetY) {
+      var w = canvas.width  / (window.devicePixelRatio || 1);
+      var h = canvas.height / (window.devicePixelRatio || 1);
+      var cellSize = 40;
+      var starR    = 14;
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = 'rgba(197,160,89,0.18)';
+      ctx.lineWidth   = 0.8;
+
+      // Tessellate across the band, offset by animated values
+      var cols = Math.ceil(w / cellSize) + 2;
+      var rows = Math.ceil(h / cellSize) + 2;
+
+      var startCol = -1;
+      var startRow = -1;
+
+      for (var row = startRow; row < rows; row++) {
+        for (var col = startCol; col < cols; col++) {
+          var cx = col * cellSize + (offsetX % cellSize);
+          var cy = row * cellSize + (offsetY % cellSize);
+
+          // Alternating row offset for a denser hex-like feel
+          if (row % 2 !== 0) cx += cellSize * 0.5;
+
+          draw8Star(cx, cy, starR);
+          ctx.stroke();
+
+          // Small connecting square between stars
+          ctx.beginPath();
+          ctx.rect(cx - 4, cy - 4, 8, 8);
+          ctx.stroke();
+        }
+      }
+    }
+
+    function animate(now) {
+      if (prefersReduced) {
+        drawGrid(0, 0);
+        return;
+      }
+
+      var elapsed = (now - startTime) / 1000; // seconds
+
+      // Slow sinusoidal drift
+      var ox = Math.sin(elapsed * 0.18) * 12;
+      var oy = Math.cos(elapsed * 0.12) * 6;
+
+      drawGrid(ox, oy);
+      raf = requestAnimationFrame(animate);
+    }
+
+    resize();
+    raf = requestAnimationFrame(animate);
+
+    window.addEventListener('resize', function () {
+      resize();
+    });
+  }());
+
+  /* ============================================================
+     STYLE CHIP INTERACTION — cross-dissolve card style
+     ============================================================ */
+  var card   = document.getElementById('cardPreview');
+  var chips  = document.querySelectorAll('.style-chip');
+
+  chips.forEach(function (chip) {
+    chip.addEventListener('click', function () {
+      var newStyle = chip.getAttribute('data-style');
+      if (card.getAttribute('data-style') === newStyle) return;
+
+      chips.forEach(function (c) { c.setAttribute('aria-pressed', 'false'); });
+      chip.setAttribute('aria-pressed', 'true');
+
+      var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReduced) {
+        card.setAttribute('data-style', newStyle);
+        return;
+      }
+
+      card.classList.add('transitioning');
+      setTimeout(function () {
+        card.setAttribute('data-style', newStyle);
+        card.classList.remove('transitioning');
+      }, 150);
+    });
+  });
+
+  /* ============================================================
+     CLOSE BUTTON — demo loop
+     ============================================================ */
+  var btnClose   = document.getElementById('btnClose');
+  var phoneFrame = document.querySelector('.phone-frame');
+
+  btnClose.addEventListener('click', function () {
+    phoneFrame.style.transition = 'opacity 0.3s cubic-bezier(.4,0,.2,1), transform 0.3s cubic-bezier(.4,0,.2,1)';
+    phoneFrame.style.opacity    = '0';
+    phoneFrame.style.transform  = 'scale(0.93) translateY(10px)';
+
+    setTimeout(function () {
+      phoneFrame.style.transition = '';
+      phoneFrame.style.opacity    = '';
+      phoneFrame.style.transform  = '';
+      phoneFrame.style.animation  = 'none';
+      void phoneFrame.offsetWidth; // reflow
+      phoneFrame.style.animation  = '';
+    }, 1100);
+  });
+
+  /* ============================================================
+     ACTION BUTTON FEEDBACK (demo)
+     ============================================================ */
+  var btnShare    = document.querySelector('.btn-share');
+  var btnDownload = document.getElementById('btnDownload');
+  var btnCopyLink = document.getElementById('btnCopyLink');
+
+  btnShare.addEventListener('click', function () {
+    var orig = btnShare.textContent;
+    btnShare.textContent = 'Shared!';
+    setTimeout(function () { btnShare.textContent = orig; }, 1600);
+  });
+
+  btnDownload.addEventListener('click', function () {
+    var orig = btnDownload.textContent;
+    btnDownload.textContent = 'Saved!';
+    setTimeout(function () { btnDownload.textContent = orig; }, 1600);
+  });
+
+  btnCopyLink.addEventListener('click', function () {
+    var orig = btnCopyLink.textContent;
+    btnCopyLink.textContent = 'Copied!';
+    setTimeout(function () { btnCopyLink.textContent = orig; }, 1600);
+  });
+
+}());
+
+/* ── Live Islamic 8-pointed star tessellation ─────────────────────────── */
+(function () {
+  'use strict';
+  const canvas = document.getElementById('geo-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+
+  function resize() {
+    const w = canvas.offsetWidth;
+    const h = canvas.offsetHeight;
+    canvas.width  = w * dpr;
+    canvas.height = h * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  // Draw an 8-pointed star centered at cx,cy with outer radius r
+  function drawStar8(cx, cy, r, rotation) {
+    const innerR = r * 0.414; // tan(22.5°) ratio for proper 8-star
+    ctx.beginPath();
+    for (let i = 0; i < 16; i++) {
+      const angle = (Math.PI / 8) * i + rotation;
+      const radius = i % 2 === 0 ? r : innerR;
+      const x = cx + Math.cos(angle) * radius;
+      const y = cy + Math.sin(angle) * radius;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  }
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let startTime = null;
+
+  function draw(ts) {
+    if (!startTime) startTime = ts;
+    const elapsed = (ts - startTime) / 1000;
+
+    const w = canvas.offsetWidth;
+    const h = canvas.offsetHeight;
+    ctx.clearRect(0, 0, w, h);
+
+    // Gentle drift
+    const driftX = Math.sin(elapsed * 0.18) * 5;
+    const driftY = Math.cos(elapsed * 0.12) * 4;
+    const breathe = Math.sin(elapsed * 0.4) * 0.8; // radius oscillation in px
+    const rot     = elapsed * 0.06; // slow spin
+
+    const sz   = 36; // grid spacing
+    const cols = Math.ceil(w / sz) + 3;
+    const rows = Math.ceil(h / sz) + 3;
+
+    ctx.strokeStyle = 'rgba(197,160,89,0.15)';
+    ctx.lineWidth   = 0.75;
+
+    for (let row = -2; row < rows; row++) {
+      for (let col = -2; col < cols; col++) {
+        const cx = col * sz + (row % 2 === 0 ? 0 : sz / 2) + driftX;
+        const cy = row * sz * 0.866 + driftY;
+        const r  = sz * 0.35 + breathe;
+        drawStar8(cx, cy, r, rot);
+        ctx.stroke();
+      }
+    }
+
+    if (!prefersReducedMotion) {
+      requestAnimationFrame(draw);
+    }
+  }
+
+  resize();
+  requestAnimationFrame(draw);
+  window.addEventListener('resize', resize);
+}());
+</script>
+
+</body>
+</html>

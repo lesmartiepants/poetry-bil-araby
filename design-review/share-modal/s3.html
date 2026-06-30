@@ -1,0 +1,1510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maktuba — Share Modal S3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;500;600&family=Amiri:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   DESIGN TOKENS — Maktuba
+   ============================================================ */
+:root {
+  --gold:            #c5a059;
+  --gold-bright:     #d4b463;
+  --gold-foil:       linear-gradient(135deg,#b8922e,#c5a059 30%,#e2c67a 55%,#c5a059 75%,#a07d38);
+  --molten-gold:     linear-gradient(135deg,#a8853d,#c5a059 22%,#e0c97a 38%,#d4b463 48%,#b8924a 62%,#d8bc6e 78%,#c5a059);
+  --lapis-deep:      #1e3a6e;
+  --lapis-medium:    #2e5090;
+  --lapis-light:     #4a7cc9;
+  --bg-app:          #0c0c0e;
+  --panel-bg:        linear-gradient(145deg, rgba(20,18,15,0.97), rgba(12,12,14,0.98));
+  --gold-border:     rgba(197,160,89,0.25);
+  --gold-rule:       linear-gradient(90deg, transparent, rgba(160,128,64,0.4) 20%, #C5A059 50%, rgba(160,128,64,0.4) 80%, transparent);
+
+  --font-arabic-display: 'Reem Kufi', system-ui, sans-serif;
+  --font-arabic-body:    'Amiri', Georgia, serif;
+  --font-editorial:      'Cormorant Garamond', Georgia, serif;
+  --font-ui:             system-ui, -apple-system, sans-serif;
+
+  --ease-expo:  cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-quart: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+
+  --space-xs:   4px;
+  --space-sm:   8px;
+  --space-md:   16px;
+  --space-lg:   24px;
+  --space-xl:   32px;
+
+  --shadow-lift: 0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.4);
+  --shadow-gold: 0 4px 16px rgba(197,160,89,0.3);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg-app);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overflow-x: hidden;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 3px;
+}
+
+/* ============================================================
+   APP BACKDROP
+   ============================================================ */
+.app-backdrop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+}
+
+.backdrop-caption {
+  text-align: center;
+  color: rgba(197,160,89,0.35);
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  line-height: 1.6;
+}
+
+.backdrop-caption strong {
+  display: block;
+  font-size: 15px;
+  color: rgba(197,160,89,0.5);
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+/* ============================================================
+   PHONE FRAME
+   ============================================================ */
+.phone-frame {
+  width: 390px;
+  height: 844px;
+  background: #111113;
+  border-radius: 54px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.06),
+    0 0 0 10px #1a1a1c,
+    0 0 0 11px rgba(255,255,255,0.04),
+    0 40px 80px rgba(0,0,0,0.8),
+    0 20px 40px rgba(0,0,0,0.5);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* Phone notch */
+.phone-frame::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 34px;
+  background: #0c0c0e;
+  border-radius: 20px;
+  z-index: 100;
+}
+
+/* Screen background (app UI behind modal) */
+.phone-screen {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(30,58,110,0.15), transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(197,160,89,0.04), transparent 50%),
+    #0e0d0b;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Faint app content behind (suggestion of poetry app) */
+.phone-screen::before {
+  content: '';
+  position: absolute;
+  inset: 60px 20px 120px;
+  border-radius: var(--radius-xl);
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 28px,
+      rgba(197,160,89,0.03) 28px,
+      rgba(197,160,89,0.03) 29px
+    );
+  opacity: 0.6;
+}
+
+/* ============================================================
+   MODAL OVERLAY
+   ============================================================ */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 10;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal-overlay {
+    animation: overlayIn 0.3s var(--ease-quart) both;
+  }
+
+  @keyframes overlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+}
+
+/* ============================================================
+   MODAL PANEL — Maktuba envelope feel
+   ============================================================ */
+.modal-panel {
+  width: 100%;
+  background: var(--panel-bg);
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+  border-top: 1px solid var(--gold-border);
+  border-left: 1px solid rgba(197,160,89,0.08);
+  border-right: 1px solid rgba(197,160,89,0.08);
+  position: relative;
+  overflow: hidden;
+  padding: 0 0 env(safe-area-inset-bottom, 0px);
+}
+
+/* Warm parchment overlay */
+.modal-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(197,160,89,0.06), transparent 60%),
+    radial-gradient(ellipse at 20% 100%, rgba(160,120,60,0.03), transparent 40%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Subtle warm paper texture */
+.modal-panel::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 3px,
+      rgba(197,160,89,0.008) 3px,
+      rgba(197,160,89,0.008) 4px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 3px,
+      rgba(197,160,89,0.006) 3px,
+      rgba(197,160,89,0.006) 4px
+    );
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .modal-panel {
+    animation: panelRise 0.5s var(--ease-expo) 0.1s both;
+  }
+
+  @keyframes panelRise {
+    from {
+      transform: translateY(60px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+.modal-inner {
+  position: relative;
+  z-index: 1;
+  padding: var(--space-md) var(--space-md) var(--space-lg);
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0 var(--space-md);
+  margin-bottom: 0;
+}
+
+.header-label-en {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--gold);
+  letter-spacing: 0.06em;
+  opacity: 0.85;
+}
+
+.header-center {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.header-label-ar {
+  font-family: var(--font-arabic-display);
+  font-size: 14px;
+  color: rgba(197,160,89,0.7);
+  letter-spacing: 0.02em;
+  direction: rtl;
+}
+
+.close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(197,160,89,0.08);
+  border: 1px solid rgba(197,160,89,0.15);
+  color: rgba(197,160,89,0.6);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s var(--ease-quart), color 0.18s var(--ease-quart);
+  min-width: 32px;
+  min-height: 32px;
+}
+
+.close-btn:hover {
+  background: rgba(197,160,89,0.15);
+  color: var(--gold);
+}
+
+/* Gold hairline rule */
+.gold-rule {
+  height: 1px;
+  background: var(--gold-rule);
+  margin: 0 0 var(--space-md);
+}
+
+/* ============================================================
+   ENVELOPE ASSEMBLY
+   ============================================================ */
+.envelope-assembly {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  position: relative;
+}
+
+/* Envelope base (bottom) — decorative container */
+.envelope-base {
+  width: 292px;
+  height: 16px;
+  background: linear-gradient(180deg, #1a1410 0%, #111008 100%);
+  border: 1px solid rgba(197,160,89,0.2);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  position: relative;
+  z-index: 1;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.envelope-base::before {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(197,160,89,0.15), transparent);
+}
+
+/* Envelope sides */
+.envelope-sides {
+  width: 292px;
+  height: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.envelope-sides::before,
+.envelope-sides::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(197,160,89,0.2);
+}
+
+.envelope-sides::before { left: 0; }
+.envelope-sides::after  { right: 0; }
+
+/* Envelope flap (the V-shaped fold above card) */
+.envelope-flap {
+  width: 292px;
+  position: relative;
+  z-index: 3;
+  overflow: hidden;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.envelope-flap-shape {
+  width: 100%;
+  height: 72px;
+  background: linear-gradient(180deg, #1e1a12 0%, #181410 100%);
+  clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+  border-top: 1px solid rgba(197,160,89,0.22);
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* Gold edge on flap */
+.envelope-flap-shape::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+  background: linear-gradient(180deg, rgba(197,160,89,0.12) 0%, transparent 60%);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .envelope-flap-shape {
+    transform-origin: top center;
+    animation: flapOpen 0.5s var(--ease-expo) 0.2s both;
+  }
+
+  @keyframes flapOpen {
+    from {
+      transform: perspective(400px) rotateX(0deg);
+      opacity: 0.3;
+    }
+    to {
+      transform: perspective(400px) rotateX(-40deg);
+      opacity: 1;
+    }
+  }
+}
+
+/* ============================================================
+   CARD PREVIEW — the letter emerging
+   ============================================================ */
+.card-preview-wrap {
+  width: 292px;
+  position: relative;
+  z-index: 2;
+}
+
+.card-preview {
+  width: 280px;
+  margin: 0 auto;
+  aspect-ratio: 4 / 5;
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  box-shadow:
+    0 2px 0 rgba(197,160,89,0.12),
+    0 8px 24px rgba(0,0,0,0.7),
+    0 16px 40px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(197,160,89,0.15);
+  cursor: pointer;
+  transition: box-shadow 0.3s var(--ease-quart);
+}
+
+.card-preview:hover {
+  box-shadow:
+    0 2px 0 rgba(197,160,89,0.2),
+    0 12px 32px rgba(0,0,0,0.7),
+    0 20px 48px rgba(0,0,0,0.4),
+    0 0 0 1px rgba(197,160,89,0.25);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .card-preview {
+    animation: letterEmerge 0.6s var(--ease-expo) 0.45s both;
+  }
+
+  @keyframes letterEmerge {
+    from {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+}
+
+/* Paper grain texture on card */
+.card-preview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(
+      30deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.012) 2px,
+      rgba(255,255,255,0.012) 3px
+    ),
+    repeating-linear-gradient(
+      120deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.008) 2px,
+      rgba(255,255,255,0.008) 3px
+    );
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Islamic geometry whisper pattern */
+.card-preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      rgba(197,160,89,0.4) 0px, rgba(197,160,89,0.4) 1px,
+      transparent 1px, transparent 14px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      rgba(197,160,89,0.4) 0px, rgba(197,160,89,0.4) 1px,
+      transparent 1px, transparent 14px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      rgba(197,160,89,0.2) 0px, rgba(197,160,89,0.2) 1px,
+      transparent 1px, transparent 14px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(197,160,89,0.2) 0px, rgba(197,160,89,0.2) 1px,
+      transparent 1px, transparent 14px
+    );
+}
+
+/* Card style backgrounds — applied via data-style */
+.card-preview[data-style="diwan"] {
+  background: #0c0c0e;
+}
+.card-preview[data-style="ibn-muqla"] {
+  background: radial-gradient(ellipse at 40% 30%, #261c0a 0%, #1a1208 100%);
+}
+.card-preview[data-style="sinan"] {
+  background: linear-gradient(145deg, #f5f0e8, #ede5d0);
+}
+.card-preview[data-style="zaha"] {
+  background: linear-gradient(135deg, #1a1a22, #23232e);
+}
+.card-preview[data-style="hassan"] {
+  background: linear-gradient(145deg, #3d2318, #5c3420);
+}
+
+/* Card geometric border ornament (Dīwān style) */
+.card-ornament {
+  position: absolute;
+  inset: 10px;
+  z-index: 3;
+  pointer-events: none;
+  border: 1px solid rgba(197,160,89,0.2);
+  border-radius: 2px;
+}
+
+.card-ornament::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 1px solid rgba(197,160,89,0.12);
+  border-radius: 1px;
+}
+
+.card-ornament::after {
+  content: '✦';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(197,160,89,0.06);
+  font-size: 80px;
+  letter-spacing: 0;
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Corner ornaments */
+.card-corners {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.card-corners::before,
+.card-corners::after {
+  content: '◆';
+  position: absolute;
+  color: rgba(197,160,89,0.25);
+  font-size: 8px;
+}
+
+.card-corners::before {
+  top: 14px;
+  left: 14px;
+}
+
+.card-corners::after {
+  bottom: 14px;
+  right: 14px;
+}
+
+/* Card content */
+.card-content {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 22px;
+  gap: 12px;
+  text-align: center;
+}
+
+.card-poem-ar {
+  direction: rtl;
+  font-family: var(--font-arabic-body);
+  font-size: 15px;
+  line-height: 1.9;
+  color: #e8dcc8;
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.card-preview[data-style="sinan"] .card-poem-ar,
+.card-preview[data-style="sinan"] .card-poem-en {
+  color: #1a150a;
+}
+
+.card-preview[data-style="sinan"] .card-ornament {
+  border-color: rgba(197,160,89,0.35);
+}
+
+.card-divider {
+  width: 40px;
+  height: 1px;
+  background: var(--gold-rule);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.card-poem-en {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 11px;
+  line-height: 1.7;
+  color: rgba(232,220,200,0.55);
+  text-align: center;
+  letter-spacing: 0.01em;
+}
+
+.card-poet {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-top: 4px;
+}
+
+.card-poet-ar {
+  direction: rtl;
+  font-family: var(--font-arabic-display);
+  font-size: 10px;
+  color: var(--gold);
+  opacity: 0.7;
+  letter-spacing: 0.03em;
+}
+
+.card-poet-en {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 9px;
+  color: rgba(197,160,89,0.45);
+  letter-spacing: 0.06em;
+}
+
+/* Decorative parametric lines for Zaha style */
+.card-preview[data-style="zaha"] .card-ornament::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      -35deg,
+      transparent,
+      transparent 18px,
+      rgba(197,160,89,0.06) 18px,
+      rgba(197,160,89,0.06) 19px
+    );
+}
+
+/* Terracotta texture for Hassan style */
+.card-preview[data-style="hassan"] .card-ornament {
+  border-color: rgba(220,160,90,0.3);
+}
+
+.card-preview[data-style="hassan"] .card-poem-ar,
+.card-preview[data-style="hassan"] .card-poem-en {
+  color: #f0d8b8;
+}
+
+/* Sepia warmth for Ibn Muqla */
+.card-preview[data-style="ibn-muqla"] .card-poem-ar,
+.card-preview[data-style="ibn-muqla"] .card-poem-en {
+  color: #e8d5a8;
+}
+
+.card-preview[data-style="ibn-muqla"] .card-ornament {
+  border-color: rgba(210,170,90,0.2);
+}
+
+/* ============================================================
+   STAMP GRID — style picker
+   ============================================================ */
+.stamp-section {
+  margin-bottom: var(--space-md);
+}
+
+.stamp-label {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 11px;
+  color: rgba(197,160,89,0.45);
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin-bottom: var(--space-sm);
+}
+
+.stamp-grid {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .stamp-grid {
+    /* Stagger handled per-stamp via animation-delay */
+  }
+}
+
+.stamp {
+  width: 60px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  position: relative;
+  min-height: 44px;
+  padding: 0;
+  transition: transform 0.18s var(--ease-spring);
+}
+
+.stamp:hover {
+  transform: scale(1.06) translateY(-2px);
+}
+
+.stamp:active {
+  transform: scale(0.96);
+}
+
+.stamp-img {
+  width: 60px;
+  height: 76px;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+  /* Perforation border effect */
+  border: 2px dashed rgba(197,160,89,0.4);
+  transition:
+    border-color 0.2s var(--ease-quart),
+    box-shadow 0.2s var(--ease-quart);
+}
+
+/* Perforation notch effect — simulate stamp edge */
+.stamp-img::before {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 1px solid rgba(197,160,89,0.1);
+  border-radius: 1px;
+  z-index: 2;
+}
+
+/* Style previews in stamps */
+.stamp[data-style="diwan"]      .stamp-img { background: #0c0c0e; }
+.stamp[data-style="ibn-muqla"]  .stamp-img { background: radial-gradient(ellipse at 40% 30%, #261c0a, #1a1208); }
+.stamp[data-style="sinan"]      .stamp-img { background: linear-gradient(145deg, #f5f0e8, #ede5d0); }
+.stamp[data-style="zaha"]       .stamp-img { background: linear-gradient(135deg, #1a1a22, #23232e); }
+.stamp[data-style="hassan"]     .stamp-img { background: linear-gradient(145deg, #3d2318, #5c3420); }
+
+/* Geometric whisper in stamp previews */
+.stamp-img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.18;
+}
+
+.stamp[data-style="diwan"] .stamp-img::after {
+  background:
+    repeating-linear-gradient(45deg, rgba(197,160,89,0.5) 0, rgba(197,160,89,0.5) 1px, transparent 1px, transparent 8px),
+    repeating-linear-gradient(-45deg, rgba(197,160,89,0.5) 0, rgba(197,160,89,0.5) 1px, transparent 1px, transparent 8px);
+}
+
+.stamp[data-style="sinan"] .stamp-img::after {
+  background:
+    repeating-linear-gradient(0deg, rgba(197,160,89,0.6) 0, rgba(197,160,89,0.6) 1px, transparent 1px, transparent 10px),
+    repeating-linear-gradient(90deg, rgba(197,160,89,0.6) 0, rgba(197,160,89,0.6) 1px, transparent 1px, transparent 10px);
+}
+
+.stamp[data-style="zaha"] .stamp-img::after {
+  background:
+    repeating-linear-gradient(-35deg, rgba(197,160,89,0.4) 0, rgba(197,160,89,0.4) 1px, transparent 1px, transparent 8px);
+}
+
+.stamp[data-style="ibn-muqla"] .stamp-img::after {
+  background: radial-gradient(circle at 50% 50%, rgba(197,160,89,0.3) 0%, transparent 60%);
+}
+
+.stamp[data-style="hassan"] .stamp-img::after {
+  background:
+    repeating-linear-gradient(0deg, rgba(220,160,90,0.4) 0, rgba(220,160,90,0.4) 1px, transparent 1px, transparent 6px);
+}
+
+/* Stamp selected state */
+.stamp.selected .stamp-img {
+  border-color: var(--gold);
+  border-style: solid;
+  box-shadow:
+    0 0 0 1px rgba(197,160,89,0.15),
+    0 4px 12px rgba(197,160,89,0.25);
+}
+
+/* Lapis corner flourish on selected */
+.stamp.selected .stamp-img::before {
+  border-color: rgba(74,124,201,0.35);
+  background: linear-gradient(135deg, rgba(30,58,110,0.3), transparent 50%);
+}
+
+.stamp-name {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 9px;
+  color: rgba(197,160,89,0.45);
+  text-align: center;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  transition: color 0.2s var(--ease-quart);
+}
+
+.stamp.selected .stamp-name {
+  color: var(--gold-bright);
+}
+
+/* Small Arabic tag in stamp */
+.stamp-ar {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-family: var(--font-arabic-display);
+  font-size: 7px;
+  color: rgba(197,160,89,0.3);
+  z-index: 3;
+  direction: rtl;
+}
+
+/* Stamp entrance animations */
+@media (prefers-reduced-motion: no-preference) {
+  .stamp:nth-child(1) { animation: stampAppear 0.3s var(--ease-expo) 0.65s both; }
+  .stamp:nth-child(2) { animation: stampAppear 0.3s var(--ease-expo) 0.70s both; }
+  .stamp:nth-child(3) { animation: stampAppear 0.3s var(--ease-expo) 0.75s both; }
+  .stamp:nth-child(4) { animation: stampAppear 0.3s var(--ease-expo) 0.80s both; }
+  .stamp:nth-child(5) { animation: stampAppear 0.3s var(--ease-expo) 0.85s both; }
+
+  @keyframes stampAppear {
+    from { opacity: 0; transform: translateY(8px) scale(0.9); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+}
+
+/* ============================================================
+   ACTIONS — stamp-and-send motif
+   ============================================================ */
+.actions-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 4px 0 0;
+}
+
+.actions-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  justify-content: center;
+}
+
+/* PRIMARY — Wax Seal Share button */
+.btn-wax-seal {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--molten-gold);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow:
+    inset 0 0 8px rgba(0,0,0,0.4),
+    inset 0 2px 4px rgba(255,255,255,0.15),
+    0 4px 16px rgba(197,160,89,0.4),
+    0 2px 8px rgba(0,0,0,0.5);
+  transition:
+    transform 0.2s var(--ease-spring),
+    box-shadow 0.2s var(--ease-quart);
+  min-width: 64px;
+}
+
+/* Inner concentric ring */
+.btn-wax-seal::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,0.2);
+  pointer-events: none;
+}
+
+.btn-wax-seal::after {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.12);
+  pointer-events: none;
+}
+
+.btn-wax-seal:hover {
+  transform: rotate(3deg) scale(1.08);
+  box-shadow:
+    inset 0 0 8px rgba(0,0,0,0.4),
+    inset 0 2px 4px rgba(255,255,255,0.15),
+    0 6px 20px rgba(197,160,89,0.5),
+    0 4px 12px rgba(0,0,0,0.5);
+}
+
+.btn-wax-seal:active {
+  transform: rotate(1deg) scale(0.96);
+}
+
+.seal-icon {
+  font-size: 22px;
+  color: #1a1200;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  font-weight: 700;
+}
+
+.seal-label {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 9px;
+  color: rgba(197,160,89,0.55);
+  text-align: center;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+}
+
+.seal-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+/* SECONDARY — Postmark Download button */
+.btn-postmark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  max-width: 120px;
+}
+
+.btn-postmark-inner {
+  width: 100%;
+  height: 44px;
+  border-radius: 22px;
+  border: 1.5px solid rgba(197,160,89,0.3);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  position: relative;
+  transition:
+    border-color 0.18s var(--ease-quart),
+    background 0.18s var(--ease-quart);
+  overflow: hidden;
+}
+
+/* Postmark wave texture */
+.btn-postmark-inner::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 22px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent,
+    transparent 4px,
+    rgba(197,160,89,0.05) 4px,
+    rgba(197,160,89,0.05) 5px
+  );
+  pointer-events: none;
+}
+
+.btn-postmark-inner:hover {
+  border-color: rgba(197,160,89,0.55);
+  background: rgba(197,160,89,0.05);
+}
+
+.btn-postmark-inner:active {
+  background: rgba(197,160,89,0.1);
+}
+
+.postmark-icon {
+  font-size: 14px;
+  color: var(--gold);
+  opacity: 0.8;
+}
+
+.postmark-text {
+  font-family: var(--font-editorial);
+  font-variant: small-caps;
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(197,160,89,0.7);
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+}
+
+.postmark-sub {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 9px;
+  color: rgba(197,160,89,0.35);
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+
+/* COPY LINK — postal tracking string */
+.btn-copy-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px var(--space-sm);
+  min-height: 44px;
+  font-family: 'Courier New', 'Courier', monospace;
+  font-size: 10.5px;
+  color: rgba(197,160,89,0.55);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  position: relative;
+  transition: color 0.18s var(--ease-quart);
+  white-space: nowrap;
+}
+
+.btn-copy-link::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(197,160,89,0.4) 0px,
+    rgba(197,160,89,0.4) 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+.btn-copy-link:hover {
+  color: var(--gold);
+}
+
+.btn-copy-link:active {
+  color: var(--gold-bright);
+}
+
+.copy-track-icon {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+/* ============================================================
+   FOOTER BYLINE
+   ============================================================ */
+.modal-footer {
+  text-align: center;
+  padding: var(--space-sm) 0 4px;
+  margin-top: 4px;
+}
+
+.footer-byline {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 10px;
+  color: rgba(197,160,89,0.2);
+  letter-spacing: 0.08em;
+}
+
+/* ============================================================
+   ACTIONS ENTRANCE
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  .actions-section {
+    animation: actionsIn 0.4s var(--ease-expo) 0.9s both;
+  }
+
+  @keyframes actionsIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal-footer {
+    animation: actionsIn 0.4s var(--ease-expo) 1.0s both;
+  }
+}
+</style>
+</head>
+
+<body>
+<div class="app-backdrop">
+
+  <div class="backdrop-caption">
+    <strong>Maktuba — مكتوبة</strong>
+    Envelope-and-stamp motif · letter-as-art · wax-seal share
+  </div>
+
+  <!-- Phone Frame -->
+  <div class="phone-frame" role="presentation">
+
+    <!-- App screen behind modal -->
+    <div class="phone-screen" aria-hidden="true"></div>
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" role="presentation">
+
+      <!-- Share Modal Panel -->
+      <div
+        class="modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Share poem"
+      >
+        <div class="modal-inner">
+
+          <!-- ── Header ── -->
+          <header class="modal-header">
+            <span class="header-label-en" aria-hidden="true">Share</span>
+
+            <div class="header-center">
+              <span class="header-label-ar" dir="rtl" lang="ar" aria-hidden="true">شارك</span>
+              <button
+                class="close-btn"
+                aria-label="Close share modal"
+                title="Close"
+              >✕</button>
+            </div>
+          </header>
+
+          <!-- Gold rule -->
+          <div class="gold-rule" role="separator" aria-hidden="true"></div>
+
+          <!-- ── Envelope Assembly ── -->
+          <div class="envelope-assembly" aria-hidden="true">
+
+            <!-- Envelope flap (decorative) -->
+            <div class="envelope-flap">
+              <div class="envelope-flap-shape"></div>
+            </div>
+
+            <!-- Card preview (the letter) -->
+            <div class="card-preview-wrap">
+              <div
+                class="card-preview"
+                data-style="diwan"
+                id="card-preview"
+                role="img"
+                aria-label="Poem card preview in Dīwān style"
+                tabindex="0"
+              >
+                <!-- Ornament layers -->
+                <div class="card-ornament" aria-hidden="true"></div>
+                <div class="card-corners" aria-hidden="true"></div>
+
+                <!-- Poem content -->
+                <div class="card-content">
+                  <p class="card-poem-ar" dir="rtl" lang="ar">
+                    إِذا أَحبَبتَ اخترْ جَيِّداً<br>
+                    فالحُبُّ لا يُعلَّمُ بَعدَ الأوانِ
+                  </p>
+
+                  <div class="card-divider" aria-hidden="true"></div>
+
+                  <p class="card-poem-en" lang="en">
+                    If you love, choose wisely<br>
+                    For love cannot be taught after its time has passed
+                  </p>
+
+                  <div class="card-poet" aria-label="Poet: Nizar Qabbani">
+                    <span class="card-poet-ar" dir="rtl" lang="ar">نزار قباني</span>
+                    <span class="card-poet-en">Nizar Qabbani</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Envelope sides -->
+            <div class="envelope-sides"></div>
+            <!-- Envelope base -->
+            <div class="envelope-base"></div>
+
+          </div>
+
+          <!-- ── Stamp Grid ── -->
+          <section class="stamp-section" aria-label="Card style selection">
+            <p class="stamp-label" aria-hidden="true">— choose your style —</p>
+
+            <div
+              class="stamp-grid"
+              role="radiogroup"
+              aria-label="Card styles"
+            >
+              <!-- Stamp 1: Dīwān -->
+              <button
+                class="stamp selected"
+                data-style="diwan"
+                role="radio"
+                aria-checked="true"
+                aria-label="Dīwān style"
+                title="Dīwān"
+              >
+                <div class="stamp-img">
+                  <span class="stamp-ar" dir="rtl" lang="ar">ديوان</span>
+                </div>
+                <span class="stamp-name">Dīwān</span>
+              </button>
+
+              <!-- Stamp 2: Ibn Muqla -->
+              <button
+                class="stamp"
+                data-style="ibn-muqla"
+                role="radio"
+                aria-checked="false"
+                aria-label="Ibn Muqla style"
+                title="Ibn Muqla"
+              >
+                <div class="stamp-img">
+                  <span class="stamp-ar" dir="rtl" lang="ar">مقلة</span>
+                </div>
+                <span class="stamp-name">Ibn Muqla</span>
+              </button>
+
+              <!-- Stamp 3: Sinan -->
+              <button
+                class="stamp"
+                data-style="sinan"
+                role="radio"
+                aria-checked="false"
+                aria-label="Sinan style"
+                title="Sinan"
+              >
+                <div class="stamp-img">
+                  <span class="stamp-ar" dir="rtl" lang="ar">سنان</span>
+                </div>
+                <span class="stamp-name">Sinan</span>
+              </button>
+
+              <!-- Stamp 4: Zaha Hadid -->
+              <button
+                class="stamp"
+                data-style="zaha"
+                role="radio"
+                aria-checked="false"
+                aria-label="Zaha Hadid style"
+                title="Zaha"
+              >
+                <div class="stamp-img">
+                  <span class="stamp-ar" dir="rtl" lang="ar">زها</span>
+                </div>
+                <span class="stamp-name">Zaha</span>
+              </button>
+
+              <!-- Stamp 5: Hassan Fathy -->
+              <button
+                class="stamp"
+                data-style="hassan"
+                role="radio"
+                aria-checked="false"
+                aria-label="Hassan Fathy style"
+                title="Hassan Fathy"
+              >
+                <div class="stamp-img">
+                  <span class="stamp-ar" dir="rtl" lang="ar">فتحي</span>
+                </div>
+                <span class="stamp-name">Hassan Fathy</span>
+              </button>
+
+            </div>
+          </section>
+
+          <!-- ── Actions ── -->
+          <div class="actions-section">
+
+            <!-- Primary row: Wax Seal Share + Download Postmark -->
+            <div class="actions-row">
+
+              <!-- Wax Seal Share -->
+              <div class="seal-wrapper">
+                <button
+                  class="btn-wax-seal"
+                  aria-label="Share poem card"
+                  title="Share"
+                >
+                  <span class="seal-icon" aria-hidden="true">↗</span>
+                </button>
+                <span class="seal-label">Share</span>
+              </div>
+
+              <!-- Postmark Download -->
+              <div class="btn-postmark">
+                <button
+                  class="btn-postmark-inner"
+                  aria-label="Download as PNG"
+                  title="Download PNG"
+                >
+                  <span class="postmark-icon" aria-hidden="true">⬇</span>
+                  <span class="postmark-text">Download</span>
+                </button>
+                <span class="postmark-sub">PNG · 2× resolution</span>
+              </div>
+
+            </div>
+
+            <!-- Copy Link — postal tracking string -->
+            <button
+              class="btn-copy-link"
+              aria-label="Copy link to poem"
+              title="Copy link"
+            >
+              <span class="copy-track-icon" aria-hidden="true">⬡</span>
+              TRACK·2024-NQ-0731·COPY LINK
+            </button>
+
+          </div>
+
+          <!-- ── Footer ── -->
+          <footer class="modal-footer">
+            <p class="footer-byline">
+              Poetry bil-Araby · <span dir="rtl" lang="ar">بالعربي</span>
+            </p>
+          </footer>
+
+        </div><!-- /.modal-inner -->
+      </div><!-- /.modal-panel -->
+
+    </div><!-- /.modal-overlay -->
+  </div><!-- /.phone-frame -->
+
+</div><!-- /.app-backdrop -->
+
+<script>
+(function () {
+  'use strict';
+
+  var stamps = document.querySelectorAll('.stamp');
+  var cardPreview = document.getElementById('card-preview');
+
+  // Style name → aria label map
+  var styleLabels = {
+    'diwan':     'Dīwān style',
+    'ibn-muqla': 'Ibn Muqla style',
+    'sinan':     'Sinan style',
+    'zaha':      'Zaha Hadid style',
+    'hassan':    'Hassan Fathy style'
+  };
+
+  stamps.forEach(function (stamp) {
+    stamp.addEventListener('click', function () {
+      var style = this.getAttribute('data-style');
+
+      // Update stamps
+      stamps.forEach(function (s) {
+        s.classList.remove('selected');
+        s.setAttribute('aria-checked', 'false');
+      });
+      this.classList.add('selected');
+      this.setAttribute('aria-checked', 'true');
+
+      // Update card preview with a quick fade transition
+      cardPreview.style.transition = 'opacity 0.18s ease';
+      cardPreview.style.opacity = '0';
+
+      setTimeout(function () {
+        cardPreview.setAttribute('data-style', style);
+        cardPreview.setAttribute('aria-label', 'Poem card preview in ' + (styleLabels[style] || style));
+        cardPreview.style.opacity = '1';
+      }, 180);
+    });
+
+    // Keyboard: space/enter already fire click; add arrow key nav
+    stamp.addEventListener('keydown', function (e) {
+      var idx = Array.prototype.indexOf.call(stamps, this);
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        var next = stamps[(idx + 1) % stamps.length];
+        next.focus();
+        next.click();
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        var prev = stamps[(idx - 1 + stamps.length) % stamps.length];
+        prev.focus();
+        prev.click();
+      }
+    });
+  });
+
+  // Close button
+  var closeBtn = document.querySelector('.close-btn');
+  closeBtn.addEventListener('click', function () {
+    // In demo context: subtle opacity pulse to acknowledge
+    var overlay = document.querySelector('.modal-overlay');
+    overlay.style.transition = 'opacity 0.2s ease';
+    overlay.style.opacity = '0.4';
+    setTimeout(function () {
+      overlay.style.opacity = '1';
+    }, 300);
+  });
+
+  // Copy link — visual feedback
+  var copyBtn = document.querySelector('.btn-copy-link');
+  copyBtn.addEventListener('click', function () {
+    var orig = this.textContent;
+    this.textContent = '⬡ COPIED · LINK SENT ·✓';
+    this.style.color = 'var(--gold-bright)';
+    var self = this;
+    setTimeout(function () {
+      self.textContent = orig;
+      self.style.color = '';
+    }, 1800);
+  });
+
+  // Download — visual feedback
+  var dlBtn = document.querySelector('.btn-postmark-inner');
+  dlBtn.addEventListener('click', function () {
+    var textEl = this.querySelector('.postmark-text');
+    var origText = textEl.textContent;
+    textEl.textContent = 'Preparing...';
+    setTimeout(function () {
+      textEl.textContent = origText;
+    }, 1400);
+  });
+
+})();
+</script>
+
+</body>
+</html>

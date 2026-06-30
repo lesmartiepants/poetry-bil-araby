@@ -1,0 +1,1537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Majlis — Share Modal S2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   DESIGN TOKENS
+   ============================================ */
+:root {
+  --gold: #c5a059;
+  --gold-bright: #d4b463;
+  --gold-foil: linear-gradient(135deg, #b8922e, #c5a059 30%, #e2c67a 55%, #c5a059 75%, #a07d38);
+  --molten-gold: linear-gradient(135deg, #a8853d, #c5a059 22%, #e0c97a 38%, #d4b463 48%, #b8924a 62%, #d8bc6e 78%, #c5a059);
+  --lapis-deep: #1e3a6e;
+  --lapis-medium: #2e5090;
+  --lapis-light: #4a7cc9;
+  --bg-app: #0c0c0e;
+  --panel-bg: linear-gradient(145deg, rgba(20,18,15,0.97), rgba(12,12,14,0.98));
+  --gold-border: rgba(197,160,89,0.25);
+  --gold-rule: linear-gradient(90deg, transparent, rgba(160,128,64,0.4) 20%, #C5A059 50%, rgba(160,128,64,0.4) 80%, transparent);
+
+  --font-arabic-display: 'Reem Kufi', sans-serif;
+  --font-arabic-body: 'Amiri', serif;
+  --font-english-editorial: 'Cormorant Garamond', serif;
+  --font-ui: system-ui, -apple-system, sans-serif;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --radius-modal: 24px;
+  --duration-entrance: 0.65s;
+  --duration-transition: 0.3s;
+  --duration-hover: 0.15s;
+}
+
+/* ============================================
+   RESET & BASE
+   ============================================ */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  background: #080808;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-ui);
+  min-height: 100vh;
+  padding: 24px 16px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================
+   PHONE FRAME
+   ============================================ */
+.phone-frame {
+  position: relative;
+  width: 390px;
+  height: 844px;
+  background: var(--bg-app);
+  border-radius: 52px;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.08),
+    0 0 0 10px #1a1a1a,
+    0 0 0 11px rgba(255,255,255,0.06),
+    0 40px 80px rgba(0,0,0,0.8),
+    0 20px 40px rgba(0,0,0,0.6);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+/* Notch */
+.phone-frame::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 126px;
+  height: 34px;
+  background: #111;
+  border-radius: 0 0 20px 20px;
+  z-index: 100;
+}
+
+/* Subtle ambient glow on phone */
+.phone-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 52px;
+  background: radial-gradient(ellipse at 30% 20%, rgba(197,160,89,0.04) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ============================================
+   APP BACKDROP (inside phone)
+   ============================================ */
+.app-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(30,58,110,0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 80%, rgba(197,160,89,0.08) 0%, transparent 50%),
+    linear-gradient(180deg, #0d0d10 0%, #0a0a0c 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 52px 20px 20px;
+}
+
+/* Caption label outside modal */
+.caption-label {
+  position: absolute;
+  top: 52px;
+  left: 20px;
+  z-index: 5;
+}
+
+.caption-title {
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 15px;
+  color: var(--gold);
+  letter-spacing: 0.02em;
+  display: block;
+  margin-top: 8px;
+}
+
+.caption-subtitle {
+  font-family: var(--font-ui);
+  font-size: 10px;
+  color: rgba(197,160,89,0.5);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: block;
+  margin-top: 3px;
+}
+
+/* ============================================
+   MODAL OVERLAY
+   ============================================ */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  display: flex;
+  align-items: flex-end;
+  z-index: 50;
+  border-radius: 52px;
+}
+
+/* ============================================
+   MODAL PANEL
+   ============================================ */
+.modal-panel {
+  width: 100%;
+  background: var(--panel-bg);
+  border: 1px solid var(--gold-border);
+  border-bottom: none;
+  border-radius: var(--radius-modal) var(--radius-modal) 0 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+
+  animation: modalEnter var(--duration-entrance) var(--ease-out-expo) forwards;
+}
+
+@keyframes modalEnter {
+  from {
+    transform: translateY(100%) scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* Architectural arch ornament on modal top */
+.modal-panel::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 28px;
+  border: 1px solid rgba(197,160,89,0.35);
+  border-bottom: none;
+  border-radius: 70px 70px 0 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Inner arch accent line */
+.modal-panel::after {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 20px;
+  border: 1px solid rgba(197,160,89,0.18);
+  border-bottom: none;
+  border-radius: 50px 50px 0 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* Left pillar */
+.pillar-left,
+.pillar-right {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: linear-gradient(180deg, rgba(197,160,89,0.3) 0%, rgba(197,160,89,0.08) 40%, transparent 100%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.pillar-left { left: 20px; }
+.pillar-right { right: 20px; }
+
+/* ============================================
+   MODAL HEADER
+   ============================================ */
+.modal-header {
+  padding: 28px 20px 16px;
+  position: relative;
+  z-index: 3;
+  animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.3s both;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.header-arch-ornament {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.arch-icon {
+  width: 48px;
+  height: 32px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.arch-icon svg {
+  width: 48px;
+  height: 32px;
+}
+
+.header-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.header-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.modal-title-arabic {
+  font-family: var(--font-arabic-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--gold-bright);
+  display: block;
+  direction: rtl;
+  text-align: right;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+}
+
+.modal-title-english {
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(197,160,89,0.75);
+  display: block;
+  margin-top: 2px;
+  letter-spacing: 0.03em;
+}
+
+.modal-subtitle {
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 11px;
+  color: rgba(197,160,89,0.45);
+  display: block;
+  margin-top: 4px;
+  letter-spacing: 0.04em;
+}
+
+.close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--gold-border);
+  background: rgba(197,160,89,0.06);
+  color: rgba(197,160,89,0.7);
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--duration-hover) var(--ease-out-quart),
+              color var(--duration-hover) var(--ease-out-quart),
+              border-color var(--duration-hover) var(--ease-out-quart);
+  flex-shrink: 0;
+  outline: none;
+}
+
+.close-btn:hover {
+  background: rgba(197,160,89,0.14);
+  color: var(--gold-bright);
+  border-color: rgba(197,160,89,0.5);
+}
+
+.close-btn:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 2px;
+}
+
+/* Gold rule */
+.gold-rule {
+  height: 1px;
+  background: var(--gold-rule);
+  border: none;
+  margin: 0 0 0 0;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   THUMBNAIL CAROUSEL
+   ============================================ */
+.carousel-section {
+  padding: 14px 20px 10px;
+  position: relative;
+  animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.4s both;
+}
+
+.carousel-label {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(197,160,89,0.4);
+  margin-bottom: 10px;
+  display: block;
+}
+
+.carousel-track-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.carousel-nav {
+  width: 28px;
+  height: 44px;
+  background: rgba(197,160,89,0.06);
+  border: 1px solid var(--gold-border);
+  border-radius: 6px;
+  color: rgba(197,160,89,0.6);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background var(--duration-hover) var(--ease-out-quart),
+              color var(--duration-hover) var(--ease-out-quart);
+  outline: none;
+}
+
+.carousel-nav:hover {
+  background: rgba(197,160,89,0.12);
+  color: var(--gold-bright);
+}
+
+.carousel-nav:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 2px;
+}
+
+.carousel-track {
+  display: flex;
+  gap: 8px;
+  overflow: hidden;
+  flex: 1;
+  padding: 4px 2px;
+}
+
+/* ============================================
+   THUMBNAIL CARDS
+   ============================================ */
+.thumb {
+  width: 72px;
+  height: 90px;
+  border-radius: 8px;
+  border: 1.5px solid var(--gold-border);
+  cursor: pointer;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--duration-transition) var(--ease-out-quart),
+              opacity var(--duration-transition) var(--ease-out-quart),
+              border-color var(--duration-transition) var(--ease-out-quart),
+              box-shadow var(--duration-transition) var(--ease-out-quart);
+  opacity: 0.55;
+  outline: none;
+
+  animation: thumbEnter 0.35s var(--ease-out-expo) both;
+}
+
+.thumb:nth-child(1) { animation-delay: 0.55s; }
+.thumb:nth-child(2) { animation-delay: 0.60s; }
+.thumb:nth-child(3) { animation-delay: 0.65s; }
+.thumb:nth-child(4) { animation-delay: 0.70s; }
+.thumb:nth-child(5) { animation-delay: 0.75s; }
+
+@keyframes thumbEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 0.55; transform: translateY(0); }
+}
+
+.thumb:hover {
+  opacity: 0.8;
+  transform: scale(1.03);
+}
+
+.thumb.active {
+  opacity: 1;
+  transform: scale(1.05);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px var(--gold), 0 4px 16px rgba(197,160,89,0.3);
+}
+
+.thumb:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 2px;
+}
+
+/* Thumb style backgrounds */
+.thumb-diwan { background: #0c0c0e; }
+.thumb-ibn-muqla { background: #1a1208; }
+.thumb-sinan { background: #f0ebe0; }
+.thumb-zaha { background: #1a1a20; }
+.thumb-hassan { background: #2d1b0e; }
+
+/* Thumb content miniature */
+.thumb-inner {
+  position: absolute;
+  inset: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.thumb-border-deco {
+  position: absolute;
+  inset: 3px;
+  border-radius: 4px;
+}
+
+.thumb-diwan .thumb-border-deco {
+  border: 1px solid rgba(197,160,89,0.4);
+}
+
+.thumb-sinan .thumb-border-deco {
+  border: 1px solid rgba(197,160,89,0.5);
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 6px,
+    rgba(197,160,89,0.06) 6px,
+    rgba(197,160,89,0.06) 7px
+  );
+}
+
+.thumb-zaha .thumb-border-deco {
+  border: 1px solid rgba(180,180,200,0.3);
+  clip-path: polygon(0 8%, 8% 0, 100% 0, 100% 92%, 92% 100%, 0 100%);
+}
+
+.thumb-hassan .thumb-border-deco {
+  border: 1px solid rgba(210,140,80,0.4);
+  border-radius: 2px 2px 20px 20px / 2px 2px 10px 10px;
+}
+
+.thumb-line {
+  height: 2px;
+  border-radius: 1px;
+  margin: 1px 6px;
+}
+
+.thumb-diwan .thumb-line { background: rgba(197,160,89,0.5); }
+.thumb-ibn-muqla .thumb-line { background: rgba(210,180,120,0.5); }
+.thumb-sinan .thumb-line { background: rgba(197,160,89,0.6); }
+.thumb-zaha .thumb-line { background: rgba(180,180,200,0.5); }
+.thumb-hassan .thumb-line { background: rgba(210,140,80,0.5); }
+
+.thumb-line-long { width: 80%; }
+.thumb-line-short { width: 55%; }
+.thumb-line-med { width: 68%; }
+
+.thumb-name {
+  position: absolute;
+  bottom: 4px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 7px;
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  letter-spacing: 0.04em;
+}
+
+.thumb-diwan .thumb-name { color: rgba(197,160,89,0.7); }
+.thumb-ibn-muqla .thumb-name { color: rgba(210,180,120,0.7); }
+.thumb-sinan .thumb-name { color: rgba(140,110,60,0.8); }
+.thumb-zaha .thumb-name { color: rgba(180,180,210,0.7); }
+.thumb-hassan .thumb-name { color: rgba(210,140,80,0.7); }
+
+/* ============================================
+   GOLD RULE BETWEEN SECTIONS
+   ============================================ */
+.section-rule {
+  height: 1px;
+  background: var(--gold-rule);
+  border: none;
+  margin: 8px 20px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ============================================
+   LARGE CARD PREVIEW
+   ============================================ */
+.preview-section {
+  flex: 1;
+  padding: 0 20px;
+  min-height: 0;
+  animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.7s both;
+}
+
+.preview-card-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px var(--gold-border);
+}
+
+.preview-card {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 20px;
+  position: absolute;
+  inset: 0;
+  transition: opacity var(--duration-transition) var(--ease-out-quart);
+}
+
+.preview-card.hidden-card {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.preview-card.visible-card {
+  opacity: 1;
+}
+
+/* Card style: Dīwān */
+.card-diwan {
+  background: #0c0c0e;
+}
+
+.card-diwan .card-border-frame {
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(197,160,89,0.35);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.card-diwan .card-border-frame::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(197,160,89,0.15);
+  border-radius: 2px;
+}
+
+/* Corner ornaments */
+.card-diwan .card-border-frame::after {
+  content: '';
+  position: absolute;
+  top: -1px; left: -1px;
+  width: 14px; height: 14px;
+  border-top: 2px solid var(--gold);
+  border-left: 2px solid var(--gold);
+}
+
+.card-diwan .lapis-band {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--lapis-deep), var(--lapis-medium), var(--lapis-deep));
+}
+
+/* Card style: Ibn Muqla */
+.card-ibn-muqla {
+  background: radial-gradient(ellipse at center, #221a0e 0%, #1a1208 60%, #100e08 100%);
+}
+
+.card-ibn-muqla::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+  pointer-events: none;
+}
+
+/* Card style: Sinan */
+.card-sinan {
+  background: #f0ebe0;
+}
+
+.card-sinan .geo-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(197,160,89,0.12) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(197,160,89,0.12) 1px, transparent 1px);
+  background-size: 20px 20px;
+  pointer-events: none;
+}
+
+.card-sinan .geo-border {
+  position: absolute;
+  inset: 8px;
+  border: 1.5px solid rgba(197,160,89,0.45);
+  pointer-events: none;
+}
+
+/* Card style: Zaha */
+.card-zaha {
+  background: #1a1a20;
+  clip-path: none;
+}
+
+.card-zaha .para-lines {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.card-zaha .para-lines::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 60%;
+  height: 140%;
+  background: linear-gradient(115deg, transparent 45%, rgba(180,180,210,0.06) 46%, rgba(180,180,210,0.06) 47%, transparent 48%),
+              linear-gradient(115deg, transparent 55%, rgba(180,180,210,0.04) 56%, rgba(180,180,210,0.04) 57%, transparent 58%);
+}
+
+.card-zaha .para-lines::after {
+  content: '';
+  position: absolute;
+  top: -20%;
+  right: -10%;
+  width: 50%;
+  height: 140%;
+  background: linear-gradient(-65deg, transparent 40%, rgba(180,180,210,0.05) 41%, rgba(180,180,210,0.05) 42%, transparent 43%);
+}
+
+.card-zaha .zaha-border {
+  position: absolute;
+  inset: 8px;
+  border: 1px solid rgba(180,180,210,0.2);
+  clip-path: polygon(0 5%, 5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%);
+  pointer-events: none;
+}
+
+/* Card style: Hassan Fathy */
+.card-hassan {
+  background: radial-gradient(ellipse at 50% 30%, #3d2510 0%, #2d1b0e 60%, #1e1208 100%);
+}
+
+.card-hassan .nubian-arch {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 40px;
+  border: 1.5px solid rgba(210,140,80,0.35);
+  border-bottom: none;
+  border-radius: 40px 40px 0 0;
+  pointer-events: none;
+}
+
+.card-hassan .adobe-texture {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* ============================================
+   CARD POEM CONTENT
+   ============================================ */
+.card-content {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.card-divider-top {
+  height: 1px;
+  width: 50%;
+  margin: 0 auto;
+}
+
+.card-diwan .card-divider-top,
+.card-ibn-muqla .card-divider-top {
+  background: linear-gradient(90deg, transparent, rgba(197,160,89,0.5), transparent);
+}
+
+.card-sinan .card-divider-top {
+  background: linear-gradient(90deg, transparent, rgba(160,128,64,0.6), transparent);
+}
+
+.card-zaha .card-divider-top {
+  background: linear-gradient(90deg, transparent, rgba(180,180,210,0.4), transparent);
+}
+
+.card-hassan .card-divider-top {
+  background: linear-gradient(90deg, transparent, rgba(210,140,80,0.5), transparent);
+}
+
+.poem-arabic {
+  text-align: center;
+  direction: rtl;
+}
+
+.poem-arabic .line {
+  display: block;
+  font-family: var(--font-arabic-body);
+  font-size: 14px;
+  line-height: 1.9;
+  letter-spacing: 0.02em;
+}
+
+.card-diwan .poem-arabic .line { color: #e8dfc4; }
+.card-ibn-muqla .poem-arabic .line { color: #d4c4a0; }
+.card-sinan .poem-arabic .line { color: #2a1e0a; }
+.card-zaha .poem-arabic .line { color: #d0d0e0; }
+.card-hassan .poem-arabic .line { color: #e8c896; }
+
+.card-mid-rule {
+  height: 1px;
+  width: 35%;
+}
+
+.card-diwan .card-mid-rule,
+.card-ibn-muqla .card-mid-rule { background: linear-gradient(90deg, transparent, rgba(197,160,89,0.3), transparent); }
+.card-sinan .card-mid-rule { background: linear-gradient(90deg, transparent, rgba(160,128,64,0.3), transparent); }
+.card-zaha .card-mid-rule { background: linear-gradient(90deg, transparent, rgba(180,180,210,0.25), transparent); }
+.card-hassan .card-mid-rule { background: linear-gradient(90deg, transparent, rgba(210,140,80,0.3), transparent); }
+
+.poem-english {
+  text-align: center;
+}
+
+.poem-english .line {
+  display: block;
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 11px;
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+
+.card-diwan .poem-english .line { color: rgba(232,223,196,0.6); }
+.card-ibn-muqla .poem-english .line { color: rgba(212,196,160,0.6); }
+.card-sinan .poem-english .line { color: rgba(42,30,10,0.6); }
+.card-zaha .poem-english .line { color: rgba(208,208,224,0.6); }
+.card-hassan .poem-english .line { color: rgba(232,200,150,0.55); }
+
+.card-divider-bottom {
+  height: 1px;
+  width: 50%;
+}
+
+.card-diwan .card-divider-bottom,
+.card-ibn-muqla .card-divider-bottom { background: linear-gradient(90deg, transparent, rgba(197,160,89,0.5), transparent); }
+.card-sinan .card-divider-bottom { background: linear-gradient(90deg, transparent, rgba(160,128,64,0.6), transparent); }
+.card-zaha .card-divider-bottom { background: linear-gradient(90deg, transparent, rgba(180,180,210,0.4), transparent); }
+.card-hassan .card-divider-bottom { background: linear-gradient(90deg, transparent, rgba(210,140,80,0.5), transparent); }
+
+.poet-byline {
+  text-align: center;
+}
+
+.poet-name-arabic {
+  display: block;
+  font-family: var(--font-arabic-display);
+  font-size: 11px;
+  direction: rtl;
+  letter-spacing: 0.03em;
+}
+
+.poet-name-english {
+  display: block;
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+  opacity: 0.65;
+}
+
+.card-diwan .poet-name-arabic { color: var(--gold); }
+.card-diwan .poet-name-english { color: var(--gold); }
+.card-ibn-muqla .poet-name-arabic { color: #c8a870; }
+.card-ibn-muqla .poet-name-english { color: #c8a870; }
+.card-sinan .poet-name-arabic { color: rgba(160,128,64,0.9); }
+.card-sinan .poet-name-english { color: rgba(160,128,64,0.9); }
+.card-zaha .poet-name-arabic { color: rgba(180,180,210,0.8); }
+.card-zaha .poet-name-english { color: rgba(180,180,210,0.8); }
+.card-hassan .poet-name-arabic { color: #d49050; }
+.card-hassan .poet-name-english { color: #d49050; }
+
+/* Style badge */
+.style-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.card-diwan .style-badge {
+  color: rgba(197,160,89,0.5);
+  border: 1px solid rgba(197,160,89,0.2);
+}
+
+.card-ibn-muqla .style-badge {
+  color: rgba(200,168,112,0.5);
+  border: 1px solid rgba(200,168,112,0.2);
+}
+
+.card-sinan .style-badge {
+  color: rgba(130,100,50,0.5);
+  border: 1px solid rgba(130,100,50,0.25);
+}
+
+.card-zaha .style-badge {
+  color: rgba(160,160,190,0.5);
+  border: 1px solid rgba(160,160,190,0.2);
+}
+
+.card-hassan .style-badge {
+  color: rgba(190,120,60,0.5);
+  border: 1px solid rgba(190,120,60,0.2);
+}
+
+/* ============================================
+   FOOTER SHELF
+   ============================================ */
+.footer-shelf {
+  padding: 10px 20px 20px;
+  flex-shrink: 0;
+  animation: fadeSlideUp 0.5s var(--ease-out-expo) 0.8s both;
+}
+
+.footer-rule {
+  height: 1px;
+  background: var(--gold-rule);
+  border: none;
+  margin-bottom: 12px;
+  opacity: 0.5;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.btn-share {
+  flex: 1.4;
+  min-height: 44px;
+  background: var(--molten-gold);
+  color: #1a1200;
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-arabic-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  letter-spacing: 0.02em;
+  transition: opacity var(--duration-hover) var(--ease-out-quart),
+              transform var(--duration-hover) var(--ease-out-quart);
+  outline: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-share::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background var(--duration-hover) var(--ease-out-quart);
+  border-radius: inherit;
+}
+
+.btn-share:hover::after { background: rgba(255,255,255,0.1); }
+.btn-share:active { transform: scale(0.98); }
+
+.btn-share:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 2px;
+}
+
+.btn-share-icon {
+  font-size: 15px;
+}
+
+.btn-download {
+  flex: 1;
+  min-height: 44px;
+  background: transparent;
+  color: var(--gold);
+  border: 1.5px solid var(--gold-border);
+  border-radius: 10px;
+  font-family: var(--font-ui);
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  transition: border-color var(--duration-hover) var(--ease-out-quart),
+              background var(--duration-hover) var(--ease-out-quart),
+              color var(--duration-hover) var(--ease-out-quart);
+  outline: none;
+}
+
+.btn-download:hover {
+  border-color: rgba(197,160,89,0.55);
+  background: rgba(197,160,89,0.06);
+  color: var(--gold-bright);
+}
+
+.btn-download:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 2px;
+}
+
+.btn-download-icon {
+  font-size: 16px;
+}
+
+.btn-copy {
+  flex: 0.8;
+  min-height: 44px;
+  background: transparent;
+  color: rgba(197,160,89,0.65);
+  border: none;
+  border-radius: 10px;
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: color var(--duration-hover) var(--ease-out-quart),
+              background var(--duration-hover) var(--ease-out-quart);
+  outline: none;
+}
+
+.btn-copy:hover {
+  color: var(--gold-bright);
+  background: rgba(197,160,89,0.05);
+  border-radius: 10px;
+}
+
+.btn-copy:focus-visible {
+  outline: 2px solid var(--lapis-light);
+  outline-offset: 2px;
+}
+
+.btn-copy-icon {
+  font-size: 16px;
+}
+
+/* Style indicator dots */
+.style-dots {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.style-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(197,160,89,0.2);
+  transition: background var(--duration-transition) var(--ease-out-quart),
+              transform var(--duration-transition) var(--ease-out-quart);
+}
+
+.style-dot.active {
+  background: var(--gold);
+  transform: scale(1.3);
+}
+</style>
+</head>
+<body>
+
+<!-- ==========================================
+     PHONE FRAME
+     ========================================== -->
+<div class="phone-frame" aria-label="iPhone frame preview">
+
+  <!-- App backdrop -->
+  <div class="app-backdrop">
+    <!-- Caption label -->
+    <div class="caption-label" aria-label="Design caption">
+      <span class="caption-title">Majlis</span>
+      <span class="caption-subtitle">horizontal style carousel · architectural chrome</span>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL OVERLAY
+       ========================================== -->
+  <div class="modal-overlay">
+    <div
+      class="modal-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Share this poem"
+    >
+      <!-- Pillar decorations -->
+      <div class="pillar-left" aria-hidden="true"></div>
+      <div class="pillar-right" aria-hidden="true"></div>
+
+      <!-- ==========================================
+           HEADER
+           ========================================== -->
+      <header class="modal-header">
+        <div class="header-arch-ornament" aria-hidden="true">
+          <div class="arch-icon">
+            <svg viewBox="0 0 48 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Pointed arch / muqarnas-inspired ornament -->
+              <path
+                d="M4 32 Q4 12 24 4 Q44 12 44 32"
+                stroke="rgba(197,160,89,0.45)"
+                stroke-width="1"
+                fill="none"
+              />
+              <path
+                d="M10 32 Q10 16 24 10 Q38 16 38 32"
+                stroke="rgba(197,160,89,0.22)"
+                stroke-width="0.75"
+                fill="none"
+              />
+              <circle cx="24" cy="4" r="1.5" fill="rgba(197,160,89,0.5)"/>
+              <!-- Corner finials -->
+              <path d="M4 32 L4 28 M4 32 L8 32" stroke="rgba(197,160,89,0.35)" stroke-width="1" fill="none"/>
+              <path d="M44 32 L44 28 M44 32 L40 32" stroke="rgba(197,160,89,0.35)" stroke-width="1" fill="none"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="header-content">
+          <div class="header-text">
+            <span class="modal-title-arabic" lang="ar" dir="rtl">شارك هذه القصيدة</span>
+            <span class="modal-title-english">Share this Poem</span>
+            <span class="modal-subtitle">Choose your card style</span>
+          </div>
+          <button class="close-btn" aria-label="Close modal" onclick="/* no-op in preview */">✕</button>
+        </div>
+      </header>
+
+      <hr class="gold-rule" aria-hidden="true">
+
+      <!-- ==========================================
+           CAROUSEL SECTION
+           ========================================== -->
+      <section class="carousel-section" aria-label="Card style selector">
+        <span class="carousel-label" aria-hidden="true">Card Style / طراز البطاقة</span>
+
+        <div class="carousel-track-wrapper">
+          <button
+            class="carousel-nav"
+            id="nav-prev"
+            aria-label="Previous style"
+            onclick="navigate(-1)"
+          >◀</button>
+
+          <div class="carousel-track" id="carousel-track" role="listbox" aria-label="Card styles">
+
+            <!-- Thumb 1: Dīwān -->
+            <div
+              class="thumb thumb-diwan active"
+              id="thumb-0"
+              role="option"
+              aria-selected="true"
+              tabindex="0"
+              aria-label="Dīwān style"
+              onclick="selectStyle(0)"
+              onkeydown="handleThumbKey(event, 0)"
+            >
+              <div class="thumb-border-deco" aria-hidden="true"></div>
+              <div class="thumb-inner" aria-hidden="true">
+                <div class="thumb-line thumb-line-long"></div>
+                <div class="thumb-line thumb-line-short"></div>
+                <div class="thumb-line thumb-line-med"></div>
+              </div>
+              <span class="thumb-name">Dīwān</span>
+            </div>
+
+            <!-- Thumb 2: Ibn Muqla -->
+            <div
+              class="thumb thumb-ibn-muqla"
+              id="thumb-1"
+              role="option"
+              aria-selected="false"
+              tabindex="0"
+              aria-label="Ibn Muqla style"
+              onclick="selectStyle(1)"
+              onkeydown="handleThumbKey(event, 1)"
+            >
+              <div class="thumb-border-deco" aria-hidden="true"></div>
+              <div class="thumb-inner" aria-hidden="true">
+                <div class="thumb-line thumb-line-long"></div>
+                <div class="thumb-line thumb-line-short"></div>
+                <div class="thumb-line thumb-line-med"></div>
+              </div>
+              <span class="thumb-name">Ibn Muqla</span>
+            </div>
+
+            <!-- Thumb 3: Sinan -->
+            <div
+              class="thumb thumb-sinan"
+              id="thumb-2"
+              role="option"
+              aria-selected="false"
+              tabindex="0"
+              aria-label="Sinan style"
+              onclick="selectStyle(2)"
+              onkeydown="handleThumbKey(event, 2)"
+            >
+              <div class="thumb-border-deco" aria-hidden="true"></div>
+              <div class="thumb-inner" aria-hidden="true">
+                <div class="thumb-line thumb-line-long"></div>
+                <div class="thumb-line thumb-line-short"></div>
+                <div class="thumb-line thumb-line-med"></div>
+              </div>
+              <span class="thumb-name">Sinan</span>
+            </div>
+
+            <!-- Thumb 4: Zaha -->
+            <div
+              class="thumb thumb-zaha"
+              id="thumb-3"
+              role="option"
+              aria-selected="false"
+              tabindex="0"
+              aria-label="Zaha Hadid style"
+              onclick="selectStyle(3)"
+              onkeydown="handleThumbKey(event, 3)"
+            >
+              <div class="thumb-border-deco" aria-hidden="true"></div>
+              <div class="thumb-inner" aria-hidden="true">
+                <div class="thumb-line thumb-line-long"></div>
+                <div class="thumb-line thumb-line-short"></div>
+                <div class="thumb-line thumb-line-med"></div>
+              </div>
+              <span class="thumb-name">Zaha</span>
+            </div>
+
+            <!-- Thumb 5: Hassan Fathy -->
+            <div
+              class="thumb thumb-hassan"
+              id="thumb-4"
+              role="option"
+              aria-selected="false"
+              tabindex="0"
+              aria-label="Hassan Fathy style"
+              onclick="selectStyle(4)"
+              onkeydown="handleThumbKey(event, 4)"
+            >
+              <div class="thumb-border-deco" aria-hidden="true"></div>
+              <div class="thumb-inner" aria-hidden="true">
+                <div class="thumb-line thumb-line-long"></div>
+                <div class="thumb-line thumb-line-short"></div>
+                <div class="thumb-line thumb-line-med"></div>
+              </div>
+              <span class="thumb-name">Hassan Fathy</span>
+            </div>
+
+          </div><!-- /carousel-track -->
+
+          <button
+            class="carousel-nav"
+            id="nav-next"
+            aria-label="Next style"
+            onclick="navigate(1)"
+          >▶</button>
+        </div><!-- /carousel-track-wrapper -->
+      </section>
+
+      <hr class="section-rule" aria-hidden="true">
+
+      <!-- ==========================================
+           LARGE CARD PREVIEW
+           ========================================== -->
+      <section class="preview-section" aria-label="Card preview" aria-live="polite">
+        <div class="preview-card-wrapper">
+
+          <!-- Card 0: Dīwān -->
+          <div class="preview-card card-diwan visible-card" id="card-0" aria-hidden="false">
+            <div class="lapis-band" aria-hidden="true"></div>
+            <div class="card-border-frame" aria-hidden="true"></div>
+            <div class="card-content">
+              <div class="card-divider-top" aria-hidden="true"></div>
+              <div class="poem-arabic" lang="ar" dir="rtl">
+                <span class="line">خُذي قَلبي وَلا تَتركيهِ وَحيداً</span>
+                <span class="line">فَفي غيابِكِ يَنسى كَيفَ يَدقّ</span>
+              </div>
+              <div class="card-mid-rule" aria-hidden="true"></div>
+              <div class="poem-english" lang="en">
+                <span class="line">Take my heart, do not leave it alone</span>
+                <span class="line">For in your absence, it forgets how to beat</span>
+              </div>
+              <div class="card-divider-bottom" aria-hidden="true"></div>
+              <div class="poet-byline">
+                <span class="poet-name-arabic" lang="ar" dir="rtl">نزار قباني</span>
+                <span class="poet-name-english">Nizar Qabbani</span>
+              </div>
+            </div>
+            <div class="style-badge" aria-hidden="true">Dīwān</div>
+          </div>
+
+          <!-- Card 1: Ibn Muqla -->
+          <div class="preview-card card-ibn-muqla hidden-card" id="card-1" aria-hidden="true">
+            <div class="card-content">
+              <div class="card-divider-top" aria-hidden="true"></div>
+              <div class="poem-arabic" lang="ar" dir="rtl">
+                <span class="line">خُذي قَلبي وَلا تَتركيهِ وَحيداً</span>
+                <span class="line">فَفي غيابِكِ يَنسى كَيفَ يَدقّ</span>
+              </div>
+              <div class="card-mid-rule" aria-hidden="true"></div>
+              <div class="poem-english" lang="en">
+                <span class="line">Take my heart, do not leave it alone</span>
+                <span class="line">For in your absence, it forgets how to beat</span>
+              </div>
+              <div class="card-divider-bottom" aria-hidden="true"></div>
+              <div class="poet-byline">
+                <span class="poet-name-arabic" lang="ar" dir="rtl">نزار قباني</span>
+                <span class="poet-name-english">Nizar Qabbani</span>
+              </div>
+            </div>
+            <div class="style-badge" aria-hidden="true">Ibn Muqla</div>
+          </div>
+
+          <!-- Card 2: Sinan -->
+          <div class="preview-card card-sinan hidden-card" id="card-2" aria-hidden="true">
+            <div class="geo-grid" aria-hidden="true"></div>
+            <div class="geo-border" aria-hidden="true"></div>
+            <div class="card-content">
+              <div class="card-divider-top" aria-hidden="true"></div>
+              <div class="poem-arabic" lang="ar" dir="rtl">
+                <span class="line">خُذي قَلبي وَلا تَتركيهِ وَحيداً</span>
+                <span class="line">فَفي غيابِكِ يَنسى كَيفَ يَدقّ</span>
+              </div>
+              <div class="card-mid-rule" aria-hidden="true"></div>
+              <div class="poem-english" lang="en">
+                <span class="line">Take my heart, do not leave it alone</span>
+                <span class="line">For in your absence, it forgets how to beat</span>
+              </div>
+              <div class="card-divider-bottom" aria-hidden="true"></div>
+              <div class="poet-byline">
+                <span class="poet-name-arabic" lang="ar" dir="rtl">نزار قباني</span>
+                <span class="poet-name-english">Nizar Qabbani</span>
+              </div>
+            </div>
+            <div class="style-badge" aria-hidden="true">Sinan</div>
+          </div>
+
+          <!-- Card 3: Zaha -->
+          <div class="preview-card card-zaha hidden-card" id="card-3" aria-hidden="true">
+            <div class="para-lines" aria-hidden="true"></div>
+            <div class="zaha-border" aria-hidden="true"></div>
+            <div class="card-content">
+              <div class="card-divider-top" aria-hidden="true"></div>
+              <div class="poem-arabic" lang="ar" dir="rtl">
+                <span class="line">خُذي قَلبي وَلا تَتركيهِ وَحيداً</span>
+                <span class="line">فَفي غيابِكِ يَنسى كَيفَ يَدقّ</span>
+              </div>
+              <div class="card-mid-rule" aria-hidden="true"></div>
+              <div class="poem-english" lang="en">
+                <span class="line">Take my heart, do not leave it alone</span>
+                <span class="line">For in your absence, it forgets how to beat</span>
+              </div>
+              <div class="card-divider-bottom" aria-hidden="true"></div>
+              <div class="poet-byline">
+                <span class="poet-name-arabic" lang="ar" dir="rtl">نزار قباني</span>
+                <span class="poet-name-english">Nizar Qabbani</span>
+              </div>
+            </div>
+            <div class="style-badge" aria-hidden="true">Zaha Hadid</div>
+          </div>
+
+          <!-- Card 4: Hassan Fathy -->
+          <div class="preview-card card-hassan hidden-card" id="card-4" aria-hidden="true">
+            <div class="adobe-texture" aria-hidden="true"></div>
+            <div class="nubian-arch" aria-hidden="true"></div>
+            <div class="card-content">
+              <div class="card-divider-top" aria-hidden="true"></div>
+              <div class="poem-arabic" lang="ar" dir="rtl">
+                <span class="line">خُذي قَلبي وَلا تَتركيهِ وَحيداً</span>
+                <span class="line">فَفي غيابِكِ يَنسى كَيفَ يَدقّ</span>
+              </div>
+              <div class="card-mid-rule" aria-hidden="true"></div>
+              <div class="poem-english" lang="en">
+                <span class="line">Take my heart, do not leave it alone</span>
+                <span class="line">For in your absence, it forgets how to beat</span>
+              </div>
+              <div class="card-divider-bottom" aria-hidden="true"></div>
+              <div class="poet-byline">
+                <span class="poet-name-arabic" lang="ar" dir="rtl">نزار قباني</span>
+                <span class="poet-name-english">Nizar Qabbani</span>
+              </div>
+            </div>
+            <div class="style-badge" aria-hidden="true">Hassan Fathy</div>
+          </div>
+
+        </div><!-- /preview-card-wrapper -->
+      </section>
+
+      <!-- ==========================================
+           FOOTER SHELF
+           ========================================== -->
+      <footer class="footer-shelf">
+        <hr class="footer-rule" aria-hidden="true">
+        <div class="footer-actions" role="group" aria-label="Share actions">
+          <button class="btn-share" aria-label="Share poem">
+            <span class="btn-share-icon" aria-hidden="true">↗</span>
+            <span>مشاركة</span>
+          </button>
+          <button class="btn-download" aria-label="Download PNG">
+            <span class="btn-download-icon" aria-hidden="true">↓</span>
+            <span>PNG</span>
+          </button>
+          <button class="btn-copy" aria-label="Copy link">
+            <span class="btn-copy-icon" aria-hidden="true">⧉</span>
+            <span>Copy Link</span>
+          </button>
+        </div>
+        <!-- Style indicator dots -->
+        <div class="style-dots" id="style-dots" aria-hidden="true">
+          <div class="style-dot active" id="dot-0"></div>
+          <div class="style-dot" id="dot-1"></div>
+          <div class="style-dot" id="dot-2"></div>
+          <div class="style-dot" id="dot-3"></div>
+          <div class="style-dot" id="dot-4"></div>
+        </div>
+      </footer>
+
+    </div><!-- /modal-panel -->
+  </div><!-- /modal-overlay -->
+
+</div><!-- /phone-frame -->
+
+<script>
+  /* ============================================
+     CAROUSEL INTERACTION
+     ============================================ */
+  var currentIndex = 0;
+  var total = 5;
+
+  function selectStyle(index) {
+    if (index === currentIndex) return;
+
+    // Deactivate current thumb
+    var prevThumb = document.getElementById('thumb-' + currentIndex);
+    prevThumb.classList.remove('active');
+    prevThumb.setAttribute('aria-selected', 'false');
+
+    // Deactivate current card
+    var prevCard = document.getElementById('card-' + currentIndex);
+    prevCard.classList.remove('visible-card');
+    prevCard.classList.add('hidden-card');
+    prevCard.setAttribute('aria-hidden', 'true');
+
+    // Deactivate current dot
+    var prevDot = document.getElementById('dot-' + currentIndex);
+    prevDot.classList.remove('active');
+
+    // Update index
+    currentIndex = index;
+
+    // Activate new thumb
+    var newThumb = document.getElementById('thumb-' + currentIndex);
+    newThumb.classList.add('active');
+    newThumb.setAttribute('aria-selected', 'true');
+
+    // Activate new card
+    var newCard = document.getElementById('card-' + currentIndex);
+    newCard.classList.remove('hidden-card');
+    newCard.classList.add('visible-card');
+    newCard.setAttribute('aria-hidden', 'false');
+
+    // Activate new dot
+    var newDot = document.getElementById('dot-' + currentIndex);
+    newDot.classList.add('active');
+
+    // Scroll thumb into view
+    newThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  }
+
+  function navigate(direction) {
+    var next = (currentIndex + direction + total) % total;
+    selectStyle(next);
+  }
+
+  function handleThumbKey(event, index) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      selectStyle(index);
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      navigate(1);
+      document.getElementById('thumb-' + currentIndex).focus();
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      navigate(-1);
+      document.getElementById('thumb-' + currentIndex).focus();
+    }
+  }
+
+  // Keyboard navigation at document level
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight') navigate(1);
+    if (e.key === 'ArrowLeft') navigate(-1);
+  });
+</script>
+
+</body>
+</html>

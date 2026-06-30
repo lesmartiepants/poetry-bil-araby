@@ -45,7 +45,9 @@ body::before {
   position: relative; z-index: 1;
   height: 100dvh; height: 100vh;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  /* Four rows: header, direction-strip, iframe-stage (fills), footer. (Was 3 rows for 4 children,
+     which put the 1fr on the direction-strip and collapsed the iframe stage to 0 height.) */
+  grid-template-rows: auto auto 1fr auto;
   gap: 0;
 }
 
@@ -160,7 +162,7 @@ body::before {
 /* ── Iframe stage ────────────────────────────── */
 .iframe-stage {
   position: relative; overflow: hidden;
-  flex: 1;
+  min-height: 0;
   display: flex; align-items: stretch;
 }
 .frame-slot {

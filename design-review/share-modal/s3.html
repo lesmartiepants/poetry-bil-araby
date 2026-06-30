@@ -1518,5 +1518,36 @@ button:focus-visible {
 })();
 </script>
 
+<style id="full-screen-fit-override">
+/* ── full-screen fit (review on a real phone) ──
+   Drop the fake phone-device frame and bottom-anchored layout that left a big empty band at the top
+   and clipped the bottom. Fill the screen, center the modal, and let the panel scroll so the whole
+   thing is reachable with nothing cut off. */
+html, body {
+  height: 100dvh !important; min-height: 100dvh !important; overflow: hidden !important;
+  align-items: stretch !important; justify-content: stretch !important; padding: 0 !important;
+}
+.caption-label, .caption-title, .caption-subtitle, .backdrop-caption,
+.phone-statusbar, .phone-dynamic-island { display: none !important; }
+.app-backdrop { position: relative !important; width: 100% !important; height: 100dvh !important; padding: 0 !important; gap: 0 !important; }
+.phone-frame {
+  width: 100% !important; max-width: 100% !important; min-width: 0 !important;
+  height: 100dvh !important; max-height: 100dvh !important; min-height: 100dvh !important;
+  border: none !important; border-radius: 0 !important; box-shadow: none !important;
+}
+.phone-frame::before, .phone-frame::after { display: none !important; }
+.phone-screen { position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important; border-radius: 0 !important; }
+.modal-overlay {
+  position: absolute !important; inset: 0 !important;
+  display: flex !important; align-items: center !important; justify-content: center !important;
+  overflow-y: auto !important; padding: 14px 0 !important;
+}
+.modal-panel {
+  max-height: calc(100dvh - 28px) !important; height: auto !important;
+  overflow-y: auto !important; -webkit-overflow-scrolling: touch !important;
+  border-radius: 18px !important;
+}
+</style>
+
 </body>
 </html>

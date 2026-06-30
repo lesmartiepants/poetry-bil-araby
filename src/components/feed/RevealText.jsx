@@ -17,7 +17,7 @@ const REDUCED_MOTION =
  *    scroll and positions it by what's visible (90% visible → handle at 90%).
  */
 const RevealText = forwardRef(function RevealText(
-  { text, active = true, color, onProgress, onScrollMeta },
+  { text, active = true, animate = true, color, onProgress, onScrollMeta },
   ref
 ) {
   const words = useMemo(() => (text || '').trim().split(/\s+/).filter(Boolean), [text]);
@@ -97,7 +97,9 @@ const RevealText = forwardRef(function RevealText(
     wordRefs.current.length = wordCount;
     scrollPxRef.current = 0;
     applyScroll();
-    if (!active || REDUCED_MOTION || wordCount === 0) {
+    if (!active || !animate || REDUCED_MOTION || wordCount === 0) {
+      // Instant: show the whole paragraph at once (used on a revisit — the reveal flourish only
+      // plays the first time a section is opened).
       wordRefs.current.forEach((el) => {
         if (el) {
           el.style.opacity = '1';
@@ -131,7 +133,7 @@ const RevealText = forwardRef(function RevealText(
       window.removeEventListener('resize', onResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, text, wordCount]);
+  }, [active, animate, text, wordCount]);
 
   return (
     <div ref={viewRef} className="w-full overflow-hidden" style={{ height: '100%' }}>

@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import SparklerStage from './SparklerStage.jsx';
 import ProgressScrubber from './ProgressScrubber.jsx';
@@ -88,6 +88,12 @@ const PoemReader = memo(function PoemReader({
   const stageWrapRef = useRef(null);
   const scrubWrapRef = useRef(null);
   const introForRef = useRef(null);
+  // Which insight sections have already been opened this poem — the reveal flourish plays only the
+  // first time; revisits show the full text instantly. Reset on poem change.
+  const seenStagesRef = useRef({});
+  // Set when the user taps "Back to Poem" so the poem is reset to the top (scrubber at start) once
+  // the stage is visible again — distinguishes it from naturally reaching the idle end-state.
+  const cameFromInsightsRef = useRef(false);
   // True while the user is actively dragging the scrubber — suppresses TTS auto-follow so the
   // scrub owns the scroll; on release we snap back to the spoken line.
   const scrubbingRef = useRef(false);
@@ -126,6 +132,7 @@ const PoemReader = memo(function PoemReader({
     introForRef.current = poemId;
     reset();
     setEndStage('idle');
+    seenStagesRef.current = {}; // new poem → insight sections animate fresh on first open
     setIntroDone(false); // hide the action buttons until the header settles up top
     const ctrl = controller;
     ctrl?.reset();
@@ -183,9 +190,12 @@ const PoemReader = memo(function PoemReader({
   useEffect(() => {
     const done = endStage === 'idle';
     insightDoneRef.current = done;
-    lastAtFracRef.current = 1;
+    lastAtFracRef.current = 0; // start at the top (scrubber at the left) on every section entry
     setInsightDone(done);
     setInsightCanScroll(false);
+    // Mark this section seen AFTER the render that decided whether to animate it, so the first open
+    // animates and every later return shows it instantly.
+    if (endStage !== 'idle') seenStagesRef.current[endStage] = true;
   }, [endStage, poemId]);
 
   // Insight RevealText → scrub bar wiring.
@@ -232,8 +242,21 @@ const PoemReader = memo(function PoemReader({
     setEndStage('meaning');
   };
   const handleSeeAuthor = () => setEndStage('author');
-  const handleBackToPoem = () => setEndStage('idle');
+  const handleBackToPoem = () => {
+    cameFromInsightsRef.current = true; // reset the poem to the top once it's visible again
+    setEndStage('idle');
+  };
   const handleBackToInsights = () => setEndStage('meaning');
+
+  // Returning to the poem from an insight: show it from the top with the scrubber at the start
+  // (the poem stays fully revealed — this only scrolls the window up, no re-animation). Runs in a
+  // layout effect so the stage is visible (unit heights measurable) before we scroll.
+  useLayoutEffect(() => {
+    if (endStage === 'idle' && cameFromInsightsRef.current) {
+      cameFromInsightsRef.current = false;
+      controller?.scrubTo(0, false);
+    }
+  }, [endStage, controller]);
 
   // "scroll up for next poem" is shown at two moments:
   //  • on landing — while the title is centred / lifting (before introDone), so the reader knows
@@ -363,6 +386,7 @@ const PoemReader = memo(function PoemReader({
               isInterpreting={isInterpreting}
               insightParts={insightParts}
               interpretation={interpretation}
+              animate={!seenStagesRef.current[endStage]}
               revealRef={revealRef}
               onProgress={onInsightProgress}
               onScrollMeta={onInsightScrollMeta}

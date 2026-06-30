@@ -18,6 +18,7 @@ export default function InlineInsights({
   isInterpreting = false,
   insightParts = null,
   interpretation = null,
+  animate = true,
   revealRef,
   onProgress,
   onScrollMeta,
@@ -73,6 +74,7 @@ export default function InlineInsights({
           key={stage}
           text={text}
           active
+          animate={animate}
           color={isAuthor ? textDim : textLight}
           onProgress={onProgress}
           onScrollMeta={onScrollMeta}

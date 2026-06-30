@@ -185,17 +185,19 @@ const PoemReader = memo(function PoemReader({
     controller?.ttsFollow(currentVerseIndex);
   }, [isActive, isPlaying, highlightStyle, currentVerseIndex, controller]);
 
-  // Reset the per-section insight gating whenever the stage changes (a new paragraph must finish
-  // revealing before the next "tap for…" is offered).
+  // Reset the per-section scrub/reveal gating whenever the stage changes.
+  //  • An already-seen section shows instantly (animate=false), so it's "done" the moment it mounts.
+  //  • A first-time section isn't "done" until its reveal finishes (onInsightProgress marks it).
+  //  • Always start the scrubber at the left so it never flashes the previous section's position.
   useEffect(() => {
-    const done = endStage === 'idle';
+    const animateThis = endStage !== 'idle' && !seenStagesRef.current[endStage];
+    const done = !animateThis;
     insightDoneRef.current = done;
     lastAtFracRef.current = 0; // start at the top (scrubber at the left) on every section entry
     setInsightDone(done);
     setInsightCanScroll(false);
-    // Mark this section seen AFTER the render that decided whether to animate it, so the first open
-    // animates and every later return shows it instantly.
-    if (endStage !== 'idle') seenStagesRef.current[endStage] = true;
+    if (scrubFillRef.current) scrubFillRef.current.style.width = '0%';
+    if (scrubHandleRef.current) scrubHandleRef.current.style.left = '0%';
   }, [endStage, poemId]);
 
   // Insight RevealText → scrub bar wiring.
@@ -209,6 +211,10 @@ const PoemReader = memo(function PoemReader({
     if (frac >= 1) {
       insightDoneRef.current = true;
       setInsightDone(true);
+      // First full reveal of this section → show it instantly on any later return. Marking here
+      // (on completion) rather than on stage-change means async-loaded insights still animate the
+      // first time (the section often mounts only after the text arrives).
+      if (endStage !== 'idle') seenStagesRef.current[endStage] = true;
       if (scrubFillRef.current)
         scrubFillRef.current.style.width = (lastAtFracRef.current * 100).toFixed(2) + '%';
     }
@@ -448,7 +454,6 @@ const PoemReader = memo(function PoemReader({
               mode={mode}
               poemId={poemId}
               isRevealing={isRevealing}
-              insightDone={insightDone}
               hasAuthor={hasAuthor}
               isPlaying={isPlaying}
               isGeneratingAudio={isGeneratingAudio}

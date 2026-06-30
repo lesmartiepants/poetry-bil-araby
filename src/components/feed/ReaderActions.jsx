@@ -54,7 +54,6 @@ export default function ReaderActions({
   mode, // 'reading' | 'idle' | 'meaning' | 'author'
   poemId,
   isRevealing = false,
-  insightDone = false,
   hasAuthor = false,
   isPlaying = false,
   isGeneratingAudio = false,
@@ -146,8 +145,10 @@ export default function ReaderActions({
       </button>
     );
   } else if (mode === 'meaning' && hasAuthor) {
+    // Always enabled — the reader can jump to the author note at any point on the meaning screen,
+    // even while it's still revealing (it loads/animates on arrival just like the meaning did).
     right = (
-      <button className="ra-btn ra-btn-primary" onClick={onSeeAuthor} disabled={!insightDone}>
+      <button className="ra-btn ra-btn-primary" onClick={onSeeAuthor}>
         <span className="ra-label">Author Insights</span>
       </button>
     );

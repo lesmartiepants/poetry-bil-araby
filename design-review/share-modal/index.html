@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Share Modal — Design Review Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Reem+Kufi:wght@400;600&display=swap" rel="stylesheet" />
+<style>
+/* ── Design Tokens ───────────────────────────── */
+:root {
+  --gold:          #c5a059;
+  --gold-bright:   #d4b463;
+  --lapis-light:   #4a7cc9;
+  --bg:            #0c0c0e;
+  --surface:       rgba(20,18,15,0.96);
+  --gold-border:   rgba(197,160,89,0.22);
+  --gold-rule:     linear-gradient(90deg, transparent, rgba(160,128,64,0.4) 20%, #C5A059 50%, rgba(160,128,64,0.4) 80%, transparent);
+  --ease-out-expo: cubic-bezier(0.16,1,0.3,1);
+  --ease-standard: cubic-bezier(.4,0,.2,1);
+}
+
+/* ── Reset ───────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%; background: var(--bg);
+  color: rgba(236,232,224,0.9);
+  font-family: system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+/* ── Ambient backdrop ────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgba(197,160,89,0.05), transparent 60%),
+    radial-gradient(ellipse 40% 30% at 10% 100%, rgba(30,58,110,0.08), transparent 55%);
+}
+
+/* ── Layout ──────────────────────────────────── */
+.viewer {
+  position: relative; z-index: 1;
+  height: 100dvh; height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0;
+}
+
+/* ── Header ──────────────────────────────────── */
+.header {
+  padding: 18px 32px 16px;
+  border-bottom: 1px solid var(--gold-border);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-shrink: 0;
+  background: rgba(12,11,10,0.6);
+  backdrop-filter: blur(12px);
+}
+.header-left {
+  display: flex; flex-direction: column; gap: 2px;
+}
+.header-brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: 1.1rem; font-weight: 600;
+  color: var(--gold); letter-spacing: 0.02em;
+}
+.header-context {
+  font-family: system-ui; font-size: 0.65rem;
+  color: rgba(197,160,89,0.45); letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.header-nav {
+  display: flex; align-items: center; gap: 0;
+}
+.nav-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  background: none; border: 1px solid var(--gold-border);
+  color: rgba(197,160,89,0.7); font-size: 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s var(--ease-standard),
+              color 0.15s var(--ease-standard),
+              border-color 0.15s var(--ease-standard);
+}
+.nav-btn:first-child { border-radius: 8px 0 0 8px; }
+.nav-btn:last-child  { border-radius: 0 8px 8px 0; border-inline-start: none; }
+.nav-btn:hover {
+  background: rgba(197,160,89,0.1);
+  color: var(--gold-bright);
+  border-color: rgba(197,160,89,0.45);
+}
+.nav-btn:active { background: rgba(197,160,89,0.18); }
+.nav-btn:focus-visible { outline: 2px solid var(--lapis-light); outline-offset: 2px; }
+.nav-btn:disabled { opacity: 0.3; cursor: default; pointer-events: none; }
+
+/* ── Direction label strip ───────────────────── */
+.direction-strip {
+  display: flex; align-items: center; justify-content: center;
+  padding: 10px 24px;
+  gap: 24px;
+  flex-shrink: 0;
+  position: relative;
+}
+.direction-strip::after {
+  content: '';
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: var(--gold-rule);
+}
+.direction-pill {
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  cursor: pointer; background: none; border: none; padding: 4px 12px;
+  border-radius: 6px;
+  transition: background 0.15s;
+  min-height: 44px; justify-content: center;
+}
+.direction-pill:hover { background: rgba(197,160,89,0.07); }
+.direction-pill:focus-visible { outline: 2px solid var(--lapis-light); outline-offset: 2px; border-radius: 6px; }
+.pill-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: 1rem; font-weight: 600;
+  color: rgba(197,160,89,0.55);
+  transition: color 0.2s;
+  letter-spacing: 0.02em;
+}
+.pill-concept {
+  font-family: system-ui; font-size: 0.58rem;
+  color: rgba(197,160,89,0.3); letter-spacing: 0.05em;
+  text-transform: uppercase; white-space: nowrap;
+  transition: color 0.2s;
+}
+.direction-pill.active .pill-name { color: var(--gold-bright); }
+.direction-pill.active .pill-concept { color: rgba(197,160,89,0.6); }
+.direction-pill.active {
+  background: rgba(197,160,89,0.08);
+}
+/* Active indicator dot */
+.direction-pill.active::after {
+  content: '';
+  display: block;
+  width: 4px; height: 4px; border-radius: 50%;
+  background: var(--gold);
+  margin: 2px auto 0;
+}
+
+/* ── Iframe stage ────────────────────────────── */
+.iframe-stage {
+  position: relative; overflow: hidden;
+  flex: 1;
+  display: flex; align-items: stretch;
+}
+.frame-slot {
+  position: absolute; inset: 0;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.35s var(--ease-standard);
+}
+.frame-slot.active {
+  opacity: 1; pointer-events: auto;
+}
+.frame-slot iframe {
+  width: 100%; height: 100%;
+  border: none; display: block;
+  background: var(--bg);
+}
+
+/* ── Footer ──────────────────────────────────── */
+.footer {
+  border-top: 1px solid var(--gold-border);
+  padding: 8px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+  background: rgba(12,11,10,0.5);
+}
+.footer-count {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic; font-size: 0.82rem;
+  color: rgba(197,160,89,0.45);
+  letter-spacing: 0.04em;
+}
+.footer-hint {
+  font-family: system-ui; font-size: 0.6rem;
+  color: rgba(197,160,89,0.25); letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+</style>
+</head>
+<body>
+
+<div class="viewer">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <span class="header-brand">شعر بالعربي — Share Modal</span>
+      <span class="header-context">Design Review · 3 Directions</span>
+    </div>
+    <nav class="header-nav" aria-label="Design navigation">
+      <button class="nav-btn" id="prevBtn" aria-label="Previous direction" disabled>◀</button>
+      <button class="nav-btn" id="nextBtn" aria-label="Next direction">▶</button>
+    </nav>
+  </header>
+
+  <!-- Direction label strip -->
+  <div class="direction-strip" role="tablist" aria-label="Design directions">
+    <button class="direction-pill active" role="tab" data-index="0" aria-selected="true" aria-controls="frame-0">
+      <span class="pill-name">Folio</span>
+      <span class="pill-concept">Full-bleed card · chrome dissolves into art</span>
+    </button>
+    <button class="direction-pill" role="tab" data-index="1" aria-selected="false" aria-controls="frame-1">
+      <span class="pill-name">Majlis</span>
+      <span class="pill-concept">Horizontal style carousel · architectural chrome</span>
+    </button>
+    <button class="direction-pill" role="tab" data-index="2" aria-selected="false" aria-controls="frame-2">
+      <span class="pill-name">Maktuba</span>
+      <span class="pill-concept">Envelope &amp; stamp motif · letter-as-art</span>
+    </button>
+  </div>
+
+  <!-- Iframe stage -->
+  <main class="iframe-stage" aria-live="polite">
+    <div class="frame-slot active" id="frame-0" role="tabpanel">
+      <iframe src="s1.html" title="Folio — Share Modal Direction 1" loading="eager"></iframe>
+    </div>
+    <div class="frame-slot" id="frame-1" role="tabpanel">
+      <iframe src="s2.html" title="Majlis — Share Modal Direction 2" loading="lazy"></iframe>
+    </div>
+    <div class="frame-slot" id="frame-2" role="tabpanel">
+      <iframe src="s3.html" title="Maktuba — Share Modal Direction 3" loading="lazy"></iframe>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span class="footer-count" id="footerCount">1 of 3</span>
+    <span class="footer-hint">← → arrow keys to navigate</span>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  let current = 0;
+  const total = 3;
+
+  const slots  = document.querySelectorAll('.frame-slot');
+  const pills  = document.querySelectorAll('.direction-pill');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const footerCount = document.getElementById('footerCount');
+
+  function go(index) {
+    if (index < 0 || index >= total) return;
+    current = index;
+
+    // Update slots
+    slots.forEach((slot, i) => {
+      const isActive = i === current;
+      slot.classList.toggle('active', isActive);
+    });
+
+    // Update pills
+    pills.forEach((pill, i) => {
+      const isActive = i === current;
+      pill.classList.toggle('active', isActive);
+      pill.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+
+    // Nav button states
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === total - 1;
+
+    // Footer count
+    footerCount.textContent = (current + 1) + ' of ' + total;
+
+    // Eagerly load the adjacent iframe if not already done
+    const adjacentIndices = [current - 1, current + 1];
+    adjacentIndices.forEach(ai => {
+      if (ai >= 0 && ai < total) {
+        const iframe = slots[ai].querySelector('iframe');
+        if (iframe && iframe.getAttribute('loading') === 'lazy') {
+          iframe.setAttribute('loading', 'eager');
+        }
+      }
+    });
+  }
+
+  prevBtn.addEventListener('click', () => go(current - 1));
+  nextBtn.addEventListener('click', () => go(current + 1));
+
+  pills.forEach(pill => {
+    pill.addEventListener('click', () => {
+      go(parseInt(pill.dataset.index, 10));
+    });
+  });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(current - 1);
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(current + 1);
+    if (e.key === '1') go(0);
+    if (e.key === '2') go(1);
+    if (e.key === '3') go(2);
+  });
+}());
+</script>
+</body>
+</html>

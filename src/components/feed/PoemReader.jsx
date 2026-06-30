@@ -345,7 +345,13 @@ const PoemReader = memo(function PoemReader({
         </div>
 
         {inInsight && (
-          <div className="w-full max-w-xl mx-auto h-full" data-insight-ui>
+          <div
+            className="w-full max-w-xl mx-auto h-full"
+            data-insight-ui
+            // Keep the scrollable insight text clear of the scrub bar below (it sits ~16px under the
+            // bar otherwise) so no line is hidden behind it; ~16px of breathing room above the bar.
+            style={{ paddingBottom: 32 }}
+          >
             <InlineInsights
               stage={endStage}
               darkMode={darkMode}
@@ -431,11 +437,11 @@ const PoemReader = memo(function PoemReader({
           </div>
         )}
 
-        {/* pull-up cue — a single line below the prompt with the arrow inline at the end; always
+        {/* pull-up cue — a single line whose letters bounce in a travelling wave (no arrow); always
             reserves its height (only opacity toggles) so the bar/prompt above stay put. Shown only
             once the poem / insight has finished animating. */}
         <div
-          className="flex flex-row items-center justify-center gap-[0.4em]"
+          className="flex flex-row items-center justify-center"
           style={{ opacity: showCue ? 0.95 : 0, transition: 'opacity 0.3s ease' }}
           aria-hidden="true"
         >
@@ -447,18 +453,19 @@ const PoemReader = memo(function PoemReader({
               letterSpacing: '0.05em',
             }}
           >
-            pull up for new poem
-          </span>
-          <span
-            className="cue-arrow"
-            style={{
-              color: goldColor,
-              fontSize: '1.1em',
-              lineHeight: 1,
-              animation: 'cueBounce 1.5s ease-in-out infinite',
-            }}
-          >
-            ↑
+            {'scroll up for next poem'.split('').map((ch, i) => (
+              <span
+                key={i}
+                style={{
+                  display: 'inline-block',
+                  whiteSpace: 'pre',
+                  animation: 'cueWave 1.7s ease-in-out infinite',
+                  animationDelay: `${(i * 0.05).toFixed(2)}s`,
+                }}
+              >
+                {ch === ' ' ? ' ' : ch}
+              </span>
+            ))}
           </span>
         </div>
       </div>

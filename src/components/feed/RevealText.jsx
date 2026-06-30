@@ -46,24 +46,27 @@ const RevealText = forwardRef(function RevealText(
       scrollPxRef.current = maxScrollRef.current;
       applyScroll();
     }
-    const atFrac = sh > 0 ? Math.min(1, (scrollPxRef.current + ch) / sh) : 1;
+    // Handle position maps the scroll travel directly: 0 = top (fully left), 1 = bottom (fully
+    // right), so the handle can be dragged all the way to either edge.
+    const atFrac = maxScrollRef.current > 0 ? scrollPxRef.current / maxScrollRef.current : 0;
     onScrollMeta?.({ canScroll: maxScrollRef.current > 4, atFrac });
   };
 
-  // Scroll to a fraction expressed as the bottom-edge position in the text (matches the handle
-  // semantics: at the top with 90% visible the handle sits at 0.9; dragging to 1 reaches the end).
+  // Scroll to a fraction of the total scroll travel (0 = top, 1 = bottom). Linear mapping so the
+  // scrub handle covers the whole track and reaches the far left (top of the text).
   const scrollToFrac = (f) => {
     const view = viewRef.current;
     const inner = innerRef.current;
     if (!view || !inner) return;
     const ch = view.clientHeight;
     const sh = inner.scrollHeight;
-    let px = f * sh - ch;
-    px = Math.max(0, Math.min(maxScrollRef.current, px));
+    const max = Math.max(0, sh - ch);
+    maxScrollRef.current = max;
+    const px = Math.max(0, Math.min(max, f * max));
     scrollPxRef.current = px;
     applyScroll();
-    const atFrac = sh > 0 ? Math.min(1, (px + ch) / sh) : 1;
-    onScrollMeta?.({ canScroll: maxScrollRef.current > 4, atFrac });
+    const atFrac = max > 0 ? px / max : 0;
+    onScrollMeta?.({ canScroll: max > 4, atFrac });
   };
 
   useImperativeHandle(ref, () => ({ scrollToFrac, recompute: reportMeta }), []);
@@ -106,7 +109,8 @@ const RevealText = forwardRef(function RevealText(
       applyReveal(0);
       tweenRef.current?.kill();
       const obj = { p: 0 };
-      const duration = Math.max(0.6, 0.9 + wordCount * 0.085);
+      // 3× faster than the original reveal pace (0.9 + wordCount·0.085).
+      const duration = Math.max(0.2, (0.9 + wordCount * 0.085) / 3);
       tweenRef.current = gsap.to(obj, {
         p: 1,
         duration,

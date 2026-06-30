@@ -19,6 +19,9 @@ on:
     paths-ignore:
       - 'README.md'
       - 'readme_ci_changelog.md'
+  # Manual trigger: runs a full README accuracy audit against the current code
+  # (useful to resync after drift, or to re-run if a previous run was blocked).
+  workflow_dispatch: {}
 
 concurrency:
   group: readme-autoupdate-${{ github.ref }}
@@ -112,6 +115,19 @@ jobs:
              file other than README.md and readme_ci_changelog.md. A later workflow step
              opens the PR.
           PROMPT
+          # On a manual run there is no single triggering commit — switch the agent to a
+          # full-README audit instead of a per-commit diff. github.event_name is a trusted,
+          # controlled value (push | workflow_dispatch), so interpolating it here is safe.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            cat >> "$RUNNER_TEMP/readme-prompt.txt" <<'MODE'
+
+          MANUAL RUN OVERRIDE: Ignore the "triggering commit" framing above. Instead, audit
+          the ENTIRE README against the current codebase and correct ANY inaccuracies you
+          find (feature counts and lists, npm commands, tech stack, architecture, project
+          structure). Apply the same changelog rules; for the entry heading use today's date
+          and "manual README audit" in place of a commit subject.
+          MODE
+          fi
           claude -p "$(cat "$RUNNER_TEMP/readme-prompt.txt")" \
             --permission-mode acceptEdits \
             --max-turns 40 \
@@ -122,6 +138,9 @@ jobs:
       - name: Open or update PR with the refreshed README
         uses: peter-evans/create-pull-request@v6
         with:
+          # Requires the repo setting "Allow GitHub Actions to create and approve pull
+          # requests" (Settings -> Actions -> General -> Workflow permissions) to be ON,
+          # otherwise this step fails with "GitHub Actions is not permitted to create...".
           token: ${{ secrets.GITHUB_TOKEN }}
           base: main
           branch: chore/readme-autoupdate

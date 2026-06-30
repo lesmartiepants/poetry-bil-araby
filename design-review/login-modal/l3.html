@@ -220,8 +220,8 @@ html, body {
 .geo-vignette {
   position: absolute; inset: 0;
   background:
-    radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(10,10,14,0.5) 100%),
-    linear-gradient(to bottom, rgba(18,14,8,0.3) 0%, transparent 40%, rgba(10,10,14,0.95) 100%);
+    radial-gradient(ellipse at 50% 45%, transparent 20%, rgba(10,10,14,0.4) 100%),
+    linear-gradient(to bottom, rgba(18,14,8,0.2) 0%, transparent 30%, rgba(10,10,14,0.88) 80%, rgba(10,10,14,0.99) 96%, rgba(10,10,14,1) 100%);
   pointer-events: none;
 }
 
@@ -270,8 +270,8 @@ html, body {
 /* close button — sits at top-right of geo zone */
 .btn-close {
   position: absolute;
-  top: 10px; right: 10px;
-  width: 30px; height: 30px;
+  top: 12px; right: 14px;
+  width: 36px; height: 36px;
   border-radius: 50%;
   border: 1px solid rgba(197,160,89,0.2);
   background: rgba(0,0,0,0.45);
@@ -280,15 +280,26 @@ html, body {
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   z-index: 5;
-  min-width: 44px; min-height: 44px;
-  margin: -7px -7px 0 0;
-  transition: background 0.16s, color 0.16s, border-color 0.16s;
+  /* no negative margin overflow; expanded via pseudo */
+  padding: 4px;
+  transition: background 0.16s, color 0.16s, border-color 0.16s, transform 0.16s;
   backdrop-filter: blur(6px);
+}
+/* touch-area expansion without layout overflow */
+.btn-close::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
 }
 .btn-close:hover {
   background: rgba(197,160,89,0.15);
   color: var(--gold);
   border-color: rgba(197,160,89,0.5);
+  transform: scale(1.08);
+}
+.btn-close:active {
+  transform: scale(0.9);
+  transition-duration: 0.08s;
 }
 .btn-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
@@ -542,6 +553,22 @@ html, body {
   .phone-frame { width: 100vw; height: 100dvh; border-radius: 0; }
   .modal { width: 94vw; }
 }
+
+/* ===========================
+   REDUCED MOTION
+   =========================== */
+@media (prefers-reduced-motion: reduce) {
+  .modal { animation: none; opacity: 1; transform: none; }
+  .arch-ar { animation: none; opacity: 1; transform: none; }
+  .arch-en { animation: none; opacity: 1; }
+  .verse-block { animation: none; opacity: 1; transform: none; }
+  .value-prop { animation: none; opacity: 1; }
+  .btn-google-wrap { animation: none; opacity: 1; }
+  .btn-google::before { animation: none; }
+  .btn-dismiss { animation: none; opacity: 1; }
+  .trust-row { animation: none; opacity: 1; }
+  .hairline-top::after { animation: none; }
+}
 </style>
 </head>
 <body>
@@ -642,25 +669,29 @@ html, body {
   const canvas = document.getElementById('tessCanvas');
   if (!canvas) return;
 
+  // Respect prefers-reduced-motion: draw once, no animation
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   const ctx = canvas.getContext('2d');
   let W, H, raf;
 
   // ---- sizing ----
   function resize() {
+    const pr = Math.min(devicePixelRatio, 2); // cap at 2x for perf
     W = canvas.offsetWidth;
     H = canvas.offsetHeight;
-    canvas.width  = W * devicePixelRatio;
-    canvas.height = H * devicePixelRatio;
-    ctx.scale(devicePixelRatio, devicePixelRatio);
+    canvas.width  = W * pr;
+    canvas.height = H * pr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(pr, pr);
   }
   resize();
-  window.addEventListener('resize', () => { resize(); });
+  window.addEventListener('resize', () => { resize(); if (prefersReduced) draw(0); });
 
   // ---- draw one 8-point star ----
-  // cx,cy: center; r: outer radius; phi: rotation offset
   function star8(cx, cy, r, phi) {
     const pts = 8;
-    const inner = r * 0.414; // ratio for regular 8-point star
+    const inner = r * 0.38; // slightly tighter inner for crisper stars
     ctx.beginPath();
     for (let i = 0; i < pts * 2; i++) {
       const angle = (Math.PI / pts) * i + phi;
@@ -672,82 +703,87 @@ html, body {
     ctx.closePath();
   }
 
-  // ---- draw connecting square between adjacent stars ----
-  function square(cx, cy, r, phi) {
+  // ---- draw connecting octagon fill between stars ----
+  function octagon(cx, cy, r, phi) {
     ctx.beginPath();
-    for (let i = 0; i < 4; i++) {
-      const angle = (Math.PI / 2) * i + phi + Math.PI / 4;
-      const x = cx + Math.cos(angle) * r * 0.9;
-      const y = cy + Math.sin(angle) * r * 0.9;
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI / 4) * i + phi;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.closePath();
   }
 
-  // ---- render loop ----
+  // ---- render ----
   let startTime = null;
 
   function draw(ts) {
     if (!startTime) startTime = ts;
-    const t = (ts - startTime) / 1000; // seconds
+    const t = prefersReduced ? 0 : (ts - startTime) / 1000;
 
     ctx.clearRect(0, 0, W, H);
 
-    // tile parameters
-    const tileSize = 44;
-    const cols = Math.ceil(W / tileSize) + 2;
-    const rows = Math.ceil(H / tileSize) + 2;
+    // tile parameters — slightly smaller tiles = denser, more ornate
+    const tileSize = 38;
+    const cols = Math.ceil(W / tileSize) + 3;
+    const rows = Math.ceil(H / tileSize) + 3;
 
-    // slow drift offset
-    const driftX = (Math.sin(t * 0.12) * 8);
-    const driftY = (Math.cos(t * 0.09) * 6);
-    // slow rotation breathe
-    const phi = Math.sin(t * 0.07) * 0.08;
+    // slow drift
+    const driftX = prefersReduced ? 0 : Math.sin(t * 0.11) * 7;
+    const driftY = prefersReduced ? 0 : Math.cos(t * 0.085) * 5;
+    // gentle rotation breathe
+    const phi = prefersReduced ? Math.PI / 8 : (Math.PI / 8 + Math.sin(t * 0.065) * 0.07);
 
     for (let row = -1; row < rows; row++) {
       for (let col = -1; col < cols; col++) {
-        // offset alternate rows for brick pattern
         const offsetX = (row % 2 === 0) ? 0 : tileSize * 0.5;
         const cx = col * tileSize + offsetX + driftX;
         const cy = row * tileSize + driftY;
-        const r = tileSize * 0.38;
+        const r = tileSize * 0.40;
 
-        // breathing per-tile pulse (each star slightly offset in phase)
-        const phase = (col * 1.3 + row * 0.9);
-        const pulse = 0.85 + 0.15 * Math.sin(t * 0.5 + phase * 0.4);
+        const phase = col * 1.27 + row * 0.91;
+        const pulse = prefersReduced ? 1 : (0.88 + 0.12 * Math.sin(t * 0.45 + phase * 0.38));
 
-        // gold color with variable opacity
-        const baseAlpha = 0.22 * pulse;
+        const baseAlpha = 0.28 * pulse;
 
-        // 8-point star
         ctx.save();
-        ctx.globalAlpha = baseAlpha;
+
+        // octagon connector (drawn first, behind star)
+        ctx.globalAlpha = baseAlpha * 0.22;
         ctx.strokeStyle = '#c5a059';
-        ctx.lineWidth = 0.8;
-        ctx.fillStyle = 'rgba(197,160,89,0.04)';
-        star8(cx, cy, r * pulse, phi + Math.PI / 8);
-        ctx.fill();
+        ctx.lineWidth = 0.6;
+        octagon(cx, cy, r * 0.62 * pulse, phi + Math.PI / 8);
         ctx.stroke();
 
-        // connector square (smaller, dimmer)
-        ctx.globalAlpha = baseAlpha * 0.5;
-        ctx.lineWidth = 0.5;
-        square(cx, cy, r * 0.55 * pulse, phi);
+        // 8-point star — subtle inner fill gives body
+        ctx.globalAlpha = baseAlpha * 0.18;
+        ctx.fillStyle = 'rgba(197,160,89,1)';
+        star8(cx, cy, r * pulse, phi);
+        ctx.fill();
+
+        ctx.globalAlpha = baseAlpha;
+        ctx.strokeStyle = '#c5a059';
+        ctx.lineWidth = 0.85;
+        star8(cx, cy, r * pulse, phi);
         ctx.stroke();
 
         ctx.restore();
       }
     }
 
-    // centre glow fade — radial mask via composite
-    const grd = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H) * 0.55);
-    grd.addColorStop(0, 'rgba(197,160,89,0.0)');
-    grd.addColorStop(0.6, 'rgba(197,160,89,0.0)');
-    grd.addColorStop(1, 'rgba(8,8,14,0.55)');
+    // radial edge fade — vignette to keep edges from looking abrupt
+    const grd = ctx.createRadialGradient(W/2, H/2, W * 0.2, W/2, H/2, Math.max(W, H) * 0.65);
+    grd.addColorStop(0, 'rgba(10,10,14,0)');
+    grd.addColorStop(0.75, 'rgba(10,10,14,0)');
+    grd.addColorStop(1, 'rgba(10,10,14,0.7)');
     ctx.fillStyle = grd;
+    ctx.globalAlpha = 1;
     ctx.fillRect(0, 0, W, H);
 
-    raf = requestAnimationFrame(draw);
+    if (!prefersReduced) {
+      raf = requestAnimationFrame(draw);
+    }
   }
 
   raf = requestAnimationFrame(draw);

@@ -29,6 +29,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
         role="dialog"
         aria-modal="true"
         aria-label="Sign in"
+        data-tour-anchor="auth"
         className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

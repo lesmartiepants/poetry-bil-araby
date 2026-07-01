@@ -107,6 +107,7 @@ import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx'
 import PoemCarousel from './components/PoemCarousel.jsx';
 import PoemFeed from './components/feed/PoemFeed.jsx';
 import AccountMenu from './components/AccountMenu.jsx';
+import TourLauncher from './components/tour/TourLauncher.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
@@ -1843,6 +1844,7 @@ export default function DiwanApp() {
           />
 
           <motion.footer
+            data-tour-anchor="controlbar"
             className="fixed bottom-0 left-0 right-0 py-2 pb-0.5 md:pb-1 px-4 flex flex-col items-center z-50 safe-bottom"
             animate={effectivelyIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
             transition={
@@ -2135,6 +2137,11 @@ export default function DiwanApp() {
           </Suspense>
         )}
       </AnimatePresence>
+
+      {/* Interactive walkthrough launcher — only once the splash is dismissed.
+          Disabled (FEATURES.tour = false) until the tour steps are re-wired to the
+          redesigned reader nav; the code is kept so the follow-up can re-enable it. */}
+      {FEATURES.tour && !showSplash && <TourLauncher user={user} savedCount={savedPoems.length} />}
 
       {/* Share Card Modal — gated behind the share feature flag */}
       {FEATURES.share && showShareCard && displayedPoem && (

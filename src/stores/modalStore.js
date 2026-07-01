@@ -12,7 +12,7 @@ function computeOnboarding() {
 }
 
 function computeSplash() {
-  if (!FEATURES.splash) return false;
+  if (!FEATURES.landing) return false;
   try {
     return !localStorage.getItem('hasSeenOnboarding');
   } catch {

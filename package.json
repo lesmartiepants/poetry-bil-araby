@@ -21,6 +21,7 @@
     "test:e2e:full": "playwright test --config=playwright.config.full.js",
     "smoke": "node scripts/smoke-deploy.mjs",
     "screenshots": "node scripts/capture-design-screenshots.js",
+    "render:banner": "node .github/assets/render-header.mjs",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "format": "prettier --write 'src/**/*.{js,jsx,json,css}'",

@@ -3,17 +3,32 @@ import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 
 export default function InsightOverlay({
-  open, insightParts, currentPoem, isInterpreting, interpretation,
-  onClose, ratchetMode, handleAnalyze,
+  open,
+  insightParts,
+  currentPoem,
+  isInterpreting,
+  interpretation,
+  onClose,
+  ratchetMode,
+  handleAnalyze,
 }) {
   const darkMode = useUIStore((s) => s.darkMode);
+  const tourActive = useUIStore((s) => s.tourActive);
   const theme = darkMode ? THEME.dark : THEME.light;
   const o = theme.overlay;
+  // While the walkthrough is running, the tour card sits above this drawer; a tap
+  // on it must not be treated as an outside-click that dismisses the drawer (the
+  // tour drives open/close itself). Suppress outside + escape dismissal then.
+  const blockDismiss = (e) => {
+    if (tourActive) e.preventDefault();
+  };
 
   return (
     <Drawer.Root
       open={open}
-      onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
       closeThreshold={0.1}
       modal
     >
@@ -30,6 +45,9 @@ export default function InsightOverlay({
           data-vaul-drawer
           className="fixed bottom-0 left-0 right-0 z-[61] h-[95dvh] rounded-t-2xl flex flex-col"
           style={{ background: o.bg, borderTop: '1px solid rgba(197,160,89,0.25)' }}
+          onPointerDownOutside={blockDismiss}
+          onInteractOutside={blockDismiss}
+          onEscapeKeyDown={blockDismiss}
         >
           <Drawer.Handle
             className="mx-auto mt-3 mb-1 w-8 h-[3px] rounded-full"
@@ -126,7 +144,10 @@ export default function InsightOverlay({
                     >
                       The Depth
                     </span>
-                    <p className="font-fell leading-[1.85] text-[13.5px] mt-2.5" style={{ color: o.textDim }}>
+                    <p
+                      className="font-fell leading-[1.85] text-[13.5px] mt-2.5"
+                      style={{ color: o.textDim }}
+                    >
                       {insightParts.depth}
                     </p>
                   </div>
@@ -177,7 +198,10 @@ export default function InsightOverlay({
                     >
                       The Author
                     </span>
-                    <p className="font-fell leading-[1.85] text-[13.5px] mt-2.5" style={{ color: o.textDim }}>
+                    <p
+                      className="font-fell leading-[1.85] text-[13.5px] mt-2.5"
+                      style={{ color: o.textDim }}
+                    >
                       {insightParts.author}
                     </p>
                   </div>

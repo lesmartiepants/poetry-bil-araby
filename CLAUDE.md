@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ### Development
+
 ```bash
 # Frontend
 npm run dev              # Start Vite dev server on localhost:5173
@@ -17,6 +18,7 @@ npm run dev:all          # Run frontend + backend concurrently
 ```
 
 ### Testing
+
 ```bash
 # Unit Tests (Vitest)
 npm test                 # Watch mode
@@ -32,20 +34,23 @@ npm run test:e2e:debug   # Debug mode
 ## Architecture
 
 ### Single-File Component Design
+
 The entire application lives in `src/app.jsx` (~2700+ lines). This is intentional for simplicity but creates specific patterns you must understand:
 
 **Feature Flags** (app.jsx:9-18)
+
 ```javascript
 const FEATURES = {
-  grounding: false,   // Experimental: Google Search grounding
-  debug: true,        // Debug panel visibility
-  logging: true,      // Emit structured logs to console (captured by Vercel/browser)
-  caching: true,      // IndexedDB caching for AI insights
-  streaming: true,    // Streaming AI responses
-  prefetching: true,  // Aggressive prefetching
-  database: true      // Enable database poem source (requires backend)
+  grounding: false, // Experimental: Google Search grounding
+  debug: true, // Debug panel visibility
+  logging: true, // Emit structured logs to console (captured by Vercel/browser)
+  caching: true, // IndexedDB caching for AI insights
+  streaming: true, // Streaming AI responses
+  prefetching: true, // Aggressive prefetching
+  database: true, // Enable database poem source (requires backend)
 };
 ```
+
 Toggle features here rather than conditionally importing code.
 
 **Design Constants** (app.jsx:14-68): `DESIGN` (layout/typography), `THEME` (colors). Never hardcode styles.
@@ -56,10 +61,12 @@ Toggle features here rather than conditionally importing code.
 
 **Dual-Mode Architecture:**
 The app supports two poem sources:
+
 1. **Database Mode**: Fetches from PostgreSQL via Express API (84,329 poems)
 2. **AI Mode**: Generates using Gemini API (existing behavior)
 
 **Database Mode (server.js):**
+
 - Express API server with 5 RESTful endpoints:
   - `GET /api/health` - Health check with poem count
   - `GET /api/poems/random` - Random poem (supports ?poet= filter)
@@ -71,30 +78,32 @@ The app supports two poem sources:
 - Keep-alive self-ping every 9-13 min (randomized) to prevent Render cold starts (production only)
 
 **Environment Variables:**
+
 ```javascript
 // Frontend (VITE_ prefix) — set in .env or Vercel
-VITE_API_URL           // Backend URL (default: http://localhost:3001)
-VITE_GEMINI_API_KEY    // Gemini API key for AI mode
-VITE_SUPABASE_URL      // Supabase project URL (optional, for auth)
-VITE_SUPABASE_ANON_KEY // Supabase anon key — MUST be JWT format (starts with eyJ)
+VITE_API_URL; // Backend URL (default: http://localhost:3001)
+VITE_GEMINI_API_KEY; // Gemini API key for AI mode
+VITE_SUPABASE_URL; // Supabase project URL (optional, for auth)
+VITE_SUPABASE_ANON_KEY; // Supabase anon key — MUST be JWT format (starts with eyJ)
 
 // Backend (server.js) — set in .env or Render
-DATABASE_URL       // Supabase pooler connection string (use pooler host, not direct)
-PORT              // API server port (defaults to 3001)
-API_SECRET_KEY    // Protect write endpoints with X-API-Key header (optional; when unset, auth is bypassed)
-LOG_ENABLED       // Enable HTTP request logging (defaults to true)
-LOG_DEBUG         // Enable verbose database debug logs (defaults to false)
-GITHUB_TOKEN_SUBMIT_BUG  // GitHub PAT for creating issues from bug reports (repo scope)
+DATABASE_URL; // Supabase pooler connection string (use pooler host, not direct)
+PORT; // API server port (defaults to 3001)
+API_SECRET_KEY; // Protect write endpoints with X-API-Key header (optional; when unset, auth is bypassed)
+LOG_ENABLED; // Enable HTTP request logging (defaults to true)
+LOG_DEBUG; // Enable verbose database debug logs (defaults to false)
+GITHUB_TOKEN_SUBMIT_BUG; // GitHub PAT for creating issues from bug reports (repo scope)
 
 // Local-only tooling tokens (never deployed)
-SUPABASE_PERSONAL_ACCESS_TOKEN  // For Supabase Management API
-RENDER_API_KEY                  // For Render API
-VERCEL_TOKEN                    // For Vercel CLI
+SUPABASE_PERSONAL_ACCESS_TOKEN; // For Supabase Management API
+RENDER_API_KEY; // For Render API
+VERCEL_TOKEN; // For Vercel CLI
 ```
 
 **Important:** Never commit API keys or database credentials. The DATABASE_URL must use the Supabase **connection pooler** host (`aws-N-region.pooler.supabase.com:6543`), not the direct host.
 
 **API Interaction Pattern:**
+
 - Database Mode: Fetch from `/api/poems/random?poet=X`
 - AI Mode: Send prompt to Gemini API with SYSTEM_PROMPT context
 - Audio synthesis uses Gemini's multimodal capabilities (AI mode only)
@@ -112,9 +121,10 @@ VERCEL_TOKEN                    // For Vercel CLI
 
 **Agents:** `test-orchestrator`, `test-suite-maintainer`, `test-coverage-reviewer`, `ci-test-guardian`, `git-workflow-manager`, `worktree-manager`, `github-issue-manager`, `docs-sync-reviewer`, `ui-ux-reviewer`, `design-review-agent`, `design-sprint-lead`, `design-generator`, `design-reviewer`, `design-review-setup`, `scroll-animation-designer`
 
-**Skills (`.claude/skills/`):** `/design-sprint`, `/screenshot-audit`, `/commit-push`
+**Skills (`.claude/skills/`):** `/design-sprint`, `/screenshot-audit`, `/commit-push`, `/professional-readme`
 
 **Maintenance Rule -- MANDATORY when creating or modifying agents:**
+
 1. Update `.cursor/rules/agents.mdc` -- keep the Agent Registry table, coordination flow, and file list in sync
 2. Update this section of `CLAUDE.md` -- keep the agent list above current
 3. If the new/changed agent alters coordination patterns, update the flow diagram and Key Coordination Patterns in `.cursor/rules/agents.mdc`
@@ -133,6 +143,7 @@ VERCEL_TOKEN                    // For Vercel CLI
 ## Common Gotchas
 
 1. **Single File Complexity**: Since everything is in `app.jsx`, search carefully for the section you need. The file is organized with comment headers like:
+
    ```javascript
    /* ============================================
       1. FEATURE FLAGS & DESIGN SYSTEM
@@ -181,6 +192,7 @@ VERCEL_TOKEN                    // For Vercel CLI
 **Branch Protection:** Never commit to main. Use feature branches (`feature/`, `bugfix/`, `docs/`, `chore/`).
 
 **Conventional Commits Required:**
+
 ```
 <type>(<scope>): <description>
 
@@ -191,6 +203,7 @@ VERCEL_TOKEN                    // For Vercel CLI
 **Types:** `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`, `ci`
 
 **GitHub Issue Tracking:**
+
 - Always create issues for bugs/failures
 - Check existing: `gh issue list`
 - Link in commits: `Fixes #123`
@@ -198,6 +211,7 @@ VERCEL_TOKEN                    // For Vercel CLI
 
 **Git Worktrees:**
 Use `worktree-manager` agent (`.claude/agents/worktree-manager.md`) for parallel development:
+
 ```bash
 git worktree add ../poetry-feature-a feature/feature-a
 cd ../poetry-feature-a && claude
@@ -208,15 +222,18 @@ cd ../poetry-feature-a && claude
 **CRITICAL: Never expose API keys, tokens, or credentials in chat or terminal output.**
 
 ### The Golden Rule
+
 > **Claude MUST NEVER display, echo, or log the actual values of API keys, tokens, passwords, or any sensitive credentials.**
 
 ### Required Pattern for All Sensitive Data
 
 #### 1. Always Ask for the Environment Variable Name
+
 - BAD: "What's your Supabase API key?"
 - GOOD: "What's the name of your environment variable? (e.g., SUPABASE_SERVICE_ROLE_KEY)"
 
 #### 2. Verify Existence Without Exposing Value
+
 ```bash
 # Check if key exists in .env file
 grep -q "^SUPABASE_SERVICE_ROLE_KEY=" .env && echo "Found" || echo "Not found"
@@ -226,6 +243,7 @@ grep -q "^SUPABASE_SERVICE_ROLE_KEY=" .env && echo "Found" || echo "Not found"
 ```
 
 #### 3. Use Variables in Commands (Never Inline Values)
+
 ```bash
 # CORRECT: Use environment variable
 source .env && supabase link --project-ref $PROJECT_REF
@@ -305,6 +323,7 @@ If you or Claude accidentally exposes a token in chat or terminal:
 ### Common Scenarios
 
 **Scenario 1: Supabase CLI Authentication**
+
 ```bash
 # CORRECT
 source .env && echo $SUPABASE_PERSONAL_ACCESS_TOKEN | supabase login
@@ -314,6 +333,7 @@ supabase login --token sbp_abc123xyz...
 ```
 
 **Scenario 2: Testing API Endpoints**
+
 ```bash
 # CORRECT - token stays hidden
 source .env && curl -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
@@ -324,6 +344,7 @@ curl -H "Authorization: Bearer eyJhbGciOiJIUzI1..." https://...
 ```
 
 **Scenario 3: Debugging Environment Variables**
+
 ```bash
 # CORRECT - confirm variables are loaded without showing values
 source .env && env | grep -E "SUPABASE|GEMINI" | cut -d'=' -f1
@@ -352,6 +373,7 @@ As Claude, when working with sensitive data:
 It's typically called `SUPABASE_PERSONAL_ACCESS_TOKEN` and should be in your `.env` file.
 
 If you don't have it yet:
+
 1. Go to https://supabase.com/dashboard/account/tokens
 2. Generate a new personal access token
 3. Add it to your `.env` file as `SUPABASE_PERSONAL_ACCESS_TOKEN=<token>`

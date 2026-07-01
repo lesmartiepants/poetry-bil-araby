@@ -1,0 +1,184 @@
+name: README Auto-Update
+
+# On merge to main, run the Claude Code CLI with the /professional-readme skill
+# to keep README.md accurate to the change that just landed, and record what it
+# did in readme_ci_changelog.md. Changes are proposed as a PR (never pushed to main).
+#
+# Why the CLI (not anthropics/claude-code-action): that action rejects the `push`
+# event ("Unsupported event type: push"). The CLI in headless mode (`claude -p`)
+# is event-agnostic, so it runs fine from a push-triggered workflow.
+#
+# Loop prevention: paths-ignore excludes README.md and readme_ci_changelog.md, so
+# when the bot's own PR is later merged (it touches only those two files) this
+# workflow does not re-trigger. paths-ignore only skips when ALL changed files
+# match, so feature merges that also touch the README still run.
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'readme_ci_changelog.md'
+
+concurrency:
+  group: readme-autoupdate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  refresh-readme:
+    name: Refresh README from merged change
+    runs-on: ubuntu-latest
+    # Belt-and-suspenders: never act on the bot's own commits.
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # merge commit + parent, for context/diff
+
+      - name: Ensure changelog file exists
+        run: |
+          if [ ! -f readme_ci_changelog.md ]; then
+            cat > readme_ci_changelog.md <<'EOF'
+          # README CI Changelog
+
+          Automated record of README updates made by the `README Auto-Update` workflow.
+          On each merge to `main`, the Claude Code CLI applies the `/professional-readme`
+          skill to keep the README accurate, and prepends an entry below (newest first)
+          describing why it changed and a concise before -> after summary. The exact line
+          diff lives in the accompanying pull request.
+
+          <!-- New entries are inserted directly below this line, newest first. -->
+          EOF
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run Claude Code CLI (professional-readme skill)
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          # Pin the major version for reproducibility (avoid surprise breaking changes).
+          npm install -g @anthropic-ai/claude-code@2
+          # Prompt is a quoted heredoc: NO shell expansion, so untrusted commit text
+          # (read by the agent itself via git) can never be interpolated into the shell.
+          cat > "$RUNNER_TEMP/readme-prompt.txt" <<'PROMPT'
+          You are the Claude Code CLI running headlessly in CI, just after a merge to `main`.
+          Keep the project's README accurate to the change that just landed, and log what you did.
+          Be efficient and conservative.
+
+          Inspect the triggering commit yourself with read-only git:
+            git log -1 --pretty='%h %s'   (subject)
+            git log -1 --pretty=%b         (body)
+            git show --stat HEAD           (files changed)
+
+          Then:
+          1. Read `.claude/skills/professional-readme/SKILL.md` and apply its principles
+             (treat the code as the source of truth; verify every claim against the code;
+             no emojis; no invented metrics).
+          2. Update `README.md` ONLY where this merged change makes it inaccurate or
+             incomplete (features, counts, commands, stack, architecture, structure).
+             Make minimal, targeted edits. If the change does not affect the README at all,
+             make NO edits to README.md and do not touch the changelog.
+          3. Do NOT regenerate the header banner image (no browser is available here). If
+             branding/identity changed so the banner is stale, do not edit the image — note
+             in the changelog that it needs `npm run render:banner`.
+          4. If (and only if) you changed README.md, PREPEND a new entry to
+             `readme_ci_changelog.md` immediately under this exact marker line
+             (insert your entry on the lines directly after it, keeping the marker in place):
+             <!-- New entries are inserted directly below this line, newest first. -->
+             Use this exact format, newest first:
+
+             ## <YYYY-MM-DD> — <short-sha> <commit subject>
+
+             **Why:** <how this merged change affects what the README should say>
+
+             **README changes:**
+             - <section>: <before> -> <after>
+
+             _Full diff: see the accompanying PR._
+          5. Do NOT run git commit, git push, or open a pull request, and do not edit any
+             file other than README.md and readme_ci_changelog.md. A later workflow step
+             opens the PR.
+          PROMPT
+          claude -p "$(cat "$RUNNER_TEMP/readme-prompt.txt")" \
+            --permission-mode acceptEdits \
+            --max-turns 40 \
+            --allowedTools "Read" "Edit" "Grep" "Glob" \
+              "Bash(git log:*)" "Bash(git show:*)" "Bash(git diff:*)" \
+              "Bash(grep:*)" "Bash(ls:*)" "Bash(cat:*)"
+
+      - name: Build PR title, body, and commit message
+        id: prbody
+        run: |
+          # All values come from git / GitHub env — no untrusted text is interpolated into
+          # the shell via ${{ }}, so a crafted commit message cannot inject commands.
+          SHA="$(git rev-parse HEAD)"
+          SHORT="$(git rev-parse --short HEAD)"
+          SUBJECT="$(git log -1 --pretty=%s)"
+          PRNUM="$(printf '%s' "$SUBJECT" | grep -oE '#[0-9]+' | head -n1 | tr -d '#')"
+          REPO="$GITHUB_REPOSITORY"
+          RUNID="$GITHUB_RUN_ID"
+          # The new changelog entry = the lines this run added to readme_ci_changelog.md.
+          ENTRY="$(git diff -U0 -- readme_ci_changelog.md | grep '^+' | grep -v '^+++' | sed 's/^+//')"
+          # Human-readable subject for the title: drop the trailing "(#NNN)" squash ref.
+          SUBJECT_CLEAN="$(printf '%s' "$SUBJECT" | sed -E 's/[[:space:]]*\(#[0-9]+\)[[:space:]]*$//')"
+
+          if [ -n "$PRNUM" ]; then
+            TITLE="docs(readme): update for #$PRNUM — $SUBJECT_CLEAN"
+            LEAD="This PR was auto-generated by the **README Auto-Update** workflow after merging PR [#$PRNUM](https://github.com/$REPO/pull/$PRNUM)."
+            SRC_LINE="- Triggering PR: [#$PRNUM](https://github.com/$REPO/pull/$PRNUM) — $SUBJECT"
+          else
+            TITLE="docs(readme): update for $SHORT — $SUBJECT_CLEAN"
+            LEAD="This PR was auto-generated by the **README Auto-Update** workflow after a merge to \`main\`."
+            SRC_LINE="- Triggering change: $SUBJECT"
+          fi
+
+          BODY="$RUNNER_TEMP/pr-body.md"
+          {
+            echo "$LEAD"
+            echo
+            echo "### Source"
+            echo "$SRC_LINE"
+            echo "- Commit: [\`$SHORT\`](https://github.com/$REPO/commit/$SHA) — $SUBJECT"
+            echo "- Workflow: [run log](https://github.com/$REPO/actions/runs/$RUNID) · [definition](https://github.com/$REPO/blob/main/.github/workflows/readme-autoupdate.yml)"
+            echo
+            echo "### What changed & why"
+            if [ -n "$ENTRY" ]; then printf '%s\n' "$ENTRY"; else echo "_See the diff below._"; fi
+            echo
+            echo "_The Claude Code CLI applied the \`/professional-readme\` skill. This PR touches only README.md and readme_ci_changelog.md, so merging it will not re-trigger the workflow._"
+          } > "$BODY"
+
+          {
+            echo "title=$TITLE"
+            echo "commitmsg<<__CM__"
+            echo "$TITLE"
+            echo
+            echo "Auto-generated by the README Auto-Update workflow."
+            echo "Triggered by: $SUBJECT"
+            echo "Commit: https://github.com/$REPO/commit/$SHA"
+            echo
+            echo "[skip ci]"
+            echo "__CM__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Open or update PR with the refreshed README
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          base: main
+          branch: chore/readme-autoupdate
+          delete-branch: true
+          add-paths: |
+            README.md
+            readme_ci_changelog.md
+          commit-message: ${{ steps.prbody.outputs.commitmsg }}
+          title: ${{ steps.prbody.outputs.title }}
+          body-path: ${{ runner.temp }}/pr-body.md

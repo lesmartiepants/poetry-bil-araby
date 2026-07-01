@@ -64,6 +64,7 @@ const initialState = {
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
   actionWeight: 'bold', // reader action buttons: 'quiet' | 'balanced' | 'bold' (molten) — visual intensity
   insightsMode: 'inline', // 'inline' = end-of-poem expand | 'drawer' = Vaul InsightOverlay (A/B test)
+  tourActive: false, // walkthrough running — overlays suppress outside-dismiss so the tour drives them
   logs: [],
   headerOpacity: 0,
   // Background settings
@@ -104,6 +105,7 @@ export const useUIStore = create((set, get) => ({
   setInsightsMode: (insightsMode) => set({ insightsMode }),
   toggleInsightsMode: () =>
     set((s) => ({ insightsMode: s.insightsMode === 'inline' ? 'drawer' : 'inline' })),
+  setTourActive: (tourActive) => set({ tourActive }),
   setDarkMode: (darkMode) => set({ darkMode }),
   toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
   setFont: (font) => set({ font }),

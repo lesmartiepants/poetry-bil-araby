@@ -59,6 +59,12 @@ let _currentStreamAbort = null;
 // so switching engine/voice mid-buffer rejected the next play as "already in
 // progress" until the fetch finished (#560, #562, #563).
 let _currentGenAbort = null;
+// PCM chunks accumulated during an in-flight live stream and the stream's sample
+// rate. Held at module scope so the pause handler can build a partial WAV blob and
+// set the audio URL before stopping — allowing resume-from-position to work even
+// when the stream hasn't finished yet (#589).
+let _streamPcmB64 = null;
+let _streamSampleRate = 24000;
 function abortCurrentStream() {
   if (_currentStreamAbort) {
     try {
@@ -86,6 +92,7 @@ function abortCurrentStream() {
  */
 export function abortPlay() {
   _currentPlayId++;
+  _streamPcmB64 = null; // discard any partial stream audio on navigation/voice-switch
   abortCurrentStream();
 }
 
@@ -268,7 +275,11 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     setPlayer,
   } = useAudioStore.getState();
 
-  if (isTogglingPlay.current || isGenerating) {
+  // Allow pause to bypass the debounce guard: when the user is pausing (isPlaying=true)
+  // the guard must not block them — during live streaming isTogglingPlay.current stays
+  // true for the full stream duration, so the first pause press would be silently
+  // dropped otherwise (#589).
+  if (!isPlaying && (isTogglingPlay.current || isGenerating)) {
     addLog('Audio', 'Play toggle already in progress — skipping', 'info');
     return;
   }
@@ -283,6 +294,16 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   // PAUSE — Tone.Player uses stop() rather than pause()
   if (isPlaying) {
     recordPause();
+    // If a live stream is in flight and no URL is set yet, build a partial WAV from
+    // the chunks collected so far so resume-from-position works instead of restarting
+    // the recitation from scratch (#589).
+    if (!audioUrl && _streamPcmB64 && _streamPcmB64.length > 0) {
+      const partialBlob = pcm16ToWav(concatPcmBase64(_streamPcmB64), _streamSampleRate);
+      if (partialBlob) {
+        setUrl(URL.createObjectURL(partialBlob));
+      }
+    }
+    _streamPcmB64 = null;
     abortCurrentStream(); // cancel an in-flight Live stream so it can't keep generating
     if (existingPlayer) {
       existingPlayer.stop();
@@ -479,7 +500,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
           await consumeSSE(liveRes.body.getReader(), {
             onMeta: (m) => {
-              if (m.sampleRate) sampleRate = m.sampleRate;
+              if (m.sampleRate) {
+                sampleRate = m.sampleRate;
+                _streamSampleRate = m.sampleRate;
+              }
             },
             onChunk: (chunkB64) => {
               // Swipe/navigation guard — stop feeding if the user moved on.
@@ -488,6 +512,9 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
                 return;
               }
               pcmB64.push(chunkB64);
+              // Keep module-level ref current so the pause handler can snapshot
+              // partial audio for resume-from-position (#589).
+              _streamPcmB64 = pcmB64;
               streamPlayer.pushChunk(pcmBase64ToInt16(chunkB64));
               if (!firstSound) {
                 firstSound = true;
@@ -510,9 +537,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             },
           });
 
-          // Stream finished on its own — release the abort handle so a later
-          // stop()/pause() doesn't try to abort an already-complete controller.
+          // Stream finished on its own — release the abort handle and the partial
+          // chunk ref (the full blob will be set below from pcmB64).
           if (_currentStreamAbort === streamAbort) _currentStreamAbort = null;
+          _streamPcmB64 = null;
 
           // User navigated away mid-stream — bail without caching/playing.
           if (_currentPlayId !== playId) {

@@ -111,8 +111,14 @@ html, body {
   align-items: center;
   justify-content: center;
   gap: 18px;
-  padding: 60px 32px 0;
+  /* reserve space so verses don't overlap the bottom sheet on mobile */
+  padding: 60px 32px 280px;
   z-index: 1;
+}
+
+/* on large screens the modal is centered, so no bottom offset needed */
+@media (min-width: 640px) {
+  .reading-content { padding-bottom: 60px; }
 }
 .reading-content .r-poet {
   font-family: 'Reem Kufi', sans-serif;

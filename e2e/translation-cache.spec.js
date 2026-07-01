@@ -211,18 +211,27 @@ test.describe('Translation Cache — Instant Load', () => {
       });
     });
 
+    // The reader seeds its feed with the bundled seed poem at index 0, then fetches same-poet
+    // companions via /api/poems/by-poet. Return an empty companion list quickly so the feed
+    // populates with just the seed poem (its verses render) while /api/poems/random stays held.
+    await page.route('**/api/poems/by-poet/**', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) })
+    );
+
     await page.route('**/api/ai/**', (route) => route.abort());
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // Arabic text from the seed poem should already be visible
-    // BEFORE the API responds (since we're holding the response)
-    const rtlText = page.locator('[dir="rtl"]').first();
-    await expect(rtlText).toBeVisible({ timeout: 3000 });
+    // The seed poem's verse (rendered as p.tts-line[dir="rtl"] in the reader) should be visible
+    // BEFORE the random-poem API responds (we're holding that response). The intro animation runs
+    // first, so allow a generous timeout.
+    const verse = page.locator('p.tts-line[dir="rtl"]').first();
+    await expect(verse).toBeVisible({ timeout: 8000 });
 
-    // The text content should be non-empty (real Arabic, not placeholder)
-    const textContent = await rtlText.textContent();
+    // The verse content should be non-empty (real Arabic, not placeholder).
+    const textContent = await verse.textContent();
+    expect(textContent).toMatch(/[؀-ۿ]/);
     expect(textContent.length).toBeGreaterThan(5);
   });
 });

@@ -157,27 +157,23 @@ test.describe('User Flows', () => {
     }
   });
 
-  // #3 — Poetic insight (desktop only)
-  test('user reads poetic insight on desktop', async ({ page, viewport }) => {
-    if (!viewport || viewport.width < 768) {
-      test.skip();
-    }
+  // #3 — Inline poem insight
+  // The standalone "Explain" button + insight drawer/overlay were removed; insights now render
+  // INLINE in the reader. The reader flow is: reveal the whole poem (Listen loads it all) → the
+  // right action becomes "Poem Insights" → tapping it swaps the verses for the inline insight
+  // (its container carries [data-insight-ui]). AI is mocked-off here, so we assert the inline
+  // insight END-STATE opens, not the generated text.
+  test('user opens the inline poem insight', async ({ page }) => {
+    // Load the whole poem so the reader reaches the idle end-state (right action = Poem Insights).
+    const listenBtn = page.locator('button[aria-label="Start recitation"]');
+    await listenBtn.click({ timeout: 10000 });
 
-    // The app auto-triggers handleAnalyze on load. With an API key it streams
-    // real insights from Gemini; without one (CI) it shows a fallback message.
-    // Either way the "Poetic Insight" overlay should appear.
-    //
-    // If auto-explain hasn't started yet (Explain button still enabled), click it.
-    const insightButton = page.locator('button[aria-label="Explain poem meaning"]').first();
-    await expect(insightButton).toBeVisible({ timeout: 5000 });
+    const insightsBtn = page.locator('button:has-text("Poem Insights")').first();
+    await expect(insightsBtn).toBeVisible({ timeout: 10000 });
+    await insightsBtn.click();
 
-    const isEnabled = await insightButton.isEnabled();
-    if (isEnabled) {
-      await insightButton.click();
-    }
-
-    // "Poetic Insight" heading should appear in the overlay
-    await expect(page.locator('text=Poetic Insight').first()).toBeVisible({ timeout: 10000 });
+    // The inline insight view (replaces the verses in-place) appears.
+    await expect(page.locator('[data-insight-ui]').first()).toBeVisible({ timeout: 10000 });
   });
 
   // #4 — Toggle dark/light theme
@@ -188,7 +184,11 @@ test.describe('User Flows', () => {
     });
 
     // Click the ThemeToggle button directly (no expand or settings gear needed)
-    const themeBtn = page.locator('button[aria-label="Switch to light mode"], button[aria-label="Switch to dark mode"]').first();
+    const themeBtn = page
+      .locator(
+        'button[aria-label="Switch to light mode"], button[aria-label="Switch to dark mode"]'
+      )
+      .first();
     await expect(themeBtn).toBeVisible({ timeout: 3000 });
     await themeBtn.click();
 
@@ -209,7 +209,9 @@ test.describe('User Flows', () => {
     await expect(page.locator('.font-amiri').first()).toBeVisible();
 
     // Open the TextSettingsPill (no expand or settings gear needed)
-    const textSettingsBtn = page.locator('button[aria-label="Text settings"]').first();
+    const textSettingsBtn = page
+      .locator('button[aria-label="Text and background settings"]')
+      .first();
     await expect(textSettingsBtn).toBeVisible({ timeout: 3000 });
     await textSettingsBtn.click();
     await page.waitForTimeout(300);
@@ -233,7 +235,9 @@ test.describe('User Flows', () => {
     await openDrawerBtn.click();
 
     // Wait for drawer to render with poet options
-    const dropdownBtn = page.locator('[data-testid="poet-picker-button"]:has-text("المتنبي")').first();
+    const dropdownBtn = page
+      .locator('[data-testid="poet-picker-button"]:has-text("المتنبي")')
+      .first();
     await expect(dropdownBtn).toBeVisible({ timeout: 3000 });
 
     // Wait for drawer slide-in animation to finish
@@ -246,24 +250,8 @@ test.describe('User Flows', () => {
     await expect(dropdownBtn).toBeHidden({ timeout: 3000 });
   });
 
-  // #7 — Copy poem to clipboard
-  test('user copies poem to clipboard', async ({ page, context }) => {
-    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-
-    // Copy button is in the always-visible sidebar — no expand needed
-    const copyButton = page.locator('button[aria-label="Copy poem to clipboard"]').first();
-    await expect(copyButton).toBeVisible({ timeout: 5000 });
-
-    // Record SVG icon before click
-    const svgBefore = await copyButton.locator('svg').first().innerHTML();
-    await copyButton.click();
-
-    // SVG icon should change (from Copy icon to Check icon)
-    await expect(async () => {
-      const svgAfter = await copyButton.locator('svg').first().innerHTML();
-      expect(svgAfter).not.toBe(svgBefore);
-    }).toPass({ timeout: 3000 });
-  });
+  // #7 — Copy poem to clipboard: REMOVED. Copy-to-clipboard is retired (FEATURES.copy=false); the
+  // copy button no longer exists, so the test was deleted.
 
   // #8 — DB/AI mode toggle removed (DB mode is now the permanent default)
 
@@ -325,11 +313,16 @@ test.describe('User Flows', () => {
     await expect(page.locator('[dir="rtl"]').first()).toBeVisible();
   });
 
-  // #13 — Auth button always visible
-  test('auth button is always visible', async ({ page }) => {
-    // Sign-in button is in the always-visible sidebar — no expand needed
-    const authBtn = page.locator('button[aria-label="Sign in"]').first();
-    await expect(authBtn).toBeVisible({ timeout: 5000 });
+  // #13 — Auth reachable via the Account menu
+  // The vertical sidebar is gone; sign-in now lives inside the bottom-nav Account popover.
+  test('sign-in is reachable from the account menu', async ({ page }) => {
+    const accountBtn = page.locator('button[aria-label="Account menu"]').first();
+    await expect(accountBtn).toBeVisible({ timeout: 5000 });
+    await accountBtn.click();
+
+    // The popover exposes the Sign in action when unauthenticated.
+    const signInBtn = page.locator('button[aria-label="Sign in"]').first();
+    await expect(signInBtn).toBeVisible({ timeout: 3000 });
   });
 
   // #14 — Save and Flag persist after Discover (no layout shift)
@@ -365,51 +358,6 @@ test.describe('User Flows', () => {
   });
 });
 
-// #16 — Mobile viewport shows VerticalSidebar (forced narrow viewport)
-test.describe('Mobile viewport sidebar', () => {
-  test.use({ viewport: { width: 402, height: 874 } });
-
-  test('mobile viewport shows VerticalSidebar with Settings', async ({ page }) => {
-    await page.route('**/api/**', (route) => route.abort());
-    await page.route('**/api/ai/**', (route) => route.abort());
-    await page.addInitScript(() => {
-      localStorage.setItem('hasSeenOnboarding', 'true');
-    });
-
-    await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await enterBtn.click();
-      await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
-    }
-    await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
-
-    // VerticalSidebar should be visible on mobile (check copy button as a representative action)
-    await expect(page.locator('button[aria-label="Copy poem to clipboard"]').first()).toBeVisible();
-  });
-
-  // #17 — Flag NOT in VerticalSidebar on mobile
-  test('mobile VerticalSidebar does not contain ThumbsDown', async ({ page }) => {
-    await setupRouteMocks(page);
-    await page.addInitScript(() => {
-      localStorage.setItem('hasSeenOnboarding', 'true');
-    });
-    await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await enterBtn.click();
-      await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
-    }
-    await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
-
-    // Save and Flag should be in the horizontal bar
-    const flagBtn = page.locator('button:has(svg.lucide-thumbs-down)').first();
-    await expect(flagBtn).toBeVisible({ timeout: 5000 });
-
-    // There should be exactly 1 ThumbsDown icon (bar only, not sidebar)
-    const totalFlags = await page.locator('svg.lucide-thumbs-down').count();
-    expect(totalFlags).toBe(1);
-  });
-});
+// #16 / #17 — Mobile VerticalSidebar tests: REMOVED. The VerticalSidebar is gone (bottom nav is now
+// Save / Library / Discover / Account, with Dislike pinned bottom-left) and copy-to-clipboard is
+// retired, so both mobile-sidebar tests were deleted rather than rewritten.

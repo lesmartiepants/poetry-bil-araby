@@ -28,7 +28,8 @@ const MOCK_POEM = {
   title: 'On Ambition',
   titleArabic: 'في الهمة',
   arabic: 'على قدر أهل العزم تأتي العزائم\nوتأتي على قدر الكرام المكارم',
-  english: 'Resolve comes in proportion to the people of resolve\nAnd noble deeds come in proportion to the noble',
+  english:
+    'Resolve comes in proportion to the people of resolve\nAnd noble deeds come in proportion to the noble',
   tags: ['حكمة'],
   isFromDatabase: true,
 };
@@ -82,16 +83,20 @@ async function setupAudioMocks(page, { ttsResponse = 'success' } = {}) {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          candidates: [{
-            content: {
-              parts: [{
-                inlineData: {
-                  mimeType: 'audio/L16;rate=24000',
-                  data: silentB64,
-                },
-              }],
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    inlineData: {
+                      mimeType: 'audio/L16;rate=24000',
+                      data: silentB64,
+                    },
+                  },
+                ],
+              },
             },
-          }],
+          ],
         }),
       });
     } else if (ttsResponse === '429') {
@@ -137,65 +142,71 @@ test.describe('Audio / Listen Feature', () => {
     });
   });
 
-  test('Play button is visible with correct aria-label', async ({ page }) => {
+  // The old footer control-bar Play button is gone; the Listen control now lives in ReaderActions
+  // (aria-label "Start recitation"). Tapping it starts playback (which fires the TTS request) and
+  // morphs the pill into a transport (Play/Pause/Preparing audio).
+  test('Listen button is visible with the recitation aria-label', async ({ page }) => {
     await setupAudioMocks(page);
     await loadApp(page);
 
-    const playBtn = page.locator('button[aria-label="Play recitation"]');
-    await expect(playBtn).toBeVisible({ timeout: 5000 });
+    const listenBtn = page.locator('button[aria-label="Start recitation"]');
+    await expect(listenBtn).toBeVisible({ timeout: 10000 });
   });
 
-  test('clicking Play triggers TTS API request', async ({ page }) => {
+  test('clicking Listen triggers TTS API request', async ({ page }) => {
     await setupAudioMocks(page);
     await loadApp(page);
 
     let ttsRequested = false;
     page.on('request', (req) => {
-      if (req.url().includes('/api/ai/') && req.url().includes('generateContent') && !req.url().includes('stream')) {
+      if (
+        req.url().includes('/api/ai/') &&
+        req.url().includes('generateContent') &&
+        !req.url().includes('stream')
+      ) {
         ttsRequested = true;
       }
     });
 
-    const playBtn = page.locator('button[aria-label="Play recitation"]');
-    await playBtn.click();
+    const listenBtn = page.locator('button[aria-label="Start recitation"]');
+    await listenBtn.click({ timeout: 10000 });
 
     // Wait for TTS request to fire
     await page.waitForTimeout(3000);
     expect(ttsRequested).toBe(true);
   });
 
-  test('Play button does not crash the app on TTS error', async ({ page }) => {
+  test('Listen does not crash the app on TTS error', async ({ page }) => {
     await setupAudioMocks(page, { ttsResponse: '500' });
     await loadApp(page);
 
-    const playBtn = page.locator('button[aria-label="Play recitation"]');
-    await playBtn.click();
+    const listenBtn = page.locator('button[aria-label="Start recitation"]');
+    await listenBtn.click({ timeout: 10000 });
     await page.waitForTimeout(3000);
 
     // App should still be functional — Arabic text visible
     await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
   });
 
-  test('TTS rate limit shows error toast', async ({ page }) => {
+  test('TTS rate limit does not crash the app', async ({ page }) => {
     await setupAudioMocks(page, { ttsResponse: '429' });
     await loadApp(page);
 
-    const playBtn = page.locator('button[aria-label="Play recitation"]');
-    await playBtn.click();
+    const listenBtn = page.locator('button[aria-label="Start recitation"]');
+    await listenBtn.click({ timeout: 10000 });
     await page.waitForTimeout(3000);
 
-    // Should show a Sonner toast with rate limit message
-    const toast = page.locator('[data-sonner-toast]');
-    // Toast may or may not be visible depending on timing, but app shouldn't crash
+    // A Sonner toast with the rate-limit message may or may not be visible depending on timing,
+    // but the app shouldn't crash.
     await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
   });
 
-  test('Play button label shows Listen text', async ({ page }) => {
+  test('the recitation control shows the Listen label', async ({ page }) => {
     await setupAudioMocks(page);
     await loadApp(page);
 
-    // The label below the play button should say "Listen"
-    const listenLabel = page.locator('text=Listen').first();
-    await expect(listenLabel).toBeVisible({ timeout: 5000 });
+    // The ReaderActions Listen pill carries a "Listen" label.
+    const listenLabel = page.locator('button[aria-label="Start recitation"] >> text=Listen');
+    await expect(listenLabel).toBeVisible({ timeout: 10000 });
   });
 });

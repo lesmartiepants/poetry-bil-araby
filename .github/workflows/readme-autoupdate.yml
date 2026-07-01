@@ -118,8 +118,9 @@ jobs:
       - name: Build PR title, body, and commit message
         id: prbody
         run: |
-          # All values come from git / GitHub env — no untrusted text is interpolated into
-          # the shell via ${{ }}, so a crafted commit message cannot inject commands.
+          # All values come from git / GitHub env via shell variables — no untrusted text is
+          # interpolated through GitHub template expressions, so a crafted commit message
+          # cannot inject commands.
           SHA="$(git rev-parse HEAD)"
           SHORT="$(git rev-parse --short HEAD)"
           SUBJECT="$(git log -1 --pretty=%s)"

@@ -99,6 +99,7 @@ export default function ReaderActions({
           className="ra-disc ra-disc-play"
           onClick={onTogglePlay}
           aria-label={isGeneratingAudio ? 'Preparing audio' : isPlaying ? 'Pause' : 'Play'}
+          data-tour="listen"
         >
           {isGeneratingAudio ? <IconSpinner /> : isPlaying ? <IconPause /> : <IconPlay />}
         </button>
@@ -113,6 +114,7 @@ export default function ReaderActions({
         className="ra-btn ra-btn-secondary"
         onClick={handleListen}
         aria-label="Start recitation"
+        data-tour="listen"
       >
         <span className="ra-label">Listen</span>
       </button>
@@ -141,7 +143,7 @@ export default function ReaderActions({
     );
   } else if (idle) {
     right = (
-      <button className="ra-btn ra-btn-primary" onClick={onSeeMeaning}>
+      <button className="ra-btn ra-btn-primary" onClick={onSeeMeaning} data-tour="explain">
         <span className="ra-label">Poem Insights</span>
       </button>
     );

@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { TOUR_STEPS } from '../src/constants/tourSteps.js';
-import { FEATURES } from '../src/constants/features.js';
 
 /**
  * Walkthrough (tour) smoke test — the anti-drift guard.
@@ -92,9 +91,6 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('every step anchors to a real element and the tour walks to completion', async ({ page }) => {
-  // The tour is disabled (FEATURES.tour = false) until its steps are re-wired to the
-  // redesigned reader nav; its launcher never mounts, so skip this end-to-end walk until then.
-  test.skip(!FEATURES.tour, 'tour feature disabled — re-wire steps to the redesigned nav first');
   await setupMocks(page);
   await page.goto('/?tour=1');
   await page.waitForSelector('[dir="rtl"]', { timeout: 15000 });

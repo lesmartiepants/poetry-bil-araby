@@ -1013,127 +1013,98 @@ button:focus-visible {
   gap: 2px;
 }
 
-/* SECONDARY — Postmark Download button */
-.btn-postmark {
+/* SECONDARY — Save Card pill button (molten gold, engraved — wider/flatter than the circular wax seal) */
+.btn-save-card-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   flex: 1;
-  max-width: 120px;
 }
 
-.btn-postmark-inner {
-  width: 100%;
+.btn-save-card {
   height: 44px;
+  padding: 0 22px;
   border-radius: 22px;
-  border: 1.5px solid rgba(197,160,89,0.3);
-  background: transparent;
+  background: var(--molten-gold);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 7px;
   position: relative;
-  transition:
-    border-color 0.18s var(--ease-quart),
-    background 0.18s var(--ease-quart);
   overflow: hidden;
+  /* Engraved stamp feel — inset shadow, opposite of the convex wax-seal dome */
+  box-shadow:
+    inset 0 2px 5px rgba(0,0,0,0.38),
+    inset 0 -1px 3px rgba(255,255,255,0.14),
+    0 3px 14px rgba(197,160,89,0.38),
+    0 1px 4px rgba(0,0,0,0.45);
+  border: 1px solid rgba(255,255,255,0.13);
+  border-bottom-color: rgba(0,0,0,0.28);
+  transition:
+    transform 0.18s var(--ease-spring),
+    box-shadow 0.18s var(--ease-quart),
+    filter 0.18s var(--ease-quart);
+  white-space: nowrap;
 }
 
-/* Postmark wave texture */
-.btn-postmark-inner::before {
+/* Top matte band — letterpress / stamp-pressed depth */
+.btn-save-card::before {
   content: '';
   position: absolute;
-  inset: -1px;
-  border-radius: 22px;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 4px,
-    rgba(197,160,89,0.05) 4px,
-    rgba(197,160,89,0.05) 5px
-  );
+  top: 0; left: 0; right: 0;
+  height: 42%;
+  background: linear-gradient(180deg, rgba(0,0,0,0.18) 0%, transparent 100%);
+  border-radius: 22px 22px 0 0;
   pointer-events: none;
 }
 
-.btn-postmark-inner:hover {
-  border-color: rgba(197,160,89,0.55);
-  background: rgba(197,160,89,0.05);
+/* Perforated inner border — stamp edge motif */
+.btn-save-card::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 19px;
+  border: 1px solid rgba(0,0,0,0.14);
+  pointer-events: none;
 }
 
-.btn-postmark-inner:active {
-  background: rgba(197,160,89,0.1);
+.btn-save-card:hover {
+  transform: translateY(-1px) scale(1.04);
+  filter: brightness(1.07) saturate(1.1);
+  box-shadow:
+    inset 0 2px 5px rgba(0,0,0,0.32),
+    inset 0 -1px 3px rgba(255,255,255,0.18),
+    0 6px 22px rgba(197,160,89,0.52),
+    0 3px 8px rgba(0,0,0,0.42);
 }
 
-.postmark-icon {
-  font-size: 14px;
-  color: var(--gold);
+.btn-save-card:active {
+  transform: translateY(1px) scale(0.97);
+  filter: brightness(0.93);
+  box-shadow:
+    inset 0 3px 8px rgba(0,0,0,0.5),
+    inset 0 1px 2px rgba(255,255,255,0.08),
+    0 1px 4px rgba(197,160,89,0.2);
+}
+
+.save-card-icon {
+  font-size: 13px;
+  color: #1a1200;
+  position: relative;
+  z-index: 1;
   opacity: 0.8;
 }
 
-.postmark-text {
+.save-card-text {
   font-family: var(--font-editorial);
   font-variant: small-caps;
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(197,160,89,0.7);
-  letter-spacing: 0.1em;
-  white-space: nowrap;
-}
-
-.postmark-sub {
-  font-family: var(--font-editorial);
-  font-style: italic;
-  font-size: 9px;
-  color: rgba(197,160,89,0.35);
-  text-align: center;
-  letter-spacing: 0.05em;
-}
-
-/* COPY LINK — postal tracking string */
-.btn-copy-link {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px var(--space-sm);
-  min-height: 44px;
-  font-family: 'Courier New', 'Courier', monospace;
-  font-size: 10.5px;
-  color: rgba(197,160,89,0.55);
+  font-size: 12px;
+  font-weight: 700;
+  color: #1a1200;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
   position: relative;
-  transition: color 0.18s var(--ease-quart);
-  white-space: nowrap;
-}
-
-.btn-copy-link::after {
-  content: '';
-  position: absolute;
-  bottom: 6px;
-  left: 8px;
-  right: 8px;
-  height: 1px;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(197,160,89,0.4) 0px,
-    rgba(197,160,89,0.4) 4px,
-    transparent 4px,
-    transparent 8px
-  );
-}
-
-.btn-copy-link:hover {
-  color: var(--gold);
-}
-
-.btn-copy-link:active {
-  color: var(--gold-bright);
-}
-
-.copy-track-icon {
-  font-size: 11px;
-  opacity: 0.7;
+  z-index: 1;
 }
 
 /* ============================================================
@@ -1347,7 +1318,7 @@ button:focus-visible {
           <!-- ── Actions ── -->
           <div class="actions-section">
 
-            <!-- Primary row: Wax Seal Share + Download Postmark -->
+            <!-- Primary row: Wax Seal Share + Save Card -->
             <div class="actions-row">
 
               <!-- Wax Seal Share -->
@@ -1362,30 +1333,19 @@ button:focus-visible {
                 <span class="seal-label">Share</span>
               </div>
 
-              <!-- Postmark Download -->
-              <div class="btn-postmark">
+              <!-- Save Card -->
+              <div class="btn-save-card-wrapper">
                 <button
-                  class="btn-postmark-inner"
-                  aria-label="Download as PNG"
-                  title="Download PNG"
+                  class="btn-save-card"
+                  aria-label="Save poem card as image"
+                  title="Save Card"
                 >
-                  <span class="postmark-icon" aria-hidden="true">⬇</span>
-                  <span class="postmark-text">Download</span>
+                  <span class="save-card-icon" aria-hidden="true">✦</span>
+                  <span class="save-card-text">Save Card</span>
                 </button>
-                <span class="postmark-sub">PNG · 2× resolution</span>
               </div>
 
             </div>
-
-            <!-- Copy Link — postal tracking string -->
-            <button
-              class="btn-copy-link"
-              aria-label="Copy link to poem"
-              title="Copy link"
-            >
-              <span class="copy-track-icon" aria-hidden="true">⬡</span>
-              TRACK·2024-NQ-0731·COPY LINK
-            </button>
 
           </div>
 
@@ -1472,28 +1432,19 @@ button:focus-visible {
     }, 300);
   });
 
-  // Copy link — visual feedback
-  var copyBtn = document.querySelector('.btn-copy-link');
-  copyBtn.addEventListener('click', function () {
-    var orig = this.textContent;
-    this.textContent = '⬡ COPIED · LINK SENT ·✓';
-    this.style.color = 'var(--gold-bright)';
+  // Save Card — visual feedback
+  var saveBtn = document.querySelector('.btn-save-card');
+  saveBtn.addEventListener('click', function () {
+    var textEl = this.querySelector('.save-card-text');
+    var origText = textEl.textContent;
+    textEl.textContent = 'Saving…';
     var self = this;
     setTimeout(function () {
-      self.textContent = orig;
-      self.style.color = '';
-    }, 1800);
-  });
-
-  // Download — visual feedback
-  var dlBtn = document.querySelector('.btn-postmark-inner');
-  dlBtn.addEventListener('click', function () {
-    var textEl = this.querySelector('.postmark-text');
-    var origText = textEl.textContent;
-    textEl.textContent = 'Preparing...';
-    setTimeout(function () {
-      textEl.textContent = origText;
-    }, 1400);
+      textEl.textContent = 'Saved ✓';
+      setTimeout(function () {
+        textEl.textContent = origText;
+      }, 900);
+    }, 800);
   });
 
 })();

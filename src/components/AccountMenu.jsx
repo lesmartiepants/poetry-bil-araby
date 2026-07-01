@@ -1,5 +1,5 @@
 import { Popover } from 'radix-ui';
-import { LogOut, Mic, Sparkles, UserRound } from 'lucide-react';
+import { LogOut, Mic, UserRound } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { voiceGender } from '../constants/voices';
@@ -67,30 +67,6 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
               <span className="opacity-70">{liveVoice}</span>
             </button>
 
-            {/* Design viewers — quick links to the design-sprint mockup viewers */}
-            <div className="my-1 h-px" style={{ background: 'rgba(197,160,89,0.18)' }} />
-            <a
-              href="/design-review/share-modal/index.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open share modal designs"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en no-underline hover:bg-gold/10 transition-colors"
-              style={{ color: ink }}
-            >
-              <Sparkles size={16} style={{ color: ink }} />
-              <span>Share Modal Designs</span>
-            </a>
-            <a
-              href="/design-review/login-modal/index.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open login modal designs"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en no-underline hover:bg-gold/10 transition-colors"
-              style={{ color: ink }}
-            >
-              <Sparkles size={16} style={{ color: ink }} />
-              <span>Login Modal Designs</span>
-            </a>
             <div className="my-1 h-px" style={{ background: 'rgba(197,160,89,0.18)' }} />
 
             {/* Auth */}

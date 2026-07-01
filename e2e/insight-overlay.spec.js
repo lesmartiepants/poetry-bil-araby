@@ -1,21 +1,14 @@
 import { test, expect } from '@playwright/test';
 
-// Helper: dismiss splash/onboarding
-async function dismissOnboarding(page) {
-  // Click through splash screen if present
-  try {
-    const splash = page.locator('[data-testid="splash-screen"]').first();
-    if (await splash.isVisible({ timeout: 2000 })) {
-      await page.click('body');
-      await page.waitForTimeout(500);
-    }
-  } catch {}
-  // Dismiss any onboarding overlays
-  try {
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(300);
-  } catch {}
-}
+/**
+ * Inline Insights E2E — the end-of-poem insight, redesigned.
+ *
+ * The standalone "Explain" button and the vaul insight drawer/overlay were removed. Insights now
+ * render INLINE inside the reader: once the whole poem is revealed the reader reaches its idle
+ * end-state and the right action becomes "Poem Insights"; tapping it swaps the verses for the
+ * inline insight ([data-insight-ui]) with "Back to Poem" to return. AI is mocked-off, so these
+ * tests assert the inline insight UI/navigation, not the generated text.
+ */
 
 const MOCK_POEM = {
   id: 42001,
@@ -29,10 +22,7 @@ const MOCK_POEM = {
   isFromDatabase: true,
 };
 
-const MOCK_POETS = [
-  { name: 'محمود درويش' },
-  { name: 'المتنبي' },
-];
+const MOCK_POETS = [{ name: 'محمود درويش' }, { name: 'المتنبي' }];
 
 async function setupMocks(page) {
   await page.route('**/api/poems/random*', async (route) => {
@@ -61,78 +51,59 @@ async function setupMocks(page) {
   });
 }
 
-test.describe('Insight Overlay', () => {
+// Reveal the whole poem so the reader reaches idle and exposes the "Poem Insights" action, then
+// open the inline insight.
+async function openInlineInsight(page) {
+  const listenBtn = page.locator('button[aria-label="Start recitation"]');
+  await listenBtn.click({ timeout: 10000 });
+  const insightsBtn = page.locator('button:has-text("Poem Insights")').first();
+  await expect(insightsBtn).toBeVisible({ timeout: 10000 });
+  await insightsBtn.click();
+  await expect(page.locator('[data-insight-ui]').first()).toBeVisible({ timeout: 10000 });
+}
+
+test.describe('Inline Insights', () => {
   test.beforeEach(async ({ page }) => {
     await setupMocks(page);
     await page.addInitScript(() => {
       localStorage.setItem('hasSeenOnboarding', 'true');
     });
-    await page.goto('http://localhost:5173');
-    await dismissOnboarding(page);
-    // Wait for app to render
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+    // Wait for the reader to render.
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
   });
 
-  test('opens on Explain click and shows heading', async ({ page }) => {
-    const explainBtn = page.locator('button[aria-label="Explain poem meaning"]').first();
-    await expect(explainBtn).toBeVisible({ timeout: 10000 });
-    await explainBtn.click();
-
-    // Drawer should appear
-    await expect(page.locator('[data-vaul-drawer]')).toBeVisible({ timeout: 10000 });
+  test('opens the inline insight from the Poem Insights action', async ({ page }) => {
+    await openInlineInsight(page);
+    // The verse stage is replaced in place by the inline insight container.
+    await expect(page.locator('[data-insight-ui]').first()).toBeVisible();
   });
 
-  test('shows loading state', async ({ page }) => {
-    const explainBtn = page.locator('button[aria-label="Explain poem meaning"]').first();
-    await expect(explainBtn).toBeVisible({ timeout: 10000 });
-    if (await explainBtn.isEnabled()) {
-      await explainBtn.click();
-    }
-    // Loading text or drawer should appear
-    const loadingOrDrawer = page.locator('text=Consulting').or(page.locator('[data-vaul-drawer]'));
-    await expect(loadingOrDrawer.first()).toBeVisible({ timeout: 10000 });
+  test('returns to the poem with Back to Poem', async ({ page }) => {
+    await openInlineInsight(page);
+
+    const backBtn = page.locator('button:has-text("Back to Poem")').first();
+    await expect(backBtn).toBeVisible({ timeout: 5000 });
+    await backBtn.click();
+
+    // The inline insight is dismissed and the verse stage is shown again.
+    await expect(page.locator('[data-insight-ui]')).toHaveCount(0);
+    await expect(page.locator('[data-testid="sparkler-stage"]').first()).toBeVisible({
+      timeout: 5000,
+    });
   });
 
-  test('closes on Escape key', async ({ page }) => {
-    const explainBtn = page.locator('button[aria-label="Explain poem meaning"]').first();
-    await expect(explainBtn).toBeVisible({ timeout: 10000 });
-    await explainBtn.click();
-    await expect(page.locator('[data-vaul-drawer]')).toBeVisible({ timeout: 10000 });
-
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(500);
-    await expect(page.locator('[data-vaul-drawer]')).not.toBeVisible({ timeout: 3000 });
+  test('the inline insight is not the old vaul drawer', async ({ page }) => {
+    await openInlineInsight(page);
+    // The removed insight drawer/overlay must not appear.
+    await expect(page.locator('[data-vaul-drawer]')).toHaveCount(0);
   });
 
-  test('closes on swipe down', async ({ page }) => {
-    const explainBtn = page.locator('button[aria-label="Explain poem meaning"]').first();
-    await expect(explainBtn).toBeVisible({ timeout: 10000 });
-    await explainBtn.click();
-    await expect(page.locator('[data-vaul-drawer]')).toBeVisible({ timeout: 10000 });
-
-    // Click close button (desktop pill or mobile circle), fall back to Escape
-    const closeBtn = page
-      .locator('[data-testid="insight-close"]')
-      .or(page.locator('[data-testid="insight-close-mobile"]'))
-      .or(page.locator('button[aria-label="Close insight overlay"]'));
-    if (await closeBtn.first().isVisible({ timeout: 1000 }).catch(() => false)) {
-      await closeBtn.first().click();
-    } else {
-      await page.keyboard.press('Escape');
-    }
-    await page.waitForTimeout(500);
-    await expect(page.locator('[data-vaul-drawer]')).not.toBeVisible({ timeout: 3000 });
-  });
-
-  test('has no hardcoded indigo colors', async ({ page }) => {
-    const explainBtn = page.locator('button[aria-label="Explain poem meaning"]').first();
-    await expect(explainBtn).toBeVisible({ timeout: 10000 });
-    await explainBtn.click();
-    await expect(page.locator('[data-vaul-drawer]')).toBeVisible({ timeout: 10000 });
-
-    // Check that no element has indigo in computed styles
+  test('has no hardcoded indigo colors in the inline insight', async ({ page }) => {
+    await openInlineInsight(page);
     const hasIndigo = await page.evaluate(() => {
-      const all = document.querySelectorAll('[data-vaul-drawer] *');
+      const all = document.querySelectorAll('[data-insight-ui] *');
       for (const el of all) {
         const style = getComputedStyle(el);
         const color = style.color + style.backgroundColor + style.borderColor;

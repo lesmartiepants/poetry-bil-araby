@@ -91,6 +91,9 @@ test.describe('Sparkler Reader', () => {
   });
 
   test('tap reveals more lines (sliding window)', async ({ page }) => {
+    // The title intro plays for a few seconds before the first line reveals; the poll below waits up
+    // to 12s, exceeding the 10s CI per-test timeout, so give this test extra headroom.
+    test.setTimeout(25000);
     await loadFeed(page);
     const stage = page.locator('[data-testid="sparkler-stage"]').first();
     // Intro plays then reveals the first pair — wait until something is revealed.
@@ -101,6 +104,8 @@ test.describe('Sparkler Reader', () => {
   });
 
   test('scrubbing seeks the reveal without navigating poems', async ({ page }) => {
+    // Intro + first reveal poll can take >10s; extend beyond the CI per-test timeout.
+    test.setTimeout(25000);
     await loadFeed(page);
     await expect.poll(() => revealedCount(page), { timeout: 12000 }).toBeGreaterThanOrEqual(1);
     const urlBefore = page.url();
@@ -118,6 +123,8 @@ test.describe('Sparkler Reader', () => {
   });
 
   test('reduced motion still reveals on tap', async ({ page }) => {
+    // Reveal poll waits up to 12s; extend beyond the 10s CI per-test timeout.
+    test.setTimeout(25000);
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loadFeed(page);
     const stage = page.locator('[data-testid="sparkler-stage"]').first();

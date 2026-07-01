@@ -19,7 +19,7 @@ raw TODO lists).
 
 ## Guiding principles
 
-1. **Ground truth over the old README.** Existing READMEs drift. Treat the *code* as the
+1. **Ground truth over the old README.** Existing READMEs drift. Treat the _code_ as the
    source of truth and verify every claim before writing it.
 2. **The banner is brand-matched, not stock.** Pull the real palette, fonts, and motifs from
    the codebase so the header looks like it belongs to the product.
@@ -34,7 +34,7 @@ Do not trust the current README's claims. Explore the codebase (launch parallel 
 explore agents when scope is uncertain) and pin down:
 
 - **Core entities / scale.** Real counts (records, users, items) — find where they actually
-  come from. Watch for figures that are *gated/filtered* vs *raw totals*; state the one users
+  come from. Watch for figures that are _gated/filtered_ vs _raw totals_; state the one users
   actually experience and say so. Distinguish hardcoded constants from live values.
 - **Implemented features.** Walk components/routes/services/stores and list what genuinely
   exists. Keep an explicit **"do NOT claim"** list of things that are stubbed, planned, or
@@ -47,8 +47,7 @@ explore agents when scope is uncertain) and pin down:
   for an honest "why this exists" section.
 
 Cross-check the final draft against `server`/backend code, `package.json`, and `src/` so
-nothing contradicts the codebase. **Verify external links resolve** (e.g. `curl -sI` for a
-200) before committing them.
+nothing contradicts the codebase. **Verify external links resolve** (e.g. `curl -sI` for a 200) before committing them.
 
 ## Step 2 — Extract the visual identity
 
@@ -58,7 +57,7 @@ splash/onboarding components), capture:
 - **Palette** — exact hex values for primary/accent/background.
 - **Typography** — the brand display fonts (and where they're used).
 - **Motif/logo** — the icon, wordmark composition, any signature background (patterns,
-  gradients, generative art). Reuse the *actual* construction where feasible.
+  gradients, generative art). Reuse the _actual_ construction where feasible.
 
 ## Step 3 — Build the custom header banner
 
@@ -67,12 +66,12 @@ templates in this skill's `assets/` as a starting point:
 
 - `assets/banner-template.html` — banner scaffold (palette vars, vendored `@font-face`,
   wordmark, tagline, optional generative background). Adapt colors/fonts/motif to the project.
-- `assets/render-banner.mjs` — element-clip render script (see gotchas for *why* element-clip).
+- `assets/render-banner.mjs` — element-clip render script (see gotchas for _why_ element-clip).
 
 Workflow:
 
 1. Adapt the template to the project's identity (Step 2). Keep a tagline and, optionally, a
-   short keyword triad that reflects the *experience*, not just properties.
+   short keyword triad that reflects the _experience_, not just properties.
 2. **Vendor the fonts.** Download the brand woff2 files and reference them locally via
    `@font-face` so the render is reproducible offline (and survives proxies that block the
    Google Fonts CSS endpoint). OFL/open fonts are fine to commit.
@@ -88,7 +87,7 @@ Workflow:
 Recommended structure (drop sections that don't apply):
 
 1. **Header banner** + centered title, one-line tagline, and a row of **shields.io badges**
-   (live demo, CI status, key stack, license *only if a LICENSE exists*). Image badges, not emojis.
+   (live demo, CI status, key stack, license _only if a LICENSE exists_). Image badges, not emojis.
 2. **Philosophy / why it exists** — short prose; the problem it solves.
 3. **Core domain** — the data/library/engine, with accurate scale and provenance.
 4. **Headline feature(s)** — give the standout capability its own section with detail.
@@ -113,12 +112,12 @@ Fix the project-structure tree to match the real layout.
 ## Gotchas (the expensive lessons)
 
 - **GitHub caches README images (camo).** After you fix a banner, GitHub's image proxy keeps
-  serving the *old* image under the same URL — it looks like your fix didn't apply. **Bust the
+  serving the _old_ image under the same URL — it looks like your fix didn't apply. **Bust the
   cache by renaming the image file** (e.g. `header.png` → `header-banner.png`) and updating the
   README `<img src>`. A query string on a relative repo path won't reliably bust it.
 - **Headless screenshots bleed the page body.** Driving raw Chromium with
   `--window-size`/`--screenshot` can capture a viewport taller than your banner, so the body
-  shows through as a flat dark/black band at the bottom. **Screenshot the banner *element*
+  shows through as a flat dark/black band at the bottom. **Screenshot the banner _element_
   with a clip** (playwright-core `locator('#banner').screenshot(...)`) so output dimensions
   always equal the element. The provided `render-banner.mjs` does this.
 - **Fonts over a proxy.** Sandboxed/proxied environments often fail TLS to Google Fonts inside

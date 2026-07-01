@@ -42,8 +42,6 @@ export const THEME = {
     debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500',
     debugDivider: 'border-stone-700',
     kbd: 'bg-stone-800 text-stone-300 border-stone-700',
-    sectionLabel: 'text-lapis-light',
-    sectionBorder: 'border-lapis-light/20',
     overlay: {
       bg: 'linear-gradient(160deg, rgba(8,8,12,0.95) 0%, rgba(12,10,18,0.97) 60%, rgba(10,12,20,0.96) 100%)',
       backdrop: 'blur(20px) saturate(130%)',
@@ -53,7 +51,8 @@ export const THEME = {
       borderSubtle: 'rgba(99,95,88,0.15)',
       sectionLabel: '#4A7CC9',
       sectionLine: 'rgba(74,124,201,0.25)',
-      goldRule: 'linear-gradient(90deg, transparent 0%, rgba(160,128,64,0.4) 20%, #C5A059 50%, rgba(160,128,64,0.4) 80%, transparent 100%)',
+      goldRule:
+        'linear-gradient(90deg, transparent 0%, rgba(160,128,64,0.4) 20%, #C5A059 50%, rgba(160,128,64,0.4) 80%, transparent 100%)',
       footerFade: 'linear-gradient(0deg, rgba(8,8,12,0.98) 50%, transparent)',
       loadingBorder: 'rgba(74,124,201,0.25)',
       loadingActive: '#4A7CC9',
@@ -103,8 +102,6 @@ export const THEME = {
     debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400',
     debugDivider: 'border-stone-300',
     kbd: 'bg-stone-200 text-stone-700 border-stone-300',
-    sectionLabel: 'text-lapis',
-    sectionBorder: 'border-lapis/15',
     overlay: {
       bg: 'linear-gradient(160deg, rgba(253,252,248,0.97) 0%, rgba(245,243,238,0.98) 60%, rgba(248,246,242,0.97) 100%)',
       backdrop: 'blur(20px) saturate(130%)',
@@ -114,7 +111,8 @@ export const THEME = {
       borderSubtle: 'rgba(168,162,158,0.2)',
       sectionLabel: '#2E5090',
       sectionLine: 'rgba(46,80,144,0.2)',
-      goldRule: 'linear-gradient(90deg, transparent 0%, rgba(139,115,85,0.35) 20%, #C5A059 50%, rgba(139,115,85,0.35) 80%, transparent 100%)',
+      goldRule:
+        'linear-gradient(90deg, transparent 0%, rgba(139,115,85,0.35) 20%, #C5A059 50%, rgba(139,115,85,0.35) 80%, transparent 100%)',
       footerFade: 'linear-gradient(0deg, rgba(253,252,248,0.98) 50%, transparent)',
       loadingBorder: 'rgba(46,80,144,0.2)',
       loadingActive: '#2E5090',

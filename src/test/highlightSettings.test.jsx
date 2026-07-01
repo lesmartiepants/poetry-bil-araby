@@ -34,11 +34,11 @@ describe('highlightStyle in uiStore', () => {
 });
 
 describe('TextSettingsPill — Row 5 Highlight selector', () => {
-  it('renders the Highlight label', () => {
+  it('renders the Read Along label', () => {
     render(<TextSettingsPill />);
     // Open the popover by clicking the trigger
     fireEvent.click(screen.getByRole('button', { name: /text.*settings/i }));
-    expect(screen.getByText(/highlight/i)).toBeInTheDocument();
+    expect(screen.getByText(/read along/i)).toBeInTheDocument();
   });
 
   it('renders all 5 style buttons: Off, Glow, Line, Pill, Blur', () => {

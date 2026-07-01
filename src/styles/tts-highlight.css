@@ -4,6 +4,22 @@
    Imported once in main.jsx or app.jsx.
    ============================================================ */
 
+/* Sparkle-reveal paragraph words (RevealText — inline insight sections).
+   The leading word carries a brief gold shimmer as the reveal sweeps across it. */
+.reveal-word {
+  transition: opacity 200ms ease-out;
+}
+.reveal-front {
+  text-shadow:
+    0 0 10px rgba(212, 180, 99, 0.85),
+    0 0 2px rgba(255, 240, 200, 0.8);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal-word {
+    transition: none !important;
+  }
+}
+
 /* Base word transition */
 .tts-word {
   transition:
@@ -70,7 +86,9 @@
 
 .tts-style-glow .tts-active {
   color: #d4b463;
-  text-shadow: 0 0 8px var(--gold), 0 0 20px rgba(201, 168, 76, 0.5);
+  text-shadow:
+    0 0 8px var(--gold),
+    0 0 20px rgba(201, 168, 76, 0.5);
 }
 
 .tts-style-glow .tts-past {
@@ -123,7 +141,9 @@
 .tts-style-focus-blur .tts-line {
   filter: blur(2px);
   opacity: 0.2;
-  transition: filter 300ms, opacity 300ms;
+  transition:
+    filter 300ms,
+    opacity 300ms;
 }
 
 .tts-style-focus-blur .tts-line.tts-line-active {

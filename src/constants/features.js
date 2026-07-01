@@ -10,5 +10,9 @@ export const FEATURES = {
   onboarding: false, // Show kinetic walkthrough (phases 1-3) on first visit
   forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
   designReview: false, // Show design review shortcut icon (still accessible via /design-review URL)
-  tour: true, // Show the "Take a tour" launcher (trial: pick Spotlight vs driver.js engine)
+  tour: false, // Guided walkthrough — disabled: its steps target the pre-redesign nav (PlayControlsStrip/VerticalSidebar); re-wire to the new reader UI before re-enabling
+
+  verticalFeed: true, // Vertical swipe feed + tap-to-reveal stanza blooms (replaces horizontal carousel)
+  share: true, // Sharing — reader Share action + share card (the vertical-sidebar icon is gone)
+  copy: false, // Copy-to-clipboard action — disabled for now
 };

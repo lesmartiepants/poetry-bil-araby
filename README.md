@@ -30,8 +30,8 @@ Three principles guide every feature:
   have found on your own — by poet, by theme, or at random.
 - **Accessible.** Full diacritics for correct pronunciation and meter, faithful bilingual
   translation, Latin transliteration, and spoken recitation meet readers wherever they are.
-  Translations follow a strict rule borrowed from the app's own prompt: *every word choice
-  must sound like it belongs in a living poem* — no archaic English, no invented imagery.
+  Translations follow a strict rule borrowed from the app's own prompt: _every word choice
+  must sound like it belongs in a living poem_ — no archaic English, no invented imagery.
 - **Pleasurable.** A lapis-and-gold visual language drawn from Islamic illumination, generative
   geometric backgrounds, kinetic onboarding, and fluid motion make reading feel like an
   occasion rather than a lookup.
@@ -50,7 +50,7 @@ of more work by the same author.
 
 ## Harakat — Diacritization
 
-Tashkeel (the short-vowel marks, *harakat*) is the single most important accessibility layer
+Tashkeel (the short-vowel marks, _harakat_) is the single most important accessibility layer
 in the app. A misplaced mark changes a word's meaning and breaks the poem's meter, so
 diacritization is treated as a first-class data pipeline rather than an afterthought.
 
@@ -100,6 +100,7 @@ handled with Framer Motion for a calm, considered feel.
 ## Features
 
 **Reading**
+
 - Full diacritics (harakat) for accurate pronunciation and meter
 - Faithful English translation (cached, or generated on demand)
 - Latin transliteration toggle
@@ -109,11 +110,13 @@ handled with Framer Motion for a calm, considered feel.
 - AI literary insight that reads a poem as a story, not an academic gloss
 
 **Discovery**
+
 - A single tap surfaces a new poem from the curated library
 - Poet filtering and a prefetched carousel of related work by the same author
 - Deep-linkable poems and shareable cards with Open Graph previews
 
 **Personalization**
+
 - Optional Google and Apple sign-in (Supabase)
 - Save poems to a personal library with pinning, sorting, and in-library search
 - Persistent settings (theme, font) that follow you across sessions
@@ -121,21 +124,22 @@ handled with Framer Motion for a calm, considered feel.
 - Keyboard shortcuts everywhere — press `?` for the full list
 
 **Platform**
+
 - Installable PWA with offline support
 - IndexedDB caching and smart prefetching for instant navigation
 - Error tracking (Sentry) and product analytics (Vercel)
 
 ### Keyboard shortcuts
 
-| Key | Action |
-|-----|--------|
-| `Space` | Play / pause recitation |
-| `→` | Next poem |
-| `E` | Seek insight (AI analysis) |
-| `T` | Toggle English translation |
-| `R` | Toggle transliteration |
-| `?` | Show all shortcuts |
-| `Esc` | Close overlay |
+| Key     | Action                     |
+| ------- | -------------------------- |
+| `Space` | Play / pause recitation    |
+| `→`     | Next poem                  |
+| `E`     | Seek insight (AI analysis) |
+| `T`     | Toggle English translation |
+| `R`     | Toggle transliteration     |
+| `?`     | Show all shortcuts         |
+| `Esc`   | Close overlay              |
 
 ## Tech Stack
 
@@ -211,15 +215,15 @@ npm run dev:server   # backend API only on http://localhost:3001
 
 ## Configuration
 
-| Variable | Scope | Purpose |
-|---|---|---|
-| `VITE_GEMINI_API_KEY` | Frontend | Gemini key for insight, translation, and recitation |
-| `VITE_API_URL` | Frontend | Backend API base URL |
-| `VITE_SUPABASE_URL` | Frontend | Supabase project URL (optional) |
-| `VITE_SUPABASE_ANON_KEY` | Frontend | Supabase anon key, JWT format (optional) |
-| `DATABASE_URL` | Backend | PostgreSQL connection (Supabase pooler in production) |
-| `PORT` | Backend | API port (default 3001) |
-| `API_SECRET_KEY` | Backend | Protects write endpoints via `X-API-Key` (optional) |
+| Variable                 | Scope    | Purpose                                               |
+| ------------------------ | -------- | ----------------------------------------------------- |
+| `VITE_GEMINI_API_KEY`    | Frontend | Gemini key for insight, translation, and recitation   |
+| `VITE_API_URL`           | Frontend | Backend API base URL                                  |
+| `VITE_SUPABASE_URL`      | Frontend | Supabase project URL (optional)                       |
+| `VITE_SUPABASE_ANON_KEY` | Frontend | Supabase anon key, JWT format (optional)              |
+| `DATABASE_URL`           | Backend  | PostgreSQL connection (Supabase pooler in production) |
+| `PORT`                   | Backend  | API port (default 3001)                               |
+| `API_SECRET_KEY`         | Backend  | Protects write endpoints via `X-API-Key` (optional)   |
 
 Never commit secrets. The `DATABASE_URL` must use the Supabase **connection pooler** host
 (`aws-N-region.pooler.supabase.com:6543`), not the direct host. Supabase anon keys must be in
@@ -241,13 +245,13 @@ pipeline builds, runs unit tests, then runs the E2E suite against a PostgreSQL s
 
 ## Deployment
 
-| Variable | Vercel | Render | GitHub Actions |
-|---|---|---|---|
-| `VITE_GEMINI_API_KEY` | Yes | — | — |
-| `VITE_API_URL` | Yes | — | Yes |
-| `VITE_SUPABASE_URL` | Yes | — | — |
-| `VITE_SUPABASE_ANON_KEY` | Yes | — | — |
-| `DATABASE_URL` | — | Yes | Yes |
+| Variable                 | Vercel | Render | GitHub Actions |
+| ------------------------ | ------ | ------ | -------------- |
+| `VITE_GEMINI_API_KEY`    | Yes    | —      | —              |
+| `VITE_API_URL`           | Yes    | —      | Yes            |
+| `VITE_SUPABASE_URL`      | Yes    | —      | —              |
+| `VITE_SUPABASE_ANON_KEY` | Yes    | —      | —              |
+| `DATABASE_URL`           | —      | Yes    | Yes            |
 
 **Frontend (Vercel)** — framework preset Vite, build `npm run build`, output `dist`.
 Auto-deploys on push to `main` with preview URLs for pull requests.

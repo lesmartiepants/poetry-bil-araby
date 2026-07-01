@@ -23,17 +23,14 @@ vi.mock('framer-motion', () => ({
 // Import createElement after the mock so it's available in the proxy factory
 import { createElement } from 'react';
 
-// Mock useTTSHighlight — the strip imports startPlayer, pauseOffset, playbackStartTime,
-// isSeeking and applyHighlightsOnce. The signal-like values must be objects with a
-// settable `.value` because seek() assigns to them (e.g. `pauseOffset.value = offset`).
+// Mock useTTSHighlight — only startPlayer, pauseOffset, and isSeeking are used by the strip
 const mockStartPlayer = vi.fn();
-const mockApplyHighlightsOnce = vi.fn();
 vi.mock('../hooks/useTTSHighlight', () => ({
   startPlayer: (...args) => mockStartPlayer(...args),
-  applyHighlightsOnce: (...args) => mockApplyHighlightsOnce(...args),
   pauseOffset: { value: 0 },
-  playbackStartTime: { value: 0 },
   isSeeking: { value: false },
+  applyHighlightsOnce: vi.fn(),
+  playbackStartTime: { value: 0 },
 }));
 
 // Minimal mock player object
@@ -43,17 +40,14 @@ const VERSE_TIMES = [0, 12.5, 25.0, 40.0];
 
 beforeEach(() => {
   useUIStore.getState().reset();
-  useAudioStore.getState().reset();
+  useAudioStore.setState({ isPlaying: false });
   mockStartPlayer.mockClear();
-  mockApplyHighlightsOnce.mockClear();
   mockPlayer.start.mockClear();
   mockPlayer.stop.mockClear();
 });
 
 describe('PlayControlsStrip — visibility', () => {
-  it('renders its transport regardless of highlightStyle (parent gates visibility)', () => {
-    // The strip itself does not read highlightStyle — the parent (app.jsx) only mounts
-    // it when highlightStyle !== 'none'. So when rendered directly it always shows.
+  it('is hidden when highlightStyle is "none"', () => {
     useUIStore.getState().setHighlightStyle('none');
     const { container } = render(
       <PlayControlsStrip
@@ -64,8 +58,8 @@ describe('PlayControlsStrip — visibility', () => {
         onPlayPause={vi.fn()}
       />
     );
-    expect(container.firstChild).not.toBeNull();
-    expect(screen.getByRole('button', { name: /play/i })).toBeInTheDocument();
+    // AnimatePresence is mocked; when style is none the strip should not render
+    expect(container.firstChild).toBeNull();
   });
 
   it('renders when highlightStyle is active and player is loaded', () => {
@@ -146,9 +140,7 @@ describe('PlayControlsStrip — play/pause button', () => {
 describe('PlayControlsStrip — prev/next verse navigation', () => {
   it('calls startPlayer with previous verse time when Prev is clicked', () => {
     useUIStore.getState().setHighlightStyle('glow');
-    // seek() reads wasPlaying from the audio store (the isPlaying prop is stale by the
-    // time onstop fires), so the store must report playing for it to restart playback.
-    useAudioStore.getState().setPlaying(true);
+    useAudioStore.setState({ isPlaying: true });
     render(
       <PlayControlsStrip
         player={mockPlayer}
@@ -164,7 +156,7 @@ describe('PlayControlsStrip — prev/next verse navigation', () => {
 
   it('calls startPlayer with next verse time when Next is clicked', () => {
     useUIStore.getState().setHighlightStyle('glow');
-    useAudioStore.getState().setPlaying(true);
+    useAudioStore.setState({ isPlaying: true });
     render(
       <PlayControlsStrip
         player={mockPlayer}
@@ -178,24 +170,18 @@ describe('PlayControlsStrip — prev/next verse navigation', () => {
     expect(mockStartPlayer).toHaveBeenCalledWith(mockPlayer, VERSE_TIMES[2]);
   });
 
-  it('Prev stays enabled at first verse and restarts from the beginning', () => {
+  it('Prev is disabled at first verse', () => {
     useUIStore.getState().setHighlightStyle('glow');
-    // seek() restarts playback only when the store reports playing.
-    useAudioStore.getState().setPlaying(true);
     render(
       <PlayControlsStrip
         player={mockPlayer}
-        isPlaying={true}
+        isPlaying={false}
         verseStartTimes={VERSE_TIMES}
         currentVerseIndex={0}
         onPlayPause={vi.fn()}
       />
     );
-    // Prev is intentionally NOT disabled at verse 0 — it restarts from the start.
-    const prev = screen.getByRole('button', { name: /prev/i });
-    expect(prev).not.toBeDisabled();
-    fireEvent.click(prev);
-    expect(mockStartPlayer).toHaveBeenCalledWith(mockPlayer, 0);
+    expect(screen.getByRole('button', { name: /prev/i })).toBeDisabled();
   });
 
   it('Next is disabled at last verse', () => {

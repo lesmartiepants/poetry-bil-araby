@@ -3,8 +3,14 @@ import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 
 export default function InsightOverlay({
-  open, insightParts, currentPoem, isInterpreting, interpretation,
-  onClose, ratchetMode, handleAnalyze,
+  open,
+  insightParts,
+  currentPoem,
+  isInterpreting,
+  interpretation,
+  onClose,
+  ratchetMode,
+  handleAnalyze,
 }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const tourActive = useUIStore((s) => s.tourActive);
@@ -20,7 +26,9 @@ export default function InsightOverlay({
   return (
     <Drawer.Root
       open={open}
-      onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
       closeThreshold={0.1}
       modal
     >
@@ -136,7 +144,10 @@ export default function InsightOverlay({
                     >
                       The Depth
                     </span>
-                    <p className="font-fell leading-[1.85] text-[13.5px] mt-2.5" style={{ color: o.textDim }}>
+                    <p
+                      className="font-fell leading-[1.85] text-[13.5px] mt-2.5"
+                      style={{ color: o.textDim }}
+                    >
                       {insightParts.depth}
                     </p>
                   </div>
@@ -187,7 +198,10 @@ export default function InsightOverlay({
                     >
                       The Author
                     </span>
-                    <p className="font-fell leading-[1.85] text-[13.5px] mt-2.5" style={{ color: o.textDim }}>
+                    <p
+                      className="font-fell leading-[1.85] text-[13.5px] mt-2.5"
+                      style={{ color: o.textDim }}
+                    >
                       {insightParts.author}
                     </p>
                   </div>

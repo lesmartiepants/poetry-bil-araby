@@ -47,16 +47,32 @@ function measure(selector) {
   const r = el.getBoundingClientRect();
   if (r.width === 0 && r.height === 0) return null;
   const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
-  return { top: r.top, left: r.left, width: r.width, height: r.height, bottom: r.bottom, right: r.right, radius };
+  return {
+    top: r.top,
+    left: r.left,
+    width: r.width,
+    height: r.height,
+    bottom: r.bottom,
+    right: r.right,
+    radius,
+  };
 }
 
-export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onComplete, onStepChange }) {
+export default function SpotlightTour({
+  steps,
+  initialStep = 0,
+  onDismiss,
+  onComplete,
+  onStepChange,
+}) {
   const darkMode = useUIStore((s) => s.darkMode);
   const discoverDrawer = useModalStore((s) => s.discoverDrawer);
   const insightsDrawer = useModalStore((s) => s.insightsDrawer);
   const authModal = useModalStore((s) => s.authModal);
   const savedPoems = useModalStore((s) => s.savedPoems);
-  const [index, setIndex] = useState(() => Math.min(Math.max(0, initialStep), Math.max(0, steps.length - 1)));
+  const [index, setIndex] = useState(() =>
+    Math.min(Math.max(0, initialStep), Math.max(0, steps.length - 1))
+  );
   const [rect, setRect] = useState(null);
   const [barTop, setBarTop] = useState(null);
   const [aboveRect, setAboveRect] = useState(null);
@@ -195,7 +211,11 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
           <motion.div
             key="scrim"
             className="absolute inset-0"
-            style={{ background: 'rgba(8,8,12,0.72)', backdropFilter: 'blur(2px)', pointerEvents: 'none' }}
+            style={{
+              background: 'rgba(8,8,12,0.72)',
+              backdropFilter: 'blur(2px)',
+              pointerEvents: 'none',
+            }}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -205,7 +225,9 @@ export default function SpotlightTour({ steps, initialStep = 0, onDismiss, onCom
       </AnimatePresence>
 
       {/* Centered intro/outro: a faint tap-catcher keeps focus on the card. */}
-      {mode === 'centered' && <div className="absolute inset-0" style={{ pointerEvents: 'auto' }} aria-hidden />}
+      {mode === 'centered' && (
+        <div className="absolute inset-0" style={{ pointerEvents: 'auto' }} aria-hidden />
+      )}
 
       <AnimatePresence mode="wait">
         <CoachCard
@@ -241,7 +263,15 @@ function Spotlight({ rect }) {
   const radius = Math.min((rect.radius || 0) + PAD, h / 2);
   const dim = 'rgba(8,8,12,0.66)';
   const panel = (style) => (
-    <div style={{ position: 'absolute', background: dim, backdropFilter: 'blur(1.5px)', pointerEvents: 'none', ...style }} />
+    <div
+      style={{
+        position: 'absolute',
+        background: dim,
+        backdropFilter: 'blur(1.5px)',
+        pointerEvents: 'none',
+        ...style,
+      }}
+    />
   );
   return (
     <motion.div
@@ -280,7 +310,21 @@ function Spotlight({ rect }) {
   );
 }
 
-function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, aboveRect, locked, onNext, onBack, onSkip }) {
+function CoachCard({
+  step,
+  index,
+  total,
+  isLast,
+  darkMode,
+  mode,
+  rect,
+  barTop,
+  aboveRect,
+  locked,
+  onNext,
+  onBack,
+  onSkip,
+}) {
   const [size, setSize] = useState({ w: 320, h: 200 });
   const ref = useRef(null);
 
@@ -291,7 +335,15 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
     }
   }, [index, mode]);
 
-  const pos = computePosition({ mode, rect, barTop, aboveRect, size, side: step?.side, align: step?.align });
+  const pos = computePosition({
+    mode,
+    rect,
+    barTop,
+    aboveRect,
+    size,
+    side: step?.side,
+    align: step?.align,
+  });
 
   const surface = darkMode
     ? { bg: 'rgba(12,12,14,0.94)', text: '#e7e5e4', dim: 'rgba(231,229,228,0.62)' }
@@ -351,16 +403,44 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
         {/* Arabic left, English right, em dash between — one line where it fits,
             wrapping on large text. (Keep the Arabic short enough to share the
             line; e.g. the intro uses "أهلا".) */}
-        <h3 style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'baseline', gap: '0 0.5rem', margin: '0 28px 6px 0' }}>
+        <h3
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'baseline',
+            gap: '0 0.5rem',
+            margin: '0 28px 6px 0',
+          }}
+        >
           {step.arabic && (
-            <span dir="rtl" style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)', fontSize: ARABIC_SIZE, fontWeight: 700 }}>
+            <span
+              dir="rtl"
+              style={{
+                fontFamily: "'Reem Kufi', sans-serif",
+                color: 'var(--gold)',
+                fontSize: ARABIC_SIZE,
+                fontWeight: 700,
+              }}
+            >
               {step.arabic}
             </span>
           )}
-          {step.arabic && <span style={{ color: surface.dim, fontFamily: "'Forum', serif" }}>—</span>}
-          <span style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', color: surface.text }}>{step.title}</span>
+          {step.arabic && (
+            <span style={{ color: surface.dim, fontFamily: "'Forum', serif" }}>—</span>
+          )}
+          <span style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', color: surface.text }}>
+            {step.title}
+          </span>
         </h3>
-        <p style={{ fontFamily: "'Forum', serif", fontSize: '0.92rem', lineHeight: 1.55, margin: 0, color: surface.dim }}>
+        <p
+          style={{
+            fontFamily: "'Forum', serif",
+            fontSize: '0.92rem',
+            lineHeight: 1.55,
+            margin: 0,
+            color: surface.dim,
+          }}
+        >
           {step.body}
         </p>
         {step.note && (
@@ -378,7 +458,15 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
         )}
       </div>
 
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+      <div
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: 16,
+        }}
+      >
         <div style={{ display: 'flex', gap: 6 }}>
           {Array.from({ length: total }).map((_, i) => (
             <span
@@ -400,7 +488,11 @@ function CoachCard({ step, index, total, isLast, darkMode, mode, rect, barTop, a
             </button>
           )}
           {/* Disabled until the step's spotlighted action is done. */}
-          <button onClick={locked ? undefined : onNext} disabled={locked} style={{ ...goldBtn, ...(locked ? lockedBtn : null) }}>
+          <button
+            onClick={locked ? undefined : onNext}
+            disabled={locked}
+            style={{ ...goldBtn, ...(locked ? lockedBtn : null) }}
+          >
             {isLast ? 'Done' : 'Next'}
           </button>
         </div>
@@ -420,7 +512,11 @@ const goldBtn = {
   cursor: 'pointer',
   fontWeight: 600,
 };
-const lockedBtn = { background: 'rgba(197,160,89,0.18)', color: 'rgba(231,229,228,0.4)', cursor: 'not-allowed' };
+const lockedBtn = {
+  background: 'rgba(197,160,89,0.18)',
+  color: 'rgba(231,229,228,0.4)',
+  cursor: 'not-allowed',
+};
 const ghostBtn = (surface) => ({
   fontFamily: "'Forum', serif",
   fontSize: '0.85rem',
@@ -459,7 +555,11 @@ function computePosition({ mode, rect, barTop, aboveRect, size, side = 'auto', a
   const placeCentered = (centerY) => {
     const maxHeight = Math.max(160, vh - 32);
     const h = Math.min(measuredH, maxHeight);
-    return { top: Math.min(Math.max(12, centerY - h / 2), vh - h - 12), left: clampX(vw / 2 - cardW / 2), maxHeight };
+    return {
+      top: Math.min(Math.max(12, centerY - h / 2), vh - h - 12),
+      left: clampX(vw / 2 - cardW / 2),
+      maxHeight,
+    };
   };
 
   if (mode === 'tray') {
@@ -474,7 +574,12 @@ function computePosition({ mode, rect, barTop, aboveRect, size, side = 'auto', a
   let s = side;
   if (s === 'auto') s = rect.top > vh - rect.bottom ? 'top' : 'bottom';
 
-  const leftFor = () => (align === 'start' ? rect.left : align === 'end' ? rect.right - cardW : rect.left + rect.width / 2 - cardW / 2);
+  const leftFor = () =>
+    align === 'start'
+      ? rect.left
+      : align === 'end'
+        ? rect.right - cardW
+        : rect.left + rect.width / 2 - cardW / 2;
 
   if (s === 'left' || s === 'right') {
     const left = s === 'left' ? rect.left - cardW - GAP : rect.right + GAP;

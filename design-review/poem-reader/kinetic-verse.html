@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kinetic Verse — poetry بالعربي</title>
+
+  <!-- ============================================================
+       FONTS
+       ============================================================ -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet" />
+
+  <!-- ============================================================
+       GSAP 3.15 — Core + SplitText (vendored locally from node_modules/gsap)
+       ============================================================ -->
+  <script src="./vendor/gsap.min.js"></script>
+  <script src="./vendor/SplitText.min.js"></script>
+
+  <style>
+    /* ============================================================
+       1. CSS CUSTOM PROPERTIES — ALL DESIGN TOKENS
+       ============================================================ */
+    :root {
+      /* Gold palette */
+      --gold:           #c5a059;
+      --gold-bright:    #d4b463;
+      --gold-foil:      linear-gradient(135deg,#b8922e,#c5a059,#e2c67a,#c5a059,#b8922e);
+
+      /* Lapis palette */
+      --lapis-deep:     #1e3a6e;
+      --lapis-mid:      #2e5090;
+      --lapis-light:    #4a7cc9;
+
+      /* Dark surfaces (default) */
+      --bg:             #0c0c0e;
+      --bg-panel:       #0f0f12;
+      --text-primary:   rgba(231,229,228,.92);
+      --text-muted:     rgba(231,229,228,.40);
+      --text-dimmed:    rgba(231,229,228,.18);
+      --border:         rgba(197,160,89,.15);
+      --verse-shadow:   0 0 28px rgba(197,160,89,.17), 0 2px 8px rgba(0,0,0,.55);
+      --numeral-color:  rgba(197,160,89,.065);
+      --dot-empty:      rgba(197,160,89,.22);
+      --dot-filled:     #c5a059;
+      --chevron-color:  rgba(197,160,89,.55);
+      --topbar-bg:      rgba(12,12,14,.90);
+      --footer-bg:      rgba(12,12,14,.78);
+
+      /* Typography */
+      --font-verse:     'Amiri', serif;
+      --font-title:     'Reem Kufi', sans-serif;
+      --font-latin:     'Cormorant Garamond', serif;
+      --size-verse:     clamp(1.45rem, 3.6vw, 2.35rem);
+      --size-trans:     clamp(0.82rem, 1.75vw, 1.08rem);
+      --size-title:     clamp(1.35rem, 3.2vw, 2.1rem);
+      --size-poet:      clamp(0.9rem,  2vw,   1.2rem);
+      --lh-verse:       1.95;
+    }
+
+    /* Light-mode overrides */
+    [data-theme="light"] {
+      --bg:             #fdfcf8;
+      --bg-panel:       #faf9f4;
+      --text-primary:   #2b2b2b;
+      --text-muted:     rgba(43,43,43,.46);
+      --text-dimmed:    rgba(43,43,43,.18);
+      --border:         rgba(139,100,40,.18);
+      --verse-shadow:   0 2px 10px rgba(139,100,40,.07);
+      --numeral-color:  rgba(139,100,40,.055);
+      --dot-empty:      rgba(139,100,40,.22);
+      --topbar-bg:      rgba(253,252,248,.92);
+      --footer-bg:      rgba(253,252,248,.82);
+    }
+
+    /* ============================================================
+       2. RESET & BASE
+       ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { height: 100%; -webkit-text-size-adjust: 100%; }
+
+    body {
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-latin);
+      -webkit-font-smoothing: antialiased;
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    /* ============================================================
+       3. TOP BAR
+       ============================================================ */
+    .top-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: var(--topbar-bg);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .app-name {
+      font-family: var(--font-title);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: var(--gold-foil);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      direction: ltr;
+    }
+
+    .theme-btn {
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      background: transparent;
+      color: var(--gold);
+      cursor: pointer;
+      font-size: 1.15rem;
+      transition: border-color 0.3s, background 0.3s;
+      flex-shrink: 0;
+    }
+    .theme-btn:hover    { background: rgba(197,160,89,.08); border-color: var(--gold); }
+    .theme-btn:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 3px; }
+
+    /* ============================================================
+       4. FOOTER
+       ============================================================ */
+    .footer {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 100;
+      height: 38px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--footer-bg);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-top: 1px solid var(--border);
+    }
+    .footer-text {
+      font-family: var(--font-latin);
+      font-size: 0.68rem;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      direction: ltr;
+    }
+
+    /* ============================================================
+       5. FEED — VERTICAL STACK (one panel per viewport-height)
+       ============================================================ */
+    .feed {
+      position: fixed;
+      top: 56px; bottom: 38px; left: 0; right: 0;
+      overflow: hidden;
+    }
+    .feed-inner {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      will-change: transform;
+    }
+
+    /* ============================================================
+       6. POEM PANEL
+       ============================================================ */
+    .poem-panel {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;   /* RTL: right-aligned */
+      justify-content: center;
+      padding: 28px clamp(20px, 5.5vw, 88px);
+      overflow: hidden;
+      background: var(--bg-panel);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Vignette overlay */
+    .poem-panel::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 75% 55% at 78% 28%, rgba(30,58,110,.10) 0%, transparent 70%),
+        radial-gradient(ellipse 55% 75% at 22% 78%, rgba(197,160,89,.04) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* Ghost stanza numeral — sits in background */
+    .stanza-numeral-ghost {
+      position: absolute;
+      bottom: 60px;
+      left: clamp(8px,5vw,72px);
+      font-family: var(--font-title);
+      font-size: clamp(5rem, 17vw, 13rem);
+      font-weight: 700;
+      color: var(--numeral-color);
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 0.55s ease, color 0.4s ease;
+      direction: ltr;
+    }
+
+    /* ============================================================
+       7. POEM HEADER
+       ============================================================ */
+    .poem-header {
+      text-align: right;
+      width: 100%;
+      margin-bottom: clamp(18px, 3.5vh, 38px);
+    }
+    .poem-title {
+      font-family: var(--font-title);
+      font-size: var(--size-title);
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.3;
+      margin-bottom: 5px;
+    }
+    .poem-poet {
+      font-family: var(--font-verse);
+      font-size: var(--size-poet);
+      color: var(--gold);
+      font-style: italic;
+    }
+    .stanza-count-badge {
+      display: inline-block;
+      margin-top: 7px;
+      font-family: var(--font-latin);
+      font-size: 0.70rem;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      direction: ltr;
+    }
+
+    /* ============================================================
+       8. TAP-TO-REVEAL HINT
+       ============================================================ */
+    .tap-hint {
+      position: absolute;
+      bottom: 85px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      font-family: var(--font-latin);
+      font-size: 0.76rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      direction: ltr;
+      pointer-events: none;
+      white-space: nowrap;
+      animation: breathe 2.6s ease-in-out infinite;
+    }
+    .tap-hint-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      flex-shrink: 0;
+      animation: dot-pulse 2.6s ease-in-out infinite;
+    }
+    @keyframes breathe {
+      0%,100% { opacity: 0.45; }
+      50%      { opacity: 1; }
+    }
+    @keyframes dot-pulse {
+      0%,100% { transform: scale(1); }
+      50%      { transform: scale(1.5); }
+    }
+
+    /* ============================================================
+       9. STANZAS CONTAINER
+       ============================================================ */
+    .stanzas-container {
+      width: 100%;
+      max-width: 920px;
+      align-self: flex-end;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(22px, 3.8vh, 46px);
+    }
+
+    /* ============================================================
+       10. STANZA BLOCK
+       ============================================================ */
+    .stanza-block {
+      position: relative;
+      opacity: 0;
+      transform-origin: right top;
+      padding-right: 18px; /* breathing room for accent bar */
+    }
+    .stanza-block.dimmed {
+      opacity: 0.27 !important;
+      transform: scale(0.97) !important;
+      transition: opacity 0.55s ease, transform 0.55s ease !important;
+    }
+
+    /* ============================================================
+       11. GOLD ACCENT BAR
+       ============================================================ */
+    .accent-bar {
+      position: absolute;
+      right: 0; top: 0;
+      width: 2.5px;
+      height: 0;  /* animates to 100% */
+      background: var(--gold-foil);
+      border-radius: 2px;
+      transform-origin: top;
+    }
+
+    /* ============================================================
+       12. VERSE LINES
+       ============================================================ */
+    .verse-line-group {
+      margin-bottom: clamp(8px, 1.8vh, 16px);
+    }
+    .verse-line-group:last-child { margin-bottom: 0; }
+
+    /* overflow:hidden mask — KINETIC REVEAL clips here */
+    .line-mask {
+      display: block;
+      overflow: hidden;
+    }
+
+    .arabic-line {
+      font-family: var(--font-verse);
+      font-size: var(--size-verse);
+      line-height: var(--lh-verse);
+      color: var(--text-primary);
+      text-align: right;
+      direction: rtl;
+      display: block;
+      will-change: transform, opacity;
+      text-shadow: var(--verse-shadow);
+    }
+    [data-theme="light"] .arabic-line { text-shadow: none; }
+
+    .english-line {
+      font-family: var(--font-latin);
+      font-size: var(--size-trans);
+      line-height: 1.65;
+      color: var(--text-muted);
+      text-align: left;
+      direction: ltr;
+      display: block;
+      margin-top: 3px;
+      font-style: italic;
+      opacity: 0;
+    }
+
+    /* ============================================================
+       13. MISBAHA PROGRESS DOTS
+       ============================================================ */
+    .misbaha {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      direction: ltr;
+    }
+    .misbaha-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--dot-empty);
+      border: 1.5px solid var(--dot-empty);
+      transition: background 0.3s, border-color 0.3s;
+    }
+    .misbaha-dot.filled {
+      background: var(--dot-filled);
+      border-color: var(--dot-filled);
+    }
+
+    /* ============================================================
+       14. DOWN-CHEVRON BUTTON
+       ============================================================ */
+    .chevron-btn {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--chevron-color);
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.45s, color 0.3s, border-color 0.3s;
+      font-size: 1.15rem;
+    }
+    .chevron-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+      animation: chevron-bob 2s ease-in-out infinite;
+    }
+    .chevron-btn:hover { color: var(--gold); border-color: var(--gold); }
+    .chevron-btn:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 3px; }
+
+    @keyframes chevron-bob {
+      0%,100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(5px); }
+    }
+
+    /* Swipe-up hint */
+    .swipe-hint {
+      position: absolute;
+      bottom: 55px;
+      left: clamp(20px,5vw,60px);
+      font-family: var(--font-latin);
+      font-size: 0.67rem;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      direction: ltr;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .swipe-hint.visible { opacity: 1; }
+
+    /* ============================================================
+       15. REDUCED MOTION
+       ============================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      .tap-hint, .tap-hint-dot, .chevron-btn { animation: none !important; }
+      .stanza-block  { transition: opacity 0.3s ease !important; }
+    }
+
+    ::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       TOP BAR
+       ============================================================ -->
+  <header class="top-bar" role="banner">
+    <div class="app-name" aria-label="poetry بالعربي">poetry بالعربي</div>
+    <button
+      class="theme-btn"
+      id="themeToggle"
+      title="Toggle theme"
+      aria-label="Toggle theme"
+      aria-pressed="false"
+    >
+      <svg id="iconMoon" width="18" height="18" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+      <svg id="iconSun" width="18" height="18" viewBox="0 0 24 24"
+           fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round"
+           aria-hidden="true" style="display:none">
+        <circle cx="12" cy="12" r="5"/>
+        <line x1="12" y1="1"  x2="12" y2="3"/>
+        <line x1="12" y1="21" x2="12" y2="23"/>
+        <line x1="4.22"  y1="4.22"  x2="5.64"  y2="5.64"/>
+        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+        <line x1="1"  y1="12" x2="3"  y2="12"/>
+        <line x1="21" y1="12" x2="23" y2="12"/>
+        <line x1="4.22"  y1="19.78" x2="5.64"  y2="18.36"/>
+        <line x1="18.36" y1="5.64"  x2="19.78" y2="4.22"/>
+      </svg>
+    </button>
+  </header>
+
+  <!-- ============================================================
+       POEM FEED
+       ============================================================ -->
+  <main class="feed" id="feed" role="main" aria-label="Arabic poetry feed">
+    <div class="feed-inner" id="feedInner">
+      <!-- Poem panels injected by buildFeed() -->
+    </div>
+  </main>
+
+  <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+  <footer class="footer" role="contentinfo">
+    <p class="footer-text">Kinetic Verse &mdash; tap to reveal &middot; swipe up for next</p>
+  </footer>
+
+  <!-- ============================================================
+       JAVASCRIPT
+       ============================================================ -->
+  <script>
+  /* ============================================================
+     POEM DATA — exact verses as specified
+     ============================================================ */
+  const POEMS = [
+    {
+      title:  'زوال ملك الدنيا',
+      poet:   'أبو إسحاق الإلبيري',
+      stanzas: [
+        { lines: [
+          { ar: 'أَيْنَ المُلُوكُ وَأَيْنَ مَا جَمَعُوا وَمَا',  en: 'Where are the kings? Where is all they amassed,' },
+          { ar: 'ذَخَرُوهُ مِنْ ذَهَبِ الْمَتَاعِ الذَّاهِبِ',  en: 'the gold they hoarded — wealth that fades and passes?' },
+          { ar: 'وَمِنَ السَّوَابِغِ وَالصَّوَارِمِ وَالقَنَا', en: 'Where are the coats of mail, the swords, the lances,' },
+          { ar: 'وَمِنَ الصَّواهِلِ بُدْنٌ وَشَوَازِبُ',        en: 'the neighing steeds, the sleek and the well-fed?' },
+        ]},
+        { lines: [
+          { ar: 'كَانَتْ سَوَابِقُهَا تَحْمِلُ مِنْهُمْ',        en: 'Their racing chargers used to carry forth' },
+          { ar: 'أَقْمَارُ أَنْدِيَةٍ وَأُسْدُ كَتَائِبٍ',       en: 'moons of the council, lions of the ranks.' },
+          { ar: 'كَانُوا لُيُوثًا خَفِيَّةً لَكِنَّهُمْ',        en: 'They were hidden lions — and even so' },
+          { ar: 'سَكَنُوا غِيَاضَ أَسِنَّةٍ وَقَوَاضِبِ',       en: 'they made their dens in thickets of spears and blades.' },
+        ]},
+        { lines: [
+          { ar: 'قَصَفَتْهُمْ رِيحُ الرَّدَى وَرَمَتْهُمْ',     en: 'The wind of doom snapped them; they were struck down' },
+          { ar: 'كَفُّ الْمَنُونِ بِكُلِّ سَهْمٍ صَائِبٍ',      en: 'by the hand of fate with every unerring arrow.' },
+        ]},
+      ]
+    },
+    {
+      title:  'جدول ونسيم',
+      poet:   'أبو البقاء الرندي',
+      stanzas: [
+        { lines: [
+          { ar: 'وَجَدْوَلٍ كُلَّمَا مَرَّ النَّسِيمُ بِهِ',    en: 'A brook — and whenever the breeze passed over it,' },
+          { ar: 'كَسَاهُ دَرْعًا لَهَا حَبَابُهُ حُلَقُ',       en: 'it clothed it in mail whose bubbles were the rings.' },
+          { ar: 'حَتَّى إِذَا انْطَبَعَتْ لَيْلًا بِهِ شُهْبُ',en: 'Until, when stars were stamped upon it in the night,' },
+          { ar: 'لَمْ تَمْتَرِ الْعَيْنُ فِيهِ أَنَّهُ الأُفْقُ',en:'the eye no longer doubted it had become the sky.' },
+        ]},
+      ]
+    },
+    {
+      title:  'فقد ابن مية',
+      poet:   'آمنة بنت عتيبة',
+      stanzas: [
+        { lines: [
+          { ar: 'عَلَى مِثْلِ ابْنِ مَيَّةَ فَانْعِيَاهُ',       en: 'For one like Ibn Mayya, mourn him well —' },
+          { ar: 'تَشُقُّ نَوَاعِمُ البِشْرِ الجُيُوبَا',         en: 'let tender, joyful women rend their collars.' },
+          { ar: 'وَكَانَ أَبِي عُتَيْبَةُ شَمّرِيّاً',           en: 'My father Utayba was a man who strove,' },
+          { ar: 'فَلاَ تَلْقَاهُ يَدَّخِرُ النَّصِيبَا',         en: 'you never found him hoarding back his share.' },
+        ]},
+        { lines: [
+          { ar: 'ضُرُوبًا لِلْكَمِيِّ إِذَا اشْمَعَلَّتْ',      en: 'a striker of the armored knight whenever' },
+          { ar: 'عَوَانُ الحَرْبِ لا وَرَعًا هُيُوبَا',          en: 'the grinding war flared up — no timid, fearful soul.' },
+        ]},
+      ]
+    }
+  ];
+
+  /* Arabic-Indic numerals for stanza markers */
+  const AR_NUMERALS = ['٠١','٠٢','٠٣','٠٤','٠٥'];
+
+  /* ============================================================
+     CAPABILITY DETECTION
+     ============================================================ */
+  const GSAP_OK    = typeof gsap !== 'undefined';
+  const SPLIT_OK   = GSAP_OK && typeof SplitText !== 'undefined';
+  const NO_MOTION  = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (GSAP_OK && SPLIT_OK) gsap.registerPlugin(SplitText);
+
+  /* ============================================================
+     STATE
+     ============================================================ */
+  let currentPoem  = 0;
+  let isAnimating  = false;
+  let feedY        = 0;
+  let panelH       = 0;
+  /* Per-poem state: how many stanzas revealed */
+  let revealed     = [];  /* revealed[poemIdx] = count */
+
+  /* ============================================================
+     BUILD FEED DOM
+     ============================================================ */
+  function buildFeed() {
+    const feedInner = document.getElementById('feedInner');
+    feedInner.innerHTML = '';
+    revealed = POEMS.map(() => 0);
+
+    POEMS.forEach((poem, pi) => {
+      const panel = document.createElement('article');
+      panel.className = 'poem-panel';
+      panel.setAttribute('aria-label', poem.title);
+      panel.dataset.pi = pi;
+
+      /* ---- Ghost numeral (background) ---- */
+      const ghost = document.createElement('div');
+      ghost.className = 'stanza-numeral-ghost';
+      ghost.id = `ghost-${pi}`;
+      ghost.textContent = AR_NUMERALS[0];
+      panel.appendChild(ghost);
+
+      /* ---- Poem header ---- */
+      const hdr = document.createElement('div');
+      hdr.className = 'poem-header';
+      hdr.innerHTML =
+        `<h1 class="poem-title">${poem.title}</h1>` +
+        `<p class="poem-poet">${poem.poet}</p>` +
+        `<span class="stanza-count-badge" dir="ltr">` +
+          `${poem.stanzas.length} stanza${poem.stanzas.length > 1 ? 's' : ''}` +
+        `</span>`;
+      panel.appendChild(hdr);
+
+      /* ---- Stanzas container ---- */
+      const sContainer = document.createElement('div');
+      sContainer.className = 'stanzas-container';
+      sContainer.id = `sc-${pi}`;
+
+      poem.stanzas.forEach((stanza, si) => {
+        const block = document.createElement('div');
+        block.className = 'stanza-block';
+        block.id = `blk-${pi}-${si}`;
+        block.setAttribute('aria-hidden', 'true');
+
+        /* Gold accent bar */
+        const bar = document.createElement('div');
+        bar.className = 'accent-bar';
+        bar.id = `bar-${pi}-${si}`;
+        block.appendChild(bar);
+
+        /* Verse lines */
+        stanza.lines.forEach((line, li) => {
+          const grp = document.createElement('div');
+          grp.className = 'verse-line-group';
+
+          /* overflow mask — clip point for kinetic reveal */
+          const mask = document.createElement('span');
+          mask.className = 'line-mask';
+
+          const arEl = document.createElement('span');
+          arEl.className = 'arabic-line';
+          arEl.id = `ar-${pi}-${si}-${li}`;
+          arEl.textContent = line.ar;
+
+          mask.appendChild(arEl);
+          grp.appendChild(mask);
+
+          const enEl = document.createElement('span');
+          enEl.className = 'english-line';
+          enEl.id = `en-${pi}-${si}-${li}`;
+          enEl.textContent = line.en;
+          grp.appendChild(enEl);
+
+          block.appendChild(grp);
+        });
+
+        sContainer.appendChild(block);
+      });
+
+      panel.appendChild(sContainer);
+
+      /* ---- Tap hint ---- */
+      const tapHint = document.createElement('div');
+      tapHint.className = 'tap-hint';
+      tapHint.id = `th-${pi}`;
+      tapHint.setAttribute('aria-hidden', 'true');
+      tapHint.innerHTML = `<span class="tap-hint-dot"></span>tap to reveal`;
+      panel.appendChild(tapHint);
+
+      /* ---- Misbaha dots ---- */
+      const misbaha = document.createElement('div');
+      misbaha.className = 'misbaha';
+      misbaha.id = `msb-${pi}`;
+      misbaha.setAttribute('aria-hidden', 'true');
+      poem.stanzas.forEach((_, si) => {
+        const dot = document.createElement('div');
+        dot.className = 'misbaha-dot';
+        dot.id = `dot-${pi}-${si}`;
+        misbaha.appendChild(dot);
+      });
+      panel.appendChild(misbaha);
+
+      /* ---- Swipe hint ---- */
+      const swHint = document.createElement('div');
+      swHint.className = 'swipe-hint';
+      swHint.id = `sw-${pi}`;
+      swHint.setAttribute('aria-hidden', 'true');
+      swHint.textContent = '↑ swipe for next';
+      panel.appendChild(swHint);
+
+      /* ---- Chevron button ---- */
+      const chevron = document.createElement('button');
+      chevron.className = 'chevron-btn';
+      chevron.id = `chv-${pi}`;
+      chevron.setAttribute('aria-label', 'Next poem');
+      chevron.innerHTML =
+        `<svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="6 15 12 9 18 15"/>
+        </svg>`;
+      chevron.addEventListener('click', e => { e.stopPropagation(); goNext(); });
+      panel.appendChild(chevron);
+
+      /* ---- Panel click → reveal stanza ---- */
+      panel.addEventListener('click', e => {
+        const tog = document.getElementById('themeToggle');
+        if (tog && (e.target === tog || tog.contains(e.target))) return;
+        if (e.target === chevron || chevron.contains(e.target)) return;
+        onPanelClick(pi);
+      });
+
+      feedInner.appendChild(panel);
+    });
+
+    layoutFeed();
+  }
+
+  /* ============================================================
+     LAYOUT — sizes all panels to match viewport
+     ============================================================ */
+  function layoutFeed() {
+    const feed = document.getElementById('feed');
+    panelH = feed.clientHeight;
+    const feedInner = document.getElementById('feedInner');
+    feedInner.style.height = (panelH * POEMS.length) + 'px';
+    document.querySelectorAll('.poem-panel')
+      .forEach(p => { p.style.height = panelH + 'px'; });
+    snapToPoem(currentPoem, false);
+  }
+
+  /* ============================================================
+     NAVIGATION — snap feed to poem index
+     ============================================================ */
+  function snapToPoem(index, animate) {
+    feedY = index * panelH;
+    const fi = document.getElementById('feedInner');
+    if (!GSAP_OK || !animate || NO_MOTION) {
+      gsap && gsap.set ? gsap.set(fi, { y: -feedY }) : (fi.style.transform = `translateY(-${feedY}px)`);
+      isAnimating = false;
+    } else {
+      gsap.to(fi, {
+        y: -feedY,
+        duration: 0.82,
+        ease: 'power3.inOut',
+        onComplete: () => { isAnimating = false; }
+      });
+    }
+  }
+
+  function goToPoem(index, animate = true) {
+    if (index < 0 || index >= POEMS.length) return;
+    if (isAnimating && animate) return;
+    if (animate) isAnimating = true;
+    currentPoem = index;
+    snapToPoem(currentPoem, animate);
+  }
+
+  function goNext() { goToPoem(currentPoem + 1); }
+  function goPrev() { goToPoem(currentPoem - 1); }
+
+  /* ============================================================
+     REVEAL LOGIC
+     ============================================================ */
+  function onPanelClick(poemIdx) {
+    /* Only act on the currently visible poem */
+    if (poemIdx !== currentPoem) return;
+    const poem = POEMS[poemIdx];
+    const rev  = revealed[poemIdx];
+
+    if (rev >= poem.stanzas.length) {
+      /* All stanzas shown — go to next poem */
+      goNext();
+      return;
+    }
+
+    /* Dim all previously revealed stanzas */
+    for (let i = 0; i < rev; i++) {
+      const prev = document.getElementById(`blk-${poemIdx}-${i}`);
+      if (prev) prev.classList.add('dimmed');
+    }
+
+    /* Hide tap hint on first reveal */
+    if (rev === 0) {
+      const th = document.getElementById(`th-${poemIdx}`);
+      if (th) {
+        if (GSAP_OK && !NO_MOTION) {
+          gsap.to(th, { opacity: 0, duration: 0.4, onComplete: () => th.remove() });
+        } else { th.remove(); }
+      }
+    }
+
+    revealStanza(poemIdx, rev);
+    revealed[poemIdx]++;
+
+    /* Misbaha dot */
+    const dot = document.getElementById(`dot-${poemIdx}-${rev}`);
+    if (dot) {
+      dot.classList.add('filled');
+      if (GSAP_OK && !NO_MOTION) {
+        gsap.fromTo(dot, { scale: 2.2 }, { scale: 1, duration: 0.6, ease: 'elastic.out(1.2,0.5)' });
+      }
+    }
+
+    /* Ghost numeral update */
+    const ghost = document.getElementById(`ghost-${poemIdx}`);
+    if (ghost) {
+      ghost.textContent = AR_NUMERALS[rev] || AR_NUMERALS[0];
+      if (GSAP_OK && !NO_MOTION) {
+        gsap.to(ghost, { opacity: 1, duration: 0.55, ease: 'power2.out' });
+      } else { ghost.style.opacity = '1'; }
+    }
+
+    /* Show chevron + swipe hint when all stanzas revealed */
+    if (revealed[poemIdx] >= poem.stanzas.length) {
+      const chv = document.getElementById(`chv-${poemIdx}`);
+      const swh = document.getElementById(`sw-${poemIdx}`);
+      if (chv) chv.classList.add('visible');
+      if (swh) swh.classList.add('visible');
+    }
+  }
+
+  /* ============================================================
+     KINETIC STANZA REVEAL — the editorial masthead animation
+     ============================================================ */
+  function revealStanza(poemIdx, si) {
+    const block  = document.getElementById(`blk-${poemIdx}-${si}`);
+    const bar    = document.getElementById(`bar-${poemIdx}-${si}`);
+    if (!block) return;
+
+    block.setAttribute('aria-hidden', 'false');
+
+    const arLines = Array.from(block.querySelectorAll('.arabic-line'));
+    const enLines = Array.from(block.querySelectorAll('.english-line'));
+
+    /* --- Reduced motion path --- */
+    if (NO_MOTION) {
+      block.style.opacity = '1';
+      arLines.forEach(l => l.style.opacity = '1');
+      enLines.forEach(l => l.style.opacity = '0.55');
+      if (bar) bar.style.height = '100%';
+      return;
+    }
+
+    /* --- No GSAP fallback --- */
+    if (!GSAP_OK) {
+      block.style.transition = 'opacity 0.5s ease';
+      block.style.opacity = '1';
+      enLines.forEach(l => { l.style.transition = 'opacity 0.5s 0.3s ease'; l.style.opacity = '0.55'; });
+      return;
+    }
+
+    /* Make the container visible (children will animate in) */
+    gsap.set(block, { opacity: 1 });
+
+    /* Gold accent bar slides in from top */
+    if (bar) {
+      gsap.fromTo(bar,
+        { height: '0%', opacity: 0 },
+        { height: '100%', opacity: 1, duration: 0.65, ease: 'power3.out' }
+      );
+    }
+
+    const tl = gsap.timeline();
+    const STAGGER = 0.10;
+
+    /* Animate each Arabic line from behind its mask (y:110% -> 0) */
+    arLines.forEach((lineEl, li) => {
+      tl.fromTo(
+        lineEl,
+        { y: '110%', scale: 1.06, opacity: 0 },
+        { y: '0%',   scale: 1,    opacity: 1,
+          duration: 0.75,
+          ease: 'power4.out',
+          clearProps: 'transform'
+        },
+        li * STAGGER
+      );
+
+      /* English translation fades in slightly after its Arabic */
+      const enEl = enLines[li];
+      if (enEl) {
+        tl.to(enEl,
+          { opacity: 0.55, duration: 0.4, ease: 'power2.out' },
+          li * STAGGER + 0.38
+        );
+      }
+    });
+
+    /* Word-level golden shimmer on the FIRST Arabic line only */
+    const firstLine = arLines[0];
+    if (firstLine && SPLIT_OK) {
+      tl.call(() => {
+        try {
+          /* Split by words — flash each word gold then back */
+          const split = new SplitText(firstLine, { type: 'words' });
+          const shimmerColor = '#e2c67a';
+          gsap.fromTo(
+            split.words,
+            { color: 'inherit' },
+            {
+              color: shimmerColor,
+              duration: 0.07,
+              stagger: { each: 0.042, from: 'start' },
+              yoyo: true,
+              repeat: 1,
+              ease: 'none',
+              onComplete: () => split.revert()
+            }
+          );
+        } catch (e) { /* SplitText not available, skip shimmer */ }
+      }, null, STAGGER * arLines.length + 0.08);
+    }
+  }
+
+  /* ============================================================
+     THEME TOGGLE
+     ============================================================ */
+  const themeToggle = document.getElementById('themeToggle');
+  const iconMoon    = document.getElementById('iconMoon');
+  const iconSun     = document.getElementById('iconSun');
+  let isDark = true;
+
+  themeToggle.addEventListener('click', () => {
+    isDark = !isDark;
+    document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+    themeToggle.setAttribute('aria-pressed', String(!isDark));
+    iconMoon.style.display = isDark  ? '' : 'none';
+    iconSun.style.display  = isDark  ? 'none' : '';
+  });
+
+  /* ============================================================
+     KEYBOARD NAVIGATION
+     ============================================================ */
+  document.addEventListener('keydown', e => {
+    switch (e.key) {
+      case 'ArrowDown':
+        e.preventDefault();
+        onPanelClick(currentPoem);
+        break;
+      case ' ':
+        /* Space: if focused on a button let it through; else reveal */
+        if (document.activeElement && document.activeElement.tagName === 'BUTTON') break;
+        e.preventDefault();
+        onPanelClick(currentPoem);
+        break;
+      case 'ArrowUp':
+        e.preventDefault();
+        goPrev();
+        break;
+    }
+  });
+
+  /* ============================================================
+     TOUCH / SWIPE
+     ============================================================ */
+  let tStartY = 0, tDelta = 0;
+
+  document.addEventListener('touchstart', e => {
+    tStartY = e.touches[0].clientY;
+    tDelta  = 0;
+  }, { passive: true });
+
+  document.addEventListener('touchmove', e => {
+    tDelta = e.touches[0].clientY - tStartY;
+  }, { passive: true });
+
+  document.addEventListener('touchend', () => {
+    const abs = Math.abs(tDelta);
+    if (abs > 50) {
+      if (tDelta < 0) {
+        /* swipe up: reveal stanza or go next */
+        onPanelClick(currentPoem);
+      } else {
+        goPrev();
+      }
+    }
+    tDelta = 0;
+  }, { passive: true });
+
+  /* ============================================================
+     WHEEL / TRACKPAD
+     ============================================================ */
+  let wheelAcc = 0, wheelCooldown = false;
+
+  document.addEventListener('wheel', e => {
+    e.preventDefault();
+    if (wheelCooldown) return;
+    wheelAcc += e.deltaY;
+
+    if (Math.abs(wheelAcc) > 80) {
+      wheelCooldown = true;
+      if (wheelAcc > 0) {
+        onPanelClick(currentPoem);
+      } else {
+        goPrev();
+      }
+      wheelAcc = 0;
+      setTimeout(() => { wheelCooldown = false; }, 350);
+    }
+  }, { passive: false });
+
+  /* ============================================================
+     RESIZE
+     ============================================================ */
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(layoutFeed, 160);
+  });
+
+  /* ============================================================
+     INIT
+     ============================================================ */
+  buildFeed();
+  /* Re-layout after fonts settle */
+  setTimeout(layoutFeed, 120);
+
+  </script>
+</body>
+</html>

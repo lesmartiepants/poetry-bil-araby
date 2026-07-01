@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { TOUR_STEPS } from '../src/constants/tourSteps.js';
+import { FEATURES } from '../src/constants/features.js';
 
 /**
  * Walkthrough (tour) smoke test — the anti-drift guard.
@@ -33,7 +34,8 @@ const MOCK_POEM = {
   arabic: 'على قَدْرِ أهلِ العَزمِ تأتي العَزائِمُ\nوتأتي على قَدْرِ الكِرامِ المَكارِمُ',
   english: '',
   tags: ['حكمة'],
-  cachedTranslation: 'By the measure of the resolute come great deeds\nAnd by the measure of the noble come generous acts',
+  cachedTranslation:
+    'By the measure of the resolute come great deeds\nAnd by the measure of the noble come generous acts',
   isFromDatabase: true,
 };
 
@@ -42,10 +44,18 @@ async function setupMocks(page) {
     r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(MOCK_POEM) })
   );
   await page.route('**/api/poets', (r) =>
-    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([{ name: 'أبو الطيب المتنبي' }]) })
+    r.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify([{ name: 'أبو الطيب المتنبي' }]),
+    })
   );
   await page.route('**/api/health', (r) =>
-    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ status: 'ok', totalPoems: 84329 }) })
+    r.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ status: 'ok', totalPoems: 84329 }),
+    })
   );
   // Live TTS fails fast so audio never sticks in a "generating" (disabled) state
   // — keeps the Listen/Pause controls clickable for the walk.
@@ -57,7 +67,17 @@ async function setupMocks(page) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        candidates: [{ content: { parts: [{ text: '**Poetic Translation**\nMock\n\n**In-Depth Analysis**\nMock\n\n**About the Poet**\nMock' }] } }],
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: '**Poetic Translation**\nMock\n\n**In-Depth Analysis**\nMock\n\n**About the Poet**\nMock',
+                },
+              ],
+            },
+          },
+        ],
       }),
     })
   );
@@ -72,6 +92,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('every step anchors to a real element and the tour walks to completion', async ({ page }) => {
+  // The tour is disabled (FEATURES.tour = false) until its steps are re-wired to the
+  // redesigned reader nav; its launcher never mounts, so skip this end-to-end walk until then.
+  test.skip(!FEATURES.tour, 'tour feature disabled — re-wire steps to the redesigned nav first');
   await setupMocks(page);
   await page.goto('/?tour=1');
   await page.waitForSelector('[dir="rtl"]', { timeout: 15000 });
@@ -84,7 +107,9 @@ test('every step anchors to a real element and the tour walks to completion', as
     const isLast = i === STEPS.length - 1;
 
     // 1. We're really on this step.
-    await expect(card.getByText(step.title, { exact: false }).first()).toBeVisible({ timeout: 8000 });
+    await expect(card.getByText(step.title, { exact: false }).first()).toBeVisible({
+      timeout: 8000,
+    });
 
     // 2. ANTI-DRIFT: the step's target must resolve to a real, visible element.
     if (step.target) {

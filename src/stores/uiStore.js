@@ -53,7 +53,7 @@ export const CATEGORY_MAP = {
 const initialState = {
   darkMode: true,
   font: 'Amiri',
-  textSize: 2, // 0=S, 1=M, 2=L, 3=XL
+  textSize: 1, // 0=S, 1=M, 2=L, 3=XL — default Medium so the reader matches the prototype size exactly
   showTranslation: true,
   showTransliteration: false,
   showDebugLogs: FEATURES.debug,
@@ -62,6 +62,8 @@ const initialState = {
   liveVoice: loadLiveVoice(), // selected speaking voice, persisted (default DEFAULT_VOICE)
   liveTemperature: 0,
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
+  actionWeight: 'bold', // reader action buttons: 'quiet' | 'balanced' | 'bold' (molten) — visual intensity
+  insightsMode: 'inline', // 'inline' = end-of-poem expand | 'drawer' = Vaul InsightOverlay (A/B test)
   tourActive: false, // walkthrough running — overlays suppress outside-dismiss so the tour drives them
   logs: [],
   headerOpacity: 0,
@@ -99,6 +101,10 @@ export const useUIStore = create((set, get) => ({
   },
   setLiveTemperature: (liveTemperature) => set({ liveTemperature }),
   setHighlightStyle: (highlightStyle) => set({ highlightStyle }),
+  setActionWeight: (actionWeight) => set({ actionWeight }),
+  setInsightsMode: (insightsMode) => set({ insightsMode }),
+  toggleInsightsMode: () =>
+    set((s) => ({ insightsMode: s.insightsMode === 'inline' ? 'drawer' : 'inline' })),
   setTourActive: (tourActive) => set({ tourActive }),
   setDarkMode: (darkMode) => set({ darkMode }),
   toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),

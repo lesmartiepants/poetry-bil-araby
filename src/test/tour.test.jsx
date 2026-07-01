@@ -81,7 +81,15 @@ describe('SpotlightTour engine', () => {
 
   it('starts at initialStep (resume) and reports step changes', async () => {
     const onStepChange = vi.fn();
-    render(<SpotlightTour steps={TOUR_STEPS} initialStep={1} onStepChange={onStepChange} onDismiss={vi.fn()} onComplete={vi.fn()} />);
+    render(
+      <SpotlightTour
+        steps={TOUR_STEPS}
+        initialStep={1}
+        onStepChange={onStepChange}
+        onDismiss={vi.fn()}
+        onComplete={vi.fn()}
+      />
+    );
     expect(screen.getByText('Listen to the poem')).toBeInTheDocument(); // step 1, not welcome
     await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
   });

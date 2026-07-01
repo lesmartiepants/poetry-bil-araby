@@ -312,6 +312,12 @@ const MysticalConsultationEffect = memo(function MysticalConsultationEffect({
         mixBlendMode: 'screen',
         transform: `translateY(${-scrollY * SPARKLE_PARALLAX_FACTOR}px)`,
         willChange: 'transform',
+        // Fade the particles upward so they stay out of the way of the reading area: full at the
+        // bottom edge, dropping quickly to ~20% by the scrub bar (~16% up) and ~10% by the header.
+        WebkitMaskImage:
+          'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.2) 16%, rgba(0,0,0,0.1) 90%)',
+        maskImage:
+          'linear-gradient(to top, rgba(0,0,0,1) 0%, rgba(0,0,0,0.2) 16%, rgba(0,0,0,0.1) 90%)',
       }}
     />
   );

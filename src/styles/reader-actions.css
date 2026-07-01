@@ -1,0 +1,379 @@
+/* Reader action buttons — "Molten Gold × Option-2 transport"
+   Ported from the design-sprint final mockup. Scoped under .reader-actions so the generic
+   class names don't collide with the rest of the app; keyframes are prefixed `ra-`. */
+
+.reader-actions {
+  --ra-gold-core: #c5a059;
+  --ra-gold-light: #d4b463;
+  --ra-gold-bright: #e8cc7a;
+  --ra-gradient-molten: linear-gradient(
+    135deg,
+    #a8853d 0%,
+    #c5a059 22%,
+    #e0c97a 38%,
+    #d4b463 48%,
+    #b8924a 62%,
+    #d8bc6e 78%,
+    #c5a059 100%
+  );
+  --ra-gradient-cooled: linear-gradient(
+    135deg,
+    rgba(160, 128, 60, 0.08) 0%,
+    rgba(197, 160, 89, 0.05) 100%
+  );
+  --ra-gradient-sheen: linear-gradient(
+    105deg,
+    transparent 0%,
+    transparent 28%,
+    rgba(255, 248, 220, 0.28) 42%,
+    rgba(255, 252, 235, 0.18) 50%,
+    transparent 62%,
+    transparent 100%
+  );
+  --ra-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ra-ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+  --ra-ease-molten: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ra-dur-hover: 0.18s;
+  --ra-dur-press: 0.1s;
+  --ra-dur-sheen: 2.8s;
+  --ra-btn-height: 44px;
+  --ra-disc: 40px;
+
+  display: flex;
+  flex-direction: row;
+  direction: ltr;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+/* ── button base ── */
+.ra-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ra-btn-height);
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  font-family: 'Reem Kufi', system-ui, sans-serif;
+  font-size: clamp(0.68rem, 1.9vw, 0.78rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0 18px;
+  white-space: nowrap;
+  overflow: hidden;
+  flex: 1 1 0;
+  min-width: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+  will-change: transform;
+  transform: translateZ(0);
+}
+.ra-btn:disabled {
+  cursor: default;
+  opacity: 0.42;
+  filter: saturate(0.7);
+}
+
+/* ── primary action button — three selectable weights ──
+   The weight is chosen in the Aa menu (uiStore.actionWeight) and applied via the
+   data-weight attribute on .reader-actions. Default = "bold" (molten gold).
+     • bold     — solid molten-gold fill, dark label (loudest / most premium)
+     • balanced — soft gold-tint fill + ring + faint glow
+     • quiet    — transparent, thin brighter-gold ring (most editorial) */
+.ra-btn-primary {
+  transition:
+    transform var(--ra-dur-hover) var(--ra-ease-out-expo),
+    box-shadow var(--ra-dur-hover) var(--ra-ease-out-quart),
+    background var(--ra-dur-hover) var(--ra-ease-out-quart);
+}
+.ra-btn-primary:not(:disabled):active {
+  transform: scale(0.985);
+  transition-duration: var(--ra-dur-press);
+}
+
+/* — Weight: BOLD (molten, default) — */
+.reader-actions[data-weight='bold'] .ra-btn-primary {
+  background: var(--ra-gradient-molten);
+  color: #1a1200;
+  font-weight: 600;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.25) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset,
+    0 4px 16px rgba(197, 160, 89, 0.28),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+.reader-actions[data-weight='bold'] .ra-btn-primary::after {
+  content: '';
+  position: absolute;
+  top: 1px;
+  left: 12%;
+  right: 12%;
+  height: 40%;
+  border-radius: 999px 999px 60% 60%;
+  background: linear-gradient(to bottom, rgba(255, 252, 230, 0.22), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+.reader-actions[data-weight='bold'] .ra-btn-primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.3) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset,
+    0 6px 22px rgba(197, 160, 89, 0.36),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+/* — Weight: BALANCED — */
+.reader-actions[data-weight='balanced'] .ra-btn-primary {
+  background: rgba(197, 160, 89, 0.16);
+  color: var(--ra-gold-bright);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.55) inset,
+    0 1px 0 rgba(255, 248, 210, 0.06) inset,
+    0 2px 10px rgba(197, 160, 89, 0.12);
+}
+.reader-actions[data-weight='balanced'] .ra-btn-primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  background: rgba(197, 160, 89, 0.22);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.7) inset,
+    0 1px 0 rgba(255, 248, 210, 0.08) inset,
+    0 4px 16px rgba(197, 160, 89, 0.2);
+}
+.reader-actions[data-weight='balanced'] .ra-btn-primary:not(:disabled):active {
+  background: rgba(197, 160, 89, 0.12);
+}
+
+/* — Weight: QUIET — */
+.reader-actions[data-weight='quiet'] .ra-btn-primary {
+  background: transparent;
+  color: var(--ra-gold-bright);
+  box-shadow: 0 0 0 1.5px rgba(197, 160, 89, 0.6) inset;
+}
+.reader-actions[data-weight='quiet'] .ra-btn-primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  background: rgba(197, 160, 89, 0.08);
+  box-shadow: 0 0 0 1.5px rgba(197, 160, 89, 0.8) inset;
+}
+
+/* ── secondary — cooled / oxidised ── */
+.ra-btn-secondary {
+  background: var(--ra-gradient-cooled);
+  color: var(--ra-gold-light);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.28) inset,
+    0 1px 0 rgba(255, 248, 210, 0.05) inset,
+    0 2px 8px rgba(0, 0, 0, 0.2);
+  transition:
+    transform var(--ra-dur-hover) var(--ra-ease-out-expo),
+    box-shadow var(--ra-dur-hover) var(--ra-ease-out-quart),
+    background var(--ra-dur-hover) var(--ra-ease-out-quart);
+}
+.ra-btn-secondary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(197, 160, 89, 0.3), transparent);
+  pointer-events: none;
+}
+.ra-btn-secondary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.45) inset,
+    0 1px 0 rgba(255, 248, 210, 0.07) inset,
+    0 4px 14px rgba(0, 0, 0, 0.28),
+    0 0 12px rgba(197, 160, 89, 0.08);
+}
+.ra-btn-secondary:not(:disabled):active {
+  transform: scale(0.985);
+  transition-duration: var(--ra-dur-press);
+}
+
+.ra-label {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.ra-label svg {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+/* ── transport cluster (replaces left pill) ── */
+.ra-transport {
+  flex: 1;
+  height: var(--ra-btn-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  border-radius: 999px;
+  background: var(--ra-gradient-cooled);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.28) inset,
+    0 1px 0 rgba(255, 248, 210, 0.05) inset,
+    0 2px 8px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+.ra-transport::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(197, 160, 89, 0.3), transparent);
+  pointer-events: none;
+  z-index: 0;
+}
+.ra-disc {
+  position: relative;
+  z-index: 1;
+  width: var(--ra-disc);
+  height: var(--ra-disc);
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  will-change: transform;
+}
+.ra-disc svg {
+  width: 18px;
+  height: 18px;
+}
+.ra-disc-ghost {
+  color: rgba(197, 160, 89, 0.65);
+  transition:
+    transform var(--ra-dur-hover) var(--ra-ease-out-expo),
+    color var(--ra-dur-hover) var(--ra-ease-out-quart),
+    background var(--ra-dur-hover) var(--ra-ease-out-quart);
+}
+.ra-disc-ghost:hover {
+  transform: scale(1.14);
+  color: var(--ra-gold-bright);
+  background: rgba(197, 160, 89, 0.07);
+}
+.ra-disc-ghost:active {
+  transform: scale(0.86);
+  transition-duration: var(--ra-dur-press);
+  color: var(--ra-gold-core);
+}
+.ra-disc-play {
+  width: calc(var(--ra-disc) + 2px);
+  height: calc(var(--ra-disc) + 2px);
+  transition:
+    transform var(--ra-dur-hover) var(--ra-ease-out-expo),
+    box-shadow var(--ra-dur-hover) var(--ra-ease-out-quart),
+    background var(--ra-dur-hover) var(--ra-ease-out-quart);
+}
+.ra-disc-play svg {
+  position: relative;
+  z-index: 3;
+  width: 17px;
+  height: 17px;
+}
+.ra-disc-play:active {
+  animation: ra-molten-press var(--ra-dur-press) var(--ra-ease-molten) forwards;
+}
+
+/* — disc weights, mirroring the primary button — */
+.reader-actions[data-weight='bold'] .ra-disc-play {
+  background: var(--ra-gradient-molten);
+  color: #1a1200;
+  box-shadow:
+    0 1px 0 rgba(255, 248, 210, 0.3) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.3) inset,
+    0 3px 12px rgba(197, 160, 89, 0.3),
+    0 2px 5px rgba(0, 0, 0, 0.3);
+}
+.reader-actions[data-weight='bold'] .ra-disc-play:hover {
+  transform: translateY(-1px) scale(1.05);
+}
+.reader-actions[data-weight='balanced'] .ra-disc-play {
+  background: rgba(197, 160, 89, 0.18);
+  color: var(--ra-gold-bright);
+  box-shadow:
+    0 0 0 1px rgba(197, 160, 89, 0.6) inset,
+    0 1px 0 rgba(255, 248, 210, 0.08) inset,
+    0 2px 10px rgba(197, 160, 89, 0.15);
+}
+.reader-actions[data-weight='balanced'] .ra-disc-play:hover {
+  transform: translateY(-1px) scale(1.05);
+  background: rgba(197, 160, 89, 0.26);
+}
+.reader-actions[data-weight='quiet'] .ra-disc-play {
+  background: transparent;
+  color: var(--ra-gold-bright);
+  box-shadow: 0 0 0 1.5px rgba(197, 160, 89, 0.6) inset;
+}
+.reader-actions[data-weight='quiet'] .ra-disc-play:hover {
+  transform: translateY(-1px) scale(1.05);
+  background: rgba(197, 160, 89, 0.08);
+}
+.ra-spin {
+  animation: ra-spin 0.9s linear infinite;
+}
+
+@keyframes ra-molten-press {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  30% {
+    transform: translateY(1.5px) scale(0.975, 0.97);
+  }
+  65% {
+    transform: translateY(1px) scale(0.982, 0.978);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+}
+@keyframes ra-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ra-btn-primary::before,
+  .ra-disc-play::before {
+    animation: none;
+  }
+  .ra-btn-primary:active,
+  .ra-disc-play:active {
+    animation: none;
+  }
+}
+
+/* ── light-mode foreground pattern ──
+   Gold text/icons read poorly on the pale light background, so use the dark ink (the same warm
+   near-black as the bold molten label) for the Listen (secondary) button, the quieter primary
+   weights, and the transport discs — matching the bottom-nav light pattern. The bold/molten weight
+   already uses a dark label, so it's left untouched. */
+.light .reader-actions .ra-btn-secondary,
+.light .reader-actions[data-weight='balanced'] .ra-btn-primary,
+.light .reader-actions[data-weight='quiet'] .ra-btn-primary,
+.light .reader-actions[data-weight='balanced'] .ra-disc-play,
+.light .reader-actions[data-weight='quiet'] .ra-disc-play,
+.light .reader-actions .ra-disc-ghost {
+  color: #1a1200;
+}

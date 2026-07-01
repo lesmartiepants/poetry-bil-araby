@@ -46,7 +46,10 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
   const steps = useMemo(
-    () => TOUR_STEPS.filter((s) => !s.when || (WHEN[s.when] ? WHEN[s.when]({ user, savedCount }) : true)),
+    () =>
+      TOUR_STEPS.filter(
+        (s) => !s.when || (WHEN[s.when] ? WHEN[s.when]({ user, savedCount }) : true)
+      ),
     [user, savedCount]
   );
 

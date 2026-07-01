@@ -9,13 +9,12 @@ import {
   ChevronDown,
   Loader2,
   Feather,
-  Lightbulb,
   Paintbrush,
   Check,
   X,
-  Rabbit,
   Heart,
-  Mic,
+  LibraryBig,
+  ThumbsDown,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -92,6 +91,8 @@ import {
   pauseOffset,
   playbackStartTime,
   isSeeking,
+  setWindowedReveal,
+  applyHighlightsOnce,
 } from './hooks/useTTSHighlight.js';
 import { useIdleTimer } from './hooks/useIdleTimer.js';
 import DebugPanel from './components/DebugPanel.jsx';
@@ -104,10 +105,11 @@ import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
-import VerticalSidebar from './components/VerticalSidebar.jsx';
+import PoemFeed from './components/feed/PoemFeed.jsx';
+import AccountMenu from './components/AccountMenu.jsx';
+import TourLauncher from './components/tour/TourLauncher.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
-import TourLauncher from './components/tour/TourLauncher.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
 import PlayControlsStrip from './components/PlayControlsStrip.jsx';
@@ -171,6 +173,9 @@ export default function DiwanApp() {
   // the settings controls (Aa / sun icon), and a gentle floating listen button.
   // Only deliberate taps/clicks wake the chrome back — scroll is ignored.
   const { isIdle } = useIdleTimer(2_000, [listenButtonIdleRef, themeToggleRef, textSettingsRef]);
+  // In vertical-feed mode controls must stay visible: every stanza tap resets the idle timer
+  // causing controls to flash. Disable idle-hide in vertical feed mode.
+  const effectivelyIdle = isIdle && !FEATURES.verticalFeed;
 
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
@@ -234,6 +239,15 @@ export default function DiwanApp() {
   const liveVoice = useUIStore((s) => s.liveVoice);
   const setLiveVoice = useUIStore((s) => s.setLiveVoice);
   const highlightStyle = useUIStore((s) => s.highlightStyle);
+  const insightsMode = useUIStore((s) => s.insightsMode);
+  const setInsightsMode = useUIStore((s) => s.setInsightsMode);
+  // Sparkler reader: tell useTTSHighlight to skip page-scroll (the 4-line window scrolls itself);
+  // allow ?insightsMode=inline|drawer to flip the end-state insight surface for A/B testing.
+  useEffect(() => {
+    setWindowedReveal(FEATURES.verticalFeed);
+    const m = new URLSearchParams(window.location.search).get('insightsMode');
+    if (m === 'inline' || m === 'drawer') setInsightsMode(m);
+  }, [setInsightsMode]);
   const hasAutoLoaded = useRef(false);
   const longPressTimer = useRef(null);
   const pendingSaveHandled = useRef(false);
@@ -271,6 +285,10 @@ export default function DiwanApp() {
   const showShareCard = useModalStore((s) => s.shareCard);
 
   const theme = darkMode ? THEME.dark : THEME.light;
+  // Light-mode control pattern: foreground icons/labels in the bottom nav, account menu and dislike
+  // use a dark ink (matching the Next-Verse molten label) instead of gold, for legibility on the
+  // pale background. In dark mode they stay gold.
+  const ink = darkMode ? GOLD.gold : '#1a1200';
 
   const currentFontClass = useMemo(() => {
     const font = FONTS.find((f) => f.id === currentFont);
@@ -340,32 +358,8 @@ export default function DiwanApp() {
     return () => clearTimeout(timer);
   }, [current?.id, user]);
 
-  // Show a loading toast while the translation is streaming, dismiss when done
-  const prevIsInterpretingRef = useRef(false);
-  useEffect(() => {
-    const prev = prevIsInterpretingRef.current;
-    prevIsInterpretingRef.current = isInterpreting;
-    if (!prev && isInterpreting) {
-      toast.loading('Translating poem…', {
-        id: 'translation-progress',
-        duration: Infinity,
-        icon: (
-          <motion.div
-            animate={{ y: [0, -5, 0] }}
-            transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
-          >
-            <Rabbit size={16} />
-          </motion.div>
-        ),
-      });
-    } else if (prev && !isInterpreting) {
-      if (interpretation) {
-        toast.success('Translation ready', { id: 'translation-progress', duration: 2500 });
-      } else {
-        toast.dismiss('translation-progress');
-      }
-    }
-  }, [isInterpreting]);
+  // Translation progress toast intentionally removed: with the live API + the header intro
+  // animation, the translation is ready by the time the reader looks for it — the toast was noise.
 
   useEffect(() => {
     if (selectedCategory !== 'All') {
@@ -937,6 +931,42 @@ export default function DiwanApp() {
   const togglePlay = () =>
     togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track });
 
+  // Seek the recitation to a given second offset (ported from PlayControlsStrip). Used by the
+  // reader's transport prev/next to jump between verses while listening.
+  const seekToOffset = (offset) => {
+    const { player, isPlaying: wasPlaying, setPlaying } = useAudioStore.getState();
+    if (!player) return;
+    isSeeking.value = true;
+    if (wasPlaying) setPlaying(true);
+    try {
+      player.stop();
+    } catch {
+      /* already stopped */
+    }
+    if (wasPlaying) {
+      startPlayer(player, offset);
+    } else {
+      pauseOffset.value = offset;
+      playbackStartTime.value = Date.now() / 1000;
+      applyHighlightsOnce(
+        offset,
+        wordRefs,
+        wordOffsets,
+        wordTimings,
+        effectiveDuration,
+        setCurrentVerseIndex
+      );
+    }
+  };
+  const handlePrevVerse = () => {
+    const idx = useAudioStore.getState().player ? currentVerseIndex : 0;
+    seekToOffset(idx > 0 ? verseStartTimes[idx - 1] : 0);
+  };
+  const handleNextVerse = () => {
+    const next = currentVerseIndex + 1;
+    if (next < verseStartTimes.length) seekToOffset(verseStartTimes[next]);
+  };
+
   // Cycle the reading voice (the pill next to Listen). Voice is part of the audio
   // cache key, so playback regenerates in the new voice. If audio is currently
   // playing or generating, stop it and restart in the new voice so the change is
@@ -996,36 +1026,8 @@ export default function DiwanApp() {
     } catch {} // silent fail — prefetch is best-effort
   }
 
-  const handleCopy = async () => {
-    addLog(
-      'UI Event',
-      `📋 Copy button clicked | Poem: ${displayedPoem?.poet} - ${displayedPoem?.title}`,
-      'user'
-    );
-
-    const englishText = insightParts?.poeticTranslation || displayedPoem?.english || '';
-    const textToCopy = `${displayedPoem?.titleArabic || ''}\n${displayedPoem?.poetArabic || ''}\n\n${displayedPoem?.arabic || ''}\n\n---\n\n${displayedPoem?.title || ''}\n${displayedPoem?.poet || ''}\n\n${englishText}`;
-    const copyChars = textToCopy.length;
-    const arabicChars = displayedPoem?.arabic?.length || 0;
-    const englishChars = englishText.length;
-
-    try {
-      await navigator.clipboard.writeText(textToCopy);
-      track('poem_copied', { poet: displayedPoem?.poet });
-      if (displayedPoem?.id) {
-        emitEvent(displayedPoem?.id, 'copy');
-        addLog('Event', `→ copy event emitted | poem_id: ${displayedPoem?.id}`, 'info');
-      }
-      useModalStore.getState().showToastTimed('copy', 2000);
-      addLog(
-        'Copy',
-        `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`,
-        'success'
-      );
-    } catch (e) {
-      addLog('Copy Error', e.message, 'error');
-    }
-  };
+  // handleCopy removed — the copy action is retired (FEATURES.copy = false) and its sidebar icon
+  // no longer exists.
 
   const handleShare = async () => {
     addLog('UI Event', 'Share button clicked', 'user');
@@ -1429,11 +1431,11 @@ export default function DiwanApp() {
       {/* Corner wordmark — top-right, fades out on scroll and when idle */}
       <motion.header
         animate={{
-          opacity: isIdle ? 0 : BRAND_HEADER.containerOpacity * (1 - headerOpacity),
-          y: isIdle ? -14 : 0,
+          opacity: effectivelyIdle ? 0 : BRAND_HEADER.containerOpacity * (1 - headerOpacity),
+          y: effectivelyIdle ? -14 : 0,
         }}
         transition={
-          isIdle
+          effectivelyIdle
             ? { duration: 0.7, ease: [0.16, 1, 0.3, 1] }
             : { type: 'spring', stiffness: 300, damping: 28, mass: 0.8 }
         }
@@ -1494,207 +1496,332 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-6 pr-14 md:px-8 md:pr-0 pb-28 pt-10 md:pt-12"
+            className={`flex-1 ${FEATURES.verticalFeed ? 'overflow-y-hidden' : 'overflow-y-auto'} overflow-x-hidden custom-scrollbar relative z-10 px-6 md:px-8 ${FEATURES.verticalFeed ? 'pt-2 pb-24' : 'pb-28 pt-10 md:pt-12'}`}
             style={{ overscrollBehaviorX: 'none' }}
           >
             {/* Top scroll gradient removed — header is now a subtle corner wordmark */}
             <div className="flex flex-col items-center pt-2">
               <div className="w-full max-w-4xl flex flex-col items-center">
-                {/* Poem meta: title (dominant) → poet → English combined → vertical separator */}
-                <div className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}>
-                  <div className="flex flex-col items-center justify-center w-full" dir="rtl">
-                    {/* Line 1: Poem title */}
-                    <div
-                      className="text-center"
-                      style={{
-                        ...POEM_META.title,
-                        fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
-                        textShadow: darkMode
-                          ? POEM_META.titleShadow.dark
-                          : POEM_META.titleShadow.light,
-                      }}
-                    >
-                      {displayedPoem?.titleArabic || displayedPoem?.title}
-                    </div>
-                    {/* Line 2: Poet name */}
-                    <div
-                      className="text-center"
-                      style={{
-                        ...POEM_META.poet,
-                        fontSize: `calc(${POEM_META.poet.fontSize} * ${textScale})`,
-                        color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
-                      }}
-                    >
-                      {displayedPoem?.poetArabic || displayedPoem?.poet}
-                    </div>
-                    {/* Line 3: English title and poet — two distinct lines */}
-                    {(displayedPoem?.poet || displayedPoem?.title) && (
-                      <>
-                        <div dir="ltr" style={POEM_META.separator} />
-                        {displayedPoem?.title && (
-                          <div
-                            className="text-center"
-                            dir="ltr"
-                            style={{
-                              fontFamily: "'Bodoni Moda', serif",
-                              fontSize: `calc(clamp(0.9rem, 1.8vw, 1.1rem) * ${textScale})`,
-                              color: darkMode ? 'var(--gold)' : 'var(--gold)',
-                              fontWeight: 500,
-                              letterSpacing: '0.02em',
-                            }}
-                          >
-                            {displayedPoem.title}
-                          </div>
-                        )}
-                        {displayedPoem?.poet && (
-                          <div
-                            className="text-center mt-0.5"
-                            dir="ltr"
-                            style={{
-                              fontFamily: "'Forum', serif",
-                              fontSize: `calc(clamp(0.75rem, 1.4vw, 0.9rem) * ${textScale})`,
-                              color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
-                              fontWeight: 400,
-                              letterSpacing: '0.03em',
-                            }}
-                          >
-                            {displayedPoem.poet}
-                          </div>
-                        )}
-                      </>
-                    )}
-                    {/* Carousel dot indicators — positioned under the English poet name */}
-                    {carouselPoems.length > 1 && (
-                      <div className="flex justify-center gap-1.5 mt-3" dir="ltr">
-                        {(() => {
-                          const maxDots = 5;
-                          const total = carouselPoems.length;
-                          const start = Math.max(0, Math.min(carouselIndex - 2, total - maxDots));
-                          const end = Math.min(start + maxDots, total);
-                          return carouselPoems.slice(start, end).map((_, i) => {
-                            const realIdx = start + i;
-                            return (
-                              <button
-                                key={realIdx}
-                                onClick={() => carouselRef.current?.scrollTo(realIdx)}
-                                aria-label={`Go to poem ${realIdx + 1}`}
-                                style={{
-                                  width: realIdx === carouselIndex ? 16 : 6,
-                                  height: 6,
-                                  borderRadius: 3,
-                                  background:
-                                    realIdx === carouselIndex
-                                      ? darkMode
-                                        ? 'rgba(197,160,89,1)'
-                                        : 'rgba(140,100,30,0.85)'
-                                      : darkMode
-                                        ? 'rgba(197,160,89,0.5)'
-                                        : 'rgba(140,100,30,0.4)',
-                                  transition: 'all 0.25s ease',
-                                  border: 'none',
-                                  padding: 0,
-                                  cursor: 'pointer',
-                                }}
-                              />
-                            );
-                          });
-                        })()}
+                {/* Poem meta — legacy carousel only. In the vertical feed each PoemReader renders its
+                    own per-poem title intro, so this whole block (incl. old carousel dots) is hidden. */}
+                {!FEATURES.verticalFeed && (
+                  <div
+                    className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}
+                  >
+                    <div className="flex flex-col items-center justify-center w-full" dir="rtl">
+                      {/* Line 1: Poem title */}
+                      <div
+                        className="text-center"
+                        style={{
+                          ...POEM_META.title,
+                          fontSize: `calc(${POEM_META.title.fontSize} * ${textScale})`,
+                          textShadow: darkMode
+                            ? POEM_META.titleShadow.dark
+                            : POEM_META.titleShadow.light,
+                        }}
+                      >
+                        {displayedPoem?.titleArabic || displayedPoem?.title}
                       </div>
-                    )}
-                    {/* Bottom spacing before verses */}
-                    <div style={{ height: '0.5rem' }} />
+                      {/* Line 2: Poet name */}
+                      <div
+                        className="text-center"
+                        style={{
+                          ...POEM_META.poet,
+                          fontSize: `calc(${POEM_META.poet.fontSize} * ${textScale})`,
+                          color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
+                        }}
+                      >
+                        {displayedPoem?.poetArabic || displayedPoem?.poet}
+                      </div>
+                      {/* Line 3: English title and poet — two distinct lines */}
+                      {(displayedPoem?.poet || displayedPoem?.title) && (
+                        <>
+                          <div dir="ltr" style={POEM_META.separator} />
+                          {displayedPoem?.title && (
+                            <div
+                              className="text-center"
+                              dir="ltr"
+                              style={{
+                                fontFamily: "'Bodoni Moda', serif",
+                                fontSize: `calc(clamp(0.9rem, 1.8vw, 1.1rem) * ${textScale})`,
+                                color: darkMode ? 'var(--gold)' : 'var(--gold)',
+                                fontWeight: 500,
+                                letterSpacing: '0.02em',
+                              }}
+                            >
+                              {displayedPoem.title}
+                            </div>
+                          )}
+                          {displayedPoem?.poet && (
+                            <div
+                              className="text-center mt-0.5"
+                              dir="ltr"
+                              style={{
+                                fontFamily: "'Forum', serif",
+                                fontSize: `calc(clamp(0.75rem, 1.4vw, 0.9rem) * ${textScale})`,
+                                color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
+                                fontWeight: 400,
+                                letterSpacing: '0.03em',
+                              }}
+                            >
+                              {displayedPoem.poet}
+                            </div>
+                          )}
+                        </>
+                      )}
+                      {/* Carousel dot indicators (legacy carousel) */}
+                      {carouselPoems.length > 1 && (
+                        <div className="flex justify-center gap-1.5 mt-3" dir="ltr">
+                          {(() => {
+                            const maxDots = 5;
+                            const total = carouselPoems.length;
+                            const start = Math.max(0, Math.min(carouselIndex - 2, total - maxDots));
+                            const end = Math.min(start + maxDots, total);
+                            return carouselPoems.slice(start, end).map((_, i) => {
+                              const realIdx = start + i;
+                              return (
+                                <button
+                                  key={realIdx}
+                                  onClick={() => carouselRef.current?.scrollTo(realIdx)}
+                                  aria-label={`Go to poem ${realIdx + 1}`}
+                                  style={{
+                                    width: realIdx === carouselIndex ? 16 : 6,
+                                    height: 6,
+                                    borderRadius: 3,
+                                    background:
+                                      realIdx === carouselIndex
+                                        ? darkMode
+                                          ? 'rgba(197,160,89,1)'
+                                          : 'rgba(140,100,30,0.85)'
+                                        : darkMode
+                                          ? 'rgba(197,160,89,0.5)'
+                                          : 'rgba(140,100,30,0.4)',
+                                    transition: 'all 0.25s ease',
+                                    border: 'none',
+                                    padding: 0,
+                                    cursor: 'pointer',
+                                  }}
+                                />
+                              );
+                            });
+                          })()}
+                        </div>
+                      )}
+                      {/* Bottom spacing before verses */}
+                      <div style={{ height: '0.5rem' }} />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
                   {carouselPoems.length > 0 && (
-                    <PoemCarousel
-                      ref={carouselRef}
-                      poems={carouselPoems}
-                      currentIndex={carouselIndex}
-                      onSlideChange={(idx, direction) => {
-                        setCarouselIndex(idx);
-                        // Stop audio and reset TTS state when navigating poems
-                        const { player: activePlayer, resetAudio } = useAudioStore.getState();
-                        // Stop unconditionally. Streaming and iOS HTMLAudio players have no
-                        // `.state` property, so the old `state === 'started'` gate skipped
-                        // stop() for them and the audio kept playing in the background after a swipe.
-                        if (activePlayer) {
-                          try {
-                            activePlayer.stop();
-                          } catch {
-                            /* already stopped */
-                          }
-                        }
-                        if (audioUrl) URL.revokeObjectURL(audioUrl);
-                        abortPlay();
-                        resetAudio();
-                        isTogglingPlay.current = false;
-                        pauseOffset.value = 0;
-                        playbackStartTime.value = 0;
-                        document
-                          .querySelectorAll('.tts-active, .tts-past')
-                          .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
-                        dismissTTSProgress();
-                        cancelAnalysis();
-                        setInterpretation(null);
-                        // If an analysis was in-flight and got cancelled, un-mark it so
-                        // swiping back to that poem will re-trigger its translation.
-                        if (
-                          carouselExplainTargetId.current &&
-                          usePoemStore.getState().isInterpreting
-                        ) {
-                          explainedPoemIds.current.delete(carouselExplainTargetId.current);
-                        }
-                        carouselExplainTargetId.current = null;
-                        setShowTranslation(true);
-                        const newPoem = usePoemStore.getState().carouselPoems[idx];
-                        if (FEATURES.logging && newPoem) {
-                          const fromPoem = carouselPoems[carouselIndex];
-                          addLog(
-                            'Carousel',
-                            `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
-                            'user'
-                          );
-                        }
-                        if (newPoem?.id) {
-                          navigate('/poem/' + newPoem.id + window.location.search, {
-                            replace: true,
-                          });
-                          updateOGMetaTags(newPoem);
-                        }
-                        if (newPoem && !newPoem.english) {
-                          // Always (re-)queue translation for poems without one — this handles
-                          // the case where a previous analysis was cancelled mid-stream, leaving
-                          // the poem with no translation and its ID stuck in explainedPoemIds.
-                          explainedPoemIds.current.delete(newPoem.id);
-                          setAutoExplainPending(true);
-                        }
-                      }}
-                      darkMode={darkMode}
-                      showTranslation={showTranslation}
-                      showTransliteration={showTransliteration}
-                      textScale={textScale}
-                      currentFontClass={currentFontClass}
-                      POEM_META={POEM_META}
-                      DESIGN={DESIGN}
-                      onLoadMore={() => {
-                        if (!current?.poetArabic) return;
-                        const existingIds = carouselPoems.map((p) => p.id);
-                        fetchPoemsByPoet(current.poetArabic, 3, existingIds)
-                          .then((newPoems) => {
-                            newPoems.forEach((p) => addCarouselPoem(p));
-                          })
-                          .catch((err) => {
-                            if (FEATURES.logging)
-                              addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
-                          });
-                      }}
-                      highlightStyle={highlightStyle}
-                      activeVersePairs={versePairs}
-                      wordRefs={wordRefs}
-                      wordOffsets={wordOffsets}
-                    />
+                    <>
+                      {FEATURES.verticalFeed ? (
+                        <PoemFeed
+                          ref={carouselRef}
+                          poems={carouselPoems}
+                          currentIndex={carouselIndex}
+                          onSlideChange={(idx, direction) => {
+                            setCarouselIndex(idx);
+                            const { player: activePlayer, resetAudio } = useAudioStore.getState();
+                            if (activePlayer) {
+                              try {
+                                activePlayer.stop();
+                              } catch {
+                                /* already stopped */
+                              }
+                            }
+                            if (audioUrl) URL.revokeObjectURL(audioUrl);
+                            abortPlay();
+                            resetAudio();
+                            isTogglingPlay.current = false;
+                            pauseOffset.value = 0;
+                            playbackStartTime.value = 0;
+                            document
+                              .querySelectorAll('.tts-active, .tts-past')
+                              .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
+                            dismissTTSProgress();
+                            cancelAnalysis();
+                            setInterpretation(null);
+                            if (
+                              carouselExplainTargetId.current &&
+                              usePoemStore.getState().isInterpreting
+                            ) {
+                              explainedPoemIds.current.delete(carouselExplainTargetId.current);
+                            }
+                            carouselExplainTargetId.current = null;
+                            setShowTranslation(true);
+                            const newPoem = usePoemStore.getState().carouselPoems[idx];
+                            if (FEATURES.logging && newPoem) {
+                              const fromPoem = carouselPoems[carouselIndex];
+                              addLog(
+                                'Carousel',
+                                `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                                'user'
+                              );
+                            }
+                            if (newPoem?.id) {
+                              navigate('/poem/' + newPoem.id + window.location.search, {
+                                replace: true,
+                              });
+                              updateOGMetaTags(newPoem);
+                            }
+                            if (newPoem && !newPoem.english) {
+                              explainedPoemIds.current.delete(newPoem.id);
+                              setAutoExplainPending(true);
+                            }
+                          }}
+                          darkMode={darkMode}
+                          showTranslation={showTranslation}
+                          showTransliteration={showTransliteration}
+                          textScale={textScale}
+                          currentFontClass={currentFontClass}
+                          POEM_META={POEM_META}
+                          DESIGN={DESIGN}
+                          onLoadMore={() => {
+                            // Endless feed: pull NEW RANDOM poems so scrolling keeps surfacing
+                            // variety instead of staying on the current author. If a poet filter is
+                            // active (Discover by poet), keep drawing random poems from that poet.
+                            (async () => {
+                              try {
+                                const exclude = carouselPoems.map((p) => p.id);
+                                const poet =
+                                  selectedCategory !== 'All' ? selectedCategory : undefined;
+                                for (let i = 0; i < 3; i++) {
+                                  const p = await fetchRandomPoem({ poet, excludeIds: exclude });
+                                  if (!p?.id || exclude.includes(p.id)) continue;
+                                  exclude.push(p.id);
+                                  addCarouselPoem(p);
+                                }
+                              } catch (err) {
+                                if (FEATURES.logging)
+                                  addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
+                              }
+                            })();
+                          }}
+                          highlightStyle={highlightStyle}
+                          currentVerseIndex={currentVerseIndex}
+                          wordRefs={wordRefs}
+                          wordOffsets={wordOffsets}
+                          isInterpreting={isInterpreting}
+                          insightParts={insightParts}
+                          interpretation={interpretation}
+                          onSeeInsight={() => handleAnalyze()}
+                          isGeneratingAudio={isGeneratingAudio}
+                          onTogglePlay={togglePlay}
+                          onPrevVerse={handlePrevVerse}
+                          onNextVerse={handleNextVerse}
+                          onStopAudio={() => {
+                            const { player, resetAudio } = useAudioStore.getState();
+                            try {
+                              player?.stop?.();
+                            } catch {
+                              /* already stopped */
+                            }
+                            abortPlay();
+                            resetAudio();
+                          }}
+                          onShare={handleShare}
+                        />
+                      ) : (
+                        <PoemCarousel
+                          ref={carouselRef}
+                          poems={carouselPoems}
+                          currentIndex={carouselIndex}
+                          onSlideChange={(idx, direction) => {
+                            setCarouselIndex(idx);
+                            // Stop audio and reset TTS state when navigating poems
+                            const { player: activePlayer, resetAudio } = useAudioStore.getState();
+                            // Stop unconditionally. Streaming and iOS HTMLAudio players have no
+                            // `.state` property, so the old `state === 'started'` gate skipped
+                            // stop() for them and the audio kept playing in the background after a swipe.
+                            if (activePlayer) {
+                              try {
+                                activePlayer.stop();
+                              } catch {
+                                /* already stopped */
+                              }
+                            }
+                            if (audioUrl) URL.revokeObjectURL(audioUrl);
+                            abortPlay();
+                            resetAudio();
+                            isTogglingPlay.current = false;
+                            pauseOffset.value = 0;
+                            playbackStartTime.value = 0;
+                            document
+                              .querySelectorAll('.tts-active, .tts-past')
+                              .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
+                            dismissTTSProgress();
+                            cancelAnalysis();
+                            setInterpretation(null);
+                            // If an analysis was in-flight and got cancelled, un-mark it so
+                            // swiping back to that poem will re-trigger its translation.
+                            if (
+                              carouselExplainTargetId.current &&
+                              usePoemStore.getState().isInterpreting
+                            ) {
+                              explainedPoemIds.current.delete(carouselExplainTargetId.current);
+                            }
+                            carouselExplainTargetId.current = null;
+                            setShowTranslation(true);
+                            const newPoem = usePoemStore.getState().carouselPoems[idx];
+                            if (FEATURES.logging && newPoem) {
+                              const fromPoem = carouselPoems[carouselIndex];
+                              addLog(
+                                'Carousel',
+                                `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                                'user'
+                              );
+                            }
+                            if (newPoem?.id) {
+                              navigate('/poem/' + newPoem.id + window.location.search, {
+                                replace: true,
+                              });
+                              updateOGMetaTags(newPoem);
+                            }
+                            if (newPoem && !newPoem.english) {
+                              // Always (re-)queue translation for poems without one — this handles
+                              // the case where a previous analysis was cancelled mid-stream, leaving
+                              // the poem with no translation and its ID stuck in explainedPoemIds.
+                              explainedPoemIds.current.delete(newPoem.id);
+                              setAutoExplainPending(true);
+                            }
+                          }}
+                          darkMode={darkMode}
+                          showTranslation={showTranslation}
+                          showTransliteration={showTransliteration}
+                          textScale={textScale}
+                          currentFontClass={currentFontClass}
+                          POEM_META={POEM_META}
+                          DESIGN={DESIGN}
+                          onLoadMore={() => {
+                            // Endless feed: pull NEW RANDOM poems so scrolling keeps surfacing
+                            // variety instead of staying on the current author. If a poet filter is
+                            // active (Discover by poet), keep drawing random poems from that poet.
+                            (async () => {
+                              try {
+                                const exclude = carouselPoems.map((p) => p.id);
+                                const poet =
+                                  selectedCategory !== 'All' ? selectedCategory : undefined;
+                                for (let i = 0; i < 3; i++) {
+                                  const p = await fetchRandomPoem({ poet, excludeIds: exclude });
+                                  if (!p?.id || exclude.includes(p.id)) continue;
+                                  exclude.push(p.id);
+                                  addCarouselPoem(p);
+                                }
+                              } catch (err) {
+                                if (FEATURES.logging)
+                                  addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
+                              }
+                            })();
+                          }}
+                          highlightStyle={highlightStyle}
+                          activeVersePairs={versePairs}
+                          wordRefs={wordRefs}
+                          wordOffsets={wordOffsets}
+                        />
+                      )}
+                    </>
                   )}
                 </div>
               </div>
@@ -1704,9 +1831,9 @@ export default function DiwanApp() {
           {/* Bottom fade — content fades out above the control bar; slides away with footer when idle */}
           <motion.div
             className="pointer-events-none fixed bottom-0 left-0 right-0 z-40"
-            animate={isIdle ? { opacity: 0, y: 60 } : { opacity: 1, y: 0 }}
+            animate={effectivelyIdle ? { opacity: 0, y: 60 } : { opacity: 1, y: 0 }}
             transition={
-              isIdle
+              effectivelyIdle
                 ? { duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 0.1 }
                 : { type: 'spring', stiffness: 280, damping: 26 }
             }
@@ -1718,291 +1845,184 @@ export default function DiwanApp() {
 
           <motion.footer
             data-tour-anchor="controlbar"
-            className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom"
-            animate={isIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
+            className="fixed bottom-0 left-0 right-0 py-2 pb-0.5 md:pb-1 px-4 flex flex-col items-center z-50 safe-bottom"
+            animate={effectivelyIdle ? { opacity: 0, y: 70 } : { opacity: 1, y: 0 }}
             transition={
-              isIdle
+              effectivelyIdle
                 ? { duration: 0.75, ease: [0.16, 1, 0.3, 1], delay: 0.12 }
                 : { type: 'spring', stiffness: 280, damping: 26 }
             }
-            style={{ pointerEvents: isIdle ? 'none' : 'auto' }}
+            style={{ pointerEvents: effectivelyIdle ? 'none' : 'auto' }}
           >
-            {/* Highlight mode: Listen (one-shot) → PlayControlsStrip (exclusive) */}
-            {highlightStyle !== 'none' && (
-              <div className="mb-2 flex flex-wrap items-center justify-center gap-2">
-                <AnimatePresence mode="wait">
-                  {isPlaying || isGeneratingAudio || audioPlayer !== null ? (
-                    <PlayControlsStrip
-                      key="play-controls"
-                      player={audioPlayer}
-                      isPlaying={isPlaying}
-                      isLoading={isGeneratingAudio}
-                      verseStartTimes={verseStartTimes}
-                      currentVerseIndex={currentVerseIndex}
-                      onPlayPause={togglePlay}
-                      wordRefs={wordRefs}
-                      wordOffsets={wordOffsets}
-                      timings={wordTimings}
-                      totalDuration={effectiveDuration}
-                      onVerseChange={setCurrentVerseIndex}
-                    />
-                  ) : (
-                    <motion.button
-                      key="listen-trigger"
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      transition={{ duration: 0.2, ease: 'easeOut' }}
-                      onClick={togglePlay}
-                      data-tour="listen"
-                      aria-label="Start recitation"
-                      className={`min-h-[44px] px-6 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-sm font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
-                      style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
-                    >
-                      Listen
-                    </motion.button>
-                  )}
-                </AnimatePresence>
-                {/* Voice cycle pill — persistent so the voice can be changed mid-playback
-                    (tapping restarts in the new voice). 44px target per the design spec. */}
-                <button
-                  onClick={cycleVoice}
-                  aria-label={`Reading voice: ${liveVoice}. Tap to change.`}
-                  title="Change reading voice"
-                  className={`min-h-[44px] flex items-center gap-1.5 pl-3 pr-3.5 py-2 rounded-full border ${theme.border} ${DESIGN.glass} ${GOLD.goldText} font-brand-en text-xs font-medium tracking-wide hover:bg-white/10 active:scale-95 transition-all duration-150`}
-                  style={{ boxShadow: '0 4px 24px rgba(0,0,0,0.4)' }}
-                >
-                  <Mic
-                    size={16}
-                    style={{ color: voiceGender(liveVoice) === 'f' ? '#c084fc' : '#60a5fa' }}
-                  />
-                  {liveVoice}
-                </button>
-              </div>
-            )}
-            <div
-              ref={controlBarRef}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${DESIGN.glass} ${theme.border} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
-              style={{
-                boxShadow:
-                  'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3)',
-                userSelect: 'none',
-                WebkitUserSelect: 'none',
-              }}
-            >
-              {highlightStyle === 'none' && (
+            {/* Single nav pill (Listen / Save / Explain / Discover) + voice cycle pinned right */}
+            <div className="relative w-full flex items-center justify-center">
+              <div
+                ref={controlBarRef}
+                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${DESIGN.glass} ${theme.border} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
+                style={{
+                  boxShadow:
+                    'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3)',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                }}
+              >
+                {/* Listen moved into the reader's action buttons (ReaderActions) — removed from nav. */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                  {isGeneratingAudio ? (
-                    <>
-                      <button
-                        disabled
-                        aria-label="Preparing audio"
-                        className="min-w-[46px] min-h-[46px] p-[11px] bg-gold/8 border border-gold/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
-                      >
-                        <div className="flex items-center justify-center gap-0.5 h-[21px]">
-                          <div
-                            className="w-[2px] h-[6px] bg-gold rounded-full"
-                            style={{
-                              animation: 'wave 1.2s ease-in-out infinite',
-                              animationDelay: '0s',
-                            }}
-                          />
-                          <div
-                            className="w-[2px] h-[10px] bg-gold rounded-full"
-                            style={{
-                              animation: 'wave 1.2s ease-in-out infinite',
-                              animationDelay: '0.15s',
-                            }}
-                          />
-                          <div
-                            className="w-[2px] h-[14px] bg-gold rounded-full"
-                            style={{
-                              animation: 'wave 1.2s ease-in-out infinite',
-                              animationDelay: '0.3s',
-                            }}
-                          />
-                          <div
-                            className="w-[2px] h-[10px] bg-gold rounded-full"
-                            style={{
-                              animation: 'wave 1.2s ease-in-out infinite',
-                              animationDelay: '0.45s',
-                            }}
-                          />
-                          <div
-                            className="w-[2px] h-[6px] bg-gold rounded-full"
-                            style={{
-                              animation: 'wave 1.2s ease-in-out infinite',
-                              animationDelay: '0.6s',
-                            }}
-                          />
-                        </div>
-                      </button>
-                      <span
-                        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
-                      >
-                        Loading
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={togglePlay}
-                        data-tour="listen"
-                        aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                        style={{ willChange: 'transform' }}
-                        className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
-                      >
-                        {audioError ? (
-                          <Volume2 className={theme.error} size={21} />
-                        ) : isPlaying ? (
-                          <>
-                            <PulseGlowBars volumePulseRef={volumePulseRef} isPlaying={true} />
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
-                              <Pause fill={GOLD.gold} size={14} />
-                            </div>
-                          </>
-                        ) : audioUrl ? (
-                          <>
-                            <PulseGlowBars volumePulseRef={null} isPlaying={false} />
-                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-60 transition-opacity duration-200 pointer-events-none">
-                              <Play fill={GOLD.gold} size={14} />
-                            </div>
-                          </>
-                        ) : (
-                          <Volume2 className={GOLD.goldText} size={21} />
-                        )}
-                      </button>
-                      <span
-                        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                      >
-                        {isPlaying ? 'Playing' : audioUrl ? 'Paused' : 'Listen'}
-                      </span>
-                    </>
-                  )}
-                </div>
-              )}
-
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]" data-tour="discover">
-                <button
-                  onClick={() => {
-                    setFireTapped(true);
-                    setTimeout(() => setFireTapped(false), 400);
-                    dismissTTSProgress();
-                    setDiscoverDrawerOpen(true);
-                  }}
-                  onTouchStart={() => {
-                    longPressTimer.current = setTimeout(() => {
-                      const willEnable = !useUIStore.getState().ratchetMode;
-                      useUIStore.getState().toggleRatchetMode();
-                      if (willEnable) {
-                        toast('🔥 Ratchet Mode activated fr fr', {
-                          style: {
-                            background: 'linear-gradient(135deg, #ff5000, #ff9000)',
-                            color: 'white',
-                            border: 'none',
-                          },
-                          duration: 2500,
-                        });
-                      } else {
-                        toast('Back to scholarly mode', {
-                          style: {
-                            background: 'rgba(60,60,70,0.92)',
-                            color: 'white',
-                            border: 'none',
-                          },
-                          duration: 2500,
-                        });
+                  <button
+                    onClick={() =>
+                      isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
+                    }
+                    aria-label={isPoemSaved(displayedPoem) ? 'Unsave poem' : 'Save poem'}
+                    className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                  >
+                    <Heart
+                      size={21}
+                      style={
+                        isPoemSaved(displayedPoem)
+                          ? { fill: '#ef4444', stroke: '#ef4444' }
+                          : { fill: 'none', stroke: ink }
                       }
-                      longPressTimer.current = null;
-                    }, 2000);
-                  }}
-                  onTouchEnd={() => {
-                    if (longPressTimer.current) {
-                      clearTimeout(longPressTimer.current);
-                      longPressTimer.current = null;
+                    />
+                  </button>
+                  <span
+                    className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                    style={{ color: ink }}
+                  >
+                    {isPoemSaved(displayedPoem) ? 'Saved' : 'Save'}
+                  </span>
+                </div>
+
+                {/* Library — opens the saved-poems drawer (Khazana) */}
+                <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                  <button
+                    onClick={handleOpenSavedPoems}
+                    aria-label={
+                      savedPoems.length > 0 ? `Library, ${savedPoems.length} saved` : 'Library'
                     }
-                  }}
-                  onTouchMove={() => {
-                    if (longPressTimer.current) {
-                      clearTimeout(longPressTimer.current);
-                      longPressTimer.current = null;
-                    }
-                  }}
-                  disabled={isFetching}
-                  aria-label="Open discover"
-                  className={`relative w-[46px] h-[46px] bg-transparent border-none cursor-pointer flex items-center justify-center rounded-full hover:scale-105 ${fireTapped ? 'fire-tap' : ''}`}
-                  style={{
-                    background: isFetching ? 'rgba(197,160,89,0.08)' : 'transparent',
-                    transition: fireTapped ? 'none' : 'transform 0.3s',
-                  }}
-                >
-                  <GoldenFireIcon size={34} />
-                </button>
-                <span
-                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                >
-                  Discover
-                </span>
+                    className={`relative min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                  >
+                    <LibraryBig size={21} style={{ color: ink }} />
+                    {savedPoems.length > 0 && (
+                      <span
+                        className="absolute top-0.5 right-0.5 min-w-[1rem] h-4 rounded-full flex items-center justify-center text-[0.5625rem] font-bold px-0.5 font-brand-en"
+                        style={{
+                          background: 'linear-gradient(135deg, var(--gold), #B8943E)',
+                          color: '#000',
+                        }}
+                      >
+                        {savedPoems.length > 99 ? '99+' : savedPoems.length}
+                      </span>
+                    )}
+                  </button>
+                  <span
+                    className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                    style={{ color: ink }}
+                  >
+                    Library
+                  </span>
+                </div>
+
+                {/* Discover */}
+                <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                  <button
+                    onClick={() => {
+                      setFireTapped(true);
+                      setTimeout(() => setFireTapped(false), 400);
+                      dismissTTSProgress();
+                      setDiscoverDrawerOpen(true);
+                    }}
+                    onTouchStart={() => {
+                      longPressTimer.current = setTimeout(() => {
+                        const willEnable = !useUIStore.getState().ratchetMode;
+                        useUIStore.getState().toggleRatchetMode();
+                        if (willEnable) {
+                          toast('🔥 Ratchet Mode activated fr fr', {
+                            style: {
+                              background: 'linear-gradient(135deg, #ff5000, #ff9000)',
+                              color: 'white',
+                              border: 'none',
+                            },
+                            duration: 2500,
+                          });
+                        } else {
+                          toast('Back to scholarly mode', {
+                            style: {
+                              background: 'rgba(60,60,70,0.92)',
+                              color: 'white',
+                              border: 'none',
+                            },
+                            duration: 2500,
+                          });
+                        }
+                        longPressTimer.current = null;
+                      }, 2000);
+                    }}
+                    onTouchEnd={() => {
+                      if (longPressTimer.current) {
+                        clearTimeout(longPressTimer.current);
+                        longPressTimer.current = null;
+                      }
+                    }}
+                    onTouchMove={() => {
+                      if (longPressTimer.current) {
+                        clearTimeout(longPressTimer.current);
+                        longPressTimer.current = null;
+                      }
+                    }}
+                    disabled={isFetching}
+                    aria-label="Open discover"
+                    className={`relative w-[46px] h-[46px] bg-transparent border-none cursor-pointer flex items-center justify-center rounded-full hover:scale-105 ${fireTapped ? 'fire-tap' : ''}`}
+                    style={{
+                      background: isFetching ? 'rgba(197,160,89,0.08)' : 'transparent',
+                      transition: fireTapped ? 'none' : 'transform 0.3s',
+                    }}
+                  >
+                    <GoldenFireIcon size={34} />
+                  </button>
+                  <span
+                    className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                    style={{ color: ink }}
+                  >
+                    Discover
+                  </span>
+                </div>
+
+                {/* Account — rightmost: expandable menu with voice cycle + sign in/out */}
+                <AccountMenu
+                  user={user}
+                  onSignIn={handleSignIn}
+                  onSignOut={handleSignOut}
+                  liveVoice={liveVoice}
+                  onCycleVoice={cycleVoice}
+                  ink={ink}
+                />
               </div>
 
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]" data-tour="save">
-                <button
-                  onClick={() =>
-                    isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
-                  }
-                  aria-label={isPoemSaved(displayedPoem) ? 'Unsave poem' : 'Save poem'}
-                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-                >
-                  <Heart
-                    size={21}
+              {/* Dislike — pinned left, in the gap between the nav pill and the screen edge */}
+              <button
+                onClick={() =>
+                  current && isPoemDownvoted(current) ? handleUndownvote() : handleDownvote()
+                }
+                aria-label={current && isPoemDownvoted(current) ? 'Remove dislike' : 'Dislike poem'}
+                className="absolute left-0 md:left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5"
+              >
+                <span className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full hover:scale-105 transition-transform">
+                  <ThumbsDown
+                    size={19}
                     style={
-                      isPoemSaved(displayedPoem)
-                        ? { fill: '#ef4444', stroke: '#ef4444' }
-                        : { fill: 'none', stroke: GOLD.gold }
+                      current && isPoemDownvoted(current)
+                        ? { fill: '#f87171', stroke: '#f87171' }
+                        : { fill: 'none', stroke: ink }
                     }
                   />
-                </button>
-                <span
-                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                >
-                  {isPoemSaved(displayedPoem) ? 'Saved' : 'Save'}
                 </span>
-              </div>
-
-              <div className="flex flex-col items-center gap-0.5 min-w-[52px]" data-tour="explain">
-                <button
-                  onClick={() => {
-                    if (interpretation) {
-                      useModalStore.getState().toggleInsightsDrawer();
-                      useModalStore.getState().showToastTimed('insight', 1500);
-                    } else {
-                      handleAnalyze();
-                      setInsightsDrawerOpen(true);
-                    }
-                  }}
-                  disabled={isInterpreting}
-                  aria-label="Explain poem meaning"
-                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${isInterpreting ? 'opacity-50' : ''}`}
-                >
-                  {isInterpreting ? (
-                    <Loader2 className="animate-spin" style={{ color: GOLD.gold }} size={21} />
-                  ) : showInsightSuccess ? (
-                    <Check style={{ color: GOLD.gold }} size={21} />
-                  ) : (
-                    <Lightbulb
-                      className={GOLD.goldText}
-                      size={21}
-                      style={{ opacity: interpretation ? 1 : 0.7 }}
-                    />
-                  )}
-                </button>
                 <span
-                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                  className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                  style={{ color: ink }}
                 >
-                  Explain
+                  dislike
                 </span>
-              </div>
+              </button>
             </div>
           </motion.footer>
 
@@ -2010,7 +2030,7 @@ export default function DiwanApp() {
               Attached to listenButtonIdleRef so tapping it does NOT wake the UI chrome;
               the user can control playback while staying in immersive zen mode. */}
           <AnimatePresence>
-            {isIdle && (
+            {effectivelyIdle && (
               <motion.div
                 ref={listenButtonIdleRef}
                 className="fixed z-[55] flex justify-center"
@@ -2034,17 +2054,7 @@ export default function DiwanApp() {
         </div>
       </div>
 
-      {/* Insights Overlay (replaces drawer + desktop pane) */}
-      <InsightOverlay
-        open={insightsDrawerOpen}
-        insightParts={insightParts}
-        currentPoem={current}
-        isInterpreting={isInterpreting}
-        interpretation={interpretation}
-        onClose={() => setInsightsDrawerOpen(false)}
-        ratchetMode={ratchetMode}
-        handleAnalyze={handleAnalyze}
-      />
+      {/* Insight drawer (InsightOverlay) removed — insights now live inline in the reader only. */}
 
       {/* Discover Drawer */}
       <AnimatePresence>
@@ -2082,7 +2092,6 @@ export default function DiwanApp() {
         darkMode={darkMode}
       />
 
-      {/* Design Review + Bug — stacked bottom-left utility buttons */}
       {FEATURES.designReview && (
         <div
           className="fixed z-[200] flex flex-col items-center gap-1"
@@ -2117,23 +2126,8 @@ export default function DiwanApp() {
         <TextSettingsPill />
       </div>
 
-      {/* Vertical Sidebar — hides in zen idle mode */}
-      <VerticalSidebar
-        onCopy={handleCopy}
-        onShare={handleShare}
-        onSave={handleSavePoem}
-        onUnsave={handleUnsavePoem}
-        isSaved={displayedPoem ? isPoemSaved(displayedPoem) : false}
-        onSignIn={handleSignIn}
-        onSignOut={handleSignOut}
-        onOpenSavedPoems={handleOpenSavedPoems}
-        savedPoemsCount={savedPoems.length}
-        onFlag={handleDownvote}
-        isDownvoted={current ? isPoemDownvoted(current) : false}
-        onUnflag={handleUndownvote}
-        user={user}
-        isIdle={isIdle}
-      />
+      {/* Vertical sidebar removed — Library + Account moved into the bottom nav, Dislike to the
+          bottom-left, Share/Copy retired (feature-flagged off). */}
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}
       <AnimatePresence>
@@ -2144,13 +2138,13 @@ export default function DiwanApp() {
         )}
       </AnimatePresence>
 
-      {/* Interactive walkthrough launcher — only once the splash is dismissed. */}
-      {FEATURES.tour && !showSplash && (
-        <TourLauncher user={user} savedCount={savedPoems.length} />
-      )}
+      {/* Interactive walkthrough launcher — only once the splash is dismissed.
+          Disabled (FEATURES.tour = false) until the tour steps are re-wired to the
+          redesigned reader nav; the code is kept so the follow-up can re-enable it. */}
+      {FEATURES.tour && !showSplash && <TourLauncher user={user} savedCount={savedPoems.length} />}
 
-      {/* Share Card Modal */}
-      {showShareCard && displayedPoem && (
+      {/* Share Card Modal — gated behind the share feature flag */}
+      {FEATURES.share && showShareCard && displayedPoem && (
         <ShareCardModal
           poem={{
             ...displayedPoem,

@@ -369,154 +369,57 @@ test.describe('Poem Carousel', () => {
     }
   });
 
-  // #11 — Second Discover resets state so poems can be re-explained
-  test('second Discover allows re-explanation of same poems', async ({ page }) => {
-    // First discover
+  // #11 / #12 — Carousel slide navigation + swipe-through: REMOVED. The horizontal carousel (dot
+  // navigation between same-poet poems) was replaced by the vertical Embla feed; feed navigation
+  // is covered in e2e/sparkler-reader.spec.js, so these carousel-only tests were deleted.
+
+  // #13 — Copy action: REMOVED. Copy-to-clipboard is retired (FEATURES.copy=false).
+
+  // #14 — Share action works on the current poem
+  // No carousel dots to navigate; assert the reader's Share action (when enabled) doesn't crash.
+  test('share action works on the current poem', async ({ page }) => {
     await discoverAndWaitForCarousel(page);
 
-    // Navigate to slide 2 (triggers explain)
-    const dots = await page.locator('button[aria-label^="Go to poem"]');
-    if ((await dots.count()) >= 2) {
-      await dots.nth(1).click();
-      await page.waitForTimeout(1000);
+    // Reveal the whole poem so the reader reaches the terminal state where Share is the action.
+    const listenBtn = page.locator('button[aria-label="Start recitation"]');
+    if (await listenBtn.isVisible({ timeout: 10000 }).catch(() => false)) {
+      await listenBtn.click();
     }
-
-    // Second discover
-    const openDrawerBtn = page.locator('button[aria-label="Open discover"]');
-    await openDrawerBtn.click();
-    const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
-    await expect(discoverBtn).toBeVisible({ timeout: 3000 });
-    await discoverBtn.click();
-    await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
-
-    // Wait for new carousel
-    const newDots = page.locator('button[aria-label^="Go to poem"]');
-    await newDots.first().waitFor({ state: 'visible', timeout: 5000 });
-
-    // Navigate to slide 2 again — should still trigger explain (IDs cleared)
-    let explainFired = false;
-    page.on('request', (req) => {
-      if (req.url().includes('/api/ai/')) explainFired = true;
-    });
-
-    if ((await newDots.count()) >= 2) {
-      await newDots.nth(1).click();
-      await page.waitForTimeout(1500);
-    }
-
-    // App should not crash regardless
-    const arLines = page.locator('p[dir="rtl"]');
-    await expect(arLines.first()).toBeVisible();
-  });
-
-  // #12 — Full user flow: swipe through carousel poems, verify app doesn't crash
-  test('swiping through all carousel poems maintains app stability', async ({ page }) => {
-    const dots = await discoverAndWaitForCarousel(page);
-    const dotCount = await dots.count();
-    expect(dotCount).toBeGreaterThan(1);
-
-    // Swipe through remaining slides — verify Arabic is present on each
-    for (let i = 1; i < Math.min(dotCount, 5); i++) {
-      const currentDots = page.locator('button[aria-label^="Go to poem"]');
-      await currentDots.nth(Math.min(i, (await currentDots.count()) - 1)).click();
-      await page.waitForTimeout(500);
-
-      // Verify Arabic is present (not a blank slide)
-      const arLines = page.locator('p[dir="rtl"]');
-      await expect(arLines.first()).toBeVisible();
-    }
-  });
-
-  // #13 — Copy action uses the displayed carousel poem, not the first loaded
-  test('copy action uses the displayed carousel poem', async ({ page }) => {
-    const dots = await discoverAndWaitForCarousel(page);
-    // Navigate to slide 2 (MOCK_POEM_DARWISH_2, id 42002)
-    await dots.nth(1).click();
-    await expect(page.locator('p[dir="rtl"]').filter({ hasText: 'سجِّل' }).first()).toBeVisible({
-      timeout: 5000,
-    });
-
-    // Find and click the Copy button
-    const copyBtn = page.locator('button[aria-label*="Copy"], button:has-text("Copy")').first();
-    if (await copyBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      // Grant clipboard permission
-      await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-      await copyBtn.click();
-      await page.waitForTimeout(500);
-
-      // Read clipboard — it should contain poem 2's Arabic text, not poem 1's
-      const clipText = await page.evaluate(() => navigator.clipboard.readText());
-      // MOCK_POEM_DARWISH_2 arabic starts with 'سجِّل'
-      expect(clipText).toContain('سجِّل');
-      // Should NOT contain poem 1's arabic
-      expect(clipText).not.toContain('على هذه الأرضِ');
-    }
-  });
-
-  // #14 — Share action does not crash when on a carousel slide
-  test('share action works on a carousel slide', async ({ page }) => {
-    const dots = await discoverAndWaitForCarousel(page);
-    await dots.nth(1).click();
-    await page.waitForTimeout(500);
-
-    // Look for share button
-    const shareBtn = page.locator('button[aria-label*="Share"], button:has-text("Share")').first();
+    const shareBtn = page.locator('button:has-text("Share")').first();
     if (await shareBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
       await shareBtn.click();
       await page.waitForTimeout(1000);
-      // App should not crash — Arabic content still visible
-      await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
     }
+    // App should not crash — Arabic content still visible.
+    await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
   });
 
-  // #15 — Save/Heart targets the displayed carousel poem, not the first loaded
-  test('save action targets the displayed carousel poem', async ({ page }) => {
-    const dots = await discoverAndWaitForCarousel(page);
-    await dots.nth(1).click();
-    await page.waitForTimeout(500);
+  // #15 — Save/Heart targets the current poem
+  test('save action targets the current poem', async ({ page }) => {
+    await discoverAndWaitForCarousel(page);
 
-    // Check if save/heart button exists
+    // The Save control is the bottom-nav heart (aria "Save poem"/"Unsave poem").
     const saveBtn = page
-      .locator('button[aria-label*="Save"], button[aria-label*="heart"], svg.lucide-heart')
+      .locator('button[aria-label="Save poem"], button[aria-label="Unsave poem"]')
       .first();
-    // Just verify the button is visible and clickable without crash
-    if (await saveBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await saveBtn.click();
-      await page.waitForTimeout(500);
-      // App should not crash
-      await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
-    }
+    await expect(saveBtn).toBeVisible({ timeout: 5000 });
+    await saveBtn.click();
+    await page.waitForTimeout(500);
+    // App should not crash.
+    await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
   });
 
-  // #16 — Play/Listen targets the displayed carousel poem, not the first loaded
-  test('play action targets the displayed carousel poem', async ({ page }) => {
-    const dots = await discoverAndWaitForCarousel(page);
-    await dots.nth(1).click();
-    await page.waitForTimeout(500);
+  // #16 — Listen targets the current poem
+  test('listen action targets the current poem', async ({ page }) => {
+    await discoverAndWaitForCarousel(page);
 
-    let ttsRequestUrl = null;
-    page.on('request', (req) => {
-      if (
-        req.url().includes('/api/ai/') &&
-        req.url().includes('generateContent') &&
-        !req.url().includes('stream')
-      ) {
-        ttsRequestUrl = req.url();
-        // Check the request body for the correct poem's Arabic text
-        const body = req.postData();
-        if (body && body.includes('سجِّل')) {
-          console.log('TTS request contains poem 2 Arabic text ✓');
-        }
-      }
-    });
-
-    const playBtn = page.locator('button[aria-label="Play recitation"]');
-    if (await playBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
-      await playBtn.click();
-      await page.waitForTimeout(3000);
-      // At minimum, verify no crash
-      await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
-    }
+    // The play control lives in the reader (ReaderActions Listen button, aria "Start recitation").
+    const listenBtn = page.locator('button[aria-label="Start recitation"]');
+    await expect(listenBtn).toBeVisible({ timeout: 10000 });
+    await listenBtn.click();
+    await page.waitForTimeout(2000);
+    // At minimum, verify no crash — Arabic content still visible.
+    await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
   });
 
   // #17 — Carousel dots repopulate (LEGACY horizontal carousel only; no dots in the vertical feed).

@@ -1,97 +1,225 @@
-import { X, Feather } from 'lucide-react';
+import { X } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { THEME } from '../../constants/theme.js';
-import { useUIStore } from '../../stores/uiStore';
 import { useModalStore } from '../../stores/modalStore';
+
+const TESS_BG = [
+  'repeating-linear-gradient(45deg, rgba(197,160,89,0.18) 0px, rgba(197,160,89,0.18) 1px, transparent 1px, transparent 22px)',
+  'repeating-linear-gradient(-45deg, rgba(197,160,89,0.18) 0px, rgba(197,160,89,0.18) 1px, transparent 1px, transparent 22px)',
+  'repeating-linear-gradient(0deg, rgba(197,160,89,0.09) 0px, rgba(197,160,89,0.09) 1px, transparent 1px, transparent 22px)',
+  'repeating-linear-gradient(90deg, rgba(197,160,89,0.09) 0px, rgba(197,160,89,0.09) 1px, transparent 1px, transparent 22px)',
+  'repeating-linear-gradient(22.5deg, rgba(197,160,89,0.07) 0px, rgba(197,160,89,0.07) 1px, transparent 1px, transparent 44px)',
+  'repeating-linear-gradient(-22.5deg, rgba(197,160,89,0.07) 0px, rgba(197,160,89,0.07) 1px, transparent 1px, transparent 44px)',
+].join(', ');
+
+const FEATURES = [
+  { icon: '🔖', label: 'Save favourite verses' },
+  { icon: '✨', label: 'Personalized recommendations by mood, topic & era' },
+  { icon: '🗂️', label: 'Browse your curated library' },
+];
 
 const AuthModal = ({ onSignInWithGoogle }) => {
   const isOpen = useModalStore((s) => s.authModal);
-  const message = useModalStore((s) => s.authMessage);
   const onClose = () => useModalStore.getState().closeAuth();
-  const darkMode = useUIStore((s) => s.darkMode);
-  const theme = darkMode ? THEME.dark : THEME.light;
+
   if (!isOpen) return null;
 
   return (
+    /* Backdrop — also acts as flex positioner:
+       mobile  → items-end  (sheet anchored to bottom)
+       desktop → items-center justify-center (centered modal) */
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{
-        background:
-          'radial-gradient(ellipse at center, rgba(197,160,89,0.08) 0%, rgba(0,0,0,0.7) 100%)',
-      }}
+      className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center"
+      style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(2px)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.2 }}
       onClick={onClose}
     >
+      {/* Sheet / Modal */}
       <motion.div
         role="dialog"
         aria-modal="true"
-        aria-label="Sign in"
+        aria-label="Sign in to Dīwān"
         data-tour-anchor="auth"
-        className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+        className="w-full overflow-hidden rounded-t-3xl sm:w-[min(480px,90vw)] sm:max-h-[85vh] sm:overflow-y-auto sm:rounded-3xl"
         style={{
-          background: 'linear-gradient(145deg, rgba(20,18,15,0.97) 0%, rgba(12,12,14,0.98) 100%)',
-          border: '1px solid rgba(197,160,89,0.25)',
+          background: 'linear-gradient(180deg, rgba(14,12,10,0.98), rgba(10,10,14,0.99))',
+          boxShadow:
+            '0 0 0 1px rgba(197,160,89,0.15), 0 32px 80px rgba(0,0,0,0.8), 0 8px 24px rgba(0,0,0,0.5)',
         }}
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 40 }}
+        transition={{ type: 'spring', damping: 28, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Gold accent line */}
+        {/* ── Tessellated header ── */}
         <div
+          className="relative overflow-hidden"
           style={{
-            height: '2px',
-            background:
-              'linear-gradient(90deg, transparent, rgba(197,160,89,0.6), rgba(212,180,120,0.8), rgba(197,160,89,0.6), transparent)',
+            height: '130px',
+            background: 'linear-gradient(180deg, rgba(20,16,10,0.98), rgba(14,12,10,0.97))',
           }}
-        />
+        >
+          {/* tessellation pattern */}
+          <div
+            className="absolute"
+            style={{ inset: '-10px', backgroundImage: TESS_BG }}
+            aria-hidden="true"
+          />
+          {/* vignette fade */}
+          <div
+            className="absolute bottom-0 left-0 right-0 pointer-events-none"
+            style={{
+              height: '40px',
+              background: 'linear-gradient(to bottom, transparent, rgba(14,12,10,0.97))',
+            }}
+            aria-hidden="true"
+          />
+          {/* gold hairline */}
+          <div
+            className="absolute top-0 left-0 right-0"
+            style={{
+              height: '2px',
+              zIndex: 2,
+              background:
+                'linear-gradient(90deg, transparent, rgba(160,128,64,0.4) 20%, #c5a059 50%, rgba(160,128,64,0.4) 80%, transparent)',
+            }}
+          />
 
-        <div className="px-8 pt-8 pb-6">
+          {/* drag handle — mobile only */}
+          <div
+            className="absolute sm:hidden"
+            style={{
+              top: '10px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '36px',
+              height: '4px',
+              borderRadius: '2px',
+              background: 'rgba(197,160,89,0.35)',
+              zIndex: 3,
+            }}
+            aria-hidden="true"
+          />
+
+          {/* close button */}
           <button
+            className="absolute top-3 right-3.5 z-10 flex items-center justify-center rounded-full transition-all duration-200 hover:scale-105 active:scale-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold"
+            style={{
+              width: '36px',
+              height: '36px',
+              border: '1px solid rgba(197,160,89,0.18)',
+              background: 'rgba(197,160,89,0.06)',
+              color: 'rgba(197,160,89,0.5)',
+            }}
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
             aria-label="Close"
           >
-            <X size={18} style={{ color: 'rgba(197,160,89,0.6)' }} />
+            <X size={13} />
           </button>
 
-          {/* Greeting */}
-          <div className="text-center mb-6">
-            <h2 className="font-amiri text-3xl mb-2" style={{ color: 'var(--gold)' }}>
-              مرحباً
-            </h2>
-            <p className="font-brand-en text-sm text-stone-400 leading-relaxed">
-              {message || 'Sign in to save poems and preferences'}
+          {/* title stack */}
+          <div
+            className="absolute inset-0 flex flex-col items-center justify-center pb-1"
+            style={{ zIndex: 2 }}
+          >
+            <p
+              className="font-brand-ar text-gold text-center"
+              style={{
+                fontSize: '1.65rem',
+                fontWeight: 600,
+                letterSpacing: '0.02em',
+                textShadow: '0 2px 12px rgba(197,160,89,0.4)',
+              }}
+              lang="ar"
+              dir="rtl"
+            >
+              اكتشف رحلتك في الشعر
+            </p>
+            <p
+              className="font-brand-en italic text-center mt-0.5"
+              style={{
+                fontSize: '1.65rem',
+                color: 'rgba(197,160,89,0.6)',
+                letterSpacing: '0.04em',
+                padding: '0 12px',
+              }}
+            >
+              Unlock your Journey Through Poetry
             </p>
           </div>
+        </div>
 
-          {/* Decorative divider */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gold/30" />
-            <Feather size={12} style={{ color: 'rgba(197,160,89,0.4)' }} />
-            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gold/30" />
+        {/* ── Sheet body ── */}
+        <div
+          className="px-6 pt-5"
+          style={{ paddingBottom: 'calc(28px + env(safe-area-inset-bottom, 0px))' }}
+        >
+          {/* Feature trio */}
+          <div className="flex gap-3 mb-5" aria-label="What you unlock">
+            {FEATURES.map(({ icon, label }) => (
+              <div
+                key={label}
+                className="flex-1 rounded-xl p-3 text-center"
+                style={{
+                  background: 'rgba(197,160,89,0.05)',
+                  border: '1px solid rgba(197,160,89,0.12)',
+                }}
+              >
+                <span
+                  className="block text-lg mb-1.5"
+                  aria-hidden="true"
+                  style={{ filter: 'sepia(1) saturate(2) hue-rotate(10deg)' }}
+                >
+                  {icon}
+                </span>
+                <p
+                  className="leading-[1.35] tracking-wide"
+                  style={{
+                    fontFamily: 'system-ui, sans-serif',
+                    fontSize: '0.68rem',
+                    color: 'rgba(236,232,224,0.50)',
+                  }}
+                >
+                  {label}
+                </p>
+              </div>
+            ))}
           </div>
 
-          {/* Google sign-in button */}
+          {/* Google CTA */}
           <button
             onClick={onSignInWithGoogle}
-            className="w-full py-3.5 px-5 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
+            type="button"
+            className="relative w-full flex items-center justify-center gap-3 overflow-hidden rounded-[14px] transition-all duration-200 hover:-translate-y-px hover:scale-[1.01] active:scale-[0.967] active:translate-y-px focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold-bright"
             style={{
+              minHeight: '54px',
+              padding: '0 20px',
               background:
-                'linear-gradient(135deg, rgba(197,160,89,0.12) 0%, rgba(197,160,89,0.06) 100%)',
-              border: '1px solid rgba(197,160,89,0.3)',
-              color: '#D4C8B0',
-              fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif",
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              letterSpacing: '0.01em',
+                'linear-gradient(135deg, #a8853d, #c5a059 22%, #e0c97a 38%, #d4b463 48%, #b8924a 62%, #d8bc6e 78%, #c5a059)',
+              color: '#1a1200',
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontSize: '0.92rem',
+              fontWeight: 700,
+              letterSpacing: '0.02em',
+              boxShadow:
+                '0 1px 0 rgba(255,255,255,0.42) inset, 0 -1px 0 rgba(0,0,0,0.24) inset, 0 4px 16px rgba(197,160,89,0.32), 0 1px 4px rgba(197,160,89,0.18)',
             }}
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
+            {/* convex dome highlight */}
+            <span
+              className="absolute top-0 left-0 right-0 pointer-events-none"
+              style={{
+                height: '50%',
+                borderRadius: '14px 14px 60% 60% / 14px 14px 50% 50%',
+                background:
+                  'linear-gradient(to bottom, rgba(255,255,255,0.26) 0%, rgba(255,255,255,0.06) 60%, transparent 100%)',
+              }}
+              aria-hidden="true"
+            />
+            <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" className="shrink-0">
               <path
                 fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -112,21 +240,56 @@ const AuthModal = ({ onSignInWithGoogle }) => {
             Continue with Google
           </button>
 
-          <p
-            className="mt-5 text-center text-[0.625rem] text-stone-600"
-            style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" }}
+          {/* Dismiss */}
+          <button
+            type="button"
+            className="block w-full mt-2.5 rounded-lg font-brand-en italic text-center transition-all duration-200 hover:bg-white/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-gold/40"
+            style={{
+              minHeight: '44px',
+              padding: '10px 8px',
+              border: 'none',
+              background: 'transparent',
+              color: 'rgba(236,232,224,0.28)',
+              fontSize: '0.83rem',
+              letterSpacing: '0.03em',
+            }}
+            onClick={onClose}
           >
-            By signing in, you agree to our Terms of Service
-          </p>
-        </div>
+            Continue reading without an account
+          </button>
 
-        {/* Gold accent bottom */}
-        <div
-          style={{
-            height: '1px',
-            background: 'linear-gradient(90deg, transparent, rgba(197,160,89,0.3), transparent)',
-          }}
-        />
+          {/* Trust footer */}
+          <div
+            className="flex items-center justify-center gap-1.5 mt-3.5 pt-3"
+            style={{ borderTop: '1px solid rgba(197,160,89,0.08)' }}
+          >
+            <span
+              style={{
+                fontFamily: 'system-ui, sans-serif',
+                fontSize: '0.6rem',
+                color: 'rgba(236,232,224,0.28)',
+                letterSpacing: '0.04em',
+              }}
+            >
+              We never post on your behalf
+            </span>
+            <div
+              className="rounded-full"
+              style={{ width: '3px', height: '3px', background: 'rgba(197,160,89,0.3)' }}
+              aria-hidden="true"
+            />
+            <span
+              style={{
+                fontFamily: 'system-ui, sans-serif',
+                fontSize: '0.6rem',
+                color: 'rgba(236,232,224,0.28)',
+                letterSpacing: '0.04em',
+              }}
+            >
+              No spam, ever
+            </span>
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );

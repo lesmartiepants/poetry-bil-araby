@@ -157,23 +157,20 @@ test.describe('Audio / Listen Feature', () => {
     await setupAudioMocks(page);
     await loadApp(page);
 
-    let ttsRequested = false;
-    page.on('request', (req) => {
-      if (
+    // Start waiting BEFORE the click so we can't miss the request — deterministic instead of a
+    // fixed sleep + boolean flag (which is flaky under CI load).
+    const ttsRequestPromise = page.waitForRequest(
+      (req) =>
         req.url().includes('/api/ai/') &&
         req.url().includes('generateContent') &&
-        !req.url().includes('stream')
-      ) {
-        ttsRequested = true;
-      }
-    });
+        !req.url().includes('stream'),
+      { timeout: 10000 }
+    );
 
     const listenBtn = page.locator('button[aria-label="Start recitation"]');
     await listenBtn.click({ timeout: 10000 });
 
-    // Wait for TTS request to fire
-    await page.waitForTimeout(3000);
-    expect(ttsRequested).toBe(true);
+    await ttsRequestPromise;
   });
 
   test('Listen does not crash the app on TTS error', async ({ page }) => {

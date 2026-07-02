@@ -178,10 +178,12 @@ test.describe('User Flows', () => {
 
   // #4 — Toggle dark/light theme
   test('user toggles dark/light theme', async ({ page }) => {
-    const initialBg = await page.evaluate(() => {
-      const rootDiv = document.querySelector('#root > div');
-      return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
-    });
+    const readBg = () =>
+      page.evaluate(() => {
+        const rootDiv = document.querySelector('#root > div');
+        return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
+      });
+    const initialBg = await readBg();
 
     // Theme toggle now lives inside the Account menu (bottom nav). Open it, then tap the
     // Night/Day row — one tap flips the theme.
@@ -192,18 +194,10 @@ test.describe('User Flows', () => {
     await expect(themeBtn).toBeVisible({ timeout: 3000 });
     await themeBtn.click();
 
-    // The theme transition is animated — poll until the root background actually changes rather
-    // than reading once after a fixed delay (which raced the transition and flaked).
-    await expect
-      .poll(
-        () =>
-          page.evaluate(() => {
-            const rootDiv = document.querySelector('#root > div');
-            return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
-          }),
-        { timeout: 3000 }
-      )
-      .not.toBe(initialBg);
+    // Background should update after the click. Poll instead of a fixed sleep — under CI load
+    // (2 workers sharing a 2-core runner) a single-shot read after a short sleep can catch the
+    // paint before React/Tailwind's class swap has committed.
+    await expect.poll(readBg, { timeout: 5000 }).not.toBe(initialBg);
   });
 
   // #5 — Cycle Arabic font

@@ -96,23 +96,26 @@ test.describe('Sparkler Reader', () => {
   });
 
   test('tap reveals more lines (sliding window)', async ({ page }) => {
-    // The title intro plays for a few seconds before the first line reveals; the poll below waits up
-    // to 12s, exceeding the 10s CI per-test timeout, so give this test extra headroom.
-    test.setTimeout(25000);
+    // The title intro plays for a few seconds before the first line reveals. Under CI load
+    // (2 workers sharing a 2-core runner, competing with other gsap/canvas-heavy specs) the intro
+    // + first ignite can take well over the previous 12s poll budget, so give both the poll and
+    // the overall test extra headroom.
+    test.setTimeout(35000);
     await loadFeed(page);
     const stage = page.locator('[data-testid="sparkler-stage"]').first();
     // Intro plays then reveals the first pair — wait until something is revealed.
-    await expect.poll(() => revealedCount(page), { timeout: 12000 }).toBeGreaterThanOrEqual(1);
+    await expect.poll(() => revealedCount(page), { timeout: 20000 }).toBeGreaterThanOrEqual(1);
     const before = await revealedCount(page);
     await stage.click({ position: { x: 40, y: 30 } });
     await expect.poll(() => revealedCount(page), { timeout: 8000 }).toBeGreaterThan(before);
   });
 
   test('scrubbing seeks the reveal without navigating poems', async ({ page }) => {
-    // Intro + first reveal poll can take >10s; extend beyond the CI per-test timeout.
-    test.setTimeout(25000);
+    // Intro + first reveal poll can take well over 12s under CI load; extend beyond the CI
+    // per-test timeout (see note above on the sibling "tap reveals" test).
+    test.setTimeout(35000);
     await loadFeed(page);
-    await expect.poll(() => revealedCount(page), { timeout: 12000 }).toBeGreaterThanOrEqual(1);
+    await expect.poll(() => revealedCount(page), { timeout: 20000 }).toBeGreaterThanOrEqual(1);
     const urlBefore = page.url();
     const handle = page.locator('[data-testid="progress-scrubber"] [role="slider"]').first();
     const bar = page.locator('[data-testid="progress-scrubber"]').first();

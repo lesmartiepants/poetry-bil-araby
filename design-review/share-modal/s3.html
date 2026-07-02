@@ -324,120 +324,18 @@ button:focus-visible {
 }
 
 /* ============================================================
-   ENVELOPE ASSEMBLY
-   ============================================================ */
-.envelope-assembly {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 4px;
-  position: relative;
-}
-
-/* Envelope base (bottom) — decorative container */
-.envelope-base {
-  width: 212px;
-  height: 14px;
-  background: linear-gradient(180deg, #1a1410 0%, #111008 100%);
-  border: 1px solid rgba(197,160,89,0.2);
-  border-top: none;
-  border-radius: 0 0 6px 6px;
-  position: relative;
-  z-index: 1;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
-.envelope-base::before {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  left: 12px;
-  right: 12px;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(197,160,89,0.15), transparent);
-}
-
-/* Envelope sides */
-.envelope-sides {
-  width: 212px;
-  height: 8px;
-  position: relative;
-  z-index: 1;
-}
-
-.envelope-sides::before,
-.envelope-sides::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 1px;
-  background: rgba(197,160,89,0.2);
-}
-
-.envelope-sides::before { left: 0; }
-.envelope-sides::after  { right: 0; }
-
-/* Envelope flap (the V-shaped fold above card) */
-.envelope-flap {
-  width: 212px;
-  position: relative;
-  z-index: 3;
-  overflow: hidden;
-  height: 28px;
-  flex-shrink: 0;
-}
-
-.envelope-flap-shape {
-  width: 100%;
-  height: 56px;
-  background: linear-gradient(180deg, #1e1a12 0%, #181410 100%);
-  clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
-  border-top: 1px solid rgba(197,160,89,0.22);
-  position: absolute;
-  top: 0;
-  left: 0;
-}
-
-/* Gold edge on flap */
-.envelope-flap-shape::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
-  background: linear-gradient(180deg, rgba(197,160,89,0.12) 0%, transparent 60%);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .envelope-flap-shape {
-    transform-origin: top center;
-    animation: flapOpen 0.5s var(--ease-expo) 0.2s both;
-  }
-
-  @keyframes flapOpen {
-    from {
-      transform: perspective(400px) rotateX(0deg);
-      opacity: 0.3;
-    }
-    to {
-      transform: perspective(400px) rotateX(-40deg);
-      opacity: 1;
-    }
-  }
-}
-
-/* ============================================================
-   CARD PREVIEW — the letter emerging
+   CARD PREVIEW — the letter
    ============================================================ */
 .card-preview-wrap {
-  width: 212px;
+  width: 236px;
   position: relative;
   z-index: 2;
+  margin: 0 auto;
 }
 
 .card-preview {
-  width: 200px;
-  height: 220px;
+  width: 220px;
+  height: 268px;
   margin: 0 auto;
   border-radius: var(--radius-md);
   position: relative;
@@ -1013,7 +911,8 @@ button:focus-visible {
   gap: 2px;
 }
 
-/* SECONDARY — Postmark Download button */
+/* SECONDARY — Download button (molten-gold glass, echoes the wax-seal's
+   material without competing with it as the primary action) */
 .btn-postmark {
   display: flex;
   flex-direction: column;
@@ -1027,113 +926,135 @@ button:focus-visible {
   width: 100%;
   height: 44px;
   border-radius: 22px;
-  border: 1.5px solid rgba(197,160,89,0.3);
-  background: transparent;
+  border: 1.5px solid rgba(197,160,89,0.4);
+  background: linear-gradient(165deg, rgba(197,160,89,0.20) 0%, rgba(197,160,89,0.06) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   position: relative;
-  transition:
-    border-color 0.18s var(--ease-quart),
-    background 0.18s var(--ease-quart);
   overflow: hidden;
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.14),
+    inset 0 -3px 6px rgba(0,0,0,0.3),
+    0 4px 16px rgba(197,160,89,0.22),
+    0 1px 4px rgba(0,0,0,0.35);
+  transition:
+    transform 0.18s var(--ease-spring),
+    box-shadow 0.18s var(--ease-quart),
+    border-color 0.18s var(--ease-quart),
+    filter 0.18s var(--ease-quart);
 }
 
-/* Postmark wave texture */
+/* Glass sheen — soft top highlight, flatter cousin of the wax-seal's dome */
 .btn-postmark-inner::before {
   content: '';
   position: absolute;
-  inset: -1px;
-  border-radius: 22px;
-  background: repeating-linear-gradient(
-    90deg,
-    transparent,
-    transparent 4px,
-    rgba(197,160,89,0.05) 4px,
-    rgba(197,160,89,0.05) 5px
-  );
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 55%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.16) 0%, transparent 100%);
+  border-radius: 22px 22px 50% 50% / 22px 22px 100% 100%;
   pointer-events: none;
 }
 
 .btn-postmark-inner:hover {
-  border-color: rgba(197,160,89,0.55);
-  background: rgba(197,160,89,0.05);
+  transform: translateY(-1px) scale(1.03);
+  border-color: rgba(197,160,89,0.6);
+  filter: brightness(1.08);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,0.16),
+    inset 0 -3px 6px rgba(0,0,0,0.26),
+    0 6px 22px rgba(197,160,89,0.38),
+    0 2px 8px rgba(0,0,0,0.4);
 }
 
 .btn-postmark-inner:active {
-  background: rgba(197,160,89,0.1);
+  transform: translateY(1px) scale(0.97);
+  filter: brightness(0.94);
+  box-shadow:
+    inset 0 3px 6px rgba(0,0,0,0.4),
+    inset 0 1px 1px rgba(255,255,255,0.08),
+    0 1px 4px rgba(197,160,89,0.22);
 }
 
 .postmark-icon {
-  font-size: 14px;
-  color: var(--gold);
-  opacity: 0.8;
+  font-size: 15px;
+  color: var(--gold-bright);
+  opacity: 0.95;
+  position: relative;
+  z-index: 1;
 }
 
 .postmark-text {
   font-family: var(--font-editorial);
   font-variant: small-caps;
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 600;
-  color: rgba(197,160,89,0.7);
-  letter-spacing: 0.1em;
+  color: var(--gold-bright);
+  letter-spacing: 0.09em;
   white-space: nowrap;
+  position: relative;
+  z-index: 1;
 }
 
 .postmark-sub {
   font-family: var(--font-editorial);
   font-style: italic;
   font-size: 9px;
-  color: rgba(197,160,89,0.35);
+  color: rgba(197,160,89,0.42);
   text-align: center;
   letter-spacing: 0.05em;
 }
 
-/* COPY LINK — postal tracking string */
+/* COPY LINK — clean icon + label button */
 .btn-copy-link {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px var(--space-sm);
+  gap: 7px;
+  padding: 9px var(--space-sm);
   min-height: 44px;
-  font-family: 'Courier New', 'Courier', monospace;
-  font-size: 10.5px;
-  color: rgba(197,160,89,0.55);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  border-radius: 999px;
+  background: transparent;
+  border: none;
   position: relative;
-  transition: color 0.18s var(--ease-quart);
+  transition: background 0.18s var(--ease-quart);
   white-space: nowrap;
 }
 
-.btn-copy-link::after {
-  content: '';
-  position: absolute;
-  bottom: 6px;
-  left: 8px;
-  right: 8px;
-  height: 1px;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(197,160,89,0.4) 0px,
-    rgba(197,160,89,0.4) 4px,
-    transparent 4px,
-    transparent 8px
-  );
-}
-
 .btn-copy-link:hover {
-  color: var(--gold);
+  background: rgba(197,160,89,0.08);
 }
 
 .btn-copy-link:active {
-  color: var(--gold-bright);
+  background: rgba(197,160,89,0.14);
 }
 
-.copy-track-icon {
-  font-size: 11px;
-  opacity: 0.7;
+.copy-link-icon {
+  display: flex;
+  align-items: center;
+  color: rgba(197,160,89,0.65);
+  transition: color 0.18s var(--ease-quart);
+}
+
+.copy-link-text {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 12.5px;
+  color: rgba(197,160,89,0.72);
+  letter-spacing: 0.03em;
+  transition: color 0.18s var(--ease-quart);
+}
+
+.btn-copy-link:hover .copy-link-icon,
+.btn-copy-link:hover .copy-link-text {
+  color: var(--gold);
+}
+
+.btn-copy-link:active .copy-link-icon,
+.btn-copy-link:active .copy-link-text {
+  color: var(--gold-bright);
 }
 
 /* ============================================================
@@ -1206,55 +1127,40 @@ button:focus-visible {
           <!-- Gold rule -->
           <div class="gold-rule" role="separator" aria-hidden="true"></div>
 
-          <!-- ── Envelope Assembly ── -->
-          <div class="envelope-assembly" aria-hidden="true">
+          <!-- ── Card Preview ── -->
+          <div class="card-preview-wrap">
+            <div
+              class="card-preview"
+              data-style="diwan"
+              id="card-preview"
+              role="img"
+              aria-label="Poem card preview in Dīwān style"
+              tabindex="0"
+            >
+              <!-- Ornament layers -->
+              <div class="card-ornament" aria-hidden="true"></div>
+              <div class="card-corners" aria-hidden="true"></div>
 
-            <!-- Envelope flap (decorative) -->
-            <div class="envelope-flap">
-              <div class="envelope-flap-shape"></div>
-            </div>
+              <!-- Poem content -->
+              <div class="card-content">
+                <p class="card-poem-ar" dir="rtl" lang="ar">
+                  إِذا أَحبَبتَ اخترْ جَيِّداً<br>
+                  فالحُبُّ لا يُعلَّمُ بَعدَ الأوانِ
+                </p>
 
-            <!-- Card preview (the letter) -->
-            <div class="card-preview-wrap">
-              <div
-                class="card-preview"
-                data-style="diwan"
-                id="card-preview"
-                role="img"
-                aria-label="Poem card preview in Dīwān style"
-                tabindex="0"
-              >
-                <!-- Ornament layers -->
-                <div class="card-ornament" aria-hidden="true"></div>
-                <div class="card-corners" aria-hidden="true"></div>
+                <div class="card-divider" aria-hidden="true"></div>
 
-                <!-- Poem content -->
-                <div class="card-content">
-                  <p class="card-poem-ar" dir="rtl" lang="ar">
-                    إِذا أَحبَبتَ اخترْ جَيِّداً<br>
-                    فالحُبُّ لا يُعلَّمُ بَعدَ الأوانِ
-                  </p>
+                <p class="card-poem-en" lang="en">
+                  If you love, choose wisely<br>
+                  For love cannot be taught after its time has passed
+                </p>
 
-                  <div class="card-divider" aria-hidden="true"></div>
-
-                  <p class="card-poem-en" lang="en">
-                    If you love, choose wisely<br>
-                    For love cannot be taught after its time has passed
-                  </p>
-
-                  <div class="card-poet" aria-label="Poet: Nizar Qabbani">
-                    <span class="card-poet-ar" dir="rtl" lang="ar">نزار قباني</span>
-                    <span class="card-poet-en">Nizar Qabbani</span>
-                  </div>
+                <div class="card-poet" aria-label="Poet: Nizar Qabbani">
+                  <span class="card-poet-ar" dir="rtl" lang="ar">نزار قباني</span>
+                  <span class="card-poet-en">Nizar Qabbani</span>
                 </div>
               </div>
             </div>
-
-            <!-- Envelope sides -->
-            <div class="envelope-sides"></div>
-            <!-- Envelope base -->
-            <div class="envelope-base"></div>
-
           </div>
 
           <!-- ── Stamp Grid ── -->
@@ -1377,14 +1283,19 @@ button:focus-visible {
 
             </div>
 
-            <!-- Copy Link — postal tracking string -->
+            <!-- Copy Link -->
             <button
               class="btn-copy-link"
               aria-label="Copy link to poem"
-              title="Copy link"
+              title="Copy link to poem"
             >
-              <span class="copy-track-icon" aria-hidden="true">⬡</span>
-              TRACK·2024-NQ-0731·COPY LINK
+              <span class="copy-link-icon" aria-hidden="true">
+                <svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="5.5" y="5.5" width="8" height="8" rx="1.6" stroke="currentColor" stroke-width="1.3"/>
+                  <path d="M3.5 10.5V3.6C3.5 2.99 3.99 2.5 4.6 2.5H11.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+              </span>
+              <span class="copy-link-text">Copy link to poem</span>
             </button>
 
           </div>
@@ -1472,16 +1383,24 @@ button:focus-visible {
     }, 300);
   });
 
-  // Copy link — visual feedback
+  // Copy link — visual feedback (swap icon to a check + text to a confirmation)
   var copyBtn = document.querySelector('.btn-copy-link');
+  var copyIconEl = copyBtn.querySelector('.copy-link-icon');
+  var copyTextEl = copyBtn.querySelector('.copy-link-text');
+  var copyIconOrig = copyIconEl.innerHTML;
+  var copyIconCheck =
+    '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M3 8.5L6.2 11.7L13 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '</svg>';
   copyBtn.addEventListener('click', function () {
-    var orig = this.textContent;
-    this.textContent = '⬡ COPIED · LINK SENT ·✓';
-    this.style.color = 'var(--gold-bright)';
-    var self = this;
+    var origText = copyTextEl.textContent;
+    copyIconEl.innerHTML = copyIconCheck;
+    copyTextEl.textContent = 'Link copied';
+    copyBtn.style.background = 'rgba(197,160,89,0.14)';
     setTimeout(function () {
-      self.textContent = orig;
-      self.style.color = '';
+      copyIconEl.innerHTML = copyIconOrig;
+      copyTextEl.textContent = origText;
+      copyBtn.style.background = '';
     }, 1800);
   });
 

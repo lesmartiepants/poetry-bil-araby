@@ -1,6 +1,6 @@
 # Poetry Bil-Araby | بالعربي
 
-A beautiful React application for exploring Arabic poetry with AI-powered insights, audio recitation, and translations.
+A beautiful React app for exploring Arabic poetry with AI-powered insights, audio recitation, and translations.
 
 ## Features
 
@@ -23,6 +23,7 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 ## Setup
 
 ### Prerequisites
+
 - Node.js (v18 or higher)
 - **For AI Mode:** A Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 - **For Database Mode:** PostgreSQL 15+ (optional, but recommended for full functionality)
@@ -31,6 +32,7 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 ### Installation
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
@@ -66,11 +68,13 @@ npm install
 3. Start the development server:
 
    **Option A: Frontend only (AI mode):**
+
    ```bash
    npm run dev
    ```
 
    **Option B: Frontend + Backend (Database mode):**
+
    ```bash
    # Terminal 1: Start backend API server
    npm run dev:server
@@ -80,6 +84,7 @@ npm install
    ```
 
    **Option C: Both concurrently:**
+
    ```bash
    npm run dev:all
    ```
@@ -89,11 +94,13 @@ npm install
 ## Usage
 
 ### Mode Switching
+
 - **Database Mode** (Library icon 📚): Fetches poems from PostgreSQL database (4,600+ curated poems)
 - **AI Mode** (Sparkles icon ✨): Generates poems using Gemini API
 - Toggle between modes using the control bar button or overflow menu (mobile)
 
 ### Core Features
+
 - **Discover**: Click the rabbit/sparkles button to fetch new poems
 - **Navigate**: Use arrow buttons to browse through poems
 - **Play**: Click the play button to hear AI-generated recitation (AI mode only)
@@ -103,7 +110,9 @@ npm install
 - **Theme**: Toggle between dark and light modes
 
 ### Authentication Features (Optional)
+
 When Supabase is configured, the app provides:
+
 - **Sign In**: Click the "Sign In" button to authenticate with Google or Apple
 - **Save Poems**: Click the heart ❤️ button to save poems to your personal collection
 - **My Poems**: View and browse all your saved poems from the account menu
@@ -120,6 +129,7 @@ Every poem in the database is enriched with full Arabic diacritics (tashkeel) �
 Accurate diacritization matters because a single misplaced mark changes meaning and breaks poetic meter. The pipeline uses [Mishkal](https://github.com/linuxscout/mishkal) (rule-based engine) as a starting point, then applies 8 post-processing rules learned from manual Arabic review to fix systematic errors — things like incorrect line-ending vowels, over-diacritized punctuation, and broken hamza patterns.
 
 **Quality gates:**
+
 - Automated audit checks coverage, mark density, and regression against known-good samples
 - HTML report with before/after comparisons for human review
 - Upload verification confirms byte-exact match between local output and DB content
@@ -148,6 +158,7 @@ python scripts/tashkeel-pipeline.py run-all --only-missing --verify
 The API automatically serves diacritized content when available, falling back to raw content (`COALESCE(diacritized_content, content)`).
 
 ### Database Mode Benefits
+
 - 4,600+ curated Arabic poems with full diacritics
 - Instant fetching (no API latency)
 - Works offline (after database setup)
@@ -173,6 +184,7 @@ The API automatically serves diacritized content when available, falling back to
 ## Tech Stack
 
 ### Frontend
+
 - React 18
 - Vite
 - Tailwind CSS
@@ -182,6 +194,7 @@ The API automatically serves diacritized content when available, falling back to
 - Structured logging (captured by Vercel/browser console)
 
 ### Backend (Database Mode)
+
 - Express.js 5 (API server)
 - PostgreSQL 15+ (poem database, requires 17 for auth features)
 - node-postgres (pg) client
@@ -189,6 +202,7 @@ The API automatically serves diacritized content when available, falling back to
 - Structured logging with LOG_ENABLED/LOG_DEBUG flags
 
 ### Authentication & User Data (Optional)
+
 - Supabase Auth (Google & Apple OAuth)
 - Supabase Database (user settings, saved poems, discussions)
 - Row Level Security (RLS) policies for data protection
@@ -238,17 +252,17 @@ poetry-bil-araby/
 
 ### Environment Variables by Service
 
-| Variable | Vercel | Render | GitHub Actions |
-|---|---|---|---|
-| `VITE_GEMINI_API_KEY` | Yes | — | — |
-| `VITE_API_URL` | Yes | — | Yes |
-| `VITE_SUPABASE_URL` | Yes | — | — |
-| `VITE_SUPABASE_ANON_KEY` | Yes | — | — |
-| `DATABASE_URL` | — | Yes | Yes |
-| `SUPABASE_SECRET_KEY` | — | Yes | — |
-| `SUPABASE_PROJECT_URL` | — | Yes | — |
-| `SUPABASE_ACCESS_TOKEN` | — | — | Yes |
-| `SUPABASE_PROJECT_REF` | — | — | Yes |
+| Variable                 | Vercel | Render | GitHub Actions |
+| ------------------------ | ------ | ------ | -------------- |
+| `VITE_GEMINI_API_KEY`    | Yes    | —      | —              |
+| `VITE_API_URL`           | Yes    | —      | Yes            |
+| `VITE_SUPABASE_URL`      | Yes    | —      | —              |
+| `VITE_SUPABASE_ANON_KEY` | Yes    | —      | —              |
+| `DATABASE_URL`           | —      | Yes    | Yes            |
+| `SUPABASE_SECRET_KEY`    | —      | Yes    | —              |
+| `SUPABASE_PROJECT_URL`   | —      | Yes    | —              |
+| `SUPABASE_ACCESS_TOKEN`  | —      | —      | Yes            |
+| `SUPABASE_PROJECT_REF`   | —      | —      | Yes            |
 
 ### Vercel (Frontend)
 
@@ -306,6 +320,7 @@ npm run test:e2e:full       # Full device matrix (local)
 ## TODO
 
 ### Features
+
 - [x] Add poem favorites and bookmarks
 - [x] Saved Poems view to browse collection
 - [x] Settings view for theme and font preferences
@@ -317,6 +332,7 @@ npm run test:e2e:full       # Full device matrix (local)
 - [ ] Implement pagination for large datasets
 
 ### Developer Experience
+
 - [x] Set up GitHub Copilot instructions
 - [ ] Configure ESLint and Prettier
 - [ ] Set up pre-commit hooks

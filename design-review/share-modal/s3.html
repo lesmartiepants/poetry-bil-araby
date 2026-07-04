@@ -262,6 +262,69 @@ button:focus-visible {
 }
 
 /* ============================================================
+   GOLD HAIRLINE — matches login modal top accent
+   ============================================================ */
+.modal-gold-hairline {
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(197,160,89,0.6), rgba(212,180,120,0.8), rgba(197,160,89,0.6), transparent);
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   TITLE BLOCK — matches login modal style
+   ============================================================ */
+.modal-title-block {
+  text-align: center;
+  padding: calc(var(--space-sm) + env(safe-area-inset-top, 0px)) var(--space-xl) var(--space-xs);
+  flex-shrink: 0;
+}
+
+.modal-title-ar {
+  font-family: var(--font-arabic-body);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--gold);
+  direction: rtl;
+  line-height: 1.1;
+  margin-bottom: 3px;
+}
+
+.modal-title-en {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 12px;
+  color: rgba(197,160,89,0.5);
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.modal-title-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 var(--space-xl);
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+}
+.divider-line:first-child {
+  background: linear-gradient(90deg, transparent, rgba(197,160,89,0.3));
+}
+.divider-line:last-child {
+  background: linear-gradient(270deg, transparent, rgba(197,160,89,0.3));
+}
+
+.divider-gem {
+  font-size: 8px;
+  color: rgba(197,160,89,0.4);
+  line-height: 1;
+}
+
+/* ============================================================
    HEADER — hidden; close button floats to corner
    ============================================================ */
 .modal-header {
@@ -616,7 +679,7 @@ button:focus-visible {
    STAMP GRID — style picker
    ============================================================ */
 .stamp-section {
-  margin-bottom: 4px;
+  margin-bottom: 0;
 }
 
 .stamp-label {
@@ -671,8 +734,7 @@ button:focus-visible {
   border-radius: 2px;
   position: relative;
   overflow: hidden;
-  /* Perforation border effect */
-  border: 2px dashed rgba(197,160,89,0.4);
+  border: 2px solid transparent;
   transition:
     border-color 0.2s var(--ease-quart),
     box-shadow 0.2s var(--ease-quart);
@@ -789,6 +851,17 @@ button:focus-visible {
 }
 
 /* ============================================================
+   BOTTOM CONTROLS — groups stamp + actions tightly
+   ============================================================ */
+.bottom-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+}
+
+/* ============================================================
    ACTIONS — stamp-and-send motif
    ============================================================ */
 .actions-section {
@@ -796,7 +869,7 @@ button:focus-visible {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 2px 0 0;
+  padding: 0;
   width: 100%;
 }
 
@@ -909,23 +982,23 @@ button:focus-visible {
   gap: 2px;
 }
 
-/* SECONDARY — Download button (molten-gold glass, echoes the wax-seal's
-   material without competing with it as the primary action) */
+/* SECONDARY — Save Card button (molten-gold dome pill, sibling to the wax seal) */
 .btn-postmark {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 0;
   flex: 1;
-  max-width: 120px;
+  max-width: 200px;
 }
 
 .btn-postmark-inner {
   width: 100%;
-  height: 44px;
-  border-radius: 22px;
-  border: 1.5px solid rgba(197,160,89,0.4);
-  background: linear-gradient(165deg, rgba(197,160,89,0.20) 0%, rgba(197,160,89,0.06) 100%);
+  height: 52px;
+  border-radius: 26px;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-bottom-color: rgba(0,0,0,0.3);
+  background: var(--molten-gold);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -933,77 +1006,70 @@ button:focus-visible {
   position: relative;
   overflow: hidden;
   box-shadow:
-    inset 0 1px 1px rgba(255,255,255,0.14),
-    inset 0 -3px 6px rgba(0,0,0,0.3),
-    0 4px 16px rgba(197,160,89,0.22),
-    0 1px 4px rgba(0,0,0,0.35);
+    inset 0 3px 6px rgba(255,255,255,0.28),
+    inset 0 -3px 6px rgba(0,0,0,0.4),
+    0 5px 20px rgba(197,160,89,0.45),
+    0 2px 8px rgba(0,0,0,0.5);
   transition:
-    transform 0.18s var(--ease-spring),
-    box-shadow 0.18s var(--ease-quart),
-    border-color 0.18s var(--ease-quart),
-    filter 0.18s var(--ease-quart);
+    transform 0.2s var(--ease-spring),
+    box-shadow 0.2s var(--ease-quart),
+    filter 0.2s var(--ease-quart);
 }
 
-/* Glass sheen — soft top highlight, flatter cousin of the wax-seal's dome */
+/* Convex dome highlight — matching wax-seal's sheen */
 .btn-postmark-inner::before {
   content: '';
   position: absolute;
   top: 0;
-  left: 12%;
-  right: 12%;
+  left: 10%;
+  right: 10%;
   height: 55%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.16) 0%, transparent 100%);
-  border-radius: 22px 22px 50% 50% / 22px 22px 100% 100%;
+  background: radial-gradient(ellipse 80% 100% at 50% -20%, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.15) 45%, transparent 100%);
+  border-radius: 26px 26px 60% 60%;
   pointer-events: none;
 }
 
 .btn-postmark-inner:hover {
-  transform: translateY(-1px) scale(1.03);
-  border-color: rgba(197,160,89,0.6);
-  filter: brightness(1.08);
+  transform: translateY(-1px) scale(1.04);
+  filter: brightness(1.07) saturate(1.1);
   box-shadow:
-    inset 0 1px 1px rgba(255,255,255,0.16),
-    inset 0 -3px 6px rgba(0,0,0,0.26),
-    0 6px 22px rgba(197,160,89,0.38),
-    0 2px 8px rgba(0,0,0,0.4);
+    inset 0 3px 6px rgba(255,255,255,0.28),
+    inset 0 -3px 6px rgba(0,0,0,0.36),
+    0 8px 28px rgba(197,160,89,0.55),
+    0 3px 10px rgba(0,0,0,0.45);
 }
 
 .btn-postmark-inner:active {
-  transform: translateY(1px) scale(0.97);
-  filter: brightness(0.94);
+  transform: scale(0.97) translateY(1px);
+  filter: brightness(0.93);
   box-shadow:
-    inset 0 3px 6px rgba(0,0,0,0.4),
-    inset 0 1px 1px rgba(255,255,255,0.08),
-    0 1px 4px rgba(197,160,89,0.22);
+    inset 0 3px 8px rgba(0,0,0,0.4),
+    inset 0 1px 2px rgba(255,255,255,0.1),
+    0 2px 8px rgba(197,160,89,0.2);
 }
 
 .postmark-icon {
-  font-size: 15px;
-  color: var(--gold-bright);
-  opacity: 0.95;
+  font-size: 13px;
+  color: #1a1200;
   position: relative;
   z-index: 1;
+  font-weight: 700;
 }
 
 .postmark-text {
   font-family: var(--font-editorial);
   font-variant: small-caps;
-  font-size: 11.5px;
+  font-size: 13px;
   font-weight: 600;
-  color: var(--gold-bright);
-  letter-spacing: 0.09em;
+  color: #1a1200;
+  letter-spacing: 0.1em;
   white-space: nowrap;
   position: relative;
   z-index: 1;
 }
 
 .postmark-sub {
-  font-family: var(--font-editorial);
-  font-style: italic;
-  font-size: 9px;
-  color: rgba(197,160,89,0.42);
-  text-align: center;
-  letter-spacing: 0.05em;
+  display: none;
 }
 
 /* COPY LINK — clean icon + label button */
@@ -1106,14 +1172,28 @@ button:focus-visible {
         aria-modal="true"
         aria-label="Share poem"
       >
-        <div class="modal-inner">
+      <!-- Gold hairline accent — matches login modal top bar -->
+      <div class="modal-gold-hairline" aria-hidden="true"></div>
 
-          <!-- Floating close button -->
-          <button
-            class="close-btn"
-            aria-label="Close share modal"
-            title="Close"
-          >✕</button>
+      <div class="modal-inner">
+
+        <!-- Floating close button -->
+        <button
+          class="close-btn"
+          aria-label="Close share modal"
+          title="Close"
+        >✕</button>
+
+        <!-- ── Modal Title ── -->
+        <div class="modal-title-block">
+          <h2 class="modal-title-ar" dir="rtl" lang="ar">شارك</h2>
+          <p class="modal-title-en">share your poem</p>
+          <div class="modal-title-divider" aria-hidden="true">
+            <span class="divider-line"></span>
+            <span class="divider-gem">◆</span>
+            <span class="divider-line"></span>
+          </div>
+        </div>
 
           <!-- ── Card Preview ── -->
           <div class="card-preview-wrap">
@@ -1151,7 +1231,10 @@ button:focus-visible {
             </div>
           </div>
 
-          <!-- ── Stamp Grid ── -->
+          <!-- ── Stamp Grid + Actions (grouped tightly) ── -->
+          <div class="bottom-controls">
+
+          <!-- Stamp Grid -->
           <section class="stamp-section" aria-label="Card style selection">
             <p class="stamp-label" aria-hidden="true">— choose your style —</p>
 
@@ -1241,7 +1324,7 @@ button:focus-visible {
           <!-- ── Actions ── -->
           <div class="actions-section">
 
-            <!-- Primary row: Wax Seal Share + Download Postmark -->
+            <!-- Primary row: Wax Seal Share + Save Card -->
             <div class="actions-row">
 
               <!-- Wax Seal Share -->
@@ -1256,17 +1339,16 @@ button:focus-visible {
                 <span class="seal-label">Share</span>
               </div>
 
-              <!-- Postmark Download -->
+              <!-- Save Card -->
               <div class="btn-postmark">
                 <button
                   class="btn-postmark-inner"
-                  aria-label="Download as PNG"
-                  title="Download PNG"
+                  aria-label="Save card as PNG"
+                  title="Save Card"
                 >
-                  <span class="postmark-icon" aria-hidden="true">⬇</span>
-                  <span class="postmark-text">Download</span>
+                  <span class="postmark-icon" aria-hidden="true">✦</span>
+                  <span class="postmark-text">Save Card</span>
                 </button>
-                <span class="postmark-sub">PNG · 2× resolution</span>
               </div>
 
             </div>
@@ -1287,6 +1369,8 @@ button:focus-visible {
             </button>
 
           </div>
+
+          </div><!-- /.bottom-controls -->
 
           <!-- ── Footer ── -->
           <footer class="modal-footer">

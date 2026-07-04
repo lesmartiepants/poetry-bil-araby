@@ -254,7 +254,7 @@ button:focus-visible {
 .modal-inner {
   position: relative;
   z-index: 1;
-  padding: calc(var(--space-sm) + env(safe-area-inset-top, 0px)) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  padding: calc(var(--space-xs) + env(safe-area-inset-top, 0px)) var(--space-md) calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -262,14 +262,10 @@ button:focus-visible {
 }
 
 /* ============================================================
-   HEADER
+   HEADER — hidden; close button floats to corner
    ============================================================ */
 .modal-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 0 var(--space-sm);
-  margin-bottom: 0;
+  display: none;
 }
 
 .header-label-en {
@@ -296,6 +292,10 @@ button:focus-visible {
 }
 
 .close-btn {
+  position: absolute;
+  top: calc(var(--space-sm) + env(safe-area-inset-top, 0px));
+  right: var(--space-md);
+  z-index: 10;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -316,26 +316,24 @@ button:focus-visible {
   color: var(--gold);
 }
 
-/* Gold hairline rule */
+/* Gold hairline rule — hidden */
 .gold-rule {
-  height: 1px;
-  background: var(--gold-rule);
-  margin: 0 0 var(--space-sm);
+  display: none;
 }
 
 /* ============================================================
    CARD PREVIEW — the letter
    ============================================================ */
 .card-preview-wrap {
-  width: 236px;
+  width: 290px;
   position: relative;
   z-index: 2;
   margin: 0 auto;
 }
 
 .card-preview {
-  width: 220px;
-  height: 268px;
+  width: 272px;
+  height: 332px;
   margin: 0 auto;
   border-radius: var(--radius-md);
   position: relative;
@@ -604,7 +602,7 @@ button:focus-visible {
   color: #f0d8b8;
 }
 
-/* Sepia warmth for Ibn Muqla */
+/* Script (ibn-muqla) style — sepia warmth */
 .card-preview[data-style="ibn-muqla"] .card-poem-ar,
 .card-preview[data-style="ibn-muqla"] .card-poem-en {
   color: #e8d5a8;
@@ -624,18 +622,18 @@ button:focus-visible {
 .stamp-label {
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: 10px;
+  font-size: 12px;
   color: rgba(197,160,89,0.45);
   letter-spacing: 0.08em;
   text-align: center;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .stamp-grid {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 12px;
   padding: 2px 0;
 }
 
@@ -646,12 +644,12 @@ button:focus-visible {
 }
 
 .stamp {
-  width: 50px;
+  width: 66px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
   cursor: pointer;
   position: relative;
   min-height: 44px;
@@ -668,8 +666,8 @@ button:focus-visible {
 }
 
 .stamp-img {
-  width: 50px;
-  height: 58px;
+  width: 66px;
+  height: 78px;
   border-radius: 2px;
   position: relative;
   overflow: hidden;
@@ -750,7 +748,7 @@ button:focus-visible {
 .stamp-name {
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: 9px;
+  font-size: 12px;
   color: rgba(197,160,89,0.45);
   text-align: center;
   letter-spacing: 0.04em;
@@ -770,7 +768,7 @@ button:focus-visible {
   right: 0;
   text-align: center;
   font-family: var(--font-arabic-display);
-  font-size: 7px;
+  font-size: 9px;
   color: rgba(197,160,89,0.3);
   z-index: 3;
   direction: rtl;
@@ -1110,22 +1108,12 @@ button:focus-visible {
       >
         <div class="modal-inner">
 
-          <!-- ── Header ── -->
-          <header class="modal-header">
-            <span class="header-label-en" aria-hidden="true">Share</span>
-
-            <div class="header-center">
-              <span class="header-label-ar" dir="rtl" lang="ar" aria-hidden="true">شارك</span>
-              <button
-                class="close-btn"
-                aria-label="Close share modal"
-                title="Close"
-              >✕</button>
-            </div>
-          </header>
-
-          <!-- Gold rule -->
-          <div class="gold-rule" role="separator" aria-hidden="true"></div>
+          <!-- Floating close button -->
+          <button
+            class="close-btn"
+            aria-label="Close share modal"
+            title="Close"
+          >✕</button>
 
           <!-- ── Card Preview ── -->
           <div class="card-preview-wrap">
@@ -1187,64 +1175,64 @@ button:focus-visible {
                 <span class="stamp-name">Dīwān</span>
               </button>
 
-              <!-- Stamp 2: Ibn Muqla -->
+              <!-- Stamp 2: Script -->
               <button
                 class="stamp"
                 data-style="ibn-muqla"
                 role="radio"
                 aria-checked="false"
-                aria-label="Ibn Muqla style"
-                title="Ibn Muqla"
+                aria-label="Script style"
+                title="Script"
               >
                 <div class="stamp-img">
-                  <span class="stamp-ar" dir="rtl" lang="ar">مقلة</span>
+                  <span class="stamp-ar" dir="rtl" lang="ar">خط</span>
                 </div>
-                <span class="stamp-name">Ibn Muqla</span>
+                <span class="stamp-name">Script</span>
               </button>
 
-              <!-- Stamp 3: Sinan -->
+              <!-- Stamp 3: Lattice -->
               <button
                 class="stamp"
                 data-style="sinan"
                 role="radio"
                 aria-checked="false"
-                aria-label="Sinan style"
-                title="Sinan"
+                aria-label="Lattice style"
+                title="Lattice"
               >
                 <div class="stamp-img">
-                  <span class="stamp-ar" dir="rtl" lang="ar">سنان</span>
+                  <span class="stamp-ar" dir="rtl" lang="ar">شبكة</span>
                 </div>
-                <span class="stamp-name">Sinan</span>
+                <span class="stamp-name">Lattice</span>
               </button>
 
-              <!-- Stamp 4: Zaha Hadid -->
+              <!-- Stamp 4: Flux -->
               <button
                 class="stamp"
                 data-style="zaha"
                 role="radio"
                 aria-checked="false"
-                aria-label="Zaha Hadid style"
-                title="Zaha"
+                aria-label="Flux style"
+                title="Flux"
               >
                 <div class="stamp-img">
-                  <span class="stamp-ar" dir="rtl" lang="ar">زها</span>
+                  <span class="stamp-ar" dir="rtl" lang="ar">تدفق</span>
                 </div>
-                <span class="stamp-name">Zaha</span>
+                <span class="stamp-name">Flux</span>
               </button>
 
-              <!-- Stamp 5: Hassan Fathy -->
+              <!-- Stamp 5: Adobe -->
               <button
                 class="stamp"
                 data-style="hassan"
                 role="radio"
                 aria-checked="false"
-                aria-label="Hassan Fathy style"
-                title="Hassan Fathy"
+                aria-label="Adobe style"
+                title="Adobe"
               >
                 <div class="stamp-img">
-                  <span class="stamp-ar" dir="rtl" lang="ar">فتحي</span>
+                  <span class="stamp-ar" dir="rtl" lang="ar">طوب</span>
                 </div>
-                <span class="stamp-name">Hassan Fathy</span>
+                <span class="stamp-name">Adobe</span>
               </button>
 
             </div>
@@ -1325,10 +1313,10 @@ button:focus-visible {
   // Style name → aria label map
   var styleLabels = {
     'diwan':     'Dīwān style',
-    'ibn-muqla': 'Ibn Muqla style',
-    'sinan':     'Sinan style',
-    'zaha':      'Zaha Hadid style',
-    'hassan':    'Hassan Fathy style'
+    'ibn-muqla': 'Script style',
+    'sinan':     'Lattice style',
+    'zaha':      'Flux style',
+    'hassan':    'Adobe style'
   };
 
   stamps.forEach(function (stamp) {

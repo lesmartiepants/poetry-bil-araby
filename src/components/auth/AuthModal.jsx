@@ -257,38 +257,6 @@ const AuthModal = ({ onSignInWithGoogle }) => {
           >
             Continue reading without an account
           </button>
-
-          {/* Trust footer */}
-          <div
-            className="flex items-center justify-center gap-1.5 mt-3.5 pt-3"
-            style={{ borderTop: '1px solid rgba(197,160,89,0.08)' }}
-          >
-            <span
-              style={{
-                fontFamily: 'system-ui, sans-serif',
-                fontSize: '0.6rem',
-                color: 'rgba(236,232,224,0.28)',
-                letterSpacing: '0.04em',
-              }}
-            >
-              We never post on your behalf
-            </span>
-            <div
-              className="rounded-full"
-              style={{ width: '3px', height: '3px', background: 'rgba(197,160,89,0.3)' }}
-              aria-hidden="true"
-            />
-            <span
-              style={{
-                fontFamily: 'system-ui, sans-serif',
-                fontSize: '0.6rem',
-                color: 'rgba(236,232,224,0.28)',
-                letterSpacing: '0.04em',
-              }}
-            >
-              No spam, ever
-            </span>
-          </div>
         </div>
       </motion.div>
     </motion.div>

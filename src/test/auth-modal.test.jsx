@@ -145,12 +145,6 @@ describe('AuthModal', () => {
       expect(mockCloseAuth).toHaveBeenCalled();
     });
 
-    it('renders the trust footer copy', () => {
-      render(<AuthModal onSignInWithGoogle={onSignInWithGoogle} />);
-      expect(screen.getByText('We never post on your behalf')).toBeInTheDocument();
-      expect(screen.getByText('No spam, ever')).toBeInTheDocument();
-    });
-
     it('Arabic title has dir="rtl" attribute', () => {
       render(<AuthModal onSignInWithGoogle={onSignInWithGoogle} />);
       const arabicTitle = screen.getByText('اكتشف رحلتك في الشعر');

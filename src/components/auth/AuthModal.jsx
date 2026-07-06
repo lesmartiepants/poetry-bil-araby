@@ -136,7 +136,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
               lang="ar"
               dir="rtl"
             >
-              اكتشف رحلتك في الشعر
+              مجموعة مختارة في انتظارك
             </p>
             <p
               className="font-brand-en italic text-center mt-0.5"
@@ -147,7 +147,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
                 padding: '0 12px',
               }}
             >
-              Unlock your Journey Through Poetry
+              A Curated Collection Awaits
             </p>
           </div>
         </div>

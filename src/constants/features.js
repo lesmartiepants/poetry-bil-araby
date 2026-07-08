@@ -9,7 +9,7 @@ export const FEATURES = {
   landing: false, // Show the splash/landing screen on first visit (disabled: boot straight into the reader)
   onboarding: false, // Show kinetic walkthrough (phases 1-3) on first visit
   forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
-  designReview: false, // Show design review shortcut icon (still accessible via /design-review URL)
+  designReview: true, // Show design review shortcut icon (still accessible via /design-review URL)
   tour: false, // Guided walkthrough — disabled: its steps target the pre-redesign nav (PlayControlsStrip/VerticalSidebar); re-wire to the new reader UI before re-enabling
 
   verticalFeed: true, // Vertical swipe feed + tap-to-reveal stanza blooms (replaces horizontal carousel)

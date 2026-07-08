@@ -1,6 +1,7 @@
 import { Popover } from 'radix-ui';
-import { LogOut, Mic, UserRound } from 'lucide-react';
+import { LogOut, Mic, Paintbrush, UserRound } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
+import { FEATURES } from '../constants/features.js';
 import { useUIStore } from '../stores/uiStore';
 import { voiceGender } from '../constants/voices';
 
@@ -68,6 +69,24 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
             </button>
 
             <div className="my-1 h-px" style={{ background: 'rgba(197,160,89,0.18)' }} />
+
+            {/* Design Review — share modal mockup (only shown when FEATURES.designReview is enabled) */}
+            {FEATURES.designReview && (
+              <>
+                <a
+                  href="/design-review/share-modal/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Open share modal design review"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors no-underline"
+                  style={{ color: ink }}
+                >
+                  <Paintbrush size={16} style={{ color: ink }} />
+                  <span>Share Modal Design</span>
+                </a>
+                <div className="my-1 h-px" style={{ background: 'rgba(197,160,89,0.18)' }} />
+              </>
+            )}
 
             {/* Auth */}
             {user ? (

@@ -71,25 +71,29 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
 
             {/* Auth */}
             {user ? (
-              <button
-                onClick={onSignOut}
-                aria-label="Sign out"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
-                style={{ color: ink }}
-              >
-                <LogOut size={16} style={{ color: ink }} />
-                <span>Sign Out</span>
-              </button>
+              <Popover.Close asChild>
+                <button
+                  onClick={onSignOut}
+                  aria-label="Sign out"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+                  style={{ color: ink }}
+                >
+                  <LogOut size={16} style={{ color: ink }} />
+                  <span>Sign Out</span>
+                </button>
+              </Popover.Close>
             ) : (
-              <button
-                onClick={onSignIn}
-                aria-label="Sign in"
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
-                style={{ color: ink }}
-              >
-                <UserRound size={16} style={{ color: ink }} />
-                <span>Sign In</span>
-              </button>
+              <Popover.Close asChild>
+                <button
+                  onClick={onSignIn}
+                  aria-label="Sign in"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+                  style={{ color: ink }}
+                >
+                  <UserRound size={16} style={{ color: ink }} />
+                  <span>Sign In</span>
+                </button>
+              </Popover.Close>
             )}
             <Popover.Arrow style={{ fill: darkMode ? '#000' : '#fff' }} />
           </Popover.Content>

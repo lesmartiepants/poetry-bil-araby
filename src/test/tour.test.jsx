@@ -94,7 +94,7 @@ describe('SpotlightTour engine', () => {
     await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
   });
 
-  it('keeps Next disabled until the user performs the action, then advances', async () => {
+  it('feature steps have no Next button and auto-advance on the real interaction', async () => {
     const target = document.createElement('button');
     target.setAttribute('data-tour', 'listen');
     document.body.appendChild(target);
@@ -103,14 +103,14 @@ describe('SpotlightTour engine', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Next' })); // welcome -> listen
     expect(screen.getByText('Listen to the poem')).toBeInTheDocument();
 
-    // Next is disabled until the step's action is done.
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    // Feature steps drive by the real interaction — the redundant Next button is gone.
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
 
-    // Performing the real interaction enables Next, which then advances.
+    // Performing the real interaction auto-advances (deferred so the app's own handler runs first).
     target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('Pause anytime')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Pause anytime')).toBeInTheDocument(), {
+      timeout: 2000,
+    });
     target.remove();
   });
 

@@ -71,6 +71,9 @@ const TextSettingsPill = () => {
     setHexInput(bgColor || defaultColor);
   }, [bgColor, defaultColor]);
 
+  // Advanced disclosure (Header Geometry) — collapsed by default
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+
   const highlightStyle = useUIStore((s) => s.highlightStyle);
   const actionWeight = useUIStore((s) => s.actionWeight);
 
@@ -330,11 +333,38 @@ const TextSettingsPill = () => {
               </ToggleGroup.Root>
             </div>
 
-            {/* ── Header Geometry section ─────────────────────────────── */}
-            <SectionLabel gold={gold}>Header Geometry</SectionLabel>
+            {/* ── Advanced disclosure ─────────────────────────────────── */}
+            <button
+              type="button"
+              onClick={() => setAdvancedOpen((o) => !o)}
+              aria-expanded={advancedOpen}
+              className="w-full flex items-center gap-2 mt-4 mb-2"
+            >
+              <span
+                className="text-xs uppercase tracking-widest opacity-50 font-medium"
+                style={{ color: gold }}
+              >
+                Advanced
+              </span>
+              <div className="flex-1 h-px opacity-10" style={{ background: gold }} />
+              <ChevronDown
+                size={14}
+                style={{
+                  color: gold,
+                  opacity: 0.5,
+                  transform: advancedOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 0.2s ease',
+                }}
+              />
+            </button>
 
-            {/* Line colour + Pattern — paired on one line */}
-            <div className="mb-3 flex gap-2 items-start">
+            {advancedOpen && (
+              <>
+                {/* ── Header Geometry section ───────────────────────────── */}
+                <SectionLabel gold={gold}>Header Geometry</SectionLabel>
+
+                {/* Line colour + Pattern — paired on one line */}
+                <div className="mb-3 flex gap-2 items-start">
               <div className="flex-1 min-w-0">
                 <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
                   Line colour
@@ -422,6 +452,8 @@ const TextSettingsPill = () => {
               <ExternalLink size={11} />
               Open pattern generator
             </a>
+              </>
+            )}
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>

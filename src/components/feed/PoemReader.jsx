@@ -23,8 +23,9 @@ const COARSE_POINTER =
 /**
  * PoemReader — one poem panel in the vertical feed, rendered as the sparkler teleprompter.
  *
- * Layout matches the prototype: the title settles at the top, the verses sit in the centre, and
- * the progress scrubber + tap prompt are anchored near the bottom. Tapping drives everything —
+ * Layout matches the prototype: the title settles at the top, the verses sit in the centre, the
+ * action buttons + tap prompt are anchored near the bottom, and a full-height vertical progress
+ * scrub rail (#613) is anchored to the screen-right edge. Tapping drives everything —
  * it advances the reveal, then ("tap for meaning") opens the inline insight (The Meaning → tap →
  * About the Author). Pull up for the next poem.
  */
@@ -201,11 +202,11 @@ const PoemReader = memo(function PoemReader({
     const animateThis = endStage !== 'idle' && !seenStagesRef.current[endStage];
     const done = !animateThis;
     insightDoneRef.current = done;
-    lastAtFracRef.current = 0; // start at the top (scrubber at the left) on every section entry
+    lastAtFracRef.current = 0; // start at the top (scrubber at the top) on every section entry
     setInsightDone(done);
     setInsightCanScroll(false);
-    if (scrubFillRef.current) scrubFillRef.current.style.width = '0%';
-    if (scrubHandleRef.current) scrubHandleRef.current.style.left = '0%';
+    if (scrubFillRef.current) scrubFillRef.current.style.height = '0%';
+    if (scrubHandleRef.current) scrubHandleRef.current.style.top = '0%';
   }, [endStage, poemId]);
 
   // Insight RevealText → scrub bar wiring.
@@ -215,7 +216,7 @@ const PoemReader = memo(function PoemReader({
   //    left to read, so emptying it would be misleading.
   const onInsightProgress = (frac) => {
     if (!insightDoneRef.current && scrubFillRef.current)
-      scrubFillRef.current.style.width = (frac * 100).toFixed(2) + '%';
+      scrubFillRef.current.style.height = (frac * 100).toFixed(2) + '%';
     if (frac >= 1) {
       insightDoneRef.current = true;
       setInsightDone(true);
@@ -223,18 +224,18 @@ const PoemReader = memo(function PoemReader({
       // (on completion) rather than on stage-change means async-loaded insights still animate the
       // first time (the section often mounts only after the text arrives).
       if (endStage !== 'idle') seenStagesRef.current[endStage] = true;
-      // Leave the bar full; onInsightScrollMeta (fires right after) drops it to the scroll position
+      // Leave the rail full; onInsightScrollMeta (fires right after) drops it to the scroll position
       // only if the text actually overflows.
-      if (scrubFillRef.current) scrubFillRef.current.style.width = '100%';
+      if (scrubFillRef.current) scrubFillRef.current.style.height = '100%';
     }
   };
   const onInsightScrollMeta = ({ canScroll, atFrac }) => {
     lastAtFracRef.current = atFrac;
     setInsightCanScroll(canScroll);
-    if (scrubHandleRef.current) scrubHandleRef.current.style.left = (atFrac * 100).toFixed(2) + '%';
+    if (scrubHandleRef.current) scrubHandleRef.current.style.top = (atFrac * 100).toFixed(2) + '%';
     if (insightDoneRef.current && scrubFillRef.current)
       // Overflowing → fill tracks scroll position; non-overflowing → keep it full.
-      scrubFillRef.current.style.width = (canScroll ? atFrac * 100 : 100).toFixed(2) + '%';
+      scrubFillRef.current.style.height = (canScroll ? atFrac * 100 : 100).toFixed(2) + '%';
   };
 
   const inInsight = endStage !== 'idle';
@@ -425,44 +426,60 @@ const PoemReader = memo(function PoemReader({
         )}
       </div>
 
-      {/* One persistent scrub bar + tap prompt — pinned as low as possible, same position in every
-          state. Reading: it seeks the reveal. Insight: it scrolls the paragraph (fill = render
-          progress, handle shown only when the text overflows). The prompt is the bottom-most child
-          so it holds a constant height across states. */}
+      {/* One persistent VERTICAL scrub rail (#613) — full-height, anchored to the screen-right edge,
+          same position in every state. Reading: it seeks the reveal (top→bottom = start→end).
+          Insight: it scrolls the paragraph (fill = render progress, handle shown only when the text
+          overflows). Always visible as a persistent reading-position indicator. */}
+      <div
+        ref={scrubWrapRef}
+        className="absolute"
+        style={{
+          right: 'env(safe-area-inset-right, 0px)',
+          top: 'env(safe-area-inset-top, 0px)',
+          bottom: 'env(safe-area-inset-bottom, 0px)',
+          opacity: 0,
+          zIndex: 5,
+        }}
+      >
+        <ProgressScrubber
+          total={inInsight ? 100 : lineCount}
+          goldColor={goldColor}
+          visible={isActive}
+          showHandle={inInsight ? insightCanScroll && insightDone : true}
+          scrubFillRef={scrubFillRef}
+          scrubHandleRef={scrubHandleRef}
+          onScrubStart={() => {
+            scrubbingRef.current = true;
+          }}
+          onScrub={(f) => {
+            if (inInsight) revealRef.current?.scrollToFrac(f);
+            else controller?.scrubTo(f, false);
+          }}
+          onScrubEnd={(f) => {
+            scrubbingRef.current = false;
+            if (inInsight) {
+              revealRef.current?.scrollToFrac(f);
+              return;
+            }
+            const ttsActive = isPlaying && highlightStyle !== 'none';
+            // During TTS the reveal is voice-driven: a scrub is a temporary seek, so on release
+            // snap the window back to the currently-spoken line instead of resuming the reveal.
+            if (ttsActive) controller?.ttsFollow(currentVerseIndex);
+            else controller?.scrubTo(f, true);
+          }}
+        />
+      </div>
+
+      {/* Action buttons + pull-up cue — pinned as low as possible, same position in every state.
+          A right pad clears the vertical scrub rail so the right-most button never underlaps it. */}
       <div
         className="absolute left-0 right-0 flex flex-col items-center gap-2 px-4"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)', zIndex: 5 }}
+        style={{
+          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
+          paddingRight: 'calc(env(safe-area-inset-right, 0px) + 56px)',
+          zIndex: 5,
+        }}
       >
-        <div ref={scrubWrapRef} className="w-full" style={{ opacity: 0 }}>
-          <ProgressScrubber
-            total={inInsight ? 100 : lineCount}
-            goldColor={goldColor}
-            visible={isActive}
-            showHandle={inInsight ? insightCanScroll && insightDone : true}
-            scrubFillRef={scrubFillRef}
-            scrubHandleRef={scrubHandleRef}
-            onScrubStart={() => {
-              scrubbingRef.current = true;
-            }}
-            onScrub={(f) => {
-              if (inInsight) revealRef.current?.scrollToFrac(f);
-              else controller?.scrubTo(f, false);
-            }}
-            onScrubEnd={(f) => {
-              scrubbingRef.current = false;
-              if (inInsight) {
-                revealRef.current?.scrollToFrac(f);
-                return;
-              }
-              const ttsActive = isPlaying && highlightStyle !== 'none';
-              // During TTS the reveal is voice-driven: a scrub is a temporary seek, so on release
-              // snap the window back to the currently-spoken line instead of resuming the reveal.
-              if (ttsActive) controller?.ttsFollow(currentVerseIndex);
-              else controller?.scrubTo(f, true);
-            }}
-          />
-        </div>
-
         {/* Action buttons — replace the old "tap to continue" prompt. State-driven pair with the
             Listen->transport morph; sits between the scrub bar and the pull-up cue. */}
         {isActive && (

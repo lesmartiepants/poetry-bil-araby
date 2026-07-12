@@ -77,8 +77,6 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
     [steps]
   );
 
-  const handleDismiss = useCallback(() => setOpen(false), []);
-
   const handleComplete = useCallback(() => {
     setOpen(false);
     setCompleted(true);
@@ -88,6 +86,18 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
       /* ignore */
     }
   }, []);
+
+  // Reaching the finish step IS completion. If the reader closes the tour from
+  // that step by ANY path (×, Esc, or a Done tap a lingering auth overlay might
+  // otherwise swallow), persist completion defensively so the restart icon — not
+  // the "Resume tour" chip — shows next time (#610c).
+  const handleDismiss = useCallback(() => {
+    if (currentKey === 'finish') {
+      handleComplete();
+      return;
+    }
+    setOpen(false);
+  }, [currentKey, handleComplete]);
 
   const restart = useCallback(() => {
     setResumeStep(0);

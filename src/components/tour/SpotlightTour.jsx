@@ -24,6 +24,10 @@ import { TOUR_TRAYS } from '../../constants/tourTrays.js';
 const Z = 9999;
 const PAD = 4; // breathing room around the spotlighted element (hugs the control)
 const GAP = 18; // distance between the control bar / element and the card
+// On feature steps the real interaction alone advances the tour. Give the tap a
+// beat to land (open the tray / start audio) so the reader sees the result before
+// the card moves on.
+const ADVANCE_DELAY = 650;
 const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
 const ARABIC_SIZE = '1.155rem'; // inline accent (Arabic) — +10%
 
@@ -169,19 +173,41 @@ export default function SpotlightTour({
     return () => clearTimeout(id);
   }, [index, step?.target, step?.key]);
 
-  // Dynamic unlock: performing the real action lights up Next. Delegated from
-  // the document (capture phase) so it keeps working even if the target element
-  // is swapped out mid-step (e.g. the Listen control morphing as audio loads).
+  // Dynamic advance: performing the real action IS the advance on feature steps
+  // (there's no Next button on them). Delegated from the document (capture phase)
+  // so it keeps working even if the target element is swapped out mid-step (e.g.
+  // the Listen control morphing as audio loads).
   useEffect(() => {
     if (!needsAction || !step?.target) return;
+    let advanced = false;
+    let timer;
     const handler = (e) => {
+      if (advanced) return;
       if (e.target instanceof Element && e.target.closest(step.target)) {
+        advanced = true;
         setActioned((prev) => new Set(prev).add(step.key));
+        // Let the app's own click handler run first (open the tray / start audio),
+        // then auto-advance — the same handler the Next button used to call.
+        timer = setTimeout(() => next(), ADVANCE_DELAY);
       }
     };
     document.addEventListener(step.advanceOn, handler, true);
-    return () => document.removeEventListener(step.advanceOn, handler, true);
-  }, [index, step, needsAction]);
+    return () => {
+      document.removeEventListener(step.advanceOn, handler, true);
+      clearTimeout(timer);
+    };
+  }, [index, step, needsAction, next]);
+
+  // Terminal step: proactively close any lingering app overlay (auth / discover /
+  // saved) so nothing sits over the Done button. A Radix/Vaul dismissable layer
+  // left open would otherwise swallow the completing tap and completion would
+  // never persist (#610c).
+  useEffect(() => {
+    if (!isLast) return;
+    Object.values(TRAYS).forEach((t) => {
+      if (useModalStore.getState()[t.key]) t.close();
+    });
+  }, [isLast]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -327,6 +353,9 @@ function CoachCard({
 }) {
   const [size, setSize] = useState({ w: 320, h: 200 });
   const ref = useRef(null);
+  // Feature steps advance by the real interaction alone — no Next button. Only
+  // the centered welcome/finish cards keep an explicit Next/Done.
+  const needsAction = !!step?.advanceOn;
 
   useLayoutEffect(() => {
     if (ref.current) {
@@ -443,7 +472,9 @@ function CoachCard({
         >
           {step.body}
         </p>
-        {step.note && (
+        {/* Only anchored steps have a real action to tap — keep the note off the
+            centered welcome/finish intro/outro cards. */}
+        {step.note && step.target && (
           <p
             style={{
               fontFamily: "'Forum', serif",
@@ -487,14 +518,16 @@ function CoachCard({
               Back
             </button>
           )}
-          {/* Disabled until the step's spotlighted action is done. */}
-          <button
-            onClick={locked ? undefined : onNext}
-            disabled={locked}
-            style={{ ...goldBtn, ...(locked ? lockedBtn : null) }}
-          >
-            {isLast ? 'Done' : 'Next'}
-          </button>
+          {/* Feature steps have no Next — the real interaction advances them. */}
+          {!needsAction && (
+            <button
+              onClick={locked ? undefined : onNext}
+              disabled={locked}
+              style={{ ...goldBtn, ...(locked ? lockedBtn : null) }}
+            >
+              {isLast ? 'Done' : 'Next'}
+            </button>
+          )}
         </div>
       </div>
     </motion.div>

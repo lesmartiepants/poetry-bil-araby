@@ -143,7 +143,9 @@ test('every step anchors to a real element and the tour walks to completion', as
         .toBe(false);
     }
 
-    // Feature steps: perform the real action the tour is guiding.
+    // Feature steps: perform the real action the tour is guiding — the tour then
+    // AUTO-ADVANCES (anchored steps no longer render a Next button). Intro/outro
+    // cards (welcome/finish) advance via their Next/Done button instead.
     if (step.advanceOn) {
       if (step.tray) {
         // Click the actual control button to OPEN its panel/drawer. The anchor
@@ -165,13 +167,14 @@ test('every step anchors to a real element and the tour walks to completion', as
         // "generates", so dispatch the click directly to fire the tour's unlock
         // regardless of disabled state (we're testing the tour, not playback).
         await page.locator(step.target).first().dispatchEvent('click');
-        await page.waitForTimeout(200);
       }
+      // Auto-advance is deferred (~650ms) so the app's own handler runs first.
+      await page.waitForTimeout(1200);
+    } else {
+      // Intro/outro cards advance via their button.
+      await card.getByRole('button', { name: isLast ? 'Done' : 'Next' }).click({ force: true });
+      await page.waitForTimeout(500);
     }
-
-    // Advance (Next flashes-not-advances only when locked; we've done the action).
-    await card.getByRole('button', { name: isLast ? 'Done' : 'Next' }).click({ force: true });
-    await page.waitForTimeout(500);
   }
 
   // Completed: the coachmark is gone, the restart entry point persists, and the

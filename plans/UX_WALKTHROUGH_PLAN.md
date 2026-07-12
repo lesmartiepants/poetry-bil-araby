@@ -12,8 +12,11 @@ Confirmed during review: in production the reading stage **does** ignite the ope
 rest (`useSparklerReveal.js:296-302`); the fully-blank canvas seen in the sandbox was an
 audio-less/headless artifact.
 
-**Status:** all nine directions are locked. None were flagged "now" — everything is batched for
-later, grouped below.
+**Status:** ✅ **SHIPPED.** All nine fixes (#606–#614) were implemented across four parallel
+worktree lanes with sprint-lead QA gates between waves, verified on iPhone 16 (393×852), and
+merged to `claude/app-building-ux-review-nyrehn`. See the execution plan in
+`~/.claude/plans/now-plan-with-defined-lovely-babbage.md`. Original locked directions are grouped
+below for reference.
 
 ## Batches (all scheduled "later")
 

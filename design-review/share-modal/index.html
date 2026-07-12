@@ -71,11 +71,15 @@
 </style>
 </head>
 <body>
-  <iframe class="frame active" src="s1b.html" title="S1B — Folio Final" loading="eager"></iframe>
+  <iframe class="frame active" src="s1c.html" title="S1C — Folio Final C" loading="eager"></iframe>
+  <iframe class="frame" src="s1b.html" title="S1B — Folio Final" loading="lazy"></iframe>
   <iframe class="frame" src="s1.html" title="S1 — Folio (original)" loading="lazy"></iframe>
   <iframe class="frame" src="s2b.html" title="S2B — Majlis Final" loading="lazy"></iframe>
+  <iframe class="frame" src="s3c.html" title="S3C — Maktuba Final C" loading="lazy"></iframe>
   <iframe class="frame" src="s3.html" title="S3 — Maktuba (original)" loading="lazy"></iframe>
+  <iframe class="frame" src="s5c.html" title="S5C — Rawāq Final C" loading="lazy"></iframe>
   <iframe class="frame" src="s5b.html" title="S5B — Rawāq Final" loading="lazy"></iframe>
+  <iframe class="frame" src="s7c.html" title="S7C — Khatm Final C" loading="lazy"></iframe>
   <iframe class="frame" src="s7b.html" title="S7B — Khatm Final" loading="lazy"></iframe>
   <iframe class="frame" src="s7.html" title="S7 — Khatm (original)" loading="lazy"></iframe>
 
@@ -83,8 +87,8 @@
   <button class="nav-btn nav-next" id="next" aria-label="Next design">›</button>
 
   <div class="label is-flag" id="label">
-    <span class="num" id="num">S1B</span>
-    <span class="name" id="name">Folio Final</span>
+    <span class="num" id="num">S1C</span>
+    <span class="name" id="name">Folio Final C</span>
     <span class="flag">Final</span>
   </div>
 
@@ -92,12 +96,16 @@
 
 <script>
   const dirs = [
-    { num: 'S1B', name: 'Folio Final',        flagship: true  },
+    { num: 'S1C', name: 'Folio Final C',      flagship: true  },
+    { num: 'S1B', name: 'Folio Final',        flagship: false },
     { num: 'S1',  name: 'Folio — original',   flagship: false },
     { num: 'S2B', name: 'Majlis Final',       flagship: true  },
+    { num: 'S3C', name: 'Maktuba Final C',    flagship: true  },
     { num: 'S3',  name: 'Maktuba — original', flagship: false },
-    { num: 'S5B', name: 'Rawāq Final',        flagship: true  },
-    { num: 'S7B', name: 'Khatm Final',        flagship: true  },
+    { num: 'S5C', name: 'Rawāq Final C',      flagship: true  },
+    { num: 'S5B', name: 'Rawāq Final',        flagship: false },
+    { num: 'S7C', name: 'Khatm Final C',      flagship: true  },
+    { num: 'S7B', name: 'Khatm Final',        flagship: false },
     { num: 'S7',  name: 'Khatm — original',   flagship: false },
   ];
   const frames = Array.from(document.querySelectorAll('.frame'));

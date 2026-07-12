@@ -15,6 +15,11 @@ import { POEM_META } from '../../constants/index.js';
 const REDUCED_MOTION =
   typeof matchMedia === 'undefined' || matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// Coarse pointers (touch) swipe; fine pointers (mouse) scroll. Resolve once at module load so the
+// between-poems cue matches the input the user actually has.
+const COARSE_POINTER =
+  typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
 /**
  * PoemReader — one poem panel in the vertical feed, rendered as the sparkler teleprompter.
  *
@@ -281,6 +286,8 @@ const PoemReader = memo(function PoemReader({
       (isAllRevealed &&
         ((endStage === 'idle' && !isRevealing) || (endStage === 'author' && insightDone))));
 
+  const nextPoemCue = COARSE_POINTER ? 'swipe up for next poem' : 'scroll up for next poem';
+
   return (
     <div
       className="relative w-full h-full select-none"
@@ -497,7 +504,7 @@ const PoemReader = memo(function PoemReader({
               letterSpacing: '0.05em',
             }}
           >
-            {'scroll up for next poem'.split('').map((ch, i) => (
+            {nextPoemCue.split('').map((ch, i) => (
               <span
                 key={i}
                 style={{

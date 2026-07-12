@@ -190,6 +190,14 @@ export default function SpotlightTour({
   // (there's no Next button on them). Delegated from the document (capture phase)
   // so it keeps working even if the target element is swapped out mid-step (e.g.
   // the Listen control morphing as audio loads).
+  // Hold the latest onDemoRecite without making the auto-advance effect depend on it.
+  // togglePlay is recreated every render, so listing it as a dep would re-run this effect
+  // on the setActioned re-render and clear the pending advance timer (freezing the tour).
+  const onDemoReciteRef = useRef(onDemoRecite);
+  useEffect(() => {
+    onDemoReciteRef.current = onDemoRecite;
+  }, [onDemoRecite]);
+
   useEffect(() => {
     if (!needsAction || !step?.target) return;
     // The Listen step demos the synced highlight: dwell longer so it's actually
@@ -210,10 +218,10 @@ export default function SpotlightTour({
         // double-toggle — kick playback ourselves if, a beat later, nothing is
         // playing or generating. (togglePlay's own in-flight guard is a further
         // backstop against starting-then-pausing.)
-        if (demoRecite && onDemoRecite) {
+        if (demoRecite && onDemoReciteRef.current) {
           guaranteeTimer = setTimeout(() => {
             const { isPlaying, isGenerating } = useAudioStore.getState();
-            if (!isPlaying && !isGenerating) onDemoRecite();
+            if (!isPlaying && !isGenerating) onDemoReciteRef.current?.();
           }, DEMO_RECITE_GUARANTEE_DELAY);
         }
         // Let the app's own click handler run first (open the tray / start audio),
@@ -227,7 +235,7 @@ export default function SpotlightTour({
       clearTimeout(timer);
       clearTimeout(guaranteeTimer);
     };
-  }, [index, step, needsAction, next, onDemoRecite]);
+  }, [index, step, needsAction, next]);
 
   // Terminal step: proactively close any lingering app overlay (auth / discover /
   // saved) so nothing sits over the Done button. A Radix/Vaul dismissable layer

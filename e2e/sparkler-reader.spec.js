@@ -109,7 +109,9 @@ test.describe('Sparkler Reader', () => {
     const box = await bar.boundingBox();
     await handle.hover();
     await page.mouse.down();
-    await page.mouse.move(box.x + box.width * 0.85, box.y + box.height / 2, { steps: 8 });
+    // The scrubber is now a vertical rail on the right edge — drag DOWN (toward the
+    // bottom = end of the poem), not across.
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.85, { steps: 8 });
     await page.mouse.up();
     await page.waitForTimeout(1500);
     // Seeking near the end reveals more lines, and the feed did NOT advance to another poem.

@@ -150,7 +150,7 @@ body {
    CARD PREVIEW
    ============================================================ */
 .preview-wrap {
-  width: min(62vw, 270px);
+  width: min(70vw, 300px);
   aspect-ratio: 4 / 5;
   border-radius: 12px;
   overflow: hidden;
@@ -169,7 +169,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 22px 18px 30px;
+  padding: 26px 18px 32px;
   background: var(--card-bg);
   transition: background 0.35s;
 }
@@ -200,8 +200,8 @@ body {
 }
 .preview .arabic-poetry {
   font-family: var(--font-arabic-body);
-  font-size: 0.9rem;
-  line-height: 2;
+  font-size: 0.84rem;
+  line-height: 1.9;
   color: var(--card-ink);
   direction: rtl;
 }
@@ -227,8 +227,8 @@ body {
 .preview .english-translation {
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: 0.7rem;
-  line-height: 1.7;
+  font-size: 0.66rem;
+  line-height: 1.65;
   color: var(--card-trans);
 }
 .preview .english-translation .verse { display: block; }
@@ -493,7 +493,7 @@ body {
 
 /* short phones: shrink preview so the sheet always fits */
 @media (max-height: 700px) {
-  .preview-wrap { width: min(52vw, 220px); }
+  .preview-wrap { width: min(56vw, 240px); }
 }
 </style>
 </head>

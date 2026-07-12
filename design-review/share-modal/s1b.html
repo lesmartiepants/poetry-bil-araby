@@ -59,7 +59,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 84px 34px 240px;
+  padding: 132px 34px 280px;
   background: var(--card-bg);
   transition: background 0.45s;
   opacity: 0;
@@ -124,8 +124,8 @@ body {
 
 .card .arabic-poetry {
   font-family: var(--font-arabic-body);
-  font-size: 1.32rem;
-  line-height: 2.15;
+  font-size: 1.26rem;
+  line-height: 2.1;
   color: var(--card-ink);
   direction: rtl;
 }
@@ -152,8 +152,8 @@ body {
 .card .english-translation {
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: 1rem;
-  line-height: 1.85;
+  font-size: 0.95rem;
+  line-height: 1.8;
   color: var(--card-trans);
   max-width: 30ch;
 }
@@ -178,11 +178,10 @@ body {
 }
 
 .card .brand {
-  position: absolute;
-  bottom: calc(216px + env(safe-area-inset-bottom, 0px));
-  right: 34px;
+  margin-top: 26px;
   display: flex;
   align-items: baseline;
+  justify-content: center;
   gap: 5px;
   opacity: 0.5;
 }

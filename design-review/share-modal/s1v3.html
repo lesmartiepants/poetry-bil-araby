@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Folio v1.3 — Column Stack</title>
+<title>Folio v1.3 — Obsidian Stack</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Reem+Kufi:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -80,8 +80,9 @@ body::before {
   position: fixed;
   inset: 0;
   background-image:
-    radial-gradient(ellipse 70% 50% at 50% 60%, rgba(197,160,89,0.05) 0%, transparent 70%),
-    radial-gradient(ellipse 50% 40% at 20% 100%, rgba(30,58,110,0.08) 0%, transparent 70%);
+    radial-gradient(ellipse 72% 44% at 50% 40%, rgba(197,160,89,0.09) 0%, transparent 62%),
+    radial-gradient(ellipse 55% 42% at 18% 100%, rgba(30,58,110,0.11) 0%, transparent 60%),
+    radial-gradient(ellipse 100% 44% at 50% 100%, rgba(5,4,3,0.60) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -715,6 +716,17 @@ body::before {
   pointer-events: none;
 }
 
+/* Gold hairline at top of chrome shelf */
+.chrome-shelf-rule {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, rgba(197,160,89,0.28) 30%, rgba(197,160,89,0.45) 50%, rgba(197,160,89,0.28) 70%, transparent 100%);
+  pointer-events: none;
+}
+
 /* ============================================================
    STYLE PICKER CHIPS
    ============================================================ */
@@ -746,8 +758,8 @@ body::before {
 }
 
 .chip-swatch {
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
   position: relative;
   transition:
@@ -759,11 +771,11 @@ body::before {
 
 /* Active gold ring */
 .style-chip[aria-pressed="true"] .chip-swatch {
-  border-color: var(--gold);
+  border-color: var(--gold-bright);
   box-shadow:
-    0 0 0 2px rgba(12,12,14,0.85),
-    0 0 0 4px var(--gold),
-    0 0 14px rgba(197,160,89,0.45);
+    0 0 0 2px rgba(10,10,12,0.9),
+    0 0 0 4px rgba(197,160,89,0.85),
+    0 0 18px rgba(197,160,89,0.50);
 }
 
 .style-chip:hover:not([aria-pressed="true"]) .chip-swatch {
@@ -795,15 +807,15 @@ body::before {
   opacity: 0.65;
 }
 
-/* Style chip labels — system-ui, deliberately subordinate */
+/* Style chip labels — Cormorant Garamond italic, editorial */
 .chip-label {
-  font-family: var(--font-ui);
-  font-size: 0.5rem;
-  color: rgba(197,160,89,0.55);
-  letter-spacing: 0.05em;
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 0.625rem;
+  color: rgba(197,160,89,0.56);
+  letter-spacing: 0.03em;
   text-align: center;
   white-space: nowrap;
-  text-transform: uppercase;
   line-height: 1;
   max-width: 52px;
   overflow: hidden;
@@ -815,85 +827,71 @@ body::before {
 }
 
 /* ============================================================
-   ACTION BUTTONS
+   ACTION BUTTONS — V1.3 Obsidian Stack
+   Persona: Nour Ziad · NZ Studio
+   ─ Share: bilingual gold throne (58px, dominant)
+   ─ Download: obsidian engraved full-width (48px, inset shadow, italic serif)
+   ─ Copy: atmospheric ghost full-width (30px, barely-there)
+   Material hierarchy: fire → earth → air
    ============================================================ */
+
 .action-buttons {
   display: flex;
-  gap: 10px;
-  align-items: stretch;
-}
-
-/* ---- V1.3 COLUMN STACK ---- */
-
-/* Vertical column layout */
-.action-buttons {
   flex-direction: column;
   gap: 6px;
 }
 
+/* SHARE — bilingual gold throne */
 .btn-share {
   flex: none;
   width: 100%;
-  height: 54px;
+  height: 58px;
   min-height: 44px;
-  border-radius: var(--radius-btn);
+  border-radius: 12px;
   background: var(--molten-gold);
   border: none;
   border-top: 1px solid rgba(255,255,255,0.22);
   border-bottom: 1px solid rgba(0,0,0,0.35);
-  color: #1a1200;
-  font-family: var(--font-ui);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  /* Convex metallic surface — strong inset lights + warm glow */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   box-shadow:
     inset 0 2px 3px rgba(255,255,255,0.32),
     inset 0 -2px 4px rgba(0,0,0,0.45),
-    inset 2px 0 3px rgba(255,255,255,0.08),
-    inset -2px 0 3px rgba(0,0,0,0.15),
-    0 5px 24px rgba(197,160,89,0.45),
-    0 2px 6px rgba(0,0,0,0.5);
+    0 7px 32px rgba(197,160,89,0.52),
+    0 2px 8px rgba(0,0,0,0.60);
   transition:
     transform var(--duration-micro) var(--ease-out-quart),
     filter var(--duration-hover) var(--ease-out-quart),
     box-shadow var(--duration-hover) var(--ease-out-quart);
 }
 
-/* Convex top highlight — stronger dome sheen */
 .btn-share::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 52%;
-  background:
-    radial-gradient(ellipse 70% 100% at 50% -10%, rgba(255,255,255,0.38) 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
-  border-radius: 10px 10px 50% 50%;
+  top: 0; left: 0; right: 0; height: 50%;
+  background: radial-gradient(ellipse 70% 100% at 50% -10%,
+    rgba(255,255,255,0.36) 0%, rgba(255,255,255,0.10) 50%, transparent 100%);
+  border-radius: 12px 12px 50% 50%;
   pointer-events: none;
   z-index: 2;
 }
 
-/* Gold sheen sweep — loops every 3.5s, slower and more elegant */
 .btn-share::after {
   content: '';
   position: absolute;
-  top: -10%;
-  left: 0;
-  width: 45%;
-  height: 120%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255,255,255,0.12) 30%,
-    rgba(255,255,255,0.38) 50%,
-    rgba(255,255,255,0.12) 70%,
-    transparent 100%
-  );
+  top: -10%; left: 0;
+  width: 45%; height: 120%;
+  background: linear-gradient(90deg, transparent 0%,
+    rgba(255,255,255,0.10) 30%,
+    rgba(255,255,255,0.34) 50%,
+    rgba(255,255,255,0.10) 70%,
+    transparent 100%);
   transform: skewX(-18deg) translateX(-180%);
   animation: goldSheen 3.5s var(--ease-out-quart) 1.0s infinite;
   pointer-events: none;
@@ -906,13 +904,36 @@ body::before {
   100% { transform: skewX(-18deg) translateX(380%); }
 }
 
+.btn-share-ar {
+  font-family: var(--font-arabic-body);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: #1a1200;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.btn-share-en {
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 0.5625rem;
+  font-weight: 400;
+  color: rgba(28,18,0,0.6);
+  letter-spacing: 0.14em;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+
 .btn-share:hover {
   filter: brightness(1.08) saturate(1.06);
   box-shadow:
     inset 0 2px 3px rgba(255,255,255,0.35),
     inset 0 -2px 4px rgba(0,0,0,0.42),
-    0 7px 32px rgba(197,160,89,0.58),
-    0 3px 8px rgba(0,0,0,0.5);
+    0 9px 38px rgba(197,160,89,0.62),
+    0 3px 10px rgba(0,0,0,0.60);
 }
 
 .btn-share:focus-visible {
@@ -921,28 +942,28 @@ body::before {
 }
 
 .btn-share:active {
-  transform: scale(0.97) translateY(1px);
+  transform: scale(0.98) translateY(1px);
   filter: brightness(0.96);
   box-shadow:
     inset 0 2px 6px rgba(0,0,0,0.35),
-    inset 0 1px 2px rgba(255,255,255,0.1),
     0 2px 10px rgba(197,160,89,0.25);
 }
 
-/* ---- Engraved Download button ---- */
+/* DOWNLOAD — obsidian engraved (dark earth, gold inlay) */
 .btn-engraved {
   width: 100%;
-  height: 46px;
+  height: 48px;
   min-height: 44px;
-  border-radius: var(--radius-btn);
-  background: linear-gradient(165deg, rgba(22,19,14,0.97) 0%, rgba(12,10,7,0.99) 100%);
-  border: 1px solid rgba(197,160,89,0.32);
+  border-radius: 11px;
+  background: linear-gradient(180deg, #141209 0%, #0c0b07 100%);
+  border: 1px solid rgba(197,160,89,0.28);
+  border-top-color: rgba(197,160,89,0.46);
   color: var(--gold);
   font-family: var(--font-english-editorial);
   font-style: italic;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -951,74 +972,80 @@ body::before {
   justify-content: center;
   gap: 7px;
   box-shadow:
-    inset 0 2px 5px rgba(0,0,0,0.6),
-    inset 0 1px 2px rgba(0,0,0,0.4),
-    inset 0 -1px 1px rgba(197,160,89,0.08),
-    0 1px 3px rgba(0,0,0,0.4);
+    inset 0 2px 7px rgba(0,0,0,0.68),
+    inset 0 -1px 2px rgba(197,160,89,0.05),
+    0 2px 6px rgba(0,0,0,0.5);
   transition:
     filter var(--duration-hover) var(--ease-out-quart),
+    border-color var(--duration-hover) var(--ease-out-quart),
     box-shadow var(--duration-hover) var(--ease-out-quart),
     transform var(--duration-micro) var(--ease-out-quart);
 }
+
+/* Gold hairline inlay at top */
 .btn-engraved::before {
   content: '';
   position: absolute;
-  bottom: 0; left: 0; right: 0;
+  top: 0; left: 7%; right: 7%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(197,160,89,0.22) 40%, rgba(197,160,89,0.22) 60%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(197,160,89,0.44) 50%, transparent);
+  pointer-events: none;
 }
+
 .btn-engraved:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.18);
+  border-color: rgba(197,160,89,0.50);
   box-shadow:
-    inset 0 2px 4px rgba(0,0,0,0.5),
-    inset 0 1px 2px rgba(0,0,0,0.35),
-    0 1px 3px rgba(0,0,0,0.4),
-    0 0 12px rgba(197,160,89,0.12);
-  border-color: rgba(197,160,89,0.48);
+    inset 0 2px 5px rgba(0,0,0,0.55),
+    0 2px 10px rgba(0,0,0,0.45),
+    0 0 16px rgba(197,160,89,0.10);
 }
+
 .btn-engraved:focus-visible {
   outline: 2px solid var(--lapis-light);
   outline-offset: 2px;
 }
+
 .btn-engraved:active {
   transform: scale(0.98) translateY(1px);
-  filter: brightness(0.94);
+  filter: brightness(0.90);
 }
 
-/* ---- Slim ghost Copy strip ---- */
-.btn-slim-ghost {
+/* COPY — atmospheric ghost (barely-there, like a footnote) */
+.btn-atmospheric {
   width: 100%;
-  height: 34px;
-  min-height: 32px;
-  border-radius: var(--radius-btn);
+  height: 30px;
+  min-height: 28px;
+  border-radius: 8px;
   background: transparent;
-  border: 1px solid rgba(197,160,89,0.2);
-  color: rgba(197,160,89,0.6);
-  font-family: var(--font-ui);
-  font-size: 0.5625rem;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  border: none;
+  color: rgba(197,160,89,0.38);
+  font-family: var(--font-english-editorial);
+  font-style: italic;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 5px;
   transition:
-    border-color var(--duration-hover) var(--ease-out-quart),
     color var(--duration-hover) var(--ease-out-quart),
     transform var(--duration-micro) var(--ease-out-quart);
 }
-.btn-slim-ghost:hover {
-  border-color: rgba(197,160,89,0.38);
-  color: rgba(197,160,89,0.85);
+
+.btn-atmospheric:hover {
+  color: rgba(197,160,89,0.72);
 }
-.btn-slim-ghost:focus-visible {
+
+.btn-atmospheric:focus-visible {
   outline: 2px solid var(--lapis-light);
   outline-offset: 2px;
 }
-.btn-slim-ghost:active {
-  transform: scale(0.98);
+
+.btn-atmospheric:active {
+  transform: scale(0.97);
 }
 
 
@@ -1204,6 +1231,7 @@ body::before {
 
         <!-- Frosted Chrome Shelf — dissolves upward into card -->
         <div class="chrome-shelf" role="group" aria-label="Share options">
+          <div class="chrome-shelf-rule" aria-hidden="true"></div>
 
           <!-- Style Picker -->
           <div class="style-picker" role="radiogroup" aria-label="Card style">
@@ -1265,16 +1293,19 @@ body::before {
 
           </div><!-- /style-picker -->
 
-          <!-- Action Buttons — V1.3 Column Stack -->
+          <!-- Action Buttons — V1.3 Obsidian Stack -->
           <div class="action-buttons" role="group" aria-label="Share actions">
             <button class="btn-share" aria-label="Share poem">
-              Share
+              <span class="btn-share-ar" dir="rtl" lang="ar" aria-hidden="true">شارك</span>
+              <span class="btn-share-en">share</span>
             </button>
-            <button class="btn-engraved" aria-label="Download as PNG" id="btnDownload">
-              <span aria-hidden="true">⬇</span> Download
+            <button class="btn-engraved" aria-label="Download poem card as PNG" id="btnDownload">
+              <span aria-hidden="true" style="font-size:0.9em;opacity:0.72;">⬇</span>
+              Download
             </button>
-            <button class="btn-slim-ghost" aria-label="Copy link" id="btnCopyLink">
-              <span aria-hidden="true">⎘</span> Copy Link
+            <button class="btn-atmospheric" aria-label="Copy link to poem" id="btnCopyLink">
+              <span aria-hidden="true">⎘</span>
+              copy poem link
             </button>
           </div>
 
@@ -1443,21 +1474,24 @@ body::before {
   var btnCopyLink = document.getElementById('btnCopyLink');
 
   btnShare.addEventListener('click', function () {
-    var orig = btnShare.textContent;
-    btnShare.textContent = 'Shared!';
-    setTimeout(function () { btnShare.textContent = orig; }, 1600);
+    var enSpan = btnShare.querySelector('.btn-share-en');
+    if (enSpan) {
+      var orig = enSpan.textContent;
+      enSpan.textContent = 'shared!';
+      setTimeout(function () { enSpan.textContent = orig; }, 1600);
+    }
   });
 
   btnDownload.addEventListener('click', function () {
-    var orig = btnDownload.textContent;
-    btnDownload.textContent = 'Saved!';
-    setTimeout(function () { btnDownload.textContent = orig; }, 1600);
+    var orig = this.innerHTML;
+    this.innerHTML = 'Saved ✓';
+    setTimeout(function () { btnDownload.innerHTML = orig; }, 1500);
   });
 
   btnCopyLink.addEventListener('click', function () {
-    var orig = btnCopyLink.textContent;
-    btnCopyLink.textContent = 'Copied!';
-    setTimeout(function () { btnCopyLink.textContent = orig; }, 1600);
+    var orig = this.innerHTML;
+    this.innerHTML = '✓ Copied';
+    setTimeout(function () { btnCopyLink.innerHTML = orig; }, 1500);
   });
 
 }());
@@ -1538,7 +1572,7 @@ body::before {
 }());
 </script>
 
-  <span class="mockup-label" aria-hidden="true">S1 · Folio v1.3 — Column Stack</span>
+  <span class="mockup-label" aria-hidden="true">S1 · v1.3 Obsidian Stack</span>
 
 </body>
 </html>

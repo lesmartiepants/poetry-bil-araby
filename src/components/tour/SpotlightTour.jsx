@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUIStore } from '../../stores/uiStore';
 import { useModalStore } from '../../stores/modalStore';
+import { useAudioStore } from '../../stores/audioStore';
 import { TOUR_TRAYS } from '../../constants/tourTrays.js';
 
 /**
@@ -28,6 +29,17 @@ const GAP = 18; // distance between the control bar / element and the card
 // beat to land (open the tray / start audio) so the reader sees the result before
 // the card moves on.
 const ADVANCE_DELAY = 650;
+// The "Listen" step is the heart of the experience: the synced word-by-word
+// highlight. Its 650ms beat moved off the step before the highlight was ever
+// visible (#607). On a step flagged `demoRecite`, dwell noticeably longer so the
+// real recitation the tap started is actually SEEN in motion before advancing.
+// Kept under the unit test's 2000ms auto-advance window with margin to spare.
+const DEMO_RECITE_DWELL = 1800;
+// After the real Listen tap, wait a beat for the app's own click handler (bubble
+// phase, after our capture-phase listener) to kick playback, then verify. Only if
+// nothing is playing/generating do we call onDemoRecite() as a guarantee — so it
+// can never double-toggle (start-then-immediately-pause) the recitation.
+const DEMO_RECITE_GUARANTEE_DELAY = 120;
 const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
 const ARABIC_SIZE = '1.155rem'; // inline accent (Arabic) — +10%
 
@@ -68,6 +80,7 @@ export default function SpotlightTour({
   onDismiss,
   onComplete,
   onStepChange,
+  onDemoRecite,
 }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const discoverDrawer = useModalStore((s) => s.discoverDrawer);
@@ -179,24 +192,42 @@ export default function SpotlightTour({
   // the Listen control morphing as audio loads).
   useEffect(() => {
     if (!needsAction || !step?.target) return;
+    // The Listen step demos the synced highlight: dwell longer so it's actually
+    // seen in motion before the card advances (#607). Every other step keeps the
+    // brief 650ms beat.
+    const demoRecite = !!step?.demoRecite;
+    const delay = demoRecite ? DEMO_RECITE_DWELL : ADVANCE_DELAY;
     let advanced = false;
     let timer;
+    let guaranteeTimer;
     const handler = (e) => {
       if (advanced) return;
       if (e.target instanceof Element && e.target.closest(step.target)) {
         advanced = true;
         setActioned((prev) => new Set(prev).add(step.key));
+        // On the demo step, the real tap already starts recitation via the app's
+        // own (bubble-phase) handler. As a guarantee — and only when it can't
+        // double-toggle — kick playback ourselves if, a beat later, nothing is
+        // playing or generating. (togglePlay's own in-flight guard is a further
+        // backstop against starting-then-pausing.)
+        if (demoRecite && onDemoRecite) {
+          guaranteeTimer = setTimeout(() => {
+            const { isPlaying, isGenerating } = useAudioStore.getState();
+            if (!isPlaying && !isGenerating) onDemoRecite();
+          }, DEMO_RECITE_GUARANTEE_DELAY);
+        }
         // Let the app's own click handler run first (open the tray / start audio),
         // then auto-advance — the same handler the Next button used to call.
-        timer = setTimeout(() => next(), ADVANCE_DELAY);
+        timer = setTimeout(() => next(), delay);
       }
     };
     document.addEventListener(step.advanceOn, handler, true);
     return () => {
       document.removeEventListener(step.advanceOn, handler, true);
       clearTimeout(timer);
+      clearTimeout(guaranteeTimer);
     };
-  }, [index, step, needsAction, next]);
+  }, [index, step, needsAction, next, onDemoRecite]);
 
   // Terminal step: proactively close any lingering app overlay (auth / discover /
   // saved) so nothing sits over the Done button. A Radix/Vaul dismissable layer

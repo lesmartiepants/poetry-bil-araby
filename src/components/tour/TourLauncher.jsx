@@ -42,7 +42,7 @@ function readPersisted() {
  *    top-right (below the Aa text-settings pill); the final tour step highlights
  *    that icon so readers know where to find a refresher.
  */
-export default function TourLauncher({ user = null, savedCount = 0 }) {
+export default function TourLauncher({ user = null, savedCount = 0, onDemoRecite }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
   const steps = useMemo(
@@ -119,6 +119,7 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
             onStepChange={persistStep}
             onDismiss={handleDismiss}
             onComplete={handleComplete}
+            onDemoRecite={onDemoRecite}
           />
         </Suspense>
       )}

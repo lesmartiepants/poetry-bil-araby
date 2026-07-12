@@ -109,13 +109,13 @@ export function useSparklerReveal({
       cfg.current.onBusyChange?.(b);
     };
 
-    // ── progress scrubber: write fill width + handle position directly (no React) ──
+    // ── progress scrubber (vertical rail): write fill height + handle top directly (no React) ──
     const writeProgress = (frac) => {
       const pct = (Math.max(0, Math.min(1, frac)) * 100).toFixed(2) + '%';
       const fill = R().scrubFillRef?.current;
       const handle = R().scrubHandleRef?.current;
-      if (fill) fill.style.width = pct;
-      if (handle) handle.style.left = pct;
+      if (fill) fill.style.height = pct;
+      if (handle) handle.style.top = pct;
     };
 
     // ── canvas ──

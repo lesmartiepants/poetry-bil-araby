@@ -72,6 +72,9 @@
 </head>
 <body>
   <iframe class="frame active" src="s1.html" title="S1 — Folio (Flagship)" loading="eager"></iframe>
+  <iframe class="frame" src="s1v1.html" title="S1 v1.1 — Folio: Stacked" loading="lazy"></iframe>
+  <iframe class="frame" src="s1v2.html" title="S1 v1.2 — Folio: Equal Trio" loading="lazy"></iframe>
+  <iframe class="frame" src="s1v3.html" title="S1 v1.3 — Folio: Column Stack" loading="lazy"></iframe>
   <iframe class="frame" src="s2.html" title="S2 — Majlis" loading="lazy"></iframe>
   <iframe class="frame" src="s3.html" title="S3 — Maktuba" loading="lazy"></iframe>
   <iframe class="frame" src="s4.html" title="S4 — Maktuba Full" loading="lazy"></iframe>
@@ -89,10 +92,13 @@
 
 <script>
   const dirs = [
-    { num: 'S1', name: 'Folio', flagship: true },
-    { num: 'S2', name: 'Majlis', flagship: false },
-    { num: 'S3', name: 'Maktuba', flagship: false },
-    { num: 'S4', name: 'Maktuba Full', flagship: false },
+    { num: 'S1',    name: 'Folio',        flagship: true  },
+    { num: 'S1.1',  name: 'Folio — Stacked',    flagship: true  },
+    { num: 'S1.2',  name: 'Folio — Equal Trio',  flagship: true  },
+    { num: 'S1.3',  name: 'Folio — Column Stack', flagship: true },
+    { num: 'S2',    name: 'Majlis',       flagship: false },
+    { num: 'S3',    name: 'Maktuba',      flagship: false },
+    { num: 'S4',    name: 'Maktuba Full', flagship: false },
   ];
   const frames = Array.from(document.querySelectorAll('.frame'));
   const prev = document.getElementById('prev');

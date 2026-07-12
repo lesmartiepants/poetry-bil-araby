@@ -1158,7 +1158,8 @@ export default function DiwanApp() {
 
     if (!user) {
       addLog('Downvote', 'Not authenticated — opening sign-in', 'info');
-      handleSignIn();
+      track('sign_in_started');
+      setShowAuthModal(true, 'Sign in to remember what you skip');
       return;
     }
 
@@ -2144,7 +2145,9 @@ export default function DiwanApp() {
       {/* Interactive walkthrough launcher — only once the splash is dismissed.
           Disabled (FEATURES.tour = false) until the tour steps are re-wired to the
           redesigned reader nav; the code is kept so the follow-up can re-enable it. */}
-      {FEATURES.tour && !showSplash && <TourLauncher user={user} savedCount={savedPoems.length} />}
+      {FEATURES.tour && !showSplash && (
+        <TourLauncher user={user} savedCount={savedPoems.length} onDemoRecite={togglePlay} />
+      )}
 
       {/* Share Card Modal — gated behind the share feature flag */}
       {FEATURES.share && showShareCard && displayedPoem && (

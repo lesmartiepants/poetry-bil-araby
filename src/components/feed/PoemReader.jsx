@@ -15,6 +15,11 @@ import { POEM_META } from '../../constants/index.js';
 const REDUCED_MOTION =
   typeof matchMedia === 'undefined' || matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// Coarse pointers (touch) swipe; fine pointers (mouse) scroll. Resolve once at module load so the
+// between-poems cue matches the input the user actually has.
+const COARSE_POINTER =
+  typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
 /**
  * PoemReader — one poem panel in the vertical feed, rendered as the sparkler teleprompter.
  *
@@ -241,8 +246,15 @@ const PoemReader = memo(function PoemReader({
   const handleAdvance = () => {
     if (!isRevealing) controller?.advance();
   };
+  // "Read full poem" reveals the whole poem as static text WITHOUT starting audio. revealAll now
+  // rests at the top (see #614), so the reader picks up from the first line. This decouples "see the
+  // whole poem" from Listen — the latter is now purely the audio overlay.
+  const handleReadFull = () => {
+    if (!isRevealing) controller?.revealAll();
+  };
   // Tapping Listen loads the whole poem (advancing bayt-by-bayt is moot once you're listening) and
-  // starts playback; the right action then becomes "Poem Insights" (poem is fully revealed → idle).
+  // starts playback; the word-highlight then runs over the fully-visible text. The right action
+  // becomes "Poem Insights" (poem is fully revealed → idle).
   const handleListen = () => {
     controller?.revealAll();
     onTogglePlay?.();
@@ -280,6 +292,8 @@ const PoemReader = memo(function PoemReader({
     (!introDone ||
       (isAllRevealed &&
         ((endStage === 'idle' && !isRevealing) || (endStage === 'author' && insightDone))));
+
+  const nextPoemCue = COARSE_POINTER ? 'swipe up for next poem' : 'scroll up for next poem';
 
   return (
     <div
@@ -468,6 +482,7 @@ const PoemReader = memo(function PoemReader({
               isPlaying={isPlaying}
               isGeneratingAudio={isGeneratingAudio}
               onAdvance={handleAdvance}
+              onReadFull={handleReadFull}
               onSeeMeaning={handleSeeMeaning}
               onSeeAuthor={handleSeeAuthor}
               onBackToPoem={handleBackToPoem}
@@ -497,7 +512,7 @@ const PoemReader = memo(function PoemReader({
               letterSpacing: '0.05em',
             }}
           >
-            {'scroll up for next poem'.split('').map((ch, i) => (
+            {nextPoemCue.split('').map((ch, i) => (
               <span
                 key={i}
                 style={{

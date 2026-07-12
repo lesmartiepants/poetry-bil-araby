@@ -2,7 +2,7 @@ import { Popover } from 'radix-ui';
 import { LogOut, Mic, UserRound } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
-import { voiceGender } from '../constants/voices';
+import { voiceGender, voiceInfo } from '../constants/voices';
 
 /**
  * AccountMenu — the rightmost bottom-nav item. A person icon that opens an expandable menu holding
@@ -53,7 +53,7 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
             {/* Reading voice — tap to cycle */}
             <button
               onClick={onCycleVoice}
-              aria-label={`Reading voice: ${liveVoice}. Tap to change.`}
+              aria-label={`Reading voice: ${voiceInfo(liveVoice)?.arabicName ?? liveVoice}. Tap to change.`}
               className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
               style={{ color: ink }}
             >
@@ -64,7 +64,7 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
                 />
                 <span>Voice</span>
               </span>
-              <span className="opacity-70">{liveVoice}</span>
+              <span className="opacity-70">{voiceInfo(liveVoice)?.arabicName ?? liveVoice}</span>
             </button>
 
             <div className="my-1 h-px" style={{ background: 'rgba(197,160,89,0.18)' }} />

@@ -246,8 +246,15 @@ const PoemReader = memo(function PoemReader({
   const handleAdvance = () => {
     if (!isRevealing) controller?.advance();
   };
+  // "Read full poem" reveals the whole poem as static text WITHOUT starting audio. revealAll now
+  // rests at the top (see #614), so the reader picks up from the first line. This decouples "see the
+  // whole poem" from Listen — the latter is now purely the audio overlay.
+  const handleReadFull = () => {
+    if (!isRevealing) controller?.revealAll();
+  };
   // Tapping Listen loads the whole poem (advancing bayt-by-bayt is moot once you're listening) and
-  // starts playback; the right action then becomes "Poem Insights" (poem is fully revealed → idle).
+  // starts playback; the word-highlight then runs over the fully-visible text. The right action
+  // becomes "Poem Insights" (poem is fully revealed → idle).
   const handleListen = () => {
     controller?.revealAll();
     onTogglePlay?.();
@@ -475,6 +482,7 @@ const PoemReader = memo(function PoemReader({
               isPlaying={isPlaying}
               isGeneratingAudio={isGeneratingAudio}
               onAdvance={handleAdvance}
+              onReadFull={handleReadFull}
               onSeeMeaning={handleSeeMeaning}
               onSeeAuthor={handleSeeAuthor}
               onBackToPoem={handleBackToPoem}

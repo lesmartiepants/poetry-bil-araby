@@ -59,6 +59,7 @@ export default function ReaderActions({
   isPlaying = false,
   isGeneratingAudio = false,
   onAdvance,
+  onReadFull,
   onSeeMeaning,
   onSeeAuthor,
   onBackToPoem,
@@ -168,9 +169,27 @@ export default function ReaderActions({
   }
 
   return (
-    <div className="reader-actions" data-weight={actionWeight} data-testid="reader-actions">
-      {left}
-      {right}
-    </div>
+    <>
+      <div className="reader-actions" data-weight={actionWeight} data-testid="reader-actions">
+        {left}
+        {right}
+      </div>
+      {/* Reading mode: a subtle "Read full poem" affordance beneath the Listen / Next Verse row.
+          Reveals the whole poem as static text (no audio) — Listen is no longer the only way to see
+          it. Disabled while a reveal animates so it can't run ahead of the sparkler. */}
+      {reading && onReadFull && (
+        <div className="ra-readfull-row">
+          <button
+            type="button"
+            className="ra-readfull"
+            onClick={onReadFull}
+            disabled={isRevealing}
+            data-testid="reader-read-full"
+          >
+            Read full poem
+          </button>
+        </div>
+      )}
+    </>
   );
 }

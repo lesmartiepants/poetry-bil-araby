@@ -449,8 +449,10 @@ export function useSparklerReveal({
       }
     };
 
-    // Reveal the whole poem at once (used when the reader starts listening — the full text loads
-    // and the right action becomes "Poem Insights" since bayt-by-bayt advance is moot).
+    // Reveal the whole poem at once (used by "Read full poem" as static text, and by Listen before
+    // playback). The poem is painted fully lit but RESTS AT THE TOP (first line visible) so the
+    // reader — or the TTS follow — starts from the beginning; no scroll-to-bottom flash. ttsFollow
+    // re-scrolls one line at a time from windowTop = 0 as playback advances.
     const revealAll = () => {
       const s = st.current;
       const T = total();
@@ -469,9 +471,9 @@ export function useSparklerReveal({
         paintLine(i, 0, { lit: true });
       }
       s.revealed = T;
-      s.windowTop = computeWindowTop(T - 1, T, VIS(), s.windowTop);
+      s.windowTop = 0;
       const track = R().trackRef?.current;
-      if (track) gsap.to(track, { y: -s.windowTop * unitH(), duration: 0.4, ease: 'power2.out' });
+      if (track) gsap.to(track, { y: 0, duration: 0.4, ease: 'power2.out' });
       writeProgress(1);
       emitRevealed();
     };

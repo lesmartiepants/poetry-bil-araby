@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { usePoemStore } from '../stores/poemStore';
 
+const { mockToast } = vi.hoisted(() => ({
+  mockToast: vi.fn(),
+}));
+
+vi.mock('sonner', () => ({
+  toast: mockToast,
+}));
+
 // Mock dependencies
 const mockAddLog = vi.fn();
 const mockTrack = vi.fn();
@@ -83,6 +91,19 @@ describe('fetchPoem action', () => {
     );
     expect(mockEmitEvent).toHaveBeenCalledWith(42, 'serve', { source: 'database' });
     expect(mockMarkPoemSeen).toHaveBeenCalledWith(42);
+  });
+
+  it('does not show a poem discovered toast after a database fetch', async () => {
+    const { fetchPoem } = await import('../stores/actions/fetchPoem');
+    await fetchPoem({
+      addLog: mockAddLog,
+      track: mockTrack,
+      emitEvent: mockEmitEvent,
+      navigate: mockNavigate,
+      markPoemSeen: mockMarkPoemSeen,
+    });
+
+    expect(mockToast).not.toHaveBeenCalled();
   });
 
   it('skips when already fetching', async () => {

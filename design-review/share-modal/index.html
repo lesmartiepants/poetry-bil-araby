@@ -71,40 +71,40 @@
 </style>
 </head>
 <body>
-  <iframe class="frame active" src="s1.html" title="S1 — Folio (Flagship)" loading="eager"></iframe>
-  <iframe class="frame" src="s1v1.html" title="S1 v1.1 — Folio: Stacked" loading="lazy"></iframe>
-  <iframe class="frame" src="s1v2.html" title="S1 v1.2 — Folio: Equal Trio" loading="lazy"></iframe>
-  <iframe class="frame" src="s1v3.html" title="S1 v1.3 — Folio: Column Stack" loading="lazy"></iframe>
-  <iframe class="frame" src="s2.html" title="S2 — Majlis" loading="lazy"></iframe>
-  <iframe class="frame" src="s3.html" title="S3 — Maktuba" loading="lazy"></iframe>
-  <iframe class="frame" src="s4.html" title="S4 — Maktuba Full" loading="lazy"></iframe>
-  <iframe class="frame" src="s5.html" title="S5 — Rawāq" loading="lazy"></iframe>
-  <iframe class="frame" src="s6.html" title="S6 — Atelier" loading="lazy"></iframe>
-  <iframe class="frame" src="s7.html" title="S7 — Khatm" loading="lazy"></iframe>
+  <iframe class="frame active" src="s1b.html" title="S1B — Folio Final" loading="eager"></iframe>
+  <iframe class="frame" src="s2b.html" title="S2B — Majlis Final" loading="lazy"></iframe>
+  <iframe class="frame" src="s3b.html" title="S3B — Maktuba Final" loading="lazy"></iframe>
+  <iframe class="frame" src="s5b.html" title="S5B — Rawāq Final" loading="lazy"></iframe>
+  <iframe class="frame" src="s7b.html" title="S7B — Khatm Final" loading="lazy"></iframe>
+  <iframe class="frame" src="s1.html" title="S1 — Folio (original)" loading="lazy"></iframe>
+  <iframe class="frame" src="s2.html" title="S2 — Majlis (original)" loading="lazy"></iframe>
+  <iframe class="frame" src="s3.html" title="S3 — Maktuba (original)" loading="lazy"></iframe>
+  <iframe class="frame" src="s5.html" title="S5 — Rawāq (original)" loading="lazy"></iframe>
+  <iframe class="frame" src="s7.html" title="S7 — Khatm (original)" loading="lazy"></iframe>
 
   <button class="nav-btn nav-prev" id="prev" aria-label="Previous design" disabled>‹</button>
   <button class="nav-btn nav-next" id="next" aria-label="Next design">›</button>
 
   <div class="label is-flag" id="label">
-    <span class="num" id="num">S1</span>
-    <span class="name" id="name">Folio</span>
-    <span class="flag">Flagship</span>
+    <span class="num" id="num">S1B</span>
+    <span class="name" id="name">Folio Final</span>
+    <span class="flag">Final</span>
   </div>
 
   <div class="dots" id="dots" role="tablist" aria-label="Design directions"></div>
 
 <script>
   const dirs = [
-    { num: 'S1',    name: 'Folio',        flagship: true  },
-    { num: 'S1.1',  name: 'Folio — Stacked',    flagship: true  },
-    { num: 'S1.2',  name: 'Folio — Equal Trio',  flagship: true  },
-    { num: 'S1.3',  name: 'Folio — Column Stack', flagship: true },
-    { num: 'S2',    name: 'Majlis',       flagship: false },
-    { num: 'S3',    name: 'Maktuba',      flagship: false },
-    { num: 'S4',    name: 'Maktuba Full', flagship: false },
-    { num: 'S5',    name: 'Rawāq — Gallery',      flagship: false },
-    { num: 'S6',    name: 'Atelier — Print Room', flagship: false },
-    { num: 'S7',    name: 'Khatm — The Seal',     flagship: false },
+    { num: 'S1B', name: 'Folio Final',   flagship: true  },
+    { num: 'S2B', name: 'Majlis Final',  flagship: true  },
+    { num: 'S3B', name: 'Maktuba Final', flagship: true  },
+    { num: 'S5B', name: 'Rawāq Final',   flagship: true  },
+    { num: 'S7B', name: 'Khatm Final',   flagship: true  },
+    { num: 'S1',  name: 'Folio — original',   flagship: false },
+    { num: 'S2',  name: 'Majlis — original',  flagship: false },
+    { num: 'S3',  name: 'Maktuba — original', flagship: false },
+    { num: 'S5',  name: 'Rawāq — original',   flagship: false },
+    { num: 'S7',  name: 'Khatm — original',   flagship: false },
   ];
   const frames = Array.from(document.querySelectorAll('.frame'));
   const prev = document.getElementById('prev');

@@ -47,6 +47,13 @@ export const TOUR_STEPS = [
     advanceOn: 'click',
     side: 'top',
     align: 'start',
+    // The heart of the experience is the synced highlight — but at the normal
+    // ~650ms beat the tour advanced before it was ever visible (#607). This flag
+    // tells the SpotlightTour to (a) dwell noticeably longer so the recitation the
+    // tap started is SEEN in motion, and (b) guarantee playback via onDemoRecite
+    // if the real tap somehow didn't start it. The following `pause` step taps the
+    // same control to stop it, so playback never leaks into later steps.
+    demoRecite: true,
   },
   {
     key: 'pause',

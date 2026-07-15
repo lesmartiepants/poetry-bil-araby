@@ -78,27 +78,25 @@
 
 <script>
   const dirs = [
-    { num: '1', name: 'Khatm Final C', flagship: true },
-    { num: '2', name: 'Majlis Final',  flagship: true },
-    { num: '3', name: 'Folio Final C', flagship: true },
+  { num: '1', name: 'Khatm Final C' },
+  { num: '2', name: 'Majlis Final' },
+  { num: '3', name: 'Folio Final C' },
   ];
   const frames = Array.from(document.querySelectorAll('.frame'));
   const prev = document.getElementById('prev');
   const next = document.getElementById('next');
-  const label = document.getElementById('label');
   const num = document.getElementById('num');
   const name = document.getElementById('name');
   let cur = 0;
 
   function go(i) {
-    if (i < 0 || i >= dirs.length) return;
+    if (i < 0 || i >= dirs.length || i >= frames.length) return;
     frames[cur].classList.remove('active');
     cur = i;
     frames[cur].classList.add('active');
     const d = dirs[cur];
     num.textContent = d.num;
     name.textContent = d.name;
-    label.classList.toggle('is-flag', d.flagship);
     prev.disabled = cur === 0;
     next.disabled = cur === dirs.length - 1;
   }

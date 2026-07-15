@@ -53,12 +53,6 @@
   }
   .label .num { opacity: 0.55; font-weight: 700; letter-spacing: 0.04em; }
   .label .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
-  .label .flag {
-    font-size: 8.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #1a1200;
-    background: linear-gradient(135deg, #a8853d, #c5a059 30%, #e0c97a 50%, #c5a059 70%, #a8853d);
-    border-radius: 4px; padding: 2px 6px; display: inline-block;
-  }
-
 </style>
 </head>
 <body>
@@ -72,7 +66,6 @@
   <div class="label" id="label">
     <span class="num" id="num">1</span>
     <span class="name" id="name">Khatm Final C</span>
-    <span class="flag">Final</span>
   </div>
 
 <script>
@@ -89,7 +82,7 @@
   let cur = 0;
 
   if (dirs.length !== frames.length) {
-    throw new Error('Share-modal viewer config mismatch: dirs and frames must have equal lengths.');
+    throw new Error(`Share-modal viewer config mismatch: ${dirs.length} dirs but ${frames.length} frames.`);
   }
 
   function go(i) {

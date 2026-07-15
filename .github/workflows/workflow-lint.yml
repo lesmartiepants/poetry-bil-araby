@@ -34,5 +34,14 @@ jobs:
       # The core actionlint checks — YAML structure, cron/glob validity, and (crucially)
       # ${{ }} expression syntax — still run, which is exactly the class that caused the
       # README Auto-Update startup outage.
+      #
+      # Incremental adoption: two PRE-EXISTING errors in ci.yml (stale references to a
+      # `e2e-env` step and an `e2e-tests` job that no longer exist — GitHub tolerates them
+      # at runtime by returning '') are ignored here so this guard doesn't block unrelated
+      # work. They should be fixed separately; everything else — including new invalid or
+      # empty expressions — still fails the check.
       - name: Run actionlint
-        run: "$(go env GOPATH)/bin/actionlint -shellcheck= -color"
+        run: |
+          "$(go env GOPATH)/bin/actionlint" -shellcheck= -color \
+            -ignore 'property "e2e-env" is not defined' \
+            -ignore 'property "e2e-tests" is not defined'

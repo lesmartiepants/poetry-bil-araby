@@ -39,10 +39,12 @@
   .nav-prev { left: calc(8px + env(safe-area-inset-left, 0px)); }
   .nav-next { right: calc(8px + env(safe-area-inset-right, 0px)); }
 
-  /* Compact label pill (top-center) */
+  /* Compact label pill (bottom-right) */
   .label {
-    position: fixed; top: calc(10px + env(safe-area-inset-top, 0px)); left: 50%;
-    transform: translateX(-50%); z-index: 50;
+    position: fixed;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    right: calc(12px + env(safe-area-inset-right, 0px));
+    z-index: 50;
     display: flex; align-items: center; gap: 8px; max-width: 80vw;
     padding: 6px 14px; border-radius: 999px;
     background: rgba(7,7,12,0.72); backdrop-filter: blur(10px);
@@ -58,55 +60,27 @@
   }
   .label.is-flag .flag { display: inline-block; }
 
-  /* Dots */
-  .dots {
-    position: fixed; bottom: calc(12px + env(safe-area-inset-bottom, 0px)); left: 50%;
-    transform: translateX(-50%); z-index: 50;
-    display: flex; gap: 8px; padding: 8px 12px; border-radius: 999px;
-    background: rgba(7,7,12,0.6); backdrop-filter: blur(8px); border: 1px solid rgba(197,160,89,0.18);
-  }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(197,160,89,0.25); cursor: pointer; transition: all 0.25s var(--ease); }
-  .dot.active { background: var(--gold); width: 22px; border-radius: 4px; box-shadow: 0 0 6px rgba(197,160,89,0.4); }
-  .dot:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 </style>
 </head>
 <body>
-  <iframe class="frame active" src="s1c.html" title="S1C — Folio Final C" loading="eager"></iframe>
-  <iframe class="frame" src="s1b.html" title="S1B — Folio Final" loading="lazy"></iframe>
-  <iframe class="frame" src="s1.html" title="S1 — Folio (original)" loading="lazy"></iframe>
-  <iframe class="frame" src="s2b.html" title="S2B — Majlis Final" loading="lazy"></iframe>
-  <iframe class="frame" src="s3c.html" title="S3C — Maktuba Final C" loading="lazy"></iframe>
-  <iframe class="frame" src="s3.html" title="S3 — Maktuba (original)" loading="lazy"></iframe>
-  <iframe class="frame" src="s5c.html" title="S5C — Rawāq Final C" loading="lazy"></iframe>
-  <iframe class="frame" src="s5b.html" title="S5B — Rawāq Final" loading="lazy"></iframe>
-  <iframe class="frame" src="s7c.html" title="S7C — Khatm Final C" loading="lazy"></iframe>
-  <iframe class="frame" src="s7b.html" title="S7B — Khatm Final" loading="lazy"></iframe>
-  <iframe class="frame" src="s7.html" title="S7 — Khatm (original)" loading="lazy"></iframe>
+  <iframe class="frame active" src="s7c.html" title="1 — Khatm Final C" loading="eager"></iframe>
+  <iframe class="frame" src="s2b.html" title="2 — Majlis Final" loading="lazy"></iframe>
+  <iframe class="frame" src="s1c.html" title="3 — Folio Final C" loading="lazy"></iframe>
 
   <button class="nav-btn nav-prev" id="prev" aria-label="Previous design" disabled>‹</button>
   <button class="nav-btn nav-next" id="next" aria-label="Next design">›</button>
 
   <div class="label is-flag" id="label">
-    <span class="num" id="num">S1C</span>
-    <span class="name" id="name">Folio Final C</span>
+    <span class="num" id="num">1</span>
+    <span class="name" id="name">Khatm Final C</span>
     <span class="flag">Final</span>
   </div>
 
-  <div class="dots" id="dots" role="tablist" aria-label="Design directions"></div>
-
 <script>
   const dirs = [
-    { num: 'S1C', name: 'Folio Final C',      flagship: true  },
-    { num: 'S1B', name: 'Folio Final',        flagship: false },
-    { num: 'S1',  name: 'Folio — original',   flagship: false },
-    { num: 'S2B', name: 'Majlis Final',       flagship: true  },
-    { num: 'S3C', name: 'Maktuba Final C',    flagship: true  },
-    { num: 'S3',  name: 'Maktuba — original', flagship: false },
-    { num: 'S5C', name: 'Rawāq Final C',      flagship: true  },
-    { num: 'S5B', name: 'Rawāq Final',        flagship: false },
-    { num: 'S7C', name: 'Khatm Final C',      flagship: true  },
-    { num: 'S7B', name: 'Khatm Final',        flagship: false },
-    { num: 'S7',  name: 'Khatm — original',   flagship: false },
+    { num: '1', name: 'Khatm Final C', flagship: true },
+    { num: '2', name: 'Majlis Final',  flagship: true },
+    { num: '3', name: 'Folio Final C', flagship: true },
   ];
   const frames = Array.from(document.querySelectorAll('.frame'));
   const prev = document.getElementById('prev');
@@ -114,26 +88,13 @@
   const label = document.getElementById('label');
   const num = document.getElementById('num');
   const name = document.getElementById('name');
-  const dotsWrap = document.getElementById('dots');
   let cur = 0;
-
-  dirs.forEach((d, i) => {
-    const dot = document.createElement('button');
-    dot.className = 'dot' + (i === 0 ? ' active' : '');
-    dot.setAttribute('role', 'tab');
-    dot.setAttribute('aria-label', `${d.num}: ${d.name}`);
-    dot.addEventListener('click', () => go(i));
-    dotsWrap.appendChild(dot);
-  });
-  const dots = Array.from(dotsWrap.children);
 
   function go(i) {
     if (i < 0 || i >= dirs.length) return;
     frames[cur].classList.remove('active');
-    dots[cur].classList.remove('active');
     cur = i;
     frames[cur].classList.add('active');
-    dots[cur].classList.add('active');
     const d = dirs[cur];
     num.textContent = d.num;
     name.textContent = d.name;

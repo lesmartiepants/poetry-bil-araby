@@ -56,9 +56,8 @@
   .label .flag {
     font-size: 8.5px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #1a1200;
     background: linear-gradient(135deg, #a8853d, #c5a059 30%, #e0c97a 50%, #c5a059 70%, #a8853d);
-    border-radius: 4px; padding: 2px 6px; display: none;
+    border-radius: 4px; padding: 2px 6px; display: inline-block;
   }
-  .label.is-flag .flag { display: inline-block; }
 
 </style>
 </head>
@@ -70,7 +69,7 @@
   <button class="nav-btn nav-prev" id="prev" aria-label="Previous design" disabled>‹</button>
   <button class="nav-btn nav-next" id="next" aria-label="Next design">›</button>
 
-  <div class="label is-flag" id="label">
+  <div class="label" id="label">
     <span class="num" id="num">1</span>
     <span class="name" id="name">Khatm Final C</span>
     <span class="flag">Final</span>

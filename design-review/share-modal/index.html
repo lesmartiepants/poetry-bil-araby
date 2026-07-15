@@ -89,8 +89,12 @@
   const name = document.getElementById('name');
   let cur = 0;
 
+  if (dirs.length !== frames.length) {
+    throw new Error('Share-modal viewer config mismatch: dirs and frames must have equal lengths.');
+  }
+
   function go(i) {
-    if (i < 0 || i >= dirs.length || i >= frames.length) return;
+    if (i < 0 || i >= dirs.length) return;
     frames[cur].classList.remove('active');
     cur = i;
     frames[cur].classList.add('active');

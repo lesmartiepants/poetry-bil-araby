@@ -1,0 +1,646 @@
+/* ============================================================
+   ShareCardModal — Folio 3.4B "Dedication: Block Cursor"
+   Locked design from design-review/share-modal/v3-4b.html.
+   Full-bleed card, left-aligned letter-opening header with a
+   typed dedication, arcade-arch style selector, glass dock.
+   All ornament is CSS/SVG — no decorative unicode.
+   ============================================================ */
+
+.scm-overlay {
+  --scm-gold: #c5a059;
+  --scm-gold-bright: #d4b463;
+  --scm-gold-foil: linear-gradient(135deg, #b8922e, #c5a059 30%, #e2c67a 55%, #c5a059 75%, #a07d38);
+  --scm-bg-app: #0c0c0e;
+
+  --scm-font-arabic-display: 'Reem Kufi', serif;
+  --scm-font-arabic-body: 'Amiri', serif;
+  --scm-font-editorial: 'Cormorant Garamond', Georgia, serif;
+  --scm-font-ui: system-ui, -apple-system, sans-serif;
+
+  --scm-ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--scm-bg-app);
+  overflow: hidden;
+  font-family: var(--scm-font-ui);
+}
+
+/* ============================================================
+   FULL-BLEED CARD — the card IS the screen
+   ============================================================ */
+.scm-card {
+  position: absolute;
+  top: calc(56px + env(safe-area-inset-top, 0px));
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 38px 34px 262px;
+  background: var(--scm-card-bg);
+  transition: background 0.45s;
+  opacity: 0;
+  animation: scm-card-in 0.9s var(--scm-ease-out-expo) 0.1s forwards;
+}
+@keyframes scm-card-in {
+  from {
+    opacity: 0;
+    transform: scale(1.015);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* style-change dissolve */
+.scm-card.scm-dissolving .scm-card-body > * {
+  opacity: 0;
+  filter: blur(5px);
+}
+.scm-card-body {
+  display: contents;
+}
+.scm-card-body > * {
+  transition:
+    opacity 0.3s var(--scm-ease-out-expo),
+    filter 0.3s var(--scm-ease-out-expo);
+}
+
+/* full-bleed hairline frame, inset from the physical edges */
+.scm-card-frame {
+  position: absolute;
+  inset: 14px 16px calc(16px + env(safe-area-inset-bottom, 0px)) 16px;
+  border: 1px solid var(--scm-card-frame, rgba(197, 160, 89, 0.35));
+  border-radius: 10px;
+  pointer-events: none;
+  transition: border-color 0.45s;
+}
+.scm-card-frame::after {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--scm-card-frame-2, rgba(197, 160, 89, 0.13));
+  border-radius: 6px;
+  transition: border-color 0.45s;
+}
+
+.scm-card .scm-arabic-title {
+  font-family: var(--scm-font-arabic-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--scm-card-accent);
+  margin-bottom: 12px;
+}
+
+.scm-card .scm-arabic-poetry {
+  font-family: var(--scm-font-arabic-body);
+  font-size: 1.04rem;
+  line-height: 1.95;
+  color: var(--scm-card-ink);
+  direction: rtl;
+}
+.scm-card .scm-verse {
+  display: block;
+}
+
+.scm-card .scm-divider {
+  width: 46%;
+  max-width: 220px;
+  height: 1px;
+  margin: 14px auto;
+  background: linear-gradient(90deg, transparent, var(--scm-card-accent), transparent);
+  opacity: 0.55;
+  position: relative;
+}
+.scm-card .scm-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--scm-card-accent);
+}
+
+.scm-card .scm-english-translation {
+  font-family: var(--scm-font-editorial);
+  font-style: italic;
+  font-size: 0.84rem;
+  line-height: 1.68;
+  color: var(--scm-card-trans);
+  max-width: 30ch;
+}
+
+.scm-card .scm-poet {
+  margin-top: 15px;
+}
+.scm-card .scm-poet-ar {
+  display: block;
+  font-family: var(--scm-font-arabic-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--scm-card-accent);
+}
+.scm-card .scm-poet-en {
+  display: block;
+  font-family: var(--scm-font-editorial);
+  font-size: 0.72rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--scm-card-trans);
+  margin-top: 4px;
+}
+
+.scm-card .scm-brand {
+  margin-top: 10px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  opacity: 0.5;
+}
+.scm-card .scm-brand .scm-brand-ar {
+  font-family: var(--scm-font-arabic-display);
+  font-weight: 700;
+  font-size: 0.7rem;
+  color: var(--scm-card-accent);
+}
+.scm-card .scm-brand .scm-brand-en {
+  font-family: var(--scm-font-editorial);
+  font-size: 0.68rem;
+  color: var(--scm-card-accent);
+}
+
+/* ---- the five styles (ids match SHARE_CARD_DESIGNS) ---- */
+.scm-card[data-style='diwan'] {
+  --scm-card-bg: radial-gradient(ellipse 120% 80% at 50% 30%, #16130f 0%, #0c0c0e 100%);
+  --scm-card-ink: #e8e0d0;
+  --scm-card-accent: #c5a059;
+  --scm-card-trans: rgba(197, 160, 89, 0.72);
+  --scm-card-frame: rgba(197, 160, 89, 0.38);
+}
+.scm-card[data-style='ibnMuqla'] {
+  --scm-card-bg: linear-gradient(180deg, #f5e6c8 0%, #f0ddb5 55%, #e8d1a0 100%);
+  --scm-card-ink: #2c1a00;
+  --scm-card-accent: #7a5a10;
+  --scm-card-trans: rgba(74, 40, 0, 0.6);
+  --scm-card-frame: rgba(139, 105, 20, 0.5);
+  --scm-card-frame-2: rgba(139, 105, 20, 0.2);
+}
+.scm-card[data-style='sinan'] {
+  --scm-card-bg: linear-gradient(180deg, #061424 0%, #0a1e38 45%, #061220 100%);
+  --scm-card-ink: #e8e4dc;
+  --scm-card-accent: #4fa6b7;
+  --scm-card-trans: rgba(197, 160, 89, 0.7);
+  --scm-card-frame: rgba(79, 166, 183, 0.42);
+  --scm-card-frame-2: rgba(197, 160, 89, 0.16);
+}
+.scm-card[data-style='zahaHadid'] {
+  --scm-card-bg: linear-gradient(155deg, #08001a 0%, #150030 40%, #0a0025 100%);
+  --scm-card-ink: #f0e8ff;
+  --scm-card-accent: #c864ff;
+  --scm-card-trans: rgba(150, 180, 255, 0.72);
+  --scm-card-frame: rgba(200, 100, 255, 0.38);
+  --scm-card-frame-2: rgba(100, 180, 255, 0.15);
+  align-items: flex-end;
+  text-align: right;
+  padding-right: 44px;
+}
+.scm-card[data-style='zahaHadid'] .scm-divider {
+  margin-right: 0;
+}
+.scm-card[data-style='hassanFathy'] {
+  --scm-card-bg: linear-gradient(180deg, #f8edd8 0%, #f0dfc0 55%, #e5cfa5 100%);
+  --scm-card-ink: #2a1500;
+  --scm-card-accent: #a0522d;
+  --scm-card-trans: rgba(74, 40, 0, 0.58);
+  --scm-card-frame: rgba(160, 82, 45, 0.48);
+  --scm-card-frame-2: rgba(160, 82, 45, 0.18);
+}
+
+/* ============================================================
+   TOP CHROME — letter opening, left-aligned living dedication
+   ============================================================ */
+.scm-top-chrome {
+  position: fixed;
+  top: calc(22px + env(safe-area-inset-top, 0px));
+  left: 22px;
+  right: auto;
+  z-index: 220;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 10px;
+  pointer-events: none;
+  text-align: left;
+  opacity: 0;
+  animation: scm-chrome-in 0.8s var(--scm-ease-out-expo) 0.35s forwards;
+}
+@keyframes scm-chrome-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.scm-top-chrome .scm-ded-ar {
+  font-family: var(--scm-font-arabic-display);
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--scm-card-accent, var(--scm-gold));
+  opacity: 0.85;
+  transition: color 0.35s;
+}
+.scm-top-chrome .scm-ded-main {
+  font-family: var(--scm-font-editorial);
+  font-style: italic;
+  font-weight: 500;
+  font-size: 1.18rem;
+  line-height: 1.2;
+  color: rgba(240, 233, 216, 0.94);
+}
+.scm-top-chrome .scm-ded-type {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  min-height: 1.5em;
+  min-width: 3em;
+  white-space: nowrap;
+  text-align: left;
+  font-family: var(--scm-font-editorial);
+  font-style: italic;
+  font-size: 1.18rem;
+  color: var(--scm-card-accent, var(--scm-gold));
+  transition: color 0.35s;
+}
+/* zero-width strut — keeps a text baseline while the phrase is empty,
+   so the cursor cannot drop below the line mid-erase (WebKit) */
+.scm-top-chrome .scm-type-text::after {
+  content: '\200B';
+}
+
+.scm-top-chrome .scm-type-cursor {
+  display: inline-block;
+  width: 1.5px;
+  height: 1.05em;
+  margin-left: 2.5px;
+  align-self: center;
+  background: var(--scm-card-accent, var(--scm-gold));
+  animation: scm-cursor-blink 1.1s steps(2, start) infinite;
+  transition: background-color 0.35s;
+}
+.scm-top-chrome .scm-ded-type.scm-typing .scm-type-cursor {
+  animation: none;
+  opacity: 1;
+}
+@keyframes scm-cursor-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.scm-btn-close {
+  position: fixed;
+  top: calc(24px + env(safe-area-inset-top, 0px));
+  right: calc(24px + env(safe-area-inset-right, 0px));
+  z-index: 230;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid rgba(197, 160, 89, 0.3);
+  background: rgba(12, 12, 14, 0.4);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: rgba(232, 224, 208, 0.85);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s var(--scm-ease-out-expo);
+}
+.scm-btn-close:hover {
+  color: #fff;
+  border-color: rgba(197, 160, 89, 0.6);
+  transform: rotate(90deg);
+}
+.scm-btn-close:focus-visible {
+  outline: 2px solid var(--scm-gold);
+  outline-offset: 3px;
+}
+
+/* ============================================================
+   BOTTOM SHELF — scrim, arcade selector, glass dock
+   ============================================================ */
+.scm-shelf {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 220;
+  padding: 40px 0 calc(18px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(6, 6, 8, 0.55) 34%,
+    rgba(6, 6, 8, 0.88) 100%
+  );
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+  animation: scm-shelf-up 0.8s var(--scm-ease-out-expo) 0.45s forwards;
+}
+@keyframes scm-shelf-up {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- style selector: arcade arches ---- */
+.scm-arcade {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+}
+
+.scm-arch {
+  position: relative;
+  width: 46px;
+  height: 62px;
+  clip-path: path(
+    'M0 62 L0 30 C0 17 5.5 9.5 13.5 5.2 C19 2.3 22 1.4 23 0 C24 1.4 27 2.3 32.5 5.2 C40.5 9.5 46 17 46 30 L46 62 Z'
+  );
+  background: var(--scm-mini-bg);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  overflow: hidden;
+  transition:
+    transform 0.25s var(--scm-ease-out-expo),
+    filter 0.25s;
+  filter: brightness(0.55) saturate(0.8);
+}
+.scm-arch:hover {
+  filter: brightness(0.8);
+}
+.scm-arch[aria-checked='true'] {
+  transform: translateY(-3px) scale(1.06);
+  filter: brightness(1) saturate(1);
+}
+.scm-arch:focus-visible {
+  outline: 2px solid var(--scm-gold);
+  outline-offset: 3px;
+}
+.scm-arch::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 90% 55% at 50% 18%,
+    rgba(255, 240, 200, 0.22),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.scm-arch[aria-checked='true']::before {
+  opacity: 1;
+}
+
+.scm-arch .scm-mini {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-top: 10px;
+}
+.scm-arch .scm-mini i {
+  display: block;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--scm-mini-ink);
+}
+.scm-arch .scm-mini i:nth-child(1) {
+  width: 55%;
+}
+.scm-arch .scm-mini i:nth-child(2) {
+  width: 68%;
+}
+.scm-arch .scm-mini i:nth-child(3) {
+  width: 40%;
+  background: var(--scm-mini-accent);
+  height: 1.5px;
+}
+.scm-arch .scm-mini em {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--scm-mini-accent);
+  margin-top: 2px;
+}
+.scm-arch-sill {
+  position: absolute;
+  bottom: 0;
+  left: 14%;
+  width: 72%;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--scm-mini-accent);
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition:
+    opacity 0.3s,
+    transform 0.3s var(--scm-ease-out-expo);
+}
+.scm-arch[aria-checked='true'] .scm-arch-sill {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.scm-arch--diwan {
+  --scm-mini-bg: linear-gradient(180deg, #17130e, #0c0c0e);
+  --scm-mini-ink: rgba(232, 224, 208, 0.75);
+  --scm-mini-accent: #c5a059;
+}
+.scm-arch--ibnMuqla {
+  --scm-mini-bg: linear-gradient(180deg, #f5e6c8, #e8d1a0);
+  --scm-mini-ink: rgba(44, 26, 0, 0.7);
+  --scm-mini-accent: #8b6914;
+}
+.scm-arch--sinan {
+  --scm-mini-bg: linear-gradient(180deg, #082036, #061220);
+  --scm-mini-ink: rgba(232, 228, 220, 0.75);
+  --scm-mini-accent: #4fa6b7;
+}
+.scm-arch--zahaHadid {
+  --scm-mini-bg: linear-gradient(160deg, #12002a, #08001a);
+  --scm-mini-ink: rgba(240, 232, 255, 0.75);
+  --scm-mini-accent: #c864ff;
+}
+.scm-arch--hassanFathy {
+  --scm-mini-bg: linear-gradient(180deg, #f8edd8, #e5cfa5);
+  --scm-mini-ink: rgba(42, 21, 0, 0.7);
+  --scm-mini-accent: #a0522d;
+}
+
+/* style description — no name, just the material */
+.scm-arcade-caption {
+  font-family: var(--scm-font-editorial);
+  font-style: italic;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: rgba(197, 160, 89, 0.55);
+  transition: opacity 0.2s;
+}
+.scm-arcade-caption.scm-swapping {
+  opacity: 0;
+}
+
+/* ---- glass dock actions ---- */
+.scm-dock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 22px;
+  background: rgba(16, 15, 13, 0.72);
+  border: 1px solid rgba(197, 160, 89, 0.22);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  box-shadow:
+    0 18px 50px -12px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 240, 200, 0.05);
+}
+
+.scm-dock button {
+  font-family: var(--scm-font-ui);
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.18s var(--scm-ease-out-expo);
+  min-height: 44px;
+}
+.scm-dock button:focus-visible {
+  outline: 2px solid var(--scm-gold);
+  outline-offset: 3px;
+}
+
+.scm-btn-share {
+  padding: 0 24px;
+  border: none;
+  color: #191307;
+  background: var(--scm-gold-foil);
+  background-size: 200% 200%;
+  box-shadow:
+    0 4px 18px rgba(197, 160, 89, 0.35),
+    inset 0 1px 0 rgba(255, 250, 230, 0.5);
+  animation: scm-foil-shift 4s ease-in-out infinite alternate;
+}
+@keyframes scm-foil-shift {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: 100% 100%;
+  }
+}
+.scm-btn-share:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 8px 26px rgba(197, 160, 89, 0.45),
+    inset 0 1px 0 rgba(255, 250, 230, 0.5);
+}
+.scm-btn-share:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.scm-btn-ghost {
+  width: 44px;
+  justify-content: center;
+  padding: 0;
+  color: rgba(232, 224, 208, 0.8);
+  background: rgba(197, 160, 89, 0.08);
+  border: 1px solid rgba(197, 160, 89, 0.2);
+}
+.scm-btn-ghost:hover {
+  background: rgba(197, 160, 89, 0.16);
+  color: var(--scm-gold-bright);
+  border-color: rgba(197, 160, 89, 0.45);
+}
+.scm-btn-ghost:active {
+  transform: scale(0.94);
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.scm-toast {
+  position: fixed;
+  left: 50%;
+  top: calc(56px + env(safe-area-inset-top, 0px));
+  transform: translate(-50%, -10px);
+  z-index: 240;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(20, 18, 14, 0.94);
+  border: 1px solid rgba(197, 160, 89, 0.4);
+  color: var(--scm-gold-bright);
+  font-family: var(--scm-font-editorial);
+  font-style: italic;
+  font-size: 0.86rem;
+  letter-spacing: 0.03em;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s var(--scm-ease-out-expo);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+.scm-toast.scm-show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scm-overlay *,
+  .scm-overlay *::before,
+  .scm-overlay *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+  }
+  .scm-top-chrome .scm-type-cursor {
+    animation: none;
+    opacity: 0.6;
+  }
+}

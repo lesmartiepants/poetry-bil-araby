@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // ─── Unit tests for share card designs ──────────────────────────────────
@@ -324,18 +324,40 @@ describe('ShareCardModal', () => {
     ShareCardModal = mod.default;
   });
 
-  it('renders with image preview', () => {
+  it('renders the full-bleed live card preview (Folio 3.4B)', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Preview is now an <img> element (full-res, supports long-press save)
-    expect(screen.getByAltText('Share card preview')).toBeInTheDocument();
+    // Preview is a live DOM card that fills the screen
+    const card = screen.getByLabelText('Poem card preview');
+    expect(card).toBeInTheDocument();
+    expect(card).toHaveAttribute('data-style', 'diwan');
+    // Card shows the Arabic verses and poet name
+    expect(screen.getByText('يا دِمَشقُ يا حَبيبَتي')).toBeInTheDocument();
+    expect(screen.getByText('نزار قباني')).toBeInTheDocument();
   });
 
-  it('shows design name for each design option', () => {
+  it('shows an arch radio for each design option', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Check that design selector buttons exist (now English names)
+    // The arcade is a radiogroup of nameless arches (aria-label carries the name)
+    const radios = screen.getAllByRole('radio');
+    expect(radios).toHaveLength(SHARE_CARD_DESIGNS.length);
     for (const d of SHARE_CARD_DESIGNS) {
-      expect(screen.getByText(d.name)).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: `${d.name} style` })).toBeInTheDocument();
     }
+  });
+
+  it('shows the material caption for the active design', () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    // Dīwān is active by default — caption describes the material, not the name
+    expect(screen.getByText('gold foil on obsidian')).toBeInTheDocument();
+  });
+
+  it('renders the typed dedication header', () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    expect(screen.getByText('Send this poem')).toBeInTheDocument();
+    expect(screen.getByText('شارِك')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('to a friend, to a lover, to a stranger, to yourself')
+    ).toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', async () => {
@@ -356,31 +378,38 @@ describe('ShareCardModal', () => {
     expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument();
   });
 
-  it('switches design when a design option is clicked', async () => {
+  it('has a copy-link button', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Click on Sinan design (now English label)
-    const sinanBtn = screen.getByText('Sinan');
-    await userEvent.click(sinanBtn);
-    // Should highlight Sinan (the button parent should have active styling)
-    expect(sinanBtn.closest('button')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument();
   });
 
-  it('renders image preview with hidden download canvas', () => {
+  it('switches design when an arch is clicked (after the dissolve)', async () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Preview is now an <img> element (full-res, supports long-press save on mobile)
-    const preview = screen.getByAltText('Share card preview');
-    expect(preview.tagName).toBe('IMG');
-    // Hidden canvas for download/share
+    const sinanArch = screen.getByRole('radio', { name: 'Sinan style' });
+    await userEvent.click(sinanArch);
+    // The card dissolves for 300ms before the new style lands
+    await waitFor(() => {
+      expect(sinanArch).toHaveAttribute('aria-checked', 'true');
+      expect(screen.getByLabelText('Poem card preview')).toHaveAttribute('data-style', 'sinan');
+    });
+    // Caption swaps to the new material description
+    expect(screen.getByText('celestial geometry')).toBeInTheDocument();
+  });
+
+  it('copies the poem link and shows a toast', async () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /copy link/i }));
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      `${window.location.origin}/poem/${mockPoem.id}`
+    );
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('Link copied');
+    });
+  });
+
+  it('keeps a hidden canvas for PNG generation', () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
     const hiddenCanvas = document.querySelector('canvas[aria-hidden="true"]');
     expect(hiddenCanvas).toBeInTheDocument();
-  });
-
-  it('has preview image with correct aspect ratio container', () => {
-    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    const preview = screen.getByAltText('Share card preview');
-    expect(preview).toBeInTheDocument();
-    // The image should be inside a container with aspect-ratio styling
-    const container = preview.closest('div');
-    expect(container.style.aspectRatio).toBe('1080 / 1350');
   });
 });

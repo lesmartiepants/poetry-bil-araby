@@ -107,7 +107,7 @@ the inline insight panels — is handled with GSAP and Framer Motion for a calm,
 - Faithful English translation (cached, or generated on demand)
 - Latin transliteration toggle
 - AI audio recitation with word-by-word highlighting synced to the voice
-- Nine Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh, Scheherazade New)
+- Ten Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh, Scheherazade New, Aref Ruqaa)
 - Dark and light themes
 - Inline AI literary insight that reads a poem as a story, not an academic gloss
 

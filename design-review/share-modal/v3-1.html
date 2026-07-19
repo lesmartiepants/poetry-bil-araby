@@ -57,7 +57,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 132px 34px 280px;
+  padding: 120px 34px 262px;
   background: var(--card-bg);
   transition: background 0.45s;
   opacity: 0;
@@ -122,8 +122,8 @@ body {
 
 .card .arabic-poetry {
   font-family: var(--font-arabic-body);
-  font-size: 1.26rem;
-  line-height: 2.1;
+  font-size: 1.16rem;
+  line-height: 2.0;
   color: var(--card-ink);
   direction: rtl;
 }
@@ -150,8 +150,8 @@ body {
 .card .english-translation {
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: 0.95rem;
-  line-height: 1.8;
+  font-size: 0.9rem;
+  line-height: 1.72;
   color: var(--card-trans);
   max-width: 30ch;
 }
@@ -176,7 +176,7 @@ body {
 }
 
 .card .brand {
-  margin-top: 26px;
+  margin-top: 16px;
   display: flex;
   align-items: baseline;
   justify-content: center;
@@ -290,12 +290,12 @@ body {
   position: fixed;
   left: 0; right: 0; bottom: 0;
   z-index: 20;
-  padding: 56px 0 calc(18px + env(safe-area-inset-bottom, 0px));
+  padding: 40px 0 calc(18px + env(safe-area-inset-bottom, 0px));
   background: linear-gradient(180deg, transparent 0%, rgba(6,6,8,0.55) 34%, rgba(6,6,8,0.88) 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   opacity: 0;
   animation: shelfUp 0.8s var(--ease-out-expo) 0.45s forwards;
 }
@@ -379,16 +379,6 @@ body {
 .arch--sinan    { --mini-bg: linear-gradient(180deg, #082036, #061220); --mini-ink: rgba(232,228,220,0.75); --mini-accent: #4fa6b7; }
 .arch--zaha     { --mini-bg: linear-gradient(160deg, #12002a, #08001a); --mini-ink: rgba(240,232,255,0.75); --mini-accent: #c864ff; }
 .arch--fathy    { --mini-bg: linear-gradient(180deg, #f8edd8, #e5cfa5); --mini-ink: rgba(42,21,0,0.7); --mini-accent: #a0522d; }
-
-.arcade-caption {
-  font-family: var(--font-editorial);
-  font-style: italic;
-  font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  color: rgba(197,160,89,0.62);
-  transition: opacity 0.2s;
-}
-.arcade-caption.swapping { opacity: 0.35; }
 
 /* ---- glass dock actions ---- */
 .dock {
@@ -540,7 +530,6 @@ body {
         <span class="arch-sill" aria-hidden="true"></span>
       </button>
     </div>
-    <div class="arcade-caption" id="arcadeCaption" aria-live="polite">Dīwān — gold foil on obsidian</div>
 
     <div class="dock" role="group" aria-label="Share actions">
       <button class="btn-ghost" aria-label="Download as image" id="btnDownload">
@@ -563,28 +552,16 @@ body {
   const card = document.getElementById('card');
   const topChrome = document.getElementById('topChrome');
   const arches = Array.from(document.querySelectorAll('.arch'));
-  const caption = document.getElementById('arcadeCaption');
   const toast = document.getElementById('toast');
   let toastTimer = null;
-
-  const SUBS = {
-    diwan: 'Dīwān — gold foil on obsidian',
-    ibnMuqla: 'Ibn Muqla — illuminated vellum',
-    sinan: 'Sinan — celestial geometry',
-    zaha: 'Zaha — fluid neon',
-    fathy: 'Hassan Fathy — sunlit clay',
-  };
 
   arches.forEach((arch) => {
     arch.addEventListener('click', () => {
       if (arch.getAttribute('aria-checked') === 'true') return;
       arches.forEach((a) => a.setAttribute('aria-checked', String(a === arch)));
       card.classList.add('dissolving');
-      caption.classList.add('swapping');
       setTimeout(() => {
         card.dataset.style = arch.dataset.style;
-        caption.textContent = SUBS[arch.dataset.style];
-        caption.classList.remove('swapping');
         // top chrome inherits the active accent
         const accent = getComputedStyle(card).getPropertyValue('--card-accent');
         topChrome.style.setProperty('--card-accent', accent);

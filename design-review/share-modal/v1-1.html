@@ -320,14 +320,14 @@ body::before {
 .card .arabic-title {
   font-family: var(--font-arabic-display);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 1.28rem;
   color: var(--card-accent);
   margin-bottom: 13px;
 }
 
 .card .arabic-poetry {
   font-family: var(--font-arabic-body);
-  font-size: 1.04rem;
+  font-size: 1.2rem;
   line-height: 2.05;
   color: var(--card-ink);
   direction: rtl;
@@ -345,7 +345,7 @@ body::before {
 .card .english-translation {
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: 0.8rem;
+  font-size: 0.94rem;
   line-height: 1.75;
   color: var(--card-trans);
 }
@@ -355,7 +355,7 @@ body::before {
 .card .poet-ar {
   display: block;
   font-family: var(--font-arabic-display);
-  font-size: 0.84rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--card-accent);
 }
@@ -371,7 +371,8 @@ body::before {
 
 .card .brand {
   position: absolute;
-  bottom: 16px; right: 21px;
+  bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+  right: 32px;
   display: flex;
   align-items: baseline;
   gap: 4px;
@@ -618,7 +619,7 @@ body::before {
   border-radius: 0;
   border-left: none;
   border-right: none;
-  padding: calc(116px + env(safe-area-inset-top, 0px)) 26px calc(188px + env(safe-area-inset-bottom, 0px));
+  padding: calc(84px + env(safe-area-inset-top, 0px)) 30px calc(188px + env(safe-area-inset-bottom, 0px));
 }
 .card .card-frame {
   inset: 16px;

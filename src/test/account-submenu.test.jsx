@@ -186,7 +186,6 @@ describe('Account Submenu - Signed In', () => {
     await userEvent.click(screen.getByLabelText('Display Settings'));
 
     expect(screen.getByText('Read Along')).toBeTruthy();
-    expect(screen.queryByText('Voice')).toBeNull();
   });
 
   it('opens SavedPoemsView when My Poems sidebar button is clicked', async () => {

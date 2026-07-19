@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>v3-1 — Folio Variant 3.1 — Share Modal</title>
+<title>v3-2 — Folio Variant 3.2 — Medallion</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Reem+Kufi:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -57,7 +57,7 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 120px 34px 262px;
+  padding: 168px 34px 262px;
   background: var(--card-bg);
   transition: background 0.45s;
   opacity: 0;
@@ -233,35 +233,59 @@ body {
 /* ============================================================
    TOP CHROME
    ============================================================ */
+/* 3.2 — the share mark as a calligraphic medallion */
 .top-chrome {
   position: fixed;
-  top: calc(26px + env(safe-area-inset-top, 0px));
-  left: 30px;
+  top: calc(16px + env(safe-area-inset-top, 0px));
+  left: 0; right: 0;
   z-index: 20;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  align-items: center;
+  gap: 9px;
   pointer-events: none;
   opacity: 0;
-  animation: chromeIn 0.7s var(--ease-out-expo) 0.35s forwards;
+  animation: chromeIn 0.8s var(--ease-out-expo) 0.35s forwards;
 }
 @keyframes chromeIn {
   from { opacity: 0; transform: translateY(-8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
-.top-chrome .kicker {
-  font-family: var(--font-editorial);
-  font-style: italic;
-  font-size: 0.78rem;
-  letter-spacing: 0.14em;
-  color: var(--card-accent, var(--gold));
-  opacity: 0.75;
+.top-chrome .medallion {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  border: 1px solid var(--card-accent, var(--gold));
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 22px rgba(197,160,89,0.14);
+  transition: border-color 0.35s;
 }
-.top-chrome .title-ar {
+.top-chrome .medallion::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 1px solid var(--card-accent, var(--gold));
+  opacity: 0.35;
+  transition: border-color 0.35s;
+}
+.top-chrome .med-ar {
   font-family: var(--font-arabic-display);
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.05rem;
   color: var(--card-accent, var(--gold));
+  transition: color 0.35s;
+}
+.top-chrome .med-en {
+  font-family: var(--font-editorial);
+  font-size: 0.6rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--card-accent, var(--gold));
+  opacity: 0.65;
+  transition: color 0.35s;
 }
 
 .btn-close {
@@ -391,6 +415,9 @@ body {
 }
 .arcade-caption.swapping { opacity: 0; }
 
+/* header carries the ornament — hide the card's own row */
+.card .ornament { display: none; }
+
 /* ---- glass dock actions ---- */
 .dock {
   display: flex;
@@ -480,8 +507,8 @@ body {
 <body>
 
   <div class="stage-label" aria-hidden="true">
-    <span class="stage-label__title">Folio Variant 3.1</span>
-    <span class="stage-label__sub">Full-bleed card with v1 arcade style selector</span>
+    <span class="stage-label__title">Folio 3.2 — Medallion</span>
+    <span class="stage-label__sub">The share mark as a calligraphic roundel</span>
   </div>
 
   <!-- The card fills the screen -->
@@ -509,8 +536,8 @@ body {
 
   <!-- Top chrome -->
   <div class="top-chrome" id="topChrome">
-    <span class="kicker" lang="en">Share this poem</span>
-    <span class="title-ar" dir="rtl" lang="ar">شارِك القصيدة</span>
+    <span class="medallion" aria-hidden="true"><span class="med-ar" dir="rtl" lang="ar">شارِك</span></span>
+    <span class="med-en" lang="en">Share this poem</span>
   </div>
 
   <button class="btn-close" aria-label="Close share dialog" id="btnClose">

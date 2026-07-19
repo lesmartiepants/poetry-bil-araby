@@ -51,8 +51,8 @@ body {
    ============================================================ */
 .card {
   position: absolute;
-  top: calc(84px + env(safe-area-inset-top, 0px));
-  bottom: calc(242px + env(safe-area-inset-bottom, 0px));
+  top: calc(58px + env(safe-area-inset-top, 0px));
+  bottom: calc(232px + env(safe-area-inset-bottom, 0px));
   left: 14px; right: 14px;
   border-radius: 18px;
   border: 1px solid var(--card-frame, rgba(197,160,89,0.3));
@@ -281,7 +281,7 @@ body {
   align-items: baseline;
   justify-content: center;
   min-height: 1.5em;
-  width: 6.05em;
+  width: 4.9em;
   justify-content: flex-start;
   text-align: left;
   font-family: var(--font-editorial);
@@ -393,13 +393,7 @@ body {
 
 .arch .mini {
   position: absolute;
-  top: calc(84px + env(safe-area-inset-top, 0px));
-  bottom: calc(242px + env(safe-area-inset-bottom, 0px));
-  left: 14px; right: 14px;
-  border-radius: 18px;
-  border: 1px solid var(--card-frame, rgba(197,160,89,0.3));
-  box-shadow: 0 26px 60px -18px rgba(0,0,0,0.85);
-  overflow: hidden;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;

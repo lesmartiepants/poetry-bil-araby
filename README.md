@@ -33,8 +33,8 @@ Three principles guide every feature:
   Translations follow a strict rule borrowed from the app's own prompt: _every word choice
   must sound like it belongs in a living poem_ — no archaic English, no invented imagery.
 - **Pleasurable.** A lapis-and-gold visual language drawn from Islamic illumination, generative
-  geometric backgrounds, kinetic onboarding, and fluid motion make reading feel like an
-  occasion rather than a lookup.
+  geometric backgrounds, and a tap-to-reveal reading experience — where each verse blooms into
+  view in time with the recitation — make reading feel like an occasion rather than a lookup.
 
 ## The Library
 
@@ -45,8 +45,8 @@ the reading experience, the API only serves poems above a quality threshold
 the full archive rather than raw bulk text.
 
 Each poem carries its Arabic title, the poet's name (Arabic and English), theme, and the
-verse body. Readers can pull a random poem, filter by poet, or browse a prefetched carousel
-of more work by the same author.
+verse body. Readers can pull a random poem, filter by poet, or swipe through a vertical feed
+of poems, one at a time.
 
 ## Harakat — Diacritization
 
@@ -93,26 +93,28 @@ illuminated manuscripts the poems come from.
 
 The animated backgrounds are not stock textures: `SquoctogonBackground.jsx` generates true
 Islamic geometric tessellations — eightfold girih stars and octagon-and-square grids — as
-live SVG, the same construction reused in this README's header banner. A kinetic splash
-sequence introduces the wordmark before the first poem appears, and motion throughout is
-handled with Framer Motion for a calm, considered feel.
+live SVG, the same construction reused in this README's header banner. The app opens directly
+onto a poem, and motion throughout — the sparkler-style verse reveal, the feed transitions, and
+the inline insight panels — is handled with GSAP and Framer Motion for a calm, considered feel.
 
 ## Features
 
 **Reading**
 
+- A vertical swipe feed where each poem unfolds through a sparkler reveal — verse by verse
+  (Arabic, transliteration, and translation together), uncovered in time with the recitation
 - Full diacritics (harakat) for accurate pronunciation and meter
 - Faithful English translation (cached, or generated on demand)
 - Latin transliteration toggle
 - AI audio recitation with word-by-word highlighting synced to the voice
 - Nine Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh, Scheherazade New)
 - Dark and light themes
-- AI literary insight that reads a poem as a story, not an academic gloss
+- Inline AI literary insight that reads a poem as a story, not an academic gloss
 
 **Discovery**
 
 - A single tap surfaces a new poem from the curated library
-- Poet filtering and a prefetched carousel of related work by the same author
+- Poet filtering and a vertical feed you swipe through, poem to poem
 - Deep-linkable poems and shareable cards with Open Graph previews
 
 **Personalization**
@@ -133,19 +135,19 @@ handled with Framer Motion for a calm, considered feel.
 
 | Key     | Action                     |
 | ------- | -------------------------- |
-| `Space` | Play / pause recitation    |
-| `→`     | Next poem                  |
-| `E`     | Seek insight (AI analysis) |
+| `Space` | Play / pause audio         |
+| `→`     | Discover new poem          |
+| `E`     | Explain poem               |
 | `T`     | Toggle English translation |
 | `R`     | Toggle transliteration     |
+| `Esc`   | Close modal / panel        |
 | `?`     | Show all shortcuts         |
-| `Esc`   | Close overlay              |
 
 ## Tech Stack
 
 **Frontend** — React 18, Vite 6, Tailwind CSS 3, Zustand (state), wouter (routing),
-Framer Motion (animation), Tone.js (audio), Radix UI and Vaul (accessible primitives),
-Embla (carousel), Sonner (toasts), Lucide (icons).
+Framer Motion and GSAP (animation), Tone.js (audio), Radix UI and Vaul (accessible primitives),
+Embla (swipe feed), Sonner (toasts), Lucide (icons).
 
 **Backend** — Express 5 with Helmet, CORS, rate limiting, and input validation; PostgreSQL
 via `pg`.
@@ -240,7 +242,7 @@ npm run test:e2e:full   # full device matrix (local)
 
 Unit tests cover components, utilities, and database integration with Vitest and React
 Testing Library. End-to-end suites in `e2e/` exercise core flows, audio and TTS highlighting,
-the carousel, translation caching, PWA behavior, and UI/UX quality. The GitHub Actions
+the reader feed, translation caching, PWA behavior, and UI/UX quality. The GitHub Actions
 pipeline builds, runs unit tests, then runs the E2E suite against a PostgreSQL service.
 
 ## Deployment
@@ -266,7 +268,7 @@ external services.
 poetry-bil-araby/
 ├── src/
 │   ├── app.jsx              # Main application shell
-│   ├── components/          # UI: splash, poem card, carousel, auth, backgrounds
+│   ├── components/          # UI: the poem reader and swipe feed, insights, auth, backgrounds
 │   ├── stores/              # Zustand state and side-effect actions
 │   ├── hooks/               # Auth, TTS highlighting, shortcuts, query params
 │   ├── services/            # Gemini, database client, cache, prefetch

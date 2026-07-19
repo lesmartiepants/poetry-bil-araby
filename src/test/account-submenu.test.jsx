@@ -172,6 +172,23 @@ describe('Account Submenu - Signed In', () => {
     expect(screen.getByText('Azzam')).toBeTruthy();
   });
 
+  it('offers Theme and Display Settings from the account menu', async () => {
+    mockAutoLoadFetch();
+    render(<DiwanApp />);
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('Nizar Qabbani');
+    });
+
+    await userEvent.click(screen.getByLabelText(/Account menu/));
+
+    expect(screen.getByText('Theme')).toBeTruthy();
+    await userEvent.click(screen.getByLabelText('Display Settings'));
+
+    expect(screen.getByText('Read Along')).toBeTruthy();
+    expect(screen.queryByText('Voice')).toBeNull();
+  });
+
   it('opens SavedPoemsView when My Poems sidebar button is clicked', async () => {
     mockAutoLoadFetch();
     render(<DiwanApp />);

@@ -333,7 +333,8 @@ describe('DiwanApp', () => {
     it('switches to light mode bg-[#FDFCF8] after toggling theme', async () => {
       render(<DiwanApp />);
 
-      // Click the ThemeToggle button directly (now a separate component, no settings gear needed)
+      // Theme is available from the account menu.
+      await userEvent.click(screen.getByLabelText('Account menu'));
       const themeToggleBtn = screen.getByLabelText('Switch to light mode');
       await userEvent.click(themeToggleBtn);
 

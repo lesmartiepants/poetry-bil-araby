@@ -169,16 +169,15 @@ export default function ReaderActions({
   }
 
   return (
-    <>
+    <div className="ra-stack">
       <div className="reader-actions" data-weight={actionWeight} data-testid="reader-actions">
         {left}
         {right}
       </div>
-      {/* Reading mode: a subtle "Read full poem" affordance beneath the Listen / Next Verse row.
-          Reveals the whole poem as static text (no audio) — Listen is no longer the only way to see
-          it. Disabled while a reveal animates so it can't run ahead of the sparkler. */}
-      {reading && onReadFull && (
-        <div className="ra-readfull-row">
+      {/* Reserve the "Read full poem" lane even after the poem is fully revealed so the action row +
+          cue never jump downward when this affordance disappears. */}
+      <div className="ra-readfull-row">
+        {reading && onReadFull && (
           <button
             type="button"
             className="ra-readfull"
@@ -188,8 +187,8 @@ export default function ReaderActions({
           >
             Read full poem
           </button>
-        </div>
-      )}
-    </>
+        )}
+      </div>
+    </div>
   );
 }

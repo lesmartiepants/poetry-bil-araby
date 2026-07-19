@@ -45,7 +45,7 @@ describe('TOUR_STEPS (shared source of truth)', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('welcome is centered; finish highlights the restart control; feature steps auto-advance', () => {
+  it('welcome is centered; finish highlights the restart control; feature steps wait for the real interaction', () => {
     const welcome = TOUR_STEPS[0];
     expect(welcome.target).toBeNull();
     expect(welcome.advanceOn).toBeUndefined();
@@ -56,7 +56,7 @@ describe('TOUR_STEPS (shared source of truth)', () => {
     expect(finish.target).toMatch(/^\[data-tour=/);
     expect(finish.advanceOn).toBeUndefined();
 
-    // Interactive feature steps anchor to a real control, auto-advance, and hint.
+    // Interactive feature steps anchor to a real control, wait for the real interaction, and hint.
     const interactive = TOUR_STEPS.filter((s) => s.advanceOn);
     expect(interactive.length).toBeGreaterThanOrEqual(3);
     for (const s of interactive) {
@@ -94,7 +94,7 @@ describe('SpotlightTour engine', () => {
     await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
   });
 
-  it('feature steps have no Next button and auto-advance on the real interaction', async () => {
+  it('feature steps reveal Next only after the real interaction lands', async () => {
     const target = document.createElement('button');
     target.setAttribute('data-tour', 'listen');
     document.body.appendChild(target);
@@ -103,14 +103,16 @@ describe('SpotlightTour engine', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Next' })); // welcome -> listen
     expect(screen.getByText('Listen to the poem')).toBeInTheDocument();
 
-    // Feature steps drive by the real interaction — the redundant Next button is gone.
+    // Feature steps start without Next — the real interaction must happen first.
     expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
 
-    // Performing the real interaction auto-advances (deferred so the app's own handler runs first).
+    // Performing the real interaction reveals Next after the dwell delay.
     target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await waitFor(() => expect(screen.getByText('Pause anytime')).toBeInTheDocument(), {
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument(), {
       timeout: 2000,
     });
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(screen.getByText('Pause anytime')).toBeInTheDocument();
     target.remove();
   });
 

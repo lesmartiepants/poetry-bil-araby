@@ -12,8 +12,8 @@ import { TOUR_TRAYS } from '../../constants/tourTrays.js';
  * Behavior:
  *  - The overlay NEVER blocks the page (pointer-events:none), so the user
  *    genuinely taps the real Listen / Discover / Explain controls.
- *  - Steps don't auto-advance. Performing the real action UNLOCKS Next; the
- *    user stays in control (e.g. play → pause) before moving on.
+ *  - Performing the real action unlocks the step. Once its animation/demo has had
+ *    a beat to land, a Next button appears so the reader stays in control.
  *  - The coachmark pops into place with a CONSTANT subtle glow (no flashing).
  *    The only thing that flashes — subtly — is the ring around the action.
  *  - The card sits fully ABOVE the control bar (never overlapping it). When a
@@ -25,9 +25,9 @@ import { TOUR_TRAYS } from '../../constants/tourTrays.js';
 const Z = 9999;
 const PAD = 4; // breathing room around the spotlighted element (hugs the control)
 const GAP = 18; // distance between the control bar / element and the card
-// On feature steps the real interaction alone advances the tour. Give the tap a
-// beat to land (open the tray / start audio) so the reader sees the result before
-// the card moves on.
+// On feature steps the real interaction unlocks the step. Give the tap a beat to
+// land (open the tray / start audio) so the reader sees the result before Next
+// appears.
 const ADVANCE_DELAY = 650;
 // The "Listen" step is the heart of the experience: the synced word-by-word
 // highlight. Its 650ms beat moved off the step before the highlight was ever
@@ -93,14 +93,14 @@ export default function SpotlightTour({
   const [rect, setRect] = useState(null);
   const [barTop, setBarTop] = useState(null);
   const [aboveRect, setAboveRect] = useState(null);
-  const [actioned, setActioned] = useState(() => new Set());
+  const [actionReady, setActionReady] = useState(() => new Set());
   const rafRef = useRef(0);
 
   const step = steps[index];
   const isLast = index === steps.length - 1;
   const total = steps.length;
   const needsAction = !!step?.advanceOn;
-  const unlocked = !needsAction || actioned.has(step?.key);
+  const unlocked = !needsAction || actionReady.has(step?.key);
   const tray = step?.tray ? TRAYS[step.tray] : null;
   const trayOpen = !!(tray && { discoverDrawer, insightsDrawer, authModal, savedPoems }[tray.key]);
 
@@ -132,8 +132,8 @@ export default function SpotlightTour({
 
   const back = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
 
-  // Next is disabled until the step's action is done; the spotlighted control is
-  // what the user taps to make progress.
+  // Next stays hidden until the step's action has landed; then it appears enabled
+  // so the reader decides when to move on.
   const locked = needsAction && !unlocked;
 
   // Flag the tour as active so app overlays (e.g. the insight drawer) suppress
@@ -186,8 +186,9 @@ export default function SpotlightTour({
     return () => clearTimeout(id);
   }, [index, step?.target, step?.key]);
 
-  // Dynamic advance: performing the real action IS the advance on feature steps
-  // (there's no Next button on them). Delegated from the document (capture phase)
+  // Dynamic unlock: the real interaction marks the step done. After its animation
+  // / demo dwell finishes, the step shows a Next button. Delegated from the
+  // document (capture phase)
   // so it keeps working even if the target element is swapped out mid-step (e.g.
   // the Listen control morphing as audio loads).
   // Hold the latest onDemoRecite without making the auto-advance effect depend on it.
@@ -212,7 +213,6 @@ export default function SpotlightTour({
       if (advanced) return;
       if (e.target instanceof Element && e.target.closest(step.target)) {
         advanced = true;
-        setActioned((prev) => new Set(prev).add(step.key));
         // On the demo step, the real tap already starts recitation via the app's
         // own (bubble-phase) handler. As a guarantee — and only when it can't
         // double-toggle — kick playback ourselves if, a beat later, nothing is
@@ -225,8 +225,10 @@ export default function SpotlightTour({
           }, DEMO_RECITE_GUARANTEE_DELAY);
         }
         // Let the app's own click handler run first (open the tray / start audio),
-        // then auto-advance — the same handler the Next button used to call.
-        timer = setTimeout(() => next(), delay);
+        // then reveal the manual Next button once the effect has had time to land.
+        timer = setTimeout(() => {
+          setActionReady((prev) => new Set(prev).add(step.key));
+        }, delay);
       }
     };
     document.addEventListener(step.advanceOn, handler, true);
@@ -235,7 +237,7 @@ export default function SpotlightTour({
       clearTimeout(timer);
       clearTimeout(guaranteeTimer);
     };
-  }, [index, step, needsAction, next]);
+  }, [index, step, needsAction]);
 
   // Terminal step: proactively close any lingering app overlay (auth / discover /
   // saved) so nothing sits over the Done button. A Radix/Vaul dismissable layer
@@ -392,8 +394,8 @@ function CoachCard({
 }) {
   const [size, setSize] = useState({ w: 320, h: 200 });
   const ref = useRef(null);
-  // Feature steps advance by the real interaction alone — no Next button. Only
-  // the centered welcome/finish cards keep an explicit Next/Done.
+  // Feature steps start without a Next button. Once the real interaction has
+  // landed, Next appears so the reader can move on manually.
   const needsAction = !!step?.advanceOn;
 
   useLayoutEffect(() => {
@@ -557,8 +559,8 @@ function CoachCard({
               Back
             </button>
           )}
-          {/* Feature steps have no Next — the real interaction advances them. */}
-          {!needsAction && (
+          {/* Interactive steps reveal Next only after the real action has landed. */}
+          {(!needsAction || !locked) && (
             <button
               onClick={locked ? undefined : onNext}
               disabled={locked}

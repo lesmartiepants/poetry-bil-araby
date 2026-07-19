@@ -18,7 +18,15 @@ const REDUCED_MOTION =
 // Coarse pointers (touch) swipe; fine pointers (mouse) scroll. Resolve once at module load so the
 // between-poems cue matches the input the user actually has.
 const COARSE_POINTER =
-  typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+  typeof window !== 'undefined' &&
+  !!window.matchMedia &&
+  window.matchMedia('(pointer: coarse)').matches;
+
+const BODY_TOP_INSET = 'calc(env(safe-area-inset-top, 0px) + clamp(116px, 16vh, 148px))';
+const BODY_BOTTOM_INSET = 'calc(env(safe-area-inset-bottom, 0px) + clamp(96px, 13vh, 120px))';
+const SCRUBBER_CLEARANCE = 56;
+const CONTENT_MAX_WIDTH = `min(760px, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - ${SCRUBBER_CLEARANCE}px))`;
+const ACTIONS_MAX_WIDTH = `min(420px, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - ${SCRUBBER_CLEARANCE}px))`;
 
 /**
  * PoemReader — one poem panel in the vertical feed, rendered as the sparkler teleprompter.
@@ -366,10 +374,10 @@ const PoemReader = memo(function PoemReader({
       <div
         className="absolute inset-0 flex items-center justify-center px-4 md:px-12"
         style={{
-          // Asymmetric so the verses sit centred between the (taller) header and the bottom bar.
-          // The one-line cue freed ~a line at the bottom, so the verses get a bit more room there.
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + clamp(116px, 16vh, 148px))',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + clamp(96px, 13vh, 120px))',
+          // The poem body stays centered on the page; the scrubber gets its own right-side lane
+          // outside this box so the verses/buttons no longer shift left to make room for it.
+          paddingTop: BODY_TOP_INSET,
+          paddingBottom: BODY_BOTTOM_INSET,
         }}
       >
         {/* Stage stays mounted (refs persist); hidden when the insight is showing. */}
@@ -377,7 +385,7 @@ const PoemReader = memo(function PoemReader({
           ref={stageWrapRef}
           className="w-full"
           style={{
-            maxWidth: 'min(760px, 92vw)',
+            maxWidth: CONTENT_MAX_WIDTH,
             opacity: 0,
             display: inInsight ? 'none' : 'block',
           }}
@@ -409,7 +417,7 @@ const PoemReader = memo(function PoemReader({
             data-insight-ui
             // Keep the scrollable insight text clear of the scrub bar below (it sits ~16px under the
             // bar otherwise) so no line is hidden behind it; ~16px of breathing room above the bar.
-            style={{ paddingBottom: 32 }}
+            style={{ maxWidth: CONTENT_MAX_WIDTH, paddingBottom: 32 }}
           >
             <InlineInsights
               stage={endStage}
@@ -426,17 +434,17 @@ const PoemReader = memo(function PoemReader({
         )}
       </div>
 
-      {/* One persistent VERTICAL scrub rail (#613) — full-height, anchored to the screen-right edge,
-          same position in every state. Reading: it seeks the reveal (top→bottom = start→end).
+      {/* One persistent VERTICAL scrub rail (#613) — constrained to the poem body, with 20px of
+          breathing room above and below the text area. Reading: it seeks the reveal (top→bottom = start→end).
           Insight: it scrolls the paragraph (fill = render progress, handle shown only when the text
           overflows). Always visible as a persistent reading-position indicator. */}
       <div
         ref={scrubWrapRef}
         className="absolute"
         style={{
-          right: 'env(safe-area-inset-right, 0px)',
-          top: 'env(safe-area-inset-top, 0px)',
-          bottom: 'env(safe-area-inset-bottom, 0px)',
+          right: 'calc(env(safe-area-inset-right, 0px) + 2px)',
+          top: `calc(${BODY_TOP_INSET} + 20px)`,
+          bottom: `calc(${BODY_BOTTOM_INSET} + 20px)`,
           opacity: 0,
           zIndex: 5,
         }}
@@ -470,13 +478,11 @@ const PoemReader = memo(function PoemReader({
         />
       </div>
 
-      {/* Action buttons + pull-up cue — pinned as low as possible, same position in every state.
-          A right pad clears the vertical scrub rail so the right-most button never underlaps it. */}
+      {/* Action buttons + pull-up cue — pinned as low as possible, same position in every state. */}
       <div
         className="absolute left-0 right-0 flex flex-col items-center gap-2 px-4"
         style={{
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
-          paddingRight: 'calc(env(safe-area-inset-right, 0px) + 56px)',
           zIndex: 5,
         }}
       >
@@ -486,7 +492,7 @@ const PoemReader = memo(function PoemReader({
           <div
             className="w-full"
             style={{
-              maxWidth: 'min(420px, 92vw)',
+              maxWidth: ACTIONS_MAX_WIDTH,
               opacity: introDone ? 1 : 0,
               transition: 'opacity 0.4s ease',
             }}

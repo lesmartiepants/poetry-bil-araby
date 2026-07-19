@@ -125,11 +125,6 @@ export default function SparklerStage({
         ref={trackRef}
         className="absolute left-0 right-0 top-0 will-change-transform"
         data-window-top="0"
-        // Right gutter (#613): reserve room for the full-height vertical scrub rail on the screen
-        // edge (44px hit area + breathing room + right safe-area inset) so centred verse text never
-        // sits under the rail. Applied here (not the stage root) because the track is absolutely
-        // positioned with left/right:0 and would otherwise ignore padding on the stage.
-        style={{ paddingRight: 'calc(env(safe-area-inset-right, 0px) + 56px)' }}
       >
         {lines.map((ln, i) => (
           <div

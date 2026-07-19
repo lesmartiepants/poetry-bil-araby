@@ -2121,6 +2121,7 @@ export default function DiwanApp() {
         <TextSettingsPill
           open={displaySettingsOpen}
           onOpenChange={setDisplaySettingsOpen}
+          showTrigger={false}
         />
       </div>
 

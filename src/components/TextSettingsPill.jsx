@@ -48,7 +48,7 @@ function SectionLabel({ gold, children }) {
   );
 }
 
-const TextSettingsPill = ({ open, onOpenChange }) => {
+const TextSettingsPill = ({ open, onOpenChange, showTrigger = true }) => {
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
   // Light-mode control pattern: menu text/icons use a dark ink (same as the bottom nav / Next-Verse
@@ -122,7 +122,7 @@ const TextSettingsPill = ({ open, onOpenChange }) => {
       `}</style>
 
       <Popover.Root open={open} onOpenChange={onOpenChange}>
-        {open === undefined && (
+        {showTrigger && (
           <Popover.Trigger asChild>
             <button
               aria-label="Text and background settings"
@@ -367,93 +367,96 @@ const TextSettingsPill = ({ open, onOpenChange }) => {
 
                 {/* Line colour + Pattern — paired on one line */}
                 <div className="mb-3 flex gap-2 items-start">
-              <div className="flex-1 min-w-0">
-                <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
-                  Line colour
-                </span>
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="color"
-                    value={bgColor || defaultColor}
-                    onChange={(e) => getStore().setBgColor(e.target.value)}
-                    className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0.5 flex-shrink-0"
-                    style={{ background: 'transparent' }}
-                    title="Pick line colour"
-                  />
-                  <input
-                    type="text"
-                    value={hexInput}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setHexInput(v);
-                      if (/^#[0-9A-Fa-f]{6}$/.test(v)) getStore().setBgColor(v);
-                    }}
-                    className={`flex-1 rounded-xl px-2 py-1.5 text-xs font-mono border ${theme.border} min-w-0 ${inputBg}`}
-                    style={{ color: gold }}
-                    maxLength={7}
-                    placeholder={defaultColor}
-                    spellCheck={false}
-                  />
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
-                  Pattern
-                </span>
-                <Select.Root value={bgPattern} onValueChange={(v) => getStore().setBgPattern(v)}>
-                  <Select.Trigger
-                    className={`w-full flex items-center justify-between rounded-xl px-2.5 py-2 border ${theme.border} ${inputBg} transition-all duration-200`}
-                    style={{ color: gold }}
-                    aria-label="Select header pattern"
-                  >
-                    <Select.Value />
-                    <Select.Icon>
-                      <ChevronDown size={14} style={{ color: gold, opacity: 0.6 }} />
-                    </Select.Icon>
-                  </Select.Trigger>
-                  <Select.Portal>
-                    <Select.Content
-                      className={`rounded-xl p-1 backdrop-blur-xl border ${theme.border} ${
-                        darkMode ? 'bg-stone-950/95' : 'bg-white/95'
-                      }`}
-                      style={{ zIndex: 100, maxHeight: '14rem', overflowY: 'auto' }}
-                      position="popper"
-                      sideOffset={4}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
+                      Line colour
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="color"
+                        value={bgColor || defaultColor}
+                        onChange={(e) => getStore().setBgColor(e.target.value)}
+                        className="w-8 h-8 rounded-lg cursor-pointer border-0 p-0.5 flex-shrink-0"
+                        style={{ background: 'transparent' }}
+                        title="Pick line colour"
+                      />
+                      <input
+                        type="text"
+                        value={hexInput}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setHexInput(v);
+                          if (/^#[0-9A-Fa-f]{6}$/.test(v)) getStore().setBgColor(v);
+                        }}
+                        className={`flex-1 rounded-xl px-2 py-1.5 text-xs font-mono border ${theme.border} min-w-0 ${inputBg}`}
+                        style={{ color: gold }}
+                        maxLength={7}
+                        placeholder={defaultColor}
+                        spellCheck={false}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs opacity-50 mb-1.5 block" style={{ color: gold }}>
+                      Pattern
+                    </span>
+                    <Select.Root
+                      value={bgPattern}
+                      onValueChange={(v) => getStore().setBgPattern(v)}
                     >
-                      <Select.Viewport>
-                        {GENERATOR_FAVORITES.map((name) => (
-                          <Select.Item
-                            key={name}
-                            value={name}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-150 text-xs ${
-                              darkMode ? 'hover:bg-white/10' : 'hover:bg-black/5'
-                            }`}
-                            style={{ color: gold }}
-                          >
-                            <Select.ItemText>{name}</Select.ItemText>
-                            <Select.ItemIndicator>
-                              <Check size={12} style={{ color: gold }} />
-                            </Select.ItemIndicator>
-                          </Select.Item>
-                        ))}
-                      </Select.Viewport>
-                    </Select.Content>
-                  </Select.Portal>
-                </Select.Root>
-              </div>
-            </div>
+                      <Select.Trigger
+                        className={`w-full flex items-center justify-between rounded-xl px-2.5 py-2 border ${theme.border} ${inputBg} transition-all duration-200`}
+                        style={{ color: gold }}
+                        aria-label="Select header pattern"
+                      >
+                        <Select.Value />
+                        <Select.Icon>
+                          <ChevronDown size={14} style={{ color: gold, opacity: 0.6 }} />
+                        </Select.Icon>
+                      </Select.Trigger>
+                      <Select.Portal>
+                        <Select.Content
+                          className={`rounded-xl p-1 backdrop-blur-xl border ${theme.border} ${
+                            darkMode ? 'bg-stone-950/95' : 'bg-white/95'
+                          }`}
+                          style={{ zIndex: 100, maxHeight: '14rem', overflowY: 'auto' }}
+                          position="popper"
+                          sideOffset={4}
+                        >
+                          <Select.Viewport>
+                            {GENERATOR_FAVORITES.map((name) => (
+                              <Select.Item
+                                key={name}
+                                value={name}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer transition-colors duration-150 text-xs ${
+                                  darkMode ? 'hover:bg-white/10' : 'hover:bg-black/5'
+                                }`}
+                                style={{ color: gold }}
+                              >
+                                <Select.ItemText>{name}</Select.ItemText>
+                                <Select.ItemIndicator>
+                                  <Check size={12} style={{ color: gold }} />
+                                </Select.ItemIndicator>
+                              </Select.Item>
+                            ))}
+                          </Select.Viewport>
+                        </Select.Content>
+                      </Select.Portal>
+                    </Select.Root>
+                  </div>
+                </div>
 
-            {/* Generator link */}
-            <a
-              href={GENERATOR_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs opacity-40 hover:opacity-70 transition-opacity mt-1"
-              style={{ color: gold }}
-            >
-              <ExternalLink size={11} />
-              Open pattern generator
-            </a>
+                {/* Generator link */}
+                <a
+                  href={GENERATOR_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1.5 text-xs opacity-40 hover:opacity-70 transition-opacity mt-1"
+                  style={{ color: gold }}
+                >
+                  <ExternalLink size={11} />
+                  Open pattern generator
+                </a>
               </>
             )}
           </Popover.Content>

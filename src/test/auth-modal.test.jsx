@@ -86,12 +86,12 @@ describe('AuthModal', () => {
 
     it('renders the Arabic header title', () => {
       render(<AuthModal onSignInWithGoogle={onSignInWithGoogle} />);
-      expect(screen.getByText('اكتشف رحلتك في الشعر')).toBeInTheDocument();
+      expect(screen.getByText('مجموعة مختارة في انتظارك')).toBeInTheDocument();
     });
 
     it('renders the English subtitle', () => {
       render(<AuthModal onSignInWithGoogle={onSignInWithGoogle} />);
-      expect(screen.getByText('Unlock your Journey Through Poetry')).toBeInTheDocument();
+      expect(screen.getByText('A Curated Collection Awaits')).toBeInTheDocument();
     });
 
     it('renders all three feature items', () => {
@@ -147,7 +147,7 @@ describe('AuthModal', () => {
 
     it('Arabic title has dir="rtl" attribute', () => {
       render(<AuthModal onSignInWithGoogle={onSignInWithGoogle} />);
-      const arabicTitle = screen.getByText('اكتشف رحلتك في الشعر');
+      const arabicTitle = screen.getByText('مجموعة مختارة في انتظارك');
       expect(arabicTitle).toHaveAttribute('dir', 'rtl');
     });
   });

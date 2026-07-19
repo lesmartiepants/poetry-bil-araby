@@ -257,16 +257,16 @@ body {
 .top-chrome .ded-ar {
   font-family: var(--font-arabic-display);
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   color: var(--card-accent, var(--gold));
-  opacity: 0.8;
+  opacity: 0.85;
   transition: color 0.35s;
 }
 .top-chrome .ded-main {
   font-family: var(--font-editorial);
   font-style: italic;
   font-weight: 500;
-  font-size: 1.02rem;
+  font-size: 1.18rem;
   line-height: 1.2;
   color: rgba(240,233,216,0.94);
 }
@@ -275,15 +275,19 @@ body {
   align-items: baseline;
   justify-content: center;
   min-height: 1.5em;
-  width: 6.5em;
+  width: 6.05em;
   justify-content: flex-start;
   text-align: left;
   font-family: var(--font-editorial);
   font-style: italic;
-  font-size: 1.02rem;
+  font-size: 1.18rem;
   color: var(--card-accent, var(--gold));
   transition: color 0.35s;
 }
+/* zero-width strut — keeps a text baseline while the phrase is empty,
+   so the cursor cannot drop below the line mid-erase (WebKit) */
+.top-chrome .type-text::after { content: '\200B'; }
+
 .top-chrome .type-cursor {
   display: inline-block;
   width: 0.52em;
@@ -301,7 +305,11 @@ body {
   50%, 100% { opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .top-chrome .type-cursor { animation: none; opacity: 0.6; }
+  /* zero-width strut — keeps a text baseline while the phrase is empty,
+   so the cursor cannot drop below the line mid-erase (WebKit) */
+.top-chrome .type-text::after { content: '\200B'; }
+
+.top-chrome .type-cursor { animation: none; opacity: 0.6; }
 }
 
 .btn-close {
@@ -433,7 +441,7 @@ body {
 .arcade-caption.swapping { opacity: 0; }
 
 /* letter-opening: header aligns left */
-.top-chrome { justify-content: flex-start; left: 30px; right: auto; text-align: left; }
+.top-chrome { justify-content: flex-start; left: 22px; right: auto; text-align: left; }
 
 /* header carries the ornament — hide the card's own row */
 .card .ornament { display: none; }

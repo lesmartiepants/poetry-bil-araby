@@ -74,7 +74,7 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
             {FEATURES.designReview && (
               <>
                 <a
-                  href="/design-review/share-modal/index.html"
+                  href="/design-review/index.html"
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Open share modal design review"

@@ -12,13 +12,19 @@ import { TOUR_TRAYS } from '../../constants/tourTrays.js';
  * Behavior:
  *  - The overlay NEVER blocks the page (pointer-events:none), so the user
  *    genuinely taps the real Listen / Discover / Explain controls.
- *  - Performing the real action unlocks the step. Once its animation/demo has had
- *    a beat to land, a Next button appears so the reader stays in control.
+ *  - Feature steps AUTO-ADVANCE on the real interaction (no Next button): perform
+ *    the action, a beat lets it land (open the tray / start audio), then the tour
+ *    moves on. Only the centered welcome/finish cards carry a manual Next/Done.
+ *  - Caveat for steps that open a modal/drawer (a "tray"): the tour does NOT
+ *    auto-advance the instant the tray opens — that would yank the panel away as
+ *    it appears. Instead it holds a dismissal beat (the card asks the reader to
+ *    close it: tap × for a modal, drag down for a drawer) and advances only once
+ *    the tray is dismissed.
  *  - The coachmark pops into place with a CONSTANT subtle glow (no flashing).
  *    The only thing that flashes — subtly — is the ring around the action.
  *  - The card sits fully ABOVE the control bar (never overlapping it). When a
  *    step opens a tray (Discover), the card moves in front of the tray, centered
- *    in the bottom two-thirds, and Next dismisses the tray.
+ *    in the bottom two-thirds.
  */
 
 // Above the Discover drawer (z-202) and everything else.
@@ -93,14 +99,15 @@ export default function SpotlightTour({
   const [rect, setRect] = useState(null);
   const [barTop, setBarTop] = useState(null);
   const [aboveRect, setAboveRect] = useState(null);
-  const [actionReady, setActionReady] = useState(() => new Set());
+  // A tray step whose interaction opened a modal/drawer: we hold here (asking the reader to close
+  // it) instead of auto-advancing, so the panel isn't yanked away the instant it appears.
+  const [awaitingDismiss, setAwaitingDismiss] = useState(false);
   const rafRef = useRef(0);
 
   const step = steps[index];
   const isLast = index === steps.length - 1;
   const total = steps.length;
   const needsAction = !!step?.advanceOn;
-  const unlocked = !needsAction || actionReady.has(step?.key);
   const tray = step?.tray ? TRAYS[step.tray] : null;
   const trayOpen = !!(tray && { discoverDrawer, insightsDrawer, authModal, savedPoems }[tray.key]);
 
@@ -114,10 +121,9 @@ export default function SpotlightTour({
     onStepChange?.(index);
   }, [index, onStepChange]);
 
-  // Next closes any open tray/panel AND advances in a single tap. The tour
-  // suppresses those overlays' own outside-dismiss (see tourActive), so tapping a
-  // feature control merely OPENS its panel — the tour stays on this slide until
-  // the user presses Next, rather than auto-advancing when the panel appears.
+  // Advance to the next step, closing any tray this step left open first. Called
+  // automatically after a feature-step interaction (or its tray's dismissal), and
+  // manually by Next/Done on the centered welcome/finish cards.
   const next = useCallback(() => {
     const t = step?.tray ? TRAYS[step.tray] : null;
     if (t && useModalStore.getState()[t.key]) t.close();
@@ -131,10 +137,6 @@ export default function SpotlightTour({
   }, [step, steps.length, complete]);
 
   const back = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
-
-  // Next stays hidden until the step's action has landed; then it appears enabled
-  // so the reader decides when to move on.
-  const locked = needsAction && !unlocked;
 
   // Flag the tour as active so app overlays (e.g. the insight drawer) suppress
   // their outside-click dismissal and let the tour drive them.
@@ -186,14 +188,13 @@ export default function SpotlightTour({
     return () => clearTimeout(id);
   }, [index, step?.target, step?.key]);
 
-  // Dynamic unlock: the real interaction marks the step done. After its animation
-  // / demo dwell finishes, the step shows a Next button. Delegated from the
-  // document (capture phase)
-  // so it keeps working even if the target element is swapped out mid-step (e.g.
-  // the Listen control morphing as audio loads).
+  // Dynamic auto-advance: performing the real interaction IS the advance on feature
+  // steps (there's no Next button on them). Delegated from the document (capture
+  // phase) so it keeps working even if the target element is swapped out mid-step
+  // (e.g. the Listen control morphing as audio loads).
   // Hold the latest onDemoRecite without making the auto-advance effect depend on it.
   // togglePlay is recreated every render, so listing it as a dep would re-run this effect
-  // on the setActioned re-render and clear the pending advance timer (freezing the tour).
+  // on a re-render and clear the pending advance timer (freezing the tour).
   const onDemoReciteRef = useRef(onDemoRecite);
   useEffect(() => {
     onDemoReciteRef.current = onDemoRecite;
@@ -206,6 +207,7 @@ export default function SpotlightTour({
     // brief 650ms beat.
     const demoRecite = !!step?.demoRecite;
     const delay = demoRecite ? DEMO_RECITE_DWELL : ADVANCE_DELAY;
+    const stepTray = step?.tray ? TRAYS[step.tray] : null;
     let advanced = false;
     let timer;
     let guaranteeTimer;
@@ -225,9 +227,17 @@ export default function SpotlightTour({
           }, DEMO_RECITE_GUARANTEE_DELAY);
         }
         // Let the app's own click handler run first (open the tray / start audio),
-        // then reveal the manual Next button once the effect has had time to land.
+        // then advance. If the interaction opened a tray (modal/drawer), DON'T
+        // advance yet — hold a dismissal beat so the panel isn't yanked away as it
+        // appears; the tray-dismissal effect below advances once the reader closes
+        // it. A tray step whose tray didn't open (e.g. Save while signed in) and
+        // every plain step auto-advance here.
         timer = setTimeout(() => {
-          setActionReady((prev) => new Set(prev).add(step.key));
+          if (stepTray && useModalStore.getState()[stepTray.key]) {
+            setAwaitingDismiss(true);
+            return;
+          }
+          next();
         }, delay);
       }
     };
@@ -237,7 +247,21 @@ export default function SpotlightTour({
       clearTimeout(timer);
       clearTimeout(guaranteeTimer);
     };
-  }, [index, step, needsAction]);
+  }, [index, step, needsAction, next]);
+
+  // Tray dismissal beat: once the reader closes the modal/drawer this step opened,
+  // advance. (We deliberately waited instead of auto-advancing when it opened.)
+  useEffect(() => {
+    if (awaitingDismiss && !trayOpen) {
+      setAwaitingDismiss(false);
+      next();
+    }
+  }, [awaitingDismiss, trayOpen, next]);
+
+  // Reset the dismissal-wait whenever the step changes so it never leaks across steps.
+  useEffect(() => {
+    setAwaitingDismiss(false);
+  }, [index]);
 
   // Terminal step: proactively close any lingering app overlay (auth / discover /
   // saved) so nothing sits over the Done button. A Radix/Vaul dismissable layer
@@ -253,15 +277,25 @@ export default function SpotlightTour({
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === 'Escape') dismiss();
-      else if (e.key === 'ArrowRight' && !locked) next();
+      // ArrowRight only advances the centered welcome/finish cards; feature steps
+      // advance by performing their real interaction, not a key press.
+      else if (e.key === 'ArrowRight' && !needsAction) next();
       else if (e.key === 'ArrowLeft') back();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [dismiss, next, back, locked]);
+  }, [dismiss, next, back, needsAction]);
 
   // Layout mode: tray (centered in front of an open drawer) > spotlight > centered.
   const mode = trayOpen ? 'tray' : rect ? 'spotlight' : 'centered';
+
+  // While holding the dismissal beat, tell the reader how to close what they opened:
+  // a centered modal (auth, `above` set) closes with ×; a bottom drawer with a drag.
+  const dismissHint = awaitingDismiss
+    ? tray?.above
+      ? 'Tap × to close and continue'
+      : 'Drag the panel down to continue'
+    : null;
 
   return createPortal(
     <div
@@ -308,7 +342,7 @@ export default function SpotlightTour({
           rect={rect}
           barTop={barTop}
           aboveRect={aboveRect}
-          locked={locked}
+          dismissHint={dismissHint}
           onNext={next}
           onBack={back}
           onSkip={dismiss}
@@ -387,15 +421,15 @@ function CoachCard({
   rect,
   barTop,
   aboveRect,
-  locked,
+  dismissHint,
   onNext,
   onBack,
   onSkip,
 }) {
   const [size, setSize] = useState({ w: 320, h: 200 });
   const ref = useRef(null);
-  // Feature steps start without a Next button. Once the real interaction has
-  // landed, Next appears so the reader can move on manually.
+  // Feature steps have no Next button — they auto-advance on the real interaction.
+  // Only the centered welcome/finish cards carry a manual Next/Done.
   const needsAction = !!step?.advanceOn;
 
   useLayoutEffect(() => {
@@ -528,6 +562,21 @@ function CoachCard({
             {step.note}
           </p>
         )}
+        {/* Dismissal beat: the interaction opened a modal/drawer — tell the reader how to close it
+            (which auto-advances the tour) instead of yanking it away. */}
+        {dismissHint && (
+          <p
+            style={{
+              fontFamily: "'Forum', serif",
+              fontSize: '0.85rem',
+              lineHeight: 1.45,
+              margin: '10px 0 0',
+              color: 'var(--gold)',
+            }}
+          >
+            {dismissHint}
+          </p>
+        )}
       </div>
 
       <div
@@ -559,13 +608,10 @@ function CoachCard({
               Back
             </button>
           )}
-          {/* Interactive steps reveal Next only after the real action has landed. */}
-          {(!needsAction || !locked) && (
-            <button
-              onClick={locked ? undefined : onNext}
-              disabled={locked}
-              style={{ ...goldBtn, ...(locked ? lockedBtn : null) }}
-            >
+          {/* Only the centered welcome/finish cards carry a manual Next/Done — feature steps
+              auto-advance on their real interaction. */}
+          {!needsAction && (
+            <button onClick={onNext} style={goldBtn}>
               {isLast ? 'Done' : 'Next'}
             </button>
           )}
@@ -585,11 +631,6 @@ const goldBtn = {
   padding: '6px 18px',
   cursor: 'pointer',
   fontWeight: 600,
-};
-const lockedBtn = {
-  background: 'rgba(197,160,89,0.18)',
-  color: 'rgba(231,229,228,0.4)',
-  cursor: 'not-allowed',
 };
 const ghostBtn = (surface) => ({
   fontFamily: "'Forum', serif",

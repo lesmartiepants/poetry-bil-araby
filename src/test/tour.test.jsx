@@ -94,7 +94,7 @@ describe('SpotlightTour engine', () => {
     await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
   });
 
-  it('feature steps reveal Next only after the real interaction lands', async () => {
+  it('feature steps auto-advance on the real interaction (no Next button)', async () => {
     const target = document.createElement('button');
     target.setAttribute('data-tour', 'listen');
     document.body.appendChild(target);
@@ -103,16 +103,14 @@ describe('SpotlightTour engine', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Next' })); // welcome -> listen
     expect(screen.getByText('Listen to the poem')).toBeInTheDocument();
 
-    // Feature steps start without Next — the real interaction must happen first.
+    // Feature steps have no Next button — the real interaction advances them.
     expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
 
-    // Performing the real interaction reveals Next after the dwell delay.
+    // Performing the real interaction auto-advances after the dwell delay (no Next tap needed).
     target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeInTheDocument(), {
-      timeout: 2000,
+    await waitFor(() => expect(screen.getByText('Pause anytime')).toBeInTheDocument(), {
+      timeout: 2500,
     });
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('Pause anytime')).toBeInTheDocument();
     target.remove();
   });
 

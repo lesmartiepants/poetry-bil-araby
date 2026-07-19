@@ -48,7 +48,7 @@ function SectionLabel({ gold, children }) {
   );
 }
 
-const TextSettingsPill = () => {
+const TextSettingsPill = ({ open, onOpenChange }) => {
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
   // Light-mode control pattern: menu text/icons use a dark ink (same as the bottom nav / Next-Verse
@@ -121,17 +121,19 @@ const TextSettingsPill = () => {
         [data-side="right"] { animation: pillSlideRight 0.15s ease-out; }
       `}</style>
 
-      <Popover.Root>
-        <Popover.Trigger asChild>
-          <button
-            aria-label="Text and background settings"
-            className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 backdrop-blur-xl border ${theme.border} ${
-              darkMode ? 'bg-black/70' : 'bg-white/80'
-            } ${theme.goldHoverBg15}`}
-          >
-            <ALargeSmall size={18} style={{ color: gold }} />
-          </button>
-        </Popover.Trigger>
+      <Popover.Root open={open} onOpenChange={onOpenChange}>
+        {open === undefined && (
+          <Popover.Trigger asChild>
+            <button
+              aria-label="Text and background settings"
+              className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 backdrop-blur-xl border ${theme.border} ${
+                darkMode ? 'bg-black/70' : 'bg-white/80'
+              } ${theme.goldHoverBg15}`}
+            >
+              <ALargeSmall size={18} style={{ color: gold }} />
+            </button>
+          </Popover.Trigger>
+        )}
 
         <Popover.Portal>
           <Popover.Content

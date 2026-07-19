@@ -1,5 +1,5 @@
 import { Popover } from 'radix-ui';
-import { LogOut, Mic, UserRound } from 'lucide-react';
+import { LogOut, Mic, Moon, Sun, UserRound, ALargeSmall } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { voiceDisplayName, voiceGender } from '../constants/voices';
@@ -12,7 +12,15 @@ import { voiceDisplayName, voiceGender } from '../constants/voices';
  * `ink` is the foreground colour for the trigger icon + labels — gold in dark mode, a dark ink in
  * light mode (matching the rest of the bottom nav), per the light-mode control pattern.
  */
-export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCycleVoice, ink }) {
+export default function AccountMenu({
+  user,
+  onSignIn,
+  onSignOut,
+  liveVoice,
+  onCycleVoice,
+  onOpenDisplaySettings,
+  ink,
+}) {
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
   const initial = (user?.email ?? user?.user_metadata?.full_name ?? 'U').charAt(0).toUpperCase();
@@ -66,6 +74,29 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
                 <span>Voice</span>
               </span>
               <span className="opacity-70">{voiceName}</span>
+            </button>
+
+            <button
+              onClick={() => useUIStore.getState().toggleDarkMode()}
+              aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+              style={{ color: ink }}
+            >
+              <span className="flex items-center gap-2">
+                {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+                <span>Theme</span>
+              </span>
+              <span className="opacity-70">{darkMode ? 'Dark' : 'Light'}</span>
+            </button>
+
+            <button
+              onClick={onOpenDisplaySettings}
+              aria-label="Display Settings"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+              style={{ color: ink }}
+            >
+              <ALargeSmall size={16} />
+              <span>Display Settings</span>
             </button>
 
             <div className="my-1 h-px" style={{ background: 'rgba(197,160,89,0.18)' }} />

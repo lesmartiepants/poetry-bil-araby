@@ -9,7 +9,7 @@
 export const VOICE_CATALOG = [
   // Female
   { name: 'Zephyr', descriptor: 'Bright', gender: 'f', arabicName: 'نور', displayName: 'Noor' },
-  { name: 'Kore', descriptor: 'Firm', gender: 'f', arabicName: 'عزيزة', displayName: 'Azizah' },
+  { name: 'Kore', descriptor: 'Firm', gender: 'm', arabicName: 'عزيز', displayName: 'Aziz' },
   { name: 'Leda', descriptor: 'Youthful', gender: 'f', arabicName: 'صبا', displayName: 'Saba' },
   { name: 'Aoede', descriptor: 'Breezy', gender: 'f', arabicName: 'نسمة', displayName: 'Nasmah' },
   {

@@ -33,7 +33,8 @@ describe('voice catalog', () => {
 
 describe('voiceGender', () => {
   it('returns the gender for a known voice', () => {
-    expect(voiceGender('Kore')).toBe('f');
+    expect(voiceGender('Zephyr')).toBe('f');
+    expect(voiceGender('Kore')).toBe('m');
     expect(voiceGender('Orus')).toBe('m');
   });
 

@@ -291,20 +291,17 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   );
   track('audio_play', { poet: current?.poet });
 
-  // PAUSE — Tone.Player uses stop() rather than pause()
+  // PAUSE — Tone.Player uses stop() rather than pause().
   if (isPlaying) {
     recordPause();
-    // If a live stream is in flight and no URL is set yet, build a partial WAV from
-    // the chunks collected so far so resume-from-position works instead of restarting
-    // the recitation from scratch (#589).
-    if (!audioUrl && _streamPcmB64 && _streamPcmB64.length > 0) {
-      const partialBlob = pcm16ToWav(concatPcmBase64(_streamPcmB64), _streamSampleRate);
-      if (partialBlob) {
-        setUrl(URL.createObjectURL(partialBlob));
-      }
-    }
-    _streamPcmB64 = null;
-    abortCurrentStream(); // cancel an in-flight Live stream so it can't keep generating
+    // Keep loading through pause. If a Live stream is still in flight we deliberately do NOT abort it
+    // and do NOT snapshot a truncated partial WAV: stopping the player halts audio output (its
+    // internal `stopped` flag makes further pushChunk() a no-op, so no sound leaks during pause),
+    // while the SSE keeps accumulating PCM and finishes into the FULL blob — setUrl()'d and cached by
+    // doGenerate's natural-completion path. Resume then plays the whole poem from the pause offset,
+    // instead of the old truncated clip that fell silent or stopped after a few words (the #589
+    // partial-blob bug). We intentionally leave _streamPcmB64 / _currentStreamAbort untouched so that
+    // completion path can run; the _currentPlayId guard still discards it if the reader swipes away.
     if (existingPlayer) {
       existingPlayer.stop();
     }

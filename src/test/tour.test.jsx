@@ -69,6 +69,18 @@ describe('TOUR_STEPS (shared source of truth)', () => {
     const targets = anchoredSteps().map((s) => s.target.match(/"(.+?)"/)[1]);
     expect(targets).toEqual(expect.arrayContaining(['listen', 'discover', 'explain']));
   });
+
+  it('the Save step carries auth-aware copy: signed-in body + a sign-up dismiss hint', () => {
+    const fav = TOUR_STEPS.find((s) => s.key === 'favourite');
+    expect(fav).toBeTruthy();
+    expect(fav.body).toBeTruthy();
+    expect(fav.bodyAuthed).toBeTruthy();
+    expect(fav.bodyAuthed).not.toBe(fav.body);
+    // The signed-out base body must NOT tell a would-be signed-in reader to sign in.
+    expect(fav.body.toLowerCase()).not.toContain('sign in');
+    // The dismiss hint encourages sign-up while making dismissal clear.
+    expect(fav.dismissHint).toMatch(/sign in/i);
+  });
 });
 
 describe('SpotlightTour engine', () => {
@@ -92,6 +104,36 @@ describe('SpotlightTour engine', () => {
     );
     expect(screen.getByText('Listen to the poem')).toBeInTheDocument(); // step 1, not welcome
     await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
+  });
+
+  it('Save step shows sign-out body when signed out and library body when signed in', () => {
+    const favIndex = TOUR_STEPS.findIndex((s) => s.key === 'favourite');
+    const fav = TOUR_STEPS[favIndex];
+
+    const { unmount } = render(
+      <SpotlightTour
+        steps={TOUR_STEPS}
+        initialStep={favIndex}
+        onDismiss={vi.fn()}
+        onComplete={vi.fn()}
+      />
+    );
+    expect(screen.getByText('Save your favourites')).toBeInTheDocument();
+    expect(screen.getByText(fav.body)).toBeInTheDocument();
+    expect(screen.queryByText(fav.bodyAuthed)).not.toBeInTheDocument();
+    unmount();
+
+    render(
+      <SpotlightTour
+        steps={TOUR_STEPS}
+        initialStep={favIndex}
+        isSignedIn
+        onDismiss={vi.fn()}
+        onComplete={vi.fn()}
+      />
+    );
+    expect(screen.getByText(fav.bodyAuthed)).toBeInTheDocument();
+    expect(screen.queryByText(fav.body)).not.toBeInTheDocument();
   });
 
   it('feature steps auto-advance on the real interaction (no Next button)', async () => {

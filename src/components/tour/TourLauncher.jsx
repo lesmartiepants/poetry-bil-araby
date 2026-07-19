@@ -120,6 +120,7 @@ export default function TourLauncher({ user = null, savedCount = 0, onDemoRecite
             onDismiss={handleDismiss}
             onComplete={handleComplete}
             onDemoRecite={onDemoRecite}
+            isSignedIn={!!user}
           />
         </Suspense>
       )}

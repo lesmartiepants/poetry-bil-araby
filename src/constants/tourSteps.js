@@ -99,13 +99,20 @@ export const TOUR_STEPS = [
     target: '[data-tour="save"]',
     arabic: 'احفظ',
     title: 'Save your favourites',
-    body: 'Tap the heart to keep a poem you love. Sign in with a free account and your favourites are saved to your library.',
+    // Signed out: tapping the heart opens the sign-in sheet (see `tray` + `dismissHint`).
+    body: 'Tap the heart to keep a poem you love.',
+    // Signed in: the heart saves straight to the library — no sheet opens, so don't mention signing in.
+    bodyAuthed: 'Tap the heart to keep a poem you love — it goes straight to your library.',
+    // Shown by the card while the sign-in sheet is open: encourage sign-up, and make clear the reader
+    // can dismiss and keep going. (Only reached when signed out — the sheet doesn't open otherwise.)
+    dismissHint:
+      'Sign in with a free account so your saved poems are always waiting — or close this to keep reading.',
     hint: 'Tap the heart to save',
     advanceOn: 'click',
     side: 'top',
     align: 'center',
-    // Tapping the heart while signed out opens the sign-in sheet; treat it like
-    // a tray so the card sits in front of it and Next dismisses it.
+    // Tapping the heart while signed out opens the sign-in sheet; treat it like a tray so the card
+    // sits in front of it. The tour holds a dismissal beat there and advances once the sheet closes.
     tray: 'auth',
   },
   {

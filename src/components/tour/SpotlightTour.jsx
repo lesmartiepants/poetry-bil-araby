@@ -87,6 +87,7 @@ export default function SpotlightTour({
   onComplete,
   onStepChange,
   onDemoRecite,
+  isSignedIn = false,
 }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const discoverDrawer = useModalStore((s) => s.discoverDrawer);
@@ -289,12 +290,12 @@ export default function SpotlightTour({
   // Layout mode: tray (centered in front of an open drawer) > spotlight > centered.
   const mode = trayOpen ? 'tray' : rect ? 'spotlight' : 'centered';
 
-  // While holding the dismissal beat, tell the reader how to close what they opened:
-  // a centered modal (auth, `above` set) closes with ×; a bottom drawer with a drag.
+  // While holding the dismissal beat, tell the reader how to close what they opened. A step may
+  // supply its own copy (e.g. the Save step encourages signing up); otherwise fall back to the
+  // generic hint — a centered modal (`above` set) closes with ×, a bottom drawer with a drag.
   const dismissHint = awaitingDismiss
-    ? tray?.above
-      ? 'Tap × to close and continue'
-      : 'Drag the panel down to continue'
+    ? (step?.dismissHint ??
+      (tray?.above ? 'Tap × to close and continue' : 'Drag the panel down to continue'))
     : null;
 
   return createPortal(
@@ -343,6 +344,7 @@ export default function SpotlightTour({
           barTop={barTop}
           aboveRect={aboveRect}
           dismissHint={dismissHint}
+          isSignedIn={isSignedIn}
           onNext={next}
           onBack={back}
           onSkip={dismiss}
@@ -422,6 +424,7 @@ function CoachCard({
   barTop,
   aboveRect,
   dismissHint,
+  isSignedIn,
   onNext,
   onBack,
   onSkip,
@@ -431,6 +434,9 @@ function CoachCard({
   // Feature steps have no Next button — they auto-advance on the real interaction.
   // Only the centered welcome/finish cards carry a manual Next/Done.
   const needsAction = !!step?.advanceOn;
+  // Auth-aware body: a step may carry a signed-in variant (e.g. Save saves straight to the library
+  // rather than prompting sign-in). Fall back to the default body.
+  const body = isSignedIn && step?.bodyAuthed ? step.bodyAuthed : step?.body;
 
   useLayoutEffect(() => {
     if (ref.current) {
@@ -545,7 +551,7 @@ function CoachCard({
             color: surface.dim,
           }}
         >
-          {step.body}
+          {body}
         </p>
         {/* Only anchored steps have a real action to tap — keep the note off the
             centered welcome/finish intro/outro cards. */}

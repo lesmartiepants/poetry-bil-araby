@@ -57,8 +57,11 @@
 </head>
 <body>
   <iframe class="frame active" src="s7c.html" title="1 — Khatm Final C" loading="eager"></iframe>
+  <iframe class="frame" src="s7c1.html" title="1.1 — Khatm Variant" loading="lazy"></iframe>
   <iframe class="frame" src="s2b.html" title="2 — Majlis Final" loading="lazy"></iframe>
+  <iframe class="frame" src="s2b1.html" title="2.1 — Majlis Variant" loading="lazy"></iframe>
   <iframe class="frame" src="s1c.html" title="3 — Folio Final C" loading="lazy"></iframe>
+  <iframe class="frame" src="s1c1.html" title="3.1 — Folio Variant" loading="lazy"></iframe>
 
   <button class="nav-btn nav-prev" id="prev" aria-label="Previous design" disabled>‹</button>
   <button class="nav-btn nav-next" id="next" aria-label="Next design">›</button>
@@ -71,8 +74,11 @@
 <script>
   const dirs = [
   { num: '1', name: 'Khatm Final C' },
+  { num: '1.1', name: 'Khatm Variant' },
   { num: '2', name: 'Majlis Final' },
+  { num: '2.1', name: 'Majlis Variant' },
   { num: '3', name: 'Folio Final C' },
+  { num: '3.1', name: 'Folio Variant' },
   ];
   const frames = Array.from(document.querySelectorAll('.frame'));
   const prev = document.getElementById('prev');

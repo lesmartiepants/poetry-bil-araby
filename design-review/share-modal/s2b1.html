@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Majlis Variant 2.1 — Share Modal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500;1,600&family=Reem+Kufi:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   S2B — MAJLIS FINAL
+   Kept from S2: the thumbnail carousel selector — miniature
+   live cards you flick through. It is now the centerpiece,
+   enlarged and re-crafted, sitting directly under a clean
+   card preview inside a calm bottom sheet. Actions use the
+   glass-dock language. No decorative unicode.
+   ============================================================ */
+:root {
+  --gold: #c5a059;
+  --gold-bright: #d4b463;
+  --gold-foil: linear-gradient(135deg, #b8922e, #c5a059 30%, #e2c67a 55%, #c5a059 75%, #a07d38);
+  --bg-app: #0c0c0e;
+  --sheet-bg: linear-gradient(180deg, #131210 0%, #0d0c0b 100%);
+  --ink-soft: rgba(232, 224, 208, 0.92);
+
+  --font-arabic-display: 'Reem Kufi', serif;
+  --font-arabic-body: 'Amiri', serif;
+  --font-editorial: 'Cormorant Garamond', Georgia, serif;
+  --font-ui: system-ui, -apple-system, sans-serif;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html { height: 100%; -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--bg-app);
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  font-family: var(--font-ui);
+  position: relative;
+}
+
+.stage-label { display: none; }
+
+/* ============================================================
+   DIMMED APP BEHIND — faint poem suggests the reader beneath
+   ============================================================ */
+.app-behind {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: calc(64px + env(safe-area-inset-top, 0px));
+  filter: blur(2px) brightness(0.42);
+  pointer-events: none;
+}
+.app-behind .ghost-poem {
+  font-family: var(--font-arabic-body);
+  font-size: 1.3rem;
+  line-height: 2.2;
+  color: rgba(232,224,208,0.75);
+  text-align: center;
+  direction: rtl;
+}
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(4,4,6,0.45);
+  opacity: 0;
+  animation: scrimIn 0.5s ease-out forwards;
+}
+@keyframes scrimIn { to { opacity: 1; } }
+
+/* ============================================================
+   BOTTOM SHEET
+   ============================================================ */
+.sheet {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 10;
+  border-radius: 26px 26px 0 0;
+  background: var(--sheet-bg);
+  border-top: 1px solid rgba(197,160,89,0.28);
+  box-shadow: 0 -24px 70px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,240,200,0.05);
+  padding: 12px 20px calc(18px + env(safe-area-inset-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-height: 88vh;
+  max-height: 88dvh;
+  transform: translateY(100%);
+  animation: sheetUp 0.65s var(--ease-out-expo) 0.15s forwards;
+}
+@keyframes sheetUp { to { transform: translateY(0); } }
+
+.grabber {
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(197,160,89,0.3);
+  flex: 0 0 auto;
+}
+
+/* header row */
+.sheet-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sheet-head .titles { display: flex; flex-direction: column; gap: 1px; }
+.sheet-head .kicker {
+  font-family: var(--font-editorial);
+  font-style: normal;
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: rgba(245,233,209,0.96);
+  text-shadow: 0 1px 10px rgba(0,0,0,0.4);
+}
+.sheet-head .title-ar {
+  font-family: var(--font-arabic-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--ink-soft);
+}
+
+.btn-close {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid rgba(197,160,89,0.22);
+  background: rgba(197,160,89,0.06);
+  color: rgba(232,224,208,0.75);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.18s var(--ease-out-expo);
+}
+.btn-close:hover { color: #fff; border-color: rgba(197,160,89,0.5); transform: rotate(90deg); }
+.btn-close:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* ============================================================
+   CARD PREVIEW
+   ============================================================ */
+.preview-wrap {
+  width: min(70vw, 300px);
+  aspect-ratio: 4 / 5;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--card-border, rgba(197,160,89,0.3));
+  box-shadow: 0 18px 44px -14px rgba(0,0,0,0.8);
+  flex: 0 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+.preview {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 26px 18px 32px;
+  background: var(--card-bg);
+  transition: background 0.35s;
+}
+.preview.dissolving .pv > * { opacity: 0; filter: blur(4px); }
+.pv { display: contents; }
+.pv > * { transition: opacity 0.28s var(--ease-out-expo), filter 0.28s var(--ease-out-expo); }
+
+.preview .pv-frame {
+  position: absolute;
+  inset: 9px;
+  border: 1px solid var(--card-frame, rgba(197,160,89,0.38));
+  border-radius: 6px;
+  pointer-events: none;
+}
+.preview .pv-frame::after {
+  content: '';
+  position: absolute; inset: 4px;
+  border: 1px solid var(--card-frame-2, rgba(197,160,89,0.14));
+  border-radius: 4px;
+}
+
+.preview .arabic-title {
+  font-family: var(--font-arabic-display);
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--card-accent);
+  margin-bottom: 10px;
+}
+.preview .arabic-poetry {
+  font-family: var(--font-arabic-body);
+  font-size: 0.84rem;
+  line-height: 1.9;
+  color: var(--card-ink);
+  direction: rtl;
+}
+.preview .arabic-poetry .verse { display: block; }
+
+.preview .divider {
+  width: 50%;
+  height: 1px;
+  margin: 10px auto;
+  background: linear-gradient(90deg, transparent, var(--card-accent), transparent);
+  opacity: 0.55;
+  position: relative;
+}
+.preview .divider::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 4px; height: 4px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--card-accent);
+}
+
+.preview .english-translation {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 0.66rem;
+  line-height: 1.65;
+  color: var(--card-trans);
+}
+.preview .english-translation .verse { display: block; }
+
+.preview .poet { margin-top: 11px; }
+.preview .poet-ar {
+  display: block;
+  font-family: var(--font-arabic-display);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--card-accent);
+}
+.preview .poet-en {
+  display: block;
+  font-family: var(--font-editorial);
+  font-size: 0.56rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--card-trans);
+  margin-top: 2px;
+}
+
+.preview .brand {
+  position: absolute;
+  bottom: 13px; right: 17px;
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  opacity: 0.55;
+}
+.preview .brand .ar { font-family: var(--font-arabic-display); font-weight: 700; font-size: 0.52rem; color: var(--card-accent); }
+.preview .brand .en { font-family: var(--font-editorial); font-size: 0.5rem; color: var(--card-accent); }
+
+/* preview themes */
+.preview[data-style="diwan"] {
+  --card-bg: radial-gradient(ellipse 120% 90% at 50% 30%, #16130f 0%, #0c0c0e 100%);
+  --card-ink: #e8e0d0;
+  --card-accent: #c5a059;
+  --card-trans: rgba(197,160,89,0.72);
+  --card-frame: rgba(197,160,89,0.4);
+  --card-border: rgba(197,160,89,0.3);
+}
+.preview[data-style="ibnMuqla"] {
+  --card-bg: linear-gradient(180deg, #f5e6c8, #ecd6ab);
+  --card-ink: #2c1a00;
+  --card-accent: #7a5a10;
+  --card-trans: rgba(74,40,0,0.6);
+  --card-frame: rgba(139,105,20,0.55);
+  --card-frame-2: rgba(139,105,20,0.22);
+  --card-border: rgba(139,105,20,0.45);
+}
+.preview[data-style="sinan"] {
+  --card-bg: linear-gradient(180deg, #061424, #0a1e38 45%, #061220);
+  --card-ink: #e8e4dc;
+  --card-accent: #4fa6b7;
+  --card-trans: rgba(197,160,89,0.7);
+  --card-frame: rgba(79,166,183,0.45);
+  --card-frame-2: rgba(197,160,89,0.18);
+  --card-border: rgba(79,166,183,0.35);
+}
+.preview[data-style="zaha"] {
+  --card-bg: linear-gradient(155deg, #08001a, #150030 40%, #0a0025);
+  --card-ink: #f0e8ff;
+  --card-accent: #c864ff;
+  --card-trans: rgba(150,180,255,0.72);
+  --card-frame: rgba(200,100,255,0.4);
+  --card-frame-2: rgba(100,180,255,0.16);
+  --card-border: rgba(200,100,255,0.32);
+}
+.preview[data-style="zaha"] { align-items: flex-end; text-align: right; padding-right: 22px; }
+.preview[data-style="zaha"] .divider { margin-right: 0; }
+.preview[data-style="fathy"] {
+  --card-bg: linear-gradient(180deg, #f8edd8, #e9d3aa);
+  --card-ink: #2a1500;
+  --card-accent: #a0522d;
+  --card-trans: rgba(74,40,0,0.58);
+  --card-frame: rgba(160,82,45,0.5);
+  --card-frame-2: rgba(160,82,45,0.2);
+  --card-border: rgba(160,82,45,0.4);
+}
+
+/* ============================================================
+   THUMBNAIL CAROUSEL — the hero selector
+   ============================================================ */
+.carousel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.carousel-label {
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  color: rgba(197,160,89,0.5);
+  text-align: center;
+}
+
+.thumb-track {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 6px 4px 2px;
+}
+.thumb-track::-webkit-scrollbar { display: none; }
+
+.thumb {
+  position: relative;
+  flex: 0 0 auto;
+  width: 62px;
+  height: 78px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--t-border, rgba(197,160,89,0.25));
+  background: var(--t-bg);
+  cursor: pointer;
+  padding: 0;
+  opacity: 0.55;
+  transition: all 0.24s var(--ease-out-expo);
+}
+.thumb:hover { opacity: 0.85; transform: translateY(-2px); }
+.thumb[aria-checked="true"] {
+  opacity: 1;
+  transform: translateY(-4px) scale(1.06);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 1px rgba(197,160,89,0.35), 0 8px 20px rgba(0,0,0,0.5);
+}
+.thumb:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* miniature card interior */
+.thumb .t-frame {
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--t-frame, rgba(197,160,89,0.35));
+  border-radius: 4px;
+  pointer-events: none;
+}
+.thumb .t-inner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3.5px;
+  padding-bottom: 14px;
+}
+.thumb .t-inner i {
+  display: block;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--t-ink);
+}
+.thumb .t-inner i:nth-child(1) { width: 58%; }
+.thumb .t-inner i:nth-child(2) { width: 70%; }
+.thumb .t-inner i:nth-child(3) { width: 44%; background: var(--t-accent); height: 1.5px; margin-top: 2px; }
+.thumb .t-name {
+  position: absolute;
+  bottom: 4px; left: 0; right: 0;
+  text-align: center;
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 0.5rem;
+  letter-spacing: 0.05em;
+  color: var(--t-accent);
+}
+
+.thumb--diwan    { --t-bg: radial-gradient(ellipse at 50% 35%, #16130f, #0c0c0e); --t-ink: rgba(232,224,208,0.7); --t-accent: #c5a059; --t-frame: rgba(197,160,89,0.4); }
+.thumb--ibnMuqla { --t-bg: linear-gradient(180deg, #f5e6c8, #e8d1a0); --t-ink: rgba(44,26,0,0.65); --t-accent: #8b6914; --t-frame: rgba(139,105,20,0.5); --t-border: rgba(139,105,20,0.4); }
+.thumb--sinan    { --t-bg: linear-gradient(180deg, #082036, #061220); --t-ink: rgba(232,228,220,0.7); --t-accent: #4fa6b7; --t-frame: rgba(79,166,183,0.45); --t-border: rgba(79,166,183,0.3); }
+.thumb--zaha     { --t-bg: linear-gradient(160deg, #12002a, #08001a); --t-ink: rgba(240,232,255,0.7); --t-accent: #c864ff; --t-frame: rgba(200,100,255,0.4); --t-border: rgba(200,100,255,0.3); }
+.thumb--fathy    { --t-bg: linear-gradient(180deg, #f8edd8, #e5cfa5); --t-ink: rgba(42,21,0,0.6); --t-accent: #a0522d; --t-frame: rgba(160,82,45,0.45); --t-border: rgba(160,82,45,0.35); }
+
+/* zaha thumbnail leans right like its card */
+.thumb--zaha .t-inner { align-items: flex-end; padding-right: 8px; }
+
+/* ============================================================
+   DOCK ACTIONS
+   ============================================================ */
+.dock {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.dock button {
+  font-family: var(--font-ui);
+  font-size: 0.84rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.18s var(--ease-out-expo);
+  min-height: 44px;
+}
+.dock button:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+.btn-share {
+  padding: 0 26px;
+  border: none;
+  color: #191307;
+  background: var(--gold-foil);
+  background-size: 200% 200%;
+  box-shadow: 0 4px 18px rgba(197,160,89,0.35), inset 0 1px 0 rgba(255,250,230,0.5);
+  animation: foilShift 4s ease-in-out infinite alternate;
+}
+@keyframes foilShift {
+  from { background-position: 0% 0%; }
+  to   { background-position: 100% 100%; }
+}
+.btn-share:hover { transform: translateY(-1px); }
+.btn-share:active { transform: scale(0.97); }
+
+.btn-ghost {
+  width: 44px;
+  justify-content: center;
+  padding: 0;
+  color: rgba(232,224,208,0.8);
+  background: rgba(197,160,89,0.08);
+  border: 1px solid rgba(197,160,89,0.2);
+}
+.btn-ghost:hover { background: rgba(197,160,89,0.16); color: var(--gold-bright); border-color: rgba(197,160,89,0.45); }
+.btn-ghost:active { transform: scale(0.94); }
+
+/* ============================================================
+   2.1 DELTAS — stronger share heading + brighter modal English
+   ============================================================ */
+.stage-label {
+  color: rgba(245,233,209,0.88);
+}
+.stage-label__title {
+  color: rgba(245,233,209,0.96);
+}
+.stage-label__sub {
+  color: rgba(245,233,209,0.78);
+}
+.sheet-head .titles {
+  gap: 3px;
+}
+.sheet-head .title-ar {
+  color: rgba(245,240,229,0.96);
+}
+.carousel-label {
+  color: rgba(245,233,209,0.9);
+}
+.dock button {
+  color: rgba(245,233,209,0.92);
+}
+.btn-share {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* ============================================================
+   TOAST
+   ============================================================ */
+.toast {
+  position: fixed;
+  left: 50%;
+  top: calc(24px + env(safe-area-inset-top, 0px));
+  transform: translate(-50%, -10px);
+  z-index: 40;
+  padding: 9px 18px;
+  border-radius: 999px;
+  background: rgba(20,18,14,0.94);
+  border: 1px solid rgba(197,160,89,0.4);
+  color: var(--gold-bright);
+  font-family: var(--font-editorial);
+  font-style: italic;
+  font-size: 0.86rem;
+  letter-spacing: 0.03em;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.35s var(--ease-out-expo);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0s !important; transition-duration: 0.01ms !important; }
+  .sheet { transform: translateY(0); }
+}
+
+/* short phones: shrink preview so the sheet always fits */
+@media (max-height: 700px) {
+  .preview-wrap { width: min(56vw, 240px); }
+}
+</style>
+</head>
+<body>
+
+  <div class="stage-label" aria-hidden="true">
+    <span class="stage-label__title">Majlis Variant 2.1</span>
+    <span class="stage-label__sub">Stronger heading with brighter modal English contrast</span>
+  </div>
+
+  <!-- Faint app behind the sheet -->
+  <div class="app-behind" aria-hidden="true">
+    <p class="ghost-poem" dir="rtl" lang="ar">أَنا لا أُريدُكِ كامِلَةً<br>أُريدُكِ حَقيقيَّة</p>
+  </div>
+  <div class="scrim" aria-hidden="true"></div>
+
+  <!-- Bottom sheet -->
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Share poem">
+    <div class="grabber" aria-hidden="true"></div>
+
+    <div class="sheet-head">
+      <div class="titles">
+        <span class="kicker">Share this poem</span>
+        <span class="title-ar" dir="rtl" lang="ar">شارِك القصيدة</span>
+      </div>
+      <button class="btn-close" aria-label="Close share dialog" id="btnClose">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- Card preview -->
+    <div class="preview-wrap">
+      <div class="preview" id="preview" data-style="diwan" aria-label="Poem card preview">
+        <div class="pv">
+          <div class="pv-frame" aria-hidden="true"></div>
+          <div class="arabic-title" dir="rtl" lang="ar">أُريدُكِ حَقيقيَّة</div>
+          <p class="arabic-poetry" dir="rtl" lang="ar">
+            <span class="verse">أَنا لا أُريدُكِ كامِلَةً، أُريدُكِ حَقيقيَّة</span>
+            <span class="verse">أُريدُكِ كَما أَنتِ، في كُلِّ فَوضاكِ الجَميلة</span>
+          </p>
+          <div class="divider" aria-hidden="true"></div>
+          <p class="english-translation" lang="en">
+            <span class="verse">I do not want you perfect, I want you real</span>
+            <span class="verse">I want you as you are, in all your beautiful chaos</span>
+          </p>
+          <div class="poet">
+            <span class="poet-ar" dir="rtl" lang="ar">نزار قباني</span>
+            <span class="poet-en">Nizar Qabbani</span>
+          </div>
+          <div class="brand" aria-hidden="true"><span class="ar">بالعربي</span><span class="en">poetry</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thumbnail carousel — the hero selector -->
+    <div class="carousel">
+      <span class="carousel-label" id="carouselLabel">Dīwān</span>
+      <div class="thumb-track" role="radiogroup" aria-label="Card style">
+        <button class="thumb thumb--diwan" role="radio" aria-checked="true" data-style="diwan" data-name="Dīwān" aria-label="Dīwān style">
+          <span class="t-frame" aria-hidden="true"></span>
+          <span class="t-inner" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="t-name" aria-hidden="true">Dīwān</span>
+        </button>
+        <button class="thumb thumb--ibnMuqla" role="radio" aria-checked="false" data-style="ibnMuqla" data-name="Ibn Muqla" aria-label="Ibn Muqla style">
+          <span class="t-frame" aria-hidden="true"></span>
+          <span class="t-inner" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="t-name" aria-hidden="true">Ibn Muqla</span>
+        </button>
+        <button class="thumb thumb--sinan" role="radio" aria-checked="false" data-style="sinan" data-name="Sinan" aria-label="Sinan style">
+          <span class="t-frame" aria-hidden="true"></span>
+          <span class="t-inner" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="t-name" aria-hidden="true">Sinan</span>
+        </button>
+        <button class="thumb thumb--zaha" role="radio" aria-checked="false" data-style="zaha" data-name="Zaha" aria-label="Zaha style">
+          <span class="t-frame" aria-hidden="true"></span>
+          <span class="t-inner" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="t-name" aria-hidden="true">Zaha</span>
+        </button>
+        <button class="thumb thumb--fathy" role="radio" aria-checked="false" data-style="fathy" data-name="Fathy" aria-label="Hassan Fathy style">
+          <span class="t-frame" aria-hidden="true"></span>
+          <span class="t-inner" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span class="t-name" aria-hidden="true">Fathy</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="dock" role="group" aria-label="Share actions">
+      <button class="btn-ghost" aria-label="Download as image" id="btnDownload">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="btn-share" id="btnShare">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>
+        Share
+      </button>
+      <button class="btn-ghost" aria-label="Copy link" id="btnCopyLink">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+
+<script>
+(() => {
+  const preview = document.getElementById('preview');
+  const label = document.getElementById('carouselLabel');
+  const thumbs = Array.from(document.querySelectorAll('.thumb'));
+  const toast = document.getElementById('toast');
+  let toastTimer = null;
+
+  thumbs.forEach((thumb) => {
+    thumb.addEventListener('click', () => {
+      if (thumb.getAttribute('aria-checked') === 'true') return;
+      thumbs.forEach((t) => t.setAttribute('aria-checked', String(t === thumb)));
+      preview.classList.add('dissolving');
+      setTimeout(() => {
+        preview.dataset.style = thumb.dataset.style;
+        label.textContent = thumb.dataset.name;
+        preview.classList.remove('dissolving');
+      }, 280);
+      if (navigator.vibrate) navigator.vibrate(5);
+    });
+  });
+
+  thumbs.forEach((thumb, i) => {
+    thumb.addEventListener('keydown', (e) => {
+      let j = null;
+      if (e.key === 'ArrowRight') j = Math.min(i + 1, thumbs.length - 1);
+      if (e.key === 'ArrowLeft') j = Math.max(i - 1, 0);
+      if (j !== null) { e.preventDefault(); thumbs[j].focus(); thumbs[j].click(); }
+    });
+  });
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
+  }
+
+  document.getElementById('btnShare').addEventListener('click', () => showToast('Opening share sheet'));
+  document.getElementById('btnDownload').addEventListener('click', () => showToast('Card saved to Photos'));
+  document.getElementById('btnCopyLink').addEventListener('click', () => showToast('Link copied'));
+  document.getElementById('btnClose').addEventListener('click', () => showToast('Close (mock)'));
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') showToast('Close (mock)'); });
+})();
+</script>
+</body>
+</html>

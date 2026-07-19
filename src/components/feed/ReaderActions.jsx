@@ -59,7 +59,6 @@ export default function ReaderActions({
   isPlaying = false,
   isGeneratingAudio = false,
   onAdvance,
-  onReadFull,
   onSeeMeaning,
   onSeeAuthor,
   onBackToPoem,
@@ -169,26 +168,9 @@ export default function ReaderActions({
   }
 
   return (
-    <div className="ra-stack">
-      <div className="reader-actions" data-weight={actionWeight} data-testid="reader-actions">
-        {left}
-        {right}
-      </div>
-      {/* Reserve the "Read full poem" lane even after the poem is fully revealed so the action row +
-          cue never jump downward when this affordance disappears. */}
-      <div className="ra-readfull-row">
-        {reading && onReadFull && (
-          <button
-            type="button"
-            className="ra-readfull"
-            onClick={onReadFull}
-            disabled={isRevealing}
-            data-testid="reader-read-full"
-          >
-            Read full poem
-          </button>
-        )}
-      </div>
+    <div className="reader-actions" data-weight={actionWeight} data-testid="reader-actions">
+      {left}
+      {right}
     </div>
   );
 }

@@ -72,6 +72,10 @@ export function useSparklerReveal({
     activeTween: null,
     rafId: null,
     last: 0,
+    // Bumped whenever revealAll()/reset() pre-empts an animation. In-flight start()/advance()
+    // loops capture the generation and bail if it changed, so a mid-animation "Read full poem"
+    // tap can't be overwritten or re-animate an already-lit line.
+    gen: 0,
   });
 
   // Build the imperative controller once. Its closures read the latest config/state through the
@@ -290,14 +294,18 @@ export function useSparklerReveal({
 
     const start = async () => {
       const s = st.current;
+      const g = s.gen;
       setBusy(true);
       writeProgress(0);
       await ignite(0);
+      if (s.gen !== g) return; // pre-empted (e.g. Read full poem tapped mid-intro)
       s.revealed = 1;
       emitRevealed();
       if (total() > 1) {
         await wait(250);
+        if (s.gen !== g) return;
         await ignite(1);
+        if (s.gen !== g) return;
         s.revealed = 2;
         emitRevealed();
       }
@@ -307,6 +315,7 @@ export function useSparklerReveal({
     const advance = async () => {
       const s = st.current;
       if (s.busy) return;
+      const g = s.gen;
       const T = total();
       if (!T) return;
       const V = VIS();
@@ -327,13 +336,18 @@ export function useSparklerReveal({
       if (newTop !== s.windowTop) {
         s.windowTop = newTop;
         await scrollTrack(newTop);
+        if (s.gen !== g) return; // pre-empted mid-scroll (Read full poem)
       }
       // Ignite only lines past the frontier; already-revealed lines in [.., target] just scrolled in.
       let firstIgnite = true;
       while (s.revealed <= target) {
-        if (!firstIgnite) await wait(200);
+        if (!firstIgnite) {
+          await wait(200);
+          if (s.gen !== g) return;
+        }
         firstIgnite = false;
         await ignite(s.revealed);
+        if (s.gen !== g) return; // pre-empted mid-ignite (Read full poem)
         s.revealed++;
         emitRevealed();
       }
@@ -457,6 +471,9 @@ export function useSparklerReveal({
       const s = st.current;
       const T = total();
       if (!T) return;
+      // Pre-empt any in-flight intro/advance so their async loops bail instead of overwriting the
+      // full reveal or re-animating an already-lit line (Read full poem is tappable mid-animation).
+      s.gen++;
       if (s.activeTween) s.activeTween.kill();
       const head = R().headRef?.current;
       if (head) {
@@ -474,12 +491,17 @@ export function useSparklerReveal({
       s.windowTop = 0;
       const track = R().trackRef?.current;
       if (track) gsap.to(track, { y: 0, duration: 0.4, ease: 'power2.out' });
-      writeProgress(1);
+      // Rest the scrubber at the TOP-of-poem position (the window rests at line 0), matching the
+      // resting view — NOT 100%, which made the handle jump to the bottom while the text sat at the
+      // top. Subsequent scrubbing/scrolling then drives it normally.
+      writeProgress(Math.min(VIS(), T) / T);
+      setBusy(false);
       emitRevealed();
     };
 
     const reset = () => {
       const s = st.current;
+      s.gen++; // abort any in-flight start()/advance() from the previous poem
       if (s.activeTween) s.activeTween.kill();
       s.activeTween = null;
       // Clear sparks + canvas but DON'T cancel the rAF loop — its lifecycle belongs to the

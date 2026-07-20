@@ -78,14 +78,14 @@ export const TOUR_STEPS = [
     target: '[data-tour="explain"]',
     arabic: 'اشرح',
     title: 'Understand the meaning',
-    body: 'Explain helps you understand by explaining the imagery and poetic nuance of the poem.',
-    hint: 'Tap for an explanation',
+    body: 'Tap Poem Insights to unfold the meaning inline — the imagery, the poetic nuance, and a note about the poet — right under the verses.',
+    hint: 'Tap for the meaning',
     advanceOn: 'click',
     side: 'top',
     align: 'end',
-    // Tapping Explain opens the insight panel; the engine moves the card in
-    // front of it (un-blurred) and closes it on Next.
-    tray: 'insight',
+    // Insights are now INLINE (they swap the poem body for the meaning, rather
+    // than opening a drawer). So there's no overlay to sit above / close — this
+    // is a plain spotlight step: tapping the "Poem Insights" action unlocks Next.
   },
   {
     key: 'favourite',

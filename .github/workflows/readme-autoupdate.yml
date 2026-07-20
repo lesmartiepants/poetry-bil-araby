@@ -19,6 +19,17 @@ on:
     paths-ignore:
       - 'README.md'
       - 'readme_ci_changelog.md'
+  # Safety net: a FULL AUDIT re-checks the whole README against the codebase instead of
+  # just the last commit's diff. This catches drift a per-commit run can miss — e.g. a
+  # large change merged while this workflow was down (see #580 / the empty-expression outage).
+  workflow_dispatch:
+    inputs:
+      full_audit:
+        description: 'Audit the entire README against the codebase (not just the last commit)'
+        type: boolean
+        default: true
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC — weekly full-audit
 
 concurrency:
   group: readme-autoupdate-${{ github.ref }}
@@ -27,6 +38,7 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
 
 jobs:
   refresh-readme:
@@ -39,6 +51,19 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 2 # merge commit + parent, for context/diff
+
+      - name: Determine audit mode
+        id: mode
+        run: |
+          # schedule or a dispatch with full_audit=true -> audit the whole README;
+          # a normal push -> only reconcile the triggering commit.
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event.inputs.full_audit }}" = "true" ]; then
+            MODE=full-audit
+          else
+            MODE=per-commit
+          fi
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "Audit mode: $MODE (event: ${{ github.event_name }})"
 
       - name: Ensure changelog file exists
         run: |
@@ -64,47 +89,58 @@ jobs:
       - name: Run Claude Code CLI (professional-readme skill)
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          AUDIT_MODE: ${{ steps.mode.outputs.mode }}
         run: |
           # Pin the major version for reproducibility (avoid surprise breaking changes).
           npm install -g @anthropic-ai/claude-code@2
-          # Prompt is a quoted heredoc: NO shell expansion, so untrusted commit text
-          # (read by the agent itself via git) can never be interpolated into the shell.
-          cat > "$RUNNER_TEMP/readme-prompt.txt" <<'PROMPT'
-          You are the Claude Code CLI running headlessly in CI, just after a merge to `main`.
-          Keep the project's README accurate to the change that just landed, and log what you did.
-          Be efficient and conservative.
+          # The mode is written first from a controlled env var (never untrusted text); the
+          # instructions follow as a quoted heredoc (NO shell expansion), so commit text the
+          # agent reads via git can never be interpolated into the shell.
+          printf 'AUDIT MODE: %s\n\n' "$AUDIT_MODE" > "$RUNNER_TEMP/readme-prompt.txt"
+          cat >> "$RUNNER_TEMP/readme-prompt.txt" <<'PROMPT'
+          You are the Claude Code CLI running headlessly in CI to keep the project's README
+          accurate. Read the AUDIT MODE line at the very top of this prompt — it is either
+          "per-commit" or "full-audit". In BOTH modes: the code is the source of truth,
+          verify every claim against it, no emojis, no invented metrics, be surgical (change
+          only what is actually wrong — do not rewrite accurate prose).
 
-          Inspect the triggering commit yourself with read-only git:
-            git log -1 --pretty='%h %s'   (subject)
-            git log -1 --pretty=%b         (body)
-            git show --stat HEAD           (files changed)
+          If AUDIT MODE is "per-commit" (a normal merge to `main` just happened):
+            Inspect the triggering commit yourself with read-only git:
+              git log -1 --pretty='%h %s'   (subject)
+              git log -1 --pretty=%b         (body)
+              git show --stat HEAD           (files changed)
+            Update README.md ONLY where THIS merged change makes it inaccurate or incomplete
+            (features, counts, commands, stack, architecture, structure). If the change does
+            not affect the README at all, make NO edits and do not touch the changelog.
 
-          Then:
-          1. Read `.claude/skills/professional-readme/SKILL.md` and apply its principles
-             (treat the code as the source of truth; verify every claim against the code;
-             no emojis; no invented metrics).
-          2. Update `README.md` ONLY where this merged change makes it inaccurate or
-             incomplete (features, counts, commands, stack, architecture, structure).
-             Make minimal, targeted edits. If the change does not affect the README at all,
-             make NO edits to README.md and do not touch the changelog.
-          3. Do NOT regenerate the header banner image (no browser is available here). If
-             branding/identity changed so the banner is stale, do not edit the image — note
-             in the changelog that it needs `npm run render:banner`.
-          4. If (and only if) you changed README.md, PREPEND a new entry to
+          If AUDIT MODE is "full-audit" (manual dispatch or the weekly schedule):
+            Do NOT rely on any single commit. Audit the ENTIRE README against the whole
+            codebase and correct every inaccuracy — stale or removed/renamed features and UI,
+            wrong counts, changed architecture or project structure, outdated commands or
+            stack. This is the periodic safety net that catches drift a per-commit run missed
+            (e.g. a large change merged while this workflow was down). If the README is
+            already accurate, make NO edits and do not touch the changelog.
+
+          Then, in BOTH modes:
+          1. Read `.claude/skills/professional-readme/SKILL.md` and apply its principles.
+          2. Do NOT regenerate the header banner image (no browser is available here). If
+             branding/identity drifted so the banner is stale, note in the changelog that it
+             needs `npm run render:banner` — do not edit the image.
+          3. If (and only if) you changed README.md, PREPEND a new entry to
              `readme_ci_changelog.md` immediately under this exact marker line
              (insert your entry on the lines directly after it, keeping the marker in place):
              <!-- New entries are inserted directly below this line, newest first. -->
              Use this exact format, newest first:
 
-             ## <YYYY-MM-DD> — <short-sha> <commit subject>
+             ## <YYYY-MM-DD> — <short-sha or "full-audit"> <summary>
 
-             **Why:** <how this merged change affects what the README should say>
+             **Why:** <what made the README inaccurate>
 
              **README changes:**
              - <section>: <before> -> <after>
 
              _Full diff: see the accompanying PR._
-          5. Do NOT run git commit, git push, or open a pull request, and do not edit any
+          4. Do NOT run git commit, git push, or open a pull request, and do not edit any
              file other than README.md and readme_ci_changelog.md. A later workflow step
              opens the PR.
           PROMPT
@@ -118,8 +154,9 @@ jobs:
       - name: Build PR title, body, and commit message
         id: prbody
         run: |
-          # All values come from git / GitHub env — no untrusted text is interpolated into
-          # the shell via ${{ }}, so a crafted commit message cannot inject commands.
+          # All values come from git / GitHub env via shell variables — no untrusted text is
+          # interpolated through GitHub template expressions, so a crafted commit message
+          # cannot inject commands.
           SHA="$(git rev-parse HEAD)"
           SHORT="$(git rev-parse --short HEAD)"
           SUBJECT="$(git log -1 --pretty=%s)"
@@ -131,7 +168,11 @@ jobs:
           # Human-readable subject for the title: drop the trailing "(#NNN)" squash ref.
           SUBJECT_CLEAN="$(printf '%s' "$SUBJECT" | sed -E 's/[[:space:]]*\(#[0-9]+\)[[:space:]]*$//')"
 
-          if [ -n "$PRNUM" ]; then
+          if [ "${{ steps.mode.outputs.mode }}" = "full-audit" ]; then
+            TITLE="docs(readme): full audit — sync README with the codebase"
+            LEAD="This PR was auto-generated by the **README Auto-Update** full audit ($GITHUB_EVENT_NAME), which re-checks the entire README against the codebase rather than a single commit."
+            SRC_LINE="- Trigger: full audit ($GITHUB_EVENT_NAME)"
+          elif [ -n "$PRNUM" ]; then
             TITLE="docs(readme): update for #$PRNUM — $SUBJECT_CLEAN"
             LEAD="This PR was auto-generated by the **README Auto-Update** workflow after merging PR [#$PRNUM](https://github.com/$REPO/pull/$PRNUM)."
             SRC_LINE="- Triggering PR: [#$PRNUM](https://github.com/$REPO/pull/$PRNUM) — $SUBJECT"
@@ -182,3 +223,46 @@ jobs:
           commit-message: ${{ steps.prbody.outputs.commitmsg }}
           title: ${{ steps.prbody.outputs.title }}
           body-path: ${{ runner.temp }}/pr-body.md
+
+  # Surface RUNTIME failures (a failed Claude run, a broken PR-creation step, etc.) as a
+  # deduplicated tracking issue so a silent red run doesn't go unnoticed.
+  # NOTE: this cannot catch a STARTUP failure (an unparseable workflow file runs zero jobs,
+  # so nothing here executes) — that class is guarded by the `Workflow Lint` check on PRs.
+  notify-on-failure:
+    name: Report a failed README refresh
+    needs: refresh-readme
+    if: failure()
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Open or update a tracking issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'CI: README Auto-Update workflow failed';
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              `The **README Auto-Update** workflow failed (event: \`${context.eventName}\`).`,
+              ``,
+              `Run: ${runUrl}`,
+              ``,
+              `_Runtime failures only. A malformed workflow file that fails to start cannot self-report — that class is guarded by the \`Workflow Lint\` (actionlint) check on PRs._`,
+            ].join('\n');
+            const q = `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open in:title "${title}"`;
+            const found = await github.rest.search.issuesAndPullRequests({ q });
+            if (found.data.total_count > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: found.data.items[0].number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+              });
+            }

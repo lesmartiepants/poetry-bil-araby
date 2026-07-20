@@ -593,8 +593,10 @@ function computePosition({ mode, rect, barTop, aboveRect, size, side = 'auto', a
   }
 
   if (s === 'top') {
-    // Bottom-anchored above the whole control bar (or the target) — never overlaps.
-    const refTop = barTop != null ? barTop : rect.top;
+    // Bottom-anchored above the target (or the control bar if higher) — never overlaps.
+    // Use the minimum (highest on-screen) of the two so the card clears elements that
+    // sit above the bar (e.g. the Listen pill in ReaderActions).
+    const refTop = Math.min(rect.top, barTop != null ? barTop : rect.top);
     return placeAbove(refTop - GAP, leftFor());
   }
   // bottom

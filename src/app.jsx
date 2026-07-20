@@ -1869,6 +1869,7 @@ export default function DiwanApp() {
                 {/* Listen moved into the reader's action buttons (ReaderActions) — removed from nav. */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                   <button
+                    data-tour="save"
                     onClick={() =>
                       isPoemSaved(displayedPoem) ? handleUnsavePoem() : handleSavePoem()
                     }
@@ -1895,6 +1896,7 @@ export default function DiwanApp() {
                 {/* Library — opens the saved-poems drawer (Khazana) */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                   <button
+                    data-tour="library"
                     onClick={handleOpenSavedPoems}
                     aria-label={
                       savedPoems.length > 0 ? `Library, ${savedPoems.length} saved` : 'Library'
@@ -1925,6 +1927,7 @@ export default function DiwanApp() {
                 {/* Discover */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                   <button
+                    data-tour="discover"
                     onClick={() => {
                       setFireTapped(true);
                       setTimeout(() => setFireTapped(false), 400);

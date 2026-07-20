@@ -13,7 +13,10 @@
  */
 export const TOUR_TRAYS = {
   discover: { stateKey: 'discoverDrawer', setter: 'setDiscoverDrawer', above: null },
-  insight: { stateKey: 'insightsDrawer', setter: 'setInsightsDrawer', above: null },
+  // NOTE: no `insight` tray — insights are now rendered INLINE in the reader
+  // (PoemReader/InlineInsights swap the poem body for the meaning) rather than in
+  // a Vaul drawer, so the 'explain' step is a plain spotlight with no overlay to
+  // open/close. See src/constants/tourSteps.js.
   auth: { stateKey: 'authModal', setter: 'setAuthModal', above: '[data-tour-anchor="auth"]' },
   saved: { stateKey: 'savedPoems', setter: 'setSavedPoemsOpen', above: null },
 };

@@ -13,4 +13,5 @@ export const FONTS = [
     labelAr: 'شهرزاد',
     family: 'font-scheherazade',
   },
+  { id: 'Aref Ruqaa', label: 'Aref Ruqaa', labelAr: 'عارف رقعة', family: 'font-aref-ruqaa' },
 ];

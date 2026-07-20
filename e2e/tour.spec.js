@@ -1,6 +1,5 @@
 import { test, expect } from '@playwright/test';
 import { TOUR_STEPS } from '../src/constants/tourSteps.js';
-import { FEATURES } from '../src/constants/features.js';
 
 /**
  * Walkthrough (tour) smoke test — the anti-drift guard.
@@ -24,6 +23,17 @@ import { FEATURES } from '../src/constants/features.js';
 // Library is conditional (only signed-in / has-saved-poems); an anonymous run
 // of the tour omits it — mirror the launcher's filter.
 const STEPS = TOUR_STEPS.filter((s) => !s.when);
+
+// Two axis-aligned rects (Playwright boundingBox: {x,y,width,height}) overlap unless
+// one is fully to the left/right/above/below the other.
+function rectsOverlap(a, b) {
+  return !(
+    a.x + a.width <= b.x ||
+    b.x + b.width <= a.x ||
+    a.y + a.height <= b.y ||
+    b.y + b.height <= a.y
+  );
+}
 
 const MOCK_POEM = {
   id: 50001,
@@ -92,9 +102,6 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('every step anchors to a real element and the tour walks to completion', async ({ page }) => {
-  // The tour is disabled (FEATURES.tour = false) until its steps are re-wired to the
-  // redesigned reader nav; its launcher never mounts, so skip this end-to-end walk until then.
-  test.skip(!FEATURES.tour, 'tour feature disabled — re-wire steps to the redesigned nav first');
   await setupMocks(page);
   await page.goto('/?tour=1');
   await page.waitForSelector('[dir="rtl"]', { timeout: 15000 });
@@ -117,6 +124,23 @@ test('every step anchors to a real element and the tour walks to completion', as
         page.locator(step.target).first(),
         `Tour step "${step.key}" target ${step.target} is missing — did a control/data-tour change?`
       ).toBeVisible({ timeout: 8000 });
+
+      // 2b. ACCESS: the coachmark must NOT cover the control it highlights — the user
+      // has to see and tap it. Assert the card and the target rects do not overlap.
+      await expect
+        .poll(
+          async () => {
+            const cardBox = await card.boundingBox();
+            const targetBox = await page.locator(step.target).first().boundingBox();
+            if (!cardBox || !targetBox) return true; // not laid out yet — keep polling
+            return rectsOverlap(cardBox, targetBox);
+          },
+          {
+            timeout: 4000,
+            message: `Tour coachmark overlaps the "${step.key}" control (${step.target}) — the highlighted button is covered and cannot be tapped.`,
+          }
+        )
+        .toBe(false);
     }
 
     // Feature steps: perform the real action the tour is guiding.

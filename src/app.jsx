@@ -109,7 +109,6 @@ import PoemFeed from './components/feed/PoemFeed.jsx';
 import AccountMenu from './components/AccountMenu.jsx';
 import TourLauncher from './components/tour/TourLauncher.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
-import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
 import PlayControlsStrip from './components/PlayControlsStrip.jsx';
@@ -160,19 +159,14 @@ export default function DiwanApp() {
   // Ref for the floating idle-state listen button — interactions inside it
   // won't reset the idle timer (user can listen without waking the chrome UI).
   const listenButtonIdleRef = useRef(null);
-  // Settings controls that stay visible during zen mode — interacting with them
-  // should NOT reset the idle timer (user adjusts settings without waking chrome).
-  const themeToggleRef = useRef(null);
-  const textSettingsRef = useRef(null);
-
   const [headerOpacity, setHeaderOpacity] = useState(0);
   const [bgScrollY, setBgScrollY] = useState(0);
   const [fireTapped, setFireTapped] = useState(false);
 
-  // Zen idle mode — hides chrome after 2s of inactivity, leaving only the poem,
-  // the settings controls (Aa / sun icon), and a gentle floating listen button.
-  // Only deliberate taps/clicks wake the chrome back — scroll is ignored.
-  const { isIdle } = useIdleTimer(2_000, [listenButtonIdleRef, themeToggleRef, textSettingsRef]);
+  // Zen idle mode — hides chrome after 2s of inactivity, leaving only the poem
+  // and a gentle floating listen button. Only deliberate taps/clicks wake the
+  // chrome back — scroll is ignored.
+  const { isIdle } = useIdleTimer(2_000, [listenButtonIdleRef]);
   // In vertical-feed mode controls must stay visible: every stanza tap resets the idle timer
   // causing controls to flash. Disable idle-hide in vertical feed mode.
   const effectivelyIdle = isIdle && !FEATURES.verticalFeed;
@@ -2120,15 +2114,10 @@ export default function DiwanApp() {
         </div>
       )}
 
-      {/* Theme Toggle — top-right, always visible (settings stay in zen mode) */}
-      <div ref={themeToggleRef} className="fixed top-10 right-2 md:right-[25rem] z-[46]">
-        <ThemeToggle />
-      </div>
-
-      {/* Text Settings — below theme toggle, always visible (settings stay in zen mode) */}
-      <div ref={textSettingsRef} className="fixed top-[5.5rem] right-2 md:right-[25rem] z-[46]">
-        <TextSettingsPill />
-      </div>
+      {/* Display (text/background) settings — theme toggle + this panel now live in the account
+          menu; the panel is a controlled popover that opens from there (anchored near the account
+          button, bottom-right). */}
+      <TextSettingsPill />
 
       {/* Vertical sidebar removed — Library + Account moved into the bottom nav, Dislike to the
           bottom-left, Share/Copy retired (feature-flagged off). */}

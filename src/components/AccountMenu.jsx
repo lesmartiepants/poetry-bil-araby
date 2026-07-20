@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Popover } from 'radix-ui';
-import { LogOut, Mic, UserRound } from 'lucide-react';
+import { LogOut, Mic, UserRound, SunMoon, SlidersHorizontal } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
+import { useModalStore } from '../stores/modalStore';
 import { voiceDisplayName, voiceGender } from '../constants/voices';
+import ThemeToggle from './ThemeToggle.jsx';
 
 /**
  * AccountMenu — the rightmost bottom-nav item. A person icon that opens an expandable menu holding
@@ -14,13 +17,16 @@ import { voiceDisplayName, voiceGender } from '../constants/voices';
  */
 export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCycleVoice, ink }) {
   const darkMode = useUIStore((s) => s.darkMode);
+  const openDisplaySettings = useModalStore((s) => s.openDisplaySettings);
+  // Controlled so tapping "Display Settings" closes this menu as it opens the panel.
+  const [open, setOpen] = useState(false);
   const theme = darkMode ? THEME.dark : THEME.light;
   const initial = (user?.email ?? user?.user_metadata?.full_name ?? 'U').charAt(0).toUpperCase();
   const voiceName = voiceDisplayName(liveVoice);
 
   return (
     <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-      <Popover.Root>
+      <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger asChild>
           <button
             aria-label="Account menu"
@@ -48,6 +54,10 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
             side="top"
             align="end"
             sideOffset={10}
+            // Don't return focus to the trigger on close — when "Display Settings" closes this menu
+            // and opens the settings panel, that focus return would land outside the panel and
+            // immediately dismiss it (Radix focus race).
+            onCloseAutoFocus={(e) => e.preventDefault()}
             className={`z-[60] rounded-xl p-2 flex flex-col gap-1 min-w-[12rem] backdrop-blur-xl border ${theme.border} ${darkMode ? 'bg-black/85' : 'bg-white/92'}`}
             style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
           >
@@ -66,6 +76,32 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
                 <span>Voice</span>
               </span>
               <span className="opacity-70">{voiceName}</span>
+            </button>
+
+            {/* Theme — dark/light toggle (moved in from the top-right pill) */}
+            <div
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-brand-en"
+              style={{ color: ink }}
+            >
+              <span className="flex items-center gap-2">
+                <SunMoon size={16} style={{ color: ink }} />
+                <span>Theme</span>
+              </span>
+              <ThemeToggle />
+            </div>
+
+            {/* Display Settings — opens the existing text/background settings panel */}
+            <button
+              onClick={() => {
+                setOpen(false);
+                openDisplaySettings();
+              }}
+              aria-label="Display settings"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+              style={{ color: ink }}
+            >
+              <SlidersHorizontal size={16} style={{ color: ink }} />
+              <span>Display Settings</span>
             </button>
 
             <div className="my-1 h-px" style={{ background: 'rgba(197,160,89,0.18)' }} />

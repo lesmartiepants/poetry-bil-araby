@@ -58,6 +58,34 @@ export const SHARE_CARD_DESIGNS = [
     artist: 'Hassan Fathy (1900–1989 CE)',
     description: 'Warm earthcraft — sunlit clay, woven lattice, organic warmth, terracotta',
   },
+  {
+    id: 'layl',
+    name: 'Layl',
+    nameAr: 'ليل',
+    artist: 'New — whisper minimal',
+    description: 'Midnight whisper — near-black silence, a single star, nothing but the words',
+  },
+  {
+    id: 'mishkat',
+    name: 'Mishkat',
+    nameAr: 'مشكاة',
+    artist: 'New — lantern niche',
+    description: 'Lantern niche — deep emerald night, a glowing mihrab arch cradles the verse',
+  },
+  {
+    id: 'sahifa',
+    name: 'Sahifa',
+    nameAr: 'صحيفة',
+    artist: 'New — broadsheet',
+    description: 'Poetry broadsheet — bone paper, masthead rules, madder-red ink, newsprint bones',
+  },
+  {
+    id: 'neon',
+    name: 'Neon',
+    nameAr: 'سهر',
+    artist: 'New — night sign',
+    description: 'Night sign — verses burning in neon rose and cyan against a dark wall',
+  },
 ];
 
 // ── Helpers ─────────────────────────────────────────────────────────────
@@ -139,6 +167,18 @@ function calculateCenteredLayout(h, poem, verseCount) {
   const totalHeight = headerHeight + titleBodyGap + contentHeight;
   const headerY = Math.max(minMargin, (h - totalHeight) / 2) + 35;
   return { headerY, titleBodyGap, pairSpacing };
+}
+
+/**
+ * Resolve shared render options for a design.
+ * `align` falls back to the design's own default; `xText` is the anchor
+ * X for verse/translation text; `maxLines` caps how many pairs draw.
+ */
+function resolveRenderOpts(w, opts = {}, defaultAlign = 'center') {
+  const align = opts.align === 'center' || opts.align === 'right' ? opts.align : defaultAlign;
+  const xText = align === 'right' ? w - 90 : w / 2;
+  const maxLines = opts.maxLines || 4;
+  return { align, xText, maxLines };
 }
 
 /**
@@ -312,7 +352,7 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
 //  Design 1: DĪWĀN — Luxe Editorial
 //  Gold foil calligraphy on obsidian, generous typography, editorial feel
 // ──────────────────────────────────────────────────────────────────────
-function renderDiwan(ctx, w, h, poem) {
+function renderDiwan(ctx, w, h, poem, opts = {}) {
   // Obsidian background with subtle warm radial
   const radial = ctx.createRadialGradient(w / 2, h * 0.35, 0, w / 2, h * 0.35, w * 0.7);
   radial.addColorStop(0, '#141210');
@@ -343,8 +383,9 @@ function renderDiwan(ctx, w, h, poem) {
   }
 
   // ── Layout: centered vertically ──
-  const verses = prepareVerses(poem.arabic);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
+  const verses = prepareVerses(poem.arabic, maxLines);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
   const layout = calculateCenteredLayout(h, poem, verses.length);
 
   // ── Header: bilingual poet & title ──
@@ -360,7 +401,7 @@ function renderDiwan(ctx, w, h, poem) {
       separator: '#c5a059',
       englishGrey: 'rgba(180, 178, 172, 0.65)',
     },
-    { borderTop: 58 }
+    { borderTop: 58, align, xPos: xText }
   );
 
   // ── Interleaved verses + translations (line by line) ──
@@ -372,16 +413,17 @@ function renderDiwan(ctx, w, h, poem) {
     // Arabic verse
     ctx.fillStyle = '#e8e0d0';
     ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = 'center';
+    ctx.textAlign = align;
     ctx.direction = 'rtl';
-    ctx.fillText(verse, w / 2, y);
+    ctx.fillText(verse, xText, y);
 
     // English translation below
     if (translation[i]) {
       ctx.fillStyle = 'rgba(197, 160, 89, 0.55)';
       ctx.font = 'italic 34px "Playfair Display", serif';
+      ctx.textAlign = align;
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 62);
+      ctx.fillText(translation[i], xText, y + 62);
     }
   });
 
@@ -399,7 +441,7 @@ function renderDiwan(ctx, w, h, poem) {
 //  Design 2: IBN MUQLA — Illuminated Manuscript
 //  Aged vellum, ornate gilded borders, rich brown ink, jewel-tone accents
 // ──────────────────────────────────────────────────────────────────────
-function renderIbnMuqla(ctx, w, h, poem) {
+function renderIbnMuqla(ctx, w, h, poem, opts = {}) {
   // Warm vellum background
   const bg = ctx.createLinearGradient(0, 0, 0, h);
   bg.addColorStop(0, '#f5e6c8');
@@ -443,8 +485,9 @@ function renderIbnMuqla(ctx, w, h, poem) {
   ctx.restore();
 
   // ── Layout: centered vertically ──
-  const verses = prepareVerses(poem.arabic);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
+  const verses = prepareVerses(poem.arabic, maxLines);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
   const layout = calculateCenteredLayout(h, poem, verses.length);
 
   // ── Header — bilingual ──
@@ -460,7 +503,7 @@ function renderIbnMuqla(ctx, w, h, poem) {
       separator: '#8B6914',
       englishGrey: 'rgba(90, 85, 75, 0.6)',
     },
-    { borderTop: 52 }
+    { borderTop: 52, align, xPos: xText }
   );
 
   // ── Interleaved verses (line by line) ──
@@ -471,15 +514,16 @@ function renderIbnMuqla(ctx, w, h, poem) {
 
     ctx.fillStyle = '#2C1A00';
     ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = 'center';
+    ctx.textAlign = align;
     ctx.direction = 'rtl';
-    ctx.fillText(verse, w / 2, y);
+    ctx.fillText(verse, xText, y);
 
     if (translation[i]) {
       ctx.fillStyle = 'rgba(74, 40, 0, 0.48)';
       ctx.font = 'italic 34px "Playfair Display", serif';
+      ctx.textAlign = align;
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 62);
+      ctx.fillText(translation[i], xText, y + 62);
     }
   });
 
@@ -495,7 +539,7 @@ function renderIbnMuqla(ctx, w, h, poem) {
 //  Design 3: SINAN — Geometric Majesty
 //  Deep ocean blue, turquoise & gold arches, celestial atmosphere
 // ──────────────────────────────────────────────────────────────────────
-function renderSinan(ctx, w, h, poem) {
+function renderSinan(ctx, w, h, poem, opts = {}) {
   // Deep ocean gradient
   const bg = ctx.createLinearGradient(0, 0, 0, h);
   bg.addColorStop(0, '#061424');
@@ -536,8 +580,9 @@ function renderSinan(ctx, w, h, poem) {
   drawStar(w - m - 7, h - m - 7, 6, 6, 'rgba(197, 160, 89, 0.2)');
 
   // ── Layout: centered vertically ──
-  const verses = prepareVerses(poem.arabic);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
+  const verses = prepareVerses(poem.arabic, maxLines);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
   const layout = calculateCenteredLayout(h, poem, verses.length);
 
   // ── Header — bilingual ──
@@ -553,7 +598,7 @@ function renderSinan(ctx, w, h, poem) {
       separator: '#c5a059',
       englishGrey: 'rgba(170, 180, 190, 0.6)',
     },
-    { borderTop: 54 }
+    { borderTop: 54, align, xPos: xText }
   );
 
   // ── Interleaved verses (line by line) ──
@@ -564,15 +609,16 @@ function renderSinan(ctx, w, h, poem) {
 
     ctx.fillStyle = '#E8E4DC';
     ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = 'center';
+    ctx.textAlign = align;
     ctx.direction = 'rtl';
-    ctx.fillText(verse, w / 2, y);
+    ctx.fillText(verse, xText, y);
 
     if (translation[i]) {
       ctx.fillStyle = 'rgba(79, 166, 183, 0.55)';
       ctx.font = 'italic 34px "Playfair Display", serif';
+      ctx.textAlign = align;
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 62);
+      ctx.fillText(translation[i], xText, y + 62);
     }
   });
 
@@ -590,7 +636,7 @@ function renderSinan(ctx, w, h, poem) {
 //  Design 4: ZAHA HADID — Bold Fluid
 //  Vivid neon gradients, dramatic curves, asymmetric glass panels
 // ──────────────────────────────────────────────────────────────────────
-function renderZahaHadid(ctx, w, h, poem) {
+function renderZahaHadid(ctx, w, h, poem, opts = {}) {
   // Deep cosmic gradient
   const bg = ctx.createLinearGradient(0, 0, w * 0.4, h);
   bg.addColorStop(0, '#08001A');
@@ -635,8 +681,9 @@ function renderZahaHadid(ctx, w, h, poem) {
   ctx.fill();
 
   // ── Layout: centered vertically ──
-  const verses = prepareVerses(poem.arabic);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts, 'right');
+  const verses = prepareVerses(poem.arabic, maxLines);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
   const layout = calculateCenteredLayout(h, poem, verses.length);
 
   // ── Header — bilingual, right-aligned for drama ──
@@ -652,7 +699,7 @@ function renderZahaHadid(ctx, w, h, poem) {
       separator: '#C864FF',
       englishGrey: 'rgba(180, 180, 200, 0.6)',
     },
-    { align: 'right', xPos: w - 85, borderTop: 48 }
+    { borderTop: 48, align, xPos: xText }
   );
 
   // ── Interleaved verses — right-aligned, line by line ──
@@ -663,16 +710,16 @@ function renderZahaHadid(ctx, w, h, poem) {
 
     ctx.fillStyle = '#F0E8FF';
     ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = 'right';
+    ctx.textAlign = align;
     ctx.direction = 'rtl';
-    ctx.fillText(verse, w - 85, y);
+    ctx.fillText(verse, xText, y);
 
     if (translation[i]) {
       ctx.fillStyle = 'rgba(150, 180, 255, 0.52)';
       ctx.font = 'italic 34px "Playfair Display", serif';
-      ctx.textAlign = 'right';
+      ctx.textAlign = align;
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w - 85, y + 62);
+      ctx.fillText(translation[i], xText, y + 62);
     }
   });
 
@@ -690,7 +737,7 @@ function renderZahaHadid(ctx, w, h, poem) {
 //  Design 5: HASSAN FATHY — Warm Earthcraft
 //  Sunlit clay, organic warmth, handmade texture
 // ──────────────────────────────────────────────────────────────────────
-function renderHassanFathy(ctx, w, h, poem) {
+function renderHassanFathy(ctx, w, h, poem, opts = {}) {
   // Warm sand-to-clay gradient
   const bg = ctx.createLinearGradient(0, 0, 0, h);
   bg.addColorStop(0, '#F8EDD8');
@@ -735,8 +782,9 @@ function renderHassanFathy(ctx, w, h, poem) {
   drawDiamond(w - m - 6, h - m - 6, 3, 'rgba(160, 82, 45, 0.3)');
 
   // ── Layout: centered vertically ──
-  const verses = prepareVerses(poem.arabic);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
+  const verses = prepareVerses(poem.arabic, maxLines);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
   const layout = calculateCenteredLayout(h, poem, verses.length);
 
   // ── Header — bilingual ──
@@ -752,7 +800,7 @@ function renderHassanFathy(ctx, w, h, poem) {
       separator: '#A0522D',
       englishGrey: 'rgba(95, 85, 75, 0.6)',
     },
-    { borderTop: 52 }
+    { borderTop: 52, align, xPos: xText }
   );
 
   // ── Interleaved verses (line by line) ──
@@ -763,15 +811,16 @@ function renderHassanFathy(ctx, w, h, poem) {
 
     ctx.fillStyle = '#2A1500';
     ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = 'center';
+    ctx.textAlign = align;
     ctx.direction = 'rtl';
-    ctx.fillText(verse, w / 2, y);
+    ctx.fillText(verse, xText, y);
 
     if (translation[i]) {
       ctx.fillStyle = 'rgba(74, 40, 0, 0.45)';
       ctx.font = 'italic 34px "Playfair Display", serif';
+      ctx.textAlign = align;
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 62);
+      ctx.fillText(translation[i], xText, y + 62);
     }
   });
 
@@ -783,6 +832,320 @@ function renderHassanFathy(ctx, w, h, poem) {
   });
 }
 
+// ──────────────────────────────────────────────────────────────────────
+//  Design 6: LAYL (ليل) — Midnight Whisper
+//  Near-black silence, a single gold star, nothing but the words.
+// ──────────────────────────────────────────────────────────────────────
+function renderLayl(ctx, w, h, poem, opts = {}) {
+  // Flat midnight with the faintest vertical lift
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, '#0b0b0e');
+  bg.addColorStop(0.5, '#0a0a0c');
+  bg.addColorStop(1, '#08080a');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // One small eight-point star, high center — the only ornament
+  ctx.save();
+  ctx.translate(w / 2, 130);
+  ctx.fillStyle = 'rgba(212, 180, 99, 0.8)';
+  ctx.shadowColor = 'rgba(212, 180, 99, 0.6)';
+  ctx.shadowBlur = 18;
+  ctx.beginPath();
+  for (let k = 0; k < 16; k++) {
+    const r = k % 2 === 0 ? 11 : 4;
+    const a = (Math.PI / 8) * k - Math.PI / 2;
+    const sx = Math.cos(a) * r;
+    const sy = Math.sin(a) * r;
+    if (k === 0) ctx.moveTo(sx, sy);
+    else ctx.lineTo(sx, sy);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  // ── Layout ──
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
+  const verses = prepareVerses(poem.arabic, maxLines);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
+  const layout = calculateCenteredLayout(h, poem, verses.length);
+
+  const headerBottom = drawBilingualHeader(
+    ctx,
+    w,
+    layout.headerY,
+    poem,
+    {
+      poet: '#d4b463',
+      poetAr: 'rgba(212, 180, 99, 0.6)',
+      title: 'rgba(212, 180, 99, 0.45)',
+      separator: 'rgba(212, 180, 99, 0.45)',
+      englishGrey: 'rgba(160, 155, 145, 0.55)',
+    },
+    { borderTop: 170, align, xPos: xText }
+  );
+
+  const contentStartY = headerBottom + layout.titleBodyGap;
+  verses.forEach((verse, i) => {
+    const y = contentStartY + i * layout.pairSpacing;
+    ctx.fillStyle = '#ece5d8';
+    ctx.font = '46px "Amiri", serif';
+    ctx.textAlign = align;
+    ctx.direction = 'rtl';
+    ctx.fillText(verse, xText, y);
+    if (translation[i]) {
+      ctx.fillStyle = 'rgba(197, 160, 89, 0.42)';
+      ctx.font = 'italic 33px "Playfair Display", serif';
+      ctx.textAlign = align;
+      ctx.direction = 'ltr';
+      ctx.fillText(translation[i], xText, y + 62);
+    }
+  });
+
+  drawBrandBottomRight(ctx, w, h, 'rgba(212, 180, 99, 0.35)', {
+    opacity: 0.45,
+    size: 28,
+    innerInset: 30,
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  Design 7: MISHKAT (مشكاة) — Lantern Niche
+//  Deep emerald night; a glowing mihrab arch cradles the verse.
+// ──────────────────────────────────────────────────────────────────────
+function renderMishkat(ctx, w, h, poem, opts = {}) {
+  // Deep emerald gradient
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, '#04211d');
+  bg.addColorStop(0.45, '#06302a');
+  bg.addColorStop(1, '#031a17');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Lantern light spilling from the top of the niche
+  const glow = ctx.createRadialGradient(w / 2, 330, 0, w / 2, 330, 560);
+  glow.addColorStop(0, 'rgba(255, 224, 160, 0.1)');
+  glow.addColorStop(1, 'rgba(255, 224, 160, 0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, h);
+
+  // Mihrab arch — glowing teal outline with a faint gold echo inside
+  const drawArch = (halfW, top, bottom, spring, color, lw, blur) => {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lw;
+    if (blur) {
+      ctx.shadowColor = color;
+      ctx.shadowBlur = blur;
+    }
+    ctx.beginPath();
+    ctx.moveTo(w / 2 - halfW, bottom);
+    ctx.lineTo(w / 2 - halfW, spring);
+    ctx.quadraticCurveTo(w / 2 - halfW, top + 60, w / 2, top);
+    ctx.quadraticCurveTo(w / 2 + halfW, top + 60, w / 2 + halfW, spring);
+    ctx.lineTo(w / 2 + halfW, bottom);
+    ctx.stroke();
+    ctx.restore();
+  };
+  drawArch(392, 218, 1210, 470, 'rgba(79, 183, 160, 0.5)', 2, 26);
+  drawArch(362, 252, 1210, 490, 'rgba(212, 180, 99, 0.22)', 1, 0);
+
+  // ── Layout ──
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
+  const verses = prepareVerses(poem.arabic, maxLines);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
+  const layout = calculateCenteredLayout(h, poem, verses.length);
+
+  const headerBottom = drawBilingualHeader(
+    ctx,
+    w,
+    layout.headerY,
+    poem,
+    {
+      poet: '#d4b463',
+      poetAr: 'rgba(212, 180, 99, 0.65)',
+      title: 'rgba(79, 183, 160, 0.6)',
+      separator: '#d4b463',
+      englishGrey: 'rgba(165, 190, 180, 0.6)',
+    },
+    { borderTop: 150, align, xPos: xText }
+  );
+
+  const contentStartY = headerBottom + layout.titleBodyGap;
+  verses.forEach((verse, i) => {
+    const y = contentStartY + i * layout.pairSpacing;
+    ctx.fillStyle = '#efe9da';
+    ctx.font = '46px "Amiri", serif';
+    ctx.textAlign = align;
+    ctx.direction = 'rtl';
+    ctx.fillText(verse, xText, y);
+    if (translation[i]) {
+      ctx.fillStyle = 'rgba(120, 200, 180, 0.55)';
+      ctx.font = 'italic 33px "Playfair Display", serif';
+      ctx.textAlign = align;
+      ctx.direction = 'ltr';
+      ctx.fillText(translation[i], xText, y + 62);
+    }
+  });
+
+  drawBrandBottomRight(ctx, w, h, 'rgba(212, 180, 99, 0.45)', {
+    glowColor: 'rgba(79, 183, 160, 0.2)',
+    glowBlur: 12,
+    opacity: 0.55,
+    size: 28,
+    innerInset: 40,
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  Design 8: SAHIFA (صحيفة) — Poetry Broadsheet
+//  Bone paper, masthead rules, madder-red ink. Right-aligned newsprint.
+// ──────────────────────────────────────────────────────────────────────
+function renderSahifa(ctx, w, h, poem, opts = {}) {
+  // Bone paper
+  ctx.fillStyle = '#f6f1e6';
+  ctx.fillRect(0, 0, w, h);
+
+  const m = 70;
+
+  // Masthead — thick and thin rule, like a broadsheet nameplate
+  ctx.fillStyle = '#191512';
+  ctx.fillRect(m, 78, w - m * 2, 6);
+  ctx.fillRect(m, 94, w - m * 2, 1.5);
+
+  // Madder folio square on the masthead
+  ctx.fillStyle = '#8e2a2a';
+  ctx.fillRect(w - m - 14, 60, 14, 14);
+
+  // Colophon — inverted rules at the foot
+  ctx.fillStyle = '#191512';
+  ctx.fillRect(m, h - 96, w - m * 2, 1.5);
+  ctx.fillRect(m, h - 86, w - m * 2, 6);
+
+  // ── Layout — right-aligned by default, like Arabic newsprint ──
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts, 'right');
+  const verses = prepareVerses(poem.arabic, maxLines);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
+  const layout = calculateCenteredLayout(h, poem, verses.length);
+
+  const headerBottom = drawBilingualHeader(
+    ctx,
+    w,
+    layout.headerY,
+    poem,
+    {
+      poet: '#191512',
+      poetAr: '#8e2a2a',
+      title: 'rgba(25, 21, 18, 0.5)',
+      separator: '#8e2a2a',
+      englishGrey: 'rgba(90, 82, 72, 0.65)',
+    },
+    { borderTop: 130, align, xPos: xText }
+  );
+
+  const contentStartY = headerBottom + layout.titleBodyGap;
+  verses.forEach((verse, i) => {
+    const y = contentStartY + i * layout.pairSpacing;
+    ctx.fillStyle = '#191512';
+    ctx.font = '46px "Amiri", serif';
+    ctx.textAlign = align;
+    ctx.direction = 'rtl';
+    ctx.fillText(verse, xText, y);
+    if (translation[i]) {
+      ctx.fillStyle = 'rgba(25, 21, 18, 0.55)';
+      ctx.font = 'italic 33px "Playfair Display", serif';
+      ctx.textAlign = align;
+      ctx.direction = 'ltr';
+      ctx.fillText(translation[i], xText, y + 62);
+    }
+  });
+
+  drawBrandBottomRight(ctx, w, h, 'rgba(25, 21, 18, 0.5)', {
+    opacity: 0.55,
+    size: 28,
+    innerInset: 40,
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  Design 9: NEON (سهر) — Night Sign
+//  Verses burning in neon rose and cyan against a dark wall.
+// ──────────────────────────────────────────────────────────────────────
+function renderNeon(ctx, w, h, poem, opts = {}) {
+  // Dark violet wall
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, '#0d0416');
+  bg.addColorStop(0.5, '#150a20');
+  bg.addColorStop(1, '#0a0312');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Ambient neon wash from the verses' own light
+  const wash = ctx.createRadialGradient(w / 2, h * 0.5, 0, w / 2, h * 0.5, w * 0.75);
+  wash.addColorStop(0, 'rgba(255, 79, 216, 0.05)');
+  wash.addColorStop(0.6, 'rgba(79, 223, 255, 0.03)');
+  wash.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = wash;
+  ctx.fillRect(0, 0, w, h);
+
+  // ── Layout ──
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
+  const verses = prepareVerses(poem.arabic, maxLines);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
+  const layout = calculateCenteredLayout(h, poem, verses.length);
+
+  const headerBottom = drawBilingualHeader(
+    ctx,
+    w,
+    layout.headerY,
+    poem,
+    {
+      poet: '#ff9ff0',
+      poetAr: 'rgba(255, 159, 240, 0.65)',
+      title: 'rgba(79, 223, 255, 0.55)',
+      separator: '#ff4fd8',
+      englishGrey: 'rgba(190, 180, 210, 0.6)',
+    },
+    { borderTop: 150, align, xPos: xText }
+  );
+
+  const contentStartY = headerBottom + layout.titleBodyGap;
+  verses.forEach((verse, i) => {
+    const y = contentStartY + i * layout.pairSpacing;
+    const tube = i % 2 === 0 ? '#ff4fd8' : '#4fdfff';
+
+    // Neon tube: wide soft glow pass, then a tight bright core
+    ctx.save();
+    ctx.font = '46px "Amiri", serif';
+    ctx.textAlign = align;
+    ctx.direction = 'rtl';
+    ctx.shadowColor = tube;
+    ctx.shadowBlur = 30;
+    ctx.fillStyle = tube;
+    ctx.fillText(verse, xText, y);
+    ctx.shadowBlur = 8;
+    ctx.fillStyle = '#fff6fd';
+    ctx.fillText(verse, xText, y);
+    ctx.restore();
+
+    if (translation[i]) {
+      ctx.fillStyle = 'rgba(200, 170, 255, 0.55)';
+      ctx.font = 'italic 33px "Playfair Display", serif';
+      ctx.textAlign = align;
+      ctx.direction = 'ltr';
+      ctx.fillText(translation[i], xText, y + 62);
+    }
+  });
+
+  drawBrandBottomRight(ctx, w, h, 'rgba(255, 79, 216, 0.45)', {
+    glowColor: 'rgba(255, 79, 216, 0.3)',
+    glowBlur: 14,
+    opacity: 0.55,
+    size: 28,
+    innerInset: 36,
+  });
+}
+
 // ── Design dispatcher ──────────────────────────────────────────────────
 const RENDERERS = {
   diwan: renderDiwan,
@@ -790,6 +1153,10 @@ const RENDERERS = {
   sinan: renderSinan,
   zahaHadid: renderZahaHadid,
   hassanFathy: renderHassanFathy,
+  layl: renderLayl,
+  mishkat: renderMishkat,
+  sahifa: renderSahifa,
+  neon: renderNeon,
 };
 
 /**
@@ -800,33 +1167,36 @@ const RENDERERS = {
  * @param {number} height
  * @param {Object} poem — { arabic, english, poet, poetArabic, title, titleArabic, cachedTranslation }
  * @param {string} designId — one of the keys in SHARE_CARD_DESIGNS
+ * @param {Object} [opts] — { align: 'center'|'right', maxLines: number }
+ *   align: overrides the design's default text alignment
+ *   maxLines: how many verse lines to draw (default 4; the modal caps at 6)
  */
-export function renderShareCard(ctx, width, height, poem, designId = 'diwan') {
+export function renderShareCard(ctx, width, height, poem, designId = 'diwan', opts = {}) {
   const renderer = RENDERERS[designId] || RENDERERS.diwan;
-  renderer(ctx, width, height, poem);
+  renderer(ctx, width, height, poem, opts);
 }
 
 /**
  * Generate a share card as a Blob (PNG).
  * Returns a Promise<Blob>.
  */
-export async function generateShareCardBlob(poem, designId = 'diwan') {
+export async function generateShareCardBlob(poem, designId = 'diwan', opts = {}) {
   const canvas = document.createElement('canvas');
   canvas.width = CARD_WIDTH;
   canvas.height = CARD_HEIGHT;
   const ctx = canvas.getContext('2d');
-  renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, poem, designId);
+  renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, poem, designId, opts);
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 }
 
 /**
  * Generate a share card as a data URL (PNG).
  */
-export function generateShareCardDataURL(poem, designId = 'diwan') {
+export function generateShareCardDataURL(poem, designId = 'diwan', opts = {}) {
   const canvas = document.createElement('canvas');
   canvas.width = CARD_WIDTH;
   canvas.height = CARD_HEIGHT;
   const ctx = canvas.getContext('2d');
-  renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, poem, designId);
+  renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, poem, designId, opts);
   return canvas.toDataURL('image/png');
 }

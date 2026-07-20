@@ -32,8 +32,8 @@ const mockPoem = {
 
 // ─── Design registry tests ──────────────────────────────────────────────
 describe('SHARE_CARD_DESIGNS', () => {
-  it('should export exactly 5 designs', () => {
-    expect(SHARE_CARD_DESIGNS).toHaveLength(5);
+  it('should export exactly 9 designs', () => {
+    expect(SHARE_CARD_DESIGNS).toHaveLength(9);
   });
 
   it('each design has required fields', () => {
@@ -54,13 +54,21 @@ describe('SHARE_CARD_DESIGNS', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('includes the 5 expected design IDs', () => {
+  it('includes the 5 original and 4 new design IDs', () => {
     const ids = SHARE_CARD_DESIGNS.map((d) => d.id);
-    expect(ids).toContain('diwan');
-    expect(ids).toContain('ibnMuqla');
-    expect(ids).toContain('sinan');
-    expect(ids).toContain('zahaHadid');
-    expect(ids).toContain('hassanFathy');
+    for (const id of [
+      'diwan',
+      'ibnMuqla',
+      'sinan',
+      'zahaHadid',
+      'hassanFathy',
+      'layl',
+      'mishkat',
+      'sahifa',
+      'neon',
+    ]) {
+      expect(ids).toContain(id);
+    }
   });
 
   it('each design nameAr is in Arabic script', () => {
@@ -324,15 +332,12 @@ describe('ShareCardModal', () => {
     ShareCardModal = mod.default;
   });
 
-  it('renders the full-bleed live card preview (Folio 3.4B)', () => {
+  it('renders the WYSIWYG canvas preview image (Folio 3.4B)', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Preview is a live DOM card that fills the screen
-    const card = screen.getByLabelText('Poem card preview');
-    expect(card).toBeInTheDocument();
-    expect(card).toHaveAttribute('data-style', 'diwan');
-    // Card shows the Arabic verses and poet name
-    expect(screen.getByText('يا دِمَشقُ يا حَبيبَتي')).toBeInTheDocument();
-    expect(screen.getByText('نزار قباني')).toBeInTheDocument();
+    // Preview is the actual canvas render — same pixels as the export
+    const preview = screen.getByAltText('Share card preview');
+    expect(preview.tagName).toBe('IMG');
+    expect(preview.closest('figure')).toHaveAttribute('data-style', 'diwan');
   });
 
   it('shows an arch radio for each design option', () => {
@@ -390,10 +395,72 @@ describe('ShareCardModal', () => {
     // The card dissolves for 300ms before the new style lands
     await waitFor(() => {
       expect(sinanArch).toHaveAttribute('aria-checked', 'true');
-      expect(screen.getByLabelText('Poem card preview')).toHaveAttribute('data-style', 'sinan');
+      expect(screen.getByAltText('Share card preview').closest('figure')).toHaveAttribute(
+        'data-style',
+        'sinan'
+      );
     });
     // Caption swaps to the new material description
     expect(screen.getByText('celestial geometry')).toBeInTheDocument();
+  });
+
+  it('opens the lines panel with a row per verse line', async () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /choose lines/i }));
+    // One checkbox row per Arabic line (mock poem has 6)
+    const rows = screen.getAllByRole('checkbox');
+    expect(rows).toHaveLength(6);
+    // First four lines selected by default
+    expect(rows[0]).toHaveAttribute('aria-checked', 'true');
+    expect(rows[3]).toHaveAttribute('aria-checked', 'true');
+    expect(rows[4]).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByText('4 of 6 lines')).toBeInTheDocument();
+    // Alignment controls live in the panel
+    expect(screen.getByRole('button', { name: /align center/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /align right/i })).toBeInTheDocument();
+  });
+
+  it('toggles a line selection and updates the count', async () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /choose lines/i }));
+    const rows = screen.getAllByRole('checkbox');
+    await userEvent.click(rows[4]);
+    expect(rows[4]).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText('5 of 6 lines')).toBeInTheDocument();
+    await userEvent.click(rows[0]);
+    expect(rows[0]).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByText('4 of 6 lines')).toBeInTheDocument();
+  });
+
+  it('never allows unselecting the last remaining line', async () => {
+    const onePair = { ...mockPoem, arabic: 'بيت واحد', english: 'one line' };
+    render(<ShareCardModal poem={onePair} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /choose lines/i }));
+    const row = screen.getByRole('checkbox');
+    await userEvent.click(row);
+    expect(row).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('Keep at least one line');
+    });
+  });
+
+  it('sets alignment via the panel controls', async () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /choose lines/i }));
+    const rightBtn = screen.getByRole('button', { name: /align right/i });
+    await userEvent.click(rightBtn);
+    expect(rightBtn).toHaveAttribute('aria-pressed', 'true');
+    // Clicking again returns to the design default (neither pressed)
+    await userEvent.click(rightBtn);
+    expect(rightBtn).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('closes the panel with Done and restores the dock', async () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /choose lines/i }));
+    expect(screen.queryByRole('button', { name: /^share$/i })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /done/i }));
+    expect(screen.getByRole('button', { name: /^share$/i })).toBeInTheDocument();
   });
 
   it('copies the poem link and shows a toast', async () => {

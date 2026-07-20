@@ -1,13 +1,18 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Download, Share2, Link as LinkIcon } from 'lucide-react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import {
+  X,
+  Download,
+  Share2,
+  Link as LinkIcon,
+  ListChecks,
+  AlignCenter,
+  AlignRight,
+} from 'lucide-react';
 import {
   SHARE_CARD_DESIGNS,
   CARD_WIDTH,
   CARD_HEIGHT,
   renderShareCard,
-  resolveBilingual,
-  prepareVerses,
-  prepareTranslation,
 } from '../utils/shareCardDesigns';
 import '../styles/share-card-modal.css';
 
@@ -19,21 +24,40 @@ const STYLE_CAPTIONS = {
   sinan: 'celestial geometry',
   zahaHadid: 'fluid neon',
   hassanFathy: 'sunlit clay',
+  layl: 'midnight whisper',
+  mishkat: 'lantern in the niche',
+  sahifa: 'poetry broadsheet',
+  neon: 'burning glass',
 };
 
-// Accent color per style — the top chrome dedication inherits it.
+// Accent color per style — chrome and preview frame inherit it.
 const STYLE_ACCENTS = {
   diwan: '#c5a059',
   ibnMuqla: '#7a5a10',
   sinan: '#4fa6b7',
   zahaHadid: '#c864ff',
   hassanFathy: '#a0522d',
+  layl: '#d4b463',
+  mishkat: '#4fb7a0',
+  sahifa: '#8e2a2a',
+  neon: '#ff4fd8',
 };
 
 // Living dedication — typed out, erased, retyped.
 const DEDICATION_PHRASES = ['to a friend', 'to a lover', 'to a stranger', 'to yourself'];
 
 const DISSOLVE_MS = 300;
+const DEFAULT_LINE_COUNT = 4;
+const MAX_LINE_COUNT = 6;
+
+/** Split a poem text field into trimmed, non-empty lines. */
+function splitLines(text) {
+  if (!text) return [];
+  return text
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
+}
 
 /**
  * Typewriter loop for the dedication line. Types each phrase, holds,
@@ -101,14 +125,13 @@ function useTypedDedication(phrases) {
 /**
  * ShareCardModal — Folio 3.4B "Dedication: Block Cursor".
  *
- * Full-bleed share experience: the poem card fills the screen and restyles
- * live as the user picks a material from the arcade-arch selector. A
- * left-aligned letter-opening header types out a living dedication
- * ("Send this poem — to a friend / to a lover / …"). Actions live in a
- * glass dock: download PNG, native share, copy link.
- *
- * The downloadable/shareable PNG is still rendered by the canvas designs
- * in `shareCardDesigns.js` on a hidden canvas.
+ * The preview IS the export: the floating 4:5 card is the actual canvas
+ * render (same pixels as the downloaded/shared PNG), so what you see is
+ * exactly what you send. The folio chrome around it: a left-aligned
+ * letter-opening header that types a living dedication, an arcade-arch
+ * style selector over nine materials, and a glass dock with download /
+ * share / copy-link — plus a lines panel where the reader chooses which
+ * verses to include and how the text is set (centered or right).
  *
  * UI primary language: English (per brand direction).
  *
@@ -118,17 +141,71 @@ export default function ShareCardModal({ poem, onClose }) {
   const [selectedDesign, setSelectedDesign] = useState('diwan');
   const [dissolving, setDissolving] = useState(false);
   const [toast, setToast] = useState({ message: '', visible: false });
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+  // null = each design's own default alignment; 'center' | 'right' override it
+  const [alignment, setAlignment] = useState(null);
   const canvasRef = useRef(null);
   const archRefs = useRef([]);
   const dissolveTimer = useRef(null);
   const toastTimer = useRef(null);
   const { text: dedicationText, typing } = useTypedDedication(DEDICATION_PHRASES);
 
-  // ── Card content (mirrors the canvas renderers' bilingual handling) ──
-  const resolvedPoet = resolveBilingual(poem.poet, poem.poetArabic);
-  const resolvedTitle = resolveBilingual(poem.title, poem.titleArabic);
-  const verses = prepareVerses(poem.arabic, 4);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation, 4);
+  // ── Verse pairs and line selection ───────────────────────────────────
+  const arabicLines = useMemo(() => splitLines(poem.arabic), [poem.arabic]);
+  const englishLines = useMemo(
+    () => splitLines(poem.english || poem.cachedTranslation),
+    [poem.english, poem.cachedTranslation]
+  );
+  const [selectedLines, setSelectedLines] = useState(() =>
+    arabicLines.slice(0, DEFAULT_LINE_COUNT).map((_, i) => i)
+  );
+
+  // The poem actually rendered on the card — only the chosen lines.
+  const sharePoem = useMemo(
+    () => ({
+      ...poem,
+      arabic: selectedLines.map((i) => arabicLines[i]).join('\n'),
+      english: selectedLines
+        .map((i) => englishLines[i])
+        .filter(Boolean)
+        .join('\n'),
+      cachedTranslation: null,
+    }),
+    [poem, selectedLines, arabicLines, englishLines]
+  );
+
+  const renderOpts = useMemo(
+    () => ({
+      align: alignment || undefined,
+      maxLines: Math.max(selectedLines.length, 1),
+    }),
+    [alignment, selectedLines.length]
+  );
+
+  // ── WYSIWYG preview: the canvas render IS the preview ────────────────
+  const redraw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.width = CARD_WIDTH;
+    canvas.height = CARD_HEIGHT;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return; // No canvas support (e.g. test environment)
+    renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, sharePoem, selectedDesign, renderOpts);
+    setPreviewUrl(canvas.toDataURL('image/png'));
+  }, [sharePoem, selectedDesign, renderOpts]);
+
+  useEffect(() => {
+    redraw();
+    // Redraw once webfonts land so the preview uses the real typefaces.
+    let stale = false;
+    document.fonts?.ready?.then(() => {
+      if (!stale) redraw();
+    });
+    return () => {
+      stale = true;
+    };
+  }, [redraw]);
 
   useEffect(
     () => () => {
@@ -167,21 +244,28 @@ export default function ShareCardModal({ poem, onClose }) {
     }
   };
 
-  // ── PNG generation on the hidden canvas ──────────────────────────────
-  const drawCard = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return null;
-    canvas.width = CARD_WIDTH;
-    canvas.height = CARD_HEIGHT;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return null; // No canvas support (e.g. test environment)
-    renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, poem, selectedDesign);
-    return canvas;
+  // ── Line selection ───────────────────────────────────────────────────
+  const toggleLine = (index) => {
+    setSelectedLines((prev) => {
+      if (prev.includes(index)) {
+        if (prev.length === 1) {
+          showToast('Keep at least one line');
+          return prev;
+        }
+        return prev.filter((i) => i !== index);
+      }
+      if (prev.length >= MAX_LINE_COUNT) {
+        showToast(`Up to ${MAX_LINE_COUNT} lines fit the card`);
+        return prev;
+      }
+      return [...prev, index].sort((a, b) => a - b);
+    });
   };
 
+  // ── Export actions — same canvas as the preview ──────────────────────
   const handleDownload = () => {
-    const canvas = drawCard();
-    if (!canvas) return;
+    const canvas = canvasRef.current;
+    if (!canvas || !previewUrl) return;
     const link = document.createElement('a');
     link.download = `poem-${poem.id || 'card'}-${selectedDesign}.png`;
     link.href = canvas.toDataURL('image/png');
@@ -190,8 +274,8 @@ export default function ShareCardModal({ poem, onClose }) {
   };
 
   const handleShare = async () => {
-    const canvas = drawCard();
-    if (!canvas) return;
+    const canvas = canvasRef.current;
+    if (!canvas || !previewUrl) return;
 
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
     const file = new File([blob], `poem-${poem.id || 'card'}.png`, { type: 'image/png' });
@@ -228,14 +312,16 @@ export default function ShareCardModal({ poem, onClose }) {
     }
   };
 
-  // ── Close on Escape ──────────────────────────────────────────────────
+  // ── Escape: close the panel first, then the modal ────────────────────
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key !== 'Escape') return;
+      if (panelOpen) setPanelOpen(false);
+      else onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, panelOpen]);
 
   return (
     <div
@@ -245,53 +331,14 @@ export default function ShareCardModal({ poem, onClose }) {
       aria-label="Share poem card"
       style={{ '--scm-card-accent': STYLE_ACCENTS[selectedDesign] }}
     >
-      {/* Full-bleed card — the card IS the screen */}
-      <div
-        className={`scm-card${dissolving ? ' scm-dissolving' : ''}`}
-        data-style={selectedDesign}
-        aria-label="Poem card preview"
-      >
-        <div className="scm-card-frame" aria-hidden="true" />
-        <div className="scm-card-body">
-          {resolvedTitle.arabic && (
-            <div className="scm-arabic-title" dir="rtl" lang="ar">
-              {resolvedTitle.arabic}
-            </div>
-          )}
-          {verses.length > 0 && (
-            <p className="scm-arabic-poetry" dir="rtl" lang="ar">
-              {verses.map((verse, i) => (
-                <span key={i} className="scm-verse">
-                  {verse}
-                </span>
-              ))}
-            </p>
-          )}
-          {translation.length > 0 && (
-            <>
-              <div className="scm-divider" aria-hidden="true" />
-              <p className="scm-english-translation" lang="en">
-                {translation.map((line, i) => (
-                  <span key={i} className="scm-verse">
-                    {line}
-                  </span>
-                ))}
-              </p>
-            </>
-          )}
-          <div className="scm-poet">
-            {resolvedPoet.arabic && (
-              <span className="scm-poet-ar" dir="rtl" lang="ar">
-                {resolvedPoet.arabic}
-              </span>
-            )}
-            {resolvedPoet.english && <span className="scm-poet-en">{resolvedPoet.english}</span>}
-          </div>
-        </div>
-        <div className="scm-brand" aria-hidden="true">
-          <span className="scm-brand-ar">بالعربي</span>
-          <span className="scm-brand-en">poetry</span>
-        </div>
+      {/* Floating card — the exact canvas render that gets downloaded */}
+      <div className="scm-stage">
+        <figure
+          className={`scm-preview${dissolving ? ' scm-dissolving' : ''}`}
+          data-style={selectedDesign}
+        >
+          <img src={previewUrl || ''} alt="Share card preview" draggable="true" />
+        </figure>
       </div>
 
       {/* Top chrome — the share heading as a living dedication */}
@@ -318,59 +365,130 @@ export default function ShareCardModal({ poem, onClose }) {
 
       {/* Bottom shelf — arcade selector, material caption, glass dock */}
       <div className="scm-shelf">
-        <div className="scm-arcade" role="radiogroup" aria-label="Card style">
-          {SHARE_CARD_DESIGNS.map((design, i) => (
-            <button
-              key={design.id}
-              ref={(el) => {
-                archRefs.current[i] = el;
-              }}
-              className={`scm-arch scm-arch--${design.id}`}
-              role="radio"
-              aria-checked={selectedDesign === design.id}
-              aria-label={`${design.name} style`}
-              tabIndex={selectedDesign === design.id ? 0 : -1}
-              onClick={() => selectStyle(design.id)}
-              onKeyDown={(e) => handleArchKeyDown(e, i)}
-            >
-              <span className="scm-mini" aria-hidden="true">
-                <i />
-                <i />
-                <i />
-                <em />
+        {panelOpen ? (
+          <div className="scm-panel" role="group" aria-label="Choose lines">
+            <div className="scm-panel-head">
+              <div className="scm-panel-titles">
+                <span className="scm-panel-title-ar" dir="rtl" lang="ar">
+                  اختر الأبيات
+                </span>
+                <span className="scm-panel-title">Choose the lines</span>
+              </div>
+              <div className="scm-align-group" role="group" aria-label="Text alignment">
+                <button
+                  aria-label="Align center"
+                  aria-pressed={alignment === 'center'}
+                  onClick={() => setAlignment((a) => (a === 'center' ? null : 'center'))}
+                >
+                  <AlignCenter size={15} aria-hidden="true" />
+                </button>
+                <button
+                  aria-label="Align right"
+                  aria-pressed={alignment === 'right'}
+                  onClick={() => setAlignment((a) => (a === 'right' ? null : 'right'))}
+                >
+                  <AlignRight size={15} aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            <div className="scm-panel-list">
+              {arabicLines.map((line, i) => (
+                <button
+                  key={i}
+                  className="scm-line-row"
+                  role="checkbox"
+                  aria-checked={selectedLines.includes(i)}
+                  onClick={() => toggleLine(i)}
+                >
+                  <span className="scm-line-check" aria-hidden="true" />
+                  <span className="scm-line-texts">
+                    <span className="scm-line-ar" dir="rtl" lang="ar">
+                      {line}
+                    </span>
+                    {englishLines[i] && <span className="scm-line-en">{englishLines[i]}</span>}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="scm-panel-foot">
+              <span className="scm-panel-count">
+                {selectedLines.length} of {arabicLines.length} lines
               </span>
-              <span className="scm-arch-sill" aria-hidden="true" />
-            </button>
-          ))}
-        </div>
+              <button className="scm-panel-done" onClick={() => setPanelOpen(false)}>
+                Done
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="scm-arcade" role="radiogroup" aria-label="Card style">
+              {SHARE_CARD_DESIGNS.map((design, i) => (
+                <button
+                  key={design.id}
+                  ref={(el) => {
+                    archRefs.current[i] = el;
+                  }}
+                  className={`scm-arch scm-arch--${design.id}`}
+                  role="radio"
+                  aria-checked={selectedDesign === design.id}
+                  aria-label={`${design.name} style`}
+                  tabIndex={selectedDesign === design.id ? 0 : -1}
+                  onClick={() => selectStyle(design.id)}
+                  onKeyDown={(e) => handleArchKeyDown(e, i)}
+                >
+                  <span className="scm-mini" aria-hidden="true">
+                    <i />
+                    <i />
+                    <i />
+                    <em />
+                  </span>
+                  <span className="scm-arch-sill" aria-hidden="true" />
+                </button>
+              ))}
+            </div>
 
-        <div
-          className={`scm-arcade-caption${dissolving ? ' scm-swapping' : ''}`}
-          aria-live="polite"
-        >
-          {STYLE_CAPTIONS[selectedDesign]}
-        </div>
+            <div
+              className={`scm-arcade-caption${dissolving ? ' scm-swapping' : ''}`}
+              aria-live="polite"
+            >
+              {STYLE_CAPTIONS[selectedDesign]}
+            </div>
 
-        <div className="scm-dock" role="group" aria-label="Share actions">
-          <button className="scm-btn-ghost" aria-label="Download as image" onClick={handleDownload}>
-            <Download size={17} aria-hidden="true" />
-          </button>
-          <button className="scm-btn-share" onClick={handleShare}>
-            <Share2 size={16} aria-hidden="true" />
-            Share
-          </button>
-          <button className="scm-btn-ghost" aria-label="Copy link" onClick={handleCopyLink}>
-            <LinkIcon size={17} aria-hidden="true" />
-          </button>
-        </div>
+            <div className="scm-dock" role="group" aria-label="Share actions">
+              <button
+                className="scm-btn-ghost"
+                aria-label="Choose lines"
+                onClick={() => setPanelOpen(true)}
+              >
+                <ListChecks size={17} aria-hidden="true" />
+              </button>
+              <button
+                className="scm-btn-ghost"
+                aria-label="Download as image"
+                onClick={handleDownload}
+              >
+                <Download size={17} aria-hidden="true" />
+              </button>
+              <button className="scm-btn-share" onClick={handleShare}>
+                <Share2 size={16} aria-hidden="true" />
+                Share
+              </button>
+              <button className="scm-btn-ghost" aria-label="Copy link" onClick={handleCopyLink}>
+                <LinkIcon size={17} aria-hidden="true" />
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       <div className={`scm-toast${toast.visible ? ' scm-show' : ''}`} role="status">
         {toast.message}
       </div>
 
-      {/* Hidden full-size canvas for PNG generation */}
-      <canvas ref={canvasRef} className="hidden" aria-hidden="true" />
+      {/* Hidden full-size canvas — the single source of truth for preview & export */}
+      <canvas ref={canvasRef} className="scm-hidden-canvas" aria-hidden="true" />
     </div>
   );
 }

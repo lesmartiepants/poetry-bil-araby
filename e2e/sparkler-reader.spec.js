@@ -76,6 +76,11 @@ async function loadFeed(page) {
 const revealedCount = (page) => page.locator('[data-revealed="true"]').count();
 
 test.describe('Sparkler Reader', () => {
+  // The reveal tests poll for up to 12s (intro animation + first sparkler reveal). That exceeds
+  // the 10s per-test cap CI sets globally, so give this suite room; otherwise the test is killed
+  // mid-poll and reports a false failure.
+  test.describe.configure({ timeout: 30_000 });
+
   test.beforeEach(async ({ page }) => {
     await setupMocks(page);
   });

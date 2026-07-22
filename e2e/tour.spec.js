@@ -102,6 +102,9 @@ test.beforeEach(async ({ page }) => {
 });
 
 test('every step anchors to a real element and the tour walks to completion', async ({ page }) => {
+  // Walking every tour step (per-step visibility + overlap polls + ~1.2s auto-advance beats)
+  // far exceeds CI's global 10s per-test cap; budget for the full multi-step walk explicitly.
+  test.setTimeout(90_000);
   await setupMocks(page);
   await page.goto('/?tour=1');
   await page.waitForSelector('[dir="rtl"]', { timeout: 15000 });

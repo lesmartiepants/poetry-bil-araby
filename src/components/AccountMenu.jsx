@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Popover } from 'radix-ui';
-import { LogOut, Mic, UserRound, SunMoon, SlidersHorizontal } from 'lucide-react';
+import { LogOut, Mic, UserRound, Moon, Sun, SlidersHorizontal } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
 import { voiceDisplayName, voiceGender } from '../constants/voices';
-import ThemeToggle from './ThemeToggle.jsx';
 
 /**
  * AccountMenu — the rightmost bottom-nav item. A person icon that opens an expandable menu holding
@@ -78,17 +77,44 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
               <span className="opacity-70">{voiceName}</span>
             </button>
 
-            {/* Theme — dark/light toggle (moved in from the top-right pill) */}
-            <div
-              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-brand-en"
+            {/* Night / Day — the whole row toggles the theme; the switch reflects the current mode. */}
+            <button
+              onClick={() => useUIStore.getState().toggleDarkMode()}
+              aria-label={darkMode ? 'Switch to day mode' : 'Switch to night mode'}
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
               style={{ color: ink }}
             >
               <span className="flex items-center gap-2">
-                <SunMoon size={16} style={{ color: ink }} />
-                <span>Theme</span>
+                {darkMode ? (
+                  <Moon size={16} style={{ color: ink }} />
+                ) : (
+                  <Sun size={16} style={{ color: ink }} />
+                )}
+                <span>{darkMode ? 'Night' : 'Day'}</span>
               </span>
-              <ThemeToggle />
-            </div>
+              {/* Visual switch — knob slides left (night) / right (day). */}
+              <span
+                aria-hidden="true"
+                className="relative inline-flex flex-shrink-0 rounded-full transition-colors duration-200"
+                style={{
+                  width: 38,
+                  height: 22,
+                  background: darkMode ? 'rgba(120,120,140,0.30)' : 'rgba(197,160,89,0.55)',
+                  border: '1px solid rgba(197,160,89,0.45)',
+                }}
+              >
+                <span
+                  className="absolute rounded-full transition-all duration-200"
+                  style={{
+                    width: 16,
+                    height: 16,
+                    top: 2,
+                    left: darkMode ? 2 : 18,
+                    background: ink,
+                  }}
+                />
+              </span>
+            </button>
 
             {/* Display Settings — opens the existing text/background settings panel */}
             <button

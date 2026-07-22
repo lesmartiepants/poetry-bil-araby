@@ -333,9 +333,9 @@ describe('DiwanApp', () => {
     it('switches to light mode bg-[#FDFCF8] after toggling theme', async () => {
       render(<DiwanApp />);
 
-      // The theme toggle now lives in the account (person icon) menu — open it, then toggle.
+      // The theme toggle now lives in the account (person icon) menu as a Night/Day row.
       await userEvent.click(screen.getByLabelText('Account menu'));
-      const themeToggleBtn = screen.getByLabelText('Switch to light mode');
+      const themeToggleBtn = screen.getByLabelText('Switch to day mode');
       await userEvent.click(themeToggleBtn);
 
       await waitFor(() => {

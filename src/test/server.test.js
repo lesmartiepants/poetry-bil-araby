@@ -832,4 +832,36 @@ describe('Backend API Server', () => {
       expect(duration).toBeLessThan(100);
     });
   });
+
+  // The categorization layer is gated behind a startup table-detection
+  // (hasCategorization). In the test environment the migration hasn't run, so
+  // these endpoints must degrade gracefully WITHOUT touching the DB.
+  describe('GET /api/categories', () => {
+    it('should return an empty dimensions list when categorization is unavailable', async () => {
+      const response = await request(app)
+        .get('/api/categories')
+        .expect('Content-Type', /json/)
+        .expect(200);
+
+      expect(response.body).toEqual({ dimensions: [] });
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /api/poems/by-category', () => {
+    it('should return an empty array when categorization is unavailable', async () => {
+      const response = await request(app)
+        .get('/api/poems/by-category?mood=melancholy&topic=exile-longing')
+        .expect('Content-Type', /json/)
+        .expect(200);
+
+      expect(response.body).toEqual([]);
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
+
+    it('should not be shadowed by the /api/poems/:id route', async () => {
+      // ':id' has an isInt validator; if by-category were shadowed we'd get a 400.
+      await request(app).get('/api/poems/by-category').expect(200);
+    });
+  });
 });

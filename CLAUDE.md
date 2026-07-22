@@ -67,12 +67,14 @@ The app supports two poem sources:
 
 **Database Mode (server.js):**
 
-- Express API server with 5 RESTful endpoints:
+- Express API server with RESTful endpoints:
   - `GET /api/health` - Health check with poem count
   - `GET /api/poems/random` - Random poem (supports ?poet= filter)
   - `GET /api/poems/by-poet/:poet` - Poems by specific poet
   - `GET /api/poets` - List available poets
   - `GET /api/poems/search` - Search poems by text
+  - `GET /api/categories` - List categorization facets (mood/topic/motif dimensions + values); empty until the categorization migration runs
+  - `GET /api/poems/by-category` - Filter/recommend poems by facets (`?mood=&topic=&motif=&minIntensity=&maxAccessibility=&limit=`); gated behind `hasCategorization`
 - PostgreSQL connection via `pg` library
 - Supports DATABASE_URL (production) or individual env vars (local)
 - Keep-alive self-ping every 9-13 min (randomized) to prevent Render cold starts (production only)

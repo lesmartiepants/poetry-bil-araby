@@ -183,6 +183,21 @@ async function checkTitleEnColumn() {
   }
 }
 
+// Check if the categorization layer exists (graceful pre-migration fallback).
+// Gates the /api/categories and /api/poems/by-category endpoints.
+let hasCategorization = false;
+async function checkCategorizationSupport() {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'poem_categories' LIMIT 1"
+    );
+    hasCategorization = result.rows.length > 0;
+    log.info('DB', `Categorization layer: ${hasCategorization ? 'available' : 'not found'}`);
+  } catch {
+    hasCategorization = false;
+  }
+}
+
 // Helper: returns extra SELECT for English poet name (empty string when column doesn't exist)
 function poetNameEnExpr() {
   return hasPoetNameEn ? ', po.name_en as poet_en' : '';
@@ -245,6 +260,7 @@ pool.query('SELECT NOW()', (err, res) => {
     checkPoetNameEnColumn();
     checkTitleEnColumn();
     checkPoemEventsTable();
+    checkCategorizationSupport();
   }
 });
 
@@ -619,6 +635,147 @@ app.get(
     }
   }
 );
+
+// List the available categorization facets (dimensions + values, bilingual).
+// Powers filter UIs. Returns [] gracefully when the migration hasn't run.
+app.get('/api/categories', async (req, res) => {
+  try {
+    if (!hasCategorization) return res.json({ dimensions: [] });
+    const result = await pool.query(`
+      SELECT d.key AS dimension, d.label_ar AS dimension_ar, d.label_en AS dimension_en,
+             d.cardinality, v.key AS value, v.label_ar, v.label_en,
+             COUNT(pc.poem_id) AS poem_count
+      FROM category_dimensions d
+      JOIN category_values v ON v.dimension_id = d.id
+      LEFT JOIN poem_categories pc ON pc.value_id = v.id
+      GROUP BY d.id, d.key, d.label_ar, d.label_en, d.cardinality,
+               v.id, v.key, v.label_ar, v.label_en, v.sort_order
+      ORDER BY d.sort_order, v.sort_order
+    `);
+    // Group values under their dimension
+    const byDim = new Map();
+    for (const row of result.rows) {
+      if (!byDim.has(row.dimension)) {
+        byDim.set(row.dimension, {
+          key: row.dimension,
+          label_ar: row.dimension_ar,
+          label_en: row.dimension_en,
+          cardinality: row.cardinality,
+          values: [],
+        });
+      }
+      byDim.get(row.dimension).values.push({
+        key: row.value,
+        label_ar: row.label_ar,
+        label_en: row.label_en,
+        poem_count: parseInt(row.poem_count, 10),
+      });
+    }
+    res.json({ dimensions: Array.from(byDim.values()) });
+  } catch (error) {
+    Sentry.captureException(error);
+    log.error('Categories', `Error listing categories: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Filter/recommend poems by category facets.
+// Query params (all optional, AND-combined):
+//   mood, topic, motif  — repeatable value keys (a poem matches ANY value within
+//                         a dimension, and ALL specified dimensions)
+//   minIntensity        — emotional_intensity >= N (0-100)
+//   maxAccessibility    — accessibility_level <= N (1-5)
+//   limit               — 1..50 (default 10). Randomized selection.
+// IMPORTANT: registered BEFORE /api/poems/:id so it is not shadowed.
+app.get('/api/poems/by-category', async (req, res) => {
+  try {
+    if (!hasCategorization) return res.json([]);
+
+    const params = [];
+    const clauses = [];
+    const qf = servingFilters();
+    if (qf) clauses.push(qf.replace(/^\s*AND\s+/i, '')); // qf begins with "AND ..."
+
+    // Dimension filters via EXISTS against the normalized join
+    for (const dim of ['mood', 'topic', 'motif']) {
+      let raw = req.query[dim];
+      if (!raw) continue;
+      const values = (Array.isArray(raw) ? raw : [raw])
+        .flatMap((s) => String(s).split(','))
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 20);
+      if (values.length === 0) continue;
+      params.push(dim);
+      const dimIdx = params.length;
+      params.push(values);
+      const valIdx = params.length;
+      clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_dimensions cd ON cv.dimension_id = cd.id
+        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = ANY($${valIdx})
+      )`);
+    }
+
+    const minIntensity = parseInt(req.query.minIntensity, 10);
+    if (Number.isInteger(minIntensity)) {
+      params.push(Math.max(0, Math.min(100, minIntensity)));
+      clauses.push(`p.emotional_intensity >= $${params.length}`);
+    }
+    const maxAccessibility = parseInt(req.query.maxAccessibility, 10);
+    if (Number.isInteger(maxAccessibility)) {
+      params.push(Math.max(1, Math.min(5, maxAccessibility)));
+      clauses.push(`p.accessibility_level <= $${params.length}`);
+    }
+
+    let limit = parseInt(req.query.limit, 10);
+    limit = Number.isInteger(limit) ? Math.max(1, Math.min(50, limit)) : 10;
+    params.push(limit);
+    const limitIdx = params.length;
+
+    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+    const result = await pool.query(
+      `
+      SELECT
+        p.id,
+        p.title,
+        ${poemContentExpr()} as arabic,
+        po.name as poet,
+        t.name as theme,
+        p.mood_primary,
+        p.emotional_intensity,
+        p.accessibility_level
+        ${poetNameEnExpr()}
+        ${titleEnExpr()}
+        ${translationSelectExpr()}
+      FROM poems p
+      JOIN poets po ON p.poet_id = po.id
+      JOIN themes t ON p.theme_id = t.id
+      ${where}
+      ORDER BY RANDOM()
+      LIMIT $${limitIdx}
+    `,
+      params
+    );
+
+    const poems = result.rows.map((poem) => {
+      const formatted = formatPoem(poem);
+      formatted.moodPrimary = poem.mood_primary;
+      formatted.emotionalIntensity = poem.emotional_intensity;
+      formatted.accessibilityLevel = poem.accessibility_level;
+      if (poem.cached_translation) formatted.cachedTranslation = poem.cached_translation;
+      return formatted;
+    });
+
+    log.info('Categories', `by-category returned ${poems.length} poems`);
+    res.json(poems);
+  } catch (error) {
+    Sentry.captureException(error);
+    log.error('Categories', `Error filtering by category: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Get poem by ID (for deep links / sharing)
 // IMPORTANT: This route uses :id param and must be registered AFTER all /api/poems/<literal> routes

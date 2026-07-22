@@ -15,6 +15,12 @@ import { useModalStore } from '../../stores/modalStore';
 // right above the nav on notched devices instead of floating with a big gap).
 const VIEWPORT_H = 'calc(100dvh - 110px - env(safe-area-inset-bottom, 0px))';
 
+// Coarse pointers (touch) swipe; fine pointers (mouse) scroll. Resolve once at module load so the
+// over-scroll preview cue matches the input the user actually has.
+const COARSE_POINTER =
+  typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+const NEXT_POEM_CUE = `${COARSE_POINTER ? 'swipe' : 'scroll'} up for next poem ↑`;
+
 /**
  * PoemFeed — vertical magnetic feed of poems, ported from the prototype.
  *
@@ -380,7 +386,7 @@ const PoemFeed = forwardRef(function PoemFeed(
             className="font-brand-en text-xs tracking-widest uppercase"
             style={{ color: goldColor }}
           >
-            swipe up for next poem ↑
+            {NEXT_POEM_CUE}
           </span>
         </div>
       )}

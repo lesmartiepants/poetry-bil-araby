@@ -183,6 +183,15 @@ Object.defineProperty(navigator, 'clipboard', {
   configurable: true,
 });
 
+// happy-dom reports navigator.webdriver === true. The app suppresses the auto-launch tour under
+// browser automation (Playwright e2e), but unit tests emulate a REAL user — present webdriver as
+// false so auto-launch behaviour and the TourLauncher tests work as in a real browser.
+Object.defineProperty(navigator, 'webdriver', {
+  value: false,
+  writable: true,
+  configurable: true,
+});
+
 // Mock document.execCommand for copy functionality
 document.execCommand = vi.fn(() => true);
 

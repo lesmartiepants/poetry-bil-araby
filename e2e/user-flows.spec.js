@@ -199,15 +199,18 @@ test.describe('User Flows', () => {
     await expect(themeBtn).toBeVisible({ timeout: 3000 });
     await themeBtn.click();
 
-    // Wait for theme transition
-    await page.waitForTimeout(300);
-
-    // Background should have changed
-    const newBg = await page.evaluate(() => {
-      const rootDiv = document.querySelector('#root > div');
-      return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
-    });
-    expect(newBg).not.toBe(initialBg);
+    // The theme transition is animated — poll until the root background actually changes rather
+    // than reading once after a fixed delay (which raced the transition and flaked).
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const rootDiv = document.querySelector('#root > div');
+            return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
+          }),
+        { timeout: 3000 }
+      )
+      .not.toBe(initialBg);
   });
 
   // #5 — Cycle Arabic font

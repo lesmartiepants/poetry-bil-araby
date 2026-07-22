@@ -45,7 +45,7 @@ describe('TOUR_STEPS (shared source of truth)', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
-  it('welcome is centered; finish highlights the restart control; feature steps auto-advance', () => {
+  it('welcome is centered; finish highlights the restart control; feature steps wait for the real interaction', () => {
     const welcome = TOUR_STEPS[0];
     expect(welcome.target).toBeNull();
     expect(welcome.advanceOn).toBeUndefined();
@@ -56,7 +56,7 @@ describe('TOUR_STEPS (shared source of truth)', () => {
     expect(finish.target).toMatch(/^\[data-tour=/);
     expect(finish.advanceOn).toBeUndefined();
 
-    // Interactive feature steps anchor to a real control, auto-advance, and hint.
+    // Interactive feature steps anchor to a real control, wait for the real interaction, and hint.
     const interactive = TOUR_STEPS.filter((s) => s.advanceOn);
     expect(interactive.length).toBeGreaterThanOrEqual(3);
     for (const s of interactive) {
@@ -68,6 +68,18 @@ describe('TOUR_STEPS (shared source of truth)', () => {
   it('every anchored selector matches an existing data-tour key set', () => {
     const targets = anchoredSteps().map((s) => s.target.match(/"(.+?)"/)[1]);
     expect(targets).toEqual(expect.arrayContaining(['listen', 'discover', 'explain']));
+  });
+
+  it('the Save step carries auth-aware copy: signed-in body + a sign-up dismiss hint', () => {
+    const fav = TOUR_STEPS.find((s) => s.key === 'favourite');
+    expect(fav).toBeTruthy();
+    expect(fav.body).toBeTruthy();
+    expect(fav.bodyAuthed).toBeTruthy();
+    expect(fav.bodyAuthed).not.toBe(fav.body);
+    // The signed-out base body must NOT tell a would-be signed-in reader to sign in.
+    expect(fav.body.toLowerCase()).not.toContain('sign in');
+    // The dismiss hint encourages sign-up while making dismissal clear.
+    expect(fav.dismissHint).toMatch(/sign in/i);
   });
 });
 
@@ -94,7 +106,37 @@ describe('SpotlightTour engine', () => {
     await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
   });
 
-  it('keeps Next disabled until the user performs the action, then advances', async () => {
+  it('Save step shows sign-out body when signed out and library body when signed in', () => {
+    const favIndex = TOUR_STEPS.findIndex((s) => s.key === 'favourite');
+    const fav = TOUR_STEPS[favIndex];
+
+    const { unmount } = render(
+      <SpotlightTour
+        steps={TOUR_STEPS}
+        initialStep={favIndex}
+        onDismiss={vi.fn()}
+        onComplete={vi.fn()}
+      />
+    );
+    expect(screen.getByText('Save your favourites')).toBeInTheDocument();
+    expect(screen.getByText(fav.body)).toBeInTheDocument();
+    expect(screen.queryByText(fav.bodyAuthed)).not.toBeInTheDocument();
+    unmount();
+
+    render(
+      <SpotlightTour
+        steps={TOUR_STEPS}
+        initialStep={favIndex}
+        isSignedIn
+        onDismiss={vi.fn()}
+        onComplete={vi.fn()}
+      />
+    );
+    expect(screen.getByText(fav.bodyAuthed)).toBeInTheDocument();
+    expect(screen.queryByText(fav.body)).not.toBeInTheDocument();
+  });
+
+  it('feature steps auto-advance on the real interaction (no Next button)', async () => {
     const target = document.createElement('button');
     target.setAttribute('data-tour', 'listen');
     document.body.appendChild(target);
@@ -103,14 +145,14 @@ describe('SpotlightTour engine', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Next' })); // welcome -> listen
     expect(screen.getByText('Listen to the poem')).toBeInTheDocument();
 
-    // Next is disabled until the step's action is done.
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    // Feature steps have no Next button — the real interaction advances them.
+    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument();
 
-    // Performing the real interaction enables Next, which then advances.
+    // Performing the real interaction auto-advances after the dwell delay (no Next tap needed).
     target.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Next' })).toBeEnabled());
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(screen.getByText('Pause anytime')).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByText('Pause anytime')).toBeInTheDocument(), {
+      timeout: 2500,
+    });
     target.remove();
   });
 

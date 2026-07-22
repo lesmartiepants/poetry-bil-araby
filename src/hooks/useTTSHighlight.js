@@ -41,10 +41,19 @@ export function setWindowedReveal(v) {
  * @param {number} offset - seconds into the audio to start from
  */
 export function startPlayer(player, offset) {
-  pauseOffset.value = offset;
+  // Clamp the offset against the actual audio duration so a stale/drifted pause offset (wall-clock
+  // elapsed can exceed the generated audio when the live stream underran) can never start the player
+  // at or past the buffer end — which yields silence. Tone.Player exposes buffer.duration; the iOS
+  // HTMLAudio wrapper has no `.buffer`, so the clamp is simply skipped there.
+  let safeOffset = Math.max(0, offset || 0);
+  const dur = player?.buffer?.duration;
+  if (typeof dur === 'number' && dur > 0 && safeOffset > dur - 0.1) {
+    safeOffset = Math.max(0, dur - 0.1);
+  }
+  pauseOffset.value = safeOffset;
   playbackStartTime.value = Date.now() / 1000;
-  if (FEATURES.logging) console.log(`[Playback:startPlayer] offset=${offset.toFixed(2)}s`);
-  player.start(undefined, offset);
+  if (FEATURES.logging) console.log(`[Playback:startPlayer] offset=${safeOffset.toFixed(2)}s`);
+  player.start(undefined, safeOffset);
 }
 
 /**

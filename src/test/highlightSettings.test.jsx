@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import TextSettingsPill from '../components/TextSettingsPill';
 import { useUIStore } from '../stores/uiStore';
+import { useModalStore } from '../stores/modalStore';
 
 // Reset uiStore before each test
 beforeEach(() => {
@@ -33,17 +34,19 @@ describe('highlightStyle in uiStore', () => {
   });
 });
 
-describe('TextSettingsPill — Row 5 Highlight selector', () => {
+describe('TextSettingsPill — Highlight selector', () => {
+  // The panel is now opened from the account menu via the modalStore flag (no standalone trigger).
+  beforeEach(() => {
+    useModalStore.getState().setDisplaySettings(true);
+  });
+
   it('renders the Read Along label', () => {
     render(<TextSettingsPill />);
-    // Open the popover by clicking the trigger
-    fireEvent.click(screen.getByRole('button', { name: /text.*settings/i }));
     expect(screen.getByText(/read along/i)).toBeInTheDocument();
   });
 
   it('renders all 5 style buttons: Off, Glow, Line, Pill, Blur', () => {
     render(<TextSettingsPill />);
-    fireEvent.click(screen.getByRole('button', { name: /text.*settings/i }));
     expect(screen.getByRole('radio', { name: /off/i })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /glow/i })).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: /line/i })).toBeInTheDocument();
@@ -53,28 +56,24 @@ describe('TextSettingsPill — Row 5 Highlight selector', () => {
 
   it('"Pill" button is active by default (highlightStyle is "pill")', () => {
     render(<TextSettingsPill />);
-    fireEvent.click(screen.getByRole('button', { name: /text.*settings/i }));
     const pillBtn = screen.getByRole('radio', { name: /pill/i });
     expect(pillBtn).toHaveAttribute('data-state', 'on');
   });
 
   it('clicking "Glow" sets highlightStyle to "glow" in uiStore', () => {
     render(<TextSettingsPill />);
-    fireEvent.click(screen.getByRole('button', { name: /text.*settings/i }));
     fireEvent.click(screen.getByRole('radio', { name: /glow/i }));
     expect(useUIStore.getState().highlightStyle).toBe('glow');
   });
 
   it('clicking "Pill" sets highlightStyle to "pill" in uiStore', () => {
     render(<TextSettingsPill />);
-    fireEvent.click(screen.getByRole('button', { name: /text.*settings/i }));
     fireEvent.click(screen.getByRole('radio', { name: /pill/i }));
     expect(useUIStore.getState().highlightStyle).toBe('pill');
   });
 
   it('active button has gold active styling (data-state="on")', () => {
     render(<TextSettingsPill />);
-    fireEvent.click(screen.getByRole('button', { name: /text.*settings/i }));
     fireEvent.click(screen.getByRole('radio', { name: /glow/i }));
     const glowBtn = screen.getByRole('radio', { name: /glow/i });
     expect(glowBtn).toHaveAttribute('data-state', 'on');

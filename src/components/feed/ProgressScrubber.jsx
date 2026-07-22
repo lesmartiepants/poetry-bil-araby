@@ -1,11 +1,13 @@
 import { useRef } from 'react';
 
 /**
- * ProgressScrubber — the thin gold progress bar with a draggable handle.
+ * ProgressScrubber — the thin gold progress rail with a draggable handle.
  *
- * The reveal controller writes the fill width + handle position directly into the refs
- * (no per-frame React). Dragging the handle calls onScrub(frac) continuously and
- * onScrubEnd(frac) on release; the controller seeks/resumes from there. The root carries
+ * VERTICAL rail (#613): full-height, anchored to the screen-right edge of the reading stage,
+ * mapping top→bottom reading position. The reveal controller writes the fill HEIGHT + handle
+ * TOP position directly into the refs (no per-frame React). Dragging the handle calls
+ * onScrub(frac) continuously and onScrubEnd(frac) on release; the controller seeks/resumes from
+ * there. frac is derived from pointer Y relative to the rail's top/height. The root carries
  * `data-scrub` so the feed's Embla `watchDrag` predicate ignores drags that start here.
  */
 export default function ProgressScrubber({
@@ -26,11 +28,12 @@ export default function ProgressScrubber({
     const el = barRef.current;
     if (!el) return 0;
     const r = el.getBoundingClientRect();
-    return Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+    // Vertical: pointer Y from the rail top, normalised over its height (top = 0, bottom = 1).
+    return Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
   };
 
-  // Pointer handlers live on a tall, full-width hit area (not the thin bar) so the scrubber is
-  // easy to grab and tapping anywhere along the row seeks. The visible bar + handle stay thin.
+  // Pointer handlers live on a wide, full-height hit area (not the thin rail) so the scrubber is
+  // easy to grab and tapping anywhere along the column seeks. The visible rail + handle stay thin.
   const onDown = (e) => {
     if (!total) return;
     e.stopPropagation();
@@ -46,7 +49,7 @@ export default function ProgressScrubber({
   };
   const onMove = (e) => {
     if (!draggingRef.current) return;
-    e.stopPropagation(); // keep the vertical feed from also handling the scrub (horizontal-locked)
+    e.stopPropagation(); // keep the vertical feed from also handling the scrub (pointer captured here)
     e.preventDefault();
     onScrub?.(frac(e));
   };
@@ -62,17 +65,18 @@ export default function ProgressScrubber({
     <div
       data-scrub
       data-testid="progress-scrubber"
-      className="flex justify-center items-center w-full transition-opacity duration-300"
+      className="flex justify-center items-stretch h-full transition-opacity duration-300"
       style={{
         opacity: visible ? 1 : 0,
         pointerEvents: visible ? 'auto' : 'none',
         direction: 'ltr',
       }}
     >
-      {/* Generous hit area: tall + wide so the thin bar is easy to grab on touch. */}
+      {/* Generous hit area: full-height + ≥44px wide so the thin rail is easy to grab on touch. */}
       <div
         role="slider"
         aria-label="Seek through the poem"
+        aria-orientation="vertical"
         aria-valuemin={0}
         aria-valuemax={total}
         tabIndex={0}
@@ -82,12 +86,14 @@ export default function ProgressScrubber({
         onPointerCancel={onUp}
         className="relative flex items-center justify-center"
         style={{
-          // Wide, tall hit area with horizontal margins beyond the bar, so a press to the RIGHT of
-          // the handle (or past the bar's end) still grabs and can be dragged left. frac is measured
-          // against the inner bar and clamped, so the side margins map to the 0 / 1 ends.
-          width: 'min(300px, 82vw)',
-          paddingTop: 18,
-          paddingBottom: 18,
+          // Wide (≥44px touch target), full-height hit area with vertical margins beyond the rail,
+          // so a press ABOVE/BELOW the handle (or past the rail's end) still grabs and can be
+          // dragged. frac is measured against the inner rail and clamped, so the top/bottom margins
+          // map to the 0 / 1 ends.
+          width: 44,
+          height: '100%',
+          paddingTop: 16,
+          paddingBottom: 16,
           paddingLeft: 16,
           paddingRight: 16,
           cursor: 'grab',
@@ -96,9 +102,9 @@ export default function ProgressScrubber({
       >
         <div
           ref={barRef}
-          className="relative w-full"
+          className="relative h-full"
           style={{
-            height: 3,
+            width: 3,
             borderRadius: 3,
             // Neutral grey track — the un-filled / un-scrolled portion reads as grey behind the
             // gold fill (reveal progress while reading, scroll position once an insight is loaded).
@@ -110,11 +116,12 @@ export default function ProgressScrubber({
             style={{
               position: 'absolute',
               left: 0,
+              right: 0,
               top: 0,
-              bottom: 0,
-              width: '0%',
+              height: '0%',
               borderRadius: 3,
-              background: `linear-gradient(90deg, ${goldColor}, #d4b463)`,
+              // Fill grows vertically from the top (top→bottom reading position).
+              background: `linear-gradient(180deg, ${goldColor}, #d4b463)`,
               pointerEvents: 'none',
             }}
           />
@@ -123,8 +130,8 @@ export default function ProgressScrubber({
             aria-hidden="true"
             style={{
               position: 'absolute',
-              top: '50%',
-              left: '0%',
+              left: '50%',
+              top: '0%',
               width: 16,
               height: 16,
               borderRadius: '50%',

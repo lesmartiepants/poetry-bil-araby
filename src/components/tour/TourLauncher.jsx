@@ -42,7 +42,7 @@ function readPersisted() {
  *    top-right (below the Aa text-settings pill); the final tour step highlights
  *    that icon so readers know where to find a refresher.
  */
-export default function TourLauncher({ user = null, savedCount = 0 }) {
+export default function TourLauncher({ user = null, savedCount = 0, onDemoRecite }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
   const steps = useMemo(
@@ -59,7 +59,8 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
     const { step } = readPersisted();
     return Number.isFinite(step) ? Math.max(0, step) : 0;
   });
-  // Always show on landing until completed; ?tour=… forces it open.
+  // Shown on landing until completed; ?tour=… forces it open. (Under browser automation the whole
+  // launcher is suppressed by the guard below, so this state is moot there.)
   const [open, setOpen] = useState(() => !readPersisted().completed || launchedFromURL());
   const [currentKey, setCurrentKey] = useState(null);
 
@@ -77,8 +78,6 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
     [steps]
   );
 
-  const handleDismiss = useCallback(() => setOpen(false), []);
-
   const handleComplete = useCallback(() => {
     setOpen(false);
     setCompleted(true);
@@ -88,6 +87,18 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
       /* ignore */
     }
   }, []);
+
+  // Reaching the finish step IS completion. If the reader closes the tour from
+  // that step by ANY path (×, Esc, or a Done tap a lingering auth overlay might
+  // otherwise swallow), persist completion defensively so the restart icon — not
+  // the "Resume tour" chip — shows next time (#610c).
+  const handleDismiss = useCallback(() => {
+    if (currentKey === 'finish') {
+      handleComplete();
+      return;
+    }
+    setOpen(false);
+  }, [currentKey, handleComplete]);
 
   const restart = useCallback(() => {
     setResumeStep(0);
@@ -99,6 +110,11 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
   // step (so that step can spotlight it) before completion.
   const showCornerIcon = completed || (open && currentKey === 'finish');
 
+  // Under browser automation (Playwright e2e), render nothing — no coachmark/tap-catcher, no
+  // "Take a tour" chip, no restart icon — so the walkthrough can never block a flow spec. The
+  // tour's own e2e opts back in explicitly via ?tour=1 (launchedFromURL).
+  if (typeof navigator !== 'undefined' && navigator.webdriver && !launchedFromURL()) return null;
+
   return (
     <>
       {open && (
@@ -109,6 +125,8 @@ export default function TourLauncher({ user = null, savedCount = 0 }) {
             onStepChange={persistStep}
             onDismiss={handleDismiss}
             onComplete={handleComplete}
+            onDemoRecite={onDemoRecite}
+            isSignedIn={!!user}
           />
         </Suspense>
       )}

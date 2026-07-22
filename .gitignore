@@ -99,3 +99,6 @@ scripts/title-progress.json
 
 *storybook.log
 storybook-static
+
+# Local git worktrees (never commit as gitlinks)
+.claude/worktrees/

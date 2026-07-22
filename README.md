@@ -240,10 +240,13 @@ npm run test:e2e        # end-to-end tests (Playwright)
 npm run test:e2e:full   # full device matrix (local)
 ```
 
-Unit tests cover components, utilities, and database integration with Vitest and React
-Testing Library. End-to-end suites in `e2e/` exercise core flows, audio and TTS highlighting,
-the reader feed, translation caching, PWA behavior, and UI/UX quality. The GitHub Actions
-pipeline builds, runs unit tests, then runs the E2E suite against a PostgreSQL service.
+Unit tests cover components, utilities, database integration, and audio/TTS behavior (including
+the REST/Live playback fallback) with Vitest and React Testing Library. End-to-end suites in
+`e2e/` exercise core flows, the sparkler reader feed, translation caching, PWA behavior, and the
+onboarding tour. A handful of pre-vertical-feed specs (`carousel`, `audio`, `insight-overlay`,
+`tts-highlight`) are quarantined in `playwright.config.js` pending migration to the current
+reader. The GitHub Actions pipeline builds, runs unit tests, then runs the E2E suite against a
+PostgreSQL service.
 
 ## Deployment
 

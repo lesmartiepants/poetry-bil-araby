@@ -27,6 +27,26 @@ vi.mock('tone', () => ({
     stop() {}
   },
   start: vi.fn().mockResolvedValue(undefined),
+  // The Live streaming fast-path builds a player from the raw AudioContext.
+  getContext: () => ({ rawContext: {} }),
+}));
+// The Live streaming layer — stub it so the streaming fast-path can run (and fail over
+// to REST) without a real Web Audio context.
+vi.mock('../utils/liveAudioStream.js', () => ({
+  createStreamingPlayer: () => ({
+    pushChunk: vi.fn(),
+    markInputDone: vi.fn(),
+    start: vi.fn(),
+    stop: vi.fn(),
+    connect: vi.fn().mockReturnThis(),
+    onstop: null,
+    get hasStarted() {
+      return false;
+    },
+  }),
+  consumeSSE: vi.fn(),
+  pcmBase64ToInt16: vi.fn(),
+  concatPcmBase64: vi.fn(() => ''),
 }));
 vi.mock('sonner', () => ({
   toast: Object.assign(vi.fn(), {

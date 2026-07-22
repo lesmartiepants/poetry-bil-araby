@@ -1,0 +1,47 @@
+name: Workflow Lint
+
+# Validates GitHub Actions workflow files with actionlint so a malformed workflow —
+# e.g. an invalid or empty expression — is caught on the pull request, before it
+# can merge and fail every future run at STARTUP (0 jobs, no logs, no self-notification).
+# This is the guard for the failure class that the README Auto-Update outage exposed.
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  actionlint:
+    name: actionlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Install the official actionlint binary from source, pinned. ubuntu-latest ships Go,
+      # so this needs no third-party action and no curl-pipe-to-shell.
+      - name: Install actionlint
+        run: go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.7
+
+      # Disable the shellcheck integration: it would lint every `run:` block across all
+      # workflows and could fail on pre-existing shell-style nits unrelated to this change.
+      # The core actionlint checks — YAML structure, cron/glob validity, and (crucially)
+      # ${{ }} expression syntax — still run, which is exactly the class that caused the
+      # README Auto-Update startup outage.
+      #
+      # Incremental adoption: two PRE-EXISTING errors in ci.yml (stale references to a
+      # `e2e-env` step and an `e2e-tests` job that no longer exist — GitHub tolerates them
+      # at runtime by returning '') are ignored here so this guard doesn't block unrelated
+      # work. They should be fixed separately; everything else — including new invalid or
+      # empty expressions — still fails the check.
+      - name: Run actionlint
+        run: |
+          "$(go env GOPATH)/bin/actionlint" -shellcheck= -color \
+            -ignore 'property "e2e-env" is not defined' \
+            -ignore 'property "e2e-tests" is not defined'

@@ -6,7 +6,7 @@ import path from 'path';
  * TDD validation for WS2: Sonner toast integration
  *
  * Validates that Sonner is wired into main.jsx,
- * toast calls exist in fetchPoem.js, and ErrorBanner is deleted.
+ * discovery toasts were removed from fetchPoem.js, and ErrorBanner is deleted.
  */
 
 const SRC = path.resolve(__dirname, '..');
@@ -30,16 +30,15 @@ describe('WS2: Sonner integration', () => {
     });
   });
 
-  describe('fetchPoem.js has toast notifications', () => {
-    it('imports toast from sonner', () => {
+  describe('fetchPoem.js does not toast on discovery', () => {
+    it('does not import toast from sonner', () => {
       const content = fs.readFileSync(path.join(SRC, 'stores/actions/fetchPoem.js'), 'utf-8');
-      expect(content).toMatch(/import\s*\{[^}]*toast[^}]*\}\s*from\s*['"]sonner['"]/);
+      expect(content).not.toMatch(/import\s*\{[^}]*toast[^}]*\}\s*from\s*['"]sonner['"]/);
     });
 
-    it('calls toast on poem discovery', () => {
+    it('does not call toast during poem discovery', () => {
       const content = fs.readFileSync(path.join(SRC, 'stores/actions/fetchPoem.js'), 'utf-8');
-      // Should have at least one toast() call
-      expect(content).toMatch(/toast\s*\(/);
+      expect(content).not.toMatch(/toast\s*\(\s*['"]New poem discovered['"]/);
     });
   });
 

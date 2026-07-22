@@ -265,17 +265,17 @@ export default function ShareCardModal({ poem, onClose }) {
   // ── Export actions — same canvas as the preview ──────────────────────
   const handleDownload = () => {
     const canvas = canvasRef.current;
-    if (!canvas || !previewUrl) return;
+    if (!canvas) return;
     const link = document.createElement('a');
     link.download = `poem-${poem.id || 'card'}-${selectedDesign}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
-    showToast('Card saved');
+    showToast('Card saved to Photos');
   };
 
   const handleShare = async () => {
     const canvas = canvasRef.current;
-    if (!canvas || !previewUrl) return;
+    if (!canvas) return;
 
     const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
     const file = new File([blob], `poem-${poem.id || 'card'}.png`, { type: 'image/png' });
@@ -362,6 +362,16 @@ export default function ShareCardModal({ poem, onClose }) {
       <button className="scm-btn-close" aria-label="Close" onClick={onClose}>
         <X size={15} aria-hidden="true" />
       </button>
+
+      {/* Tap-outside scrim — only while the lines panel is open, so tapping the
+          card (or anywhere above the sheet) dismisses the panel. */}
+      {panelOpen && (
+        <div
+          className="scm-scrim"
+          aria-hidden="true"
+          onClick={() => setPanelOpen(false)}
+        />
+      )}
 
       {/* Bottom shelf — arcade selector, material caption, glass dock */}
       <div className="scm-shelf">

@@ -715,14 +715,22 @@
   display: none;
 }
 
+/* Tap-outside scrim — invisible; sits above the stage, below the shelf,
+   so tapping the card closes the open lines panel */
+.scm-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 215;
+}
+
 /* ============================================================
-   TOAST
+   TOAST — anchored just above the dock, not at the top of the
+   screen, so feedback appears right next to the action buttons
    ============================================================ */
 .scm-toast {
   position: fixed;
   left: 50%;
-  top: calc(56px + env(safe-area-inset-top, 0px));
-  transform: translate(-50%, -10px);
+  bottom: calc(116px + env(safe-area-inset-bottom, 0px));
   z-index: 240;
   padding: 9px 18px;
   border-radius: 999px;
@@ -737,6 +745,7 @@
   pointer-events: none;
   transition: all 0.35s var(--scm-ease-out-expo);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  transform: translate(-50%, 10px);
 }
 .scm-toast.scm-show {
   opacity: 1;

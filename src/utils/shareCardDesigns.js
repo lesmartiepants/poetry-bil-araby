@@ -222,14 +222,18 @@ function drawBrandBottomRight(ctx, w, h, brandColor, opts = {}) {
 }
 
 /**
- * Draw a book-inspired decorative flourish — two mirrored curves with a central diamond.
+ * Draw a book-inspired decorative flourish — two mirrored curves with a central
+ * diamond. Always drawn horizontally centered on `cx`; `span` controls how far
+ * each wing reaches so the ornament can be made wider/narrower per design.
  */
-function drawBookFlourish(ctx, cx, cy, color) {
+function drawBookFlourish(ctx, cx, cy, color, span = 128) {
   ctx.save();
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
   ctx.lineWidth = 3.0;
   ctx.globalAlpha = 0.5;
+
+  const mid = span * 0.55; // control-point x for the gentle arc
 
   // Central small diamond
   ctx.beginPath();
@@ -240,25 +244,25 @@ function drawBookFlourish(ctx, cx, cy, color) {
   ctx.closePath();
   ctx.fill();
 
-  // Left open-book page curve — wider span
+  // Left open-book page curve
   ctx.beginPath();
   ctx.moveTo(cx - 14, cy);
-  ctx.quadraticCurveTo(cx - 50, cy - 18, cx - 90, cy - 3);
+  ctx.quadraticCurveTo(cx - mid, cy - 18, cx - span, cy - 3);
   ctx.stroke();
 
-  // Right open-book page curve (mirrored) — wider span
+  // Right open-book page curve (mirrored)
   ctx.beginPath();
   ctx.moveTo(cx + 14, cy);
-  ctx.quadraticCurveTo(cx + 50, cy - 18, cx + 90, cy - 3);
+  ctx.quadraticCurveTo(cx + mid, cy - 18, cx + span, cy - 3);
   ctx.stroke();
 
   // Small end dots
   ctx.globalAlpha = 0.35;
   ctx.beginPath();
-  ctx.arc(cx - 90, cy - 3, 2.5, 0, Math.PI * 2);
+  ctx.arc(cx - span, cy - 3, 2.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(cx + 90, cy - 3, 2.5, 0, Math.PI * 2);
+  ctx.arc(cx + span, cy - 3, 2.5, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
@@ -288,14 +292,19 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
 
   ctx.textAlign = align;
 
-  // ── 1. Book flourish ornament — positioned halfway between top border and title ──
-  const flourishY = Math.round((borderTop + headerY) / 2) - 3;
-  drawBookFlourish(
-    ctx,
-    align === 'right' ? xPos : w / 2,
-    flourishY,
-    colors.separator || colors.poet
-  );
+  // ── 1. Book flourish ornament — always centered on the card, sitting a fixed
+  //   gap above the title. The ornament stays put regardless of text alignment
+  //   (a right-aligned poem should not shove it into the corner). When the
+  //   header is pushed up — e.g. six lines selected — there may be no room
+  //   between the top border and the title, so the flourish is skipped rather
+  //   than allowed to collide with the title. ──
+  const flourishGap = 44; // clearance kept above the title baseline's cap height
+  const flourishY = headerY - flourishGap;
+  // opts.flourish === false → the design supplies its own top ornament
+  // (e.g. Layl's star, Mishkat's arch, Sahifa's masthead) so we don't double up.
+  if (opts.flourish !== false && flourishY >= borderTop + 22) {
+    drawBookFlourish(ctx, w / 2, flourishY, colors.separator || colors.poet);
+  }
 
   // ── 2. Arabic poem title — biggest, gold foil ──
   if (resolvedTitle.arabic) {
@@ -681,7 +690,7 @@ function renderZahaHadid(ctx, w, h, poem, opts = {}) {
   ctx.fill();
 
   // ── Layout: centered vertically ──
-  const { align, xText, maxLines } = resolveRenderOpts(w, opts, 'right');
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
   const verses = prepareVerses(poem.arabic, maxLines);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
   const layout = calculateCenteredLayout(h, poem, verses.length);
@@ -882,7 +891,7 @@ function renderLayl(ctx, w, h, poem, opts = {}) {
       separator: 'rgba(212, 180, 99, 0.45)',
       englishGrey: 'rgba(160, 155, 145, 0.55)',
     },
-    { borderTop: 170, align, xPos: xText }
+    { borderTop: 170, align, xPos: xText, flourish: false }
   );
 
   const contentStartY = headerBottom + layout.titleBodyGap;
@@ -968,7 +977,7 @@ function renderMishkat(ctx, w, h, poem, opts = {}) {
       separator: '#d4b463',
       englishGrey: 'rgba(165, 190, 180, 0.6)',
     },
-    { borderTop: 150, align, xPos: xText }
+    { borderTop: 150, align, xPos: xText, flourish: false }
   );
 
   const contentStartY = headerBottom + layout.titleBodyGap;
@@ -1023,7 +1032,7 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
   ctx.fillRect(m, h - 86, w - m * 2, 6);
 
   // ── Layout — right-aligned by default, like Arabic newsprint ──
-  const { align, xText, maxLines } = resolveRenderOpts(w, opts, 'right');
+  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
   const verses = prepareVerses(poem.arabic, maxLines);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
   const layout = calculateCenteredLayout(h, poem, verses.length);
@@ -1040,7 +1049,7 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
       separator: '#8e2a2a',
       englishGrey: 'rgba(90, 82, 72, 0.65)',
     },
-    { borderTop: 130, align, xPos: xText }
+    { borderTop: 130, align, xPos: xText, flourish: false }
   );
 
   const contentStartY = headerBottom + layout.titleBodyGap;
@@ -1106,7 +1115,7 @@ function renderNeon(ctx, w, h, poem, opts = {}) {
       separator: '#ff4fd8',
       englishGrey: 'rgba(190, 180, 210, 0.6)',
     },
-    { borderTop: 150, align, xPos: xText }
+    { borderTop: 150, align, xPos: xText, flourish: false }
   );
 
   const contentStartY = headerBottom + layout.titleBodyGap;

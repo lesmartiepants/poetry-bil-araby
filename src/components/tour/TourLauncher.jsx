@@ -59,7 +59,8 @@ export default function TourLauncher({ user = null, savedCount = 0, onDemoRecite
     const { step } = readPersisted();
     return Number.isFinite(step) ? Math.max(0, step) : 0;
   });
-  // Always show on landing until completed; ?tour=… forces it open.
+  // Shown on landing until completed; ?tour=… forces it open. (Under browser automation the whole
+  // launcher is suppressed by the guard below, so this state is moot there.)
   const [open, setOpen] = useState(() => !readPersisted().completed || launchedFromURL());
   const [currentKey, setCurrentKey] = useState(null);
 
@@ -108,6 +109,11 @@ export default function TourLauncher({ user = null, savedCount = 0, onDemoRecite
   // The corner icon is permanent once completed; it also appears on the final
   // step (so that step can spotlight it) before completion.
   const showCornerIcon = completed || (open && currentKey === 'finish');
+
+  // Under browser automation (Playwright e2e), render nothing — no coachmark/tap-catcher, no
+  // "Take a tour" chip, no restart icon — so the walkthrough can never block a flow spec. The
+  // tour's own e2e opts back in explicitly via ?tour=1 (launchedFromURL).
+  if (typeof navigator !== 'undefined' && navigator.webdriver && !launchedFromURL()) return null;
 
   return (
     <>

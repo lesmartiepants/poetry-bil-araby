@@ -6,177 +6,79 @@
 <title>Share Card — Render Options (WYSIWYG)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700&family=Reem+Kufi:wght@400;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700&family=Reem+Kufi:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
-:root {
-  --gold: #c5a059;
-  --gold-bright: #d4b463;
-  --bg: #0c0c0e;
-  --ink: rgba(232, 224, 208, 0.92);
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: var(--bg);
-  color: var(--ink);
-  font-family: system-ui, -apple-system, sans-serif;
-  padding: 48px 28px 80px;
-}
-header { max-width: 1080px; margin: 0 auto 10px; }
-header .kicker {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-size: 0.85rem;
-  letter-spacing: 0.14em;
-  color: rgba(197, 160, 89, 0.6);
-}
-header h1 {
-  font-family: 'Playfair Display', serif;
-  font-weight: 600;
-  font-size: 1.7rem;
-  margin: 6px 0 4px;
-}
-header h1 .ar { font-family: 'Reem Kufi', sans-serif; color: var(--gold); font-size: 1.2rem; margin-left: 8px; }
-header p { color: rgba(232, 224, 208, 0.6); font-size: 0.9rem; max-width: 68ch; line-height: 1.6; }
-.rule {
-  max-width: 1080px; margin: 26px auto; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(197,160,89,0.4), transparent);
-}
-section { max-width: 1080px; margin: 0 auto 20px; }
-section h2 {
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-weight: 500;
-  font-size: 1.15rem;
-  color: var(--gold-bright);
-  margin-bottom: 4px;
-}
-section .sub { color: rgba(232,224,208,0.55); font-size: 0.84rem; margin-bottom: 18px; }
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 22px;
-}
-.card {
-  border: 1px solid rgba(197, 160, 89, 0.18);
-  border-radius: 14px;
-  overflow: hidden;
-  background: #101013;
-  transition: transform 0.2s, border-color 0.2s;
-}
-.card:hover { transform: translateY(-3px); border-color: rgba(197,160,89,0.45); }
-.card img { display: block; width: 100%; aspect-ratio: 1080 / 1350; object-fit: cover; }
-.card.tall img { aspect-ratio: 390 / 844; }
-.card figcaption { padding: 12px 14px 14px; border-top: 1px solid rgba(197,160,89,0.12); }
-.card .name { font-weight: 600; font-size: 0.92rem; display: flex; align-items: baseline; gap: 8px; }
-.card .name .ar { font-family: 'Reem Kufi', sans-serif; font-size: 0.8rem; color: var(--gold); }
-.card .badge {
-  display: inline-block; margin-left: auto;
-  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em;
-  color: #191307; background: linear-gradient(135deg, #b8922e, #e2c67a);
-  border-radius: 999px; padding: 2px 8px;
-}
-.card .desc {
-  margin-top: 5px;
-  font-family: 'Playfair Display', serif;
-  font-style: italic;
-  font-size: 0.78rem;
-  color: rgba(197, 160, 89, 0.65);
-  line-height: 1.5;
-}
+:root { --gold:#c5a059; --gold-bright:#d4b463; --bg:#0c0c0e; --ink:rgba(232,224,208,0.92); }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { background:var(--bg); color:var(--ink); font-family:system-ui,-apple-system,sans-serif; padding:48px 28px 80px; }
+header { max-width:1120px; margin:0 auto 10px; }
+.kicker { font-family:'Playfair Display',serif; font-style:italic; font-size:0.85rem; letter-spacing:0.14em; color:rgba(197,160,89,0.6); }
+h1 { font-family:'Playfair Display',serif; font-weight:600; font-size:1.7rem; margin:6px 0 4px; }
+h1 .ar { font-family:'Reem Kufi',sans-serif; color:var(--gold); font-size:1.2rem; margin-left:8px; }
+header p { color:rgba(232,224,208,0.6); font-size:0.9rem; max-width:70ch; line-height:1.6; }
+.rule { max-width:1120px; margin:26px auto; height:1px; background:linear-gradient(90deg,transparent,rgba(197,160,89,0.4),transparent); }
+section { max-width:1120px; margin:0 auto 20px; }
+section h2 { font-family:'Playfair Display',serif; font-style:italic; font-weight:500; font-size:1.15rem; color:var(--gold-bright); margin-bottom:4px; }
+section .sub { color:rgba(232,224,208,0.55); font-size:0.84rem; margin-bottom:18px; }
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:22px; }
+.card { border:1px solid rgba(197,160,89,0.18); border-radius:14px; overflow:hidden; background:#101013; transition:transform .2s,border-color .2s; }
+.card:hover { transform:translateY(-3px); border-color:rgba(197,160,89,0.45); }
+.card img { display:block; width:100%; aspect-ratio:1080/1350; object-fit:cover; }
+.card.tall img { aspect-ratio:390/844; }
+.card figcaption { padding:12px 14px 14px; border-top:1px solid rgba(197,160,89,0.12); }
+.card .name { font-weight:600; font-size:0.92rem; display:flex; align-items:baseline; gap:8px; }
+.card .name .ar { font-family:'Reem Kufi',sans-serif; font-size:0.8rem; color:var(--gold); }
+.card .badge { display:inline-block; margin-left:auto; font-size:0.6rem; font-weight:700; letter-spacing:0.1em; color:#191307; background:linear-gradient(135deg,#b8922e,#e2c67a); border-radius:999px; padding:2px 8px; }
+.card .desc { margin-top:5px; font-family:'Playfair Display',serif; font-style:italic; font-size:0.78rem; color:rgba(197,160,89,0.65); line-height:1.5; }
 </style>
 </head>
 <body>
-
 <header>
-  <div class="kicker">SHARE MODAL — POST-3.4B ITERATION</div>
-  <h1>Card Render Options <span class="ar">بالعربي</span></h1>
+  <div class="kicker">SHARE MODAL — CARD RENDER OPTIONS</div>
+  <h1>Card Materials <span class="ar">بالعربي</span></h1>
   <p>
-    The preview is now the actual canvas render — what you see in the modal is pixel-identical
-    to the PNG that gets downloaded or shared. Nine materials: the five artist designs from the
-    original sprint, plus four new directions that take liberties with the system. Every render
-    honors the reader's line selection (up to six verse pairs) and alignment choice
-    (centered / right).
+    The preview is the actual canvas render — what you see in the modal is pixel-identical
+    to the PNG that gets downloaded or shared. Twelve materials across three families. Every
+    card honours the reader's line selection (up to six verse pairs) and centres by default,
+    with an optional right alignment.
   </p>
 </header>
-
 <div class="rule"></div>
 
-<section id="new">
-  <h2>New directions</h2>
-  <div class="sub">Design liberties beyond the current system — same bilingual layout engine underneath.</div>
+<section>
+  <h2>The artist five</h2>
+  <div class="sub">The original sprint designs — bilingual header with a book flourish set between the header and the poem.</div>
   <div class="grid">
-    <figure class="card">
-      <img src="renders/layl.png" alt="Layl render" loading="lazy">
-      <figcaption>
-        <div class="name">Layl <span class="ar">ليل</span> <span class="badge">NEW</span></div>
-        <div class="desc">Midnight whisper — near-black silence, a single star, nothing but the words.</div>
-      </figcaption>
-    </figure>
-    <figure class="card" id="mishkat">
-      <img src="renders/mishkat.png" alt="Mishkat render" loading="lazy">
-      <figcaption>
-        <div class="name">Mishkat <span class="ar">مشكاة</span> <span class="badge">NEW</span></div>
-        <div class="desc">Lantern niche — deep emerald night, a glowing mihrab arch cradles the verse.</div>
-      </figcaption>
-    </figure>
-    <figure class="card" id="sahifa">
-      <img src="renders/sahifa.png" alt="Sahifa render" loading="lazy">
-      <figcaption>
-        <div class="name">Sahifa <span class="ar">صحيفة</span> <span class="badge">NEW</span></div>
-        <div class="desc">Poetry broadsheet — bone paper, masthead rules, madder-red ink. Right-aligned by default.</div>
-      </figcaption>
-    </figure>
-    <figure class="card" id="neon">
-      <img src="renders/neon.png" alt="Neon render" loading="lazy">
-      <figcaption>
-        <div class="name">Neon <span class="ar">سهر</span> <span class="badge">NEW</span></div>
-        <div class="desc">Night sign — verses burning in neon rose and cyan against a dark wall.</div>
-      </figcaption>
-    </figure>
+    <figure class="card"><img src="renders/diwan.png" alt="Dīwān" loading="lazy"><figcaption><div class="name">Dīwān <span class="ar">الديوان</span></div><div class="desc">Gold foil on obsidian.</div></figcaption></figure>
+    <figure class="card"><img src="renders/ibnMuqla.png" alt="Ibn Muqla" loading="lazy"><figcaption><div class="name">Ibn Muqla <span class="ar">ابن مقلة</span></div><div class="desc">Illuminated vellum.</div></figcaption></figure>
+    <figure class="card"><img src="renders/sinan.png" alt="Sinan" loading="lazy"><figcaption><div class="name">Sinan <span class="ar">سنان</span></div><div class="desc">Celestial geometry.</div></figcaption></figure>
+    <figure class="card"><img src="renders/zahaHadid.png" alt="Zaha Hadid" loading="lazy"><figcaption><div class="name">Zaha Hadid <span class="ar">زها حديد</span></div><div class="desc">Fluid neon.</div></figcaption></figure>
+    <figure class="card"><img src="renders/hassanFathy.png" alt="Hassan Fathy" loading="lazy"><figcaption><div class="name">Hassan Fathy <span class="ar">حسن فتحي</span></div><div class="desc">Sunlit clay.</div></figcaption></figure>
   </div>
 </section>
 
 <div class="rule"></div>
 
-<section id="classic">
-  <h2>The artist five</h2>
-  <div class="sub">The original sprint designs, now with line selection and alignment support.</div>
+<section>
+  <h2>Atmosphere</h2>
+  <div class="sub">Mood-led materials, each with its own hero treatment (or none at all).</div>
   <div class="grid">
-    <figure class="card">
-      <img src="renders/diwan.png" alt="Diwan render" loading="lazy">
-      <figcaption>
-        <div class="name">Dīwān <span class="ar">الديوان</span></div>
-        <div class="desc">Gold foil on obsidian.</div>
-      </figcaption>
-    </figure>
-    <figure class="card">
-      <img src="renders/ibnMuqla.png" alt="Ibn Muqla render" loading="lazy">
-      <figcaption>
-        <div class="name">Ibn Muqla <span class="ar">ابن مقلة</span></div>
-        <div class="desc">Illuminated vellum.</div>
-      </figcaption>
-    </figure>
-    <figure class="card">
-      <img src="renders/sinan.png" alt="Sinan render" loading="lazy">
-      <figcaption>
-        <div class="name">Sinan <span class="ar">سنان</span></div>
-        <div class="desc">Celestial geometry.</div>
-      </figcaption>
-    </figure>
-    <figure class="card">
-      <img src="renders/zahaHadid.png" alt="Zaha Hadid render" loading="lazy">
-      <figcaption>
-        <div class="name">Zaha Hadid <span class="ar">زها حديد</span></div>
-        <div class="desc">Fluid neon. Right-aligned by default.</div>
-      </figcaption>
-    </figure>
-    <figure class="card">
-      <img src="renders/hassanFathy.png" alt="Hassan Fathy render" loading="lazy">
-      <figcaption>
-        <div class="name">Hassan Fathy <span class="ar">حسن فتحي</span></div>
-        <div class="desc">Sunlit clay.</div>
-      </figcaption>
-    </figure>
+    <figure class="card"><img src="renders/layl.png" alt="Layl" loading="lazy"><figcaption><div class="name">Layl <span class="ar">ليل</span></div><div class="desc">Midnight whisper — no ornament, just the words.</div></figcaption></figure>
+    <figure class="card"><img src="renders/mishkat.png" alt="Mishkat" loading="lazy"><figcaption><div class="name">Mishkat <span class="ar">مشكاة</span></div><div class="desc">Lantern niche — a wide mihrab arch frames the verse.</div></figcaption></figure>
+    <figure class="card"><img src="renders/sahifa.png" alt="Sahifa" loading="lazy"><figcaption><div class="name">Sahifa <span class="ar">صحيفة</span></div><div class="desc">Poetry broadsheet — bone paper, masthead rules.</div></figcaption></figure>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<section>
+  <h2>Composition</h2>
+  <div class="sub">Structural directions — same palette, different arrangement of the poem on the page.</div>
+  <div class="grid">
+    <figure class="card"><img src="renders/musnad.png" alt="Musnad" loading="lazy"><figcaption><div class="name">Musnad <span class="ar">مسند</span> <span class="badge">NEW</span></div><div class="desc">Numbered margin — editorial manuscript, poet slug top-left.</div></figcaption></figure>
+    <figure class="card"><img src="renders/muqabala.png" alt="Muqabala" loading="lazy"><figcaption><div class="name">Muqabala <span class="ar">مقابلة</span> <span class="badge">NEW</span></div><div class="desc">Facing columns — Arabic and English split by a central rule.</div></figcaption></figure>
+    <figure class="card"><img src="renders/najma.png" alt="Najma" loading="lazy"><figcaption><div class="name">Najma <span class="ar">نجمة</span> <span class="badge">NEW</span></div><div class="desc">Star medallion — verses inside an eight-point star.</div></figcaption></figure>
+    <figure class="card"><img src="renders/iqtibas.png" alt="Iqtibas" loading="lazy"><figcaption><div class="name">Iqtibas <span class="ar">اقتباس</span> <span class="badge">NEW</span></div><div class="desc">Pull-quote — oversized quote motif, attribution on a gold rule.</div></figcaption></figure>
   </div>
 </section>
 
@@ -184,41 +86,13 @@ section .sub { color: rgba(232,224,208,0.55); font-size: 0.84rem; margin-bottom:
 
 <section id="flow">
   <h2>The flow, holistically</h2>
-  <div class="sub">
-    WYSIWYG stage → lines &amp; alignment panel (live preview updates) → material switch.
-    The chrome accent inherits each material's color.
-  </div>
+  <div class="sub">WYSIWYG stage → lines &amp; alignment panel (live preview updates) → material switch. Tap outside the panel to dismiss; toasts appear by the dock.</div>
   <div class="grid">
-    <figure class="card tall">
-      <img src="renders/flow-stage.png" alt="Share flow — stage" loading="lazy">
-      <figcaption>
-        <div class="name">Stage</div>
-        <div class="desc">The floating card is the real render — long-press to save on mobile.</div>
-      </figcaption>
-    </figure>
-    <figure class="card tall">
-      <img src="renders/flow-panel.png" alt="Share flow — lines panel" loading="lazy">
-      <figcaption>
-        <div class="name">Lines panel</div>
-        <div class="desc">Gold diamond checks per verse pair; alignment control top right.</div>
-      </figcaption>
-    </figure>
-    <figure class="card tall">
-      <img src="renders/flow-panel-tuned.png" alt="Share flow — two lines, right aligned" loading="lazy">
-      <figcaption>
-        <div class="name">Tuned</div>
-        <div class="desc">Two lines chosen, right alignment — the card redraws live above the panel.</div>
-      </figcaption>
-    </figure>
-    <figure class="card tall">
-      <img src="renders/flow-mishkat.png" alt="Share flow — mishkat material" loading="lazy">
-      <figcaption>
-        <div class="name">Material switch</div>
-        <div class="desc">Mishkat selected — dedication and chrome pick up the emerald accent.</div>
-      </figcaption>
-    </figure>
+    <figure class="card tall"><img src="renders/flow-stage.png" alt="Stage" loading="lazy"><figcaption><div class="name">Stage</div><div class="desc">The floating card is the real render.</div></figcaption></figure>
+    <figure class="card tall"><img src="renders/flow-panel.png" alt="Lines panel" loading="lazy"><figcaption><div class="name">Lines panel</div><div class="desc">Gold diamond checks per verse pair; alignment top-right.</div></figcaption></figure>
+    <figure class="card tall"><img src="renders/flow-panel-tuned.png" alt="Tuned" loading="lazy"><figcaption><div class="name">Tuned</div><div class="desc">Two lines, right alignment — redraws live.</div></figcaption></figure>
+    <figure class="card tall"><img src="renders/flow-mishkat.png" alt="Material switch" loading="lazy"><figcaption><div class="name">Material switch</div><div class="desc">Chrome inherits the material's accent.</div></figcaption></figure>
   </div>
 </section>
-
 </body>
 </html>

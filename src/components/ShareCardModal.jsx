@@ -27,7 +27,10 @@ const STYLE_CAPTIONS = {
   layl: 'midnight whisper',
   mishkat: 'lantern in the niche',
   sahifa: 'poetry broadsheet',
-  neon: 'burning glass',
+  musnad: 'numbered margin',
+  muqabala: 'facing columns',
+  najma: 'star medallion',
+  iqtibas: 'pull-quote',
 };
 
 // Accent color per style — chrome and preview frame inherit it.
@@ -40,7 +43,10 @@ const STYLE_ACCENTS = {
   layl: '#d4b463',
   mishkat: '#4fb7a0',
   sahifa: '#8e2a2a',
-  neon: '#ff4fd8',
+  musnad: '#c5a059',
+  muqabala: '#c5a059',
+  najma: '#c5a059',
+  iqtibas: '#c5a059',
 };
 
 // Living dedication — typed out, erased, retyped.

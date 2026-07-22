@@ -32,8 +32,8 @@ const mockPoem = {
 
 // ─── Design registry tests ──────────────────────────────────────────────
 describe('SHARE_CARD_DESIGNS', () => {
-  it('should export exactly 9 designs', () => {
-    expect(SHARE_CARD_DESIGNS).toHaveLength(9);
+  it('should export exactly 12 designs', () => {
+    expect(SHARE_CARD_DESIGNS).toHaveLength(12);
   });
 
   it('each design has required fields', () => {
@@ -54,7 +54,7 @@ describe('SHARE_CARD_DESIGNS', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('includes the 5 original and 4 new design IDs', () => {
+  it('includes the artist, atmosphere, and composition design IDs', () => {
     const ids = SHARE_CARD_DESIGNS.map((d) => d.id);
     for (const id of [
       'diwan',
@@ -65,10 +65,18 @@ describe('SHARE_CARD_DESIGNS', () => {
       'layl',
       'mishkat',
       'sahifa',
-      'neon',
+      'musnad',
+      'muqabala',
+      'najma',
+      'iqtibas',
     ]) {
       expect(ids).toContain(id);
     }
+  });
+
+  it('no longer includes the removed neon design', () => {
+    const ids = SHARE_CARD_DESIGNS.map((d) => d.id);
+    expect(ids).not.toContain('neon');
   });
 
   it('each design nameAr is in Arabic script', () => {
@@ -221,18 +229,21 @@ describe('renderShareCard', () => {
     expect(ctx.fillRect).toHaveBeenCalled();
   });
 
-  it('calls fillText with poem text for each design', () => {
+  it('draws the poet name and verses for each design', () => {
     for (const design of SHARE_CARD_DESIGNS) {
       ctx.fillText.mockClear();
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, design.id);
-      // At minimum it should draw poet name and verses
       expect(ctx.fillText).toHaveBeenCalled();
-      // Check English poet name is drawn (in summary line "[author] – [title]")
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);
-      const hasEnglishPoet = calls.some(
-        (text) => typeof text === 'string' && text.includes(mockPoem.poet)
+      // Every design draws the Arabic poet name and the opening verse
+      const hasPoet = calls.some(
+        (text) => typeof text === 'string' && text.includes(mockPoem.poetArabic)
       );
-      expect(hasEnglishPoet).toBe(true);
+      const hasVerse = calls.some(
+        (text) => typeof text === 'string' && text.includes('يا دِمَشقُ')
+      );
+      expect(hasPoet).toBe(true);
+      expect(hasVerse).toBe(true);
     }
   });
 
@@ -286,12 +297,24 @@ describe('renderShareCard', () => {
     }
   });
 
-  it('draws English poet name and poem title in every design', () => {
-    for (const design of SHARE_CARD_DESIGNS) {
+  it('draws the English poet name and title in the artist designs', () => {
+    // The artist/atmosphere designs use the bilingual header, which renders an
+    // English "[author] – [title]" summary. The composition layouts (musnad,
+    // muqabala, najma, iqtibas) are intentionally Arabic-forward and omit it.
+    const ARTIST_DESIGNS = [
+      'diwan',
+      'ibnMuqla',
+      'sinan',
+      'zahaHadid',
+      'hassanFathy',
+      'layl',
+      'mishkat',
+      'sahifa',
+    ];
+    for (const id of ARTIST_DESIGNS) {
       ctx.fillText.mockClear();
-      renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, design.id);
+      renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, id);
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);
-      // English poet and title are combined in summary line: "[author] – [title]"
       const hasEnglishPoet = calls.some(
         (text) => typeof text === 'string' && text.includes(mockPoem.poet)
       );

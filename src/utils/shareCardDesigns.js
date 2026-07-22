@@ -80,11 +80,32 @@ export const SHARE_CARD_DESIGNS = [
     description: 'Poetry broadsheet — bone paper, masthead rules, madder-red ink, newsprint bones',
   },
   {
-    id: 'neon',
-    name: 'Neon',
-    nameAr: 'سهر',
-    artist: 'New — night sign',
-    description: 'Night sign — verses burning in neon rose and cyan against a dark wall',
+    id: 'musnad',
+    name: 'Musnad',
+    nameAr: 'مسند',
+    artist: 'Layout — numbered margin',
+    description: 'Numbered margin — editorial manuscript, poet slug top-left, verses numbered against a margin rule',
+  },
+  {
+    id: 'muqabala',
+    name: 'Muqabala',
+    nameAr: 'مقابلة',
+    artist: 'Layout — facing columns',
+    description: 'Facing columns — Arabic and English side by side, split by a central rule',
+  },
+  {
+    id: 'najma',
+    name: 'Najma',
+    nameAr: 'نجمة',
+    artist: 'Layout — star medallion',
+    description: 'Star medallion — verses cradled inside an eight-point geometric star',
+  },
+  {
+    id: 'iqtibas',
+    name: 'Iqtibas',
+    nameAr: 'اقتباس',
+    artist: 'Layout — pull-quote',
+    description: 'Pull-quote — oversized quotation motif, attribution on a gold rule',
   },
 ];
 
@@ -179,6 +200,52 @@ function resolveRenderOpts(w, opts = {}, defaultAlign = 'center') {
   const xText = align === 'right' ? w - 90 : w / 2;
   const maxLines = opts.maxLines || 4;
   return { align, xText, maxLines };
+}
+
+/**
+ * Set ctx.font to the largest size (stepping down from `size`) at which `text`
+ * fits within `maxWidth`, and return that size. Keeps long verses/titles inside
+ * their column or frame instead of overflowing.
+ */
+function fitFont(ctx, text, family, size, maxWidth, style = '') {
+  let s = size;
+  const prefix = style ? `${style} ` : '';
+  ctx.font = `${prefix}${s}px ${family}`;
+  while (s > 15 && ctx.measureText(text).width > maxWidth) {
+    s -= 2;
+    ctx.font = `${prefix}${s}px ${family}`;
+  }
+  return s;
+}
+
+/**
+ * Draw the brand mark "بالعربي poetry" as one left→right unit, anchored either
+ * centered on `cx`, at a right edge, or at a left edge — never overlapping
+ * itself regardless of alignment. Used by the composition layouts.
+ */
+function drawBrandUnit(ctx, w, h, color, opts = {}) {
+  const { align = 'right', x = w - 76, y = h - 74, opacity = 0.55 } = opts;
+  ctx.save();
+  ctx.globalAlpha = opacity;
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  ctx.direction = 'ltr';
+  ctx.fillStyle = color;
+  const arFont = 'bold 30px "Reem Kufi", sans-serif';
+  const enFont = '26px "Forum", serif';
+  const arText = 'بالعربي ';
+  const enText = 'poetry';
+  ctx.font = arFont;
+  const arW = ctx.measureText(arText).width;
+  ctx.font = enFont;
+  const enW = ctx.measureText(enText).width;
+  const total = arW + enW;
+  const startX = align === 'right' ? x - total : align === 'center' ? x - total / 2 : x;
+  ctx.font = arFont;
+  ctx.fillText(arText, startX, y);
+  ctx.font = enFont;
+  ctx.fillText(enText, startX + arW, y);
+  ctx.restore();
 }
 
 /**
@@ -285,28 +352,13 @@ function drawBookFlourish(ctx, cx, cy, color, span = 128) {
 function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
   const align = opts.align || 'center';
   const xPos = opts.xPos || w / 2;
-  const borderTop = opts.borderTop || 60;
   const resolvedPoet = resolveBilingual(poem.poet, poem.poetArabic);
   const resolvedTitle = resolveBilingual(poem.title, poem.titleArabic);
   let curY = headerY;
 
   ctx.textAlign = align;
 
-  // ── 1. Book flourish ornament — always centered on the card, sitting a fixed
-  //   gap above the title. The ornament stays put regardless of text alignment
-  //   (a right-aligned poem should not shove it into the corner). When the
-  //   header is pushed up — e.g. six lines selected — there may be no room
-  //   between the top border and the title, so the flourish is skipped rather
-  //   than allowed to collide with the title. ──
-  const flourishGap = 44; // clearance kept above the title baseline's cap height
-  const flourishY = headerY - flourishGap;
-  // opts.flourish === false → the design supplies its own top ornament
-  // (e.g. Layl's star, Mishkat's arch, Sahifa's masthead) so we don't double up.
-  if (opts.flourish !== false && flourishY >= borderTop + 22) {
-    drawBookFlourish(ctx, w / 2, flourishY, colors.separator || colors.poet);
-  }
-
-  // ── 2. Arabic poem title — biggest, gold foil ──
+  // ── 1. Arabic poem title — biggest, gold foil ──
   if (resolvedTitle.arabic) {
     ctx.fillStyle = colors.poet;
     ctx.font = 'bold 54px "Reem Kufi", "Amiri", sans-serif';
@@ -352,6 +404,15 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
     ctx.fillText(englishSummary, xPos, curY);
     ctx.restore();
     curY += 40;
+  }
+
+  // ── Book flourish ornament — sits BETWEEN the header and the poem, centered
+  //   on the card (it stays put regardless of text alignment). Placed in the
+  //   gap the caller leaves before the first verse (titleBodyGap), so it never
+  //   collides with the title or the verses even at six lines.
+  //   opts.flourish === false → the design supplies its own ornament. ──
+  if (opts.flourish !== false) {
+    drawBookFlourish(ctx, w / 2, curY + (opts.flourishGap || 34), colors.separator || colors.poet);
   }
 
   return curY;
@@ -854,26 +915,7 @@ function renderLayl(ctx, w, h, poem, opts = {}) {
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
 
-  // One small eight-point star, high center — the only ornament
-  ctx.save();
-  ctx.translate(w / 2, 130);
-  ctx.fillStyle = 'rgba(212, 180, 99, 0.8)';
-  ctx.shadowColor = 'rgba(212, 180, 99, 0.6)';
-  ctx.shadowBlur = 18;
-  ctx.beginPath();
-  for (let k = 0; k < 16; k++) {
-    const r = k % 2 === 0 ? 11 : 4;
-    const a = (Math.PI / 8) * k - Math.PI / 2;
-    const sx = Math.cos(a) * r;
-    const sy = Math.sin(a) * r;
-    if (k === 0) ctx.moveTo(sx, sy);
-    else ctx.lineTo(sx, sy);
-  }
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-
-  // ── Layout ──
+  // ── Layout — no ornament at all; the words are the whole design ──
   const { align, xText, maxLines } = resolveRenderOpts(w, opts);
   const verses = prepareVerses(poem.arabic, maxLines);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
@@ -932,14 +974,20 @@ function renderMishkat(ctx, w, h, poem, opts = {}) {
   ctx.fillRect(0, 0, w, h);
 
   // Lantern light spilling from the top of the niche
-  const glow = ctx.createRadialGradient(w / 2, 330, 0, w / 2, 330, 560);
+  const glow = ctx.createRadialGradient(w / 2, 300, 0, w / 2, 300, 560);
   glow.addColorStop(0, 'rgba(255, 224, 160, 0.1)');
   glow.addColorStop(1, 'rgba(255, 224, 160, 0)');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, w, h);
 
-  // Mihrab arch — glowing teal outline with a faint gold echo inside
-  const drawArch = (halfW, top, bottom, spring, color, lw, blur) => {
+  // Mihrab arch — a WIDE border frame that cradles the whole card. Its straight
+  // sides sit far outside the text column and its curved crown lives up in the
+  // top margin, so the outline never crosses the title or the verses.
+  const HALF = 452; // sides at x = 88 and 992
+  const APEX = 96;
+  const SPRING = 300; // straight sides start here, going down
+  const ARCH_BOTTOM = 1250;
+  const drawArch = (halfW, apex, spring, color, lw, blur) => {
     ctx.save();
     ctx.strokeStyle = color;
     ctx.lineWidth = lw;
@@ -948,27 +996,30 @@ function renderMishkat(ctx, w, h, poem, opts = {}) {
       ctx.shadowBlur = blur;
     }
     ctx.beginPath();
-    ctx.moveTo(w / 2 - halfW, bottom);
+    ctx.moveTo(w / 2 - halfW, ARCH_BOTTOM);
     ctx.lineTo(w / 2 - halfW, spring);
-    ctx.quadraticCurveTo(w / 2 - halfW, top + 60, w / 2, top);
-    ctx.quadraticCurveTo(w / 2 + halfW, top + 60, w / 2 + halfW, spring);
-    ctx.lineTo(w / 2 + halfW, bottom);
+    ctx.quadraticCurveTo(w / 2 - halfW, apex + 70, w / 2, apex);
+    ctx.quadraticCurveTo(w / 2 + halfW, apex + 70, w / 2 + halfW, spring);
+    ctx.lineTo(w / 2 + halfW, ARCH_BOTTOM);
     ctx.stroke();
     ctx.restore();
   };
-  drawArch(392, 218, 1210, 470, 'rgba(79, 183, 160, 0.5)', 2, 26);
-  drawArch(362, 252, 1210, 490, 'rgba(212, 180, 99, 0.22)', 1, 0);
+  drawArch(HALF, APEX, SPRING, 'rgba(79, 183, 160, 0.5)', 2, 26);
+  drawArch(HALF - 26, APEX + 34, SPRING + 22, 'rgba(212, 180, 99, 0.22)', 1, 0);
 
-  // ── Layout ──
-  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
+  // ── Layout — content is kept entirely below the springline (inside the arch's
+  //   straight-sided body) and width-limited to the arch interior, so it never
+  //   touches the outline. ──
+  const { maxLines } = resolveRenderOpts(w, opts);
   const verses = prepareVerses(poem.arabic, maxLines);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
-  const layout = calculateCenteredLayout(h, poem, verses.length);
+  const textWidth = 700; // fits comfortably between the arch sides
+  const xText = w / 2;
 
   const headerBottom = drawBilingualHeader(
     ctx,
     w,
-    layout.headerY,
+    SPRING + 96,
     poem,
     {
       poet: '#d4b463',
@@ -977,23 +1028,32 @@ function renderMishkat(ctx, w, h, poem, opts = {}) {
       separator: '#d4b463',
       englishGrey: 'rgba(165, 190, 180, 0.6)',
     },
-    { borderTop: 150, align, xPos: xText, flourish: false }
+    { borderTop: SPRING, align: 'center', xPos: xText, flourish: false }
   );
 
-  const contentStartY = headerBottom + layout.titleBodyGap;
+  // Distribute verses in the remaining body of the arch. The niche interior is
+  // shorter than a full card, so when many lines are selected the type steps
+  // down to keep each verse clear of the next line's translation.
+  const contentTop = headerBottom + 68;
+  const contentBottom = ARCH_BOTTOM - 60;
+  const dense = verses.length >= 5;
+  const vSize = dense ? 40 : 46;
+  const tSize = dense ? 27 : 33;
+  const tOffset = dense ? 46 : 58;
+  const gap = Math.min(160, (contentBottom - contentTop) / Math.max(verses.length, 1));
   verses.forEach((verse, i) => {
-    const y = contentStartY + i * layout.pairSpacing;
+    const y = contentTop + i * gap;
     ctx.fillStyle = '#efe9da';
-    ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = align;
+    ctx.textAlign = 'center';
     ctx.direction = 'rtl';
+    fitFont(ctx, verse, '"Amiri", serif', vSize, textWidth);
     ctx.fillText(verse, xText, y);
     if (translation[i]) {
       ctx.fillStyle = 'rgba(120, 200, 180, 0.55)';
-      ctx.font = 'italic 33px "Playfair Display", serif';
-      ctx.textAlign = align;
+      ctx.textAlign = 'center';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], xText, y + 62);
+      fitFont(ctx, translation[i], '"Playfair Display", serif', tSize, textWidth, 'italic');
+      ctx.fillText(translation[i], xText, y + tOffset);
     }
   });
 
@@ -1031,16 +1091,20 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
   ctx.fillRect(m, h - 96, w - m * 2, 1.5);
   ctx.fillRect(m, h - 86, w - m * 2, 6);
 
-  // ── Layout — right-aligned by default, like Arabic newsprint ──
-  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
+  // ── Layout — the masthead and colophon are fixed; the header and verses are
+  //   pinned into the band between them and shrunk to fit, so even at six lines
+  //   nothing rides up over the top bar. ──
+  const { maxLines } = resolveRenderOpts(w, opts);
   const verses = prepareVerses(poem.arabic, maxLines);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
-  const layout = calculateCenteredLayout(h, poem, verses.length);
+  const xText = w / 2;
+  const textWidth = w - m * 2 - 24; // inside the masthead/colophon rules
 
+  // Header sits safely below the masthead (title cap-height clears the bars).
   const headerBottom = drawBilingualHeader(
     ctx,
     w,
-    layout.headerY,
+    206,
     poem,
     {
       poet: '#191512',
@@ -1049,23 +1113,26 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
       separator: '#8e2a2a',
       englishGrey: 'rgba(90, 82, 72, 0.65)',
     },
-    { borderTop: 130, align, xPos: xText, flourish: false }
+    { borderTop: 130, align: 'center', xPos: xText, flourish: false }
   );
 
-  const contentStartY = headerBottom + layout.titleBodyGap;
+  // Verses fill the band down to just above the colophon.
+  const contentTop = headerBottom + 72;
+  const contentBottom = h - 140;
+  const gap = Math.min(150, (contentBottom - contentTop) / Math.max(verses.length, 1));
   verses.forEach((verse, i) => {
-    const y = contentStartY + i * layout.pairSpacing;
+    const y = contentTop + i * gap;
     ctx.fillStyle = '#191512';
-    ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = align;
+    ctx.textAlign = 'center';
     ctx.direction = 'rtl';
+    fitFont(ctx, verse, '"Amiri", serif', 46, textWidth);
     ctx.fillText(verse, xText, y);
     if (translation[i]) {
       ctx.fillStyle = 'rgba(25, 21, 18, 0.55)';
-      ctx.font = 'italic 33px "Playfair Display", serif';
-      ctx.textAlign = align;
+      ctx.textAlign = 'center';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], xText, y + 62);
+      fitFont(ctx, translation[i], '"Playfair Display", serif', 33, textWidth, 'italic');
+      ctx.fillText(translation[i], xText, y + 56);
     }
   });
 
@@ -1076,83 +1143,286 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
   });
 }
 
-// ──────────────────────────────────────────────────────────────────────
-//  Design 9: NEON (سهر) — Night Sign
-//  Verses burning in neon rose and cyan against a dark wall.
-// ──────────────────────────────────────────────────────────────────────
-function renderNeon(ctx, w, h, poem, opts = {}) {
-  // Dark violet wall
-  const bg = ctx.createLinearGradient(0, 0, 0, h);
-  bg.addColorStop(0, '#0d0416');
-  bg.addColorStop(0.5, '#150a20');
-  bg.addColorStop(1, '#0a0312');
-  ctx.fillStyle = bg;
+// ══════════════════════════════════════════════════════════════════════
+//  COMPOSITION LAYOUTS — different structures on the Dīwān obsidian palette.
+//  Each is a self-contained arrangement (they do not use the shared centered
+//  layout / bilingual header).
+// ══════════════════════════════════════════════════════════════════════
+
+// Shared obsidian palette for the composition layouts.
+const LP = {
+  ink: '#e8e0d0',
+  gold: '#c5a059',
+  goldSoft: 'rgba(197,160,89,0.62)',
+  goldFaint: 'rgba(197,160,89,0.22)',
+  grey: 'rgba(184,180,170,0.62)',
+};
+
+function paintObsidian(ctx, w, h) {
+  const g = ctx.createRadialGradient(w / 2, h * 0.34, 0, w / 2, h * 0.34, w * 0.72);
+  g.addColorStop(0, '#151210');
+  g.addColorStop(1, '#0c0c0e');
+  ctx.fillStyle = g;
   ctx.fillRect(0, 0, w, h);
+}
 
-  // Ambient neon wash from the verses' own light
-  const wash = ctx.createRadialGradient(w / 2, h * 0.5, 0, w / 2, h * 0.5, w * 0.75);
-  wash.addColorStop(0, 'rgba(255, 79, 216, 0.05)');
-  wash.addColorStop(0.6, 'rgba(79, 223, 255, 0.03)');
-  wash.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = wash;
-  ctx.fillRect(0, 0, w, h);
+// ── Design: MUSNAD (مسند) — Numbered Margin ────────────────────────────
+function renderMusnad(ctx, w, h, poem, opts = {}) {
+  paintObsidian(ctx, w, h);
+  const verses = prepareVerses(poem.arabic, opts.maxLines || 4);
+  const tr = prepareTranslation(poem.english || poem.cachedTranslation, opts.maxLines || 4);
+  const poet = resolveBilingual(poem.poet, poem.poetArabic);
+  const title = resolveBilingual(poem.title, poem.titleArabic);
 
-  // ── Layout ──
-  const { align, xText, maxLines } = resolveRenderOpts(w, opts);
-  const verses = prepareVerses(poem.arabic, maxLines);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation, maxLines);
-  const layout = calculateCenteredLayout(h, poem, verses.length);
-
-  const headerBottom = drawBilingualHeader(
-    ctx,
-    w,
-    layout.headerY,
-    poem,
-    {
-      poet: '#ff9ff0',
-      poetAr: 'rgba(255, 159, 240, 0.65)',
-      title: 'rgba(79, 223, 255, 0.55)',
-      separator: '#ff4fd8',
-      englishGrey: 'rgba(190, 180, 210, 0.6)',
-    },
-    { borderTop: 150, align, xPos: xText, flourish: false }
-  );
-
-  const contentStartY = headerBottom + layout.titleBodyGap;
-  verses.forEach((verse, i) => {
-    const y = contentStartY + i * layout.pairSpacing;
-    const tube = i % 2 === 0 ? '#ff4fd8' : '#4fdfff';
-
-    // Neon tube: wide soft glow pass, then a tight bright core
+  ctx.textAlign = 'left';
+  ctx.direction = 'rtl';
+  ctx.fillStyle = LP.gold;
+  ctx.font = 'bold 52px "Reem Kufi", sans-serif';
+  ctx.fillText(poet.arabic || '', 96, 150);
+  if (poet.english) {
+    ctx.direction = 'ltr';
+    ctx.fillStyle = LP.grey;
+    ctx.font = '26px "Forum", serif';
     ctx.save();
-    ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = align;
-    ctx.direction = 'rtl';
-    ctx.shadowColor = tube;
-    ctx.shadowBlur = 30;
-    ctx.fillStyle = tube;
-    ctx.fillText(verse, xText, y);
-    ctx.shadowBlur = 8;
-    ctx.fillStyle = '#fff6fd';
-    ctx.fillText(verse, xText, y);
+    ctx.letterSpacing = '4px';
+    ctx.fillText(poet.english.toUpperCase(), 98, 196);
     ctx.restore();
+  }
+  ctx.strokeStyle = LP.goldFaint;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(98, 224);
+  ctx.lineTo(360, 224);
+  ctx.stroke();
 
-    if (translation[i]) {
-      ctx.fillStyle = 'rgba(200, 170, 255, 0.55)';
-      ctx.font = 'italic 33px "Playfair Display", serif';
-      ctx.textAlign = align;
+  if (title.arabic) {
+    ctx.textAlign = 'right';
+    ctx.direction = 'rtl';
+    ctx.fillStyle = LP.goldSoft;
+    ctx.font = '34px "Reem Kufi", sans-serif';
+    ctx.fillText(title.arabic, w - 96, 150);
+  }
+
+  const marginX = w - 168;
+  ctx.strokeStyle = LP.goldFaint;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(marginX, 320);
+  ctx.lineTo(marginX, h - 150);
+  ctx.stroke();
+
+  const arabicNums = ['١', '٢', '٣', '٤', '٥', '٦'];
+  const top = 400;
+  const gap = Math.min(170, (h - 200 - top) / Math.max(verses.length, 1));
+  const anchorX = marginX - 34;
+  const colWidth = anchorX - 96;
+  verses.forEach((v, i) => {
+    const y = top + i * gap;
+    ctx.textAlign = 'center';
+    ctx.direction = 'rtl';
+    ctx.fillStyle = LP.goldSoft;
+    ctx.font = '30px "Amiri", serif';
+    ctx.fillText(arabicNums[i] || String(i + 1), w - 118, y - 6);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = LP.ink;
+    fitFont(ctx, v, '"Amiri", serif', 46, colWidth);
+    ctx.fillText(v, anchorX, y);
+    if (tr[i]) {
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], xText, y + 62);
+      ctx.fillStyle = LP.grey;
+      fitFont(ctx, tr[i], '"Playfair Display", serif', 31, colWidth, 'italic');
+      ctx.fillText(tr[i], anchorX, y + 50);
     }
   });
 
-  drawBrandBottomRight(ctx, w, h, 'rgba(255, 79, 216, 0.45)', {
-    glowColor: 'rgba(255, 79, 216, 0.3)',
-    glowBlur: 14,
-    opacity: 0.55,
-    size: 28,
-    innerInset: 36,
+  drawBrandUnit(ctx, w, h, LP.goldSoft, { align: 'left', x: 96, y: h - 96 });
+}
+
+// ── Design: NAJMA (نجمة) — Star Medallion ──────────────────────────────
+function renderNajma(ctx, w, h, poem, opts = {}) {
+  paintObsidian(ctx, w, h);
+  const max = Math.min(opts.maxLines || 4, 6);
+  const verses = prepareVerses(poem.arabic, max);
+  const tr = prepareTranslation(poem.english || poem.cachedTranslation, max);
+  const poet = resolveBilingual(poem.poet, poem.poetArabic);
+  const title = resolveBilingual(poem.title, poem.titleArabic);
+
+  const cx = w / 2;
+  const cy = h / 2 + 20;
+
+  const drawSquare = (r, rot, alpha) => {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rot);
+    ctx.strokeStyle = `rgba(197,160,89,${alpha})`;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(-r, -r, r * 2, r * 2);
+    ctx.restore();
+  };
+  drawSquare(430, 0, 0.3);
+  drawSquare(430, Math.PI / 4, 0.3);
+  drawSquare(360, 0, 0.14);
+  drawSquare(360, Math.PI / 4, 0.14);
+
+  ctx.textAlign = 'center';
+  ctx.direction = 'rtl';
+  ctx.fillStyle = LP.gold;
+  ctx.save();
+  ctx.shadowColor = 'rgba(197,160,89,0.3)';
+  ctx.shadowBlur = 10;
+  fitFont(ctx, title.arabic || '', '"Reem Kufi", sans-serif', 46, 560, 'bold');
+  ctx.fillText(title.arabic || '', cx, cy - 300);
+  ctx.restore();
+
+  const coreWidth = 620;
+  const top = cy - 150;
+  const gap = Math.min(150, 440 / Math.max(verses.length, 1));
+  verses.forEach((v, i) => {
+    const y = top + i * gap;
+    ctx.fillStyle = LP.ink;
+    ctx.direction = 'rtl';
+    ctx.textAlign = 'center';
+    fitFont(ctx, v, '"Amiri", serif', 42, coreWidth);
+    ctx.fillText(v, cx, y);
+    if (tr[i]) {
+      ctx.fillStyle = LP.grey;
+      ctx.direction = 'ltr';
+      fitFont(ctx, tr[i], '"Playfair Display", serif', 27, coreWidth, 'italic');
+      ctx.fillText(tr[i], cx, y + 40);
+    }
   });
+
+  ctx.fillStyle = LP.goldSoft;
+  ctx.font = '30px "Reem Kufi", sans-serif';
+  ctx.direction = 'rtl';
+  ctx.textAlign = 'center';
+  ctx.fillText(poet.arabic || '', cx, cy + 300);
+
+  drawBrandUnit(ctx, w, h, LP.goldSoft, { align: 'center', x: w / 2, y: h - 56 });
+}
+
+// ── Design: MUQABALA (مقابلة) — Facing Columns ─────────────────────────
+function renderMuqabala(ctx, w, h, poem, opts = {}) {
+  paintObsidian(ctx, w, h);
+  const verses = prepareVerses(poem.arabic, opts.maxLines || 4);
+  const tr = prepareTranslation(poem.english || poem.cachedTranslation, opts.maxLines || 4);
+  const poet = resolveBilingual(poem.poet, poem.poetArabic);
+  const title = resolveBilingual(poem.title, poem.titleArabic);
+
+  ctx.textAlign = 'center';
+  ctx.direction = 'rtl';
+  ctx.fillStyle = LP.gold;
+  ctx.font = 'bold 50px "Reem Kufi", sans-serif';
+  ctx.fillText(title.arabic || '', w / 2, 168);
+  ctx.fillStyle = LP.goldSoft;
+  ctx.font = '32px "Amiri", serif';
+  ctx.fillText(poet.arabic || '', w / 2, 224);
+  if (poet.english) {
+    ctx.direction = 'ltr';
+    ctx.fillStyle = LP.grey;
+    ctx.font = '24px "Forum", serif';
+    ctx.save();
+    ctx.letterSpacing = '3px';
+    ctx.fillText(poet.english.toUpperCase(), w / 2, 262);
+    ctx.restore();
+  }
+
+  const top = 380;
+  const bottom = h - 170;
+  ctx.strokeStyle = LP.goldFaint;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(w / 2, top);
+  ctx.lineTo(w / 2, bottom);
+  ctx.stroke();
+  ctx.save();
+  ctx.translate(w / 2, (top + bottom) / 2);
+  ctx.rotate(Math.PI / 4);
+  ctx.fillStyle = LP.goldSoft;
+  ctx.fillRect(-5, -5, 10, 10);
+  ctx.restore();
+
+  const gutter = 46;
+  const arAnchor = w - 96;
+  const arColWidth = arAnchor - (w / 2 + gutter);
+  const enAnchor = 96;
+  const enColWidth = w / 2 - gutter - enAnchor;
+  const gap = Math.min(150, (bottom - top - 60) / Math.max(verses.length, 1));
+  const rowTop = top + 70;
+  verses.forEach((v, i) => {
+    const y = rowTop + i * gap;
+    ctx.fillStyle = LP.ink;
+    ctx.direction = 'rtl';
+    ctx.textAlign = 'right';
+    fitFont(ctx, v, '"Amiri", serif', 42, arColWidth);
+    ctx.fillText(v, arAnchor, y);
+    if (tr[i]) {
+      ctx.fillStyle = LP.grey;
+      ctx.direction = 'ltr';
+      ctx.textAlign = 'left';
+      fitFont(ctx, tr[i], '"Playfair Display", serif', 28, enColWidth, 'italic');
+      ctx.fillText(tr[i], enAnchor, y);
+    }
+  });
+
+  drawBrandUnit(ctx, w, h, LP.goldSoft, { align: 'center', x: w / 2, y: h - 96 });
+}
+
+// ── Design: IQTIBAS (اقتباس) — Pull-Quote ──────────────────────────────
+function renderIqtibas(ctx, w, h, poem, opts = {}) {
+  paintObsidian(ctx, w, h);
+  const max = Math.min(opts.maxLines || 4, 6);
+  const verses = prepareVerses(poem.arabic, max);
+  const tr = prepareTranslation(poem.english || poem.cachedTranslation, max);
+  const poet = resolveBilingual(poem.poet, poem.poetArabic);
+  const title = resolveBilingual(poem.title, poem.titleArabic);
+
+  ctx.save();
+  ctx.globalAlpha = 0.16;
+  ctx.fillStyle = LP.gold;
+  ctx.font = '340px "Playfair Display", serif';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('“', 60, 400);
+  ctx.restore();
+
+  const top = 470;
+  const gap = Math.min(158, (h - 320 - top) / Math.max(verses.length, 1));
+  verses.forEach((v, i) => {
+    const y = top + i * gap;
+    ctx.fillStyle = LP.ink;
+    ctx.direction = 'rtl';
+    ctx.textAlign = 'center';
+    fitFont(ctx, v, '"Amiri", serif', 48, w - 200);
+    ctx.fillText(v, w / 2, y);
+    if (tr[i]) {
+      ctx.fillStyle = LP.grey;
+      ctx.direction = 'ltr';
+      fitFont(ctx, tr[i], '"Playfair Display", serif', 31, w - 200, 'italic');
+      ctx.fillText(tr[i], w / 2, y + 48);
+    }
+  });
+
+  const baseY = h - 150;
+  ctx.textAlign = 'right';
+  ctx.direction = 'rtl';
+  ctx.fillStyle = LP.gold;
+  ctx.font = 'bold 40px "Reem Kufi", sans-serif';
+  ctx.fillText(poet.arabic || '', w - 96, baseY);
+  if (title.english) {
+    ctx.direction = 'ltr';
+    ctx.fillStyle = LP.grey;
+    ctx.font = 'italic 30px "Playfair Display", serif';
+    ctx.fillText(title.english, w - 96, baseY + 46);
+  }
+  ctx.strokeStyle = LP.goldSoft;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(w - 96, baseY + 70);
+  ctx.lineTo(w - 300, baseY + 70);
+  ctx.stroke();
+
+  drawBrandUnit(ctx, w, h, LP.goldSoft, { align: 'left', x: 96, y: h - 90 });
 }
 
 // ── Design dispatcher ──────────────────────────────────────────────────
@@ -1165,7 +1435,10 @@ const RENDERERS = {
   layl: renderLayl,
   mishkat: renderMishkat,
   sahifa: renderSahifa,
-  neon: renderNeon,
+  musnad: renderMusnad,
+  muqabala: renderMuqabala,
+  najma: renderNajma,
+  iqtibas: renderIqtibas,
 };
 
 /**

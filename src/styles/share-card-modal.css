@@ -405,10 +405,13 @@
   --scm-mini-ink: rgba(25, 21, 18, 0.7);
   --scm-mini-accent: #8e2a2a;
 }
-.scm-arch--neon {
-  --scm-mini-bg: linear-gradient(180deg, #150a20, #0a0312);
-  --scm-mini-ink: rgba(255, 246, 253, 0.8);
-  --scm-mini-accent: #ff4fd8;
+.scm-arch--musnad,
+.scm-arch--muqabala,
+.scm-arch--najma,
+.scm-arch--iqtibas {
+  --scm-mini-bg: linear-gradient(180deg, #17130e, #0c0c0e);
+  --scm-mini-ink: rgba(232, 224, 208, 0.75);
+  --scm-mini-accent: #c5a059;
 }
 
 /* style description — no name, just the material */

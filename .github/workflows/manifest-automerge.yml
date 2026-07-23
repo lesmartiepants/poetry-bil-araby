@@ -1,0 +1,58 @@
+name: Manifest Auto-Merge
+
+# Auto-merges the bot's manifest-reconcile PRs, but ONLY when they are safe:
+# the diff must touch nothing except the manifest, the generated doc, and test
+# files. A PR that touches app source is left for a human. This is what lets the
+# feature inventory maintain itself without a person babysitting each bot PR,
+# while never letting the bot merge application code.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    # Only consider the bot's reconcile PRs (double-gated: label AND head branch).
+    if: >
+      contains(github.event.pull_request.labels.*.name, 'manifest-autofix') &&
+      github.event.pull_request.head.ref == 'bot/manifest-autofix'
+    steps:
+      - name: Verify the diff is manifest/doc/test only
+        id: guard
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          files=$(gh pr view "$PR" --json files --jq '.files[].path')
+          echo "Changed files:"; echo "$files"
+          # Allowlist: manifest, the generated doc, and tests only.
+          bad=$(echo "$files" | grep -vE '^(feature-manifest\.json|docs/APP-STATE\.md|src/test/.*|e2e/.*)$' || true)
+          if [ -n "$bad" ]; then
+            echo "safe=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::PR touches files outside the manifest/doc/test allowlist — auto-merge skipped:"
+            echo "$bad"
+          else
+            echo "safe=true" >> "$GITHUB_OUTPUT"
+            echo "All changes are within the allowlist — eligible for auto-merge."
+          fi
+
+      - name: Enable auto-merge (merges once required checks pass)
+        if: steps.guard.outputs.safe == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: gh pr merge "$PR" --auto --squash
+
+      - name: Flag for human review
+        if: steps.guard.outputs.safe == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr edit "$PR" --add-label needs-human-review
+          gh pr comment "$PR" --body "Auto-merge skipped: this reconcile PR touches files outside the manifest/doc/test allowlist. A human should review before merge."

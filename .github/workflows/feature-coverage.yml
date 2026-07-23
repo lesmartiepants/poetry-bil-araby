@@ -40,14 +40,14 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '21'
+          node-version: '22'
 
       # Capture the report (do not fail the step yet — we want to comment first).
       - name: Run drift check
         id: drift
         run: |
           set +e
-          node scripts/check-feature-manifest.mjs --check > drift.txt 2>&1
+          node scripts/check-feature-manifest.mjs --deadref-only > drift.txt 2>&1
           echo "exit_code=$?" >> "$GITHUB_OUTPUT"
           cat drift.txt
           {
@@ -82,9 +82,10 @@ jobs:
             const MARKER = '<!-- feature-coverage-bot -->';
             let body = `${MARKER}\n## Feature coverage ${ok ? '✅' : '❌'}\n\n`;
             if (!ok) {
-              body += `**Manifest is out of sync with the code.** A feature was added or removed without updating \`feature-manifest.json\`.\n\n`;
+              body += `**Blocking drift: the manifest points at code that no longer exists** (a dead file/test reference or a removed endpoint). This is a one-line human fix — update or remove the stale reference in \`feature-manifest.json\`.\n\n`;
+              body += `_Note: adding a new feature does **not** block your PR. The Manifest Auto-Reconcile bot picks up additions after merge and opens a manifest PR on its own._\n\n`;
             } else {
-              body += `Manifest matches the code.\n\n`;
+              body += `Manifest is consistent with the code (no dead references). New features, if any, will be auto-reconciled by the bot after merge.\n\n`;
             }
             if (docStale === 'true') {
               body += `⚠️ \`docs/APP-STATE.md\` is stale — run \`npm run manifest:update\` and commit.\n\n`;

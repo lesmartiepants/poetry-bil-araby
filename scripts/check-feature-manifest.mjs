@@ -36,7 +36,15 @@ const MODE = {
   checkOnly: args.has('--check'),
   updateOnly: args.has('--update'),
   json: args.has('--json'),
+  // deadref-only: only FAIL on drift that makes the manifest actively wrong
+  // (points at a deleted file / removed endpoint). Additions (new component /
+  // endpoint) are NOT fatal here — the auto-reconcile bot handles those by
+  // opening a PR, so a human's feature PR is never blocked for adding a feature.
+  deadrefOnly: args.has('--deadref-only'),
 };
+
+// Drift types that mean "the manifest lies about what exists" → a human must fix.
+const BLOCKING_TYPES = new Set(['dead_entrypoint', 'dead_test', 'endpoint_removed']);
 
 const MANIFEST_PATH = join(ROOT, 'feature-manifest.json');
 const DOC_PATH = join(ROOT, 'docs', 'APP-STATE.md');
@@ -282,7 +290,26 @@ if (!MODE.json) {
   }
 }
 
-// Exit code: fail on drift unless --update (local convenience).
-if (result.fail.length && !MODE.updateOnly) {
+// Exit code.
+// - default: fail on ANY drift (unless --update, a local convenience).
+// - --deadref-only: fail ONLY on drift that makes the manifest actively wrong
+//   (dead file/test ref, removed endpoint). Additions are non-fatal because the
+//   auto-reconcile bot opens a PR for them, so feature PRs are never blocked.
+const blocking = MODE.deadrefOnly
+  ? result.fail.filter((d) => BLOCKING_TYPES.has(d.type))
+  : result.fail;
+if (MODE.deadrefOnly && !MODE.json) {
+  const additions = result.fail.length - blocking.length;
+  if (additions > 0) {
+    console.log(
+      `\nℹ️  ${additions} addition(s) are non-blocking — the auto-reconcile bot will open a manifest PR.`
+    );
+  }
+  if (blocking.length > 0) {
+    console.log(`\n❌ ${blocking.length} BLOCKING issue(s) (manifest points at missing code — human fix):`);
+    for (const d of blocking) console.log(`   [${d.type}] ${d.detail}`);
+  }
+}
+if (blocking.length && !MODE.updateOnly) {
   process.exitCode = 1;
 }

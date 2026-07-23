@@ -689,6 +689,50 @@ const CATALOG = [
         feedback: {}
       }
     ]
+  },
+  // ═══════════════════════════════════════════════════════════════
+  // SHARE MODAL — share-card modal sprint (kept finalists)
+  // Chosen direction: 3.4B Dedication (locked)
+  // ═══════════════════════════════════════════════════════════════
+  {
+    component: 'Share Modal',
+    id: 'share-modal',
+    categories: [
+      { id: 'share-renders', name: 'Card Renders — WYSIWYG', source: 'claude/design-3-4b-xru8t6', description: 'Post-3.4B implementation — the preview IS the exported PNG (single canvas source of truth); twelve card materials across three families (artist, atmosphere, composition), line selection up to six verse pairs, and centered/right alignment (all designs centre by default)',
+        options: [
+          { id: 'share-renders-gallery', name: 'Render Options Gallery', philosophy: 'What you see is exactly what you send — every material rendered from the same canvas as the export', file: 'share-modal/render-options.html', desc: 'All twelve card renders at export resolution: the artist five (Dīwān, Ibn Muqla, Sinan, Zaha Hadid, Hassan Fathy); atmosphere (Layl, Mishkat, Sahifa); and composition layouts (Musnad numbered-margin, Muqabala facing-columns, Najma star-medallion, Iqtibas pull-quote)', generation: 11, iteration: 1, source_branch: 'claude/design-3-4b-xru8t6' },
+          { id: 'share-renders-flow', name: 'Flow — Lines & Alignment', philosophy: 'The reader chooses which verses travel and how the text is set', file: 'share-modal/render-options.html#flow', desc: 'WYSIWYG stage with floating card, glass lines panel (gold diamond checks per verse pair, up to six), centered/right alignment control, tap-outside to dismiss, dock-anchored toasts, live preview updates, material-accent chrome', generation: 11, iteration: 1, source_branch: 'claude/design-3-4b-xru8t6' }
+        ],
+        feedback: {}
+      },
+      { id: 'share-dedication', name: 'Folio — Dedication', source: 'claude/share-modal-design-zhezmr', description: 'The chosen direction — one-line dedication header (شارِك · Send this poem · recipient typed live with a cursor), full-bleed card, smooth Islamic arch selector, glass dock actions',
+        options: [
+          { id: 'share-34b-final', name: '3.4B — Final (Locked)', philosophy: 'The header addresses a person, not a feature — the recipient typed and retyped in living ink', file: 'share-modal/v3-4b.html', desc: 'LOCKED FINAL: left-anchored letter-opening line with bar cursor typing to a friend / to a lover / to a stranger / to yourself; full-bleed card from under the header to screen bottom; arch selector with sill indicator and nameless style caption; dock: download / foil Share / copy link', generation: 9, iteration: 3, source_branch: 'claude/share-modal-design-zhezmr' },
+          { id: 'share-34a', name: '3.4A — Ink Bar', philosophy: 'Same living dedication, card as a floating inset panel', file: 'share-modal/v3-4a.html', desc: 'Left-anchored dedication line with thin bar cursor; inset rounded preview card with soft elevation between header and arch selector', generation: 9, iteration: 3, source_branch: 'claude/share-modal-design-zhezmr' },
+          { id: 'share-34c', name: '3.4C — Address Line', philosophy: 'The recipient is typed onto a drawn gold rule, like addressing an envelope', file: 'share-modal/v3-4c.html', desc: 'Dedication line where the typed recipient sits on a gold underline that tracks the text; deepest card elevation of the three', generation: 9, iteration: 3, source_branch: 'claude/share-modal-design-zhezmr' }
+        ],
+        feedback: {}
+      },
+      { id: 'share-folio', name: 'Folio — Full-Bleed', source: 'claude/share-modal-design-zhezmr', description: 'Full-bleed card directions that led to the Dedication family — arch selector on the shelf, glass dock actions',
+        options: [
+          { id: 'share-folio-31', name: '3.1 — Arcade Selector', philosophy: 'The card fills the screen; the styles wait as an arcade of arch windows', file: 'share-modal/v3-1.html', desc: 'Full-bleed card, corner share heading, smooth arch selector with nameless style caption, glass dock', generation: 9, iteration: 2, source_branch: 'claude/share-modal-design-zhezmr' },
+          { id: 'share-folio-33', name: '3.3 — Unwan Band', philosophy: 'The share heading as an illuminated chapter opening — cartouche and flanking hairlines', file: 'share-modal/v3-3.html', desc: 'Manuscript unwan header band (Arabic over English small caps in a double-outline cartouche, diamond-tipped hairlines), full-bleed card, arch selector, glass dock', generation: 9, iteration: 2, source_branch: 'claude/share-modal-design-zhezmr' }
+        ],
+        feedback: {}
+      },
+      { id: 'share-khatm', name: 'Khatm — The Seal', source: 'claude/share-modal-design-zhezmr', description: 'Sharing as ritual — candlelight verse reveals and a wax-seal share button',
+        options: [
+          { id: 'share-khatm-1', name: '1 — Khatm Final C', philosophy: 'Press the seal to send this card to a friend — the share as a stamped ritual', file: 'share-modal/s7c.html', desc: 'Centre-stage card with staggered candlelight verse reveal, smooth Islamic arch selector above the ritual bar, wax seal engraved Share / شارِك that stamps the card with a gold dust burst', generation: 9, iteration: 2, source_branch: 'claude/share-modal-design-zhezmr' }
+        ],
+        feedback: {}
+      },
+      { id: 'share-majlis', name: 'Majlis — Bottom Sheet', source: 'claude/share-modal-design-zhezmr', description: 'The share modal as a calm bottom sheet led by its thumbnail selector',
+        options: [
+          { id: 'share-majlis-2', name: '2 — Majlis Final', philosophy: 'Miniature live cards you flick through — the selector is the centrepiece', file: 'share-modal/s2b.html', desc: 'Bottom sheet over the dimmed reader: grabber, bilingual header, large 4:5 preview, thumbnail carousel of five miniature live cards, glass dock actions', generation: 9, iteration: 2, source_branch: 'claude/share-modal-design-zhezmr' }
+        ],
+        feedback: {}
+      }
+    ]
   }
 ];
 

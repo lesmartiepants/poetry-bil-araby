@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/lesmartiepants/poetry-bil-araby/scripts/feature-manifest.schema.json",
+  "title": "Feature Coverage Manifest",
+  "description": "Source of truth for the app's feature inventory and its test coverage. Validated against code by scripts/check-feature-manifest.mjs.",
+  "type": "object",
+  "required": ["tiers", "coverageLegend", "features"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Path or URL to this JSON Schema."
+    },
+    "_comment": {
+      "type": "string",
+      "description": "Freeform note describing the file's purpose."
+    },
+    "tiers": {
+      "type": "object",
+      "description": "Human-readable definition of each risk tier.",
+      "required": ["critical", "important", "nice", "internal"],
+      "additionalProperties": false,
+      "properties": {
+        "critical": { "type": "string" },
+        "important": { "type": "string" },
+        "nice": { "type": "string" },
+        "internal": { "type": "string" }
+      }
+    },
+    "coverageLegend": {
+      "type": "object",
+      "description": "Human-readable definition of each coverage tag.",
+      "required": ["behavioral", "mocked", "source-only", "device-only", "none"],
+      "additionalProperties": false,
+      "properties": {
+        "behavioral": { "type": "string" },
+        "mocked": { "type": "string" },
+        "source-only": { "type": "string" },
+        "device-only": { "type": "string" },
+        "none": { "type": "string" }
+      }
+    },
+    "features": {
+      "type": "array",
+      "description": "Every user-facing or internal feature and its coverage.",
+      "items": { "$ref": "#/definitions/feature" }
+    }
+  },
+  "definitions": {
+    "feature": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "tier",
+        "userFacing",
+        "entrypoints",
+        "endpoints",
+        "tests",
+        "deviceOnly",
+        "coverage",
+        "gap"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Stable slug used to reference the feature.",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Short human-readable feature name."
+        },
+        "tier": {
+          "type": "string",
+          "description": "Risk tier.",
+          "enum": ["critical", "important", "nice", "internal"]
+        },
+        "userFacing": {
+          "type": "string",
+          "description": "What the user actually sees or does when this works."
+        },
+        "entrypoints": {
+          "type": "array",
+          "description": "POSIX (forward-slash) source paths that implement the feature.",
+          "items": { "type": "string" }
+        },
+        "endpoints": {
+          "type": "array",
+          "description": "HTTP endpoints this feature relies on, formatted as 'METHOD /path'.",
+          "items": { "type": "string" }
+        },
+        "tests": {
+          "type": "object",
+          "description": "Test files that exercise the feature, grouped by kind.",
+          "additionalProperties": false,
+          "properties": {
+            "unit": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "e2e": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        },
+        "deviceOnly": {
+          "type": "boolean",
+          "description": "True when the feature can only be verified on a real device / Safari, not Chromium-on-Linux CI."
+        },
+        "coverage": {
+          "type": "string",
+          "description": "How well the feature is actually tested.",
+          "enum": ["behavioral", "mocked", "source-only", "device-only", "none"]
+        },
+        "gap": {
+          "type": "string",
+          "description": "What is still not covered — the honest residual risk."
+        }
+      }
+    }
+  }
+}

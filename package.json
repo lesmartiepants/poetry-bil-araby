@@ -28,8 +28,11 @@
     "format": "prettier --write 'src/**/*.{js,jsx,json,css}'",
     "format:check": "prettier --check 'src/**/*.{js,jsx,json,css}'",
     "prepare": "husky",
+    "manifest:check": "node scripts/check-feature-manifest.mjs --check",
+    "manifest:update": "node scripts/check-feature-manifest.mjs --update",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "guard:verify": "node scripts/guard-gauntlet.mjs"
   },
   "lint-staged": {
     "*.{js,jsx}": [

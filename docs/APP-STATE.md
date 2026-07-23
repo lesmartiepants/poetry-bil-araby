@@ -7,6 +7,7 @@ This is the living map of **what the app does** and **how well each feature is a
 - **CI:** `.github/workflows/feature-coverage.yml` runs the gate on every PR and comments drift.
 
 Run locally:
+
 ```bash
 npm run manifest:check     # fail on drift (what CI runs)
 npm run manifest:update    # refresh the auto block below, never fails
@@ -16,15 +17,15 @@ npm run manifest:update    # refresh the auto block below, never fails
 
 ## How to read coverage (the honest definitions)
 
-A green test is not the same as a tested feature. We tag each feature with what its tests *actually* exercise:
+A green test is not the same as a tested feature. We tag each feature with what its tests _actually_ exercise:
 
-| Tag | Meaning |
-|-----|---------|
-| **behavioral** | A test runs the feature's real logic and asserts real behavior. Trust it. |
-| **mocked** | Covered by e2e/unit, but the fragile layer is mocked away (e.g. TTS returns silent PCM, Supabase is faked). Catches wiring breaks, not the real failure. |
-| **source-only** | "Verified" only by grepping source text (`makeover-*.test.js`). If the logic regresses but keeps the same tokens, the test stays green. Weakest signal. |
-| **device-only** | Cannot run in Chromium-on-Linux CI. Needs real Safari/iOS or a device. Must be covered by a manual checklist. |
-| **none** | No automated coverage. |
+| Tag             | Meaning                                                                                                                                                  |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **behavioral**  | A test runs the feature's real logic and asserts real behavior. Trust it.                                                                                |
+| **mocked**      | Covered by e2e/unit, but the fragile layer is mocked away (e.g. TTS returns silent PCM, Supabase is faked). Catches wiring breaks, not the real failure. |
+| **source-only** | "Verified" only by grepping source text (`makeover-*.test.js`). If the logic regresses but keeps the same tokens, the test stays green. Weakest signal.  |
+| **device-only** | Cannot run in Chromium-on-Linux CI. Needs real Safari/iOS or a device. Must be covered by a manual checklist.                                            |
+| **none**        | No automated coverage.                                                                                                                                   |
 
 ---
 
@@ -33,10 +34,12 @@ A green test is not the same as a tested feature. We tag each feature with what 
 Researched from current practice ([sources](#sources)). The shape matters less than pointing effort at real risk.
 
 ### 1. Testing Trophy over Test Pyramid (this app is API/UI-centric)
+
 The [Test Pyramid](https://qalified.com/blog/test-pyramid-for-engineering-teams/) (lots of unit, few integration, fewer E2E) fits thick-domain-logic apps. The [Testing Trophy](https://testrigor.com/blog/what-is-the-testing-trophy-model/) (static analysis → unit → **integration as the focus** → minimal E2E) fits apps where the value is units collaborating across a UI and a backend. That's this app. Our bugs live in collaboration (togglePlay ↔ audio engine ↔ store ↔ DOM), which is exactly the integration layer the pyramid under-weights. So: keep ESLint/Prettier as the base, keep unit tests for pure logic (timing math, parsing), and **invest in integration/behavioral tests of the playback state machine**, with a thin E2E smoke layer on top.
 
 ### 2. Risk-based testing: tier every feature
-From [risk-based regression practice](https://katalon.com/resources-center/blog/risk-based-approach-for-regression-testing): score features by *likelihood of breaking* × *impact if broken*, and spend coverage proportionally. We encode this as a **tier** on every feature:
+
+From [risk-based regression practice](https://katalon.com/resources-center/blog/risk-based-approach-for-regression-testing): score features by _likelihood of breaking_ × _impact if broken_, and spend coverage proportionally. We encode this as a **tier** on every feature:
 
 - **critical** — core journey; app is unusable if it breaks. Must have a behavioral smoke test gated on every PR.
 - **important** — real value, frequent use. Must have regression coverage.
@@ -44,12 +47,15 @@ From [risk-based regression practice](https://katalon.com/resources-center/blog/
 - **internal** — tooling/ops, not user-facing.
 
 ### 3. Smoke vs regression: draw the line deliberately
+
 From the [smoke-vs-regression guide](https://medium.com/pickme-engineering-blog/smoke-vs-regression-the-complete-classification-guide-to-drawing-the-line-in-testing-702e45143c2a): the **smoke suite is the minimum set that proves the build is usable** (target < 5 min, gates every merge); **everything else is regression** (runs pre-release or change-scoped). Our smoke suite = the critical-tier user journeys: load a poem, discover, listen (play→pause→stop), swipe. Resist letting smoke grow into full verification.
 
 ### 4. Feature traceability that can't go stale
+
 From [traceability-in-CI practice](https://medium.com/@sancharini.panda/how-a-traceability-matrix-fits-into-modern-ci-cd-workflows-714c5a6862af): hand-maintained matrices decay into fiction. The fix is to (1) keep stable feature IDs, (2) link tests to features in a single artifact, and (3) **enforce it as a CI gate**. That's exactly what `feature-manifest.json` + the drift detector do: the doc can't silently drift, because CI fails when code grows an endpoint or component the manifest doesn't know about.
 
 ### 5. Device coverage is a first-class gap, not an afterthought
+
 Half our regressions are iOS/Safari/PWA. CI runs Chromium-on-Linux only. Anything tagged **device-only** below is, by definition, invisible to CI and must be covered by the manual checklist in [`docs/DEVICE-QA-CHECKLIST.md`](./DEVICE-QA-CHECKLIST.md) before release.
 
 ---
@@ -59,79 +65,83 @@ Half our regressions are iOS/Safari/PWA. CI runs Chromium-on-Linux only. Anythin
 The block below is regenerated by `npm run manifest:update` and by CI. Do not hand-edit it.
 
 <!-- AUTO:BEGIN (generated by scripts/check-feature-manifest.mjs — do not edit by hand) -->
-_Generated 2026-06-28. **Manifest is in sync with code.**_
+
+_Generated 2026-07-23. **Manifest is in sync with code.**_
 
 ### Inventory at a glance
 
-- **Features tracked:** 34
+- **Features tracked:** 36
 - **HTTP endpoints in code:** 31
-- **Components in code:** 21
-- **Test files in code:** 42
-- **Behavioral coverage:** 6/34 (18%)
+- **Components in code:** 30
+- **Test files in code:** 51
+- **Behavioral coverage:** 6/36 (17%)
 
-| Tier | Features |
-|------|----------|
-| critical | 6 |
-| important | 12 |
-| nice | 13 |
-| internal | 3 |
+| Tier      | Features |
+| --------- | -------- |
+| critical  | 7        |
+| important | 13       |
+| nice      | 13       |
+| internal  | 3        |
 
-| Coverage | Features |
-|----------|----------|
-| behavioral | 6 |
-| mocked | 17 |
-| source-only | 1 |
-| device-only | 3 |
-| none | 7 |
+| Coverage    | Features |
+| ----------- | -------- |
+| behavioral  | 6        |
+| mocked      | 19       |
+| source-only | 1        |
+| device-only | 3        |
+| none        | 7        |
 
 ### Feature coverage matrix
 
-| Feature | Tier | Coverage | Device-only | Gap |
-|---------|------|----------|-------------|-----|
-| `poem-display` | critical | behavioral | - | Arabic font rendering (Amiri/Tajawal) differs prod vs CI; no visual regression. |
-| `discover-random` | critical | mocked | - | e2e routes /api/** to canned JSON; real server SERVING filters + exclude fallback only covered by server.test.js in isolation. |
-| `poem-carousel` | critical | mocked | - | carousel.spec skips silently when <2 dots populate; a broken carousel can pass as skipped. |
-| `tts-playback` | critical | source-only | - | HIGHEST RISK. togglePlay.js (1025 lines, 105 branches) state machine is never executed behaviorally; makeover-tone asserts source text via regex; e2e runs on silent PCM with the streaming path aborted. |
-| `tts-stop-on-swipe` | critical | mocked | - | Regressed in #552 on streaming/iOS players (no .state). liveAudioStream covers the streaming stop primitive; the togglePlay swipe path is not behaviorally tested. |
-| `tts-voice-cycle` | important | mocked | - | voices.test covers nextVoice + persistence; the abort+restart race on mid-recitation switch is untested. |
-| `tts-engine-switch` | important | none | - | Source of #560/#558/#561. The orphaned-stream/abort path on engine switch has no behavioral test. |
-| `tts-word-highlight` | important | behavioral | - | Timing math and class transitions well covered. Auto-scroll layout (getBoundingClientRect) only real in Chromium, not jsdom. |
-| `tts-seek-verse` | nice | mocked | - | startPlayer is mocked; isSeeking singleton clearing not behaviorally verified. |
-| `tts-ios-silent-switch` | important | device-only | yes | navigator.audioSession + HTMLAudio unlock. Source of #556/#561. Impossible in CI; needs a manual iOS device checklist. |
-| `tts-prefetch-cache` | nice | mocked | - | cache.test covers Blob->ArrayBuffer (iOS #554). Prefetch is skipped entirely in live mode; the in-flight prefetch poll (60s nested timeouts) is untested. |
-| `ai-insights` | important | mocked | - | Parsing well covered. SSE streaming + swipe-bail (_analysisGeneration) only over mocked routes. |
-| `save-poems` | important | mocked | - | Supabase fully mocked. Optimistic insert + 23505 dedup + post-OAuth auto-save stash only logic-tested. |
-| `auth-oauth` | important | mocked | yes | Real OAuth redirect/PKCE exchange can't run in CI; only the stash/restore + short-circuit logic is mockable. |
-| `settings-sync` | nice | mocked | - | Debounced upsert to user_settings only logic-tested; voice_preference column exists but UI uses localStorage. |
-| `text-settings` | important | behavioral | - | Store + highlight defaults covered; full popover interaction matrix not exhaustively e2e-tested. |
-| `theme-toggle` | important | behavioral | - | None significant. |
-| `share-card` | nice | mocked | - | canvas ctx mocked; real toDataURL pixels + navigator.share unavailable in CI; Arabic font rendering unverified. |
-| `deep-link` | important | mocked | - | Param parsing covered; deep-link fetch-failure fallback to random only logic-level. |
-| `copy-poem` | nice | mocked | - | clipboard stubbed in unit setup; e2e asserts the success state. |
-| `downvote-flag` | nice | mocked | - | Frontend uses Supabase-direct emitEvent; the Express event endpoints are an unused alternate path. |
-| `poet-filter` | important | mocked | - | search endpoint exists server-side but has no client service wrapper; search UI path thin. |
-| `onboarding-splash` | nice | none | - | No behavioral test of phase progression or hasSeenOnboarding gating. |
-| `zen-mode` | nice | none | - | No test for idle transition or that settings taps don't wake chrome. |
-| `ratchet-mode` | nice | none | - | Easter-egg toggles + RATCHET_SYSTEM_PROMPT path untested. |
-| `keyboard-shortcuts` | nice | mocked | - | Help overlay + a few shortcuts touched in e2e; full key matrix not asserted. |
-| `bug-report` | nice | none | - | server.test covers the endpoint shape; the client submit flow is untested. |
-| `pwa-offline` | important | device-only | yes | pwa-service-worker.spec needs a prod preview build (skips on dev); SW lifecycle absent in jsdom. |
-| `pwa-release-update` | critical | device-only | yes | Source of #557. checkForNewRelease (fetch+compare+caches.delete+reload) is unit-testable with mocks but currently has NO unit test; iOS Safari SW unreliability is device-only. |
-| `keep-alive` | internal | behavioral | - | None. |
-| `ai-mode` | nice | mocked | - | Model ranking + thinking config covered; live generation mocked. |
-| `internal-design-review` | internal | behavioral | - | Endpoints well covered against mocked pg. |
-| `decorative-visuals` | nice | none | - | Purely decorative; no behavioral coverage, low risk. |
-| `internal-tts-lab` | internal | none | - | Dev-only; no coverage needed. |
+| Feature                  | Tier      | Coverage    | Device-only | Gap                                                                                                                                                                                                       |
+| ------------------------ | --------- | ----------- | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `poem-display`           | critical  | behavioral  | -           | Arabic font rendering (Amiri/Tajawal) differs prod vs CI; no visual regression.                                                                                                                           |
+| `discover-random`        | critical  | mocked      | -           | e2e routes /api/\*\* to canned JSON; real server SERVING filters + exclude fallback only covered by server.test.js in isolation.                                                                          |
+| `poem-carousel`          | critical  | mocked      | -           | carousel.spec skips silently when <2 dots populate; a broken carousel can pass as skipped.                                                                                                                |
+| `tts-playback`           | critical  | source-only | -           | HIGHEST RISK. togglePlay.js (1025 lines, 105 branches) state machine is never executed behaviorally; makeover-tone asserts source text via regex; e2e runs on silent PCM with the streaming path aborted. |
+| `tts-stop-on-swipe`      | critical  | mocked      | -           | Regressed in #552 on streaming/iOS players (no .state). liveAudioStream covers the streaming stop primitive; the togglePlay swipe path is not behaviorally tested.                                        |
+| `tts-voice-cycle`        | important | mocked      | -           | voices.test covers nextVoice + persistence; the abort+restart race on mid-recitation switch is untested.                                                                                                  |
+| `tts-engine-switch`      | important | none        | -           | Source of #560/#558/#561. The orphaned-stream/abort path on engine switch has no behavioral test.                                                                                                         |
+| `tts-word-highlight`     | important | behavioral  | -           | Timing math and class transitions well covered. Auto-scroll layout (getBoundingClientRect) only real in Chromium, not jsdom.                                                                              |
+| `tts-seek-verse`         | nice      | mocked      | -           | startPlayer is mocked; isSeeking singleton clearing not behaviorally verified.                                                                                                                            |
+| `tts-ios-silent-switch`  | important | device-only | yes         | navigator.audioSession + HTMLAudio unlock. Source of #556/#561. Impossible in CI; needs a manual iOS device checklist.                                                                                    |
+| `tts-prefetch-cache`     | nice      | mocked      | -           | cache.test covers Blob->ArrayBuffer (iOS #554). Prefetch is skipped entirely in live mode; the in-flight prefetch poll (60s nested timeouts) is untested.                                                 |
+| `ai-insights`            | important | mocked      | -           | Parsing well covered. SSE streaming + swipe-bail (\_analysisGeneration) only over mocked routes.                                                                                                          |
+| `save-poems`             | important | mocked      | -           | Supabase fully mocked. Optimistic insert + 23505 dedup + post-OAuth auto-save stash only logic-tested.                                                                                                    |
+| `auth-oauth`             | important | mocked      | yes         | Real OAuth redirect/PKCE exchange can't run in CI; only the stash/restore + short-circuit logic is mockable.                                                                                              |
+| `settings-sync`          | nice      | mocked      | -           | Debounced upsert to user_settings only logic-tested; voice_preference column exists but UI uses localStorage.                                                                                             |
+| `text-settings`          | important | behavioral  | -           | Store + highlight defaults covered; full popover interaction matrix not exhaustively e2e-tested.                                                                                                          |
+| `theme-toggle`           | important | behavioral  | -           | None significant. Toggle control moved out of the removed ThemeToggle.jsx into the nav/settings.                                                                                                          |
+| `share-card`             | nice      | mocked      | -           | canvas ctx mocked; real toDataURL pixels + navigator.share unavailable in CI; Arabic font rendering unverified.                                                                                           |
+| `deep-link`              | important | mocked      | -           | Param parsing covered; deep-link fetch-failure fallback to random only logic-level.                                                                                                                       |
+| `copy-poem`              | nice      | mocked      | -           | clipboard stubbed in unit setup; e2e asserts the success state.                                                                                                                                           |
+| `downvote-flag`          | nice      | mocked      | -           | Frontend uses Supabase-direct emitEvent; the Express event endpoints are an unused alternate path.                                                                                                        |
+| `poet-filter`            | important | mocked      | -           | search endpoint exists server-side but has no client service wrapper; search UI path thin.                                                                                                                |
+| `onboarding-splash`      | nice      | none        | -           | No behavioral test of phase progression or hasSeenOnboarding gating.                                                                                                                                      |
+| `zen-mode`               | nice      | none        | -           | No test for idle transition or that settings taps don't wake chrome.                                                                                                                                      |
+| `ratchet-mode`           | nice      | none        | -           | Easter-egg toggles + RATCHET_SYSTEM_PROMPT path untested.                                                                                                                                                 |
+| `keyboard-shortcuts`     | nice      | mocked      | -           | Help overlay + a few shortcuts touched in e2e; full key matrix not asserted.                                                                                                                              |
+| `bug-report`             | nice      | none        | -           | server.test covers the endpoint shape; the client submit flow is untested.                                                                                                                                |
+| `pwa-offline`            | important | device-only | yes         | pwa-service-worker.spec needs a prod preview build (skips on dev); SW lifecycle absent in jsdom.                                                                                                          |
+| `pwa-release-update`     | critical  | device-only | yes         | Source of #557. checkForNewRelease (fetch+compare+caches.delete+reload) is unit-testable with mocks but currently has NO unit test; iOS Safari SW unreliability is device-only.                           |
+| `keep-alive`             | internal  | behavioral  | -           | None.                                                                                                                                                                                                     |
+| `ai-mode`                | nice      | mocked      | -           | Model ranking + thinking config covered; live generation mocked.                                                                                                                                          |
+| `internal-design-review` | internal  | behavioral  | -           | Endpoints well covered against mocked pg.                                                                                                                                                                 |
+| `decorative-visuals`     | nice      | none        | -           | Purely decorative; no behavioral coverage, low risk.                                                                                                                                                      |
+| `internal-tts-lab`       | internal  | none        | -           | Dev-only; no coverage needed.                                                                                                                                                                             |
+| `reader-feed`            | critical  | mocked      | -           | #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted.                                                             |
+| `guided-tour`            | important | mocked      | -           | #582/#602. e2e exercises step flow; conditional-step + resume-lifecycle branches only partly asserted.                                                                                                    |
 
 ### Critical features without behavioral CI coverage
 
 These are the highest-leverage gaps. Each is a critical-tier feature whose real failure mode is not exercised by a test that runs in CI:
 
-- `discover-random` — mocked: e2e routes /api/** to canned JSON; real server SERVING filters + exclude fallback only covered by server.test.js in isolation.
+- `discover-random` — mocked: e2e routes /api/\*\* to canned JSON; real server SERVING filters + exclude fallback only covered by server.test.js in isolation.
 - `poem-carousel` — mocked: carousel.spec skips silently when <2 dots populate; a broken carousel can pass as skipped.
 - `tts-playback` — source-only: HIGHEST RISK. togglePlay.js (1025 lines, 105 branches) state machine is never executed behaviorally; makeover-tone asserts source text via regex; e2e runs on silent PCM with the streaming path aborted.
 - `tts-stop-on-swipe` — mocked: Regressed in #552 on streaming/iOS players (no .state). liveAudioStream covers the streaming stop primitive; the togglePlay swipe path is not behaviorally tested.
 - `pwa-release-update` — device-only: Source of #557. checkForNewRelease (fetch+compare+caches.delete+reload) is unit-testable with mocks but currently has NO unit test; iOS Safari SW unreliability is device-only.
+- `reader-feed` — mocked: #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted.
 <!-- AUTO:END -->
 
 ---

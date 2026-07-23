@@ -180,7 +180,7 @@ function buildDocBlock(manifest, discovered, result) {
   const featureRows = f
     .map(
       (x) =>
-        `| \`${x.id}\` | ${x.tier} | ${x.coverage} | ${x.deviceOnly ? 'yes' : '-'} | ${(x.gap || '').replace(/\|/g, '\\|')} |`,
+        `| \`${x.id}\` | ${x.tier} | ${x.coverage} | ${x.deviceOnly ? 'yes' : '-'} | ${(x.gap || '').replace(/\\/g, '\\\\').replace(/\|/g, '\\|')} |`,
     )
     .join('\n');
 

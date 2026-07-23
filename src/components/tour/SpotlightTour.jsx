@@ -1,0 +1,727 @@
+import { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useUIStore } from '../../stores/uiStore';
+import { useModalStore } from '../../stores/modalStore';
+import { useAudioStore } from '../../stores/audioStore';
+import { TOUR_TRAYS } from '../../constants/tourTrays.js';
+
+/**
+ * SpotlightTour — bespoke, on-brand walkthrough engine (no external library).
+ *
+ * Behavior:
+ *  - The overlay NEVER blocks the page (pointer-events:none), so the user
+ *    genuinely taps the real Listen / Discover / Explain controls.
+ *  - Feature steps AUTO-ADVANCE on the real interaction (no Next button): perform
+ *    the action, a beat lets it land (open the tray / start audio), then the tour
+ *    moves on. Only the centered welcome/finish cards carry a manual Next/Done.
+ *  - Caveat for steps that open a modal/drawer (a "tray"): the tour does NOT
+ *    auto-advance the instant the tray opens — that would yank the panel away as
+ *    it appears. Instead it holds a dismissal beat (the card asks the reader to
+ *    close it: tap × for a modal, drag down for a drawer) and advances only once
+ *    the tray is dismissed.
+ *  - The coachmark pops into place with a CONSTANT subtle glow (no flashing).
+ *    The only thing that flashes — subtly — is the ring around the action.
+ *  - The card sits fully ABOVE the control bar (never overlapping it). When a
+ *    step opens a tray (Discover), the card moves in front of the tray, centered
+ *    in the bottom two-thirds.
+ */
+
+// Above the Discover drawer (z-202) and everything else.
+const Z = 9999;
+const PAD = 4; // breathing room around the spotlighted element (hugs the control)
+const GAP = 18; // distance between the control bar / element and the card
+// On feature steps the real interaction unlocks the step. Give the tap a beat to
+// land (open the tray / start audio) so the reader sees the result before Next
+// appears.
+const ADVANCE_DELAY = 650;
+// The "Listen" step is the heart of the experience: the synced word-by-word
+// highlight. Its 650ms beat moved off the step before the highlight was ever
+// visible (#607). On a step flagged `demoRecite`, dwell noticeably longer so the
+// real recitation the tap started is actually SEEN in motion before advancing.
+// Kept under the unit test's 2000ms auto-advance window with margin to spare.
+const DEMO_RECITE_DWELL = 1800;
+// After the real Listen tap, wait a beat for the app's own click handler (bubble
+// phase, after our capture-phase listener) to kick playback, then verify. Only if
+// nothing is playing/generating do we call onDemoRecite() as a guarantee — so it
+// can never double-toggle (start-then-immediately-pause) the recitation.
+const DEMO_RECITE_GUARANTEE_DELAY = 120;
+const POP = { type: 'spring', stiffness: 460, damping: 30, mass: 0.7 };
+const ARABIC_SIZE = '1.155rem'; // inline accent (Arabic) — +10%
+
+// Steps can open an overlay (a "tray"): the engine then moves the card in front
+// of it (un-blurred, centered in the bottom two-thirds) and closes it on Next.
+// Built from the shared TOUR_TRAYS contract (see constants/tourTrays.js, which a
+// unit test validates against the store). `key` is the store boolean that means
+// "open", `close()` closes it, `above` (optional) is a centered modal to sit
+// above rather than float over.
+const TRAYS = Object.fromEntries(
+  Object.entries(TOUR_TRAYS).map(([name, { stateKey, setter, above }]) => [
+    name,
+    { key: stateKey, above, close: () => useModalStore.getState()[setter](false) },
+  ])
+);
+
+function measure(selector) {
+  if (!selector) return null;
+  const el = document.querySelector(selector);
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (r.width === 0 && r.height === 0) return null;
+  const radius = parseFloat(getComputedStyle(el).borderTopLeftRadius) || 0;
+  return {
+    top: r.top,
+    left: r.left,
+    width: r.width,
+    height: r.height,
+    bottom: r.bottom,
+    right: r.right,
+    radius,
+  };
+}
+
+export default function SpotlightTour({
+  steps,
+  initialStep = 0,
+  onDismiss,
+  onComplete,
+  onStepChange,
+  onDemoRecite,
+  isSignedIn = false,
+}) {
+  const darkMode = useUIStore((s) => s.darkMode);
+  const discoverDrawer = useModalStore((s) => s.discoverDrawer);
+  const insightsDrawer = useModalStore((s) => s.insightsDrawer);
+  const authModal = useModalStore((s) => s.authModal);
+  const savedPoems = useModalStore((s) => s.savedPoems);
+  const [index, setIndex] = useState(() =>
+    Math.min(Math.max(0, initialStep), Math.max(0, steps.length - 1))
+  );
+  const [rect, setRect] = useState(null);
+  const [barTop, setBarTop] = useState(null);
+  const [aboveRect, setAboveRect] = useState(null);
+  // A tray step whose interaction opened a modal/drawer: we hold here (asking the reader to close
+  // it) instead of auto-advancing, so the panel isn't yanked away the instant it appears.
+  const [awaitingDismiss, setAwaitingDismiss] = useState(false);
+  const rafRef = useRef(0);
+
+  const step = steps[index];
+  const isLast = index === steps.length - 1;
+  const total = steps.length;
+  const needsAction = !!step?.advanceOn;
+  const tray = step?.tray ? TRAYS[step.tray] : null;
+  const trayOpen = !!(tray && { discoverDrawer, insightsDrawer, authModal, savedPoems }[tray.key]);
+
+  // Dismiss = user closed it early (× / Esc) → can resume later.
+  // Complete = reached the end (Done) → terminal; entry point moves to the corner.
+  const dismiss = useCallback(() => onDismiss?.(), [onDismiss]);
+  const complete = useCallback(() => onComplete?.(), [onComplete]);
+
+  // Persist the current step so a resume picks up exactly where they left off.
+  useEffect(() => {
+    onStepChange?.(index);
+  }, [index, onStepChange]);
+
+  // Advance to the next step, closing any tray this step left open first. Called
+  // automatically after a feature-step interaction (or its tray's dismissal), and
+  // manually by Next/Done on the centered welcome/finish cards.
+  const next = useCallback(() => {
+    const t = step?.tray ? TRAYS[step.tray] : null;
+    if (t && useModalStore.getState()[t.key]) t.close();
+    setIndex((i) => {
+      if (i >= steps.length - 1) {
+        complete();
+        return i;
+      }
+      return i + 1;
+    });
+  }, [step, steps.length, complete]);
+
+  const back = useCallback(() => setIndex((i) => Math.max(0, i - 1)), []);
+
+  // Flag the tour as active so app overlays (e.g. the insight drawer) suppress
+  // their outside-click dismissal and let the tour drive them.
+  useEffect(() => {
+    useUIStore.getState().setTourActive(true);
+    return () => useUIStore.getState().setTourActive(false);
+  }, []);
+
+  // Keep the app chrome awake (the idle timer would otherwise hide the bar).
+  useEffect(() => {
+    const id = setInterval(() => {
+      window.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    }, 1200);
+    return () => clearInterval(id);
+  }, []);
+
+  // Track the target, the control bar's top edge, and any "above" modal (auth)
+  // every frame so the card follows them.
+  useLayoutEffect(() => {
+    let active = true;
+    const tk = step?.tray ? TRAYS[step.tray] : null;
+    const tick = () => {
+      if (!active) return;
+      setRect(measure(step?.target));
+      const bar = document.querySelector('[data-tour-anchor="controlbar"]');
+      setBarTop(bar ? bar.getBoundingClientRect().top : null);
+      setAboveRect(tk?.above ? measure(tk.above) : null);
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => {
+      active = false;
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [step?.target, step?.tray]);
+
+  // Dev-only drift warning: if a step expects an anchor that isn't in the DOM,
+  // surface it the moment the tour runs locally — it would otherwise silently
+  // fall back to a centered card. No-op in production builds and unit tests.
+  useEffect(() => {
+    if (!import.meta.env.DEV || import.meta.env.MODE === 'test' || !step?.target) return;
+    const id = setTimeout(() => {
+      if (!document.querySelector(step.target)) {
+        console.warn(
+          `[tour] step "${step.key}": target ${step.target} not found — anchor drift? Falling back to a centered card.`
+        );
+      }
+    }, 800);
+    return () => clearTimeout(id);
+  }, [index, step?.target, step?.key]);
+
+  // Dynamic auto-advance: performing the real interaction IS the advance on feature
+  // steps (there's no Next button on them). Delegated from the document (capture
+  // phase) so it keeps working even if the target element is swapped out mid-step
+  // (e.g. the Listen control morphing as audio loads).
+  // Hold the latest onDemoRecite without making the auto-advance effect depend on it.
+  // togglePlay is recreated every render, so listing it as a dep would re-run this effect
+  // on a re-render and clear the pending advance timer (freezing the tour).
+  const onDemoReciteRef = useRef(onDemoRecite);
+  useEffect(() => {
+    onDemoReciteRef.current = onDemoRecite;
+  }, [onDemoRecite]);
+
+  useEffect(() => {
+    if (!needsAction || !step?.target) return;
+    // The Listen step demos the synced highlight: dwell longer so it's actually
+    // seen in motion before the card advances (#607). Every other step keeps the
+    // brief 650ms beat.
+    const demoRecite = !!step?.demoRecite;
+    const delay = demoRecite ? DEMO_RECITE_DWELL : ADVANCE_DELAY;
+    const stepTray = step?.tray ? TRAYS[step.tray] : null;
+    let advanced = false;
+    let timer;
+    let guaranteeTimer;
+    const handler = (e) => {
+      if (advanced) return;
+      if (e.target instanceof Element && e.target.closest(step.target)) {
+        advanced = true;
+        // On the demo step, the real tap already starts recitation via the app's
+        // own (bubble-phase) handler. As a guarantee — and only when it can't
+        // double-toggle — kick playback ourselves if, a beat later, nothing is
+        // playing or generating. (togglePlay's own in-flight guard is a further
+        // backstop against starting-then-pausing.)
+        if (demoRecite && onDemoReciteRef.current) {
+          guaranteeTimer = setTimeout(() => {
+            const { isPlaying, isGenerating } = useAudioStore.getState();
+            if (!isPlaying && !isGenerating) onDemoReciteRef.current?.();
+          }, DEMO_RECITE_GUARANTEE_DELAY);
+        }
+        // Let the app's own click handler run first (open the tray / start audio),
+        // then advance. If the interaction opened a tray (modal/drawer), DON'T
+        // advance yet — hold a dismissal beat so the panel isn't yanked away as it
+        // appears; the tray-dismissal effect below advances once the reader closes
+        // it. A tray step whose tray didn't open (e.g. Save while signed in) and
+        // every plain step auto-advance here.
+        timer = setTimeout(() => {
+          if (stepTray && useModalStore.getState()[stepTray.key]) {
+            setAwaitingDismiss(true);
+            return;
+          }
+          next();
+        }, delay);
+      }
+    };
+    document.addEventListener(step.advanceOn, handler, true);
+    return () => {
+      document.removeEventListener(step.advanceOn, handler, true);
+      clearTimeout(timer);
+      clearTimeout(guaranteeTimer);
+    };
+  }, [index, step, needsAction, next]);
+
+  // Tray dismissal beat: once the reader closes the modal/drawer this step opened,
+  // advance. (We deliberately waited instead of auto-advancing when it opened.)
+  useEffect(() => {
+    if (awaitingDismiss && !trayOpen) {
+      setAwaitingDismiss(false);
+      next();
+    }
+  }, [awaitingDismiss, trayOpen, next]);
+
+  // Reset the dismissal-wait whenever the step changes so it never leaks across steps.
+  useEffect(() => {
+    setAwaitingDismiss(false);
+  }, [index]);
+
+  // Terminal step: proactively close any lingering app overlay (auth / discover /
+  // saved) so nothing sits over the Done button. A Radix/Vaul dismissable layer
+  // left open would otherwise swallow the completing tap and completion would
+  // never persist (#610c).
+  useEffect(() => {
+    if (!isLast) return;
+    Object.values(TRAYS).forEach((t) => {
+      if (useModalStore.getState()[t.key]) t.close();
+    });
+  }, [isLast]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') dismiss();
+      // ArrowRight only advances the centered welcome/finish cards; feature steps
+      // advance by performing their real interaction, not a key press.
+      else if (e.key === 'ArrowRight' && !needsAction) next();
+      else if (e.key === 'ArrowLeft') back();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [dismiss, next, back, needsAction]);
+
+  // Layout mode: tray (centered in front of an open drawer) > spotlight > centered.
+  const mode = trayOpen ? 'tray' : rect ? 'spotlight' : 'centered';
+
+  // While holding the dismissal beat, tell the reader how to close what they opened. A step may
+  // supply its own copy (e.g. the Save step encourages signing up); otherwise fall back to the
+  // generic hint — a centered modal (`above` set) closes with ×, a bottom drawer with a drag.
+  const dismissHint = awaitingDismiss
+    ? (step?.dismissHint ??
+      (tray?.above ? 'Tap × to close and continue' : 'Drag the panel down to continue'))
+    : null;
+
+  return createPortal(
+    <div
+      className="fixed inset-0"
+      style={{ zIndex: Z, pointerEvents: 'none' }}
+      aria-live="polite"
+      role="dialog"
+      aria-label="App walkthrough"
+    >
+      <AnimatePresence>
+        {mode === 'spotlight' ? (
+          <Spotlight key="spot" rect={rect} />
+        ) : mode === 'centered' ? (
+          <motion.div
+            key="scrim"
+            className="absolute inset-0"
+            style={{
+              background: 'rgba(8,8,12,0.72)',
+              backdropFilter: 'blur(2px)',
+              pointerEvents: 'none',
+            }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          />
+        ) : null}
+      </AnimatePresence>
+
+      {/* Centered intro/outro: a faint tap-catcher keeps focus on the card. */}
+      {mode === 'centered' && (
+        <div className="absolute inset-0" style={{ pointerEvents: 'auto' }} aria-hidden />
+      )}
+
+      <AnimatePresence mode="wait">
+        <CoachCard
+          key={step.key}
+          step={step}
+          index={index}
+          total={total}
+          isLast={isLast}
+          darkMode={darkMode}
+          mode={mode}
+          rect={rect}
+          barTop={barTop}
+          aboveRect={aboveRect}
+          dismissHint={dismissHint}
+          isSignedIn={isSignedIn}
+          onNext={next}
+          onBack={back}
+          onSkip={dismiss}
+        />
+      </AnimatePresence>
+    </div>,
+    document.body
+  );
+}
+
+/** Dim panels framing the target + a SUBTLY pulsing ring drawing the eye to the
+ *  action the user must tap. */
+function Spotlight({ rect }) {
+  const t = rect.top - PAD;
+  const l = rect.left - PAD;
+  const w = rect.width + PAD * 2;
+  const h = rect.height + PAD * 2;
+  // Match the target's own corner radius (a pill stays a pill) — concentric with PAD.
+  const radius = Math.min((rect.radius || 0) + PAD, h / 2);
+  const dim = 'rgba(8,8,12,0.66)';
+  const panel = (style) => (
+    <div
+      style={{
+        position: 'absolute',
+        background: dim,
+        backdropFilter: 'blur(1.5px)',
+        pointerEvents: 'none',
+        ...style,
+      }}
+    />
+  );
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="absolute inset-0"
+      style={{ pointerEvents: 'none' }}
+    >
+      {panel({ top: 0, left: 0, right: 0, height: Math.max(0, t) })}
+      {panel({ top: t, left: 0, width: Math.max(0, l), height: h })}
+      {panel({ top: t, left: l + w, right: 0, height: h })}
+      {panel({ top: t + h, left: 0, right: 0, bottom: 0 })}
+      <motion.div
+        style={{
+          position: 'absolute',
+          top: t,
+          left: l,
+          width: w,
+          height: h,
+          borderRadius: radius,
+          border: '1.5px solid rgba(197,160,89,0.9)',
+          pointerEvents: 'none',
+        }}
+        animate={{
+          boxShadow: [
+            '0 0 14px 1px rgba(197,160,89,0.28), inset 0 0 8px rgba(197,160,89,0.10)',
+            '0 0 22px 3px rgba(197,160,89,0.42), inset 0 0 12px rgba(197,160,89,0.16)',
+            '0 0 14px 1px rgba(197,160,89,0.28), inset 0 0 8px rgba(197,160,89,0.10)',
+          ],
+        }}
+        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+      />
+    </motion.div>
+  );
+}
+
+function CoachCard({
+  step,
+  index,
+  total,
+  isLast,
+  darkMode,
+  mode,
+  rect,
+  barTop,
+  aboveRect,
+  dismissHint,
+  isSignedIn,
+  onNext,
+  onBack,
+  onSkip,
+}) {
+  const [size, setSize] = useState({ w: 320, h: 200 });
+  const ref = useRef(null);
+  // Feature steps have no Next button — they auto-advance on the real interaction.
+  // Only the centered welcome/finish cards carry a manual Next/Done.
+  const needsAction = !!step?.advanceOn;
+  // Auth-aware body: a step may carry a signed-in variant (e.g. Save saves straight to the library
+  // rather than prompting sign-in). Fall back to the default body.
+  const body = isSignedIn && step?.bodyAuthed ? step.bodyAuthed : step?.body;
+
+  useLayoutEffect(() => {
+    if (ref.current) {
+      const r = ref.current.getBoundingClientRect();
+      setSize({ w: r.width, h: r.height });
+    }
+  }, [index, mode]);
+
+  const pos = computePosition({
+    mode,
+    rect,
+    barTop,
+    aboveRect,
+    size,
+    side: step?.side,
+    align: step?.align,
+  });
+
+  const surface = darkMode
+    ? { bg: 'rgba(12,12,14,0.94)', text: '#e7e5e4', dim: 'rgba(231,229,228,0.62)' }
+    : { bg: 'rgba(253,252,248,0.96)', text: '#1c1917', dim: 'rgba(28,25,23,0.6)' };
+
+  return (
+    <motion.div
+      ref={ref}
+      // Keep pointer events on the card from reaching Radix's document-level
+      // dismiss listener — otherwise tapping Next on a step whose tray is a Radix
+      // modal (the insight panel) is treated as an "outside" click that just
+      // closes the dialog, swallowing the first press. Stopping propagation lets
+      // the tour's own Next close the panel AND advance in a single tap.
+      onPointerDown={(e) => e.stopPropagation()}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={POP}
+      style={{
+        position: 'absolute',
+        ...pos,
+        width: 'min(340px, calc(100vw - 32px))',
+        display: 'flex',
+        flexDirection: 'column',
+        pointerEvents: 'auto',
+        background: surface.bg,
+        backdropFilter: 'blur(24px) saturate(150%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(150%)',
+        border: '1px solid rgba(197,160,89,0.3)',
+        borderRadius: 18,
+        padding: '18px 18px 14px',
+        color: surface.text,
+        // Constant, subtle gold glow — no flashing on the popup itself.
+        boxShadow: '0 0 28px rgba(197,160,89,0.16), 0 12px 40px rgba(0,0,0,0.55)',
+      }}
+    >
+      <button
+        onClick={onSkip}
+        aria-label="Close walkthrough"
+        style={{
+          position: 'absolute',
+          top: 10,
+          right: 12,
+          background: 'transparent',
+          border: 'none',
+          color: surface.dim,
+          cursor: 'pointer',
+          fontSize: 18,
+          lineHeight: 1,
+        }}
+      >
+        ×
+      </button>
+
+      {/* Scrollable content so the Back/Next footer below always stays visible. */}
+      <div style={{ overflowY: 'auto', minHeight: 0 }}>
+        {/* Arabic left, English right, em dash between — one line where it fits,
+            wrapping on large text. (Keep the Arabic short enough to share the
+            line; e.g. the intro uses "أهلا".) */}
+        <h3
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'baseline',
+            gap: '0 0.5rem',
+            margin: '0 28px 6px 0',
+          }}
+        >
+          {step.arabic && (
+            <span
+              dir="rtl"
+              style={{
+                fontFamily: "'Reem Kufi', sans-serif",
+                color: 'var(--gold)',
+                fontSize: ARABIC_SIZE,
+                fontWeight: 700,
+              }}
+            >
+              {step.arabic}
+            </span>
+          )}
+          {step.arabic && (
+            <span style={{ color: surface.dim, fontFamily: "'Forum', serif" }}>—</span>
+          )}
+          <span style={{ fontFamily: "'Forum', serif", fontSize: '1.18rem', color: surface.text }}>
+            {step.title}
+          </span>
+        </h3>
+        <p
+          style={{
+            fontFamily: "'Forum', serif",
+            fontSize: '0.92rem',
+            lineHeight: 1.55,
+            margin: 0,
+            color: surface.dim,
+          }}
+        >
+          {body}
+        </p>
+        {/* Only anchored steps have a real action to tap — keep the note off the
+            centered welcome/finish intro/outro cards. */}
+        {step.note && step.target && (
+          <p
+            style={{
+              fontFamily: "'Forum', serif",
+              fontSize: '0.85rem',
+              lineHeight: 1.45,
+              margin: '10px 0 0',
+              color: 'var(--gold)',
+            }}
+          >
+            {step.note}
+          </p>
+        )}
+        {/* Dismissal beat: the interaction opened a modal/drawer — tell the reader how to close it
+            (which auto-advances the tour) instead of yanking it away. */}
+        {dismissHint && (
+          <p
+            style={{
+              fontFamily: "'Forum', serif",
+              fontSize: '0.85rem',
+              lineHeight: 1.45,
+              margin: '10px 0 0',
+              color: 'var(--gold)',
+            }}
+          >
+            {dismissHint}
+          </p>
+        )}
+      </div>
+
+      <div
+        style={{
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: 16,
+        }}
+      >
+        <div style={{ display: 'flex', gap: 6 }}>
+          {Array.from({ length: total }).map((_, i) => (
+            <span
+              key={i}
+              style={{
+                width: i === index ? 18 : 6,
+                height: 6,
+                borderRadius: 999,
+                background: i === index ? 'var(--gold)' : 'rgba(197,160,89,0.3)',
+                transition: 'all 0.3s ease',
+              }}
+            />
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {index > 0 && (
+            <button onClick={onBack} style={ghostBtn(surface)}>
+              Back
+            </button>
+          )}
+          {/* Only the centered welcome/finish cards carry a manual Next/Done — feature steps
+              auto-advance on their real interaction. */}
+          {!needsAction && (
+            <button onClick={onNext} style={goldBtn}>
+              {isLast ? 'Done' : 'Next'}
+            </button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+const goldBtn = {
+  fontFamily: "'Forum', serif",
+  fontSize: '0.85rem',
+  color: '#0c0c0e',
+  background: 'linear-gradient(135deg, var(--gold), #B8943E)',
+  border: 'none',
+  borderRadius: 999,
+  padding: '6px 18px',
+  cursor: 'pointer',
+  fontWeight: 600,
+};
+const ghostBtn = (surface) => ({
+  fontFamily: "'Forum', serif",
+  fontSize: '0.85rem',
+  color: surface.dim,
+  background: 'transparent',
+  border: '1px solid rgba(197,160,89,0.3)',
+  borderRadius: 999,
+  padding: '6px 16px',
+  cursor: 'pointer',
+});
+
+/**
+ * Place the card and return a maxHeight so it can scroll internally rather than
+ * ever overlap what it points at.
+ *  - tray + aboveRect (auth modal): sit fully ABOVE the modal, no overlap.
+ *  - tray (bottom drawers): centered in the bottom two-thirds, in front.
+ *  - center: dead center (intro/outro).
+ *  - spotlight side 'top': bottom-anchored a GAP above the control bar (or the
+ *    target) so the card never partially overlaps the controls.
+ */
+function computePosition({ mode, rect, barTop, aboveRect, size, side = 'auto', align = 'center' }) {
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const cardW = Math.min(340, vw - 32);
+  const measuredH = size.h || 200;
+  const clampX = (x) => Math.min(Math.max(12, x), vw - cardW - 12);
+
+  // Anchor the card by its BOTTOM edge at `bottomY` (grows upward) so it can
+  // never cross `bottomY` regardless of height; cap height to the room above and
+  // scroll if tight.
+  const placeAbove = (bottomY, leftX) => ({
+    bottom: Math.max(12, vh - bottomY),
+    left: clampX(leftX),
+    maxHeight: Math.max(140, bottomY - 12),
+  });
+  const placeCentered = (centerY) => {
+    const maxHeight = Math.max(160, vh - 32);
+    const h = Math.min(measuredH, maxHeight);
+    return {
+      top: Math.min(Math.max(12, centerY - h / 2), vh - h - 12),
+      left: clampX(vw / 2 - cardW / 2),
+      maxHeight,
+    };
+  };
+
+  if (mode === 'tray') {
+    // A centered modal (auth) → sit fully above it. A bottom drawer → centered.
+    if (aboveRect) return placeAbove(aboveRect.top - GAP, vw / 2 - cardW / 2);
+    return placeCentered((2 * vh) / 3);
+  }
+  if (mode === 'centered' || !rect || side === 'center') {
+    return placeCentered(vh / 2);
+  }
+
+  let s = side;
+  if (s === 'auto') s = rect.top > vh - rect.bottom ? 'top' : 'bottom';
+
+  const leftFor = () =>
+    align === 'start'
+      ? rect.left
+      : align === 'end'
+        ? rect.right - cardW
+        : rect.left + rect.width / 2 - cardW / 2;
+
+  if (s === 'left' || s === 'right') {
+    const left = s === 'left' ? rect.left - cardW - GAP : rect.right + GAP;
+    const maxHeight = Math.max(160, vh - 24);
+    const h = Math.min(measuredH, maxHeight);
+    let top;
+    if (align === 'start') top = rect.top;
+    else if (align === 'end') top = rect.bottom - h;
+    else top = rect.top + rect.height / 2 - h / 2;
+    return { top: Math.min(Math.max(12, top), vh - h - 12), left: clampX(left), maxHeight };
+  }
+
+  if (s === 'top') {
+    // Bottom-anchored above the target (or the control bar if higher) — never overlaps.
+    // Use the minimum (highest on-screen) of the two so the card clears elements that
+    // sit above the bar (e.g. the Listen pill in ReaderActions).
+    const refTop = Math.min(rect.top, barTop != null ? barTop : rect.top);
+    return placeAbove(refTop - GAP, leftFor());
+  }
+  // bottom
+  const top = rect.bottom + GAP;
+  const maxHeight = Math.max(140, vh - top - 12);
+  return { top, left: clampX(leftFor()), maxHeight };
+}

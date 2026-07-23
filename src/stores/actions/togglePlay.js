@@ -1,6 +1,3 @@
-import { createElement } from 'react';
-import { Rabbit } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { Player, start as toneStart, getContext } from 'tone';
 import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
@@ -32,102 +29,18 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  */
 const estimateTTSSeconds = (arabicCharCount) => Math.max(8, Math.ceil(arabicCharCount * 0.06));
 
-const TTS_LOADING_MESSAGES = [
-  'Preparing recitation',
-  'Clearing my throat',
-  'The poet is getting ready',
-  'Wise voice awakening',
-  'Summoning the muse',
-  'The poet steadies their breath',
-  'The majlis is gathering',
-  'Ink drying on the qasida',
-];
-
 /**
- * Create a Sonner toast for TTS generation.
+ * TTS generation progress toast — intentionally disabled (no-op).
  *
- * Two shapes:
- *  - countdown (default): "Recitation ready in Xs" ticking down to "Almost ready...".
- *    Right for REST and buffered paths, which must generate the whole clip before
- *    playback, so the wait is real and roughly predictable (~0.06 s/char).
- *  - indeterminate: "Starting recitation…" with no number. Right for the Live stream,
- *    which plays its first words in ~1s — there's no meaningful countdown, and the
- *    first-sound handler dismisses it. Showing a full-generation countdown there
- *    (e.g. "ready in 59s") was just wrong.
- *
- * Returns { dismiss } for cleanup. Auto-dismisses if isGenerating goes false
- * externally (e.g. poem navigation).
+ * With the Live API (first sound in ~1s) and the reader's header intro animation, the wait is not
+ * perceptible, so the "Starting recitation…" / "The recitation begins" notifications were just
+ * noise. Kept as a no-op (rather than removed) so the dismiss plumbing — `_activeProgressDismiss`
+ * and the poem-change / drawer-open cleanup that calls it — stays intact. Error toasts elsewhere
+ * are unaffected.
  */
-function createProgressToast(estimatedSeconds, arabicText, { indeterminate = false } = {}) {
-  const toastId = `tts-progress-${Date.now()}`;
-  const startTime = Date.now();
-  const lineCount = arabicText ? arabicText.split('\n').filter((l) => l.trim()).length : 0;
-  const lineInfo =
-    lineCount > 0
-      ? `Preparing ${lineCount} line${lineCount !== 1 ? 's' : ''}`
-      : 'Preparing recitation';
-
-  const bounceIcon = () =>
-    createElement(
-      motion.div,
-      {
-        animate: { y: [0, -5, 0] },
-        transition: { repeat: Infinity, duration: 0.55, ease: 'easeInOut' },
-      },
-      createElement(Rabbit, { size: 16 })
-    );
-
-  const STARTING = 'Starting recitation…';
-
-  toast.loading(indeterminate ? STARTING : `Recitation ready in ${estimatedSeconds}s`, {
-    id: toastId,
-    description: lineInfo,
-    duration: Infinity,
-    icon: bounceIcon(),
-  });
-
-  const interval = setInterval(() => {
-    // Auto-dismiss if generation was cancelled externally (poem change, etc.)
-    if (!useAudioStore.getState().isGenerating) {
-      clearInterval(interval);
-      toast.dismiss(toastId);
-      return;
-    }
-
-    const elapsed = Math.floor((Date.now() - startTime) / 1000);
-    const subtitle = TTS_LOADING_MESSAGES[Math.floor(elapsed / 5) % TTS_LOADING_MESSAGES.length];
-
-    let label;
-    if (indeterminate) {
-      label = STARTING;
-    } else {
-      const remaining = estimatedSeconds - elapsed;
-      label = remaining > 0 ? `Recitation ready in ${remaining}s` : 'Almost ready...';
-    }
-
-    toast.loading(label, {
-      id: toastId,
-      description: subtitle,
-      duration: Infinity,
-      icon: bounceIcon(),
-    });
-  }, 1000);
-
-  let dismissed = false;
-  const dismiss = (successMsg) => {
-    if (dismissed) return;
-    dismissed = true;
-    clearInterval(interval);
-    if (successMsg) {
-      toast.success('The recitation begins', { id: toastId, duration: 2000 });
-    } else {
-      toast.dismiss(toastId);
-    }
-  };
-
-  // Store globally so it can be dismissed from outside (e.g. drawer open, poem change)
+function createProgressToast() {
+  const dismiss = () => {};
   _activeProgressDismiss = dismiss;
-
   return { dismiss };
 }
 
@@ -146,6 +59,12 @@ let _currentStreamAbort = null;
 // so switching engine/voice mid-buffer rejected the next play as "already in
 // progress" until the fetch finished (#560, #562, #563).
 let _currentGenAbort = null;
+// PCM chunks accumulated during an in-flight live stream and the stream's sample
+// rate. Held at module scope so the pause handler can build a partial WAV blob and
+// set the audio URL before stopping — allowing resume-from-position to work even
+// when the stream hasn't finished yet (#589).
+let _streamPcmB64 = null;
+let _streamSampleRate = 24000;
 function abortCurrentStream() {
   if (_currentStreamAbort) {
     try {
@@ -173,6 +92,7 @@ function abortCurrentStream() {
  */
 export function abortPlay() {
   _currentPlayId++;
+  _streamPcmB64 = null; // discard any partial stream audio on navigation/voice-switch
   abortCurrentStream();
 }
 
@@ -355,7 +275,11 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     setPlayer,
   } = useAudioStore.getState();
 
-  if (isTogglingPlay.current || isGenerating) {
+  // Allow pause to bypass the debounce guard: when the user is pausing (isPlaying=true)
+  // the guard must not block them — during live streaming isTogglingPlay.current stays
+  // true for the full stream duration, so the first pause press would be silently
+  // dropped otherwise (#589).
+  if (!isPlaying && (isTogglingPlay.current || isGenerating)) {
     addLog('Audio', 'Play toggle already in progress — skipping', 'info');
     return;
   }
@@ -367,10 +291,17 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   );
   track('audio_play', { poet: current?.poet });
 
-  // PAUSE — Tone.Player uses stop() rather than pause()
+  // PAUSE — Tone.Player uses stop() rather than pause().
   if (isPlaying) {
     recordPause();
-    abortCurrentStream(); // cancel an in-flight Live stream so it can't keep generating
+    // Keep loading through pause. If a Live stream is still in flight we deliberately do NOT abort it
+    // and do NOT snapshot a truncated partial WAV: stopping the player halts audio output (its
+    // internal `stopped` flag makes further pushChunk() a no-op, so no sound leaks during pause),
+    // while the SSE keeps accumulating PCM and finishes into the FULL blob — setUrl()'d and cached by
+    // doGenerate's natural-completion path. Resume then plays the whole poem from the pause offset,
+    // instead of the old truncated clip that fell silent or stopped after a few words (the #589
+    // partial-blob bug). We intentionally leave _streamPcmB64 / _currentStreamAbort untouched so that
+    // completion path can run; the _currentPlayId guard still discards it if the reader swipes away.
     if (existingPlayer) {
       existingPlayer.stop();
     }
@@ -409,14 +340,16 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   if (isIOS()) {
     try {
       if ('audioSession' in navigator) navigator.audioSession.type = 'playback';
-    } catch { /* older iOS without the Audio Session API → buffered fallback still works */ }
+    } catch {
+      /* older iOS without the Audio Session API → buffered fallback still works */
+    }
     // Bless the reusable <audio> element NOW, inside the gesture, so the REST
     // path's play() after the generation await is allowed (otherwise silent first
     // play; #...). Web Audio (Live) doesn't need this, but it's a cheap no-op there.
     unlockIOSAudioElement();
   }
-  // Unlock the AudioContext after the user gesture (now on iOS too).
-  await toneStart();
+  // Unlock the AudioContext after the user gesture (skip on iOS — HTMLAudioElement handles playback there).
+  if (!isIOS()) await toneStart();
 
   setGenerating(true);
 
@@ -564,7 +497,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
           await consumeSSE(liveRes.body.getReader(), {
             onMeta: (m) => {
-              if (m.sampleRate) sampleRate = m.sampleRate;
+              if (m.sampleRate) {
+                sampleRate = m.sampleRate;
+                _streamSampleRate = m.sampleRate;
+              }
             },
             onChunk: (chunkB64) => {
               // Swipe/navigation guard — stop feeding if the user moved on.
@@ -573,11 +509,18 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
                 return;
               }
               pcmB64.push(chunkB64);
+              // Keep module-level ref current so the pause handler can snapshot
+              // partial audio for resume-from-position (#589).
+              _streamPcmB64 = pcmB64;
               streamPlayer.pushChunk(pcmBase64ToInt16(chunkB64));
               if (!firstSound) {
                 firstSound = true;
                 const t = ((performance.now() - apiStart) / 1000).toFixed(2);
-                addLog('Audio API', `[Live 3.1] ▶ First sound (${t}s) | voice: ${liveVoice}`, 'success');
+                addLog(
+                  'Audio API',
+                  `[Live 3.1] ▶ First sound (${t}s) | voice: ${liveVoice}`,
+                  'success'
+                );
                 progress.dismiss('Recitation ready');
                 setPlayer(streamPlayer);
                 startPlayer(streamPlayer, 0);
@@ -591,9 +534,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             },
           });
 
-          // Stream finished on its own — release the abort handle so a later
-          // stop()/pause() doesn't try to abort an already-complete controller.
+          // Stream finished on its own — release the abort handle and the partial
+          // chunk ref (the full blob will be set below from pcmB64).
           if (_currentStreamAbort === streamAbort) _currentStreamAbort = null;
+          _streamPcmB64 = null;
 
           // User navigated away mid-stream — bail without caching/playing.
           if (_currentPlayId !== playId) {

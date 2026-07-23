@@ -87,7 +87,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '21'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -119,7 +119,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '21'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -139,7 +139,9 @@ jobs:
       needs.detect-changes.outputs.code-changed == 'true' ||
       needs.detect-changes.outputs.tests-changed == 'true' ||
       needs.detect-changes.outputs.config-changed == 'true'
-    timeout-minutes: 5
+    # 85 e2e specs on 2 workers (plus a first-run chromium download) exceed 5 min and
+    # the job was being cancelled mid-run; give the suite room to finish.
+    timeout-minutes: 12
     outputs:
       missing_tokens: ${{ steps.e2e-env.outputs.missing_tokens }}
 
@@ -149,7 +151,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '21'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies

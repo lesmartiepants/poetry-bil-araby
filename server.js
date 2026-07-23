@@ -29,7 +29,20 @@ import WebSocket from 'ws';
 
 const { Pool } = pg;
 const app = express();
-const _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
+// TTS Lab HTML is a dev-only page. Load it lazily on first request and cache it, so a
+// missing/unreadable file — or a non-file import.meta.url (as under the test runner) —
+// never crashes server boot.
+let _labHtml = null;
+const loadLabHtml = () => {
+  if (_labHtml === null) {
+    try {
+      _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
+    } catch {
+      _labHtml = '';
+    }
+  }
+  return _labHtml;
+};
 const PORT = process.env.PORT || 3001;
 const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
 const LOG_DEBUG = process.env.LOG_DEBUG === 'true'; // verbose DB debug, off by default
@@ -957,12 +970,14 @@ app.post('/api/ai/live-tts', async (req, res) => {
   const WS_MAX_STREAM = 180000;
   const WS_MAX_BUFFER = 90000;
 
-  if (!GEMINI_API_KEY) {
-    return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
-  }
+  // Validate the request body before reporting backend availability so a malformed
+  // request always gets a 400 (not a 503 that hides the real problem).
   const { text, voiceName, systemInstruction, temperature } = req.body || {};
   if (!text || typeof text !== 'string' || !text.trim()) {
     return res.status(400).json({ error: 'Missing or empty "text" field' });
+  }
+  if (!GEMINI_API_KEY) {
+    return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
   }
 
   const voice = voiceName || 'Fenrir';
@@ -1029,7 +1044,10 @@ app.post('/api/ai/live-tts', async (req, res) => {
     const resetIdle = () => {
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
-        log.error('Live TTS', `Idle ${WS_IDLE_TIMEOUT}ms, no new chunk (${ms()}) | ${chunkCount} chunks`);
+        log.error(
+          'Live TTS',
+          `Idle ${WS_IDLE_TIMEOUT}ms, no new chunk (${ms()}) | ${chunkCount} chunks`
+        );
         stop('idle', new Error('Live TTS stalled'));
       }, WS_IDLE_TIMEOUT);
     };
@@ -1131,8 +1149,14 @@ app.post('/api/ai/live-tts', async (req, res) => {
 
     ws.on('close', (code, reason) => {
       const reasonStr = reason?.toString() || '';
-      log.info('Live TTS', `WS closed (${ms()}) | code: ${code}${reasonStr ? ` | ${reasonStr}` : ''}`);
-      stop('ws-close', new Error(`WebSocket closed: code=${code}${reasonStr ? ` (${reasonStr})` : ''}`));
+      log.info(
+        'Live TTS',
+        `WS closed (${ms()}) | code: ${code}${reasonStr ? ` | ${reasonStr}` : ''}`
+      );
+      stop(
+        'ws-close',
+        new Error(`WebSocket closed: code=${code}${reasonStr ? ` (${reasonStr})` : ''}`)
+      );
     });
 
     return () => {
@@ -1164,7 +1188,10 @@ app.post('/api/ai/live-tts', async (req, res) => {
         sse({ meta: { sampleRate: 24000, mimeType: mime || 'audio/pcm;rate=24000' } }),
       onChunk: (b64) => sse({ chunk: b64 }),
       onDone: (reason, n) => {
-        log.info('Live TTS', `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice}`);
+        log.info(
+          'Live TTS',
+          `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice}`
+        );
         sse({ done: true, chunks: n, reason });
         try {
           res.end();
@@ -1191,7 +1218,8 @@ app.post('/api/ai/live-tts', async (req, res) => {
     onChunk: (b64) => chunks.push(b64),
     onDone: () => {
       if (!chunks.length) {
-        if (!res.headersSent) res.status(500).json({ error: 'No audio data received from Live API' });
+        if (!res.headersSent)
+          res.status(500).json({ error: 'No audio data received from Live API' });
         return;
       }
       // Decode each base64 chunk to binary, concat, re-encode. A plain string join
@@ -1232,7 +1260,7 @@ app.get('/tts-lab', (_req, res) => {
     'Content-Security-Policy',
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; media-src blob:"
   );
-  res.type('html').send(_labHtml);
+  res.type('html').send(loadLabHtml());
 });
 
 app.get(

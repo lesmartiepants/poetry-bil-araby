@@ -2,6 +2,36 @@ import { expect, afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 
+// Mock GSAP as inert in jsdom — the sparkler reveal's tweens/canvas only matter visually,
+// which is covered by the Storybook (real browser) project + Playwright E2E. Here they must
+// not run a ticker (it would fire setState outside act and re-enter React). The real animation
+// is exercised in the browser projects.
+vi.mock('gsap', () => {
+  const tween = { kill: () => {}, progress: () => tween, pause: () => tween, play: () => tween };
+  const make = () => tween;
+  const timeline = () => {
+    const tl = {
+      to: () => tl,
+      fromTo: () => tl,
+      set: () => tl,
+      add: () => tl,
+      kill: () => {},
+      pause: () => tl,
+      play: () => tl,
+    };
+    return tl;
+  };
+  const gsap = {
+    to: make,
+    fromTo: make,
+    set: () => {},
+    killTweensOf: () => {},
+    timeline,
+    registerPlugin: () => {},
+  };
+  return { gsap, default: gsap };
+});
+
 // Mock seed-poems module so tests use a predictable seed poem
 vi.mock('../data/seed-poems.json', () => ({
   default: [
@@ -79,12 +109,20 @@ const mockCanvas2DContext = {
   rotate: vi.fn(),
   scale: vi.fn(),
   setLineDash: vi.fn(),
+  setTransform: vi.fn(),
+  resetTransform: vi.fn(),
+  getTransform: vi.fn(() => ({ a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 })),
+  transform: vi.fn(),
   createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
   createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
   measureText: vi.fn(() => ({ width: 100 })),
-  get fillStyle() { return ''; },
+  get fillStyle() {
+    return '';
+  },
   set fillStyle(_) {},
-  get strokeStyle() { return ''; },
+  get strokeStyle() {
+    return '';
+  },
   set strokeStyle(_) {},
   lineWidth: 1,
   font: '',
@@ -141,6 +179,15 @@ Object.defineProperty(navigator, 'clipboard', {
     writeText: vi.fn().mockResolvedValue(undefined),
     readText: vi.fn().mockResolvedValue(''),
   },
+  writable: true,
+  configurable: true,
+});
+
+// happy-dom reports navigator.webdriver === true. The app suppresses the auto-launch tour under
+// browser automation (Playwright e2e), but unit tests emulate a REAL user — present webdriver as
+// false so auto-launch behaviour and the TourLauncher tests work as in a real browser.
+Object.defineProperty(navigator, 'webdriver', {
+  value: false,
   writable: true,
   configurable: true,
 });

@@ -98,3 +98,9 @@ poetry_quality_and_curation/retriever_and_quality_curator/data/shard_ids/
 scripts/title-progress.json
 .env*
 .gstack/
+
+*storybook.log
+storybook-static
+
+# Local git worktrees (never commit as gitlinks)
+.claude/worktrees/

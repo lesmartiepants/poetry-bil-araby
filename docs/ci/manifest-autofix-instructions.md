@@ -31,10 +31,30 @@ doubt, label a feature `"none"` and move on. Honesty over completeness.
    - `coverage`: follow the coverage decision below. **Default to `"none"`.**
    - `gap`: one honest sentence about what is not covered.
 
-   **`dead_entrypoint` / `dead_test` (a DEAD REF):** the manifest points at a file
-   that no longer exists. Update the entry to the file's new location, or remove
-   the stale reference. Do not delete a whole feature unless the feature is truly
-   gone from the product.
+   **`dead_entrypoint` / `dead_test` / `endpoint_removed` (a REMOVAL or RENAME):**
+   the manifest points at a file/route that no longer exists. Decide which it is
+   using git — check the recent history of the deleted path
+   (`git log --oneline -3 -- <path>`) and look for a same-named/similar file that
+   appeared (a `component_unmapped` in the same drift is often the moved file):
+   - **Rename / move** (the code moved to a new path): update the feature's
+     `entrypoints`/`endpoints` to the new location. Keep the feature, its coverage,
+     and its tests. This also resolves the paired `component_unmapped`.
+   - **True removal** (the feature is gone from the product): remove the feature
+     entry entirely, and delete any now-orphaned test files it owned.
+     Do not delete a feature just because one of several files moved.
+
+   **`feature_updated` (an in-place UPDATE):** listed in `drift.json` under
+   `updated`. The feature's own source changed since its last hash baseline, so its
+   coverage may now be stale. For each updated feature:
+   - If `coverage` is `"behavioral"`: RE-VERIFY the guard. Generate a fresh break
+     for the feature's current source and run the gauntlet
+     (`node scripts/guard-gauntlet.mjs`, see step 4) against the feature's existing
+     test. If it still passes-clean-and-fails-on-break → keep `"behavioral"`. If the
+     test now fails on clean code, or no longer fails on the break → the update
+     broke or outdated the guard: downgrade `coverage` to `"none"`, note it in
+     `gap`, and (if you can) regenerate a real test via step 4.
+   - Re-read the component and refresh `userFacing`/`gap` if the behavior changed.
+   - Leave `tier` unless the feature's importance genuinely changed.
 
 3. Coverage decision, per new feature:
    - **Is it testable in headless Chromium CI?**
@@ -71,14 +91,21 @@ doubt, label a feature `"none"` and move on. Honesty over completeness.
 5. Regenerate the living doc: `node scripts/check-feature-manifest.mjs --update`
    (updates `docs/APP-STATE.md`).
 
-6. Confirm the tree is clean: run `node scripts/check-feature-manifest.mjs` — it
-   must now report 0 drift. Do not push or open a PR yourself; leave the changes
-   staged in the working tree for the workflow to PR.
+6. Re-baseline the update hashes LAST, after all manifest edits:
+   `node scripts/check-feature-manifest.mjs --update-hashes` (rewrites
+   `feature-hashes.json`). This records the current source of every feature so the
+   next push does not re-flag the same update.
+
+7. Confirm the tree is fully in sync:
+   `node scripts/check-feature-manifest.mjs --needs-reconcile` — it must now exit 0
+   (no drift, no un-reconciled updates). Do not push or open a PR yourself; leave
+   the changes staged in the working tree for the workflow to PR.
 
 ## Boundaries
 
-- Touch ONLY: `feature-manifest.json`, `docs/APP-STATE.md`, and new test files
-  under `src/test/**` or `e2e/**`. Do NOT modify application source (except a
+- Touch ONLY: `feature-manifest.json`, `feature-hashes.json`, `docs/APP-STATE.md`,
+  and test files under `src/test/**` or `e2e/**` (add new ones; delete only tests
+  orphaned by a true feature removal). Do NOT modify application source (except a
   gauntlet break, which you must always revert — the gauntlet does this for you).
 - If you cannot honestly classify a feature, `coverage: "none"` with a clear
   `gap` is the correct, honest answer.

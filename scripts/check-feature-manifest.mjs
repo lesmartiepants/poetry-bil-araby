@@ -27,6 +27,7 @@
 import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, relative, sep } from 'node:path';
+import { createHash } from 'node:crypto';
 
 // Manifest paths are POSIX (forward-slash). path.relative() emits the platform
 // separator ('\' on Windows), so normalize discovered paths before comparing.
@@ -45,12 +46,18 @@ const MODE = {
   // endpoint) are NOT fatal here — the auto-reconcile bot handles those by
   // opening a PR, so a human's feature PR is never blocked for adding a feature.
   deadrefOnly: args.has('--deadref-only'),
+  // update-hashes: recompute + write feature-hashes.json (the bot runs this last).
+  updateHashes: args.has('--update-hashes'),
+  // needs-reconcile: exit 1 if ANYTHING requires the bot (drift OR a feature
+  // whose source changed). This is the trigger the autofix workflow reads.
+  needsReconcile: args.has('--needs-reconcile'),
 };
 
 // Drift types that mean "the manifest lies about what exists" → a human must fix.
 const BLOCKING_TYPES = new Set(['dead_entrypoint', 'dead_test', 'endpoint_removed']);
 
 const MANIFEST_PATH = join(ROOT, 'feature-manifest.json');
+const HASHES_PATH = join(ROOT, 'feature-hashes.json');
 const DOC_PATH = join(ROOT, 'docs', 'APP-STATE.md');
 const SERVER_PATH = join(ROOT, 'server.js');
 const COMPONENTS_DIR = join(ROOT, 'src', 'components');
@@ -159,6 +166,73 @@ function reconcile(manifest, discovered) {
   }
 
   return { fail, warn };
+}
+
+/* ---------- feature source hashing (UPDATE detection) ---------- */
+
+// The files that make up a feature: its file entrypoints, plus every file under
+// any directory entrypoint (those end in '/'). Only existing files are included.
+function featureFiles(feature) {
+  const files = [];
+  for (const ep of feature.entrypoints || []) {
+    const full = join(ROOT, ep);
+    if (!existsSync(full)) continue;
+    if (ep.endsWith('/')) {
+      files.push(...walk(full, () => true));
+    } else if (statSync(full).isFile()) {
+      files.push(toPosix(relative(ROOT, full)));
+    }
+  }
+  return [...new Set(files)].sort();
+}
+
+// A stable content hash of a feature's own source. Changes when the feature's
+// code changes but its file set / manifest entry does not — i.e. an UPDATE.
+function computeFeatureHash(feature) {
+  const h = createHash('sha256');
+  for (const rel of featureFiles(feature)) {
+    h.update(rel + '\0');
+    h.update(readFileSync(join(ROOT, rel)));
+    h.update('\0');
+  }
+  return h.digest('hex').slice(0, 16);
+}
+
+function loadHashes() {
+  if (!existsSync(HASHES_PATH)) return {};
+  try {
+    return JSON.parse(readFileSync(HASHES_PATH, 'utf8'));
+  } catch {
+    return {};
+  }
+}
+
+function computeAllHashes(features) {
+  const out = {};
+  for (const f of features) out[f.id] = computeFeatureHash(f);
+  return out;
+}
+
+function writeHashes(features) {
+  const all = computeAllHashes(features);
+  const sorted = Object.fromEntries(Object.keys(all).sort().map((k) => [k, all[k]]));
+  writeFileSync(HASHES_PATH, JSON.stringify(sorted, null, 2) + '\n');
+  return sorted;
+}
+
+// Compare current feature source against the stored baseline.
+//   updated  = has a stored hash that no longer matches (a real UPDATE)
+//   unhashed = no stored hash yet (first run / newly added; baseline it, don't flag)
+function detectUpdates(features) {
+  const stored = loadHashes();
+  const updated = [];
+  const unhashed = [];
+  for (const f of features) {
+    const cur = computeFeatureHash(f);
+    if (!(f.id in stored)) unhashed.push({ type: 'feature_unhashed', detail: f.id });
+    else if (stored[f.id] !== cur) updated.push({ type: 'feature_updated', detail: `${f.id} (${f.coverage})` });
+  }
+  return { updated, unhashed };
 }
 
 /* ---------- doc generation ---------- */
@@ -273,6 +347,19 @@ const discovered = {
 };
 const result = reconcile(manifest, discovered);
 
+// Update detection: has any feature's own source changed since the last baseline?
+const { updated, unhashed } = detectUpdates(manifest.features);
+result.updated = updated;
+result.unhashed = unhashed;
+
+// --update-hashes: recompute the baseline and exit. The bot runs this LAST, after
+// reconciling, so the next push compares against current source.
+if (MODE.updateHashes) {
+  const written = writeHashes(manifest.features);
+  if (!MODE.json) console.log(`feature-hashes.json baselined: ${Object.keys(written).length} features.`);
+  process.exit(0);
+}
+
 if (MODE.json) {
   console.log(JSON.stringify({ discovered: {
     endpoints: discovered.endpoints.length,
@@ -302,6 +389,11 @@ if (!MODE.json) {
     console.log('\n✅ No drift. Manifest matches code.');
   }
 
+  if (result.updated.length) {
+    console.log(`\n🔧 ${result.updated.length} updated feature(s) — source changed, coverage should be re-verified:`);
+    for (const u of result.updated) console.log(`   [${u.type}] ${u.detail}`);
+  }
+
   if (result.warn.length) {
     console.log(`\n⚠️  ${result.warn.length} warning(s):`);
     for (const w of result.warn) console.log(`   [${w.type}] ${w.detail}`);
@@ -328,6 +420,14 @@ if (MODE.deadrefOnly && !MODE.json) {
     for (const d of blocking) console.log(`   [${d.type}] ${d.detail}`);
   }
 }
-if (blocking.length && !MODE.updateOnly) {
+if (MODE.needsReconcile) {
+  // The autofix trigger: exit 1 if the bot has anything to do — any drift
+  // (add / remove / rename) OR any updated / newly-unhashed feature.
+  const items = result.fail.length + result.updated.length + result.unhashed.length;
+  if (!MODE.json) {
+    console.log(items ? `\n🔧 needs-reconcile: ${items} item(s) for the bot.` : '\n✅ in sync — nothing for the bot.');
+  }
+  process.exitCode = items ? 1 : 0;
+} else if (blocking.length && !MODE.updateOnly) {
   process.exitCode = 1;
 }

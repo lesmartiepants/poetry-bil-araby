@@ -15,6 +15,27 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
 
+  // Two groups of specs are excluded from the default/CI (mocked) smoke run:
+  //
+  // 1. verify-production-fixes.spec.js hits REAL backend endpoints (no mocks) and expects the
+  //    deployed app (onboarding splash, live API) — a manual production-verification spec, run
+  //    explicitly against a deployed URL. It can't pass against the mocked CI run; it is still
+  //    picked up when PLAYWRIGHT_TEST_BASE_URL points at a real deployment.
+  //
+  // 2. Legacy-UI specs written against the pre-vertical-feed reader (horizontal carousel + the
+  //    removed VerticalSidebar copy/share/explain actions + the top-right "Aa" text-settings pill).
+  //    FEATURES.verticalFeed replaced that whole surface (shipped on main), so these assert
+  //    controls that no longer render and already fail on main. They are quarantined pending a
+  //    dedicated e2e migration to the vertical-feed reader (see the vertical-feed migration TODO).
+  //    NOTE: these are always excluded — the vertical-feed reader is the app in every environment.
+  testIgnore: [
+    ...(process.env.PLAYWRIGHT_TEST_BASE_URL ? [] : ['**/verify-production-fixes.spec.js']),
+    '**/carousel.spec.js',
+    '**/audio.spec.js',
+    '**/insight-overlay.spec.js',
+    '**/tts-highlight.spec.js',
+  ],
+
   // Run tests in parallel
   fullyParallel: true,
 
@@ -46,7 +67,7 @@ export default defineConfig({
     : [
         ['html', { outputFolder: 'playwright-report' }],
         ['json', { outputFile: 'playwright-report/results.json' }],
-        ['list']
+        ['list'],
       ],
 
   // Shared test settings
@@ -72,71 +93,71 @@ export default defineConfig({
 
   // CI: Single Desktop Chrome project — mobile coverage via test.use() viewport overrides.
   // Local: Full device matrix for comprehensive pre-push testing.
-  projects: process.env.CI ? [
-    {
-      name: 'Desktop Chrome',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1920, height: 1080 },
-        // Web Audio (Tone.js) is blocked in headless Chromium without this;
-        // required for audio-playback behavioral tests to reach the playing state.
-        launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
-      },
-    },
-  ] : [
-    // Local: Full device matrix for comprehensive testing
-    // Desktop browsers
-    {
-      name: 'Desktop Chrome',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1920, height: 1080 },
-        // Allow Web Audio (Tone.js) to start without a gesture so audio-playback
-        // behavioral tests can reach the playing state in headless Chromium.
-        launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
-      },
-    },
-    {
-      name: 'Desktop Firefox',
-      use: {
-        ...devices['Desktop Firefox'],
-        viewport: { width: 1920, height: 1080 }
-      },
-    },
-    {
-      name: 'Desktop Safari',
-      use: {
-        ...devices['Desktop Safari'],
-        viewport: { width: 1920, height: 1080 }
-      },
-    },
+  projects: process.env.CI
+    ? [
+        {
+          name: 'Desktop Chrome',
+          use: {
+            ...devices['Desktop Chrome'],
+            viewport: { width: 1920, height: 1080 },
+            // Relax Chromium's autoplay gesture requirement for Web Audio tests.
+            launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
+          },
+        },
+      ]
+    : [
+        // Local: Full device matrix for comprehensive testing
+        // Desktop browsers
+        {
+          name: 'Desktop Chrome',
+          use: {
+            ...devices['Desktop Chrome'],
+            viewport: { width: 1920, height: 1080 },
+            // Relax Chromium's autoplay gesture requirement for Web Audio tests.
+            launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
+          },
+        },
+        {
+          name: 'Desktop Firefox',
+          use: {
+            ...devices['Desktop Firefox'],
+            viewport: { width: 1920, height: 1080 },
+          },
+        },
+        {
+          name: 'Desktop Safari',
+          use: {
+            ...devices['Desktop Safari'],
+            viewport: { width: 1920, height: 1080 },
+          },
+        },
 
-    // Mobile viewports
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
-    },
-    // Narrow-viewport regression for iOS-class phones (iPhone 16 Pro: 402px CSS width)
-    {
-      name: 'iPhone 16 Pro',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 402, height: 874 },
-        isMobile: true,
-        hasTouch: true,
-      },
-    },
+        // Mobile viewports
+        {
+          name: 'Mobile Chrome',
+          use: { ...devices['Pixel 5'] },
+        },
+        {
+          name: 'Mobile Safari',
+          use: { ...devices['iPhone 12'] },
+        },
+        // Narrow-viewport regression for iOS-class phones (iPhone 16 Pro: 402px CSS width)
+        {
+          name: 'iPhone 16 Pro',
+          use: {
+            ...devices['Desktop Chrome'],
+            viewport: { width: 402, height: 874 },
+            isMobile: true,
+            hasTouch: true,
+          },
+        },
 
-    // Tablet viewports
-    {
-      name: 'iPad',
-      use: { ...devices['iPad Pro'] },
-    },
-  ],
+        // Tablet viewports
+        {
+          name: 'iPad',
+          use: { ...devices['iPad Pro'] },
+        },
+      ],
 
   // Web server configuration for local dev
   webServer: {

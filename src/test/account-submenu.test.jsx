@@ -158,6 +158,20 @@ describe('Account Submenu - Signed In', () => {
     expect(screen.getByLabelText('Sign out')).toBeTruthy();
   });
 
+  it('shows the voice persona using its English pronunciation', async () => {
+    mockAutoLoadFetch();
+    render(<DiwanApp />);
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('Nizar Qabbani');
+    });
+
+    await userEvent.click(screen.getByLabelText(/Account menu/));
+
+    expect(screen.getByLabelText(/Reading voice: Azzam/)).toBeTruthy();
+    expect(screen.getByText('Azzam')).toBeTruthy();
+  });
+
   it('opens SavedPoemsView when My Poems sidebar button is clicked', async () => {
     mockAutoLoadFetch();
     render(<DiwanApp />);

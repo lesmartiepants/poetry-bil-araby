@@ -34,6 +34,7 @@ const initialState = {
   shareToast: false,
   insightToast: false,
   shareCard: false,
+  displaySettings: false,
   onboarding: computeOnboarding(),
 };
 
@@ -71,6 +72,11 @@ export const useModalStore = create((set) => ({
   openShareCard: () => set({ shareCard: true }),
   closeShareCard: () => set({ shareCard: false }),
 
+  // Display (text/background) settings panel — opened from the account menu.
+  openDisplaySettings: () => set({ displaySettings: true }),
+  closeDisplaySettings: () => set({ displaySettings: false }),
+  setDisplaySettings: (open) => set({ displaySettings: open }),
+
   showToast: (type) => set({ [TOAST_MAP[type]]: true }),
   hideToast: (type) => set({ [TOAST_MAP[type]]: false }),
   showToastTimed: (type, ms = 2000) => {
@@ -96,6 +102,7 @@ export const useModalStore = create((set) => ({
       shortcutHelp: false,
       poetPicker: false,
       shareCard: false,
+      displaySettings: false,
     }),
 
   reset: () => set({ ...initialState, splash: computeSplash(), onboarding: computeOnboarding() }),

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { VOICE_CATALOG, DEFAULT_VOICE, nextVoice, voiceGender } from '../constants/voices.js';
+import {
+  VOICE_CATALOG,
+  DEFAULT_VOICE,
+  nextVoice,
+  voiceDisplayName,
+  voiceGender,
+} from '../constants/voices.js';
 
 describe('voice catalog', () => {
   it('has voices to cycle between with no duplicates', () => {
@@ -14,6 +20,8 @@ describe('voice catalog', () => {
       expect(v.name.length).toBeGreaterThan(0);
       expect(typeof v.descriptor).toBe('string');
       expect(v.descriptor.length).toBeGreaterThan(0);
+      expect(typeof v.displayName).toBe('string');
+      expect(v.displayName.length).toBeGreaterThan(0);
       expect(['f', 'm']).toContain(v.gender);
     }
   });
@@ -25,8 +33,21 @@ describe('voice catalog', () => {
 
 describe('voiceGender', () => {
   it('returns the gender for a known voice', () => {
-    expect(voiceGender('Kore')).toBe('f');
+    expect(voiceGender('Zephyr')).toBe('f');
+    expect(voiceGender('Kore')).toBe('m');
     expect(voiceGender('Orus')).toBe('m');
+  });
+
+  describe('voiceDisplayName', () => {
+    it('returns the English persona name for a known voice', () => {
+      expect(voiceDisplayName('Aoede')).toBe('Nasmah');
+      expect(voiceDisplayName('Orus')).toBe('Azzam');
+    });
+
+    it('falls back to the raw voice id when unknown', () => {
+      expect(voiceDisplayName('NotAVoice')).toBe('NotAVoice');
+      expect(voiceDisplayName(undefined)).toBeUndefined();
+    });
   });
 
   it('returns null for an unknown voice', () => {

@@ -4,6 +4,7 @@ import SparklerStage from './SparklerStage.jsx';
 import ProgressScrubber from './ProgressScrubber.jsx';
 import InlineInsights from './InlineInsights.jsx';
 import ReaderActions from './ReaderActions.jsx';
+import '../../styles/reader-actions.css'; // .ra-readfull — the "Read full poem" affordance lives in the cue slot here
 import { useRevealWindow } from '../../hooks/useRevealWindow.js';
 import { useSparklerReveal } from '../../hooks/useSparklerReveal.js';
 import { useAudioStore } from '../../stores/audioStore';
@@ -15,11 +16,32 @@ import { POEM_META } from '../../constants/index.js';
 const REDUCED_MOTION =
   typeof matchMedia === 'undefined' || matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// Coarse pointers (touch) swipe; fine pointers (mouse) scroll. Resolve once at module load so the
+// between-poems cue matches the input the user actually has.
+const COARSE_POINTER =
+  typeof window !== 'undefined' &&
+  !!window.matchMedia &&
+  window.matchMedia('(pointer: coarse)').matches;
+
+const BODY_TOP_INSET = 'calc(env(safe-area-inset-top, 0px) + clamp(116px, 16vh, 148px))';
+const BODY_BOTTOM_INSET = 'calc(env(safe-area-inset-bottom, 0px) + clamp(96px, 13vh, 120px))';
+const SCRUBBER_CLEARANCE = 56;
+const CONTENT_MAX_WIDTH = `min(760px, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - ${SCRUBBER_CLEARANCE}px))`;
+const ACTIONS_MAX_WIDTH = `min(420px, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px) - ${SCRUBBER_CLEARANCE}px))`;
+// The centered content box leaves a right gutter of half the space it doesn't occupy (it caps at
+// 760px and otherwise reserves 32px page padding + SCRUBBER_CLEARANCE). Center the 44px-wide rail hit
+// area in that gutter (offset = gutter/2 − halfRailWidth) so the visible rail sits with equal space
+// between the poem body's right edge and the screen edge. Derived from the viewport (robust) rather
+// than measured — the PoemFeed stack made per-element measurement unreliable.
+const RAIL_RIGHT_GUTTER = `max((100vw - 760px) / 2, (32px + ${SCRUBBER_CLEARANCE}px + env(safe-area-inset-left, 0px) + env(safe-area-inset-right, 0px)) / 2)`;
+const RAIL_RIGHT = `max(0px, calc(${RAIL_RIGHT_GUTTER} / 2 - 22px))`;
+
 /**
  * PoemReader — one poem panel in the vertical feed, rendered as the sparkler teleprompter.
  *
- * Layout matches the prototype: the title settles at the top, the verses sit in the centre, and
- * the progress scrubber + tap prompt are anchored near the bottom. Tapping drives everything —
+ * Layout matches the prototype: the title settles at the top, the verses sit in the centre, the
+ * action buttons + tap prompt are anchored near the bottom, and a full-height vertical progress
+ * scrub rail (#613) is anchored to the screen-right edge. Tapping drives everything —
  * it advances the reveal, then ("tap for meaning") opens the inline insight (The Meaning → tap →
  * About the Author). Pull up for the next poem.
  */
@@ -86,6 +108,7 @@ const PoemReader = memo(function PoemReader({
   const scrubHandleRef = useRef(null);
   const metaRef = useRef(null);
   const stageWrapRef = useRef(null);
+  const insightWrapRef = useRef(null);
   const scrubWrapRef = useRef(null);
   const introForRef = useRef(null);
   // Which insight sections have already been opened this poem — the reveal flourish plays only the
@@ -196,11 +219,11 @@ const PoemReader = memo(function PoemReader({
     const animateThis = endStage !== 'idle' && !seenStagesRef.current[endStage];
     const done = !animateThis;
     insightDoneRef.current = done;
-    lastAtFracRef.current = 0; // start at the top (scrubber at the left) on every section entry
+    lastAtFracRef.current = 0; // start at the top (scrubber at the top) on every section entry
     setInsightDone(done);
     setInsightCanScroll(false);
-    if (scrubFillRef.current) scrubFillRef.current.style.width = '0%';
-    if (scrubHandleRef.current) scrubHandleRef.current.style.left = '0%';
+    if (scrubFillRef.current) scrubFillRef.current.style.height = '0%';
+    if (scrubHandleRef.current) scrubHandleRef.current.style.top = '0%';
   }, [endStage, poemId]);
 
   // Insight RevealText → scrub bar wiring.
@@ -210,7 +233,7 @@ const PoemReader = memo(function PoemReader({
   //    left to read, so emptying it would be misleading.
   const onInsightProgress = (frac) => {
     if (!insightDoneRef.current && scrubFillRef.current)
-      scrubFillRef.current.style.width = (frac * 100).toFixed(2) + '%';
+      scrubFillRef.current.style.height = (frac * 100).toFixed(2) + '%';
     if (frac >= 1) {
       insightDoneRef.current = true;
       setInsightDone(true);
@@ -218,18 +241,18 @@ const PoemReader = memo(function PoemReader({
       // (on completion) rather than on stage-change means async-loaded insights still animate the
       // first time (the section often mounts only after the text arrives).
       if (endStage !== 'idle') seenStagesRef.current[endStage] = true;
-      // Leave the bar full; onInsightScrollMeta (fires right after) drops it to the scroll position
+      // Leave the rail full; onInsightScrollMeta (fires right after) drops it to the scroll position
       // only if the text actually overflows.
-      if (scrubFillRef.current) scrubFillRef.current.style.width = '100%';
+      if (scrubFillRef.current) scrubFillRef.current.style.height = '100%';
     }
   };
   const onInsightScrollMeta = ({ canScroll, atFrac }) => {
     lastAtFracRef.current = atFrac;
     setInsightCanScroll(canScroll);
-    if (scrubHandleRef.current) scrubHandleRef.current.style.left = (atFrac * 100).toFixed(2) + '%';
+    if (scrubHandleRef.current) scrubHandleRef.current.style.top = (atFrac * 100).toFixed(2) + '%';
     if (insightDoneRef.current && scrubFillRef.current)
       // Overflowing → fill tracks scroll position; non-overflowing → keep it full.
-      scrubFillRef.current.style.width = (canScroll ? atFrac * 100 : 100).toFixed(2) + '%';
+      scrubFillRef.current.style.height = (canScroll ? atFrac * 100 : 100).toFixed(2) + '%';
   };
 
   const inInsight = endStage !== 'idle';
@@ -241,8 +264,17 @@ const PoemReader = memo(function PoemReader({
   const handleAdvance = () => {
     if (!isRevealing) controller?.advance();
   };
+  // "Read full poem" reveals the whole poem as static text WITHOUT starting audio. revealAll now
+  // rests at the top (see #614), so the reader picks up from the first line. This decouples "see the
+  // whole poem" from Listen — the latter is now purely the audio overlay. It stays tappable DURING
+  // the ignite animation: revealAll() pre-empts the in-flight reveal (gen guard), so no isRevealing
+  // gate here.
+  const handleReadFull = () => {
+    controller?.revealAll();
+  };
   // Tapping Listen loads the whole poem (advancing bayt-by-bayt is moot once you're listening) and
-  // starts playback; the right action then becomes "Poem Insights" (poem is fully revealed → idle).
+  // starts playback; the word-highlight then runs over the fully-visible text. The right action
+  // becomes "Poem Insights" (poem is fully revealed → idle).
   const handleListen = () => {
     controller?.revealAll();
     onTogglePlay?.();
@@ -269,6 +301,55 @@ const PoemReader = memo(function PoemReader({
     }
   }, [endStage, controller]);
 
+  // Rail geometry (#613 refinements): position the vertical scrub rail imperatively.
+  //  • horizontal — center it in the right gutter so there's equal space between the poem body's
+  //    right edge and the screen edge (the rail's visible line sits at the 44px hit area's center);
+  //  • vertical — constrain it to the rendered text: 10px above the top line and 10px below the
+  //    bottom line, instead of spanning the padded body box.
+  // Measured against the currently-visible body element (the verse stage while reading, the insight
+  // paragraph while in an end-stage) and re-run on resize / layout-affecting changes.
+  useLayoutEffect(() => {
+    const wrap = scrubWrapRef.current;
+    if (!wrap) return;
+    const MARGIN = 10; // px above the top line / below the bottom line
+    const measure = () => {
+      const content = inInsight ? insightWrapRef.current : stageWrapRef.current;
+      const root = wrap.offsetParent;
+      if (!content || !root) return;
+      const cr = content.getBoundingClientRect();
+      const rr = root.getBoundingClientRect();
+      if (cr.height === 0) return; // not laid out yet (or jsdom) — keep the CSS fallback
+      // Only the vertical extent is measured (10px above the top line / below the bottom line); the
+      // horizontal offset is a viewport-derived CSS calc (RAIL_RIGHT) set in the JSX style.
+      wrap.style.top = `${Math.max(0, cr.top - MARGIN - rr.top)}px`;
+      wrap.style.bottom = `${Math.max(0, rr.bottom - (cr.bottom + MARGIN))}px`;
+    };
+    measure();
+    let ro;
+    if (typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(measure);
+      if (wrap.offsetParent) ro.observe(wrap.offsetParent);
+      const content = inInsight ? insightWrapRef.current : stageWrapRef.current;
+      if (content) ro.observe(content);
+    }
+    window.addEventListener('resize', measure);
+    return () => {
+      if (ro) ro.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    isActive,
+    poemId,
+    visRows,
+    inInsight,
+    endStage,
+    textScale,
+    showTranslation,
+    showTransliteration,
+    currentFontClass,
+  ]);
+
   // "scroll up for next poem" is shown at two moments:
   //  • on landing — while the title is centred / lifting (before introDone), so the reader knows
   //    they can skip to the next poem if the title doesn't grab them; it fades out as the header
@@ -280,6 +361,14 @@ const PoemReader = memo(function PoemReader({
     (!introDone ||
       (isAllRevealed &&
         ((endStage === 'idle' && !isRevealing) || (endStage === 'author' && insightDone))));
+
+  // "Read full poem" and the next-poem cue share one bottom slot (mutually exclusive): the affordance
+  // shows while the reader is still revealing the poem; once it's fully revealed / at rest the cue
+  // takes the same spot. showReadFull and showCue never overlap (showCue requires !introDone or
+  // isAllRevealed; showReadFull requires introDone and mode === 'reading' i.e. !isAllRevealed).
+  const showReadFull = isActive && introDone && mode === 'reading';
+
+  const nextPoemCue = COARSE_POINTER ? 'swipe up for next poem' : 'scroll up for next poem';
 
   return (
     <div
@@ -351,10 +440,10 @@ const PoemReader = memo(function PoemReader({
       <div
         className="absolute inset-0 flex items-center justify-center px-4 md:px-12"
         style={{
-          // Asymmetric so the verses sit centred between the (taller) header and the bottom bar.
-          // The one-line cue freed ~a line at the bottom, so the verses get a bit more room there.
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + clamp(116px, 16vh, 148px))',
-          paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + clamp(96px, 13vh, 120px))',
+          // The poem body stays centered on the page; the scrubber gets its own right-side lane
+          // outside this box so the verses/buttons no longer shift left to make room for it.
+          paddingTop: BODY_TOP_INSET,
+          paddingBottom: BODY_BOTTOM_INSET,
         }}
       >
         {/* Stage stays mounted (refs persist); hidden when the insight is showing. */}
@@ -362,7 +451,7 @@ const PoemReader = memo(function PoemReader({
           ref={stageWrapRef}
           className="w-full"
           style={{
-            maxWidth: 'min(760px, 92vw)',
+            maxWidth: CONTENT_MAX_WIDTH,
             opacity: 0,
             display: inInsight ? 'none' : 'block',
           }}
@@ -390,11 +479,12 @@ const PoemReader = memo(function PoemReader({
 
         {inInsight && (
           <div
+            ref={insightWrapRef}
             className="w-full max-w-xl mx-auto h-full"
             data-insight-ui
             // Keep the scrollable insight text clear of the scrub bar below (it sits ~16px under the
             // bar otherwise) so no line is hidden behind it; ~16px of breathing room above the bar.
-            style={{ paddingBottom: 32 }}
+            style={{ maxWidth: CONTENT_MAX_WIDTH, paddingBottom: 32 }}
           >
             <InlineInsights
               stage={endStage}
@@ -411,51 +501,65 @@ const PoemReader = memo(function PoemReader({
         )}
       </div>
 
-      {/* One persistent scrub bar + tap prompt — pinned as low as possible, same position in every
-          state. Reading: it seeks the reveal. Insight: it scrolls the paragraph (fill = render
-          progress, handle shown only when the text overflows). The prompt is the bottom-most child
-          so it holds a constant height across states. */}
+      {/* One persistent VERTICAL scrub rail (#613). Its right offset + top/bottom are set
+          imperatively by the rail-geometry effect: centered in the right gutter (equal space between
+          the poem body and the screen edge) and shrunk to the rendered text — 10px above the top
+          line and 10px below the bottom line. Reading: it seeks the reveal (top→bottom = start→end).
+          Insight: it scrolls the paragraph (fill = render progress, handle shown only when the text
+          overflows). Always visible as a persistent reading-position indicator. */}
+      <div
+        ref={scrubWrapRef}
+        className="absolute"
+        style={{
+          right: RAIL_RIGHT,
+          opacity: 0,
+          zIndex: 5,
+        }}
+      >
+        <ProgressScrubber
+          total={inInsight ? 100 : lineCount}
+          goldColor={goldColor}
+          visible={isActive}
+          showHandle={inInsight ? insightCanScroll && insightDone : true}
+          scrubFillRef={scrubFillRef}
+          scrubHandleRef={scrubHandleRef}
+          onScrubStart={() => {
+            scrubbingRef.current = true;
+          }}
+          onScrub={(f) => {
+            if (inInsight) revealRef.current?.scrollToFrac(f);
+            else controller?.scrubTo(f, false);
+          }}
+          onScrubEnd={(f) => {
+            scrubbingRef.current = false;
+            if (inInsight) {
+              revealRef.current?.scrollToFrac(f);
+              return;
+            }
+            const ttsActive = isPlaying && highlightStyle !== 'none';
+            // During TTS the reveal is voice-driven: a scrub is a temporary seek, so on release
+            // snap the window back to the currently-spoken line instead of resuming the reveal.
+            if (ttsActive) controller?.ttsFollow(currentVerseIndex);
+            else controller?.scrubTo(f, true);
+          }}
+        />
+      </div>
+
+      {/* Action buttons + pull-up cue — pinned as low as possible, same position in every state. */}
       <div
         className="absolute left-0 right-0 flex flex-col items-center gap-2 px-4"
-        style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)', zIndex: 5 }}
+        style={{
+          bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
+          zIndex: 5,
+        }}
       >
-        <div ref={scrubWrapRef} className="w-full" style={{ opacity: 0 }}>
-          <ProgressScrubber
-            total={inInsight ? 100 : lineCount}
-            goldColor={goldColor}
-            visible={isActive}
-            showHandle={inInsight ? insightCanScroll && insightDone : true}
-            scrubFillRef={scrubFillRef}
-            scrubHandleRef={scrubHandleRef}
-            onScrubStart={() => {
-              scrubbingRef.current = true;
-            }}
-            onScrub={(f) => {
-              if (inInsight) revealRef.current?.scrollToFrac(f);
-              else controller?.scrubTo(f, false);
-            }}
-            onScrubEnd={(f) => {
-              scrubbingRef.current = false;
-              if (inInsight) {
-                revealRef.current?.scrollToFrac(f);
-                return;
-              }
-              const ttsActive = isPlaying && highlightStyle !== 'none';
-              // During TTS the reveal is voice-driven: a scrub is a temporary seek, so on release
-              // snap the window back to the currently-spoken line instead of resuming the reveal.
-              if (ttsActive) controller?.ttsFollow(currentVerseIndex);
-              else controller?.scrubTo(f, true);
-            }}
-          />
-        </div>
-
         {/* Action buttons — replace the old "tap to continue" prompt. State-driven pair with the
             Listen->transport morph; sits between the scrub bar and the pull-up cue. */}
         {isActive && (
           <div
             className="w-full"
             style={{
-              maxWidth: 'min(420px, 92vw)',
+              maxWidth: ACTIONS_MAX_WIDTH,
               opacity: introDone ? 1 : 0,
               transition: 'opacity 0.4s ease',
             }}
@@ -484,33 +588,46 @@ const PoemReader = memo(function PoemReader({
         {/* pull-up cue — a single line whose letters bounce in a travelling wave (no arrow); always
             reserves its height (only opacity toggles) so the bar/prompt above stay put. Shown only
             once the poem / insight has finished animating. */}
-        <div
-          className="flex flex-row items-center justify-center"
-          style={{ opacity: showCue ? 0.95 : 0, transition: 'opacity 0.3s ease' }}
-          aria-hidden="true"
-        >
-          <span
-            className="font-brand-en italic"
-            style={{
-              color: goldColor,
-              fontSize: 'clamp(0.85rem, 3.6vw, 1rem)',
-              letterSpacing: '0.05em',
-            }}
-          >
-            {'scroll up for next poem'.split('').map((ch, i) => (
+        <div className="flex items-center justify-center" style={{ minHeight: 24 }}>
+          {showReadFull ? (
+            <button
+              type="button"
+              className="ra-readfull"
+              onClick={handleReadFull}
+              data-testid="reader-read-full"
+            >
+              Read full poem
+            </button>
+          ) : (
+            <div
+              className="flex flex-row items-center justify-center"
+              style={{ opacity: showCue ? 0.95 : 0, transition: 'opacity 0.3s ease' }}
+              aria-hidden="true"
+            >
               <span
-                key={i}
+                className="font-brand-en italic"
                 style={{
-                  display: 'inline-block',
-                  whiteSpace: 'pre',
-                  animation: 'cueWave 3s ease-in-out infinite',
-                  animationDelay: `${(i * 0.05).toFixed(2)}s`,
+                  color: goldColor,
+                  fontSize: 'clamp(0.85rem, 3.6vw, 1rem)',
+                  letterSpacing: '0.05em',
                 }}
               >
-                {ch === ' ' ? ' ' : ch}
+                {nextPoemCue.split('').map((ch, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      display: 'inline-block',
+                      whiteSpace: 'pre',
+                      animation: 'cueWave 3s ease-in-out infinite',
+                      animationDelay: `${(i * 0.05).toFixed(2)}s`,
+                    }}
+                  >
+                    {ch === ' ' ? ' ' : ch}
+                  </span>
+                ))}
               </span>
-            ))}
-          </span>
+            </div>
+          )}
         </div>
       </div>
     </div>

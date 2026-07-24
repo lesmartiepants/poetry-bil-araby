@@ -1,20 +1,18 @@
 /**
- * Unit tests for the togglePlay pause fix (#589).
+ * Unit tests for the togglePlay pause behaviour (#589).
  *
- * Problems:
  * 1. During live streaming, isTogglingPlay.current stays true for the full stream
  *    duration. Once the first chunk arrives, setGenerating(false) and setPlaying(true)
- *    are called, but isTogglingPlay.current is still true — the debounce guard silently
- *    drops the first pause press.
- * 2. After pausing mid-stream, audioUrl is null (blob URL is only set when the stream
- *    completes). The resume path skips to doGenerate() and restarts from the beginning
- *    instead of continuing where the user paused.
- *
- * Fixes:
- * 1. Guard narrowed to `!isPlaying && (isTogglingPlay.current || isGenerating)` so
+ *    are called, but isTogglingPlay.current is still true — the debounce guard would
+ *    otherwise silently drop the first pause press.
+ *    Fix: guard narrowed to `!isPlaying && (isTogglingPlay.current || isGenerating)` so
  *    pause (isPlaying=true) always bypasses the guard.
- * 2. Pause handler builds a partial WAV from in-flight stream chunks (_streamPcmB64)
- *    and calls setUrl() before stopping — giving the resume path a blob URL to seek into.
+ *
+ * 2. "Keep loading through pause": pausing mid-stream must NOT abort the live stream
+ *    or snapshot a truncated partial WAV. Stopping the player halts audio output while
+ *    the stream keeps accumulating PCM and finishes into the FULL blob (setUrl + cache
+ *    on natural completion), so resume plays the whole poem from the pause offset —
+ *    instead of the old truncated clip that fell silent or stopped after a few words.
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -46,11 +44,13 @@ describe('togglePlay guard — static contract (#589)', () => {
     expect(content).toMatch(/#589/);
   });
 
-  it('pause handler builds partial blob from _streamPcmB64 for resume-from-position', () => {
+  it('pause keeps the stream loading instead of snapshotting a truncated partial blob', () => {
     const content = fs.readFileSync(TOGGLE_PLAY_SRC, 'utf-8');
-    expect(content).toMatch(/_streamPcmB64/);
-    expect(content).toMatch(/concatPcmBase64\(_streamPcmB64/);
-    expect(content).toMatch(/setUrl\(URL\.createObjectURL\(partialBlob\)\)/);
+    // The pause path must NOT build a partial WAV from in-flight chunks — that produced the
+    // truncated clip that fell silent / stopped after a few words. The stream is left to finish
+    // into the full blob instead.
+    expect(content).not.toMatch(/concatPcmBase64\(_streamPcmB64/);
+    expect(content).not.toMatch(/URL\.createObjectURL\(partialBlob\)/);
   });
 });
 
@@ -159,38 +159,17 @@ describe('togglePlay guard — behaviour (#589)', () => {
     );
   });
 
-  it('sets audio URL from partial stream chunks on mid-stream pause so resume continues from paused position', async () => {
+  it('mid-stream pause stops output without snapshotting a partial blob (keeps loading through pause)', async () => {
     const { pcm16ToWav } = await import('../utils/audio.js');
-    const { concatPcmBase64 } = await import('../utils/liveAudioStream.js');
 
-    // Simulate: stream is playing, 3 chunks collected, no URL set yet
+    // Simulate: live stream is playing, no URL set yet (stream hasn't finished).
     useAudioStore.getState().setPlaying(true);
     useAudioStore.getState().setGenerating(false);
-    // audioUrl (url) stays null — stream hasn't finished
 
     const mockPlayer = { stop: vi.fn(), onstop: null };
     useAudioStore.getState().setPlayer(mockPlayer);
 
-    const fakeBlob = new Blob(['audio'], { type: 'audio/wav' });
-    pcm16ToWav.mockReturnValueOnce(fakeBlob);
-    concatPcmBase64.mockReturnValueOnce('concatenated-pcm');
-
-    // Seed the module-level _streamPcmB64 by reaching into the module.
-    // We do this by importing abortPlay (exported) to confirm the ref is used,
-    // and by checking the URL after the pause call.
-    const { togglePlay, abortPlay } = await import('../stores/actions/togglePlay.js');
-
-    // Manually seed the module-level _streamPcmB64 via the internal bookkeeping:
-    // The real code sets _streamPcmB64 = pcmB64 inside onChunk. We can't call onChunk
-    // directly, but we can verify the URL is set when the mock returns a valid blob.
-    // This test validates the integration path: pcm16ToWav is called with the right
-    // args and setUrl is called with the resulting object URL.
-
-    // Inject chunks by re-importing and confirming mock interactions instead.
-    // Since _streamPcmB64 starts null after module reset, verify that:
-    // - when _streamPcmB64 IS populated, setUrl is called (static test covers shape)
-    // - when _streamPcmB64 is null (no chunks yet), no URL is set (no crash)
-
+    const { togglePlay } = await import('../stores/actions/togglePlay.js');
     await togglePlay({
       audioRef: {},
       isTogglingPlay: { current: true },
@@ -199,10 +178,11 @@ describe('togglePlay guard — behaviour (#589)', () => {
       track: vi.fn(),
     });
 
-    // Pause went through (isTogglingPlay was true but isPlaying was true)
+    // Pause went through (isPlaying was true so the debounce guard was bypassed).
     expect(useAudioStore.getState().isPlaying).toBe(false);
-    // pcm16ToWav should NOT have been called when _streamPcmB64 is null
-    // (the !audioUrl && _streamPcmB64?.length guard prevents it)
+    // Audio output was stopped …
+    expect(mockPlayer.stop).toHaveBeenCalled();
+    // … but no partial-blob snapshot was built — the stream is left to finish into the full blob.
     expect(pcm16ToWav).not.toHaveBeenCalled();
   });
 });

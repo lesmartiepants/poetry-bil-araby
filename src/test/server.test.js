@@ -987,7 +987,8 @@ describe('Backend API Server', () => {
         theme: 'حزن',
         mood_primary: 'melancholy',
         emotional_intensity: 80,
-        accessibility_level: 2,
+        accessibility_score: 4.2,
+        accessibility_factors: { lexical: 4, syntax: 3, imagery_abstraction: 2, allusion: 2, narrativity: 2 },
         categories_json: { moods: ['melancholy'], confidences: { melancholy: 91 } },
         confidence: 91,
       };
@@ -1055,7 +1056,8 @@ describe('Backend API Server', () => {
           id: 7,
           moodPrimary: 'melancholy',
           emotionalIntensity: 80,
-          accessibilityLevel: 2,
+          accessibilityScore: 4.2,
+          accessibilityFactors: { lexical: 4, syntax: 3, imagery_abstraction: 2, allusion: 2, narrativity: 2 },
           confidence: 91,
           categories: { moods: ['melancholy'], confidences: { melancholy: 91 } },
         });

@@ -78,4 +78,20 @@ describe('TextSettingsPill — Highlight selector', () => {
     const glowBtn = screen.getByRole('radio', { name: /glow/i });
     expect(glowBtn).toHaveAttribute('data-state', 'on');
   });
+
+  it('renders design links in same tab and keeps generator in new tab', () => {
+    render(<TextSettingsPill />);
+    fireEvent.click(screen.getByRole('button', { name: /advanced/i }));
+
+    const generatorLink = screen.getByRole('link', { name: /open pattern generator/i });
+    expect(generatorLink).toHaveAttribute('target', '_blank');
+
+    const designReviewLink = screen.getByRole('link', { name: /design review/i });
+    expect(designReviewLink).toHaveAttribute('href', '/design-review');
+    expect(designReviewLink).not.toHaveAttribute('target');
+
+    const geometricExplorerLink = screen.getByRole('link', { name: /geometric explorer/i });
+    expect(geometricExplorerLink).toHaveAttribute('href', '/geometric-explorer');
+    expect(geometricExplorerLink).not.toHaveAttribute('target');
+  });
 });

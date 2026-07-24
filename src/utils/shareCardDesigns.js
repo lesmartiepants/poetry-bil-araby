@@ -286,7 +286,6 @@ export function createBilingualVerseLayout(ctx, verses, translation, opts) {
     minSize = 14,
     gap = MIN_BILINGUAL_GAP,
   } = opts;
-  const hasTranslation = verses.map((_, index) => Boolean(translation[index]));
   const maxArabic = uniformFit(ctx, verses, '"Amiri", serif', arabicSize, maxWidth);
   const maxEnglish = uniformFit(
     ctx,
@@ -296,8 +295,6 @@ export function createBilingualVerseLayout(ctx, verses, translation, opts) {
     maxWidth,
     'italic'
   );
-  const firstArabic = verses[0] || '';
-  const firstTranslation = translation.find(Boolean) || '';
   let scale = 1;
   let layout;
 
@@ -305,22 +302,28 @@ export function createBilingualVerseLayout(ctx, verses, translation, opts) {
     const vSize = Math.max(minSize, Math.floor(maxArabic * scale));
     const tSize = Math.max(minSize, Math.floor(maxEnglish * scale));
     ctx.font = `${vSize}px "Amiri", serif`;
-    const arabicBounds = textBounds(ctx, firstArabic, vSize);
+    const arabicBounds = verses.map((verse) => textBounds(ctx, verse, vSize));
     ctx.font = `italic ${tSize}px "Playfair Display", serif`;
-    const englishBounds = textBounds(ctx, firstTranslation, tSize);
-    const translationOffset = arabicBounds.descent + gap + englishBounds.ascent;
-    const minimumRowGap =
-      translationOffset +
-      (hasTranslation.some(Boolean) ? englishBounds.descent : arabicBounds.descent) +
-      gap +
-      arabicBounds.ascent;
+    const englishBounds = translation.map((line) => (line ? textBounds(ctx, line, tSize) : null));
+    const translationOffsets = arabicBounds.map((bounds, index) =>
+      englishBounds[index] ? bounds.descent + gap + englishBounds[index].ascent : 0
+    );
+    const minimumRowGap = arabicBounds.slice(0, -1).reduce((minimum, bounds, index) => {
+      const previousBottom = englishBounds[index]
+        ? translationOffsets[index] + englishBounds[index].descent
+        : bounds.descent;
+      return Math.max(minimum, previousBottom + gap + arabicBounds[index + 1].ascent);
+    }, 0);
     const rowGap = Math.max(preferredRowGap * scale, minimumRowGap);
-    const lastHasTranslation = hasTranslation.at(-1);
+    const lastIndex = verses.length - 1;
+    const lastBottom = englishBounds[lastIndex]
+      ? translationOffsets[lastIndex] + englishBounds[lastIndex].descent
+      : arabicBounds[lastIndex]?.descent || 0;
     const height =
-      arabicBounds.ascent +
+      (arabicBounds[0]?.ascent || 0) +
       Math.max(verses.length - 1, 0) * rowGap +
-      (lastHasTranslation ? translationOffset + englishBounds.descent : arabicBounds.descent);
-    layout = { vSize, tSize, translationOffset, rowGap, height };
+      lastBottom;
+    layout = { vSize, tSize, translationOffsets, rowGap, height };
     scale -= BILINGUAL_SCALE_STEP;
   } while (
     layout.height > maxHeight &&
@@ -350,7 +353,7 @@ function drawInterleavedVerses(ctx, verses, translation, opts) {
     tBase = 34,
     preferredRowGap = 150,
   } = opts;
-  const { vSize, tSize, translationOffset, rowGap } = createBilingualVerseLayout(ctx, verses, translation, {
+  const { vSize, tSize, translationOffsets, rowGap } = createBilingualVerseLayout(ctx, verses, translation, {
     maxWidth,
     maxHeight,
     arabicSize: vBase,
@@ -369,7 +372,7 @@ function drawInterleavedVerses(ctx, verses, translation, opts) {
       ctx.font = `italic ${tSize}px "Playfair Display", serif`;
       ctx.textAlign = align;
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], xText, y + translationOffset);
+      ctx.fillText(translation[i], xText, y + translationOffsets[i]);
     }
   });
 }
@@ -1181,7 +1184,7 @@ function renderMishkat(ctx, w, h, poem, opts = {}) {
       ctx.textAlign = 'center';
       ctx.direction = 'ltr';
       ctx.font = `italic ${verseLayout.tSize}px "Playfair Display", serif`;
-      ctx.fillText(translation[i], xText, y + verseLayout.translationOffset);
+      ctx.fillText(translation[i], xText, y + verseLayout.translationOffsets[i]);
     }
   });
 
@@ -1415,7 +1418,7 @@ function renderMusnad(ctx, w, h, poem, opts = {}) {
       ctx.direction = 'ltr';
       ctx.fillStyle = LP.grey;
       ctx.font = `italic ${verseLayout.tSize}px "Playfair Display", serif`;
-      ctx.fillText(tr[i], anchorX, y + verseLayout.translationOffset);
+      ctx.fillText(tr[i], anchorX, y + verseLayout.translationOffsets[i]);
     }
   });
 
@@ -1491,7 +1494,7 @@ function renderNajma(ctx, w, h, poem, opts = {}) {
       ctx.fillStyle = LP.grey;
       ctx.direction = 'ltr';
       ctx.font = `italic ${verseLayout.tSize}px "Playfair Display", serif`;
-      ctx.fillText(tr[i], cx, y + verseLayout.translationOffset);
+      ctx.fillText(tr[i], cx, y + verseLayout.translationOffsets[i]);
     }
   });
 
@@ -1644,7 +1647,7 @@ function renderIqtibas(ctx, w, h, poem, opts = {}) {
       ctx.fillStyle = LP.grey;
       ctx.direction = 'ltr';
       ctx.font = `italic ${verseLayout.tSize}px "Playfair Display", serif`;
-      ctx.fillText(tr[i], w / 2, y + verseLayout.translationOffset);
+      ctx.fillText(tr[i], w / 2, y + verseLayout.translationOffsets[i]);
     }
   });
 

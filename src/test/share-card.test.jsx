@@ -372,12 +372,14 @@ describe('renderShareCard', () => {
       preferredRowGap: 96,
     });
 
-    expect(layout.translationOffset - arabicDescent - arabicAscent).toBeGreaterThanOrEqual(
+    expect(layout.translationOffsets[0] - arabicDescent - arabicAscent).toBeGreaterThanOrEqual(
       MIN_BILINGUAL_GAP
     );
-    expect(layout.rowGap - (layout.translationOffset + arabicDescent) - arabicAscent).toBeGreaterThanOrEqual(
-      MIN_BILINGUAL_GAP
-    );
+    for (let index = 0; index < verses.length - 1; index++) {
+      const englishBottom = layout.translationOffsets[index] + arabicDescent;
+      const nextArabicTop = layout.rowGap - arabicAscent;
+      expect(nextArabicTop - englishBottom).toBeGreaterThanOrEqual(MIN_BILINGUAL_GAP);
+    }
     for (const design of SHARE_CARD_DESIGNS) {
       expect(() => renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, vocalizedPoem, design.id, { maxLines: 6 })).not.toThrow();
     }

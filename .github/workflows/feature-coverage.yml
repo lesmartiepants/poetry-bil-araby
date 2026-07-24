@@ -104,8 +104,11 @@ jobs:
         env:
           DRIFT_REPORT: ${{ steps.drift.outputs.report }}
 
-      - name: Fail if drift detected
+      # NOTE: this gate never fails a PR. Additions, removals, renames, and
+      # in-place updates are all handled by the Manifest Auto-Reconcile bot after
+      # merge (it opens a manifest PR that auto-merges). This step is purely a
+      # heads-up comment on the PR. Nothing here blocks a human's feature work.
+      - name: Heads-up (never blocks)
         if: steps.drift.outputs.exit_code != '0'
         run: |
-          echo "Feature manifest drift detected. Update feature-manifest.json to match the code."
-          exit 1
+          echo "::notice::Feature manifest will be auto-reconciled by the bot after this merges to main. Your PR is not blocked."

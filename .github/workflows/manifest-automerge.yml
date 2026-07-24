@@ -31,7 +31,7 @@ jobs:
           files=$(gh pr view "$PR" --json files --jq '.files[].path')
           echo "Changed files:"; echo "$files"
           # Allowlist: manifest, the generated doc, and tests only.
-          bad=$(echo "$files" | grep -vE '^(feature-manifest\.json|docs/APP-STATE\.md|src/test/.*|e2e/.*)$' || true)
+          bad=$(echo "$files" | grep -vE '^(feature-manifest\.json|feature-hashes\.json|docs/APP-STATE\.md|src/test/.*|e2e/.*)$' || true)
           if [ -n "$bad" ]; then
             echo "safe=false" >> "$GITHUB_OUTPUT"
             echo "::warning::PR touches files outside the manifest/doc/test allowlist — auto-merge skipped:"

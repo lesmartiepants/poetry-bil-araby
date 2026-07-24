@@ -46,14 +46,17 @@ jobs:
         run: |
           set +e
           node scripts/check-feature-manifest.mjs --json > drift.json 2>/dev/null
-          node scripts/check-feature-manifest.mjs --check > /dev/null 2>&1
+          # --needs-reconcile exits non-zero when the bot has anything to do:
+          # an addition, a removal/rename (dead ref), OR an in-place update
+          # (a feature's source changed since its last hash baseline).
+          node scripts/check-feature-manifest.mjs --needs-reconcile > /dev/null 2>&1
           code=$?
           if [ "$code" = "0" ]; then
             echo "has_drift=false" >> "$GITHUB_OUTPUT"
-            echo "Manifest is in sync. Nothing to do."
+            echo "Manifest is in sync (no add/remove/update). Nothing to do."
           else
             echo "has_drift=true" >> "$GITHUB_OUTPUT"
-            echo "Drift detected — waking Claude to reconcile."
+            echo "Reconcile needed — waking Claude."
             cat drift.json
           fi
 

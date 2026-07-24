@@ -72,7 +72,11 @@ CREATE INDEX IF NOT EXISTS idx_poem_categories_poem  ON poem_categories (poem_id
 -- ============================================================
 ALTER TABLE public.poems ADD COLUMN IF NOT EXISTS mood_primary        TEXT;
 ALTER TABLE public.poems ADD COLUMN IF NOT EXISTS emotional_intensity SMALLINT;
-ALTER TABLE public.poems ADD COLUMN IF NOT EXISTS accessibility_level SMALLINT;
+ALTER TABLE public.poems ADD COLUMN IF NOT EXISTS accessibility_level SMALLINT;   -- legacy v2 (1-5); v4 uses accessibility_score
+-- v4: reading difficulty as a 0-10 score derived from 5 scored sub-factors
+ALTER TABLE public.poems ADD COLUMN IF NOT EXISTS accessibility_score REAL;
+ALTER TABLE public.poems ADD COLUMN IF NOT EXISTS accessibility_factors JSONB;     -- {lexical,syntax,imagery_abstraction,allusion,narrativity} each 1-5
+ALTER TABLE public.poems ADD COLUMN IF NOT EXISTS categorization_prompt_version VARCHAR(40);
 ALTER TABLE public.poems ADD COLUMN IF NOT EXISTS century             SMALLINT;
 -- Raw AI output kept for provenance / flexible querying:
 --   {"moods":[...], "topics":[...], "motifs":[...], "confidences":{...}}

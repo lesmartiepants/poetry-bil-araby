@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import { fetchPoemById } from '../../services/database.js';
 
 /**
  * PoemResultsGrid — reusable results grid for category / mood queries.
@@ -34,6 +35,23 @@ export default function PoemResultsGrid({
   const textColor = darkMode ? 'rgba(214,211,205,0.92)' : 'rgba(40,35,30,0.92)';
   const subTextColor = darkMode ? 'rgba(214,211,205,0.6)' : 'rgba(40,35,30,0.6)';
   const subtleBorder = darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
+
+  // Tap a card to EXPAND the full poem in place (no navigation, stay in the explorer).
+  const [expandedId, setExpandedId] = useState(null);
+  const [fullById, setFullById] = useState({});
+  const [loadingId, setLoadingId] = useState(null);
+  const linesOf = (s) => (s || '').split(/[*\n]+/).map((l) => l.trim()).filter(Boolean);
+  const toggle = (poem) => {
+    if (expandedId === poem.id) { setExpandedId(null); return; }
+    setExpandedId(poem.id);
+    if (!fullById[poem.id]) {
+      setLoadingId(poem.id);
+      fetchPoemById(poem.id)
+        .then((f) => setFullById((prev) => ({ ...prev, [poem.id]: f })))
+        .catch(() => {})
+        .finally(() => setLoadingId((id) => (id === poem.id ? null : id)));
+    }
+  };
   const cardBg = darkMode ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)';
 
   // Build { dimKey: { valueKey: {ar,en} } } lookup so raw category keys render bilingually.
@@ -127,11 +145,12 @@ export default function PoemResultsGrid({
         return (
           <div
             key={poem.id}
-            role={onSelectPoem ? 'button' : undefined}
-            tabIndex={onSelectPoem ? 0 : undefined}
-            onClick={onSelectPoem ? () => onSelectPoem(poem) : undefined}
-            onKeyDown={onSelectPoem ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectPoem(poem); } } : undefined}
-            className={`rounded-2xl p-3.5 flex flex-col gap-2 border transition-transform ${onSelectPoem ? 'cursor-pointer hover:scale-[1.015] hover:border-gold/40 active:scale-[0.99]' : ''}`}
+            role="button"
+            tabIndex={0}
+            aria-expanded={expandedId === poem.id}
+            onClick={() => toggle(poem)}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(poem); } }}
+            className={`rounded-2xl p-3.5 flex flex-col gap-2 border transition-colors cursor-pointer hover:border-gold/40 ${expandedId === poem.id ? 'border-gold/50' : ''}`}
             style={{ borderColor: subtleBorder, background: cardBg }}
           >
             {/* Title + poet */}
@@ -168,7 +187,7 @@ export default function PoemResultsGrid({
             </div>
 
             {/* Snippet */}
-            {firstLine(poem) && (
+            {expandedId !== poem.id && firstLine(poem) && (
               <p
                 className="font-amiri text-[0.8125rem] leading-[1.9] line-clamp-2"
                 dir="rtl"
@@ -205,6 +224,53 @@ export default function PoemResultsGrid({
                     {t.en}
                   </span>
                 ))}
+              </div>
+            )}
+
+            {/* Expanded full poem — in place, no navigation */}
+            {expandedId === poem.id && (
+              <div
+                className="mt-1 pt-2.5 border-t"
+                style={{ borderColor: subtleBorder }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {loadingId === poem.id && !fullById[poem.id] ? (
+                  <div className="flex items-center gap-2 text-[0.6875rem]" style={{ color: subTextColor }}>
+                    <Loader2 className="w-3 h-3 animate-spin" /> loading full poem…
+                  </div>
+                ) : (
+                  <>
+                    <div dir="rtl" className="font-amiri text-[0.9375rem] leading-[2.1]" style={{ color: textColor }}>
+                      {linesOf(fullById[poem.id]?.arabic || poem.arabic).map((l, i) => (
+                        <div key={i}>{l}</div>
+                      ))}
+                    </div>
+                    {fullById[poem.id]?.english && (
+                      <div
+                        dir="ltr"
+                        className="mt-2.5 pt-2 border-t text-[0.75rem] leading-[1.7]"
+                        style={{ borderColor: subtleBorder, color: subTextColor }}
+                      >
+                        {linesOf(fullById[poem.id].english).map((l, i) => (
+                          <div key={i}>{l}</div>
+                        ))}
+                      </div>
+                    )}
+                    {poem.accessibilityFactors && (
+                      <div
+                        className="mt-2 flex flex-wrap gap-x-2 gap-y-0.5 text-[0.5625rem] font-brand-en"
+                        style={{ color: subTextColor, opacity: 0.75 }}
+                      >
+                        {Object.entries(poem.accessibilityFactors).map(([k, v]) => (
+                          <span key={k}>{k.replace('imagery_abstraction', 'imagery')} {v}</span>
+                        ))}
+                      </div>
+                    )}
+                    <div className="mt-2 text-[0.5625rem] font-brand-en" style={{ color: subTextColor, opacity: 0.55 }}>
+                      tap to collapse
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>

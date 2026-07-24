@@ -30,9 +30,21 @@ CREATE TABLE IF NOT EXISTS category_dimensions (
   sort_order  SMALLINT NOT NULL DEFAULT 0
 );
 
+-- Families group related values ACROSS dimensions (e.g. "Love & Desire"
+-- gathers moods, topics, and motifs). Must exist before category_values,
+-- which points back at it via family_id.
+CREATE TABLE IF NOT EXISTS category_families (
+  id         SERIAL PRIMARY KEY,
+  key        TEXT NOT NULL UNIQUE,               -- stable ASCII slug, e.g. 'love-desire'
+  label_ar   TEXT NOT NULL,
+  label_en   TEXT NOT NULL,
+  sort_order SMALLINT NOT NULL DEFAULT 0
+);
+
 CREATE TABLE IF NOT EXISTS category_values (
   id           SERIAL PRIMARY KEY,
   dimension_id INTEGER NOT NULL REFERENCES category_dimensions(id) ON DELETE CASCADE,
+  family_id    INTEGER NULL REFERENCES category_families(id) ON DELETE SET NULL,
   key          TEXT NOT NULL,                    -- stable ASCII slug, e.g. 'melancholy'
   label_ar     TEXT NOT NULL,
   label_en     TEXT NOT NULL,
@@ -70,7 +82,8 @@ ALTER TABLE public.poems ADD COLUMN IF NOT EXISTS categorization_model VARCHAR(4
 
 CREATE INDEX IF NOT EXISTS idx_poems_mood_primary ON public.poems (mood_primary);
 CREATE INDEX IF NOT EXISTS idx_poems_century      ON public.poems (century);
-CREATE INDEX IF NOT EXISTS idx_poems_categories_gin ON public.poems USING GIN (categories);
+-- No GIN index on `categories`: the API filters via the normalized
+-- poem_categories join, not the JSONB, so a GIN index would only add write cost.
 CREATE INDEX IF NOT EXISTS idx_poems_categorized
   ON public.poems (id) WHERE categorized_at IS NOT NULL;
 
@@ -78,14 +91,18 @@ CREATE INDEX IF NOT EXISTS idx_poems_categorized
 -- 4. Row-Level Security (match existing posture: enabled, no public policies)
 -- ============================================================
 ALTER TABLE category_dimensions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE category_families   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE category_values     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE poem_categories     ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
--- 5. Seed controlled vocabularies
+-- ============================================================
+-- 5. Seed controlled vocabularies + families
 --    AUTO-GENERATED from categorization/config.py — regenerate with:
 --      python -m poetry_quality_and_curation.categorization.config --print-seed
+--    (families are inserted here; the CREATE TABLE lives in section 1 above.)
 -- ============================================================
+-- AUTO-GENERATED from categorization/config.py — do not hand-edit.
 INSERT INTO category_dimensions (key, label_ar, label_en, cardinality, sort_order) VALUES ('mood', 'المزاج', 'Mood', 'multi', 1) ON CONFLICT (key) DO NOTHING;
 INSERT INTO category_dimensions (key, label_ar, label_en, cardinality, sort_order) VALUES ('topic', 'الموضوع', 'Topic', 'multi', 2) ON CONFLICT (key) DO NOTHING;
 INSERT INTO category_dimensions (key, label_ar, label_en, cardinality, sort_order) VALUES ('motif', 'الصورة', 'Motif', 'multi', 3) ON CONFLICT (key) DO NOTHING;
@@ -136,3 +153,63 @@ INSERT INTO category_values (dimension_id, key, label_ar, label_en, sort_order) 
 INSERT INTO category_values (dimension_id, key, label_ar, label_en, sort_order) SELECT id, 'tears', 'الدموع', 'Tears', 9 FROM category_dimensions WHERE key = 'motif' ON CONFLICT (dimension_id, key) DO NOTHING;
 INSERT INTO category_values (dimension_id, key, label_ar, label_en, sort_order) SELECT id, 'journey', 'الرحلة والراحلة', 'Journey & Mount', 10 FROM category_dimensions WHERE key = 'motif' ON CONFLICT (dimension_id, key) DO NOTHING;
 INSERT INTO category_values (dimension_id, key, label_ar, label_en, sort_order) SELECT id, 'dawn', 'الفجر والصبح', 'Dawn', 11 FROM category_dimensions WHERE key = 'motif' ON CONFLICT (dimension_id, key) DO NOTHING;
+
+INSERT INTO category_families (key, label_ar, label_en, sort_order) VALUES ('love-desire', 'الحب والهوى', 'Love & Desire', 0) ON CONFLICT (key) DO NOTHING;
+INSERT INTO category_families (key, label_ar, label_en, sort_order) VALUES ('grief-loss', 'الأسى والفقد', 'Grief & Loss', 1) ON CONFLICT (key) DO NOTHING;
+INSERT INTO category_families (key, label_ar, label_en, sort_order) VALUES ('longing-exile', 'الحنين والغربة', 'Longing & Exile', 2) ON CONFLICT (key) DO NOTHING;
+INSERT INTO category_families (key, label_ar, label_en, sort_order) VALUES ('valor-defiance', 'الحماسة والإباء', 'Valor & Defiance', 3) ON CONFLICT (key) DO NOTHING;
+INSERT INTO category_families (key, label_ar, label_en, sort_order) VALUES ('revelry-company', 'الطرب والصُّحبة', 'Revelry & Companionship', 4) ON CONFLICT (key) DO NOTHING;
+INSERT INTO category_families (key, label_ar, label_en, sort_order) VALUES ('reflection-faith', 'التأمّل والإيمان', 'Reflection & Faith', 5) ON CONFLICT (key) DO NOTHING;
+INSERT INTO category_families (key, label_ar, label_en, sort_order) VALUES ('nature-cosmos', 'الطبيعة والكون', 'Nature & Cosmos', 6) ON CONFLICT (key) DO NOTHING;
+
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'love-desire') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'amorous';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'love-desire') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'passion';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'love-desire') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'yearning';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'love-desire') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'love';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'love-desire') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'beauty';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'love-desire') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'women-feminine';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'love-desire') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'garden-flowers';
+
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'grief-loss') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'melancholy';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'grief-loss') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'grief';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'grief-loss') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'despair';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'grief-loss') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'loss-death';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'grief-loss') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'tears';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'grief-loss') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'desert-ruins';
+
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'longing-exile') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'nostalgia';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'longing-exile') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'bittersweet';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'longing-exile') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'exile-longing';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'longing-exile') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'homeland';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'longing-exile') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'journey';
+
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'valor-defiance') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'defiance';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'valor-defiance') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'pride';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'valor-defiance') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'satire';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'valor-defiance') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'war-conflict';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'valor-defiance') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'honor-pride';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'valor-defiance') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'justice-oppression';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'valor-defiance') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'freedom';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'valor-defiance') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'sword-battle';
+
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'revelry-company') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'joy';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'revelry-company') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'wine-pleasure';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'revelry-company') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'friendship';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'revelry-company') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'wine-cup';
+
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'reflection-faith') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'contemplation';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'reflection-faith') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'serenity';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'reflection-faith') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'reverence';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'reflection-faith') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'mood') AND key = 'hope';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'reflection-faith') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'faith-spirit';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'reflection-faith') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'wisdom-ethics';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'reflection-faith') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'time-mortality';
+
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'nature-cosmos') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'topic') AND key = 'nature';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'nature-cosmos') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'night';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'nature-cosmos') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'moon-stars';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'nature-cosmos') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'sea-water';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'nature-cosmos') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'birds';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'nature-cosmos') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'fire-light';
+UPDATE category_values SET family_id = (SELECT id FROM category_families WHERE key = 'nature-cosmos') WHERE dimension_id = (SELECT id FROM category_dimensions WHERE key = 'motif') AND key = 'dawn';
+

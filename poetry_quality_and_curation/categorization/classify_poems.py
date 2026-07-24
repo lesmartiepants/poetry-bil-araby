@@ -6,7 +6,11 @@ Parquet checkpoints, --resume, cost cap, --dry-run. Output feeds
 import_categories.py, which writes to the DB.
 
 Usage:
-    # Bulk classify everything with Haiku (cheap):
+    # Bulk classify everything with Gemini Flash (cheap; working provider here):
+    python -m poetry_quality_and_curation.categorization.classify_poems \
+        --model gemini/gemini-2.5-flash --scope all --concurrency 15 --max-cost 40 --resume
+
+    # Or via the Anthropic/Bedrock proxy when it's reachable:
     python -m poetry_quality_and_curation.categorization.classify_poems \
         --model openai/bedrock-haiku-45 --scope all --concurrency 15 --max-cost 40 --resume
 
@@ -158,6 +162,27 @@ def _clean_int(raw, lo, hi):
     return None
 
 
+def _clean_confidences(raw, kept_keys) -> dict:
+    """Keep confidences only for labels we actually kept, clamped to 0-100.
+
+    `kept_keys` is the flat list of value keys that survived vocab validation
+    (moods + topics + motifs). Confidences for hallucinated / dropped keys are
+    discarded so the persisted map lines up 1:1 with poem_categories rows.
+    """
+    if not isinstance(raw, dict):
+        return {}
+    kept = set(kept_keys)
+    out = {}
+    for k, v in raw.items():
+        key = str(k).strip()
+        if key not in kept:
+            continue
+        c = config.clamp_confidence(v)
+        if c is not None:
+            out[key] = c
+    return out
+
+
 def parse_categories(text: str, batch: list[dict]) -> list[dict]:
     text = re.sub(r'```(?:json)?\s*', '', text).strip()
     parsed = None
@@ -182,6 +207,7 @@ def parse_categories(text: str, batch: list[dict]) -> list[dict]:
         mood_primary = str(item.get("mood_primary", "")).strip()
         if mood_primary not in config.VALID_KEYS["mood"]:
             mood_primary = moods[0] if moods else None
+        confidences = _clean_confidences(item.get("confidences"), moods + topics + motifs)
         results.append({
             "poem_id": str(poem["id"]),
             "moods": moods,
@@ -190,7 +216,14 @@ def parse_categories(text: str, batch: list[dict]) -> list[dict]:
             "mood_primary": mood_primary,
             "emotional_intensity": _clean_int(item.get("emotional_intensity"), 0, 100),
             "accessibility_level": _clean_int(item.get("accessibility_level"), 1, 5),
-            "century": _clean_int(item.get("century"), -8, 21),
+            # Per-value 0-100 confidences, JSON-encoded so the parquet column
+            # stays a plain string (keys vary per row; a struct would fight
+            # pyarrow's schema inference). import_categories decodes it.
+            "confidences": json.dumps(confidences, ensure_ascii=False),
+            # Provenance: which taxonomy version produced this row.
+            "taxonomy_version": config.TAXONOMY_VERSION,
+            # `century` is NOT here: it's derived from poet era on the import
+            # side (import_categories --backfill-century), never model-guessed.
             "model_used": "",  # filled by caller
             "categorized_at": pd.Timestamp.now(tz="UTC").isoformat(),
         })
@@ -218,7 +251,7 @@ def save_checkpoint(rows: list[dict], output_path: str):
 # ---------------------------------------------------------------------------
 # Async classify
 # ---------------------------------------------------------------------------
-async def classify_batch(batch, model, system_prompt, semaphore, api_base, api_key):
+async def classify_batch(batch, model, system_prompt, semaphore, provider_kwargs):
     import litellm
     async with semaphore:
         user_content = "\n\n---\n\n".join(
@@ -232,12 +265,12 @@ async def classify_batch(batch, model, system_prompt, semaphore, api_base, api_k
                 {"role": "user", "content": user_content},
             ],
             temperature=0.2,
-            max_tokens=400 * len(batch),
+            # Floor of 1500 covers a judge model's low-effort thinking budget
+            # plus the JSON; for thinking-disabled bulk models the extra headroom
+            # costs nothing (you only pay for tokens actually generated).
+            max_tokens=max(1500, 500 * len(batch)),
+            **provider_kwargs,
         )
-        if api_base:
-            kwargs["api_base"] = api_base
-        if api_key:
-            kwargs["api_key"] = api_key
         return await litellm.acompletion(**kwargs)
 
 
@@ -246,10 +279,9 @@ async def run(poems: list[dict], args) -> tuple[list[dict], float]:
 
     semaphore = asyncio.Semaphore(args.concurrency)
     system_prompt = config.CLASSIFICATION_PROMPT
-    api_base = os.environ.get("ANTHROPIC_BASE_URL") or os.environ.get("LITELLM_API_BASE")
-    api_key = (os.environ.get("ANTHROPIC_API_KEY")
-               or os.environ.get("ANTHROPIC_AUTH_TOKEN")
-               or os.environ.get("LITELLM_API_KEY"))
+    # Per-model provider routing: `gemini/*` -> Gemini via GEMINI_API_KEY;
+    # `openai/bedrock-*` -> the Anthropic/LiteLLM proxy. See config.resolve_provider.
+    provider_kwargs = config.resolve_provider(args.model)
 
     all_rows, total_cost = [], 0.0
     batches = [poems[i:i + args.batch_size] for i in range(0, len(poems), args.batch_size)]
@@ -257,7 +289,7 @@ async def run(poems: list[dict], args) -> tuple[list[dict], float]:
 
     for start in range(0, len(batches), args.concurrency):
         chunk = batches[start:start + args.concurrency]
-        tasks = [classify_batch(b, args.model, system_prompt, semaphore, api_base, api_key) for b in chunk]
+        tasks = [classify_batch(b, args.model, system_prompt, semaphore, provider_kwargs) for b in chunk]
         responses = await asyncio.gather(*tasks, return_exceptions=True)
         for batch, resp in zip(chunk, responses):
             if isinstance(resp, Exception):

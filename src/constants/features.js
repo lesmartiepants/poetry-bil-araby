@@ -10,6 +10,7 @@ export const FEATURES = {
   onboarding: false, // Show kinetic walkthrough (phases 1-3) on first visit
   forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
   designReview: true, // Show design review shortcut icon (still accessible via /design-review URL)
+  categoryExplorer: true, // Dev/admin Category Explorer — taxonomy browser + filter playground (corner launcher, bottom-left)
   tour: false, // Guided walkthrough — disabled: its steps target the pre-redesign nav (PlayControlsStrip/VerticalSidebar); re-wire to the new reader UI before re-enabling
 
   verticalFeed: true, // Vertical swipe feed + tap-to-reveal stanza blooms (replaces horizontal carousel)

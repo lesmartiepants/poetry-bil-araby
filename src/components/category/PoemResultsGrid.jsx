@@ -29,6 +29,7 @@ export default function PoemResultsGrid({
   loading = false,
   error = null,
   darkMode,
+  onSelectPoem,
 }) {
   const textColor = darkMode ? 'rgba(214,211,205,0.92)' : 'rgba(40,35,30,0.92)';
   const subTextColor = darkMode ? 'rgba(214,211,205,0.6)' : 'rgba(40,35,30,0.6)';
@@ -126,7 +127,11 @@ export default function PoemResultsGrid({
         return (
           <div
             key={poem.id}
-            className="rounded-2xl p-3.5 flex flex-col gap-2 border"
+            role={onSelectPoem ? 'button' : undefined}
+            tabIndex={onSelectPoem ? 0 : undefined}
+            onClick={onSelectPoem ? () => onSelectPoem(poem) : undefined}
+            onKeyDown={onSelectPoem ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectPoem(poem); } } : undefined}
+            className={`rounded-2xl p-3.5 flex flex-col gap-2 border transition-transform ${onSelectPoem ? 'cursor-pointer hover:scale-[1.015] hover:border-gold/40 active:scale-[0.99]' : ''}`}
             style={{ borderColor: subtleBorder, background: cardBg }}
           >
             {/* Title + poet */}

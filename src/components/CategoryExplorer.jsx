@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { X, Loader2, ChevronDown } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLocation } from 'wouter';
 
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
@@ -22,6 +23,14 @@ import PoemResultsGrid from './category/PoemResultsGrid.jsx';
 export default function CategoryExplorer() {
   const isOpen = useModalStore((s) => s.categoryExplorer);
   const onClose = () => useModalStore.getState().setCategoryExplorer(false);
+  const [, navigate] = useLocation();
+  // Tap a result -> close the explorer and deep-link to the full poem (/poem/:id),
+  // which app.jsx detects and loads via fetchPoemById.
+  const handleSelectPoem = (poem) => {
+    if (!poem?.id) return;
+    onClose();
+    navigate('/poem/' + poem.id + (typeof window !== 'undefined' ? window.location.search : ''));
+  };
   const darkMode = useUIStore((s) => s.darkMode);
 
   const [activeTab, setActiveTab] = useState('taxonomy'); // 'taxonomy' | 'playground'
@@ -329,6 +338,7 @@ export default function CategoryExplorer() {
                 loading={resultsLoading}
                 error={resultsError}
                 darkMode={darkMode}
+                onSelectPoem={handleSelectPoem}
               />
             </div>
           )}

@@ -847,8 +847,20 @@ app.get('/api/poems/by-category', async (req, res) => {
     const limitIdx = params.length;
 
     const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+    // Perf: pick N random matching poem ids on a minimal projection FIRST, then
+    // enrich only those N. Avoids running the content expr, per-row MAX(confidence)
+    // subquery, and themes/translation joins across the whole filtered set (which
+    // ORDER BY RANDOM() would otherwise materialize) — that was the read timeout.
     const result = await pool.query(
       `
+      WITH matched AS (
+        SELECT p.id
+        FROM poems p
+        JOIN poets po ON p.poet_id = po.id
+        ${where}
+        ORDER BY RANDOM()
+        LIMIT $${limitIdx}
+      )
       SELECT
         p.id,
         p.title,
@@ -867,9 +879,7 @@ app.get('/api/poems/by-category', async (req, res) => {
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
-      ${where}
-      ORDER BY RANDOM()
-      LIMIT $${limitIdx}
+      WHERE p.id IN (SELECT id FROM matched)
     `,
       params
     );

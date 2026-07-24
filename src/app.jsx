@@ -15,6 +15,7 @@ import {
   Heart,
   LibraryBig,
   ThumbsDown,
+  LayoutGrid,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -104,6 +105,7 @@ const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
+import CategoryExplorer from './components/CategoryExplorer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
 import PoemFeed from './components/feed/PoemFeed.jsx';
 import AccountMenu from './components/AccountMenu.jsx';
@@ -203,6 +205,8 @@ export default function DiwanApp() {
   // ── Modal store (Zustand) ──
   const discoverDrawerOpen = useModalStore((s) => s.discoverDrawer);
   const setDiscoverDrawerOpen = useModalStore((s) => s.setDiscoverDrawer);
+  const categoryExplorerOpen = useModalStore((s) => s.categoryExplorer);
+  const setCategoryExplorerOpen = useModalStore((s) => s.setCategoryExplorer);
   // ── UI store (Zustand) ──
   const darkMode = useUIStore((s) => s.darkMode);
   const setDarkMode = useUIStore((s) => s.setDarkMode);
@@ -740,6 +744,22 @@ export default function DiwanApp() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
+
+  // Category Explorer deep-link: open on ?explorer=1 (dev/admin), and keep the
+  // URL param in sync with the drawer's open state so it stays shareable.
+  useEffect(() => {
+    if (FEATURES.categoryExplorer && queryParams.explorer === '1' && !categoryExplorerOpen) {
+      setCategoryExplorerOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const desired = categoryExplorerOpen ? '1' : null;
+    if ((queryParams.explorer ?? null) !== desired) {
+      setQueryParams({ explorer: desired });
+    }
+  }, [categoryExplorerOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleScroll = (e) => {
     const scrollTop = e.target.scrollTop;
@@ -2071,6 +2091,10 @@ export default function DiwanApp() {
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {categoryExplorerOpen && <CategoryExplorer key="category-explorer" />}
+      </AnimatePresence>
+
       {/* Auth Modal */}
       <AnimatePresence>
         {showAuthModal && (
@@ -2111,6 +2135,31 @@ export default function DiwanApp() {
               <Paintbrush size={9} />
             </span>
           </a>
+        </div>
+      )}
+
+      {/* Category Explorer launcher — bottom-left, stacked above the design-review icon */}
+      {FEATURES.categoryExplorer && (
+        <div
+          className="fixed z-[200] flex flex-col items-center gap-1"
+          style={{ left: 8, bottom: FEATURES.designReview ? 56 : 8 }}
+        >
+          <button
+            onClick={() => setCategoryExplorerOpen(true)}
+            className="w-[44px] h-[44px] flex items-center justify-center"
+            title="Category Explorer"
+            aria-label="Open category explorer"
+          >
+            <span
+              className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+                darkMode
+                  ? 'bg-stone-900/60 border border-gold/20 text-stone-500 hover:text-gold hover:border-gold/40'
+                  : 'bg-white/50 border border-gold/20 text-stone-400 hover:text-gold hover:border-gold/40'
+              } backdrop-blur-md`}
+            >
+              <LayoutGrid size={9} />
+            </span>
+          </button>
         </div>
       )}
 

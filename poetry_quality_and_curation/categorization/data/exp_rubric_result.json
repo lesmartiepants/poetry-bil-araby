@@ -1,0 +1,514 @@
+{
+  "base": {
+    "85646": {
+      "poem_id": "85646",
+      "moods": [
+        "amorous",
+        "passion",
+        "joy"
+      ],
+      "topics": [
+        "love",
+        "beauty",
+        "wine-pleasure"
+      ],
+      "motifs": [
+        "wine-cup",
+        "fire-light",
+        "dawn"
+      ],
+      "mood_primary": "amorous",
+      "emotional_intensity": 85,
+      "accessibility_level": 2,
+      "confidences": "{\"amorous\": 95, \"passion\": 85, \"joy\": 70, \"love\": 90, \"beauty\": 85, \"wine-pleasure\": 80, \"wine-cup\": 80, \"fire-light\": 75, \"dawn\": 70}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:57:58.949613+00:00"
+    },
+    "85684": {
+      "poem_id": "85684",
+      "moods": [
+        "amorous",
+        "yearning",
+        "bittersweet"
+      ],
+      "topics": [
+        "love",
+        "beauty",
+        "nature"
+      ],
+      "motifs": [
+        "garden-flowers"
+      ],
+      "mood_primary": "amorous",
+      "emotional_intensity": 70,
+      "accessibility_level": 2,
+      "confidences": "{\"amorous\": 90, \"yearning\": 75, \"bittersweet\": 65, \"love\": 85, \"beauty\": 70, \"nature\": 80, \"garden-flowers\": 90}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:57:58.949662+00:00"
+    },
+    "36953": {
+      "poem_id": "36953",
+      "moods": [
+        "grief",
+        "melancholy",
+        "despair",
+        "nostalgia"
+      ],
+      "topics": [
+        "loss-death",
+        "time-mortality",
+        "friendship"
+      ],
+      "motifs": [
+        "tears",
+        "fire-light",
+        "desert-ruins"
+      ],
+      "mood_primary": "grief",
+      "emotional_intensity": 90,
+      "accessibility_level": 3,
+      "confidences": "{\"grief\": 95, \"melancholy\": 90, \"despair\": 80, \"nostalgia\": 75, \"loss-death\": 95, \"time-mortality\": 85, \"friendship\": 70, \"tears\": 85, \"fire-light\": 70, \"desert-ruins\": 75}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:57:58.949684+00:00"
+    },
+    "63346": {
+      "poem_id": "63346",
+      "moods": [
+        "passion",
+        "reverence",
+        "contemplation",
+        "yearning"
+      ],
+      "topics": [
+        "faith-spirit",
+        "love",
+        "time-mortality"
+      ],
+      "motifs": [
+        "fire-light"
+      ],
+      "mood_primary": "passion",
+      "emotional_intensity": 90,
+      "accessibility_level": 4,
+      "confidences": "{\"passion\": 95, \"reverence\": 90, \"contemplation\": 80, \"yearning\": 75, \"faith-spirit\": 95, \"love\": 85, \"time-mortality\": 70, \"fire-light\": 80}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:57:58.949711+00:00"
+    },
+    "53601": {
+      "poem_id": "53601",
+      "moods": [
+        "grief",
+        "reverence",
+        "defiance",
+        "yearning"
+      ],
+      "topics": [
+        "loss-death",
+        "faith-spirit",
+        "justice-oppression",
+        "honor-pride"
+      ],
+      "motifs": [
+        "tears",
+        "fire-light",
+        "sea-water"
+      ],
+      "mood_primary": "grief",
+      "emotional_intensity": 90,
+      "accessibility_level": 4,
+      "confidences": "{\"grief\": 95, \"reverence\": 85, \"defiance\": 80, \"yearning\": 75, \"loss-death\": 90, \"faith-spirit\": 85, \"justice-oppression\": 80, \"honor-pride\": 70, \"tears\": 90, \"fire-light\": 70, \"sea-water\": 60}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:02.740998+00:00"
+    },
+    "85512": {
+      "poem_id": "85512",
+      "moods": [
+        "defiance",
+        "contemplation",
+        "pride"
+      ],
+      "topics": [
+        "freedom",
+        "wisdom-ethics",
+        "honor-pride"
+      ],
+      "motifs": [],
+      "mood_primary": "defiance",
+      "emotional_intensity": 70,
+      "accessibility_level": 3,
+      "confidences": "{\"defiance\": 90, \"contemplation\": 75, \"pride\": 70, \"freedom\": 85, \"wisdom-ethics\": 70, \"honor-pride\": 65}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:02.741022+00:00"
+    },
+    "78165": {
+      "poem_id": "78165",
+      "moods": [
+        "grief",
+        "melancholy",
+        "despair"
+      ],
+      "topics": [
+        "loss-death",
+        "time-mortality"
+      ],
+      "motifs": [
+        "tears",
+        "fire-light"
+      ],
+      "mood_primary": "grief",
+      "emotional_intensity": 95,
+      "accessibility_level": 3,
+      "confidences": "{\"grief\": 100, \"melancholy\": 85, \"despair\": 70, \"loss-death\": 100, \"time-mortality\": 80, \"tears\": 90, \"fire-light\": 70}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:02.741031+00:00"
+    },
+    "85942": {
+      "poem_id": "85942",
+      "moods": [
+        "contemplation",
+        "serenity"
+      ],
+      "topics": [
+        "nature",
+        "beauty"
+      ],
+      "motifs": [
+        "fire-light",
+        "night",
+        "moon-stars"
+      ],
+      "mood_primary": "contemplation",
+      "emotional_intensity": 60,
+      "accessibility_level": 4,
+      "confidences": "{\"contemplation\": 90, \"serenity\": 70, \"nature\": 95, \"beauty\": 80, \"fire-light\": 85, \"night\": 75, \"moon-stars\": 70}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:02.741039+00:00"
+    },
+    "63352": {
+      "poem_id": "63352",
+      "moods": [
+        "passion",
+        "yearning",
+        "melancholy",
+        "contemplation"
+      ],
+      "topics": [
+        "love",
+        "beauty",
+        "faith-spirit"
+      ],
+      "motifs": [
+        "night",
+        "moon-stars",
+        "fire-light",
+        "tears",
+        "dawn"
+      ],
+      "mood_primary": "passion",
+      "emotional_intensity": 95,
+      "accessibility_level": 4,
+      "confidences": "{\"passion\": 95, \"yearning\": 90, \"melancholy\": 80, \"contemplation\": 75, \"love\": 95, \"beauty\": 85, \"faith-spirit\": 70, \"night\": 80, \"moon-stars\": 75, \"fire-light\": 70, \"tears\": 85, \"dawn\": 65}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:05.562988+00:00"
+    },
+    "16199": {
+      "poem_id": "16199",
+      "moods": [
+        "melancholy",
+        "yearning",
+        "passion",
+        "grief"
+      ],
+      "topics": [
+        "love",
+        "beauty",
+        "loss-death"
+      ],
+      "motifs": [
+        "tears",
+        "night",
+        "moon-stars",
+        "fire-light",
+        "garden-flowers"
+      ],
+      "mood_primary": "melancholy",
+      "emotional_intensity": 90,
+      "accessibility_level": 3,
+      "confidences": "{\"melancholy\": 95, \"yearning\": 90, \"passion\": 85, \"grief\": 75, \"love\": 95, \"beauty\": 80, \"loss-death\": 70, \"tears\": 90, \"night\": 75, \"moon-stars\": 70, \"fire-light\": 65, \"garden-flowers\": 60}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:05.563201+00:00"
+    }
+  },
+  "v3": {
+    "85646": {
+      "poem_id": "85646",
+      "moods": [
+        "amorous",
+        "passion",
+        "joy"
+      ],
+      "topics": [
+        "love",
+        "beauty",
+        "wine-pleasure"
+      ],
+      "motifs": [
+        "dawn",
+        "wine-cup"
+      ],
+      "mood_primary": "amorous",
+      "emotional_intensity": 75,
+      "accessibility_level": 2,
+      "confidences": "{\"amorous\": 95, \"passion\": 85, \"joy\": 70, \"love\": 90, \"beauty\": 80, \"wine-pleasure\": 75, \"dawn\": 70, \"wine-cup\": 80}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:09.439089+00:00"
+    },
+    "85684": {
+      "poem_id": "85684",
+      "moods": [
+        "amorous",
+        "joy",
+        "bittersweet"
+      ],
+      "topics": [
+        "love",
+        "beauty",
+        "nature"
+      ],
+      "motifs": [
+        "garden-flowers"
+      ],
+      "mood_primary": "amorous",
+      "emotional_intensity": 60,
+      "accessibility_level": 2,
+      "confidences": "{\"amorous\": 90, \"joy\": 70, \"bittersweet\": 60, \"love\": 85, \"beauty\": 75, \"nature\": 70, \"garden-flowers\": 90}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:09.439228+00:00"
+    },
+    "36953": {
+      "poem_id": "36953",
+      "moods": [
+        "grief",
+        "melancholy",
+        "despair",
+        "nostalgia"
+      ],
+      "topics": [
+        "loss-death",
+        "time-mortality",
+        "friendship"
+      ],
+      "motifs": [
+        "tears",
+        "desert-ruins",
+        "fire-light"
+      ],
+      "mood_primary": "grief",
+      "emotional_intensity": 90,
+      "accessibility_level": 3,
+      "confidences": "{\"grief\": 95, \"melancholy\": 90, \"despair\": 80, \"nostalgia\": 70, \"loss-death\": 95, \"time-mortality\": 85, \"friendship\": 75, \"tears\": 90, \"desert-ruins\": 80, \"fire-light\": 70}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:09.439294+00:00"
+    },
+    "63346": {
+      "poem_id": "63346",
+      "moods": [
+        "passion",
+        "reverence",
+        "contemplation",
+        "yearning"
+      ],
+      "topics": [
+        "faith-spirit",
+        "love",
+        "time-mortality"
+      ],
+      "motifs": [
+        "fire-light"
+      ],
+      "mood_primary": "passion",
+      "emotional_intensity": 85,
+      "accessibility_level": 4,
+      "confidences": "{\"passion\": 95, \"reverence\": 90, \"contemplation\": 80, \"yearning\": 75, \"faith-spirit\": 95, \"love\": 85, \"time-mortality\": 70, \"fire-light\": 80}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:09.439348+00:00"
+    },
+    "53601": {
+      "poem_id": "53601",
+      "moods": [
+        "grief",
+        "reverence",
+        "defiance",
+        "melancholy"
+      ],
+      "topics": [
+        "loss-death",
+        "faith-spirit",
+        "justice-oppression",
+        "homeland"
+      ],
+      "motifs": [
+        "tears",
+        "fire-light",
+        "night",
+        "desert-ruins"
+      ],
+      "mood_primary": "grief",
+      "emotional_intensity": 85,
+      "accessibility_level": 4,
+      "confidences": "{\"grief\": 95, \"reverence\": 90, \"defiance\": 80, \"melancholy\": 75, \"loss-death\": 95, \"faith-spirit\": 90, \"justice-oppression\": 85, \"homeland\": 70, \"tears\": 90, \"fire-light\": 75, \"night\": 60, \"desert-ruins\": 65}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:13.326666+00:00"
+    },
+    "85512": {
+      "poem_id": "85512",
+      "moods": [
+        "defiance",
+        "contemplation",
+        "pride"
+      ],
+      "topics": [
+        "freedom",
+        "wisdom-ethics",
+        "honor-pride"
+      ],
+      "motifs": [],
+      "mood_primary": "defiance",
+      "emotional_intensity": 70,
+      "accessibility_level": 3,
+      "confidences": "{\"defiance\": 90, \"contemplation\": 75, \"pride\": 80, \"freedom\": 85, \"wisdom-ethics\": 70, \"honor-pride\": 75}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:13.326795+00:00"
+    },
+    "78165": {
+      "poem_id": "78165",
+      "moods": [
+        "grief",
+        "melancholy",
+        "despair"
+      ],
+      "topics": [
+        "loss-death",
+        "time-mortality",
+        "faith-spirit"
+      ],
+      "motifs": [
+        "tears",
+        "fire-light"
+      ],
+      "mood_primary": "grief",
+      "emotional_intensity": 90,
+      "accessibility_level": 3,
+      "confidences": "{\"grief\": 95, \"melancholy\": 85, \"despair\": 70, \"loss-death\": 95, \"time-mortality\": 80, \"faith-spirit\": 60, \"tears\": 90, \"fire-light\": 70}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:13.326854+00:00"
+    },
+    "85942": {
+      "poem_id": "85942",
+      "moods": [
+        "contemplation",
+        "serenity"
+      ],
+      "topics": [
+        "nature",
+        "beauty"
+      ],
+      "motifs": [
+        "fire-light",
+        "night",
+        "dawn",
+        "sea-water"
+      ],
+      "mood_primary": "contemplation",
+      "emotional_intensity": 45,
+      "accessibility_level": 4,
+      "confidences": "{\"contemplation\": 90, \"serenity\": 75, \"beauty\": 85, \"nature\": 90, \"fire-light\": 85, \"night\": 70, \"dawn\": 65, \"sea-water\": 60}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:13.326907+00:00"
+    },
+    "63352": {
+      "poem_id": "63352",
+      "moods": [
+        "passion",
+        "yearning",
+        "melancholy",
+        "reverence"
+      ],
+      "topics": [
+        "love",
+        "beauty",
+        "faith-spirit"
+      ],
+      "motifs": [
+        "night",
+        "moon-stars",
+        "tears",
+        "fire-light",
+        "dawn"
+      ],
+      "mood_primary": "passion",
+      "emotional_intensity": 90,
+      "accessibility_level": 4,
+      "confidences": "{\"passion\": 95, \"yearning\": 90, \"melancholy\": 80, \"reverence\": 75, \"love\": 95, \"beauty\": 85, \"faith-spirit\": 70, \"night\": 70, \"moon-stars\": 65, \"tears\": 80, \"fire-light\": 60, \"dawn\": 55}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:15.812284+00:00"
+    },
+    "16199": {
+      "poem_id": "16199",
+      "moods": [
+        "melancholy",
+        "yearning",
+        "passion",
+        "grief"
+      ],
+      "topics": [
+        "love",
+        "beauty",
+        "loss-death"
+      ],
+      "motifs": [
+        "tears",
+        "night",
+        "fire-light"
+      ],
+      "mood_primary": "melancholy",
+      "emotional_intensity": 85,
+      "accessibility_level": 3,
+      "confidences": "{\"melancholy\": 90, \"yearning\": 85, \"passion\": 80, \"grief\": 75, \"love\": 95, \"beauty\": 80, \"loss-death\": 70, \"tears\": 90, \"night\": 70, \"fire-light\": 60}",
+      "taxonomy_version": "2",
+      "model_used": "",
+      "categorized_at": "2026-07-23T23:58:15.812379+00:00"
+    }
+  },
+  "pids": [
+    "85646",
+    "85684",
+    "36953",
+    "63346",
+    "53601",
+    "85512",
+    "78165",
+    "85942",
+    "63352",
+    "16199"
+  ]
+}

@@ -25,7 +25,7 @@ vi.mock('pg', () => {
 });
 
 // Import after mocking
-const { app, pool } = await import('../../server.js');
+const { app, pool, __test } = await import('../../server.js');
 
 // Save and clear API_SECRET_KEY so auth middleware is bypassed by default in tests
 const savedApiSecretKey = process.env.API_SECRET_KEY;
@@ -830,6 +830,249 @@ describe('Backend API Server', () => {
 
       // Lightweight health check should be very fast (no DB query)
       expect(duration).toBeLessThan(100);
+    });
+  });
+
+  // The categorization layer is gated behind a startup table-detection
+  // (hasCategorization). In the test environment the migration hasn't run, so
+  // these endpoints must degrade gracefully WITHOUT touching the DB.
+  describe('GET /api/categories', () => {
+    it('should return an empty dimensions list when categorization is unavailable', async () => {
+      const response = await request(app)
+        .get('/api/categories')
+        .expect('Content-Type', /json/)
+        .expect(200);
+
+      // Empty payload now carries both arrays (families added in v2); still no DB touch.
+      expect(response.body).toEqual({ dimensions: [], families: [] });
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /api/poems/by-category', () => {
+    it('should return an empty array when categorization is unavailable', async () => {
+      const response = await request(app)
+        .get('/api/poems/by-category?mood=melancholy&topic=exile-longing')
+        .expect('Content-Type', /json/)
+        .expect(200);
+
+      expect(response.body).toEqual([]);
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
+
+    it('should not be shadowed by the /api/poems/:id route', async () => {
+      // ':id' has an isInt validator; if by-category were shadowed we'd get a 400.
+      await request(app).get('/api/poems/by-category').expect(200);
+    });
+  });
+
+  // Enabled path: the migration has run. We drive the module's categorization
+  // state directly (checkCategorizationSupport's real init callback never fires
+  // under the mocked pool). Every test resets the state back to disabled so the
+  // contract tests above remain valid regardless of ordering.
+  describe('Categorization enabled path', () => {
+    afterEach(() => {
+      __test.setCategorizationState(false, []);
+      mockPool.query.mockReset();
+    });
+
+    describe('GET /api/categories (enabled)', () => {
+      it('returns dimensions AND families with bilingual labels + counts', async () => {
+        __test.setCategorizationState(true, ['mood', 'topic', 'motif']);
+
+        // 1st query: dimensions+values (grouped by dimension in the handler)
+        mockPool.query.mockResolvedValueOnce({
+          rows: [
+            {
+              dimension: 'mood',
+              dimension_ar: 'المزاج',
+              dimension_en: 'Mood',
+              cardinality: 'multi',
+              value: 'melancholy',
+              label_ar: 'حزن',
+              label_en: 'Melancholy',
+              poem_count: '12',
+            },
+            {
+              dimension: 'topic',
+              dimension_ar: 'الموضوع',
+              dimension_en: 'Topic',
+              cardinality: 'multi',
+              value: 'love',
+              label_ar: 'الحب',
+              label_en: 'Love',
+              poem_count: '30',
+            },
+          ],
+        });
+        // 2nd query: families with member values + cross-dimension poem_count
+        mockPool.query.mockResolvedValueOnce({
+          rows: [
+            {
+              family: 'grief-loss',
+              family_ar: 'الأسى والفقد',
+              family_en: 'Grief & Loss',
+              family_sort: 1,
+              dim: 'mood',
+              value: 'melancholy',
+              label_ar: 'حزن',
+              label_en: 'Melancholy',
+              poem_count: '12',
+            },
+            {
+              family: 'grief-loss',
+              family_ar: 'الأسى والفقد',
+              family_en: 'Grief & Loss',
+              family_sort: 1,
+              dim: 'motif',
+              value: 'tears',
+              label_ar: 'الدموع',
+              label_en: 'Tears',
+              poem_count: '12',
+            },
+          ],
+        });
+
+        const response = await request(app)
+          .get('/api/categories')
+          .expect('Content-Type', /json/)
+          .expect(200);
+
+        // Dimensions unchanged (bilingual, grouped)
+        expect(response.body.dimensions).toEqual([
+          {
+            key: 'mood',
+            label_ar: 'المزاج',
+            label_en: 'Mood',
+            cardinality: 'multi',
+            values: [{ key: 'melancholy', label_ar: 'حزن', label_en: 'Melancholy', poem_count: 12 }],
+          },
+          {
+            key: 'topic',
+            label_ar: 'الموضوع',
+            label_en: 'Topic',
+            cardinality: 'multi',
+            values: [{ key: 'love', label_ar: 'الحب', label_en: 'Love', poem_count: 30 }],
+          },
+        ]);
+
+        // Families: bilingual, cross-dimension members, DISTINCT poem_count
+        expect(response.body.families).toEqual([
+          {
+            key: 'grief-loss',
+            label_ar: 'الأسى والفقد',
+            label_en: 'Grief & Loss',
+            sort_order: 1,
+            poem_count: 12,
+            values: [
+              { dim: 'mood', key: 'melancholy', label_ar: 'حزن', label_en: 'Melancholy' },
+              { dim: 'motif', key: 'tears', label_ar: 'الدموع', label_en: 'Tears' },
+            ],
+          },
+        ]);
+
+        // Family SQL uses COUNT(DISTINCT poem_id) over any member value
+        const familySql = mockPool.query.mock.calls[1][0];
+        expect(familySql).toContain('COUNT(DISTINCT pc.poem_id)');
+        expect(familySql).toContain('v.family_id = f.id');
+      });
+    });
+
+    describe('GET /api/poems/by-category (enabled)', () => {
+      const matchedRow = {
+        id: 7,
+        title: 'قصيدة',
+        arabic: 'بيت',
+        poet: 'نزار قباني',
+        theme: 'حزن',
+        mood_primary: 'melancholy',
+        emotional_intensity: 80,
+        accessibility_level: 2,
+        categories_json: { moods: ['melancholy'], confidences: { melancholy: 91 } },
+        confidence: 91,
+      };
+
+      it('reads the dimension set from the DB (not hardcoded) and accepts a new dimension', async () => {
+        // Drive the REAL startup detection with a mocked pool: table exists,
+        // then a dimension list that includes a brand-new 'form' dimension.
+        mockPool.query
+          .mockResolvedValueOnce({ rows: [{ exists: 1 }] })
+          .mockResolvedValueOnce({
+            rows: [{ key: 'mood' }, { key: 'topic' }, { key: 'motif' }, { key: 'form' }],
+          });
+        await __test.checkCategorizationSupport();
+
+        expect(__test.getCategorizationState().categorizationDimensions).toEqual([
+          'mood',
+          'topic',
+          'motif',
+          'form',
+        ]);
+
+        // A request using the brand-new dimension must filter with zero code change.
+        mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+        await request(app).get('/api/poems/by-category?form=qasida').expect(200);
+
+        const [sql, params] = mockPool.query.mock.calls[2];
+        expect(sql).toContain('cd.key = $1 AND cv.key = ANY($2)');
+        expect(params[0]).toBe('form');
+        expect(params[1]).toEqual(['qasida']);
+      });
+
+      it('composes dimension + family + poet + era filters and returns confidence', async () => {
+        __test.setCategorizationState(true, ['mood', 'topic', 'motif']);
+        mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+        const response = await request(app)
+          .get(
+            `/api/poems/by-category?mood=melancholy&family=grief-loss&poet=${encodeURIComponent(
+              'نزار قباني'
+            )}&era=2&limit=5`
+          )
+          .expect('Content-Type', /json/)
+          .expect(200);
+
+        const [sql, params] = mockPool.query.mock.calls[0];
+        // Dimension EXISTS ($1 key, $2 value array)
+        expect(sql).toContain('cd.key = $1 AND cv.key = ANY($2)');
+        // Family EXISTS (cross-dimension via family_id)
+        expect(sql).toContain('cf.key = $3');
+        expect(sql).toContain('cv.family_id = cf.id');
+        // Poet by name OR slug (mirrors by-poet)
+        expect(sql).toContain('po.name = $4 OR po.slug = $4');
+        // Era by numeric id
+        expect(sql).toContain('po.era_id = $5');
+        // Confidence summary in the SELECT
+        expect(sql).toContain('MAX(pc.confidence)');
+        expect(sql).toContain('ORDER BY RANDOM()');
+        expect(sql).toContain('LIMIT $6');
+
+        expect(params).toEqual(['mood', ['melancholy'], 'grief-loss', 'نزار قباني', 2, 5]);
+
+        // Confidence + categories surfaced per poem
+        expect(response.body).toHaveLength(1);
+        expect(response.body[0]).toMatchObject({
+          id: 7,
+          moodPrimary: 'melancholy',
+          emotionalIntensity: 80,
+          accessibilityLevel: 2,
+          confidence: 91,
+          categories: { moods: ['melancholy'], confidences: { melancholy: 91 } },
+        });
+      });
+
+      it('resolves a non-numeric era via eras.name', async () => {
+        __test.setCategorizationState(true, ['mood', 'topic', 'motif']);
+        mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+        await request(app)
+          .get(`/api/poems/by-category?era=${encodeURIComponent('عباسي')}`)
+          .expect(200);
+
+        const [sql, params] = mockPool.query.mock.calls[0];
+        expect(sql).toContain('po.era_id = (SELECT id FROM eras WHERE name = $1)');
+        expect(params).toEqual(['عباسي', 10]); // era name, then default limit
+      });
     });
   });
 });

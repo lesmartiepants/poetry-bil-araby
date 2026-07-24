@@ -174,13 +174,13 @@ export default function PoemResultsGrid({
             )}
 
             {/* Metrics */}
-            {(poem.emotionalIntensity != null || poem.accessibilityLevel != null) && (
+            {(poem.emotionalIntensity != null || poem.accessibilityScore != null) && (
               <div className="flex flex-wrap gap-2 text-[0.5625rem] font-brand-en" style={{ color: subTextColor }}>
                 {poem.emotionalIntensity != null && (
                   <span>intensity {poem.emotionalIntensity}</span>
                 )}
-                {poem.accessibilityLevel != null && (
-                  <span>· accessibility {poem.accessibilityLevel}/5</span>
+                {poem.accessibilityScore != null && (
+                  <span>· difficulty {poem.accessibilityScore}/10</span>
                 )}
               </div>
             )}

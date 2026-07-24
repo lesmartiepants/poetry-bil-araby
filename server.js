@@ -835,10 +835,10 @@ app.get('/api/poems/by-category', async (req, res) => {
       params.push(Math.max(0, Math.min(100, minIntensity)));
       clauses.push(`p.emotional_intensity >= $${params.length}`);
     }
-    const maxAccessibility = parseInt(req.query.maxAccessibility, 10);
-    if (Number.isInteger(maxAccessibility)) {
-      params.push(Math.max(1, Math.min(5, maxAccessibility)));
-      clauses.push(`p.accessibility_level <= $${params.length}`);
+    const maxAccessibility = parseFloat(req.query.maxAccessibility);
+    if (Number.isFinite(maxAccessibility)) {
+      params.push(Math.max(0, Math.min(10, maxAccessibility)));
+      clauses.push(`p.accessibility_score <= $${params.length}`);
     }
 
     let limit = parseInt(req.query.limit, 10);
@@ -857,7 +857,8 @@ app.get('/api/poems/by-category', async (req, res) => {
         t.name as theme,
         p.mood_primary,
         p.emotional_intensity,
-        p.accessibility_level,
+        p.accessibility_score,
+        p.accessibility_factors,
         p.categories AS categories_json,
         (SELECT MAX(pc.confidence) FROM poem_categories pc WHERE pc.poem_id = p.id) AS confidence
         ${poetNameEnExpr()}
@@ -877,7 +878,8 @@ app.get('/api/poems/by-category', async (req, res) => {
       const formatted = formatPoem(poem);
       formatted.moodPrimary = poem.mood_primary;
       formatted.emotionalIntensity = poem.emotional_intensity;
-      formatted.accessibilityLevel = poem.accessibility_level;
+      formatted.accessibilityScore = poem.accessibility_score;
+      formatted.accessibilityFactors = poem.accessibility_factors;
       // Confidence summary: MAX per-label confidence across this poem's
       // category assignments (0-100), plus the raw categories JSONB (which
       // holds the per-value `confidences` object) when present.

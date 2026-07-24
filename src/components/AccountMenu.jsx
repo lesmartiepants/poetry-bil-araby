@@ -1,8 +1,9 @@
 import { Popover } from 'radix-ui';
-import { LogOut, Mic, Paintbrush, UserRound } from 'lucide-react';
+import { LogOut, Mic, Paintbrush, UserRound, Compass } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FEATURES } from '../constants/features.js';
 import { useUIStore } from '../stores/uiStore';
+import { useModalStore } from '../stores/modalStore';
 import { voiceGender } from '../constants/voices';
 
 /**
@@ -15,6 +16,7 @@ import { voiceGender } from '../constants/voices';
  */
 export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCycleVoice, ink }) {
   const darkMode = useUIStore((s) => s.darkMode);
+  const openCategoryExplorer = useModalStore((s) => s.openCategoryExplorer);
   const theme = darkMode ? THEME.dark : THEME.light;
   const initial = (user?.email ?? user?.user_metadata?.full_name ?? 'U').charAt(0).toUpperCase();
 
@@ -51,6 +53,19 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
             className={`z-[60] rounded-xl p-2 flex flex-col gap-1 min-w-[12rem] backdrop-blur-xl border ${theme.border} ${darkMode ? 'bg-black/85' : 'bg-white/92'}`}
             style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
           >
+            {/* Explore poems — filter/browse by mood, theme, motif, intensity, accessibility */}
+            <button
+              onClick={openCategoryExplorer}
+              aria-label="Explore poems by mood, theme, and reading difficulty"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+              style={{ color: ink }}
+            >
+              <Compass size={16} style={{ color: ink }} />
+              <span>Explore Poems</span>
+            </button>
+
+            <div className="my-1 h-px" style={{ background: 'rgba(197,160,89,0.18)' }} />
+
             {/* Reading voice — tap to cycle */}
             <button
               onClick={onCycleVoice}

@@ -36,7 +36,7 @@ export default function CategoryExplorer() {
   const [activeFamily, setActiveFamily] = useState(null);
   const [selectedValues, setSelectedValues] = useState({}); // { dimKey: [valueKey,...] }
   const [minIntensity, setMinIntensity] = useState(0);
-  const [maxAccessibility, setMaxAccessibility] = useState(5);
+  const [maxAccessibility, setMaxAccessibility] = useState(10);
   const [poet, setPoet] = useState('');
   const [era, setEra] = useState('');
   const limit = 12; // results page size (API supports 1-50)
@@ -76,7 +76,7 @@ export default function CategoryExplorer() {
       if (vals && vals.length > 0) f[dim] = vals.join(',');
     });
     if (minIntensity > 0) f.minIntensity = minIntensity;
-    if (maxAccessibility < 5) f.maxAccessibility = maxAccessibility;
+    if (maxAccessibility < 10) f.maxAccessibility = maxAccessibility;
     if (poet.trim()) f.poet = poet.trim();
     if (era.trim()) f.era = era.trim();
     return f;
@@ -279,12 +279,12 @@ export default function CategoryExplorer() {
                   subTextColor={subTextColor}
                 />
                 <SliderRow
-                  label="Max accessibility"
-                  labelAr="أقصى سهولة"
+                  label="Max difficulty"
+                  labelAr="أقصى صعوبة"
                   value={maxAccessibility}
-                  min={1}
-                  max={5}
-                  step={1}
+                  min={0}
+                  max={10}
+                  step={0.5}
                   onChange={setMaxAccessibility}
                   subTextColor={subTextColor}
                 />

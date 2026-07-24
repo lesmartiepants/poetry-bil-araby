@@ -7,6 +7,8 @@ import {
   SHARE_CARD_DESIGNS,
   CARD_WIDTH,
   CARD_HEIGHT,
+  MIN_BILINGUAL_GAP,
+  createBilingualVerseLayout,
   prepareVerses,
   prepareTranslation,
   renderShareCard,
@@ -345,6 +347,36 @@ describe('renderShareCard', () => {
     const calls = ctx.fillText.mock.calls.map((c) => c[0]);
     expect(calls).toContain('يا دِمَشقُ يا حَبيبَتي');
     expect(calls.some((t) => typeof t === 'string' && t.includes('O Damascus'))).toBe(true);
+  });
+
+  it('keeps fully vocalized six-line Arabic verses clear of English text', () => {
+    ctx.measureText.mockImplementation(() => ({
+      width: 100,
+      actualBoundingBoxAscent: 32,
+      actualBoundingBoxDescent: 9,
+    }));
+    const vocalizedPoem = {
+      ...mockPoem,
+      arabic:
+        'إِنَّ الحَيَاةَ دَقِيقَةٌ\nفَاجْعَلْهَا نُورًا وَسَكِينَةً\nوَاخْتَرْ لِقَلْبِكَ مَوْعِدًا\nيُحْيِي الرُّوحَ وَيُطْمَئِنُهَا\nفَكُلُّ دَرْبٍ فِي المَدَى\nيَبْدَأُ بِخُطْوَةٍ أَمِينَةٍ',
+    };
+    const verses = prepareVerses(vocalizedPoem.arabic, 6);
+    const translation = prepareTranslation(vocalizedPoem.english, 6);
+    const layout = createBilingualVerseLayout(ctx, verses, translation, {
+      maxWidth: 800,
+      maxHeight: 500,
+      arabicSize: 42,
+      englishSize: 27,
+      preferredRowGap: 96,
+    });
+
+    expect(layout.translationOffset - 9 - 32).toBeGreaterThanOrEqual(MIN_BILINGUAL_GAP);
+    expect(layout.rowGap - (layout.translationOffset + 9) - 32).toBeGreaterThanOrEqual(
+      MIN_BILINGUAL_GAP
+    );
+    for (const design of SHARE_CARD_DESIGNS) {
+      expect(() => renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, vocalizedPoem, design.id, { maxLines: 6 })).not.toThrow();
+    }
   });
 });
 

@@ -15,7 +15,6 @@ import {
   Heart,
   LibraryBig,
   ThumbsDown,
-  LayoutGrid,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -2135,31 +2134,6 @@ export default function DiwanApp() {
               <Paintbrush size={9} />
             </span>
           </a>
-        </div>
-      )}
-
-      {/* Category Explorer launcher — bottom-left, stacked above the design-review icon */}
-      {FEATURES.categoryExplorer && (
-        <div
-          className="fixed z-[200] flex flex-col items-center gap-1"
-          style={{ left: 8, bottom: FEATURES.designReview ? 56 : 8 }}
-        >
-          <button
-            onClick={() => setCategoryExplorerOpen(true)}
-            className="w-[44px] h-[44px] flex items-center justify-center"
-            title="Category Explorer"
-            aria-label="Open category explorer"
-          >
-            <span
-              className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
-                darkMode
-                  ? 'bg-stone-900/60 border border-gold/20 text-stone-500 hover:text-gold hover:border-gold/40'
-                  : 'bg-white/50 border border-gold/20 text-stone-400 hover:text-gold hover:border-gold/40'
-              } backdrop-blur-md`}
-            >
-              <LayoutGrid size={9} />
-            </span>
-          </button>
         </div>
       )}
 

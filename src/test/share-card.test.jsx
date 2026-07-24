@@ -350,10 +350,12 @@ describe('renderShareCard', () => {
   });
 
   it('keeps fully vocalized six-line Arabic verses clear of English text', () => {
+    const arabicAscent = 32;
+    const arabicDescent = 9;
     ctx.measureText.mockImplementation(() => ({
       width: 100,
-      actualBoundingBoxAscent: 32,
-      actualBoundingBoxDescent: 9,
+      actualBoundingBoxAscent: arabicAscent,
+      actualBoundingBoxDescent: arabicDescent,
     }));
     const vocalizedPoem = {
       ...mockPoem,
@@ -370,8 +372,10 @@ describe('renderShareCard', () => {
       preferredRowGap: 96,
     });
 
-    expect(layout.translationOffset - 9 - 32).toBeGreaterThanOrEqual(MIN_BILINGUAL_GAP);
-    expect(layout.rowGap - (layout.translationOffset + 9) - 32).toBeGreaterThanOrEqual(
+    expect(layout.translationOffset - arabicDescent - arabicAscent).toBeGreaterThanOrEqual(
+      MIN_BILINGUAL_GAP
+    );
+    expect(layout.rowGap - (layout.translationOffset + arabicDescent) - arabicAscent).toBeGreaterThanOrEqual(
       MIN_BILINGUAL_GAP
     );
     for (const design of SHARE_CARD_DESIGNS) {

@@ -21,6 +21,7 @@
 export const CARD_WIDTH = 1080;
 export const CARD_HEIGHT = 1350;
 export const MIN_BILINGUAL_GAP = 12;
+const BILINGUAL_SCALE_STEP = 0.05;
 
 // ── Design registry ────────────────────────────────────────────────────
 export const SHARE_CARD_DESIGNS = [
@@ -258,6 +259,10 @@ function uniformFit(ctx, texts, family, size, maxWidth, style = '') {
   return s;
 }
 
+/**
+ * Read rendered glyph bounds, retaining sensible metrics in canvas mocks and
+ * browsers that do not expose the `actualBoundingBox*` properties.
+ */
 function textBounds(ctx, text, fallbackSize) {
   const metrics = ctx.measureText(text);
   return {
@@ -291,6 +296,8 @@ export function createBilingualVerseLayout(ctx, verses, translation, opts) {
     maxWidth,
     'italic'
   );
+  const firstArabic = verses[0] || '';
+  const firstTranslation = translation.find(Boolean) || '';
   let scale = 1;
   let layout;
 
@@ -298,9 +305,9 @@ export function createBilingualVerseLayout(ctx, verses, translation, opts) {
     const vSize = Math.max(minSize, Math.floor(maxArabic * scale));
     const tSize = Math.max(minSize, Math.floor(maxEnglish * scale));
     ctx.font = `${vSize}px "Amiri", serif`;
-    const arabicBounds = textBounds(ctx, verses[0] || '', vSize);
+    const arabicBounds = textBounds(ctx, firstArabic, vSize);
     ctx.font = `italic ${tSize}px "Playfair Display", serif`;
-    const englishBounds = textBounds(ctx, translation.find(Boolean) || '', tSize);
+    const englishBounds = textBounds(ctx, firstTranslation, tSize);
     const translationOffset = arabicBounds.descent + gap + englishBounds.ascent;
     const minimumRowGap =
       translationOffset +
@@ -314,7 +321,7 @@ export function createBilingualVerseLayout(ctx, verses, translation, opts) {
       Math.max(verses.length - 1, 0) * rowGap +
       (lastHasTranslation ? translationOffset + englishBounds.descent : arabicBounds.descent);
     layout = { vSize, tSize, translationOffset, rowGap, height };
-    scale -= 0.05;
+    scale -= BILINGUAL_SCALE_STEP;
   } while (
     layout.height > maxHeight &&
     layout.vSize > minSize &&

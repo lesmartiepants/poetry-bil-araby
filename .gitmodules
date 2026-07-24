@@ -4,4 +4,4 @@
 	branch = fix/tashkeel-bugs
 [submodule "docs/design/TiledPatternMaker"]
 	path = docs/design/TiledPatternMaker
-	url = git@github.com:ChortleMortal/TiledPatternMaker.git
+	url = https://github.com/ChortleMortal/TiledPatternMaker.git

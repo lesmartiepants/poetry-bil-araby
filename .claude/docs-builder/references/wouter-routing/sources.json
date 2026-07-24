@@ -1,0 +1,10 @@
+[
+  {
+    "file": "raw/api.md",
+    "url": "https://github.com/molefrog/wouter (README, main branch)",
+    "type": "official",
+    "trust": "high",
+    "fetched": "2026-05-30",
+    "notes": "Harvested via the project README. API surface for hooks, components, and route pattern matching."
+  }
+]

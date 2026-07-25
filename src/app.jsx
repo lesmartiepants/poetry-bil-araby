@@ -1045,6 +1045,24 @@ export default function DiwanApp() {
     setShowAuthModal(true);
   };
 
+  // Open a specific poem in the reader with the normal "just scrolled to it"
+  // feel: fetch first (explorer stays put), then load it into the feed and
+  // SPA-navigate in the same tick. React commits the explorer unmount and the
+  // new poem together, so the reveal (keyed on poemId) animates in view rather
+  // than behind the overlay — and there's no full-page reload.
+  const openPoemInReader = (id) => {
+    if (id == null) return;
+    fetchPoemById(id)
+      .then((poem) => {
+        setPoems([poem]);
+        setCurrentIndex(0);
+        setAutoExplainPending(true);
+        updateOGMetaTags(poem);
+        navigate('/poem/' + id);
+      })
+      .catch(() => navigate('/poem/' + id));
+  };
+
   const handleSignInWithGoogle = async () => {
     // Stash current poem so it survives the OAuth page redirect
     if (current) {
@@ -2089,6 +2107,7 @@ export default function DiwanApp() {
           unsavePoem={unsavePoem}
           isPoemSaved={isPoemSaved}
           onRequireAuth={handleSignIn}
+          onOpenPoem={openPoemInReader}
         />
       )}
 

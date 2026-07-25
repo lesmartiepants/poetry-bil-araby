@@ -44,6 +44,7 @@ export default function CategoryExplorer({
   unsavePoem,
   isPoemSaved = () => false,
   onRequireAuth,
+  onOpenPoem: onOpenPoemProp,
 }) {
   // Full-screen routed view (/explore). Mounted only on that route, so it is
   // always "open"; closing navigates back to the reader.
@@ -54,11 +55,13 @@ export default function CategoryExplorer({
 
   // Save + open-in-reader wiring (shared with the main app via props so the
   // Library stays in sync). Saving requires auth; otherwise prompt sign-in.
-  // Full navigation (not SPA): the reader's /poem/:id deep-link load runs only on
-  // mount (hasAutoLoaded guard), so a client-side route change wouldn't load the
-  // poem. A hard nav boots the reader fresh on that poem with its reveal animation.
+  // Prefer the app-provided handler (loads the poem into the feed + SPA-navigates
+  // so it animates in like a freshly-scrolled poem). Fall back to a hard nav if
+  // it isn't wired.
   const openPoem = (id) => {
-    if (id != null) window.location.assign('/poem/' + id);
+    if (id == null) return;
+    if (onOpenPoemProp) onOpenPoemProp(id);
+    else window.location.assign('/poem/' + id);
   };
   const toggleSave = (poem) => {
     if (!user) return onRequireAuth?.();

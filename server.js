@@ -579,6 +579,12 @@ app.get(
 app.get('/api/poets', async (req, res) => {
   try {
     const qf = servingFilters();
+    // Default to the top 50 by poem count (leaderboard). Pass ?limit=N (1..2000)
+    // or ?all=1 to get the full serveable poet list for a searchable picker.
+    const all = String(req.query.all || '') === '1' || String(req.query.all || '') === 'true';
+    let limit = parseInt(req.query.limit, 10);
+    if (!Number.isInteger(limit) || limit < 1) limit = all ? 2000 : 50;
+    limit = Math.min(limit, 2000);
     const query = `
       SELECT DISTINCT po.name${hasPoetNameEn ? ', po.name_en' : ''}, COUNT(p.id) as poem_count
       FROM poets po
@@ -587,7 +593,7 @@ app.get('/api/poets', async (req, res) => {
       GROUP BY po.name${hasPoetNameEn ? ', po.name_en' : ''}
       HAVING COUNT(p.id) > 0
       ORDER BY poem_count DESC
-      LIMIT 50
+      LIMIT ${limit}
     `;
 
     const result = await pool.query(query);

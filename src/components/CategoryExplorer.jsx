@@ -114,7 +114,7 @@ export default function CategoryExplorer({
   useEffect(() => {
     if (!isOpen || poets.length) return;
     let cancelled = false;
-    fetchPoets()
+    fetchPoets({ all: true }) // full serveable poet list — the search box does the filtering
       .then((list) => { if (!cancelled) setPoets(list); })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -816,6 +816,11 @@ function SingleSelectPanel({ title, options, selected, onSelect, searchable, tex
   const filtered = searchable && q.trim()
     ? options.filter((o) => `${o.en} ${o.ar}`.toLowerCase().includes(q.trim().toLowerCase()))
     : options;
+  // With a long list (e.g. ~700 poets) render only a slice until the user
+  // searches, so the panel opens instantly. Search covers the full list.
+  const CAP = 60;
+  const capped = searchable && !q.trim() && filtered.length > CAP;
+  const shown = capped ? filtered.slice(0, CAP) : filtered;
   return (
     <div className="rounded-2xl border p-3 flex flex-col gap-2" style={{ borderColor: subtleBorder, background: panelBg }}>
       <span className="font-brand-en font-bold text-[0.6875rem] uppercase tracking-[0.1em]" style={{ color: 'var(--gold)' }}>
@@ -833,7 +838,7 @@ function SingleSelectPanel({ title, options, selected, onSelect, searchable, tex
         />
       )}
       <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
-        {filtered.map((o) => {
+        {shown.map((o) => {
           const on = String(selected) === String(o.value);
           return (
             <button
@@ -868,6 +873,11 @@ function SingleSelectPanel({ title, options, selected, onSelect, searchable, tex
         })}
         {filtered.length === 0 && (
           <span className="text-[0.6875rem] font-brand-en px-2 py-2" style={{ color: subTextColor }}>No matches</span>
+        )}
+        {capped && (
+          <span className="text-[0.625rem] font-brand-en px-2 py-1.5" style={{ color: subTextColor, opacity: 0.7 }}>
+            +{filtered.length - CAP} more — type to search
+          </span>
         )}
       </div>
     </div>

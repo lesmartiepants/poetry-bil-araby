@@ -66,8 +66,8 @@ export const fetchRandomPoem = async ({ poet, excludeIds = [] } = {}) => {
  *
  * @returns {Promise<Array<{name: string, poem_count?: number}>>} Array of poet objects
  */
-export const fetchPoets = async () => {
-  const res = await fetch(`${apiUrl}/api/poets`);
+export const fetchPoets = async ({ all = false } = {}) => {
+  const res = await fetch(`${apiUrl}/api/poets${all ? '?all=1' : ''}`);
   if (!res.ok) throw new Error(`Failed to fetch poets: ${res.status}`);
   const data = await res.json();
   return Array.isArray(data) ? data : [];

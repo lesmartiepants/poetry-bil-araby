@@ -27,6 +27,7 @@ import { fetchPoemById } from '../../services/database.js';
 export default function PoemResultsGrid({
   poems = [],
   dimensions = [],
+  families = [],
   loading = false,
   error = null,
   darkMode,
@@ -70,6 +71,27 @@ export default function PoemResultsGrid({
   const labelFor = (dimKey, valueKey) => {
     const hit = labelMap[dimKey]?.[valueKey];
     return hit || { ar: valueKey, en: valueKey };
+  };
+
+  // "dim:key" -> family (families are disjoint by design, so first match wins).
+  const familyIndex = useMemo(() => {
+    const m = {};
+    for (const fam of families) {
+      for (const v of fam.values || []) m[`${v.dim}:${v.key}`] = fam;
+    }
+    return m;
+  }, [families]);
+
+  // A poem's family — prefer its primary mood, then any tagged value.
+  const familyFor = (poem) => {
+    const cats = poem.categories || {};
+    const ordered = [];
+    if (poem.moodPrimary) ordered.push(`mood:${poem.moodPrimary}`);
+    (cats.moods || []).forEach((k) => ordered.push(`mood:${k}`));
+    (cats.topics || []).forEach((k) => ordered.push(`topic:${k}`));
+    (cats.motifs || []).forEach((k) => ordered.push(`motif:${k}`));
+    for (const k of ordered) if (familyIndex[k]) return familyIndex[k];
+    return null;
   };
 
   // Flatten a poem's category tags into a small display list [{dim, key, ar, en}].
@@ -142,7 +164,10 @@ export default function PoemResultsGrid({
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {poems.map((poem) => {
         const tags = tagsFor(poem);
-        const conf = Number.isFinite(Number(poem.confidence)) ? Number(poem.confidence) : null;
+        const fam = familyFor(poem);
+        const metrics = [];
+        if (poem.accessibilityScore != null) metrics.push(`difficulty ${poem.accessibilityScore}/10`);
+        if (poem.emotionalIntensity != null) metrics.push(`intensity ${poem.emotionalIntensity}`);
         return (
           <div
             key={poem.id}
@@ -203,18 +228,14 @@ export default function PoemResultsGrid({
               </p>
             )}
 
-            {/* Metrics */}
-            {(poem.emotionalIntensity != null || poem.accessibilityScore != null || conf != null) && (
+            {/* Metrics — difficulty, intensity, family */}
+            {(metrics.length > 0 || fam) && (
               <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[0.5625rem] font-brand-en font-semibold" style={{ color: subTextColor }}>
-                {poem.emotionalIntensity != null && (
-                  <span>intensity {poem.emotionalIntensity}</span>
-                )}
-                {poem.accessibilityScore != null && (
-                  <span>· difficulty {poem.accessibilityScore}/10</span>
-                )}
-                {conf != null && (
-                  <span title="Categorization confidence" style={{ color: 'var(--gold)' }}>
-                    · {conf}% conf
+                {metrics.length > 0 && <span>{metrics.join(' · ')}</span>}
+                {fam && (
+                  <span style={{ color: 'var(--gold)' }}>
+                    {metrics.length > 0 ? '· ' : ''}
+                    {fam.label_en}
                   </span>
                 )}
               </div>

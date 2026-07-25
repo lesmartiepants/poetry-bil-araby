@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'wouter';
 import { Popover } from 'radix-ui';
 import { LogOut, Mic, Paintbrush, UserRound, Moon, Sun, SlidersHorizontal, Compass } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
@@ -18,7 +19,7 @@ import { voiceDisplayName, voiceGender } from '../constants/voices';
 export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCycleVoice, ink }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const openDisplaySettings = useModalStore((s) => s.openDisplaySettings);
-  const openCategoryExplorer = useModalStore((s) => s.openCategoryExplorer);
+  const [, navigate] = useLocation();
   // Controlled so tapping "Display Settings" closes this menu as it opens the panel.
   const [open, setOpen] = useState(false);
   const theme = darkMode ? THEME.dark : THEME.light;
@@ -64,7 +65,10 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
           >
             {/* Explore poems — filter/browse by mood, theme, motif, intensity, accessibility */}
             <button
-              onClick={openCategoryExplorer}
+              onClick={() => {
+                setOpen(false);
+                navigate('/explore');
+              }}
               aria-label="Explore poems by mood, theme, and reading difficulty"
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
               style={{ color: ink }}

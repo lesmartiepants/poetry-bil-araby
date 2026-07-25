@@ -1,9 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { X, Loader2, ChevronDown, Check } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useLocation } from 'wouter';
 
 import { useUIStore } from '../stores/uiStore';
-import { useModalStore } from '../stores/modalStore';
 import { fetchCategories, fetchPoemsByCategory, fetchPoets } from '../services/database.js';
 import PoemResultsGrid from './category/PoemResultsGrid.jsx';
 
@@ -39,8 +38,11 @@ const ordinal = (n) => {
  * UI shows a graceful "not available yet" state instead of crashing.
  */
 export default function CategoryExplorer() {
-  const isOpen = useModalStore((s) => s.categoryExplorer);
-  const onClose = () => useModalStore.getState().setCategoryExplorer(false);
+  // Full-screen routed view (/explore). Mounted only on that route, so it is
+  // always "open"; closing navigates back to the reader.
+  const isOpen = true;
+  const [, navigate] = useLocation();
+  const onClose = () => navigate('/');
   const darkMode = useUIStore((s) => s.darkMode);
 
   const [activeTab, setActiveTab] = useState('taxonomy'); // 'taxonomy' | 'playground'
@@ -192,46 +194,18 @@ export default function CategoryExplorer() {
   const panelBg = darkMode ? 'rgba(24,22,18,0.98)' : 'rgba(252,250,246,0.99)';
 
   return (
-    <>
-      {/* Backdrop */}
-      <motion.div
-        className="fixed inset-0 z-[201] bg-black/50 backdrop-blur-sm"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        onClick={onClose}
-      />
-
-      {/* Drawer */}
-      <motion.div
-        className="fixed bottom-0 left-0 right-0 z-[202] rounded-t-3xl flex flex-col overflow-hidden"
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.18}
-        onDragEnd={(_e, info) => {
-          if (info.offset.y > 140 || info.velocity.y > 600) onClose();
-        }}
-        initial={{ y: '100%' }}
-        animate={{ y: 0 }}
-        exit={{ y: '100%' }}
-        transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-        style={{
-          height: '90dvh',
-          background: darkMode
-            ? 'linear-gradient(180deg, rgba(18,16,12,0.99) 0%, rgba(12,12,14,1) 100%)'
-            : 'linear-gradient(180deg, rgba(253,252,248,0.99) 0%, rgba(245,243,238,1) 100%)',
-          borderTop: '1px solid rgba(197,160,89,0.22)',
-          boxShadow: '0 -20px 60px rgba(0,0,0,0.5)',
-        }}
-      >
-        {/* Drag handle */}
-        <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 rounded-full bg-gold/25" />
-        </div>
-
+    <div
+      className="fixed inset-0 z-[200] flex flex-col"
+      style={{
+        background: darkMode
+          ? 'linear-gradient(180deg, rgba(18,16,12,1) 0%, rgba(12,12,14,1) 100%)'
+          : 'linear-gradient(180deg, rgba(253,252,248,1) 0%, rgba(245,243,238,1) 100%)',
+      }}
+    >
+      {/* Centered content column so the full-screen view stays readable on wide displays */}
+      <div className="w-full max-w-5xl mx-auto flex flex-col flex-1 min-h-0">
         {/* Header */}
-        <div className="relative px-5 pb-2 pt-1 flex-shrink-0">
+        <div className="relative px-5 pb-2 pt-5 flex-shrink-0">
           <h3
             className="font-brand-en font-bold text-[0.9375rem] leading-none"
             style={{ color: 'var(--gold)' }}
@@ -247,7 +221,7 @@ export default function CategoryExplorer() {
           </p>
           <button
             onClick={onClose}
-            className="absolute top-0 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+            className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full transition-colors"
             style={{
               background: 'rgba(197,160,89,0.08)',
               border: '1px solid rgba(197,160,89,0.18)',
@@ -332,6 +306,7 @@ export default function CategoryExplorer() {
               <PoemResultsGrid
                 poems={results}
                 dimensions={data.dimensions}
+                families={data.families}
                 loading={resultsLoading}
                 error={resultsError}
                 darkMode={darkMode}
@@ -339,8 +314,8 @@ export default function CategoryExplorer() {
             </div>
           )}
         </div>
-      </motion.div>
-    </>
+      </div>
+    </div>
   );
 }
 

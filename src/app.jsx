@@ -133,6 +133,12 @@ export { filterPoemsByCategory } from './utils/filterPoems.js';
 export default function DiwanApp() {
   const [, navigate] = useLocation();
   const [, routeParams] = useRoute('/poem/:id');
+  const [isExploreRoute] = useRoute('/explore');
+  // The reader owns the URL (it writes /poem/:id as you move through the feed).
+  // Suppress those writes while the full-screen explorer route is active so the
+  // feed doesn't clobber /explore out from under the explorer.
+  const navigateReader = (to, opts) =>
+    window.location.pathname.startsWith('/explore') ? undefined : navigate(to, opts);
   const [queryParams, setQueryParams] = useQueryParams();
 
   const mainScrollRef = useRef(null);
@@ -204,8 +210,6 @@ export default function DiwanApp() {
   // ── Modal store (Zustand) ──
   const discoverDrawerOpen = useModalStore((s) => s.discoverDrawer);
   const setDiscoverDrawerOpen = useModalStore((s) => s.setDiscoverDrawer);
-  const categoryExplorerOpen = useModalStore((s) => s.categoryExplorer);
-  const setCategoryExplorerOpen = useModalStore((s) => s.setCategoryExplorer);
   // ── UI store (Zustand) ──
   const darkMode = useUIStore((s) => s.darkMode);
   const setDarkMode = useUIStore((s) => s.setDarkMode);
@@ -590,7 +594,7 @@ export default function DiwanApp() {
         // Restored from OAuth — stay on this poem, just queue explanation
         addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
         setAutoExplainPending(true);
-        if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
+        if (initial.id) navigateReader('/poem/' + initial.id + window.location.search, { replace: true });
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(
@@ -743,22 +747,6 @@ export default function DiwanApp() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
-
-  // Category Explorer deep-link: open on ?explorer=1 (dev/admin), and keep the
-  // URL param in sync with the drawer's open state so it stays shareable.
-  useEffect(() => {
-    if (FEATURES.categoryExplorer && queryParams.explorer === '1' && !categoryExplorerOpen) {
-      setCategoryExplorerOpen(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    const desired = categoryExplorerOpen ? '1' : null;
-    if ((queryParams.explorer ?? null) !== desired) {
-      setQueryParams({ explorer: desired });
-    }
-  }, [categoryExplorerOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleScroll = (e) => {
     const scrollTop = e.target.scrollTop;
@@ -1012,7 +1000,8 @@ export default function DiwanApp() {
     analyzePoemAction({ current: displayedPoem, addLog, track });
   };
 
-  const handleFetch = () => fetchPoemAction({ addLog, track, emitEvent, navigate, markPoemSeen });
+  const handleFetch = () =>
+    fetchPoemAction({ addLog, track, emitEvent, navigate: navigateReader, markPoemSeen });
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -1243,9 +1232,9 @@ export default function DiwanApp() {
     // Update URL for DB poems, preserving any existing query params (e.g. ?poet=)
     const qs = window.location.search;
     if (typeof mappedPoem.id === 'number') {
-      navigate('/poem/' + mappedPoem.id + qs);
+      navigateReader('/poem/' + mappedPoem.id + qs);
     } else {
-      navigate('/' + qs);
+      navigateReader('/' + qs);
     }
   };
 
@@ -1675,7 +1664,7 @@ export default function DiwanApp() {
                               );
                             }
                             if (newPoem?.id) {
-                              navigate('/poem/' + newPoem.id + window.location.search, {
+                              navigateReader('/poem/' + newPoem.id + window.location.search, {
                                 replace: true,
                               });
                               updateOGMetaTags(newPoem);
@@ -1788,7 +1777,7 @@ export default function DiwanApp() {
                               );
                             }
                             if (newPoem?.id) {
-                              navigate('/poem/' + newPoem.id + window.location.search, {
+                              navigateReader('/poem/' + newPoem.id + window.location.search, {
                                 replace: true,
                               });
                               updateOGMetaTags(newPoem);
@@ -2090,9 +2079,8 @@ export default function DiwanApp() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {categoryExplorerOpen && <CategoryExplorer key="category-explorer" />}
-      </AnimatePresence>
+      {/* Category Explorer — full-screen routed view at /explore */}
+      {FEATURES.categoryExplorer && isExploreRoute && <CategoryExplorer key="category-explorer" />}
 
       {/* Auth Modal */}
       <AnimatePresence>

@@ -744,11 +744,17 @@ app.get('/api/categories', async (req, res) => {
 //                         within a dimension and ALL specified dimensions.
 //   family              — a category_families key; matches poems having ANY
 //                         member value of that family (cross-dimension OR).
+//   {dim}Mode           — 'and' | 'or' (default 'or'): combine the selected
+//                         values of that dimension with AND (poem carries all)
+//                         or OR (poem carries any). e.g. moodMode=and.
 //   poet                — exact poet name or slug (mirrors /api/poems/by-poet).
 //   era                 — poets.era_id (integer) OR an era name (poets.era_id
 //                         resolved via eras.name).
+//   century             — poems.century (integer CE, era-derived).
 //   minIntensity        — emotional_intensity >= N (0-100)
-//   maxAccessibility    — accessibility_level <= N (1-5)
+//   maxIntensity        — emotional_intensity <= N (0-100)
+//   minAccessibility    — accessibility_score >= N (0-10)
+//   maxAccessibility    — accessibility_score <= N (0-10)
 //   limit               — 1..50 (default 10). Randomized selection.
 // Response: each poem includes moodPrimary, emotionalIntensity,
 //   accessibilityLevel, a `confidence` summary (MAX per-label confidence across
@@ -775,16 +781,34 @@ app.get('/api/poems/by-category', async (req, res) => {
         .filter(Boolean)
         .slice(0, 20);
       if (values.length === 0) continue;
-      params.push(dim);
-      const dimIdx = params.length;
-      params.push(values);
-      const valIdx = params.length;
-      clauses.push(`EXISTS (
+      // Per-dimension combine mode: `${dim}Mode=and` requires the poem to carry
+      // ALL selected values (one EXISTS each); default `or` matches ANY.
+      const andMode = String(req.query[`${dim}Mode`] || 'or').toLowerCase() === 'and';
+      if (andMode) {
+        for (const v of values) {
+          params.push(dim);
+          const dimIdx = params.length;
+          params.push(v);
+          const valIdx = params.length;
+          clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_dimensions cd ON cv.dimension_id = cd.id
+        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = $${valIdx}
+      )`);
+        }
+      } else {
+        params.push(dim);
+        const dimIdx = params.length;
+        params.push(values);
+        const valIdx = params.length;
+        clauses.push(`EXISTS (
         SELECT 1 FROM poem_categories pc
         JOIN category_values cv ON pc.value_id = cv.id
         JOIN category_dimensions cd ON cv.dimension_id = cd.id
         WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = ANY($${valIdx})
       )`);
+      }
     }
 
     // Family filter: match poems having ANY value that belongs to the family
@@ -830,10 +854,32 @@ app.get('/api/poems/by-category', async (req, res) => {
       }
     }
 
+    // Century passthrough: poems.century is era-derived (integer CE).
+    const centuryRaw = req.query.century;
+    if (centuryRaw != null && String(centuryRaw).trim() !== '') {
+      const century = parseInt(centuryRaw, 10);
+      if (Number.isInteger(century)) {
+        params.push(century);
+        clauses.push(`p.century = $${params.length}`);
+      }
+    }
+
+    // Intensity range (0-100) and difficulty/accessibility range (0-10). Each
+    // bound is independent so the UI can express a min, a max, or both.
     const minIntensity = parseInt(req.query.minIntensity, 10);
     if (Number.isInteger(minIntensity)) {
       params.push(Math.max(0, Math.min(100, minIntensity)));
       clauses.push(`p.emotional_intensity >= $${params.length}`);
+    }
+    const maxIntensity = parseInt(req.query.maxIntensity, 10);
+    if (Number.isInteger(maxIntensity)) {
+      params.push(Math.max(0, Math.min(100, maxIntensity)));
+      clauses.push(`p.emotional_intensity <= $${params.length}`);
+    }
+    const minAccessibility = parseFloat(req.query.minAccessibility);
+    if (Number.isFinite(minAccessibility)) {
+      params.push(Math.max(0, Math.min(10, minAccessibility)));
+      clauses.push(`p.accessibility_score >= $${params.length}`);
     }
     const maxAccessibility = parseFloat(req.query.maxAccessibility);
     if (Number.isFinite(maxAccessibility)) {

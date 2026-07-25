@@ -32,9 +32,10 @@ export default function PoemResultsGrid({
   darkMode,
   onSelectPoem,
 }) {
-  const textColor = darkMode ? 'rgba(214,211,205,0.92)' : 'rgba(40,35,30,0.92)';
-  const subTextColor = darkMode ? 'rgba(214,211,205,0.6)' : 'rgba(40,35,30,0.6)';
-  const subtleBorder = darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
+  // Higher-contrast palette — near-opaque body text, readable secondary text.
+  const textColor = darkMode ? 'rgba(232,229,223,0.98)' : 'rgba(24,20,16,0.98)';
+  const subTextColor = darkMode ? 'rgba(220,216,209,0.82)' : 'rgba(34,29,24,0.82)';
+  const subtleBorder = darkMode ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.1)';
 
   // Tap a card to EXPAND the full poem in place (no navigation, stay in the explorer).
   const [expandedId, setExpandedId] = useState(null);
@@ -153,37 +154,42 @@ export default function PoemResultsGrid({
             className={`rounded-2xl p-3.5 flex flex-col gap-2 border transition-colors cursor-pointer hover:border-gold/40 ${expandedId === poem.id ? 'border-gold/50' : ''}`}
             style={{ borderColor: subtleBorder, background: cardBg }}
           >
-            {/* Title + poet */}
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
+            {/* Title + poet — English (left, bold) beside Arabic (right) */}
+            <div className="flex items-start justify-between gap-3">
+              {/* English column, left-aligned */}
+              <div dir="ltr" className="min-w-0 flex-1 text-left">
                 <div
-                  className="font-bold text-[0.9375rem] truncate"
-                  dir="rtl"
+                  className="font-brand-en font-bold text-[0.8125rem] leading-tight line-clamp-2"
+                  style={{ color: textColor }}
+                >
+                  {poem.title || poem.titleArabic || 'Poem'}
+                </div>
+                {(poem.poet || poem.poetArabic) && (
+                  <div
+                    className="font-brand-en font-semibold text-[0.6875rem] truncate mt-0.5"
+                    style={{ color: subTextColor }}
+                  >
+                    {poem.poet || poem.poetArabic}
+                  </div>
+                )}
+              </div>
+              {/* Arabic column, right-aligned */}
+              <div dir="rtl" className="min-w-0 flex-1 text-right">
+                <div
+                  className="font-bold text-[0.9375rem] leading-tight line-clamp-2"
                   style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)' }}
                 >
                   {poem.titleArabic || poem.title || 'قصيدة'}
                 </div>
-                <div
-                  className="text-[0.75rem] truncate mt-0.5"
-                  dir="rtl"
-                  style={{ fontFamily: "'Tajawal', sans-serif", color: textColor }}
-                >
-                  {poem.poetArabic || poem.poet || ''}
-                </div>
+                {(poem.poetArabic || poem.poet) && (
+                  <div
+                    className="text-[0.75rem] truncate mt-0.5"
+                    style={{ fontFamily: "'Tajawal', sans-serif", color: textColor }}
+                  >
+                    {poem.poetArabic || poem.poet}
+                  </div>
+                )}
               </div>
-              {conf != null && (
-                <span
-                  className="flex-shrink-0 font-brand-en text-[0.5625rem] rounded-full px-1.5 py-0.5"
-                  title="Categorization confidence"
-                  style={{
-                    color: 'var(--gold)',
-                    background: 'rgba(197,160,89,0.1)',
-                    border: '1px solid rgba(197,160,89,0.2)',
-                  }}
-                >
-                  {conf}%
-                </span>
-              )}
             </div>
 
             {/* Snippet */}
@@ -198,13 +204,18 @@ export default function PoemResultsGrid({
             )}
 
             {/* Metrics */}
-            {(poem.emotionalIntensity != null || poem.accessibilityScore != null) && (
-              <div className="flex flex-wrap gap-2 text-[0.5625rem] font-brand-en" style={{ color: subTextColor }}>
+            {(poem.emotionalIntensity != null || poem.accessibilityScore != null || conf != null) && (
+              <div className="flex flex-wrap gap-x-2 gap-y-0.5 text-[0.5625rem] font-brand-en font-semibold" style={{ color: subTextColor }}>
                 {poem.emotionalIntensity != null && (
                   <span>intensity {poem.emotionalIntensity}</span>
                 )}
                 {poem.accessibilityScore != null && (
                   <span>· difficulty {poem.accessibilityScore}/10</span>
+                )}
+                {conf != null && (
+                  <span title="Categorization confidence" style={{ color: 'var(--gold)' }}>
+                    · {conf}% conf
+                  </span>
                 )}
               </div>
             )}
@@ -215,9 +226,10 @@ export default function PoemResultsGrid({
                 {tags.map((t) => (
                   <span
                     key={`${t.dim}-${t.key}`}
-                    className="font-brand-en text-[0.5625rem] rounded-full px-1.5 py-0.5"
+                    className="font-brand-en font-semibold text-[0.5625rem] rounded-full px-1.5 py-0.5"
                     style={{
-                      color: subTextColor,
+                      color: textColor,
+                      background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                       border: `1px solid ${subtleBorder}`,
                     }}
                   >

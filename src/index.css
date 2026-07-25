@@ -118,3 +118,48 @@ button:focus-visible {
     scroll-behavior: auto !important;
   }
 }
+
+/* Dual-thumb range slider (Category Explorer intensity/difficulty).
+   Two <input type=range> overlaid on one track: track ignores pointer
+   events, only the thumbs receive them, so both handles are grabbable. */
+.dual-range {
+  position: relative;
+  height: 20px;
+  display: flex;
+  align-items: center;
+}
+.dual-range-input {
+  position: absolute;
+  left: 0;
+  right: 0;
+  width: 100%;
+  margin: 0;
+  background: transparent;
+  pointer-events: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.dual-range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: var(--gold);
+  border: 2px solid #1a1712;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.dual-range-input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: var(--gold);
+  border: 2px solid #1a1712;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+.dual-range-input::-webkit-slider-runnable-track { background: transparent; }
+.dual-range-input::-moz-range-track { background: transparent; }

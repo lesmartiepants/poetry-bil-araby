@@ -54,7 +54,12 @@ export default function CategoryExplorer({
 
   // Save + open-in-reader wiring (shared with the main app via props so the
   // Library stays in sync). Saving requires auth; otherwise prompt sign-in.
-  const openPoem = (id) => id != null && navigate('/poem/' + id);
+  // Full navigation (not SPA): the reader's /poem/:id deep-link load runs only on
+  // mount (hasAutoLoaded guard), so a client-side route change wouldn't load the
+  // poem. A hard nav boots the reader fresh on that poem with its reveal animation.
+  const openPoem = (id) => {
+    if (id != null) window.location.assign('/poem/' + id);
+  };
   const toggleSave = (poem) => {
     if (!user) return onRequireAuth?.();
     return isPoemSaved(poem) ? unsavePoem(poem.id, poem.arabic) : savePoem(poem);
@@ -150,7 +155,7 @@ export default function CategoryExplorer({
 
   // Live-run the query (debounced) whenever filters change on the playground tab.
   useEffect(() => {
-    if (!isOpen || activeTab !== 'playground' || !hasTaxonomy) return;
+    if (!isOpen || activeTab !== 'playground' || showSaved || !hasTaxonomy) return;
     let cancelled = false;
     setResultsLoading(true);
     setResultsError(null);
@@ -175,7 +180,7 @@ export default function CategoryExplorer({
       cancelled = true;
       clearTimeout(t);
     };
-  }, [isOpen, activeTab, hasTaxonomy, filters, queryString]);
+  }, [isOpen, activeTab, hasTaxonomy, showSaved, filters, queryString]);
 
   // Load more: the source is randomized (no stable offset), so fetch another
   // batch and append only poems we don't already have. If a batch adds nothing
@@ -215,6 +220,85 @@ export default function CategoryExplorer({
       .finally(() => { if (!cancelled) setSavedLoading(false); });
     return () => { cancelled = true; };
   }, [showSaved, user, savedPoems]);
+
+  // Facets limited to what's actually in the saved list: reduce the dimensions /
+  // families / poets / eras / centuries to the values present in savedResults, so
+  // the saved-mode FilterBar only offers filters that can match something.
+  const CAT_GROUP = { mood: 'moods', topic: 'topics', motif: 'motifs' };
+  const savedFacets = useMemo(() => {
+    const valueCount = { mood: {}, topic: {}, motif: {} };
+    const familyCount = {};
+    const poetMap = new Map();
+    const eras = new Set();
+    const centuries = new Set();
+    // Family membership: famKey -> Set("dim:key")
+    const famMembers = {};
+    for (const f of data.families) famMembers[f.key] = new Set((f.values || []).map((v) => `${v.dim}:${v.key}`));
+    for (const p of savedResults) {
+      const c = p.categories || {};
+      const keys = [];
+      (c.moods || []).forEach((k) => { valueCount.mood[k] = (valueCount.mood[k] || 0) + 1; keys.push(`mood:${k}`); });
+      (c.topics || []).forEach((k) => { valueCount.topic[k] = (valueCount.topic[k] || 0) + 1; keys.push(`topic:${k}`); });
+      (c.motifs || []).forEach((k) => { valueCount.motif[k] = (valueCount.motif[k] || 0) + 1; keys.push(`motif:${k}`); });
+      for (const f of data.families) {
+        if (keys.some((k) => famMembers[f.key].has(k))) familyCount[f.key] = (familyCount[f.key] || 0) + 1;
+      }
+      const ar = p.poetArabic || p.poet;
+      if (ar) {
+        const e = poetMap.get(ar) || { name: ar, name_en: p.poet || ar, poem_count: 0 };
+        e.poem_count += 1;
+        poetMap.set(ar, e);
+      }
+      if (p.eraId != null) eras.add(String(p.eraId));
+      if (p.century != null) centuries.add(String(p.century));
+    }
+    // Reduce to present values/families and stamp saved-scoped counts.
+    const dimensions = data.dimensions
+      .map((d) => ({
+        ...d,
+        values: (d.values || [])
+          .filter((v) => (valueCount[d.key] || {})[v.key])
+          .map((v) => ({ ...v, poem_count: valueCount[d.key][v.key] })),
+      }))
+      .filter((d) => d.values.length > 0);
+    const families = data.families
+      .filter((f) => familyCount[f.key])
+      .map((f) => ({ ...f, poem_count: familyCount[f.key] }));
+    return { dimensions, families, poets: [...poetMap.values()], eras, centuries };
+  }, [savedResults, data]);
+
+  // Client-side filter of the saved set by the shared filter state (same
+  // semantics as the server: AND across dimensions, per-dimension AND/OR, ranges).
+  const matchesSavedFilters = (poem) => {
+    const cats = poem.categories || {};
+    if (activeFamily) {
+      const fam = data.families.find((f) => f.key === activeFamily);
+      const members = new Set((fam?.values || []).map((v) => `${v.dim}:${v.key}`));
+      const keys = [
+        ...(cats.moods || []).map((k) => `mood:${k}`),
+        ...(cats.topics || []).map((k) => `topic:${k}`),
+        ...(cats.motifs || []).map((k) => `motif:${k}`),
+      ];
+      if (!keys.some((k) => members.has(k))) return false;
+    }
+    for (const dim of data.dimensions) {
+      const sel = selectedValues[dim.key];
+      if (!sel || sel.length === 0) continue;
+      const have = new Set(cats[CAT_GROUP[dim.key]] || []);
+      const ok = dimMode[dim.key] === 'and' ? sel.every((v) => have.has(v)) : sel.some((v) => have.has(v));
+      if (!ok) return false;
+    }
+    const ei = poem.emotionalIntensity;
+    if (ei != null && (ei < intensity[0] || ei > intensity[1])) return false;
+    const ac = poem.accessibilityScore;
+    if (ac != null && (ac < difficulty[0] || ac > difficulty[1])) return false;
+    if (poet && poem.poetArabic !== poet && poem.poet !== poet) return false;
+    if (era && String(poem.eraId) !== String(era)) return false;
+    if (century && String(poem.century) !== String(century)) return false;
+    return true;
+  };
+
+  const savedFiltered = savedResults.filter((p) => isPoemSaved(p)).filter(matchesSavedFilters);
 
   const toggleValue = (dimKey, valueKey) => {
     setSelectedValues((prev) => {
@@ -279,22 +363,6 @@ export default function CategoryExplorer({
           >
             مستكشف التصنيفات
           </p>
-          {/* Saved toggle — swaps the results grid to the user's saved poems */}
-          <button
-            onClick={() => setShowSaved((v) => !v)}
-            className="absolute top-4 right-16 h-9 px-3 flex items-center gap-1.5 rounded-full transition-colors"
-            style={{
-              background: showSaved ? 'rgba(197,160,89,0.16)' : 'rgba(197,160,89,0.08)',
-              border: `1px solid ${showSaved ? 'rgba(197,160,89,0.45)' : 'rgba(197,160,89,0.18)'}`,
-            }}
-            aria-pressed={showSaved}
-            aria-label="Show saved poems"
-          >
-            <Heart size={14} style={{ color: 'var(--gold)' }} fill={showSaved ? 'var(--gold)' : 'none'} />
-            <span className="font-brand-en font-bold text-[0.6875rem]" style={{ color: 'var(--gold)' }}>
-              {savedPoems.length || 0}
-            </span>
-          </button>
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full transition-colors"
@@ -315,7 +383,7 @@ export default function CategoryExplorer({
             ar="التصنيف"
             en="Taxonomy"
             activeTab={activeTab}
-            onSelect={setActiveTab}
+            onSelect={(t) => { setActiveTab(t); setShowSaved(false); }}
             textColor={textColor}
             subTextColor={subTextColor}
             subtleBorder={subtleBorder}
@@ -325,7 +393,7 @@ export default function CategoryExplorer({
             ar="التجربة"
             en="Filter Playground"
             activeTab={activeTab}
-            onSelect={setActiveTab}
+            onSelect={(t) => { setActiveTab(t); setShowSaved(false); }}
             textColor={textColor}
             subTextColor={subTextColor}
             subtleBorder={subtleBorder}
@@ -353,40 +421,16 @@ export default function CategoryExplorer({
               subtleBorder={subtleBorder}
               cardBg={cardBg}
             />
-          ) : showSaved ? (
-            <div className="flex flex-col gap-3 pt-1">
-              <div className="flex items-center gap-2 px-0.5">
-                <Heart size={15} style={{ color: 'var(--gold)' }} fill="var(--gold)" />
-                <span className="font-brand-en font-bold text-[0.875rem]" style={{ color: textColor }}>
-                  Saved poems
-                </span>
-                <span className="font-brand-en text-[0.6875rem]" style={{ color: subTextColor }}>
-                  {savedPoems.length}
-                </span>
-              </div>
-              {!user ? (
-                <div className="px-4 py-12 text-center text-[0.8125rem] font-brand-en" style={{ color: subTextColor }}>
-                  Sign in to save poems and revisit them here.
-                </div>
-              ) : (
-                <PoemResultsGrid
-                  poems={savedResults.filter((p) => isPoemSaved(p))}
-                  dimensions={data.dimensions}
-                  families={data.families}
-                  darkMode={darkMode}
-                  loading={savedLoading}
-                  onToggleSave={toggleSave}
-                  isPoemSaved={isPoemSaved}
-                  onOpenPoem={openPoem}
-                  emptyLabel="No saved poems yet"
-                />
-              )}
-            </div>
           ) : (
             <div className="flex flex-col gap-3 pt-1">
+              {/* One filter bar for both modes. When "Saved" is on, the facets are
+                  limited to what's actually in the saved list and results are the
+                  saved set filtered by the same controls. */}
               <FilterBar
-                data={data}
-                poets={poets}
+                data={showSaved ? { dimensions: savedFacets.dimensions, families: savedFacets.families } : data}
+                poets={showSaved ? savedFacets.poets : poets}
+                availableEras={showSaved ? savedFacets.eras : null}
+                availableCenturies={showSaved ? savedFacets.centuries : null}
                 activeFamily={activeFamily}
                 setActiveFamily={setActiveFamily}
                 selectedValues={selectedValues}
@@ -405,24 +449,40 @@ export default function CategoryExplorer({
                 setCentury={setCentury}
                 activeFilterCount={activeFilterCount}
                 clearFilters={clearFilters}
+                showSaved={showSaved}
+                setShowSaved={setShowSaved}
+                savedCount={savedPoems.length}
                 tokens={{ textColor, subTextColor, subtleBorder, cardBg, panelBg }}
               />
 
-              <PoemResultsGrid
-                poems={results}
-                dimensions={data.dimensions}
-                families={data.families}
-                activeFamily={activeFamily}
-                loading={resultsLoading}
-                error={resultsError}
-                darkMode={darkMode}
-                onToggleSave={toggleSave}
-                isPoemSaved={isPoemSaved}
-                onOpenPoem={openPoem}
-                onLoadMore={loadMore}
-                loadingMore={loadingMore}
-                canLoadMore={!exhausted && results.length > 0}
-              />
+              {showSaved && !user ? (
+                <div className="px-4 py-12 text-center text-[0.8125rem] font-brand-en" style={{ color: subTextColor }}>
+                  Sign in to save poems and revisit them here.
+                </div>
+              ) : (
+                <PoemResultsGrid
+                  poems={showSaved ? savedFiltered : results}
+                  dimensions={data.dimensions}
+                  families={data.families}
+                  activeFamily={activeFamily}
+                  loading={showSaved ? savedLoading : resultsLoading}
+                  error={showSaved ? null : resultsError}
+                  darkMode={darkMode}
+                  onToggleSave={toggleSave}
+                  isPoemSaved={isPoemSaved}
+                  onOpenPoem={openPoem}
+                  onLoadMore={showSaved ? undefined : loadMore}
+                  loadingMore={loadingMore}
+                  canLoadMore={!showSaved && !exhausted && results.length > 0}
+                  emptyLabel={
+                    showSaved
+                      ? savedPoems.length
+                        ? 'No saved poems match these filters'
+                        : 'No saved poems yet'
+                      : 'No poems match these filters'
+                  }
+                />
+              )}
             </div>
           )}
         </div>
@@ -612,7 +672,12 @@ function FilterBar({
   dimMode, setMode, intensity, setIntensity, difficulty, setDifficulty,
   poet, setPoet, era, setEra, century, setCentury,
   activeFilterCount, clearFilters, tokens,
+  availableEras = null, availableCenturies = null,
+  showSaved = false, setShowSaved, savedCount = 0,
 }) {
+  // In saved mode these limit the era/century dropdowns to what's present.
+  const eraOptions = availableEras ? ERAS.filter((e) => availableEras.has(String(e.id))) : ERAS;
+  const centuryOptions = availableCenturies ? CENTURIES.filter((c) => availableCenturies.has(String(c))) : CENTURIES;
   const { textColor, subTextColor, subtleBorder, cardBg, panelBg } = tokens;
   const [open, setOpen] = useState(null); // which control's panel is expanded
   const toggleOpen = (id) => setOpen((cur) => (cur === id ? null : id));
@@ -634,6 +699,21 @@ function FilterBar({
     <div className="flex flex-col gap-2.5">
       {/* Control bar */}
       <div className="flex flex-wrap gap-1.5">
+        {setShowSaved && (
+          <button
+            onClick={() => setShowSaved(!showSaved)}
+            aria-pressed={showSaved}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-[0.6875rem] font-brand-en font-semibold transition-colors"
+            style={{
+              color: 'var(--gold)',
+              background: showSaved ? 'rgba(197,160,89,0.16)' : 'transparent',
+              border: `1px solid ${showSaved ? 'rgba(197,160,89,0.5)' : tokens.subtleBorder}`,
+            }}
+          >
+            <Heart size={12} fill={showSaved ? 'var(--gold)' : 'none'} style={{ color: 'var(--gold)' }} />
+            <span>Saved{savedCount ? ` ${savedCount}` : ''}</span>
+          </button>
+        )}
         <FilterButton id="family" label="Family" value={famLabel} open={open === 'family'} onClick={() => toggleOpen('family')} tokens={tokens} />
         {data.dimensions.map((dim) => {
           const cnt = (selectedValues[dim.key] || []).length;
@@ -706,7 +786,7 @@ function FilterBar({
       {open === 'era' && (
         <SingleSelectPanel
           title="Era · العصر"
-          options={ERAS.map((e) => ({ value: String(e.id), en: e.en, ar: e.ar }))}
+          options={eraOptions.map((e) => ({ value: String(e.id), en: e.en, ar: e.ar }))}
           selected={era}
           onSelect={(v) => setEra(v === era ? '' : v)}
           {...panelProps}
@@ -715,7 +795,7 @@ function FilterBar({
       {open === 'century' && (
         <SingleSelectPanel
           title="Century · القرن"
-          options={CENTURIES.map((c) => ({ value: String(c), en: `${ordinal(c)} c. CE`, ar: `القرن ${c}` }))}
+          options={centuryOptions.map((c) => ({ value: String(c), en: `${ordinal(c)} c. CE`, ar: `القرن ${c}` }))}
           selected={century}
           onSelect={(v) => setCentury(v === century ? '' : v)}
           {...panelProps}
@@ -806,8 +886,15 @@ function MultiSelectPanel({ title, options, selected, onToggle, mode, onMode, te
                   {v.label_en}
                 </span>
               </span>
-              <span dir="rtl" className="text-[0.75rem] flex-shrink-0" style={{ fontFamily: "'Reem Kufi', sans-serif", color: subTextColor }}>
-                {v.label_ar}
+              <span className="flex items-center gap-1.5 flex-shrink-0">
+                {v.poem_count != null && v.poem_count > 0 && (
+                  <span className="font-brand-en text-[0.5625rem]" style={{ color: subTextColor, opacity: 0.7 }}>
+                    {Number(v.poem_count).toLocaleString()}
+                  </span>
+                )}
+                <span dir="rtl" className="text-[0.75rem]" style={{ fontFamily: "'Reem Kufi', sans-serif", color: subTextColor }}>
+                  {v.label_ar}
+                </span>
               </span>
             </button>
           );

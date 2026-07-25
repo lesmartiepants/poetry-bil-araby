@@ -953,6 +953,8 @@ app.get('/api/poems/by-category', async (req, res) => {
         p.accessibility_score,
         p.accessibility_factors,
         p.categories AS categories_json,
+        po.era_id AS era_id,
+        p.century AS century,
         (SELECT MAX(pc.confidence) FROM poem_categories pc WHERE pc.poem_id = p.id) AS confidence
         ${poetNameEnExpr()}
         ${titleEnExpr()}
@@ -977,6 +979,8 @@ app.get('/api/poems/by-category', async (req, res) => {
       // holds the per-value `confidences` object) when present.
       if (poem.confidence != null) formatted.confidence = poem.confidence;
       if (poem.categories_json) formatted.categories = poem.categories_json;
+      if (poem.era_id != null) formatted.eraId = poem.era_id;
+      if (poem.century != null) formatted.century = poem.century;
       if (poem.cached_translation) formatted.cachedTranslation = poem.cached_translation;
       return formatted;
     });

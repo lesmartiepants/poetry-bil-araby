@@ -826,8 +826,10 @@ function SingleSelectPanel({ title, options, selected, onSelect, searchable, tex
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search…"
-          className="rounded-lg px-2.5 py-1.5 text-[0.75rem] font-brand-en focus:outline-none"
-          style={{ background: 'rgba(197,160,89,0.07)', border: `1px solid ${subtleBorder}`, color: textColor }}
+          className="rounded-lg px-2.5 py-1.5 font-brand-en focus:outline-none"
+          // 16px min font-size prevents iOS Safari from auto-zooming on focus
+          // (and never zooming back out). Keep at/above 16px.
+          style={{ fontSize: '16px', background: 'rgba(197,160,89,0.07)', border: `1px solid ${subtleBorder}`, color: textColor }}
         />
       )}
       <div className="flex flex-col gap-0.5 max-h-60 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>

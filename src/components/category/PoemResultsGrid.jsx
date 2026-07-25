@@ -28,6 +28,7 @@ export default function PoemResultsGrid({
   poems = [],
   dimensions = [],
   families = [],
+  activeFamily = '',
   loading = false,
   error = null,
   darkMode,
@@ -73,25 +74,49 @@ export default function PoemResultsGrid({
     return hit || { ar: valueKey, en: valueKey };
   };
 
-  // "dim:key" -> family (families are disjoint by design, so first match wins).
-  const familyIndex = useMemo(() => {
-    const m = {};
+  // "dim:key" -> family, and key -> family. Poems are multi-tagged and can span
+  // several families, so a single poem has no one "true" family.
+  const { familyIndex, familyByKey } = useMemo(() => {
+    const idx = {};
+    const byKey = {};
     for (const fam of families) {
-      for (const v of fam.values || []) m[`${v.dim}:${v.key}`] = fam;
+      byKey[fam.key] = fam;
+      for (const v of fam.values || []) idx[`${v.dim}:${v.key}`] = fam;
     }
-    return m;
+    return { familyIndex: idx, familyByKey: byKey };
   }, [families]);
 
-  // A poem's family — prefer its primary mood, then any tagged value.
+  // The family to show on a card. When a family filter is active and the poem
+  // matches it, show THAT family (every result matched it — showing a different
+  // family reads as a bug). Otherwise show the poem's dominant family: the one
+  // with the most matching tags, tie-broken by the primary mood's family.
   const familyFor = (poem) => {
     const cats = poem.categories || {};
-    const ordered = [];
-    if (poem.moodPrimary) ordered.push(`mood:${poem.moodPrimary}`);
-    (cats.moods || []).forEach((k) => ordered.push(`mood:${k}`));
-    (cats.topics || []).forEach((k) => ordered.push(`topic:${k}`));
-    (cats.motifs || []).forEach((k) => ordered.push(`motif:${k}`));
-    for (const k of ordered) if (familyIndex[k]) return familyIndex[k];
-    return null;
+    const keys = [];
+    (cats.moods || []).forEach((k) => keys.push(`mood:${k}`));
+    (cats.topics || []).forEach((k) => keys.push(`topic:${k}`));
+    (cats.motifs || []).forEach((k) => keys.push(`motif:${k}`));
+    if (keys.length === 0 && poem.moodPrimary) keys.push(`mood:${poem.moodPrimary}`);
+
+    if (activeFamily && familyByKey[activeFamily] && keys.some((k) => familyIndex[k]?.key === activeFamily)) {
+      return familyByKey[activeFamily];
+    }
+
+    const counts = {};
+    for (const k of keys) {
+      const f = familyIndex[k];
+      if (f) counts[f.key] = (counts[f.key] || 0) + 1;
+    }
+    const primFam = poem.moodPrimary ? familyIndex[`mood:${poem.moodPrimary}`] : null;
+    let best = null;
+    let bestN = 0;
+    for (const [fk, n] of Object.entries(counts)) {
+      if (n > bestN || (n === bestN && primFam && fk === primFam.key)) {
+        best = fk;
+        bestN = n;
+      }
+    }
+    return best ? familyByKey[best] : primFam || null;
   };
 
   // Flatten a poem's category tags into a small display list [{dim, key, ar, en}].

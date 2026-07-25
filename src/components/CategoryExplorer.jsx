@@ -307,6 +307,7 @@ export default function CategoryExplorer() {
                 poems={results}
                 dimensions={data.dimensions}
                 families={data.families}
+                activeFamily={activeFamily}
                 loading={resultsLoading}
                 error={resultsError}
                 darkMode={darkMode}

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { X, Loader2, ChevronDown, Check } from 'lucide-react';
+import { X, Loader2, ChevronDown, Check, Heart } from 'lucide-react';
 import { useLocation } from 'wouter';
 
 import { useUIStore } from '../stores/uiStore';
@@ -37,13 +37,29 @@ const ordinal = (n) => {
  * DB has not been migrated the payload is {dimensions:[],families:[]} and the
  * UI shows a graceful "not available yet" state instead of crashing.
  */
-export default function CategoryExplorer() {
+export default function CategoryExplorer({
+  user = null,
+  savedPoems = [],
+  savePoem,
+  unsavePoem,
+  isPoemSaved = () => false,
+  onRequireAuth,
+}) {
   // Full-screen routed view (/explore). Mounted only on that route, so it is
   // always "open"; closing navigates back to the reader.
   const isOpen = true;
   const [, navigate] = useLocation();
   const onClose = () => navigate('/');
   const darkMode = useUIStore((s) => s.darkMode);
+
+  // Save + open-in-reader wiring (shared with the main app via props so the
+  // Library stays in sync). Saving requires auth; otherwise prompt sign-in.
+  const openPoem = (id) => id != null && navigate('/poem/' + id);
+  const toggleSave = (poem) => {
+    if (!user) return onRequireAuth?.();
+    return isPoemSaved(poem) ? unsavePoem(poem.id, poem.arabic) : savePoem(poem);
+  };
+  const [showSaved, setShowSaved] = useState(false);
 
   const [activeTab, setActiveTab] = useState('taxonomy'); // 'taxonomy' | 'playground'
 
@@ -69,6 +85,8 @@ export default function CategoryExplorer() {
   const [resultsLoading, setResultsLoading] = useState(false);
   const [resultsError, setResultsError] = useState(null);
   const [lastQuery, setLastQuery] = useState('');
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [exhausted, setExhausted] = useState(false);
 
   const hasTaxonomy = data.families.length > 0 || data.dimensions.length > 0;
 
@@ -134,6 +152,7 @@ export default function CategoryExplorer() {
     let cancelled = false;
     setResultsLoading(true);
     setResultsError(null);
+    setExhausted(false);
     const t = setTimeout(() => {
       fetchPoemsByCategory(filters)
         .then((poems) => {
@@ -155,6 +174,41 @@ export default function CategoryExplorer() {
       clearTimeout(t);
     };
   }, [isOpen, activeTab, hasTaxonomy, filters, queryString]);
+
+  // Load more: the source is randomized (no stable offset), so fetch another
+  // batch and append only poems we don't already have. If a batch adds nothing
+  // new, treat the filtered set as exhausted and hide the button.
+  const loadMore = () => {
+    if (loadingMore || exhausted) return;
+    setLoadingMore(true);
+    fetchPoemsByCategory({ ...filters, limit: 24 })
+      .then((poems) => {
+        setResults((prev) => {
+          const seen = new Set(prev.map((p) => p.id));
+          const fresh = poems.filter((p) => !seen.has(p.id));
+          if (fresh.length === 0) setExhausted(true);
+          return fresh.length ? [...prev, ...fresh] : prev;
+        });
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMore(false));
+  };
+
+  // Saved poems reshaped for the results grid (they lack category tags).
+  const savedAsPoems = useMemo(
+    () =>
+      (savedPoems || []).map((sp) => ({
+        id: sp.poem_id ?? sp.id,
+        title: sp.title || '',
+        titleArabic: '',
+        poet: sp.poet || '',
+        poetArabic: '',
+        arabic: sp.poem_text || '',
+        english: sp.english || '',
+        categories: {},
+      })),
+    [savedPoems]
+  );
 
   const toggleValue = (dimKey, valueKey) => {
     setSelectedValues((prev) => {
@@ -219,6 +273,22 @@ export default function CategoryExplorer() {
           >
             مستكشف التصنيفات
           </p>
+          {/* Saved toggle — swaps the results grid to the user's saved poems */}
+          <button
+            onClick={() => setShowSaved((v) => !v)}
+            className="absolute top-4 right-16 h-9 px-3 flex items-center gap-1.5 rounded-full transition-colors"
+            style={{
+              background: showSaved ? 'rgba(197,160,89,0.16)' : 'rgba(197,160,89,0.08)',
+              border: `1px solid ${showSaved ? 'rgba(197,160,89,0.45)' : 'rgba(197,160,89,0.18)'}`,
+            }}
+            aria-pressed={showSaved}
+            aria-label="Show saved poems"
+          >
+            <Heart size={14} style={{ color: 'var(--gold)' }} fill={showSaved ? 'var(--gold)' : 'none'} />
+            <span className="font-brand-en font-bold text-[0.6875rem]" style={{ color: 'var(--gold)' }}>
+              {savedPoems.length || 0}
+            </span>
+          </button>
           <button
             onClick={onClose}
             className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full transition-colors"
@@ -277,6 +347,34 @@ export default function CategoryExplorer() {
               subtleBorder={subtleBorder}
               cardBg={cardBg}
             />
+          ) : showSaved ? (
+            <div className="flex flex-col gap-3 pt-1">
+              <div className="flex items-center gap-2 px-0.5">
+                <Heart size={15} style={{ color: 'var(--gold)' }} fill="var(--gold)" />
+                <span className="font-brand-en font-bold text-[0.875rem]" style={{ color: textColor }}>
+                  Saved poems
+                </span>
+                <span className="font-brand-en text-[0.6875rem]" style={{ color: subTextColor }}>
+                  {savedAsPoems.length}
+                </span>
+              </div>
+              {!user ? (
+                <div className="px-4 py-12 text-center text-[0.8125rem] font-brand-en" style={{ color: subTextColor }}>
+                  Sign in to save poems and revisit them here.
+                </div>
+              ) : (
+                <PoemResultsGrid
+                  poems={savedAsPoems}
+                  dimensions={data.dimensions}
+                  families={data.families}
+                  darkMode={darkMode}
+                  onToggleSave={toggleSave}
+                  isPoemSaved={isPoemSaved}
+                  onOpenPoem={openPoem}
+                  emptyLabel="No saved poems yet"
+                />
+              )}
+            </div>
           ) : (
             <div className="flex flex-col gap-3 pt-1">
               <FilterBar
@@ -311,6 +409,12 @@ export default function CategoryExplorer() {
                 loading={resultsLoading}
                 error={resultsError}
                 darkMode={darkMode}
+                onToggleSave={toggleSave}
+                isPoemSaved={isPoemSaved}
+                onOpenPoem={openPoem}
+                onLoadMore={loadMore}
+                loadingMore={loadingMore}
+                canLoadMore={!exhausted && results.length > 0}
               />
             </div>
           )}

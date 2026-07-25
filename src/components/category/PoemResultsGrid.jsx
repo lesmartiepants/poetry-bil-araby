@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Heart, Maximize2 } from 'lucide-react';
 import { fetchPoemById } from '../../services/database.js';
 
 /**
@@ -33,6 +33,13 @@ export default function PoemResultsGrid({
   error = null,
   darkMode,
   onSelectPoem,
+  onToggleSave,
+  isPoemSaved = () => false,
+  onOpenPoem,
+  onLoadMore,
+  loadingMore = false,
+  canLoadMore = false,
+  emptyLabel = 'No poems match these filters',
 }) {
   // Higher-contrast palette — near-opaque body text, readable secondary text.
   const textColor = darkMode ? 'rgba(232,229,223,0.98)' : 'rgba(24,20,16,0.98)';
@@ -179,17 +186,19 @@ export default function PoemResultsGrid({
           className="block text-[0.6875rem] font-brand-en"
           style={{ opacity: 0.4, color: subTextColor }}
         >
-          No poems match these filters
+          {emptyLabel}
         </span>
       </div>
     );
   }
 
   return (
+    <>
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {poems.map((poem) => {
         const tags = tagsFor(poem);
         const fam = familyFor(poem);
+        const saved = isPoemSaved(poem);
         const metrics = [];
         if (poem.accessibilityScore != null) metrics.push(`difficulty ${poem.accessibilityScore}/10`);
         if (poem.emotionalIntensity != null) metrics.push(`intensity ${poem.emotionalIntensity}`);
@@ -331,9 +340,71 @@ export default function PoemResultsGrid({
                 )}
               </div>
             )}
+
+            {/* Card actions — save + open in reader (bottom-right) */}
+            {(onToggleSave || onOpenPoem) && (
+              <div className="flex justify-end gap-1.5 mt-0.5">
+                {onToggleSave && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleSave(poem);
+                    }}
+                    aria-label={saved ? 'Remove from saved' : 'Save poem'}
+                    className="w-7 h-7 flex items-center justify-center rounded-full transition-colors hover:border-gold/40"
+                    style={{
+                      background: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                      border: `1px solid ${subtleBorder}`,
+                    }}
+                  >
+                    <Heart
+                      size={13}
+                      style={{ color: saved ? 'var(--gold)' : subTextColor }}
+                      fill={saved ? 'var(--gold)' : 'none'}
+                    />
+                  </button>
+                )}
+                {onOpenPoem && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenPoem(poem.id);
+                    }}
+                    aria-label="Open this poem in the reader"
+                    className="w-7 h-7 flex items-center justify-center rounded-full transition-colors hover:border-gold/40"
+                    style={{
+                      background: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                      border: `1px solid ${subtleBorder}`,
+                    }}
+                  >
+                    <Maximize2 size={12} style={{ color: subTextColor }} />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         );
       })}
     </div>
+
+    {/* Load more */}
+    {canLoadMore && onLoadMore && (
+      <div className="flex justify-center pt-4 pb-2">
+        <button
+          onClick={onLoadMore}
+          disabled={loadingMore}
+          className="flex items-center gap-2 px-5 py-2 rounded-full font-brand-en font-semibold text-[0.75rem] transition-colors disabled:opacity-60"
+          style={{
+            color: 'var(--gold)',
+            background: 'rgba(197,160,89,0.1)',
+            border: '1px solid rgba(197,160,89,0.35)',
+          }}
+        >
+          {loadingMore ? <Loader2 size={13} className="animate-spin" /> : null}
+          {loadingMore ? 'Loading…' : 'Load more'}
+        </button>
+      </div>
+    )}
+    </>
   );
 }

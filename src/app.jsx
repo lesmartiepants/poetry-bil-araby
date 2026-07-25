@@ -2080,7 +2080,17 @@ export default function DiwanApp() {
       </AnimatePresence>
 
       {/* Category Explorer — full-screen routed view at /explore */}
-      {FEATURES.categoryExplorer && isExploreRoute && <CategoryExplorer key="category-explorer" />}
+      {FEATURES.categoryExplorer && isExploreRoute && (
+        <CategoryExplorer
+          key="category-explorer"
+          user={user}
+          savedPoems={savedPoems}
+          savePoem={savePoem}
+          unsavePoem={unsavePoem}
+          isPoemSaved={isPoemSaved}
+          onRequireAuth={handleSignIn}
+        />
+      )}
 
       {/* Auth Modal */}
       <AnimatePresence>

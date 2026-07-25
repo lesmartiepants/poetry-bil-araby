@@ -87,6 +87,8 @@ export default function CategoryExplorer({
   const [lastQuery, setLastQuery] = useState('');
   const [loadingMore, setLoadingMore] = useState(false);
   const [exhausted, setExhausted] = useState(false);
+  const [savedResults, setSavedResults] = useState([]);
+  const [savedLoading, setSavedLoading] = useState(false);
 
   const hasTaxonomy = data.families.length > 0 || data.dimensions.length > 0;
 
@@ -194,21 +196,25 @@ export default function CategoryExplorer({
       .finally(() => setLoadingMore(false));
   };
 
-  // Saved poems reshaped for the results grid (they lack category tags).
-  const savedAsPoems = useMemo(
-    () =>
-      (savedPoems || []).map((sp) => ({
-        id: sp.poem_id ?? sp.id,
-        title: sp.title || '',
-        titleArabic: '',
-        poet: sp.poet || '',
-        poetArabic: '',
-        arabic: sp.poem_text || '',
-        english: sp.english || '',
-        categories: {},
-      })),
-    [savedPoems]
-  );
+  // Saved poems rendered as identical categorized cards: fetch the full
+  // by-category records for the saved ids (same pipeline as the playground),
+  // so mood/topic/motif/intensity/difficulty/family all match. Re-runs when the
+  // saved set changes, so unsaving drops the card.
+  useEffect(() => {
+    if (!showSaved || !user) return;
+    const ids = (savedPoems || []).map((sp) => sp.poem_id ?? sp.id).filter(Boolean);
+    if (!ids.length) {
+      setSavedResults([]);
+      return;
+    }
+    let cancelled = false;
+    setSavedLoading(true);
+    fetchPoemsByCategory({ ids })
+      .then((list) => { if (!cancelled) setSavedResults(list); })
+      .catch(() => { if (!cancelled) setSavedResults([]); })
+      .finally(() => { if (!cancelled) setSavedLoading(false); });
+    return () => { cancelled = true; };
+  }, [showSaved, user, savedPoems]);
 
   const toggleValue = (dimKey, valueKey) => {
     setSelectedValues((prev) => {
@@ -355,7 +361,7 @@ export default function CategoryExplorer({
                   Saved poems
                 </span>
                 <span className="font-brand-en text-[0.6875rem]" style={{ color: subTextColor }}>
-                  {savedAsPoems.length}
+                  {savedPoems.length}
                 </span>
               </div>
               {!user ? (
@@ -364,10 +370,11 @@ export default function CategoryExplorer({
                 </div>
               ) : (
                 <PoemResultsGrid
-                  poems={savedAsPoems}
+                  poems={savedResults.filter((p) => isPoemSaved(p))}
                   dimensions={data.dimensions}
                   families={data.families}
                   darkMode={darkMode}
+                  loading={savedLoading}
                   onToggleSave={toggleSave}
                   isPoemSaved={isPoemSaved}
                   onOpenPoem={openPoem}

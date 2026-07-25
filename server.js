@@ -893,14 +893,44 @@ app.get('/api/poems/by-category', async (req, res) => {
       clauses.push(`p.accessibility_score <= $${params.length}`);
     }
 
-    let limit = parseInt(req.query.limit, 10);
-    limit = Number.isInteger(limit) ? Math.max(1, Math.min(50, limit)) : 10;
-    params.push(limit);
-    const limitIdx = params.length;
+    // Explicit id set (e.g. a user's saved poems): return exactly those poems,
+    // fully categorized and in the order given, bypassing the random pick + cap.
+    const idsRaw = req.query.ids;
+    let idList = null;
+    if (idsRaw) {
+      idList = String(idsRaw)
+        .split(',')
+        .map((s) => parseInt(s.trim(), 10))
+        .filter(Number.isInteger)
+        .slice(0, 200);
+      if (!idList.length) idList = null;
+    }
+    let idsIdx = null;
+    if (idList) {
+      params.push(idList);
+      idsIdx = params.length;
+      clauses.push(`p.id = ANY($${idsIdx}::int[])`);
+    }
+
+    // Only the random path takes a LIMIT param; the id-set path returns all
+    // matched ids (bounded to <=200 by the ANY filter). Pushing an unused param
+    // makes pg reject the bind ("supplies N params, requires N-1").
+    let limitIdx = null;
+    if (!idList) {
+      let limit = parseInt(req.query.limit, 10);
+      limit = Number.isInteger(limit) ? Math.max(1, Math.min(50, limit)) : 10;
+      params.push(limit);
+      limitIdx = params.length;
+    }
 
     const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-    // Perf: pick N random matching poem ids on a minimal projection FIRST, then
-    // enrich only those N. Avoids running the content expr, per-row MAX(confidence)
+    // For an explicit id set, keep the caller's order and take all of them;
+    // otherwise pick N random matching ids.
+    const orderLimit = idList
+      ? `ORDER BY array_position($${idsIdx}::int[], p.id::int)`
+      : `ORDER BY RANDOM() LIMIT $${limitIdx}`;
+    // Perf: pick matching poem ids on a minimal projection FIRST, then enrich
+    // only those. Avoids running the content expr, per-row MAX(confidence)
     // subquery, and themes/translation joins across the whole filtered set (which
     // ORDER BY RANDOM() would otherwise materialize) — that was the read timeout.
     const result = await pool.query(
@@ -910,8 +940,7 @@ app.get('/api/poems/by-category', async (req, res) => {
         FROM poems p
         JOIN poets po ON p.poet_id = po.id
         ${where}
-        ORDER BY RANDOM()
-        LIMIT $${limitIdx}
+        ${orderLimit}
       )
       SELECT
         p.id,
@@ -932,6 +961,7 @@ app.get('/api/poems/by-category', async (req, res) => {
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
       WHERE p.id IN (SELECT id FROM matched)
+      ${idList ? `ORDER BY array_position($${idsIdx}::int[], p.id::int)` : ''}
     `,
       params
     );

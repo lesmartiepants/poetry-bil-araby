@@ -1045,22 +1045,20 @@ export default function DiwanApp() {
     setShowAuthModal(true);
   };
 
-  // Open a specific poem in the reader with the normal "just scrolled to it"
-  // feel: fetch first (explorer stays put), then load it into the feed and
-  // SPA-navigate in the same tick. React commits the explorer unmount and the
-  // new poem together, so the reveal (keyed on poemId) animates in view rather
-  // than behind the overlay — and there's no full-page reload.
-  const openPoemInReader = (id) => {
-    if (id == null) return;
-    fetchPoemById(id)
-      .then((poem) => {
-        setPoems([poem]);
-        setCurrentIndex(0);
-        setAutoExplainPending(true);
-        updateOGMetaTags(poem);
-        navigate('/poem/' + id);
-      })
-      .catch(() => navigate('/poem/' + id));
+  // Open a poem from the explorer in the reader. We load the WHOLE list the user
+  // was looking at (the filtered/saved results) as the feed, positioned at the
+  // chosen poem — so the reader has a real queue to swipe through (next/prev)
+  // instead of a dead-end single poem, and the reveal fires like a normal slide.
+  const openPoemInReader = (list, startIndex = 0) => {
+    const arr = Array.isArray(list) ? list.filter((p) => p && p.id != null) : [];
+    if (arr.length === 0) return;
+    const idx = Math.max(0, Math.min(startIndex, arr.length - 1));
+    const poem = arr[idx];
+    setPoems(arr);
+    setCurrentIndex(idx);
+    setAutoExplainPending(true);
+    updateOGMetaTags(poem);
+    navigate('/poem/' + poem.id);
   };
 
   const handleSignInWithGoogle = async () => {

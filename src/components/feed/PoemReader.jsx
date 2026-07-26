@@ -111,6 +111,7 @@ const PoemReader = memo(function PoemReader({
   const insightWrapRef = useRef(null);
   const scrubWrapRef = useRef(null);
   const introForRef = useRef(null);
+  const introTlRef = useRef(null);
   // Which insight sections have already been opened this poem — the reveal flourish plays only the
   // first time; revisits show the full text instantly. Reset on poem change.
   const seenStagesRef = useRef({});
@@ -156,6 +157,14 @@ const PoemReader = memo(function PoemReader({
     if (!isActive || lineCount === 0) return;
     if (introForRef.current === poemId) return; // run once per poem activation
     introForRef.current = poemId;
+    // Starting this poem's intro — kill any prior poem's timeline. (We intentionally
+    // do NOT kill on every dep change: `lineCount` can change mid-intro on desktop,
+    // and killing there aborted the timeline before it revealed the poem, leaving it
+    // blank. The per-poem guard above already prevents duplicate runs.)
+    if (introTlRef.current) {
+      introTlRef.current.kill();
+      introTlRef.current = null;
+    }
     reset();
     setEndStage('idle');
     seenStagesRef.current = {}; // new poem → insight sections animate fresh on first open
@@ -184,6 +193,7 @@ const PoemReader = memo(function PoemReader({
       transformOrigin: 'center top',
     });
     const tl = gsap.timeline();
+    introTlRef.current = tl;
     tl.to(meta, { opacity: 1, duration: 1.0, ease: 'power2.out' })
       .to({}, { duration: 1.1 })
       .to(meta, { y: 0, scale: 1, duration: 0.9, ease: 'power3.inOut' })
@@ -193,14 +203,36 @@ const PoemReader = memo(function PoemReader({
         setIntroDone(true); // header is up → reveal the action buttons
       })
       .add(() => ctrl?.start(), '-=0.05');
-
-    return () => tl.kill();
+    // NOTE: no per-run cleanup that kills tl — that aborted the intro when a dep
+    // (lineCount) changed mid-run. The timeline is killed only when a new poem's
+    // intro starts (above) or on unmount (separate effect below).
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, poemId, lineCount]);
+
+  // Kill the intro timeline only on unmount (not on every dep change).
+  useEffect(() => () => introTlRef.current?.kill(), []);
 
   useEffect(() => {
     if (!isActive) introForRef.current = null;
   }, [isActive]);
+
+  // Landing-reveal safety net (desktop/mouse only). On mouse setups the sparkler
+  // `ignite` tween doesn't paint the first line on landing (it works on touch and
+  // once a slide is scrolled into view). Just after the intro would have revealed,
+  // if the first line is still fully clipped, reveal the poem via the controller
+  // (instant paint — handles clip, track and lit). Skipped on touch, where the
+  // normal reveal works, so the sparkler animation is never preempted. Guarded on
+  // the stuck state, so it never touches a slide that revealed normally.
+  useEffect(() => {
+    if (!isActive || lineCount === 0 || COARSE_POINTER) return;
+    const t = setTimeout(() => {
+      const ar0 = unitRefs.current?.[0]?.querySelector?.('.ar-line');
+      if (!ar0) return;
+      if (!/\b100%\)/.test(getComputedStyle(ar0).clipPath || '')) return; // revealed fine
+      controller.revealAll();
+    }, 3200);
+    return () => clearTimeout(t);
+  }, [isActive, poemId, lineCount, controller]);
 
   // ── TTS line-sync: follow the spoken line while playing, keeping the 4-line frame ──
   // The window scrolls one line at a time to keep the spoken line visible; if the reveal hasn't

@@ -55,12 +55,15 @@ export default function CategoryExplorer({
 
   // Save + open-in-reader wiring (shared with the main app via props so the
   // Library stays in sync). Saving requires auth; otherwise prompt sign-in.
-  // Prefer the app-provided handler (loads the poem into the feed + SPA-navigates
-  // so it animates in like a freshly-scrolled poem). Fall back to a hard nav if
-  // it isn't wired.
+  // Open a poem in the reader, handing the app the full list the user is viewing
+  // (filtered results, or the saved set) so the reader gets a swipeable queue
+  // positioned at the chosen poem. Falls back to a hard nav if not wired.
   const openPoem = (id) => {
     if (id == null) return;
-    if (onOpenPoemProp) onOpenPoemProp(id);
+    const list = showSaved ? savedFiltered : results;
+    const idx = list.findIndex((p) => String(p.id) === String(id));
+    if (onOpenPoemProp && idx >= 0) onOpenPoemProp(list, idx);
+    else if (onOpenPoemProp) onOpenPoemProp([{ id }], 0);
     else window.location.assign('/poem/' + id);
   };
   const toggleSave = (poem) => {

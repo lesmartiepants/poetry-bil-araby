@@ -142,12 +142,23 @@ def import_rows(conn, df: pd.DataFrame, lookup: dict, batch_size: int) -> tuple[
             confidences = _as_conf_dict(row.get("confidences"))
             taxonomy_version = row.get("taxonomy_version")
             taxonomy_version = str(taxonomy_version) if pd.notna(taxonomy_version) else None
+            prompt_version = row.get("prompt_version")
+            prompt_version = str(prompt_version) if pd.notna(prompt_version) else None
+            rationale = row.get("rationale")
+            rationale = str(rationale) if pd.notna(rationale) and str(rationale).strip() else None
+            mood_primary = row.get("mood_primary") or None
 
-            dim_lists = {
+            raw_dim_lists = {
                 "mood": _as_list(row.get("moods")),
                 "topic": _as_list(row.get("topics")),
                 "motif": _as_list(row.get("motifs")),
             }
+            # Distillation (v3): drop labels below the confidence floor before
+            # writing anything, so the table and the JSONB agree. mood_primary is
+            # always kept. Old (v2) parquets have full-confidence tags, so this is
+            # a no-op for them; it only bites weak tags going forward.
+            dim_lists = config.apply_confidence_floor(
+                raw_dim_lists, confidences, mood_primary, config.CONFIDENCE_FLOOR)
 
             # Resolve (value_id, value_key) so we can attach each value's confidence.
             value_entries = []
@@ -159,7 +170,7 @@ def import_rows(conn, df: pd.DataFrame, lookup: dict, batch_size: int) -> tuple[
 
             # JSONB provenance mirrors the shape promised in the migration:
             #   {"moods":[...], "topics":[...], "motifs":[...], "confidences":{...}}
-            # plus a taxonomy_version stamp so we know which taxonomy tagged it.
+            # plus taxonomy/prompt version stamps and the distilled rationale.
             categories_payload = {
                 "moods": dim_lists["mood"],
                 "topics": dim_lists["topic"],
@@ -168,6 +179,10 @@ def import_rows(conn, df: pd.DataFrame, lookup: dict, batch_size: int) -> tuple[
             }
             if taxonomy_version is not None:
                 categories_payload["taxonomy_version"] = taxonomy_version
+            if prompt_version is not None:
+                categories_payload["prompt_version"] = prompt_version
+            if rationale is not None:
+                categories_payload["rationale"] = rationale
             categories_json = json.dumps(categories_payload, ensure_ascii=False)
 
             def _num(v):

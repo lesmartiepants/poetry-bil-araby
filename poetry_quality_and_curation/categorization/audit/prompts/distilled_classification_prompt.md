@@ -1,9 +1,11 @@
 # Proposed DISTILLED classification prompt
 
 This is the prompt used in the live 3-poem illustrative pass (see
-`../samples/before_after.json`). It is the concrete proposal from the audit
-(`ideas/categorization-audit.md`, §5c). It has **not** been wired into
-`config.py` or run on the corpus — that is the pending, approval-gated change.
+`../samples/before_after.json`) and the human-readable spec for the audit's
+proposal (`ideas/categorization-audit.md`, §5c). It is now **implemented** in
+`config.build_classification_prompt()` (built from the taxonomy, so this text and
+the code render the same rules). What remains approval-gated is **running** it on
+the corpus — the code is in place; the re-tag is not.
 
 ## What changed vs. the current prompt
 1. **Tight caps: mood 2 / topic 2 / motif 2** (was 4 / 4 / 5). Hard ceiling drops 13 → 6.

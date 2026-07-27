@@ -288,7 +288,6 @@
   </div>
   <div id="savedList" class="saved-list"><p class="saved-empty">Open this tab to load your saved poems.</p></div>
 </div>
-<div id="undoToast" class="undo-toast" hidden><span id="undoText"></span><button onclick="undoLastRemove()">Undo</button></div>
 
 <style>
   .saved-toolbar { display:flex; align-items:center; gap:1rem; margin:1rem 0; flex-wrap:wrap; }
@@ -326,6 +325,26 @@
   .undo-toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); background:#2a2418; border:1px solid var(--gold,#c5a059); color:var(--ink,#e8e0d0); padding:.6rem 1rem; border-radius:8px; display:flex; gap:1rem; align-items:center; z-index:1000; box-shadow:0 4px 20px rgba(0,0,0,.5); }
   .undo-toast button { background:var(--gold,#c5a059); border:none; color:#1a1408; padding:.3rem .8rem; border-radius:5px; cursor:pointer; font-weight:600; }
   .undo-toast[hidden] { display:none; }
+  .saved-card.removed { opacity:.48; }
+  .saved-heart.out { color:#8a8070; }
+  .saved-removed-badge { display:inline-block; font-size:.62rem; color:#e0a0a0; border:1px solid rgba(224,102,102,.5); border-radius:4px; padding:0 .35rem; margin-inline-start:.4rem; vertical-align:middle; letter-spacing:.05em; text-transform:uppercase; }
+  .cat-block { margin:.2rem 0 .7rem; padding:.5rem .7rem; background:rgba(197,160,89,.05); border:1px solid rgba(197,160,89,.15); border-radius:8px; display:flex; flex-direction:column; gap:.35rem; }
+  .cat-row { display:flex; flex-wrap:wrap; gap:.35rem; align-items:center; }
+  .cat-label { color:#8a8070; font-size:.7rem; text-transform:uppercase; letter-spacing:.06em; min-width:52px; }
+  .cat-chip { display:inline-flex; align-items:center; gap:.3rem; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:.12rem .5rem; font-size:.82rem; }
+  .cat-chip.fam { background:rgba(197,160,89,.14); border-color:rgba(197,160,89,.35); }
+  .cat-en { color:var(--ink,#e8e0d0); }
+  .cat-ar { color:#b0a690; font-family:'Amiri',serif; }
+  .cat-conf { color:#7a7060; font-size:.66rem; }
+  .cat-scales { display:flex; flex-direction:column; gap:.25rem; margin-top:.15rem; }
+  .scale { display:flex; align-items:center; gap:.5rem; font-size:.78rem; flex-wrap:wrap; }
+  .scale-label { color:#8a8070; min-width:70px; }
+  .scale-bar { flex:0 0 120px; height:6px; background:rgba(255,255,255,.08); border-radius:3px; overflow:hidden; }
+  .scale-fill { display:block; height:100%; background:var(--gold,#c5a059); }
+  .scale-val { color:var(--ink,#e8e0d0); }
+  .scale-max { color:#7a7060; }
+  .scale-factors { color:#7a7060; font-size:.7rem; }
+  .cat-none { color:#8a8070; font-style:italic; font-size:.8rem; }
 </style>
 
 <script>
@@ -342,6 +361,7 @@ async function reloadSaved() {
     const j = await (await fetch('/api/lab/saved')).json();
     if (j.error) { host.innerHTML = '<p class="saved-empty">' + escS(j.error) + '</p>'; return; }
     _savedData = j.saved;
+    _savedData.forEach(r => { r._key = r.saved_id; r._removed = false; });
     renderSaved();
   } catch (e) { host.innerHTML = '<p class="saved-empty">Failed to load: ' + escS(e.message) + '</p>'; }
 }
@@ -353,8 +373,10 @@ function matchFilter(r) {
 function filterSaved(v) { _filter = (v || '').trim().toLowerCase(); renderSaved(); }
 
 function updateCount() {
-  document.getElementById('savedCount').textContent = _savedData.length + ' saved';
-  const tc = document.getElementById('savedTabCount'); if (tc) tc.textContent = '(' + _savedData.length + ')';
+  const kept = _savedData.filter(r => !r._removed).length;
+  const removed = _savedData.length - kept;
+  document.getElementById('savedCount').textContent = kept + ' saved' + (removed ? ' · ' + removed + ' removed' : '');
+  const tc = document.getElementById('savedTabCount'); if (tc) tc.textContent = '(' + kept + ')';
 }
 
 function renderSaved() {
@@ -372,21 +394,23 @@ function renderSaved() {
 }
 
 function savedCardHTML(r) {
+  const key = r._key || r.saved_id;
   const title = r.title || r.saved_title || '(untitled)';
   const bayts = baytLines(r.arabic);
   const incipit = bayts.length ? (bayts[0][0] + (bayts[0][1] ? '  ﴿﴾  ' + bayts[0][1] : '')) : '';
   const orphan = !r.poem_id || !r.arabic;
   const date = r.saved_at ? new Date(r.saved_at).toLocaleDateString() : '';
-  return '<div class="saved-card" data-id="' + r.saved_id + '">'
-    + '<div class="saved-head" onclick="toggleSaved(\'' + r.saved_id + '\')">'
-    + '<button class="saved-heart" title="Un-heart (removes from the database)" onclick="event.stopPropagation(); removeSaved(\'' + r.saved_id + '\')">&#9829;</button>'
+  const rm = !!r._removed;
+  return '<div class="saved-card' + (rm ? ' removed' : '') + '" data-id="' + key + '">'
+    + '<div class="saved-head" onclick="toggleSaved(\'' + key + '\')">'
+    + '<button class="saved-heart' + (rm ? ' out' : '') + '" title="' + (rm ? 'Re-add (restore to saved)' : 'Un-heart (removes from the database)') + '" onclick="event.stopPropagation(); toggleHeart(\'' + key + '\')">' + (rm ? '&#9825;' : '&#9829;') + '</button>'
     + '<div class="saved-body">'
-    + '<div class="saved-title" dir="rtl">' + escS(title) + (orphan ? ' <span class="saved-orphan">poem unavailable</span>' : '') + '</div>'
+    + '<div class="saved-title" dir="rtl">' + escS(title) + (orphan ? ' <span class="saved-orphan">poem unavailable</span>' : '') + (rm ? ' <span class="saved-removed-badge">removed</span>' : '') + '</div>'
     + ((r.title_en || r.poet_en) ? '<div class="saved-title-en" dir="ltr">' + escS(r.title_en || '') + (r.poet_en ? ' <span class="saved-author-en">· ' + escS(r.poet_en) + '</span>' : '') + '</div>' : '')
     + (incipit ? '<div class="saved-incipit" dir="rtl">' + escS(incipit) + '</div>' : '')
     + '<div class="saved-meta">saved ' + escS(date) + ' · tap to read + hear</div>'
     + '</div><span class="saved-caret">▾</span></div>'
-    + '<div class="saved-expand" id="exp-' + r.saved_id + '" hidden></div>'
+    + '<div class="saved-expand" id="exp-' + key + '" hidden></div>'
     + '</div>';
 }
 
@@ -405,6 +429,29 @@ function gridHTML(bayts, enLines) {
   ).join('') + '</div>';
 }
 
+// Categorization block for the expand: mood/topic/motif chips, family, difficulty, intensity.
+function catsHTML(r) {
+  if (!r) return '';
+  const cats = r.cats || [];
+  const byDim = { mood: [], topic: [], motif: [] };
+  const fams = [];
+  cats.forEach(c => {
+    if (byDim[c.dim]) byDim[c.dim].push(c);
+    if (c.fam_en && !fams.some(f => f.en === c.fam_en)) fams.push({ en: c.fam_en, ar: c.fam_ar });
+  });
+  const chip = c => '<span class="cat-chip"><span class="cat-en">' + escS(c.en) + '</span> <span class="cat-ar" dir="rtl">' + escS(c.ar) + '</span>' + (c.conf != null ? '<span class="cat-conf">' + c.conf + '</span>' : '') + '</span>';
+  const dimRow = (label, arr) => arr.length ? '<div class="cat-row"><span class="cat-label">' + label + '</span>' + arr.map(chip).join('') + '</div>' : '';
+  const famRow = fams.length ? '<div class="cat-row"><span class="cat-label">Family</span>' + fams.map(f => '<span class="cat-chip fam"><span class="cat-en">' + escS(f.en) + '</span> <span class="cat-ar" dir="rtl">' + escS(f.ar) + '</span></span>').join('') + '</div>' : '';
+  const diff = r.accessibility_score, inten = r.emotional_intensity;
+  const bar = (val, max, label, extra) => (val == null ? '' :
+    '<div class="scale"><span class="scale-label">' + label + '</span><span class="scale-bar"><span class="scale-fill" style="width:' + Math.max(2, Math.min(100, val / max * 100)) + '%"></span></span><span class="scale-val">' + (Math.round(val * 10) / 10) + '<span class="scale-max">/' + max + '</span></span>' + (extra || '') + '</div>');
+  const factors = r.accessibility_factors;
+  const factorTxt = factors ? ' <span class="scale-factors">' + Object.entries(factors).map(([k, v]) => escS(k.replace(/_/g, ' ')) + ' ' + v).join(' · ') + '</span>' : '';
+  const scales = (diff != null || inten != null) ? '<div class="cat-scales">' + bar(diff, 10, 'Difficulty', factorTxt) + bar(inten, 100, 'Intensity', '') + '</div>' : '';
+  if (!cats.length && !scales) return '<div class="cat-block"><span class="cat-none">not categorized</span></div>';
+  return '<div class="cat-block">' + famRow + dimRow('Mood', byDim.mood) + dimRow('Topic', byDim.topic) + dimRow('Motif', byDim.motif) + scales + '</div>';
+}
+
 async function translateArabic(text) {
   const body = {
     contents: [{ parts: [{ text: 'Translate this classical Arabic poem into English. Output exactly one English line per input line (each input line is one bayt); keep the imagery, do not pad.\n\n' + text }] }],
@@ -419,20 +466,21 @@ async function translateArabic(text) {
   return JSON.parse(txt).english || '';
 }
 
-async function toggleSaved(savedId) {
-  const exp = document.getElementById('exp-' + savedId);
+async function toggleSaved(key) {
+  const exp = document.getElementById('exp-' + key);
   if (!exp) return;
   const card = exp.closest('.saved-card');
   if (!exp.hidden) { exp.hidden = true; card.classList.remove('open'); return; }
   exp.hidden = false; card.classList.add('open');
   if (exp.dataset.loaded) return;
   exp.dataset.loaded = '1';
-  const row = _savedData.find(r => r.saved_id === savedId);
+  const row = _savedData.find(r => r._key === key);
+  const cats = catsHTML(row);
   const bayts = baytLines(row && row.arabic);
-  if (!bayts.length) { exp.innerHTML = '<p class="saved-empty">No text to display for this save.</p>'; return; }
-  exp.innerHTML = gridHTML(bayts, null)
-    + '<div class="pf-actions"><button class="saved-hear hear-btn" onclick="hearSaved(\'' + savedId + '\', this)">▶ Hear it</button> <span class="hear-status" id="hearStatus-' + savedId + '"></span></div>'
-    + '<audio id="player-' + savedId + '" controls style="display:none;margin-top:.5rem;width:100%"></audio>';
+  if (!bayts.length) { exp.innerHTML = cats + '<p class="saved-empty">No text to display for this save.</p>'; return; }
+  exp.innerHTML = cats + gridHTML(bayts, null)
+    + '<div class="pf-actions"><button class="saved-hear hear-btn" onclick="hearSaved(\'' + key + '\', this)">▶ Hear it</button> <span class="hear-status" id="hearStatus-' + key + '"></span></div>'
+    + '<audio id="player-' + key + '" controls style="display:none;margin-top:.5rem;width:100%"></audio>';
   try {
     const eng = await translateArabic(bayts.map(b => b.join(' ')).join('\n'));
     const enLines = eng.split('\n').map(x => x.trim()).filter(Boolean);
@@ -450,10 +498,10 @@ function stopSavedTTS() {
   _savedSources.forEach(s => { try { s.stop(); } catch (e) {} });
   _savedSources = [];
 }
-async function hearSaved(savedId, btn) {
-  const row = _savedData.find(r => r.saved_id === savedId);
-  const status = document.getElementById('hearStatus-' + savedId);
-  const player = document.getElementById('player-' + savedId);
+async function hearSaved(key, btn) {
+  const row = _savedData.find(r => r._key === key);
+  const status = document.getElementById('hearStatus-' + key);
+  const player = document.getElementById('player-' + key);
   if (btn.classList.contains('playing')) { stopSavedTTS(); btn.classList.remove('playing'); btn.textContent = '▶ Hear it'; if (status) status.textContent = ''; return; }
   if (typeof stopCurrent === 'function') stopCurrent();
   stopSavedTTS();
@@ -512,38 +560,49 @@ async function hearSaved(savedId, btn) {
   }
 }
 
-async function removeSaved(savedId) {
-  const row = _savedData.find(r => r.saved_id === savedId);
-  try {
-    const j = await (await fetch('/api/lab/saved/' + encodeURIComponent(savedId), { method: 'DELETE' })).json();
-    if (!j.ok) { alert('Remove failed: ' + (j.error || '?')); return; }
-    _savedData = _savedData.filter(x => x.saved_id !== savedId);
-    renderSaved();
-    showUndo(row, j.deleted);
-  } catch (e) { alert('Remove failed: ' + e.message); }
+// Heart toggles delete/restore IN PLACE — a removed poem stays visible (greyed,
+// badged) in its original position, and the list is never reordered.
+async function toggleHeart(key) {
+  const row = _savedData.find(r => r._key === key);
+  if (!row) return;
+  if (!row._removed) {
+    try {
+      const j = await (await fetch('/api/lab/saved/' + encodeURIComponent(row.saved_id), { method: 'DELETE' })).json();
+      if (!j.ok) { alert('Remove failed: ' + (j.error || '?')); return; }
+      row._removed = true; row._deleted = j.deleted;
+    } catch (e) { alert('Remove failed: ' + e.message); return; }
+  } else {
+    try {
+      const payload = row._deleted || { poem_id: row.poem_id, poet: row.poet, title: row.title };
+      const j = await (await fetch('/api/lab/saved/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })).json();
+      if (!j.ok) { alert('Restore failed: ' + (j.error || '?')); return; }
+      if (j.saved_id) row.saved_id = j.saved_id;
+      row._removed = false;
+    } catch (e) { alert('Restore failed: ' + e.message); return; }
+  }
+  paintCard(key);
 }
 
-function showUndo(row, deleted) {
-  _lastRemoved = { row, deleted };
-  document.getElementById('undoText').textContent = 'Removed "' + ((row && (row.title || row.saved_title)) || 'poem') + '"';
-  const t = document.getElementById('undoToast'); t.hidden = false;
-  clearTimeout(_undoTimer);
-  _undoTimer = setTimeout(() => { t.hidden = true; _lastRemoved = null; }, 8000);
-}
-
-async function undoLastRemove() {
-  if (!_lastRemoved) return;
-  const { row, deleted } = _lastRemoved;
-  try {
-    const j = await (await fetch('/api/lab/saved/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(deleted) })).json();
-    if (j.ok) {
-      _savedData.push({ ...row, saved_id: j.saved_id || (row && row.saved_id), saved_at: new Date().toISOString() });
-      _savedData.sort((a, b) => (a.poet || '') < (b.poet || '') ? -1 : 1);
-      renderSaved();
-    }
-  } catch (e) { /* ignore */ }
-  document.getElementById('undoToast').hidden = true;
-  _lastRemoved = null; clearTimeout(_undoTimer);
+function paintCard(key) {
+  const row = _savedData.find(r => r._key === key);
+  const sel = (window.CSS && CSS.escape) ? CSS.escape(key) : key;
+  const card = document.querySelector('.saved-card[data-id="' + sel + '"]');
+  if (!row || !card) return;
+  card.classList.toggle('removed', !!row._removed);
+  const heart = card.querySelector('.saved-heart');
+  if (heart) {
+    heart.innerHTML = row._removed ? '&#9825;' : '&#9829;';
+    heart.classList.toggle('out', !!row._removed);
+    heart.title = row._removed ? 'Re-add (restore to saved)' : 'Un-heart (removes from the database)';
+  }
+  const titleEl = card.querySelector('.saved-title');
+  let badge = card.querySelector('.saved-removed-badge');
+  if (row._removed && !badge && titleEl) {
+    badge = document.createElement('span'); badge.className = 'saved-removed-badge'; badge.textContent = 'removed';
+    titleEl.appendChild(document.createTextNode(' ')); titleEl.appendChild(badge);
+  }
+  if (!row._removed && badge) badge.remove();
+  updateCount();
 }
 </script>
 

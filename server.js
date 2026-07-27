@@ -1695,15 +1695,33 @@ app.get('/api/lab/saved', requireCuration, async (req, res) => {
       : 'p.content';
     const poetEn = hasPoetNameEn ? ', po.name_en AS poet_en' : '';
     const titleEn = hasTitleEn ? ', p.title_en' : '';
+    // Categorization (mood/topic/motif + family + difficulty/intensity), when the layer exists.
+    const catCols = hasCategorization
+      ? `, p.emotional_intensity, p.accessibility_score, p.accessibility_factors, p.mood_primary, cat.cats`
+      : '';
+    const catJoin = hasCategorization
+      ? `LEFT JOIN LATERAL (
+           SELECT json_agg(json_build_object(
+             'dim', d.key, 'en', cv.label_en, 'ar', cv.label_ar,
+             'fam_en', f.label_en, 'fam_ar', f.label_ar, 'conf', pc.confidence
+           ) ORDER BY d.sort_order, pc.confidence DESC NULLS LAST) AS cats
+           FROM poem_categories pc
+           JOIN category_values cv ON cv.id = pc.value_id
+           JOIN category_dimensions d ON d.id = cv.dimension_id
+           LEFT JOIN category_families f ON f.id = cv.family_id
+           WHERE pc.poem_id = s.poem_id
+         ) cat ON TRUE`
+      : '';
     const r = await pool.query(
       `SELECT s.id AS saved_id, s.saved_at, s.poem_id,
               s.poet AS saved_poet, s.title AS saved_title,
               p.title AS title${titleEn},
               ${arabicExpr} AS arabic,
-              po.name AS poet${poetEn}
+              po.name AS poet${poetEn}${catCols}
        FROM saved_poems s
        LEFT JOIN poems p ON p.id = s.poem_id
        LEFT JOIN poets po ON p.poet_id = po.id
+       ${catJoin}
        WHERE s.user_id = $1
        ORDER BY COALESCE(po.name, s.poet, '~'), s.saved_at DESC`,
       [req.curationUid]

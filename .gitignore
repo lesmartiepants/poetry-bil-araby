@@ -104,3 +104,6 @@ storybook-static
 
 # Local git worktrees (never commit as gitlinks)
 .claude/worktrees/
+
+# Enjoyability Lab diagnostics cache (raw LLM scores; regenerated locally)
+data/enjoy_diagnostics.json

@@ -408,7 +408,7 @@ function savedCardHTML(r) {
     + '<div class="saved-title" dir="rtl">' + escS(title) + (orphan ? ' <span class="saved-orphan">poem unavailable</span>' : '') + (rm ? ' <span class="saved-removed-badge">removed</span>' : '') + '</div>'
     + ((r.title_en || r.poet_en) ? '<div class="saved-title-en" dir="ltr">' + escS(r.title_en || '') + (r.poet_en ? ' <span class="saved-author-en">· ' + escS(r.poet_en) + '</span>' : '') + '</div>' : '')
     + (incipit ? '<div class="saved-incipit" dir="rtl">' + escS(incipit) + '</div>' : '')
-    + '<div class="saved-meta">saved ' + escS(date) + ' · tap to read + hear</div>'
+    + '<div class="saved-meta">id ' + (r.poem_id || '—') + ' · saved ' + escS(date) + ' · tap to read + hear</div>'
     + '</div><span class="saved-caret">▾</span></div>'
     + '<div class="saved-expand" id="exp-' + key + '" hidden></div>'
     + '</div>';

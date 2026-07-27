@@ -75,7 +75,7 @@ const DebugPanel = ({ controlBarRef }) => {
   const [bugError, setBugError] = useState('');
   const [lastViewedCount, setLastViewedCount] = useState(0);
   const [timingMode, setTimingMode] = useState(() => {
-    try { return localStorage.getItem('ttsTimingMode') || 'verseLetterWeighted'; } catch { return 'verseLetterWeighted'; }
+    try { return localStorage.getItem('ttsTimingMode') || 'verseSyllableWeighted'; } catch { return 'verseSyllableWeighted'; }
   });
   const [verseDelayMs, setVerseDelayMs] = useState(() => {
     try { return parseFloat(localStorage.getItem('ttsVerseDelayMs') || '125'); } catch { return 125; }

@@ -9,37 +9,37 @@
 // Active voices (quality-checked)
 const ACTIVE_VOICES = [
   // Female
-  // { name: 'Zephyr', descriptor: 'Bright', gender: 'f' }, // TODO: quality check needed
-  { name: 'Kore', descriptor: 'Firm', gender: 'f' },
-  { name: 'Leda', descriptor: 'Youthful', gender: 'f' },
+  { name: 'Zephyr', descriptor: 'Bright', gender: 'f' },
+  // { name: 'Kore', descriptor: 'Firm', gender: 'f' }, // archived: poet-curation exclusion
+  // { name: 'Leda', descriptor: 'Youthful', gender: 'f' }, // archived: 48.5 with the production timing profile; validate a rescue profile before returning it
   { name: 'Aoede', descriptor: 'Breezy', gender: 'f' },
-  { name: 'Callirrhoe', descriptor: 'Easy-going', gender: 'f' },
+  // { name: 'Callirrhoe', descriptor: 'Easy-going', gender: 'f' }, // archived: 39.0 with the production timing profile; 50/50 fallback is a future rescue candidate
   { name: 'Autonoe', descriptor: 'Bright', gender: 'f' },
-  { name: 'Despina', descriptor: 'Smooth', gender: 'f' },
-  // { name: 'Erinome', descriptor: 'Clear', gender: 'f' }, // TODO: quality check needed
+  // { name: 'Despina', descriptor: 'Smooth', gender: 'f' }, // archived: 35.1 with the production timing profile; transcript letters/final mora need repeat validation
+  // { name: 'Erinome', descriptor: 'Clear', gender: 'f' }, // archived: poet-curation exclusion
   { name: 'Laomedeia', descriptor: 'Upbeat', gender: 'f' },
-  // { name: 'Achernar', descriptor: 'Soft', gender: 'f' }, // TODO: quality check needed
-  // { name: 'Pulcherrima', descriptor: 'Forward', gender: 'f' }, // TODO: quality check needed
-  // { name: 'Achird', descriptor: 'Friendly', gender: 'f' }, // TODO: quality check needed
-  { name: 'Schedar', descriptor: 'Even', gender: 'f' },
-  // { name: 'Vindemiatrix', descriptor: 'Gentle', gender: 'f' }, // TODO: quality check needed
+  // { name: 'Achernar', descriptor: 'Soft', gender: 'f' }, // archived: 49.7 with the production timing profile; 50/50 fallback is a future rescue candidate
+  { name: 'Pulcherrima', descriptor: 'Forward', gender: 'f' },
+  // { name: 'Achird', descriptor: 'Friendly', gender: 'f' }, // archived: poet-curation exclusion
+  // { name: 'Schedar', descriptor: 'Even', gender: 'f' }, // archived: poet-curation exclusion
+  { name: 'Vindemiatrix', descriptor: 'Gentle', gender: 'f' },
   { name: 'Sulafat', descriptor: 'Warm', gender: 'f' },
   // Male
-  // { name: 'Orus', descriptor: 'Firm', gender: 'm' }, // TODO: quality check needed
-  { name: 'Puck', descriptor: 'Upbeat', gender: 'm' },
+  { name: 'Orus', descriptor: 'Firm', gender: 'm' },
+  // { name: 'Puck', descriptor: 'Upbeat', gender: 'm' }, // archived: 46.7 with the production timing profile; 75% mora is a future rescue candidate
   { name: 'Charon', descriptor: 'Informative', gender: 'm' },
-  // { name: 'Fenrir', descriptor: 'Excitable', gender: 'm' }, // TODO: quality check needed
+  // { name: 'Fenrir', descriptor: 'Excitable', gender: 'm' }, // archived: poet-curation exclusion
   { name: 'Enceladus', descriptor: 'Breathy', gender: 'm' },
   { name: 'Iapetus', descriptor: 'Clear', gender: 'm' },
-  { name: 'Umbriel', descriptor: 'Easy-going', gender: 'm' },
+  // { name: 'Umbriel', descriptor: 'Easy-going', gender: 'm' }, // archived: poet-curation exclusion
   { name: 'Algieba', descriptor: 'Smooth', gender: 'm' },
   { name: 'Algenib', descriptor: 'Gravelly', gender: 'm' },
-  { name: 'Rasalgethi', descriptor: 'Informative', gender: 'm' },
-  // { name: 'Alnilam', descriptor: 'Firm', gender: 'm' }, // TODO: quality check needed
-  // { name: 'Gacrux', descriptor: 'Mature', gender: 'm' }, // TODO: quality check needed
+  // { name: 'Rasalgethi', descriptor: 'Informative', gender: 'm' }, // archived: 34.4 with the production timing profile; full/25% mora needs repeat validation
+  { name: 'Alnilam', descriptor: 'Firm', gender: 'm' },
+  // { name: 'Gacrux', descriptor: 'Mature', gender: 'm' }, // archived: poet-curation exclusion
   { name: 'Zubenelgenubi', descriptor: 'Casual', gender: 'm' },
-  { name: 'Sadachbia', descriptor: 'Lively', gender: 'm' },
-  { name: 'Sadaltager', descriptor: 'Knowledgeable', gender: 'm' },
+  // { name: 'Sadachbia', descriptor: 'Lively', gender: 'm' }, // archived: poet-curation exclusion
+  // { name: 'Sadaltager', descriptor: 'Knowledgeable', gender: 'm' }, // archived: poet-curation exclusion
 ];
 
 export const VOICE_CATALOG = ACTIVE_VOICES;

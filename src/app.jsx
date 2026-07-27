@@ -927,9 +927,12 @@ export default function DiwanApp() {
           /* localStorage unavailable */
         }
         try {
-          let timingMode = 'even';
+          // Production default from the low-latency investigation: keep the
+          // character-weighted pre-anchor fallback above, then divide each
+          // transcript-anchored verse by Arabic mora mass.
+          let timingMode = 'verseSyllableWeighted';
           try {
-            timingMode = localStorage.getItem('ttsTimingMode') || 'even';
+            timingMode = localStorage.getItem('ttsTimingMode') || 'verseSyllableWeighted';
           } catch {}
 
           let result = aligned.timings;

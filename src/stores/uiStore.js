@@ -60,7 +60,7 @@ const initialState = {
   ratchetMode: false, // Ratchet Mode: explains poems in Gen Z / gangster slang
   ttsMode: loadTtsMode(), // 'rest' | 'live' — defaults to 'live' (streaming)
   liveVoice: loadLiveVoice(), // selected speaking voice, persisted (default DEFAULT_VOICE)
-  liveTemperature: 0,
+  liveTemperature: 0.35,
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
   actionWeight: 'bold', // reader action buttons: 'quiet' | 'balanced' | 'bold' (molten) — visual intensity
   insightsMode: 'inline', // 'inline' = end-of-poem expand | 'drawer' = Vaul InsightOverlay (A/B test)

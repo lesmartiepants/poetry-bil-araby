@@ -9,7 +9,7 @@
 export const VOICE_CATALOG = [
   // Female
   { name: 'Zephyr', descriptor: 'Bright', gender: 'f', arabicName: 'نور', displayName: 'Noor' },
-  { name: 'Kore', descriptor: 'Firm', gender: 'm', arabicName: 'عزيز', displayName: 'Aziz' },
+  // { name: 'Kore', descriptor: 'Firm', gender: 'm', arabicName: 'عزيز', displayName: 'Aziz' }, // removed: too firm
   { name: 'Leda', descriptor: 'Youthful', gender: 'f', arabicName: 'صبا', displayName: 'Saba' },
   { name: 'Aoede', descriptor: 'Breezy', gender: 'f', arabicName: 'نسمة', displayName: 'Nasmah' },
   {
@@ -27,7 +27,7 @@ export const VOICE_CATALOG = [
     displayName: 'Ishraq',
   },
   { name: 'Despina', descriptor: 'Smooth', gender: 'f', arabicName: 'سلمى', displayName: 'Salma' },
-  { name: 'Erinome', descriptor: 'Clear', gender: 'f', arabicName: 'صفاء', displayName: 'Safaa' },
+  // { name: 'Erinome', descriptor: 'Clear', gender: 'f', arabicName: 'صفاء', displayName: 'Safaa' }, // removed: too matter of fact
   {
     name: 'Laomedeia',
     descriptor: 'Upbeat',
@@ -49,14 +49,15 @@ export const VOICE_CATALOG = [
     arabicName: 'رائدة',
     displayName: 'Raidah',
   },
-  {
-    name: 'Achird',
-    descriptor: 'Friendly',
-    gender: 'f',
-    arabicName: 'أنيسة',
-    displayName: 'Anisah',
-  },
-  { name: 'Schedar', descriptor: 'Even', gender: 'f', arabicName: 'سكينة', displayName: 'Sakinah' },
+  // removed: too friendly
+  // {
+  //   name: 'Achird',
+  //   descriptor: 'Friendly',
+  //   gender: 'f',
+  //   arabicName: 'أنيسة',
+  //   displayName: 'Anisah',
+  // },
+  // { name: 'Schedar', descriptor: 'Even', gender: 'f', arabicName: 'سكينة', displayName: 'Sakinah' }, // removed: too formal
   {
     name: 'Vindemiatrix',
     descriptor: 'Gentle',
@@ -75,13 +76,14 @@ export const VOICE_CATALOG = [
     arabicName: 'عارف',
     displayName: 'Aref',
   },
-  {
-    name: 'Fenrir',
-    descriptor: 'Excitable',
-    gender: 'm',
-    arabicName: 'وجدي',
-    displayName: 'Wajdi',
-  },
+  // removed: not serious sounding
+  // {
+  //   name: 'Fenrir',
+  //   descriptor: 'Excitable',
+  //   gender: 'm',
+  //   arabicName: 'وجدي',
+  //   displayName: 'Wajdi',
+  // },
   {
     name: 'Enceladus',
     descriptor: 'Breathy',
@@ -90,13 +92,14 @@ export const VOICE_CATALOG = [
     displayName: 'Naseem',
   },
   { name: 'Iapetus', descriptor: 'Clear', gender: 'm', arabicName: 'صافي', displayName: 'Safi' },
-  {
-    name: 'Umbriel',
-    descriptor: 'Easy-going',
-    gender: 'm',
-    arabicName: 'هاني',
-    displayName: 'Hani',
-  },
+  // removed: upbeat, kind of odd sounding
+  // {
+  //   name: 'Umbriel',
+  //   descriptor: 'Easy-going',
+  //   gender: 'm',
+  //   arabicName: 'هاني',
+  //   displayName: 'Hani',
+  // },
   { name: 'Algieba', descriptor: 'Smooth', gender: 'm', arabicName: 'سليم', displayName: 'Saleem' },
   { name: 'Algenib', descriptor: 'Gravelly', gender: 'm', arabicName: 'صخر', displayName: 'Sakhr' },
   {
@@ -107,7 +110,7 @@ export const VOICE_CATALOG = [
     displayName: 'Rashid',
   },
   { name: 'Alnilam', descriptor: 'Firm', gender: 'm', arabicName: 'ثابت', displayName: 'Thabit' },
-  { name: 'Gacrux', descriptor: 'Mature', gender: 'm', arabicName: 'حليم', displayName: 'Haleem' },
+  // { name: 'Gacrux', descriptor: 'Mature', gender: 'm', arabicName: 'حليم', displayName: 'Haleem' }, // removed: don't love this one
   {
     name: 'Zubenelgenubi',
     descriptor: 'Casual',
@@ -115,20 +118,22 @@ export const VOICE_CATALOG = [
     arabicName: 'أنس',
     displayName: 'Anas',
   },
-  {
-    name: 'Sadachbia',
-    descriptor: 'Lively',
-    gender: 'm',
-    arabicName: 'حيّان',
-    displayName: 'Hayyan',
-  },
-  {
-    name: 'Sadaltager',
-    descriptor: 'Knowledgeable',
-    gender: 'm',
-    arabicName: 'فهيم',
-    displayName: 'Faheem',
-  },
+  // removed: sounds too official
+  // {
+  //   name: 'Sadachbia',
+  //   descriptor: 'Lively',
+  //   gender: 'm',
+  //   arabicName: 'حيّان',
+  //   displayName: 'Hayyan',
+  // },
+  // removed: seems like a teacher, not emotional
+  // {
+  //   name: 'Sadaltager',
+  //   descriptor: 'Knowledgeable',
+  //   gender: 'm',
+  //   arabicName: 'فهيم',
+  //   displayName: 'Faheem',
+  // },
 ];
 
 /** The voice used until the listener picks another. */

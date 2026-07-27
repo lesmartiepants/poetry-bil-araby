@@ -3669,6 +3669,15 @@ function seventhComposite(id, dropCluster) {
   return tw ? t / tw : 0;
 }
 
+// Base framework as a lens: mean of the three top-line axes (identical to the
+// Enjoyability-tab consensus). BASE_SCORES covers all 9 (exemplars + baselines).
+const BASE_SCORES = Object.fromEntries([...POEMS, ...BASELINES].map(p => [p.id, p.scores]));
+function baseComposite(id, dropAxis) {
+  const s = BASE_SCORES[id];
+  const axes = ['sound', 'balanced', 'impact'].filter(a => a !== dropAxis);
+  return axes.reduce((t, a) => t + s[a], 0) / axes.length;
+}
+
 function rankingBy(ids, scoreFn) {
   const order = ids.map(id => ({ id, s: scoreFn(id) })).sort((a, b) => b.s - a.s);
   const pos = {}; order.forEach((o, i) => pos[o.id] = i);
@@ -3772,6 +3781,7 @@ function seventhPanel(ids) {
 // ── (c) consistency matrix ───────────────────────────────────────────
 function matrixPanel(ids) {
   const rubrics = [
+    { key: 'base', label: 'Base (S/B/I)', fn: id => baseComposite(id, null) },
     ...PERSONAS.map(p => ({ key: p.key, label: p.name.replace(/^The /, ''), fn: id => personaComposite(id, p, null) })),
     { key: 'seventh', label: '7th rubric', fn: id => seventhComposite(id, null) },
   ];
@@ -3807,15 +3817,21 @@ function matrixPanel(ids) {
 
   return `<div class="diag-block">
     <h2><span class="step">2c</span>Consistency matrix — every lens on every poem</h2>
-    <p class="lead">Each poem's composite (0–10) under all eight personas' own weighted dimensions and under the 7th rubric, side by side. Gold cells outlined = that lens's top poem. Rows sorted by the 7th-rubric composite.</p>
+    <p class="lead">Each poem's composite (0–10) under the base framework (sound/balanced/impact), all eight personas' own weighted dimensions, and the 7th rubric, side by side. Gold cells outlined = that lens's top poem. Rows sorted by the 7th-rubric composite.</p>
     <div class="tbl-wrap"><table class="grid">${header}${rows}</table></div>
-    <div class="callout">Mean pairwise rank agreement (Kendall τ) across the nine lenses: <b>${meanTau.toFixed(2)}</b> — moderate, not high. The rankings genuinely diverge. Sharpest disagreement: <b>${minPair}</b> (τ = ${minTau.toFixed(2)}). Where a single poem is outlined in one column but scores mid-pack in another, the lenses are fighting over it.</div>
+    <div class="callout">Mean pairwise rank agreement (Kendall τ) across the ten lenses: <b>${meanTau.toFixed(2)}</b> — moderate, not high. The rankings genuinely diverge. Sharpest disagreement: <b>${minPair}</b> (τ = ${minTau.toFixed(2)}). Where a single poem is outlined in one column but scores mid-pack in another, the lenses are fighting over it.</div>
   </div>`;
 }
 
 // ── (3) ablation ─────────────────────────────────────────────────────
 function ablationPanel(ids) {
   const rubrics = [
+    {
+      key: 'base', label: 'The base framework', kind: 'base',
+      dims: ['sound', 'balanced', 'impact'],
+      full: id => baseComposite(id, null),
+      drop: (id, dim) => baseComposite(id, dim),
+    },
     ...PERSONAS.map(p => ({
       key: p.key, label: p.name, kind: 'persona',
       dims: p.dims.map(d => d.n),

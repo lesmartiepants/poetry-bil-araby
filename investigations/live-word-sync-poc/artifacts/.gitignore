@@ -1,0 +1,4 @@
+# Captures are immutable local evidence, not repository payload (currently >4 GB).
+*
+!.gitignore
+!README.md

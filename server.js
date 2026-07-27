@@ -1658,6 +1658,95 @@ app.get('/enjoyability', (_req, res) => {
   res.type('html').send(loadEnjoyabilityHtml());
 });
 
+// ── Saved-poems curation (LOCAL DEV ONLY) ──────────────────────────────────
+// Powers the "Saved" tab of the Enjoyability Lab. Gated on SAVED_CURATION_EMAIL,
+// which is set only in a local .env (never on Render), so these destructive
+// endpoints do not exist in production. Every query is scoped to that single
+// user's own rows, so they can never touch anyone else's saves.
+let _curationUid = null;
+async function getCurationUid() {
+  const email = process.env.SAVED_CURATION_EMAIL;
+  if (!email) return null;
+  if (_curationUid) return _curationUid;
+  const r = await pool.query('SELECT id FROM auth.users WHERE email = $1', [email]);
+  _curationUid = r.rows[0]?.id || null;
+  return _curationUid;
+}
+const requireCuration = async (req, res, next) => {
+  try {
+    const uid = await getCurationUid();
+    if (!uid) {
+      return res
+        .status(404)
+        .json({ error: 'saved-poems curation disabled (set SAVED_CURATION_EMAIL in a local .env)' });
+    }
+    req.curationUid = uid;
+    next();
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+};
+
+// List the configured user's saved poems, joined with corpus data.
+app.get('/api/lab/saved', requireCuration, async (req, res) => {
+  try {
+    const arabicExpr = hasDiacritizedColumn
+      ? 'COALESCE(p.diacritized_content, p.content)'
+      : 'p.content';
+    const poetEn = hasPoetNameEn ? ', po.name_en AS poet_en' : '';
+    const titleEn = hasTitleEn ? ', p.title_en' : '';
+    const r = await pool.query(
+      `SELECT s.id AS saved_id, s.saved_at, s.poem_id,
+              s.poet AS saved_poet, s.title AS saved_title,
+              p.title AS title${titleEn},
+              ${arabicExpr} AS arabic,
+              po.name AS poet${poetEn}
+       FROM saved_poems s
+       LEFT JOIN poems p ON p.id = s.poem_id
+       LEFT JOIN poets po ON p.poet_id = po.id
+       WHERE s.user_id = $1
+       ORDER BY COALESCE(po.name, s.poet, '~'), s.saved_at DESC`,
+      [req.curationUid]
+    );
+    res.json({ count: r.rows.length, saved: r.rows });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Un-heart: delete one saved row (scoped to the user). Returns the row for undo.
+app.delete('/api/lab/saved/:savedId', requireCuration, async (req, res) => {
+  try {
+    const r = await pool.query(
+      `DELETE FROM saved_poems
+       WHERE id = $1 AND user_id = $2
+       RETURNING poem_id, poem_text, poet, title, english, category`,
+      [req.params.savedId, req.curationUid]
+    );
+    if (!r.rows.length) return res.status(404).json({ error: 'not found or not yours' });
+    res.json({ ok: true, deleted: r.rows[0] });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Undo a delete: re-insert the row.
+app.post('/api/lab/saved/restore', requireCuration, async (req, res) => {
+  try {
+    const { poem_id, poem_text, poet, title, english, category } = req.body || {};
+    const r = await pool.query(
+      `INSERT INTO saved_poems (user_id, poem_id, poem_text, poet, title, english, category)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT DO NOTHING
+       RETURNING id`,
+      [req.curationUid, poem_id ?? null, poem_text ?? null, poet ?? null, title ?? null, english ?? null, category ?? null]
+    );
+    res.json({ ok: true, saved_id: r.rows[0]?.id || null });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 app.get(
   '/api/poems/:id/og-image',
   [param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'), validate],

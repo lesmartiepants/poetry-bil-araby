@@ -239,6 +239,7 @@
   <button class="tab-btn active" data-tab="enjoyability" onclick="switchTab('enjoyability', this)">Enjoyability</button>
   <button class="tab-btn" data-tab="personas" onclick="switchTab('personas', this)">Personas</button>
   <button class="tab-btn" data-tab="diagnostics" onclick="switchTab('diagnostics', this)">Diagnostics</button>
+  <button class="tab-btn" data-tab="saved" onclick="switchTab('saved', this); loadSavedOnce()">Saved <span id="savedTabCount"></span></button>
 </div>
 
 <details class="options">
@@ -278,6 +279,130 @@
   <div class="diag-meta" id="diagMeta"></div>
   <div id="diagBody"></div>
 </div>
+
+<div class="tab-panel" id="panel-saved">
+  <p class="subtitle">Your saved poems, live from the database. Un-heart to remove a save — it deletes immediately (an Undo appears for a few seconds). Prune this to the poems you actually mean before we run the larger analysis on it.</p>
+  <div class="saved-toolbar">
+    <span id="savedCount" class="saved-count">…</span>
+    <input id="savedFilter" class="saved-filter" type="text" placeholder="filter by poet or title…" oninput="filterSaved(this.value)">
+  </div>
+  <div id="savedList" class="saved-list"><p class="saved-empty">Open this tab to load your saved poems.</p></div>
+</div>
+<div id="undoToast" class="undo-toast" hidden><span id="undoText"></span><button onclick="undoLastRemove()">Undo</button></div>
+
+<style>
+  .saved-toolbar { display:flex; align-items:center; gap:1rem; margin:1rem 0; flex-wrap:wrap; }
+  .saved-count { color:var(--gold,#c5a059); font-weight:600; white-space:nowrap; }
+  .saved-filter { flex:1; min-width:200px; background:rgba(255,255,255,.05); border:1px solid rgba(197,160,89,.4); color:var(--ink,#e8e0d0); padding:.5rem .75rem; border-radius:6px; font-size:.95rem; }
+  .saved-group { margin-bottom:1.4rem; }
+  .saved-poet { color:var(--gold,#c5a059); font-size:1.05rem; margin:.5rem 0; border-bottom:1px solid rgba(197,160,89,.2); padding-bottom:.25rem; }
+  .saved-poet-en { color:#9a9080; font-weight:400; font-size:.82rem; }
+  .saved-poet-n { color:#9a9080; font-size:.78rem; font-weight:400; }
+  .saved-card { display:flex; gap:.75rem; align-items:flex-start; padding:.55rem .7rem; border:1px solid rgba(255,255,255,.06); border-radius:8px; margin-bottom:.4rem; background:rgba(255,255,255,.02); }
+  .saved-heart { background:none; border:none; color:var(--gold,#c5a059); font-size:1.3rem; cursor:pointer; line-height:1; padding:.1rem .3rem; transition:transform .1s, color .2s; }
+  .saved-heart:hover { transform:scale(1.18); color:#e06666; }
+  .saved-body { flex:1; min-width:0; }
+  .saved-title { font-family:'Amiri',serif; font-size:1.1rem; color:var(--ink,#e8e0d0); }
+  .saved-incipit { font-family:'Amiri',serif; color:#b0a690; font-size:.95rem; margin-top:.2rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .saved-meta { color:#8a8070; font-size:.72rem; margin-top:.2rem; }
+  .saved-orphan { color:#e06666; font-size:.72rem; }
+  .saved-empty { color:#9a9080; padding:2rem; text-align:center; }
+  .undo-toast { position:fixed; bottom:1.5rem; left:50%; transform:translateX(-50%); background:#2a2418; border:1px solid var(--gold,#c5a059); color:var(--ink,#e8e0d0); padding:.6rem 1rem; border-radius:8px; display:flex; gap:1rem; align-items:center; z-index:1000; box-shadow:0 4px 20px rgba(0,0,0,.5); }
+  .undo-toast button { background:var(--gold,#c5a059); border:none; color:#1a1408; padding:.3rem .8rem; border-radius:5px; cursor:pointer; font-weight:600; }
+  .undo-toast[hidden] { display:none; }
+</style>
+
+<script>
+// ── Saved-poems curation tab (talks to /api/lab/saved; live DB deletes) ──
+let _savedLoaded = false, _savedData = [], _filter = '', _lastRemoved = null, _undoTimer = null;
+const escS = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]));
+
+async function loadSavedOnce() { if (_savedLoaded) return; _savedLoaded = true; await reloadSaved(); }
+
+async function reloadSaved() {
+  const host = document.getElementById('savedList');
+  host.innerHTML = '<p class="saved-empty">Loading…</p>';
+  try {
+    const j = await (await fetch('/api/lab/saved')).json();
+    if (j.error) { host.innerHTML = '<p class="saved-empty">' + escS(j.error) + '</p>'; return; }
+    _savedData = j.saved;
+    renderSaved();
+  } catch (e) { host.innerHTML = '<p class="saved-empty">Failed to load: ' + escS(e.message) + '</p>'; }
+}
+
+function matchFilter(r) {
+  if (!_filter) return true;
+  return [r.poet, r.poet_en, r.title, r.saved_title].some(x => (x || '').toLowerCase().includes(_filter));
+}
+function filterSaved(v) { _filter = (v || '').trim().toLowerCase(); renderSaved(); }
+
+function updateCount() {
+  document.getElementById('savedCount').textContent = _savedData.length + ' saved';
+  const tc = document.getElementById('savedTabCount'); if (tc) tc.textContent = '(' + _savedData.length + ')';
+}
+
+function renderSaved() {
+  const host = document.getElementById('savedList');
+  updateCount();
+  const rows = _savedData.filter(matchFilter);
+  if (!rows.length) { host.innerHTML = '<p class="saved-empty">' + (_savedData.length ? 'No matches.' : 'No saved poems.') + '</p>'; return; }
+  const groups = {};
+  rows.forEach(r => { const k = r.poet || r.saved_poet || 'Unknown'; (groups[k] = groups[k] || []).push(r); });
+  host.innerHTML = Object.entries(groups).map(([poet, items]) => {
+    const en = items[0].poet_en ? ' <span class="saved-poet-en">' + escS(items[0].poet_en) + '</span>' : '';
+    return '<div class="saved-group"><h3 class="saved-poet" dir="rtl">' + escS(poet) + en
+      + ' <span class="saved-poet-n">' + items.length + '</span></h3>' + items.map(savedCardHTML).join('') + '</div>';
+  }).join('');
+}
+
+function savedCardHTML(r) {
+  const title = r.title || r.saved_title || '(untitled)';
+  const incipit = (r.arabic || '').split('\n').slice(0, 2).join('  ·  ');
+  const orphan = !r.poem_id || !r.arabic;
+  const date = r.saved_at ? new Date(r.saved_at).toLocaleDateString() : '';
+  return '<div class="saved-card" data-id="' + r.saved_id + '">'
+    + '<button class="saved-heart" title="Un-heart (removes from the database)" onclick="removeSaved(\'' + r.saved_id + '\')">&#9829;</button>'
+    + '<div class="saved-body">'
+    + '<div class="saved-title" dir="rtl">' + escS(title) + (orphan ? ' <span class="saved-orphan">poem unavailable</span>' : '') + '</div>'
+    + (incipit ? '<div class="saved-incipit" dir="rtl">' + escS(incipit) + '</div>' : '')
+    + '<div class="saved-meta">saved ' + escS(date) + '</div>'
+    + '</div></div>';
+}
+
+async function removeSaved(savedId) {
+  const row = _savedData.find(r => r.saved_id === savedId);
+  try {
+    const j = await (await fetch('/api/lab/saved/' + encodeURIComponent(savedId), { method: 'DELETE' })).json();
+    if (!j.ok) { alert('Remove failed: ' + (j.error || '?')); return; }
+    _savedData = _savedData.filter(x => x.saved_id !== savedId);
+    renderSaved();
+    showUndo(row, j.deleted);
+  } catch (e) { alert('Remove failed: ' + e.message); }
+}
+
+function showUndo(row, deleted) {
+  _lastRemoved = { row, deleted };
+  document.getElementById('undoText').textContent = 'Removed "' + ((row && (row.title || row.saved_title)) || 'poem') + '"';
+  const t = document.getElementById('undoToast'); t.hidden = false;
+  clearTimeout(_undoTimer);
+  _undoTimer = setTimeout(() => { t.hidden = true; _lastRemoved = null; }, 8000);
+}
+
+async function undoLastRemove() {
+  if (!_lastRemoved) return;
+  const { row, deleted } = _lastRemoved;
+  try {
+    const j = await (await fetch('/api/lab/saved/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(deleted) })).json();
+    if (j.ok) {
+      _savedData.push({ ...row, saved_id: j.saved_id || (row && row.saved_id), saved_at: new Date().toISOString() });
+      _savedData.sort((a, b) => (a.poet || '') < (b.poet || '') ? -1 : 1);
+      renderSaved();
+    }
+  } catch (e) { /* ignore */ }
+  document.getElementById('undoToast').hidden = true;
+  _lastRemoved = null; clearTimeout(_undoTimer);
+}
+</script>
 
 <script>
 // ── Data ─────────────────────────────────────────────────────────────

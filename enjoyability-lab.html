@@ -516,6 +516,7 @@ async function hearSaved(key, btn) {
   _savedAbort = new AbortController(); const mySignal = _savedAbort.signal; const t0 = Date.now();
   try {
     const ctx = getCtx();
+    if (ctx.state === 'suspended') { try { await ctx.resume(); } catch (e) {} }
     let sr = 24000, nextTime = 0, firstAt = null; const bytes = [];
     const playChunk = (b64) => {
       const pcm = Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0));

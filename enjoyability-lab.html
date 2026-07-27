@@ -298,7 +298,21 @@
   .saved-poet { color:var(--gold,#c5a059); font-size:1.05rem; margin:.5rem 0; border-bottom:1px solid rgba(197,160,89,.2); padding-bottom:.25rem; }
   .saved-poet-en { color:#9a9080; font-weight:400; font-size:.82rem; }
   .saved-poet-n { color:#9a9080; font-size:.78rem; font-weight:400; }
-  .saved-card { display:flex; gap:.75rem; align-items:flex-start; padding:.55rem .7rem; border:1px solid rgba(255,255,255,.06); border-radius:8px; margin-bottom:.4rem; background:rgba(255,255,255,.02); }
+  .saved-card { display:block; border:1px solid rgba(255,255,255,.06); border-radius:8px; margin-bottom:.4rem; background:rgba(255,255,255,.02); overflow:hidden; }
+  .saved-card.open { border-color:rgba(197,160,89,.4); }
+  .saved-head { display:flex; gap:.75rem; align-items:flex-start; padding:.55rem .7rem; cursor:pointer; }
+  .saved-head:hover { background:rgba(255,255,255,.03); }
+  .saved-caret { color:#8a8070; align-self:center; transition:transform .15s; }
+  .saved-card.open .saved-caret { transform:rotate(180deg); }
+  .saved-expand { padding:.5rem .9rem 1rem; border-top:1px solid rgba(255,255,255,.05); }
+  .saved-expand[hidden] { display:none; }
+  .pf-grid { display:grid; grid-template-columns:1fr 1fr; gap:.4rem 1.6rem; margin:.6rem 0; }
+  .pf-ar { font-family:'Amiri',serif; font-size:1.18rem; color:var(--ink,#e8e0d0); line-height:1.95; }
+  .pf-en { color:#b0a690; font-size:.9rem; line-height:1.6; }
+  .pf-sep { color:rgba(197,160,89,.55); font-size:.75rem; padding:0 .25rem; }
+  .pf-loading { color:#8a8070; font-style:italic; }
+  .pf-actions { display:flex; align-items:center; gap:.75rem; margin-top:.5rem; }
+  @media (max-width:720px) { .pf-grid { grid-template-columns:1fr; gap:.15rem; } .pf-en { margin-bottom:.5rem; } }
   .saved-heart { background:none; border:none; color:var(--gold,#c5a059); font-size:1.3rem; cursor:pointer; line-height:1; padding:.1rem .3rem; transition:transform .1s, color .2s; }
   .saved-heart:hover { transform:scale(1.18); color:#e06666; }
   .saved-body { flex:1; min-width:0; }
@@ -357,16 +371,142 @@ function renderSaved() {
 
 function savedCardHTML(r) {
   const title = r.title || r.saved_title || '(untitled)';
-  const incipit = (r.arabic || '').split('\n').slice(0, 2).join('  ·  ');
+  const bayts = baytLines(r.arabic);
+  const incipit = bayts.length ? (bayts[0][0] + (bayts[0][1] ? '  ﴿﴾  ' + bayts[0][1] : '')) : '';
   const orphan = !r.poem_id || !r.arabic;
   const date = r.saved_at ? new Date(r.saved_at).toLocaleDateString() : '';
   return '<div class="saved-card" data-id="' + r.saved_id + '">'
-    + '<button class="saved-heart" title="Un-heart (removes from the database)" onclick="removeSaved(\'' + r.saved_id + '\')">&#9829;</button>'
+    + '<div class="saved-head" onclick="toggleSaved(\'' + r.saved_id + '\')">'
+    + '<button class="saved-heart" title="Un-heart (removes from the database)" onclick="event.stopPropagation(); removeSaved(\'' + r.saved_id + '\')">&#9829;</button>'
     + '<div class="saved-body">'
     + '<div class="saved-title" dir="rtl">' + escS(title) + (orphan ? ' <span class="saved-orphan">poem unavailable</span>' : '') + '</div>'
     + (incipit ? '<div class="saved-incipit" dir="rtl">' + escS(incipit) + '</div>' : '')
-    + '<div class="saved-meta">saved ' + escS(date) + '</div>'
-    + '</div></div>';
+    + '<div class="saved-meta">saved ' + escS(date) + ' · tap to read + hear</div>'
+    + '</div><span class="saved-caret">▾</span></div>'
+    + '<div class="saved-expand" id="exp-' + r.saved_id + '" hidden></div>'
+    + '</div>';
+}
+
+// Split "*"-joined hemistichs into bayts (pairs): [[shatr1, shatr2], …].
+function baytLines(arabic) {
+  const h = String(arabic || '').split('*').map(x => x.trim()).filter(Boolean);
+  const out = [];
+  for (let i = 0; i < h.length; i += 2) out.push([h[i], h[i + 1] || '']);
+  return out;
+}
+
+function gridHTML(bayts, enLines) {
+  return '<div class="pf-grid">' + bayts.map((b, i) =>
+    '<div class="pf-en" dir="ltr">' + (enLines ? escS(enLines[i] || '') : '<span class="pf-loading">translating…</span>') + '</div>'
+    + '<div class="pf-ar" dir="rtl">' + escS(b[0]) + (b[1] ? ' <span class="pf-sep">﴿﴾</span> ' + escS(b[1]) : '') + '</div>'
+  ).join('') + '</div>';
+}
+
+async function translateArabic(text) {
+  const body = {
+    contents: [{ parts: [{ text: 'Translate this classical Arabic poem into English. Output exactly one English line per input line (each input line is one bayt); keep the imagery, do not pad.\n\n' + text }] }],
+    systemInstruction: { parts: [{ text: 'You are a master literary translator of classical Arabic poetry into English. Output strict JSON.' }] },
+    generationConfig: { responseMimeType: 'application/json', responseSchema: { type: 'object', properties: { english: { type: 'string' } }, required: ['english'] }, temperature: 0.2 },
+  };
+  const r = await fetch('/api/ai/gemini-3.6-flash/generateContent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  const j = await r.json();
+  const txt = j.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!txt) throw new Error('no translation');
+  return JSON.parse(txt).english || '';
+}
+
+async function toggleSaved(savedId) {
+  const exp = document.getElementById('exp-' + savedId);
+  if (!exp) return;
+  const card = exp.closest('.saved-card');
+  if (!exp.hidden) { exp.hidden = true; card.classList.remove('open'); return; }
+  exp.hidden = false; card.classList.add('open');
+  if (exp.dataset.loaded) return;
+  exp.dataset.loaded = '1';
+  const row = _savedData.find(r => r.saved_id === savedId);
+  const bayts = baytLines(row && row.arabic);
+  if (!bayts.length) { exp.innerHTML = '<p class="saved-empty">No text to display for this save.</p>'; return; }
+  exp.innerHTML = gridHTML(bayts, null)
+    + '<div class="pf-actions"><button class="saved-hear hear-btn" onclick="hearSaved(\'' + savedId + '\', this)">▶ Hear it</button> <span class="hear-status" id="hearStatus-' + savedId + '"></span></div>'
+    + '<audio id="player-' + savedId + '" controls style="display:none;margin-top:.5rem;width:100%"></audio>';
+  try {
+    const eng = await translateArabic(bayts.map(b => b.join(' ')).join('\n'));
+    const enLines = eng.split('\n').map(x => x.trim()).filter(Boolean);
+    const grid = exp.querySelector('.pf-grid');
+    if (grid) grid.outerHTML = gridHTML(bayts, enLines);
+  } catch (e) {
+    exp.querySelectorAll('.pf-loading').forEach(x => { x.textContent = '(translation failed)'; });
+  }
+}
+
+// Saved-tab TTS: reuses the page's getCtx/pcmToWav + shared voice/temp/prompt.
+let _savedAbort = null, _savedSources = [];
+function stopSavedTTS() {
+  if (_savedAbort) { try { _savedAbort.abort(); } catch (e) {} _savedAbort = null; }
+  _savedSources.forEach(s => { try { s.stop(); } catch (e) {} });
+  _savedSources = [];
+}
+async function hearSaved(savedId, btn) {
+  const row = _savedData.find(r => r.saved_id === savedId);
+  const status = document.getElementById('hearStatus-' + savedId);
+  const player = document.getElementById('player-' + savedId);
+  if (btn.classList.contains('playing')) { stopSavedTTS(); btn.classList.remove('playing'); btn.textContent = '▶ Hear it'; if (status) status.textContent = ''; return; }
+  if (typeof stopCurrent === 'function') stopCurrent();
+  stopSavedTTS();
+  document.querySelectorAll('.saved-hear.playing').forEach(b => { b.classList.remove('playing'); b.textContent = '▶ Hear it'; });
+  const arabic = String(row && row.arabic || '').split('*').map(x => x.trim()).filter(Boolean).join('\n');
+  if (!arabic) { if (status) status.textContent = 'no text'; return; }
+  const voice = (typeof selectedVoice !== 'undefined') ? selectedVoice : 'Orus';
+  const temp = (typeof selectedTemp !== 'undefined') ? selectedTemp : 0.35;
+  const sys = (typeof DELIVERY_SYSTEM_INSTRUCTION !== 'undefined') ? DELIVERY_SYSTEM_INSTRUCTION : '';
+  btn.classList.add('playing'); btn.textContent = '■ Stop';
+  status.className = 'hear-status'; status.textContent = 'Generating · ' + voice + ' · temp ' + temp.toFixed(2) + '…';
+  _savedAbort = new AbortController(); const mySignal = _savedAbort.signal; const t0 = Date.now();
+  try {
+    const ctx = getCtx();
+    let sr = 24000, nextTime = 0, firstAt = null; const bytes = [];
+    const playChunk = (b64) => {
+      const pcm = Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0));
+      bytes.push(pcm);
+      const i16 = new Int16Array(pcm.buffer, pcm.byteOffset, pcm.length >> 1);
+      const buf = ctx.createBuffer(1, i16.length, sr); const ch = buf.getChannelData(0);
+      for (let i = 0; i < i16.length; i++) ch[i] = i16[i] / 32768;
+      const s = ctx.createBufferSource(); s.buffer = buf; s.connect(ctx.destination); _savedSources.push(s);
+      const now = ctx.currentTime; if (nextTime < now + 0.05) nextTime = now + 0.05;
+      if (firstAt === null) { firstAt = Date.now(); status.className = 'hear-status ok'; status.textContent = '▶ streaming · first sound ' + ((firstAt - t0) / 1000).toFixed(1) + 's'; }
+      s.start(nextTime); nextTime += buf.duration;
+    };
+    const res = await fetch(window.location.origin + '/api/ai/live-tts?stream=1', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: arabic, voiceName: voice, systemInstruction: sys, temperature: temp }), signal: mySignal,
+    });
+    if (!res.ok || !res.body) throw new Error('HTTP ' + res.status);
+    const reader = res.body.getReader(); const dec = new TextDecoder(); let sbuf = '';
+    for (;;) {
+      const { value, done } = await reader.read(); if (done) break;
+      sbuf += dec.decode(value, { stream: true }); let sep;
+      while ((sep = sbuf.indexOf('\n\n')) !== -1) {
+        const raw = sbuf.slice(0, sep); sbuf = sbuf.slice(sep + 2);
+        for (const line of raw.split('\n')) {
+          if (!line.startsWith('data:')) continue;
+          const pl = line.slice(5).trim(); if (!pl) continue;
+          let e; try { e = JSON.parse(pl); } catch (err) { continue; }
+          if (e.meta) sr = e.meta.sampleRate || sr; else if (e.chunk) playChunk(e.chunk); else if (e.error) throw new Error(e.error);
+        }
+      }
+    }
+    if (!bytes.length) throw new Error('No audio returned');
+    const total = new Uint8Array(bytes.reduce((n, b) => n + b.length, 0)); let off = 0; for (const b of bytes) { total.set(b, off); off += b.length; }
+    if (player) { player.src = URL.createObjectURL(pcmToWav(total, sr)); player.style.display = 'block'; player.load(); }
+    const dur = (total.length / 2 / sr).toFixed(1); const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+    status.className = 'hear-status ok'; status.textContent = '✓ ' + dur + 's audio · rendered ' + elapsed + 's · ' + voice;
+  } catch (e) {
+    if (mySignal.aborted || e.name === 'AbortError') return;
+    status.className = 'hear-status error'; status.textContent = 'Error: ' + e.message;
+  } finally {
+    if (_savedAbort && _savedAbort.signal === mySignal) { btn.classList.remove('playing'); btn.textContent = '▶ Hear it'; }
+  }
 }
 
 async function removeSaved(savedId) {

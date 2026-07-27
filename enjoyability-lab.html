@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Enjoyability Lab — Poetry bil-Araby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c5a059;
+    --gold-dim: #8a7440;
+    --bg: #100e0b;
+    --panel: #17140f;
+    --panel-2: #1c1812;
+    --line: #2a2419;
+    --ink: #e8e0d0;
+    --dim: #877c66;
+    --dimmer: #55503f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: system-ui, -apple-system, sans-serif;
+    padding: 28px 20px 60px; max-width: 980px; margin: 0 auto;
+  }
+  h1 { color: var(--gold); font-size: 1.25rem; letter-spacing: 0.04em; margin-bottom: 4px; }
+  .subtitle { color: var(--dim); font-size: 0.8rem; margin-bottom: 20px; }
+
+  /* Tabs */
+  .tabs { display: flex; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 22px; }
+  .tab-btn {
+    background: none; border: none; color: var(--dim); font-size: 0.85rem; font-weight: 700;
+    padding: 10px 16px; cursor: pointer; letter-spacing: 0.03em; border-bottom: 2px solid transparent;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Options bar */
+  details.options {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    padding: 10px 14px; margin-bottom: 22px;
+  }
+  details.options summary {
+    cursor: pointer; color: var(--dim); font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.08em; font-weight: 700; list-style: none; user-select: none;
+  }
+  details.options summary::-webkit-details-marker { display: none; }
+  details.options summary::before { content: '⚙ '; }
+  .opt-row { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 12px; }
+  .opt-field { display: flex; flex-direction: column; gap: 5px; min-width: 200px; flex: 1; }
+  .opt-field label { font-size: 0.65rem; color: var(--dimmer); text-transform: uppercase; letter-spacing: 0.08em; }
+  select {
+    background: var(--panel-2); border: 1px solid var(--line); color: var(--ink); border-radius: 6px;
+    padding: 8px 10px; font-size: 0.85rem; cursor: pointer;
+  }
+  select:focus { outline: none; border-color: var(--gold-dim); }
+  .slider-wrap { display: flex; align-items: center; gap: 10px; }
+  input[type=range] { flex: 1; accent-color: var(--gold); cursor: pointer; }
+  .slider-val { color: var(--gold); font-size: 0.78rem; font-family: monospace; min-width: 32px; text-align: right; }
+
+  /* Poem cards */
+  .poem-card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 20px; margin-bottom: 16px;
+  }
+  .poem-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+  .poem-titles { flex: 1; min-width: 0; }
+  .poem-title-ar { font-family: 'Amiri', Georgia, serif; font-size: 1.15rem; color: var(--ink); direction: rtl; }
+  .poem-poet { font-size: 0.78rem; color: var(--dim); margin-top: 2px; }
+  .poem-poet .ar { font-family: 'Amiri', Georgia, serif; direction: rtl; }
+  .score-block { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0; }
+  .consensus-num { font-size: 1.9rem; font-weight: 800; color: var(--gold); line-height: 1; font-family: monospace; }
+  .consensus-lbl { font-size: 0.6rem; color: var(--dimmer); text-transform: uppercase; letter-spacing: 0.08em; }
+  .tier-chip {
+    font-size: 0.65rem; font-weight: 700; padding: 2px 9px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px;
+  }
+  .tier-high { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.35); }
+  .tier-mid { background: rgba(197,160,89,0.12); color: var(--gold); border: 1px solid rgba(197,160,89,0.4); }
+  .tier-low { background: rgba(239,68,68,0.12); color: #ef4444; border: 1px solid rgba(239,68,68,0.35); }
+
+  .bars { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .bar-row { display: grid; grid-template-columns: 70px 1fr 34px; align-items: center; gap: 8px; }
+  .bar-label { font-size: 0.68rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.04em; }
+  .bar-track { background: var(--panel-2); border-radius: 4px; height: 7px; overflow: hidden; }
+  .bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 4px; }
+  .bar-val { font-size: 0.68rem; color: var(--dim); font-family: monospace; text-align: right; }
+
+  .sub-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .sub-chip {
+    font-size: 0.65rem; color: var(--dim); background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 6px; padding: 3px 8px;
+  }
+  .sub-chip b { color: var(--ink); }
+
+  .poem-text-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 14px; }
+  @media (max-width: 640px) { .poem-text-grid { grid-template-columns: 1fr; } }
+  .arabic-text {
+    direction: rtl; font-family: 'Amiri', 'Noto Naskh Arabic', Georgia, serif; font-size: 1.15rem;
+    line-height: 2; color: #e8dfc8; white-space: pre-line;
+  }
+  .english-text { font-size: 0.85rem; line-height: 1.7; color: var(--dim); white-space: pre-line; }
+
+  .hear-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .hear-btn {
+    background: var(--gold); color: #100e0b; border: none; border-radius: 6px; padding: 9px 20px;
+    font-size: 0.82rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  }
+  .hear-btn:hover { opacity: 0.88; }
+  .hear-btn:active { transform: scale(0.98); }
+  .hear-btn.playing { background: #2a2419; color: var(--gold); border: 1px solid var(--gold-dim); }
+  .hear-status { font-size: 0.72rem; color: var(--dimmer); }
+  .hear-status.error { color: #ef4444; }
+  .hear-status.ok { color: #4ade80; }
+  audio.player { width: 100%; margin-top: 10px; display: none; border-radius: 6px; }
+
+  /* Personas tab */
+  .synthesis {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 18px 20px; margin-bottom: 22px;
+  }
+  .synthesis h2 { color: var(--gold); font-size: 0.95rem; margin-bottom: 4px; }
+  .synthesis .sub { color: var(--dim); font-size: 0.75rem; margin-bottom: 14px; }
+  .dim-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  @media (max-width: 720px) { .dim-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .dim-grid { grid-template-columns: 1fr; } }
+  .dim-item {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px;
+  }
+  .dim-item .name { color: var(--gold); font-size: 0.78rem; font-weight: 700; margin-bottom: 3px; }
+  .dim-item .def { color: var(--dim); font-size: 0.72rem; line-height: 1.5; }
+
+  .persona-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 720px) { .persona-grid { grid-template-columns: 1fr; } }
+  .persona-card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px;
+  }
+  .persona-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .persona-name { color: var(--ink); font-size: 0.95rem; font-weight: 700; }
+  .mode-badge {
+    font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;
+    padding: 2px 8px; border-radius: 999px; flex-shrink: 0; white-space: nowrap;
+  }
+  .mode-own { background: rgba(197,160,89,0.12); color: var(--gold); border: 1px solid rgba(197,160,89,0.4); }
+  .mode-checklist { background: rgba(135,124,102,0.15); color: var(--dim); border: 1px solid var(--line); }
+  .persona-blurb { font-size: 0.78rem; color: var(--dim); margin-bottom: 8px; }
+  .persona-creed { font-size: 0.78rem; color: #cdbf9a; font-style: italic; line-height: 1.55; margin-bottom: 12px; border-left: 2px solid var(--gold-dim); padding-left: 10px; }
+  .persona-dims { display: flex; flex-direction: column; gap: 6px; }
+  .pdim-row { display: grid; grid-template-columns: 1fr 34px; align-items: center; gap: 8px; }
+  .pdim-label { font-size: 0.68rem; color: var(--dim); }
+  .pdim-track { background: var(--panel-2); border-radius: 4px; height: 6px; overflow: hidden; grid-column: 1 / -1; margin-bottom: 2px; }
+  .pdim-fill { height: 100%; background: var(--gold-dim); border-radius: 4px; }
+  .pdim-w { font-size: 0.65rem; color: var(--dimmer); font-family: monospace; text-align: right; }
+  .pdim-def { grid-column: 1 / -1; font-size: 0.64rem; color: var(--dimmer); line-height: 1.4; margin-top: -2px; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+
+<h1>Enjoyability Lab</h1>
+<p class="subtitle">Poetry bil-Araby — exemplar poems ranked by consensus enjoyability, and the eight critical lenses behind the scores</p>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="enjoyability" onclick="switchTab('enjoyability', this)">Enjoyability</button>
+  <button class="tab-btn" data-tab="personas" onclick="switchTab('personas', this)">Personas</button>
+</div>
+
+<details class="options">
+  <summary>Playback options</summary>
+  <div class="opt-row">
+    <div class="opt-field">
+      <label>Voice</label>
+      <select id="voiceSelect"></select>
+    </div>
+    <div class="opt-field">
+      <label>Temperature</label>
+      <div class="slider-wrap">
+        <input type="range" id="tempSlider" min="0" max="2" step="0.05" value="0.35">
+        <span class="slider-val" id="tempVal">0.35</span>
+      </div>
+    </div>
+  </div>
+</details>
+
+<div class="tab-panel active" id="panel-enjoyability">
+  <div id="poemList"></div>
+</div>
+
+<div class="tab-panel" id="panel-personas">
+  <div class="synthesis">
+    <h2>The Six Clustered Dimensions</h2>
+    <p class="sub">Every persona's bespoke rubric reduces to the same six underlying axes, weighted differently.</p>
+    <div class="dim-grid" id="dimGrid"></div>
+  </div>
+  <div class="persona-grid" id="personaGrid"></div>
+</div>
+
+<script>
+// ── Data ─────────────────────────────────────────────────────────────
+const POEMS = [
+{"id":65276,"poet":"al-Farazdaq","poetAr":"الفرزدق","title":"نَدامةُ الطّلاق","band":"high","q":92,"arabic":"نَدِمْتُ نَدَامَةَ الكُسَعِي لَمَّا\nغَدَّتْ مِنِّي مُطَلَّقَةٌ نَوَّارُ\nوَكانَت جَنَّتَي فَخَرَجْتُ مِنْهَا\nكَآدَمَ حَيِّنَّ لَجَّ بِهَا الضِرارُ\nوَكُنتُ كَفاقِئٍ عَيْنَيْهِ عَمْدًا\nفَأَصْبَحَ مَا يُضِيءُ لَهُ النَّهَارُ\nوَلا يُوفِي بِحُبِّ نَوَّارَ عِندِيٌّ\nوَلا كَلَفِّي بِهَا إِلَّا اِنْتِحَارُ\nوَلَوِّ رَضِيَتْ يَدَاي بِهَا وَقَرَّتْ\nلَكانَ لَهَا عَلَى الْقَدَرِ الْخِيَارُ\nوَمَا فَارَقْتُهَا شِبَعًا وَلَكِنَ\nرَأَيْتُ الدَّهْرَ يَأْخُذُ مَا يُعَارُ","english":"I regretted with the regret of Al-Kusa'i when\nNawwar departed from me, divorced.\nShe was my paradise, and I departed from it\nLike Adam when tribulation became grievous within it.\nI was like one who deliberately gouged out his two eyes,\nSo daylight no longer illuminated for him.\nAnd no one can match my love for Nawwar,\nAnd my passion for her is naught but self-destruction.\nIf my hands had been content with her and found peace,\nThen she would have had a choice over destiny.\nI did not part from her out of satiety, but\nI saw that Time takes what is lent.","scores":{"sound":9.6,"balanced":9.2,"impact":8.9,"sub":{"meter":5,"rhyme":5,"euphony":4,"imagery":5,"emotion":5,"impact":5}}},
+{"id":46,"poet":"Ibn Zuhr al-Ḥafīd","poetAr":"ابن زهر الحفيد","title":"شيخوخة المرآة وفناء الشباب","band":"high","q":92,"arabic":"إِنِّي نَظَرْتُ إِلَى الْمِرْآةِ إِذ جُلِيَتْ\nفَأَنْكَرَتْ مُقلَتايَ كُلّ مَا رَأَتَا\nرَأَيْتُ فِيهَا شُيَيخاً لَسِتُّ أَعْرِفُهُ\nوَكُنتُ أَعْرِفُ فِيهَا قَبَلَ ذَاِكَ فَتَى\nفَقُلْتُ أَيْنَ الَّذي مَثْوَاَهُ كَانَ هُنَا\nمَتَى تَرْحَلُ عَنِّ هَذَا الْمَكَانِ مَتَى\nفَاِستَجهَلَتني وَقَالَتْ لِي وَمَا نَطَقَتْ\nقَدَْ كَانَ ذَاِكَ وَهَذَا بَعُدَ ذَاُكَ أَتَى\nهَوَّنَ عَلَّيْكَ فَهَذَا لَا بَقَاءَ لَهُ\nأَمَّا تَرَى الْعُشْبَ يَفني بَعدَمَا نَبَتَا\nكَانَ الْغَوَانِي يَقُلْنَ يَا أَخِي فَقَدِْ\nصَارَ الْغَوَانِي يَقُلْنَ الْيَوْمَ يَا أَبَتَا","english":"I looked at the mirror when it was polished,\nAnd my eyes disavowed all they saw.\nI saw in it an old man whom I did not know,\nWhile before that, I knew a youth in it.\nSo I said, \"Where is he whose dwelling was here?\nWhen will you depart from me, from this place, when?\"\nSo it deemed me ignorant and said to me, though it spoke not:\n\"That was, and this came after that.\nCalm yourself, for this has no permanence.\nDo you not see the grass perish after it grows?\nThe charming women used to say, 'O my brother!'\nToday the charming women say, 'O my father!'\"","scores":{"sound":9.2,"balanced":9.2,"impact":8.2,"sub":{"meter":5,"rhyme":5,"euphony":4,"imagery":4,"emotion":5,"impact":5}}},
+{"id":86194,"poet":"Ṣafī al-Dīn al-Ḥillī","poetAr":"صفي الدين الحلي","title":"إيمان بالجمال","band":"mid","q":79,"arabic":"بُعِثَتْ بِآيَاتِ الْجَمَالِ فَآمَنَتْ\nبِحُسْنِكَ أَبْصَارٌ لَنَا وَبَصَائِرٌ\nوَأَبْدَيْتَ حُسْنًا بِاللِّحَاظِ مُمَنَّعًا\nفَلا خَاطِرٌ إِلاَّ وَفِيكَ يُخَاطِرُ\nوَلَمَّا بَدَتْ زَهْرُ الثُّغُورِ وَتَاهَتِ ال\nخَوَاطِرَ وَامْتَدَّتْ إِلَيْكَ النَّوَاظِرُ\nخَتَمَتْ عَلَى دُرِّ الثَّنَايَا بِخَاتَمٍ\nعَقِيقٌ وَتَحْتَ الخَتْمِ تُخْبَى الْجَوَاهِرُ","scores":{"sound":6.9,"balanced":6.8,"impact":5.9,"sub":{"meter":4,"rhyme":4,"euphony":4,"imagery":4,"emotion":3,"impact":3}},"english":"She was sent with signs of beauty, and so believed\nIn your beauty, our eyes and our insights.\nAnd you displayed beauty through glances, made unattainable,\nSo no thought but in you does venture.\nAnd when the blossoms of the smiles appeared, and strayed were the\nthoughts, and towards you stretched out the gazes,\nShe sealed the pearls of her front teeth with a seal,\nAn agate one, and beneath the seal are hidden the jewels."},
+{"id":62293,"poet":"'Amr ibn Kulthum","poetAr":"عمرو بن كلثوم","title":"أصوات الخيل في الغبار","band":"high","q":92,"arabic":"جَلَبْنَا الْخَيْلَ مِنْ جَنْبَي أَريكٍ\nسَوَاهِمَ يَعْتَزِمَنَّ عَلَّى الْخَبَارِ\nنَزَائِعَ لِلْغُرَابِ بِنَّا تُبَارِي\nخَوَارِجَ كَالسَمَامِ مِنَ الْغُبَارِ\nصَبَّحْنَاهُنَّ يَوْمَ الأَتمِ شُعثاً\nفِرَاسًا وَالْقَبَائِلَ مِنْ غِفارِ\nتَرَكْتُ نِسَاءَ سَاعِدَةَ بْن عَمْروَ\nعَلَّيْهِ حَواسِراً وَسَطَ الدَّيَّارِ\nتَرَكْتُ الطَّيْرَ عَاكِفَةً عَلَّيْهِ\nكَمًّا عَكَفَ النِّسَاءُ عَلَّى الدُّوَارِ\nفَجَعْتُهُمُ بِخَيرِهِمِ نَدِيمًا\nوَأَطعَمِهِم لَدَى قَحْطِ الْقِطَارِ","english":"We brought the horses from the slopes of Arik,\nLean, striding with resolve over the soft ground.\nOutrunning the crow, they vied with us,\nEmerging like the simoom from the dust.\nWe raided them at dawn on the day of Al-Atam, dust-covered,\nFirasan and the tribes of Ghifar.\nI left the women of Sa'idah ibn Amr,\nUnveiled around him, in the midst of their dwelling.\nI left the birds gathered over him,\nJust as women circled the idol.\nI bereaved them of their best companion,\nAnd their provider when caravans ceased.","scores":{"sound":6.8,"balanced":6.4,"impact":5.2,"sub":{"meter":4,"rhyme":4,"euphony":3,"imagery":4,"emotion":3,"impact":4}}},
+{"id":85608,"poet":"al-Abbas ibn al-Ahnaf","poetAr":"العباس بن الأحنف","title":"يوم الرزيئة وظعن الأحباء","band":"low","q":58,"arabic":"مَنْ كَانَ يَبْكِي لِي لِرُزْء مُوجَعٍ\nفَاليَوْمَ يَوْمُ رَزِيئَتي فَلْيَبْكِ لِي\nظَعَنَ الَّذِينَ أُحِبُّهُمْ فَتَحَمَّلُوا\nنَفْسِي الْفِدَاءُ لِظَاعِنٍ مُتَحَمِّلْ\nذَهَبُوا فَصِرْتُ خِلاَفَهُمْ مُتَلَدِّدًا\nمُتَحَيِّرًا ذَا حَسْرَةٍ وَتَمَلْمُلِ","english":"Whoever would weep for me for a grievous woe,\nThen today is the day of my tragedy, so let him weep for me.\nThose whom I love departed, and they carried their burdens.\nMy soul be a sacrifice for a departing one who bears a burden.\nThey went, and I became, after them, wandering aimlessly,\nBewildered, full of sorrow and restlessness.","scores":{"sound":5.5,"balanced":5.2,"impact":5,"sub":{"meter":4,"rhyme":3,"euphony":3,"imagery":2,"emotion":4,"impact":3}}},
+{"id":26413,"poet":"Muḥammad ibn Ḥumayr al-Hamadānī","poetAr":"محمد بن حمير الهمداني","title":"موت الرجال","band":"mid","q":78,"arabic":"لَعَمْركَ مَا الرُّزِّيَّةِ هَدْمُ دَارِ\nولَا شَاةٍ تُمَوِّتُ ولَا بَعيرِ\nوَلَكَنَّ الرزيُة مَوْتُ حُرٍّ\nيُمَوِّتُ لِمَوْتِهِ بَشَرَ كَثِيرَ","english":"By your life, the calamity is not the destruction of a house,\nNor a sheep dying, nor a camel,\nBut the calamity is the death of a free man,\nWhose death causes many people to die.","scores":{"sound":4.7,"balanced":6.8,"impact":6.6,"sub":{"meter":3,"rhyme":2,"euphony":3,"imagery":3,"emotion":4,"impact":4}}}
+];
+
+const PERSONAS = [
+{"key":"classical-prosodist","name":"The Classical Prosodist","blurb":"Prosody & balāgha scholar. Form is the spine.","mode":"checklist","creed":"Form is not the vessel of meaning — form IS the meaning, and a wobbling meter is a lie no sincerity can redeem.","dims":[{"n":"Meter (wazn)","w":30},{"n":"Rhyme (qāfiya)","w":22},{"n":"Euphony","w":16},{"n":"Imagery","w":12},{"n":"Impact","w":9},{"n":"Emotion","w":6},{"n":"Wit","w":5}]},
+{"key":"modern-lyric","name":"The Modern Lyric","blurb":"Mahjar / free-verse romantic. Feeling first.","mode":"checklist","creed":"A poem earns its life by feeling true and seeing new; form is only the servant that carries the wound to the reader.","dims":[{"n":"Emotion","w":30},{"n":"Imagery","w":27},{"n":"Impact","w":15},{"n":"Euphony","w":10},{"n":"Meter","w":8},{"n":"Rhyme","w":6},{"n":"Wit","w":4}]},
+{"key":"oral-reciter","name":"The Oral Reciter (munshid)","blurb":"Performs aloud. The ear is the oldest judge.","mode":"checklist","creed":"If it doesn't move the breath and detonate in the ear, it is ink pretending to be fire.","dims":[{"n":"Meter","w":26},{"n":"Euphony","w":22},{"n":"Impact","w":16},{"n":"Rhyme","w":14},{"n":"Emotion","w":12},{"n":"Imagery","w":8},{"n":"Wit","w":2}]},
+{"key":"poetry-professor","name":"The Poetry Professor","blurb":"Comparative-lit scholar. Pressure under tension.","mode":"own","creed":"A poem is great not for what it says but for the pressure it survives without explaining itself.","dims":[{"n":"Load-Bearing Compression","w":24,"d":"Meaning released per word spent — plainness that loses something irreducible."},{"n":"Inheritance Friction","w":22,"d":"Does it wrestle the tradition or merely decorate it."},{"n":"The Unspoken Leap","w":20,"d":"Size of the inference it trusts you to complete alone."},{"n":"Acoustic Memory","w":18,"d":"How sound summons prior texts and ghosts beyond the literal."},{"n":"Earned Silence","w":16,"d":"Does the ending close a circle it opened, or just stop."}]},
+{"key":"lebanese-citizen","name":"The Lebanese Citizen","blurb":"Not a scholar. Fairuz, weddings, WhatsApp.","mode":"own","creed":"A poem is good when my body believes it before my mind does, and I want to hand it to someone I love.","dims":[{"n":"Qashaʿrīra (the chill)","w":30,"d":"The involuntary shiver — the body reacts before the mind explains."},{"n":"Would I forward it","w":20,"d":"The urge to send it to someone specific right now."},{"n":"Sounds like home","w":18,"d":"The music feels Levantine, not translated or cold."},{"n":"Said what I couldn't","w":15,"d":"Words to a feeling I've carried but never spoke."},{"n":"Belongs to a moment","w":10,"d":"Fits a real occasion — a funeral, an airport goodbye."},{"n":"Nostalgia / the ache","w":7,"d":"Pulls me backward toward something lost."}]},
+{"key":"non-arabic-listener","name":"The Non-Arabic Listener","blurb":"No Arabic. Hears the sound + a translation.","mode":"own","creed":"Move my body with the sound and my chest with an image I already own, and I'll never miss the words.","dims":[{"n":"Sonic pleasure","w":30,"d":"Raw physical enjoyment of the recitation, independent of meaning."},{"n":"Emotional transmission by sound","w":20,"d":"Feeling crosses the barrier in the voice before translation."},{"n":"Image survives translation","w":20,"d":"Central images arrive in English still charged and concrete."},{"n":"Sound–meaning agreement","w":18,"d":"Sonic mood matches the meaning the translation reports."},{"n":"Universality (no scaffolding)","w":12,"d":"Lands on a human ache I already share, needs no footnote."}]},
+{"key":"cognitive-aesthetician","name":"The Cognitive Aesthetician","blurb":"Wildcard. Studies why brains find art pleasurable.","mode":"own","creed":"Beauty is the reward signal your brain pays itself for a prediction that went better than it dared to expect.","dims":[{"n":"Fluency–Disfluency Balance","w":22,"d":"Intermediate processing load — the Wundt sweet spot."},{"n":"Prediction Error at the Turn","w":20,"d":"Earned surprise at the volta / swerved rhyme."},{"n":"Closure Reward","w":20,"d":"The dopaminergic click when tension discharges."},{"n":"Arousal Transfer","w":18,"d":"Autonomic activation — the felt bodily charge, any valence."},{"n":"Encoding Strength","w":12,"d":"Stickiness — how readily a line lodges in memory."},{"n":"Optimal Complexity","w":8,"d":"Global position on the novelty-vs-comprehensibility curve."}]},
+{"key":"timeless-enjoyment","name":"The Timeless Lens","blurb":"Judges by what endures across millennia.","mode":"own","creed":"A poem earns eternity not by being admired in its age, but by ambushing a stranger who owes it nothing — again on the hundredth reading.","dims":[{"n":"The Unfootnoted Pleasure","w":25,"d":"Delight that survives with zero explanation of era or biography."},{"n":"Durability of the Image","w":22,"d":"A picture carved not painted — re-summoned intact decades later."},{"n":"The Perennial Rendered Dangerous","w":20,"d":"The oldest subjects made to feel unsafe and new again."},{"n":"Survival of the Hundredth Reading","w":18,"d":"Gives more on repetition rather than depleting."},{"n":"The Body's Assent","w":15,"d":"Sound produces physical pleasure independent of meaning."}]}
+];
+
+const CLUSTER_DIMS = [
+  { name: "Music", def: "The sonic architecture — meter, rhyme, and euphony working as one instrument." },
+  { name: "Image", def: "The concrete picture a line burns into memory, carved rather than merely described." },
+  { name: "Emotional charge", def: "How much felt weight the poem carries, and whether it actually crosses into the reader." },
+  { name: "The turn & the landing", def: "The volta, the swerve at the close — does the ending earn what it opened." },
+  { name: "Depth", def: "What survives paraphrase; the pressure the poem holds without explaining itself." },
+  { name: "Reach", def: "How far the poem travels beyond its own era, language, or first audience." },
+];
+
+const VOICES = [
+  { name: "Orus", gender: "M", desc: "Firm" },
+  { name: "Puck", gender: "M", desc: "Upbeat" },
+  { name: "Charon", gender: "M", desc: "Informative" },
+  { name: "Enceladus", gender: "M", desc: "Breathy" },
+  { name: "Iapetus", gender: "M", desc: "Clear" },
+  { name: "Algieba", gender: "M", desc: "Smooth" },
+  { name: "Algenib", gender: "M", desc: "Gravelly" },
+  { name: "Rasalgethi", gender: "M", desc: "Informative" },
+  { name: "Alnilam", gender: "M", desc: "Firm" },
+  { name: "Zubenelgenubi", gender: "M", desc: "Casual" },
+  { name: "Vindemiatrix", gender: "F", desc: "Gentle" },
+  { name: "Sulafat", gender: "F", desc: "Warm" },
+  { name: "Zephyr", gender: "F", desc: "Bright" },
+  { name: "Leda", gender: "F", desc: "Youthful" },
+  { name: "Aoede", gender: "F", desc: "Breezy" },
+  { name: "Callirrhoe", gender: "F", desc: "Easy-going" },
+  { name: "Autonoe", gender: "F", desc: "Bright" },
+  { name: "Despina", gender: "F", desc: "Smooth" },
+  { name: "Laomedeia", gender: "F", desc: "Upbeat" },
+  { name: "Achernar", gender: "F", desc: "Soft" },
+  { name: "Pulcherrima", gender: "F", desc: "Forward" },
+];
+
+const DELIVERY_SYSTEM_INSTRUCTION = "You are a passionate Arabic speaker, reciting Arabic poetry. You don't slow down unnecessarily and do this with the authority of a poet that is well practiced. It flows, and sounds serious. Even when you read this quicker, you take breaths that are audible. It's like you're pausing to think about what you're going to say, then it comes out heavy and hard.\n\nاقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية.";
+
+// ── Tabs ─────────────────────────────────────────────────────────────
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+}
+
+// ── Options: voice + temperature ────────────────────────────────────
+let selectedVoice = 'Orus';
+let selectedTemp = 0.35;
+function renderVoiceSelect() {
+  const sel = document.getElementById('voiceSelect');
+  sel.innerHTML = VOICES.map(v =>
+    `<option value="${v.name}"${v.name === selectedVoice ? ' selected' : ''}>${v.name} — ${v.gender === 'M' ? '♂' : '♀'} ${v.desc}</option>`
+  ).join('');
+  sel.addEventListener('change', e => { selectedVoice = e.target.value; });
+}
+document.getElementById('tempSlider').addEventListener('input', e => {
+  selectedTemp = parseFloat(e.target.value);
+  document.getElementById('tempVal').textContent = selectedTemp.toFixed(2);
+});
+
+// ── Enjoyability tab ─────────────────────────────────────────────────
+function tierFor(score) {
+  if (score >= 8) return { cls: 'tier-high', label: 'High' };
+  if (score >= 6) return { cls: 'tier-mid', label: 'Mid' };
+  return { cls: 'tier-low', label: 'Low' };
+}
+const SUB_LABELS = { meter: 'Meter', rhyme: 'Rhyme', euphony: 'Euphony', imagery: 'Imagery', emotion: 'Emotion', impact: 'Impact' };
+
+function renderPoems() {
+  const ranked = POEMS.map(p => ({
+    ...p,
+    consensus: (p.scores.sound + p.scores.balanced + p.scores.impact) / 3
+  })).sort((a, b) => b.consensus - a.consensus);
+
+  const list = document.getElementById('poemList');
+  list.innerHTML = ranked.map((p, idx) => {
+    const tier = tierFor(p.consensus);
+    const bars = ['sound', 'balanced', 'impact'].map(k => {
+      const v = p.scores[k];
+      return `<div class="bar-row">
+        <span class="bar-label">${k}</span>
+        <div class="bar-track"><div class="bar-fill" style="width:${(v / 10) * 100}%"></div></div>
+        <span class="bar-val">${v.toFixed(1)}</span>
+      </div>`;
+    }).join('');
+    const subChips = Object.keys(p.scores.sub).map(k =>
+      `<span class="sub-chip">${SUB_LABELS[k] || k}: <b>${p.scores.sub[k]}</b></span>`
+    ).join('');
+    return `<div class="poem-card" data-idx="${idx}">
+      <div class="poem-head">
+        <div class="poem-titles">
+          <div class="poem-title-ar">${p.title}</div>
+          <div class="poem-poet">#${idx + 1} · <span class="ar">${p.poetAr}</span> (${p.poet})</div>
+        </div>
+        <div class="score-block">
+          <span class="consensus-num">${p.consensus.toFixed(1)}</span>
+          <span class="consensus-lbl">consensus / 10</span>
+          <span class="tier-chip ${tier.cls}">${tier.label}</span>
+        </div>
+      </div>
+      <div class="bars">${bars}</div>
+      <div class="sub-chips">${subChips}</div>
+      <div class="poem-text-grid">
+        <div class="arabic-text">${p.arabic}</div>
+        <div class="english-text">${p.english || ''}</div>
+      </div>
+      <div class="hear-row">
+        <button class="hear-btn" onclick="hearPoem(${idx}, this)">▶ Hear it</button>
+        <span class="hear-status" id="hearStatus-${idx}"></span>
+      </div>
+      <audio class="player" id="player-${idx}" controls></audio>
+    </div>`;
+  }).join('');
+
+  window._RANKED_POEMS = ranked;
+}
+
+// ── Personas tab ─────────────────────────────────────────────────────
+function renderClusterDims() {
+  document.getElementById('dimGrid').innerHTML = CLUSTER_DIMS.map(d =>
+    `<div class="dim-item"><div class="name">${d.name}</div><div class="def">${d.def}</div></div>`
+  ).join('');
+}
+function renderPersonas() {
+  document.getElementById('personaGrid').innerHTML = PERSONAS.map(p => {
+    const dims = p.dims.map(d => `<div class="pdim-row">
+        <span class="pdim-label">${d.n}</span>
+        <span class="pdim-w">${d.w}</span>
+      </div>
+      <div class="pdim-track"><div class="pdim-fill" style="width:${d.w}%"></div></div>
+      ${d.d ? `<div class="pdim-def">${d.d}</div>` : ''}`
+    ).join('');
+    return `<div class="persona-card">
+      <div class="persona-head">
+        <span class="persona-name">${p.name}</span>
+        <span class="mode-badge ${p.mode === 'own' ? 'mode-own' : 'mode-checklist'}">${p.mode}</span>
+      </div>
+      <div class="persona-blurb">${p.blurb}</div>
+      <div class="persona-creed">"${p.creed}"</div>
+      <div class="persona-dims">${dims}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── TTS streaming playback (same approach as tts-lab.html) ──────────
+let _ctx = null, genAbort = null, genSources = [], playingIdx = null;
+function getCtx() {
+  if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_ctx.state === 'suspended') _ctx.resume();
+  return _ctx;
+}
+function stopCurrent() {
+  if (genAbort) { try { genAbort.abort(); } catch {} }
+  genSources.forEach(s => { try { s.stop(); } catch {} });
+  genSources = [];
+  if (playingIdx !== null) {
+    const btn = document.querySelector(`.poem-card[data-idx="${playingIdx}"] .hear-btn`);
+    if (btn) { btn.classList.remove('playing'); btn.textContent = '▶ Hear it'; }
+  }
+  playingIdx = null;
+}
+function pcmToWav(pcm, sampleRate) {
+  const buf = new ArrayBuffer(44 + pcm.length);
+  const v = new DataView(buf);
+  const s = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  const u4 = (o, n) => v.setUint32(o, n, true);
+  const u2 = (o, n) => v.setUint16(o, n, true);
+  s(0, 'RIFF'); u4(4, 36 + pcm.length); s(8, 'WAVE');
+  s(12, 'fmt '); u4(16, 16); u2(20, 1); u2(22, 1);
+  u4(24, sampleRate); u4(28, sampleRate * 2); u2(32, 2); u2(34, 16);
+  s(36, 'data'); u4(40, pcm.length);
+  new Uint8Array(buf, 44).set(pcm);
+  return new Blob([buf], { type: 'audio/wav' });
+}
+
+async function hearPoem(idx, btn) {
+  const poem = window._RANKED_POEMS[idx];
+  const status = document.getElementById(`hearStatus-${idx}`);
+  const player = document.getElementById(`player-${idx}`);
+
+  // Only one plays at a time: abort/stop whatever came before.
+  const wasPlayingThis = playingIdx === idx;
+  stopCurrent();
+  if (wasPlayingThis) { status.textContent = ''; status.className = 'hear-status'; return; } // toggle off
+
+  playingIdx = idx;
+  genAbort = new AbortController();
+  const mySignal = genAbort.signal;
+
+  btn.classList.add('playing');
+  btn.textContent = '■ Stop';
+  status.className = 'hear-status';
+  status.textContent = `Generating · ${selectedVoice} · temp ${selectedTemp.toFixed(2)}…`;
+  player.style.display = 'none';
+  if (player.src) URL.revokeObjectURL(player.src);
+
+  const t0 = Date.now();
+  try {
+    const ctx = getCtx();
+    let sr = 24000, nextTime = 0, firstAt = null;
+    const bytes = [];
+    const playChunk = (b64) => {
+      const pcm = Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0));
+      bytes.push(pcm);
+      const i16 = new Int16Array(pcm.buffer, pcm.byteOffset, pcm.length >> 1);
+      const buf = ctx.createBuffer(1, i16.length, sr);
+      const ch = buf.getChannelData(0);
+      for (let i = 0; i < i16.length; i++) ch[i] = i16[i] / 32768;
+      const src = ctx.createBufferSource();
+      src.buffer = buf; src.connect(ctx.destination);
+      genSources.push(src);
+      const now = ctx.currentTime;
+      if (nextTime < now + 0.05) nextTime = now + 0.05;
+      if (firstAt === null) {
+        firstAt = Date.now();
+        status.className = 'hear-status ok';
+        status.textContent = `▶ streaming · first sound ${((firstAt - t0) / 1000).toFixed(1)}s`;
+      }
+      src.start(nextTime); nextTime += buf.duration;
+    };
+
+    const res = await fetch(`${window.location.origin}/api/ai/live-tts?stream=1`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: poem.arabic,
+        voiceName: selectedVoice,
+        systemInstruction: DELIVERY_SYSTEM_INSTRUCTION,
+        temperature: selectedTemp
+      }),
+      signal: mySignal
+    });
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let sbuf = '';
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      sbuf += dec.decode(value, { stream: true });
+      let sep;
+      while ((sep = sbuf.indexOf('\n\n')) !== -1) {
+        const raw = sbuf.slice(0, sep); sbuf = sbuf.slice(sep + 2);
+        for (const line of raw.split('\n')) {
+          if (!line.startsWith('data:')) continue;
+          const pl = line.slice(5).trim(); if (!pl) continue;
+          let e; try { e = JSON.parse(pl); } catch { continue; }
+          if (e.meta) sr = e.meta.sampleRate || sr;
+          else if (e.chunk) playChunk(e.chunk);
+          else if (e.error) throw new Error(e.error);
+        }
+      }
+    }
+    if (bytes.length === 0) throw new Error('No audio returned');
+
+    const total = new Uint8Array(bytes.reduce((n, b) => n + b.length, 0));
+    let off = 0; for (const b of bytes) { total.set(b, off); off += b.length; }
+    player.src = URL.createObjectURL(pcmToWav(total, sr));
+    player.style.display = 'block'; player.load();
+
+    const dur = (total.length / 2 / sr).toFixed(1);
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+    status.className = 'hear-status ok';
+    status.textContent = `✓ ${dur}s audio · rendered ${elapsed}s · ${selectedVoice} · temp ${selectedTemp.toFixed(2)}`;
+  } catch (e) {
+    if (mySignal.aborted || e.name === 'AbortError') return;
+    status.className = 'hear-status error';
+    status.textContent = `Error: ${e.message}`;
+  } finally {
+    if (genAbort && genAbort.signal === mySignal) {
+      btn.classList.remove('playing');
+      btn.textContent = '▶ Hear it';
+      if (playingIdx === idx) playingIdx = null;
+    }
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+renderVoiceSelect();
+renderPoems();
+renderClusterDims();
+renderPersonas();
+</script>
+</body>
+</html>

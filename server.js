@@ -43,6 +43,18 @@ const loadLabHtml = () => {
   }
   return _labHtml;
 };
+// Enjoyability Lab HTML — same lazy-load-and-cache pattern as the TTS lab above.
+let _enjoyabilityHtml = null;
+const loadEnjoyabilityHtml = () => {
+  if (_enjoyabilityHtml === null) {
+    try {
+      _enjoyabilityHtml = readFileSync(fileURLToPath(new URL('enjoyability-lab.html', import.meta.url)), 'utf8');
+    } catch {
+      _enjoyabilityHtml = '';
+    }
+  }
+  return _enjoyabilityHtml;
+};
 const PORT = process.env.PORT || 3001;
 const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
 const LOG_DEBUG = process.env.LOG_DEBUG === 'true'; // verbose DB debug, off by default
@@ -1635,6 +1647,15 @@ app.get('/tts-lab', (_req, res) => {
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; media-src blob:"
   );
   res.type('html').send(loadLabHtml());
+});
+
+// Enjoyability Lab — dev-only experiment page (relaxed CSP for inline scripts)
+app.get('/enjoyability', (_req, res) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; media-src blob:"
+  );
+  res.type('html').send(loadEnjoyabilityHtml());
 });
 
 app.get(

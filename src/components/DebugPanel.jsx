@@ -10,6 +10,7 @@ import { useAudioStore } from '../stores/audioStore';
 import { API_MODELS } from '../services/gemini.js';
 import { abortPlay } from '../stores/actions/togglePlay.js';
 import { cacheOperations, CACHE_CONFIG } from '../services/cache.js';
+import { liveTimingProfile, LIVE_TIMING_PROFILE_OPTIONS } from '../utils/liveTimingProfiles.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -20,7 +21,10 @@ const DebugPanel = ({ controlBarRef }) => {
   // Serialize the whole log to plain text and copy it to the clipboard.
   const onCopyLogs = async () => {
     const text = logs
-      .map((l) => `${l.time || l.rel || ''} [${(l.type || 'info').toUpperCase()}] [${l.label}] ${l.msg}`)
+      .map(
+        (l) =>
+          `${l.time || l.rel || ''} [${(l.type || 'info').toUpperCase()}] [${l.label}] ${l.msg}`
+      )
       .join('\n');
     const ok = await (async () => {
       try {
@@ -45,7 +49,11 @@ const DebugPanel = ({ controlBarRef }) => {
     })();
     useUIStore
       .getState()
-      .addLog('Debug', ok ? `Copied ${logs.length} log lines to clipboard` : 'Copy failed', ok ? 'success' : 'error');
+      .addLog(
+        'Debug',
+        ok ? `Copied ${logs.length} log lines to clipboard` : 'Copy failed',
+        ok ? 'success' : 'error'
+      );
     if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
@@ -68,12 +76,23 @@ const DebugPanel = ({ controlBarRef }) => {
   // Initialize the engine display from the actual ttsMode so the panel and playback
   // agree (ttsMode defaults to 'live'). Falls back to the REST model label otherwise.
   const [ttsModel, setTtsModel] = useState(() =>
-    useUIStore.getState().ttsMode === 'live' ? 'live' : API_MODELS.tts.includes('pro') ? 'pro' : 'flash'
+    useUIStore.getState().ttsMode === 'live'
+      ? 'live'
+      : API_MODELS.tts.includes('pro')
+        ? 'pro'
+        : 'flash'
   );
   const [bugDescription, setBugDescription] = useState('');
   const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const [bugError, setBugError] = useState('');
   const [lastViewedCount, setLastViewedCount] = useState(0);
+  const [timingMode, setTimingMode] = useState(() => {
+    try {
+      return liveTimingProfile(localStorage.getItem('ttsTimingMode')).value;
+    } catch {
+      return 'transcript-moras-weighted-fallback';
+    }
+  });
   const scrollRef = useRef(null);
   const btnPos = { right: 8, bottom: 52 };
   const panelRight = 68; // clears sidebar (right:8 + ~52px wide + 8px gap)
@@ -126,7 +145,9 @@ const DebugPanel = ({ controlBarRef }) => {
       useUIStore.getState().addLog('Settings', `Speech engine → Live (${v}, temp ${t})`, 'user');
     } else {
       useUIStore.getState().setTtsMode('rest');
-      useUIStore.getState().addLog('Settings', `Speech engine → REST (${API_MODELS?.tts || 'flash'})`, 'user');
+      useUIStore
+        .getState()
+        .addLog('Settings', `Speech engine → REST (${API_MODELS?.tts || 'flash'})`, 'user');
       if (next === 'pro') {
         API_MODELS.tts = 'gemini-2.5-pro-preview-tts';
         API_MODELS.ttsFallback = 'gemini-2.5-flash-preview-tts';
@@ -224,9 +245,7 @@ const DebugPanel = ({ controlBarRef }) => {
       {/* Floating log panel */}
       <div
         className={`fixed z-[200] flex flex-col rounded-2xl transition-all duration-200 border ${theme.border} ${
-          darkMode
-            ? 'bg-black/70'
-            : 'bg-white/80'
+          darkMode ? 'bg-black/70' : 'bg-white/80'
         } backdrop-blur-xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
         style={{
           right: panelRight,
@@ -283,10 +302,20 @@ const DebugPanel = ({ controlBarRef }) => {
                 <span className={darkMode ? 'text-white/95' : 'text-black/80'}>
                   {idx === 0 ? log.time : log.rel}
                 </span>{' '}
-                <span className="font-semibold" style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color }}>
+                <span
+                  className="font-semibold"
+                  style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color }}
+                >
                   {(CATEGORY_MAP[log.type] || CATEGORY_MAP.info).prefix}
                 </span>{' '}
-                <span style={{ color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color, opacity: 0.7 }}>[{log.label}]</span>
+                <span
+                  style={{
+                    color: (CATEGORY_MAP[log.type] || CATEGORY_MAP.info).color,
+                    opacity: 0.7,
+                  }}
+                >
+                  [{log.label}]
+                </span>
               </div>
               <div className={darkMode ? 'text-white/50' : 'text-black/50'}>{log.msg}</div>
             </div>
@@ -315,7 +344,12 @@ const DebugPanel = ({ controlBarRef }) => {
             style={{
               width: 30,
               height: 12,
-              backgroundColor: ttsModel === 'pro' ? 'rgba(251,191,36,0.18)' : ttsModel === 'flash' ? 'rgba(52,211,153,0.15)' : 'rgba(251,146,60,0.18)',
+              backgroundColor:
+                ttsModel === 'pro'
+                  ? 'rgba(251,191,36,0.18)'
+                  : ttsModel === 'flash'
+                    ? 'rgba(52,211,153,0.15)'
+                    : 'rgba(251,146,60,0.18)',
               border: `1px solid ${ttsModel === 'pro' ? 'rgba(251,191,36,0.35)' : ttsModel === 'flash' ? 'rgba(52,211,153,0.3)' : 'rgba(251,146,60,0.35)'}`,
             }}
           >
@@ -326,12 +360,24 @@ const DebugPanel = ({ controlBarRef }) => {
                 height: 8,
                 top: 1,
                 left: ttsModel === 'pro' ? 1 : ttsModel === 'flash' ? 10 : 19,
-                backgroundColor: ttsModel === 'pro' ? 'rgb(251,191,36)' : ttsModel === 'flash' ? 'rgb(52,211,153)' : 'rgb(251,146,60)',
-                boxShadow: ttsModel === 'pro' ? '0 0 4px rgba(251,191,36,0.7)' : ttsModel === 'flash' ? '0 0 4px rgba(52,211,153,0.6)' : '0 0 4px rgba(251,146,60,0.7)',
+                backgroundColor:
+                  ttsModel === 'pro'
+                    ? 'rgb(251,191,36)'
+                    : ttsModel === 'flash'
+                      ? 'rgb(52,211,153)'
+                      : 'rgb(251,146,60)',
+                boxShadow:
+                  ttsModel === 'pro'
+                    ? '0 0 4px rgba(251,191,36,0.7)'
+                    : ttsModel === 'flash'
+                      ? '0 0 4px rgba(52,211,153,0.6)'
+                      : '0 0 4px rgba(251,146,60,0.7)',
               }}
             />
           </div>
-          <span className={`text-[0.5625rem] font-mono font-bold flex-shrink-0 ${ttsModel === 'pro' ? 'text-amber-400' : ttsModel === 'flash' ? 'text-emerald-400' : 'text-orange-400'}`}>
+          <span
+            className={`text-[0.5625rem] font-mono font-bold flex-shrink-0 ${ttsModel === 'pro' ? 'text-amber-400' : ttsModel === 'flash' ? 'text-emerald-400' : 'text-orange-400'}`}
+          >
             {ttsModel === 'pro' ? 'Pro' : ttsModel === 'flash' ? 'Flash' : 'Live 3.1'}
           </span>
         </button>
@@ -340,49 +386,104 @@ const DebugPanel = ({ controlBarRef }) => {
         {ttsModel === 'live' && (
           <div className={`flex flex-col gap-2 px-4 py-2 border-t ${theme.border} flex-none`}>
             <div className="flex items-center gap-2">
-              <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">Voice</span>
+              <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">
+                Voice
+              </span>
               <select
                 value={liveVoice}
                 onChange={(e) => {
                   useUIStore.getState().setLiveVoice(e.target.value);
-                  useUIStore.getState().addLog('Settings', `Live voice → ${e.target.value}`, 'user');
+                  useUIStore
+                    .getState()
+                    .addLog('Settings', `Live voice → ${e.target.value}`, 'user');
                   // Cancel any in-flight stream + reset loaded audio so the next Listen
                   // regenerates in the new voice and isn't blocked as "already in
                   // progress" (otherwise resume-from-blob replays the old voice) (#558).
                   stopAndResetAudio();
                 }}
                 className="flex-1 text-[0.6rem] font-mono rounded px-1.5 py-0.5 cursor-pointer"
-                style={{ background: 'rgba(251,146,60,0.1)', border: '1px solid rgba(251,146,60,0.3)', color: 'rgb(251,146,60)' }}
+                style={{
+                  background: 'rgba(251,146,60,0.1)',
+                  border: '1px solid rgba(251,146,60,0.3)',
+                  color: 'rgb(251,146,60)',
+                }}
               >
                 <optgroup label="♀ Female">
                   {VOICE_CATALOG.filter((v) => v.gender === 'f').map((v) => (
-                    <option key={v.name} value={v.name}>{v.name} — {v.descriptor}</option>
+                    <option key={v.name} value={v.name}>
+                      {v.name} — {v.descriptor}
+                    </option>
                   ))}
                 </optgroup>
                 <optgroup label="♂ Male">
                   {VOICE_CATALOG.filter((v) => v.gender === 'm').map((v) => (
-                    <option key={v.name} value={v.name}>{v.name} — {v.descriptor}</option>
+                    <option key={v.name} value={v.name}>
+                      {v.name} — {v.descriptor}
+                    </option>
                   ))}
                 </optgroup>
               </select>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">Temp</span>
+              <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50 flex-shrink-0">
+                Temp
+              </span>
               <input
-                type="range" min="0" max="2" step="0.05"
+                type="range"
+                min="0"
+                max="2"
+                step="0.05"
                 value={liveTemperature}
-                onChange={(e) => { useUIStore.getState().setLiveTemperature(parseFloat(e.target.value)); useUIStore.getState().addLog('Settings', `Live temperature → ${parseFloat(e.target.value).toFixed(2)}`, 'user'); }}
+                onChange={(e) => {
+                  useUIStore.getState().setLiveTemperature(parseFloat(e.target.value));
+                  useUIStore
+                    .getState()
+                    .addLog(
+                      'Settings',
+                      `Live temperature → ${parseFloat(e.target.value).toFixed(2)}`,
+                      'user'
+                    );
+                }}
                 className="flex-1 h-1 cursor-pointer accent-orange-400"
               />
-              <span className="text-[0.6rem] font-mono text-orange-400 w-7 text-right">{liveTemperature.toFixed(2)}</span>
+              <span className="text-[0.6rem] font-mono text-orange-400 w-7 text-right">
+                {liveTemperature.toFixed(2)}
+              </span>
+            </div>
+            <div className="flex flex-col items-start gap-2">
+              <div className="flex flex-col items-start gap-1">
+                <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">
+                  Timing Mode
+                </span>
+                <select
+                  value={timingMode}
+                  onChange={(e) => {
+                    setTimingMode(e.target.value);
+                    try {
+                      localStorage.setItem('ttsTimingMode', e.target.value);
+                    } catch {}
+                    useUIStore
+                      .getState()
+                      .addLog('Settings', `Timing mode → ${e.target.value}`, 'user');
+                    // A profile changes the schedule, so discard any cached
+                    // playback rather than silently continuing the old one.
+                    stopAndResetAudio();
+                  }}
+                  className={`rounded text-[0.75rem] px-2 py-1 cursor-pointer ${darkMode ? 'bg-white/[0.06] border border-white/[0.1] text-white/80' : 'bg-black/[0.03] border border-black/[0.1] text-black/70'}`}
+                >
+                  {LIVE_TIMING_PROFILE_OPTIONS.map((profile) => (
+                    <option key={profile.value} value={profile.value}>
+                      {profile.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         )}
 
         {/* Bug report input */}
-        <div
-          className={`flex items-center gap-1.5 px-4 py-2 border-t ${theme.border} flex-none`}
-        >
+        <div className={`flex items-center gap-1.5 px-4 py-2 border-t ${theme.border} flex-none`}>
           <input
             type="text"
             value={bugDescription}

@@ -30,13 +30,19 @@ import { buildLiveWordTimings } from './src/utils/liveWordTiming.js';
 
 const { Pool } = pg;
 const app = express();
-let _labHtml = '';
-try {
-  _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
-} catch {
-  // In test environment, import.meta.url may not be a valid file URL
-  _labHtml = '<html><!-- tts-lab.html not available in test environment --></html>';
-}
+// The lab is a development-only page. Loading it lazily prevents a missing file —
+// or a non-file import URL under the test runner — from blocking server startup.
+let _labHtml = null;
+const loadLabHtml = () => {
+  if (_labHtml === null) {
+    try {
+      _labHtml = readFileSync(fileURLToPath(new URL('tts-lab.html', import.meta.url)), 'utf8');
+    } catch {
+      _labHtml = '';
+    }
+  }
+  return _labHtml;
+};
 const PORT = process.env.PORT || 3001;
 const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
 const LOG_DEBUG = process.env.LOG_DEBUG === 'true'; // verbose DB debug, off by default
@@ -1289,7 +1295,7 @@ app.get('/tts-lab', (_req, res) => {
     'Content-Security-Policy',
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; media-src blob:"
   );
-  res.type('html').send(_labHtml);
+  res.type('html').send(loadLabHtml());
 });
 
 app.get(

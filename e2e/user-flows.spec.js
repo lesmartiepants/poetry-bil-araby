@@ -158,7 +158,10 @@ test.describe('User Flows', () => {
   });
 
   // #3 — Poetic insight (desktop only)
-  test('user reads poetic insight on desktop', async ({ page, viewport }) => {
+  // SKIP: the standalone "Explain poem meaning" button + insight overlay belonged to the old
+  // carousel reader. The vertical-feed reader surfaces insights differently ("Poem Insights"
+  // in ReaderActions); this flow needs rewriting for that UI. Tracked for e2e migration.
+  test.skip('user reads poetic insight on desktop', async ({ page, viewport }) => {
     if (!viewport || viewport.width < 768) {
       test.skip();
     }
@@ -187,20 +190,27 @@ test.describe('User Flows', () => {
       return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
     });
 
-    // Click the ThemeToggle button directly (no expand or settings gear needed)
-    const themeBtn = page.locator('button[aria-label="Switch to light mode"], button[aria-label="Switch to dark mode"]').first();
+    // Theme toggle now lives inside the Account menu (bottom nav). Open it, then tap the
+    // Night/Day row — one tap flips the theme.
+    await page.locator('button[aria-label="Account menu"]').first().click();
+    const themeBtn = page
+      .locator('button[aria-label="Switch to day mode"], button[aria-label="Switch to night mode"]')
+      .first();
     await expect(themeBtn).toBeVisible({ timeout: 3000 });
     await themeBtn.click();
 
-    // Wait for theme transition
-    await page.waitForTimeout(300);
-
-    // Background should have changed
-    const newBg = await page.evaluate(() => {
-      const rootDiv = document.querySelector('#root > div');
-      return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
-    });
-    expect(newBg).not.toBe(initialBg);
+    // The theme transition is animated — poll until the root background actually changes rather
+    // than reading once after a fixed delay (which raced the transition and flaked).
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const rootDiv = document.querySelector('#root > div');
+            return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
+          }),
+        { timeout: 3000 }
+      )
+      .not.toBe(initialBg);
   });
 
   // #5 — Cycle Arabic font
@@ -208,10 +218,12 @@ test.describe('User Flows', () => {
     // Initial font should be Amiri (default, index 0)
     await expect(page.locator('.font-amiri').first()).toBeVisible();
 
-    // Open the TextSettingsPill (no expand or settings gear needed)
-    const textSettingsBtn = page.locator('button[aria-label="Text settings"]').first();
-    await expect(textSettingsBtn).toBeVisible({ timeout: 3000 });
-    await textSettingsBtn.click();
+    // Display settings now live in the Account menu → "Display Settings" (the old top-right
+    // "Aa" pill was removed). Open the menu, then the settings panel.
+    await page.locator('button[aria-label="Account menu"]').first().click();
+    const displaySettingsBtn = page.locator('button[aria-label="Display settings"]').first();
+    await expect(displaySettingsBtn).toBeVisible({ timeout: 3000 });
+    await displaySettingsBtn.click();
     await page.waitForTimeout(300);
 
     const fontTrigger = page.locator('button[aria-label="Select font"]').first();
@@ -233,7 +245,9 @@ test.describe('User Flows', () => {
     await openDrawerBtn.click();
 
     // Wait for drawer to render with poet options
-    const dropdownBtn = page.locator('[data-testid="poet-picker-button"]:has-text("المتنبي")').first();
+    const dropdownBtn = page
+      .locator('[data-testid="poet-picker-button"]:has-text("المتنبي")')
+      .first();
     await expect(dropdownBtn).toBeVisible({ timeout: 3000 });
 
     // Wait for drawer slide-in animation to finish
@@ -247,7 +261,10 @@ test.describe('User Flows', () => {
   });
 
   // #7 — Copy poem to clipboard
-  test('user copies poem to clipboard', async ({ page, context }) => {
+  // SKIP: the copy action lived in the removed VerticalSidebar. The vertical-feed reader has no
+  // standalone "Copy poem to clipboard" control; sharing/copy moved into the reader flow. Tracked
+  // for e2e migration.
+  test.skip('user copies poem to clipboard', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
     // Copy button is in the always-visible sidebar — no expand needed
@@ -325,11 +342,15 @@ test.describe('User Flows', () => {
     await expect(page.locator('[dir="rtl"]').first()).toBeVisible();
   });
 
-  // #13 — Auth button always visible
+  // #13 — Auth entry point reachable
   test('auth button is always visible', async ({ page }) => {
-    // Sign-in button is in the always-visible sidebar — no expand needed
+    // Sign-in moved into the Account menu (bottom nav). The person-icon trigger is always
+    // visible; opening it reveals the Sign in action.
+    const accountBtn = page.locator('button[aria-label="Account menu"]').first();
+    await expect(accountBtn).toBeVisible({ timeout: 5000 });
+    await accountBtn.click();
     const authBtn = page.locator('button[aria-label="Sign in"]').first();
-    await expect(authBtn).toBeVisible({ timeout: 5000 });
+    await expect(authBtn).toBeVisible({ timeout: 3000 });
   });
 
   // #14 — Save and Flag persist after Discover (no layout shift)
@@ -369,7 +390,9 @@ test.describe('User Flows', () => {
 test.describe('Mobile viewport sidebar', () => {
   test.use({ viewport: { width: 402, height: 874 } });
 
-  test('mobile viewport shows VerticalSidebar with Settings', async ({ page }) => {
+  // SKIP: asserts the removed VerticalSidebar's "Copy poem to clipboard" control on mobile.
+  // The vertical-feed reader has no such sidebar; needs rewriting for the new mobile nav.
+  test.skip('mobile viewport shows VerticalSidebar with Settings', async ({ page }) => {
     await page.route('**/api/**', (route) => route.abort());
     await page.route('**/api/ai/**', (route) => route.abort());
     await page.addInitScript(() => {

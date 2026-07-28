@@ -359,8 +359,8 @@ describe('uiStore', () => {
       expect(useUIStore.getState().font).toBe('Amiri');
     });
 
-    it('starts at text size 2 (Large)', () => {
-      expect(useUIStore.getState().textSize).toBe(2);
+    it('starts at text size 1 (Medium)', () => {
+      expect(useUIStore.getState().textSize).toBe(1);
     });
 
     it('starts with translation shown', () => {
@@ -443,14 +443,15 @@ describe('uiStore', () => {
     });
 
     it('cycleTextSize cycles 0-3 and wraps', () => {
-      useUIStore.getState().cycleTextSize(); // 2 -> 3
-      expect(useUIStore.getState().textSize).toBe(3);
-      useUIStore.getState().cycleTextSize(); // 3 -> 0
-      expect(useUIStore.getState().textSize).toBe(0);
+      useUIStore.getState().setTextSize(0); // start from Small regardless of default
       useUIStore.getState().cycleTextSize(); // 0 -> 1
       expect(useUIStore.getState().textSize).toBe(1);
       useUIStore.getState().cycleTextSize(); // 1 -> 2
       expect(useUIStore.getState().textSize).toBe(2);
+      useUIStore.getState().cycleTextSize(); // 2 -> 3
+      expect(useUIStore.getState().textSize).toBe(3);
+      useUIStore.getState().cycleTextSize(); // 3 -> 0 (wraps)
+      expect(useUIStore.getState().textSize).toBe(0);
     });
 
     it('toggleTranslation flips flag', () => {
@@ -536,7 +537,7 @@ describe('modalStore', () => {
       expect(state.authModal).toBe(false);
       expect(state.authMessage).toBe('');
       expect(state.savedPoems).toBe(false);
-      expect(state.splash).toBe(true); // splash always starts open
+      expect(state.splash).toBe(false); // splash/landing disabled via FEATURES.landing
       expect(state.insightsDrawer).toBe(false);
       expect(state.shortcutHelp).toBe(false);
       expect(state.poetPicker).toBe(false);
@@ -673,6 +674,9 @@ describe('modalStore', () => {
       useModalStore.getState().toggleShortcutHelp();
       useModalStore.getState().openPoetPicker();
       useModalStore.getState().openShareCard();
+      // Force splash open to prove closeAll leaves it untouched regardless of the
+      // FEATURES.landing default.
+      useModalStore.setState({ splash: true });
       useModalStore.getState().closeAll();
       const state = useModalStore.getState();
       expect(state.authModal).toBe(false);

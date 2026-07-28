@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 // ─── Unit tests for share card designs ──────────────────────────────────
@@ -32,8 +32,8 @@ const mockPoem = {
 
 // ─── Design registry tests ──────────────────────────────────────────────
 describe('SHARE_CARD_DESIGNS', () => {
-  it('should export exactly 5 designs', () => {
-    expect(SHARE_CARD_DESIGNS).toHaveLength(5);
+  it('should export exactly 12 designs', () => {
+    expect(SHARE_CARD_DESIGNS).toHaveLength(12);
   });
 
   it('each design has required fields', () => {
@@ -54,13 +54,29 @@ describe('SHARE_CARD_DESIGNS', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('includes the 5 expected design IDs', () => {
+  it('includes the artist, atmosphere, and composition design IDs', () => {
     const ids = SHARE_CARD_DESIGNS.map((d) => d.id);
-    expect(ids).toContain('diwan');
-    expect(ids).toContain('ibnMuqla');
-    expect(ids).toContain('sinan');
-    expect(ids).toContain('zahaHadid');
-    expect(ids).toContain('hassanFathy');
+    for (const id of [
+      'diwan',
+      'ibnMuqla',
+      'sinan',
+      'zahaHadid',
+      'hassanFathy',
+      'layl',
+      'mishkat',
+      'sahifa',
+      'musnad',
+      'muqabala',
+      'najma',
+      'iqtibas',
+    ]) {
+      expect(ids).toContain(id);
+    }
+  });
+
+  it('no longer includes the removed neon design', () => {
+    const ids = SHARE_CARD_DESIGNS.map((d) => d.id);
+    expect(ids).not.toContain('neon');
   });
 
   it('each design nameAr is in Arabic script', () => {
@@ -213,18 +229,21 @@ describe('renderShareCard', () => {
     expect(ctx.fillRect).toHaveBeenCalled();
   });
 
-  it('calls fillText with poem text for each design', () => {
+  it('draws the poet name and verses for each design', () => {
     for (const design of SHARE_CARD_DESIGNS) {
       ctx.fillText.mockClear();
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, design.id);
-      // At minimum it should draw poet name and verses
       expect(ctx.fillText).toHaveBeenCalled();
-      // Check English poet name is drawn (in summary line "[author] – [title]")
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);
-      const hasEnglishPoet = calls.some(
-        (text) => typeof text === 'string' && text.includes(mockPoem.poet)
+      // Every design draws the Arabic poet name and the opening verse
+      const hasPoet = calls.some(
+        (text) => typeof text === 'string' && text.includes(mockPoem.poetArabic)
       );
-      expect(hasEnglishPoet).toBe(true);
+      const hasVerse = calls.some(
+        (text) => typeof text === 'string' && text.includes('يا دِمَشقُ')
+      );
+      expect(hasPoet).toBe(true);
+      expect(hasVerse).toBe(true);
     }
   });
 
@@ -278,12 +297,24 @@ describe('renderShareCard', () => {
     }
   });
 
-  it('draws English poet name and poem title in every design', () => {
-    for (const design of SHARE_CARD_DESIGNS) {
+  it('draws the English poet name and title in the artist designs', () => {
+    // The artist/atmosphere designs use the bilingual header, which renders an
+    // English "[author] – [title]" summary. The composition layouts (musnad,
+    // muqabala, najma, iqtibas) are intentionally Arabic-forward and omit it.
+    const ARTIST_DESIGNS = [
+      'diwan',
+      'ibnMuqla',
+      'sinan',
+      'zahaHadid',
+      'hassanFathy',
+      'layl',
+      'mishkat',
+      'sahifa',
+    ];
+    for (const id of ARTIST_DESIGNS) {
       ctx.fillText.mockClear();
-      renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, design.id);
+      renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, id);
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);
-      // English poet and title are combined in summary line: "[author] – [title]"
       const hasEnglishPoet = calls.some(
         (text) => typeof text === 'string' && text.includes(mockPoem.poet)
       );
@@ -324,18 +355,37 @@ describe('ShareCardModal', () => {
     ShareCardModal = mod.default;
   });
 
-  it('renders with image preview', () => {
+  it('renders the WYSIWYG canvas preview image (Folio 3.4B)', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Preview is now an <img> element (full-res, supports long-press save)
-    expect(screen.getByAltText('Share card preview')).toBeInTheDocument();
+    // Preview is the actual canvas render — same pixels as the export
+    const preview = screen.getByAltText('Share card preview');
+    expect(preview.tagName).toBe('IMG');
+    expect(preview.closest('figure')).toHaveAttribute('data-style', 'diwan');
   });
 
-  it('shows design name for each design option', () => {
+  it('shows an arch radio for each design option', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Check that design selector buttons exist (now English names)
+    // The arcade is a radiogroup of nameless arches (aria-label carries the name)
+    const radios = screen.getAllByRole('radio');
+    expect(radios).toHaveLength(SHARE_CARD_DESIGNS.length);
     for (const d of SHARE_CARD_DESIGNS) {
-      expect(screen.getByText(d.name)).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: `${d.name} style` })).toBeInTheDocument();
     }
+  });
+
+  it('shows the material caption for the active design', () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    // Dīwān is active by default — caption describes the material, not the name
+    expect(screen.getByText('gold foil on obsidian')).toBeInTheDocument();
+  });
+
+  it('renders the typed dedication header', () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    expect(screen.getByText('Send this poem')).toBeInTheDocument();
+    expect(screen.getByText('شارِك')).toBeInTheDocument();
+    expect(
+      screen.getByLabelText('to a friend, to a lover, to a stranger, to yourself')
+    ).toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', async () => {
@@ -356,31 +406,100 @@ describe('ShareCardModal', () => {
     expect(screen.getByRole('button', { name: /share/i })).toBeInTheDocument();
   });
 
-  it('switches design when a design option is clicked', async () => {
+  it('has a copy-link button', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Click on Sinan design (now English label)
-    const sinanBtn = screen.getByText('Sinan');
-    await userEvent.click(sinanBtn);
-    // Should highlight Sinan (the button parent should have active styling)
-    expect(sinanBtn.closest('button')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /copy link/i })).toBeInTheDocument();
   });
 
-  it('renders image preview with hidden download canvas', () => {
+  it('switches design when an arch is clicked (after the dissolve)', async () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Preview is now an <img> element (full-res, supports long-press save on mobile)
-    const preview = screen.getByAltText('Share card preview');
-    expect(preview.tagName).toBe('IMG');
-    // Hidden canvas for download/share
+    const sinanArch = screen.getByRole('radio', { name: 'Sinan style' });
+    await userEvent.click(sinanArch);
+    // The card dissolves for 300ms before the new style lands
+    await waitFor(() => {
+      expect(sinanArch).toHaveAttribute('aria-checked', 'true');
+      expect(screen.getByAltText('Share card preview').closest('figure')).toHaveAttribute(
+        'data-style',
+        'sinan'
+      );
+    });
+    // Caption swaps to the new material description
+    expect(screen.getByText('celestial geometry')).toBeInTheDocument();
+  });
+
+  it('opens the lines panel with a row per verse line', async () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /choose lines/i }));
+    // One checkbox row per Arabic line (mock poem has 6)
+    const rows = screen.getAllByRole('checkbox');
+    expect(rows).toHaveLength(6);
+    // First four lines selected by default
+    expect(rows[0]).toHaveAttribute('aria-checked', 'true');
+    expect(rows[3]).toHaveAttribute('aria-checked', 'true');
+    expect(rows[4]).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByText('4 of 6 lines')).toBeInTheDocument();
+    // Alignment controls live in the panel
+    expect(screen.getByRole('button', { name: /align center/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /align right/i })).toBeInTheDocument();
+  });
+
+  it('toggles a line selection and updates the count', async () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /choose lines/i }));
+    const rows = screen.getAllByRole('checkbox');
+    await userEvent.click(rows[4]);
+    expect(rows[4]).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText('5 of 6 lines')).toBeInTheDocument();
+    await userEvent.click(rows[0]);
+    expect(rows[0]).toHaveAttribute('aria-checked', 'false');
+    expect(screen.getByText('4 of 6 lines')).toBeInTheDocument();
+  });
+
+  it('never allows unselecting the last remaining line', async () => {
+    const onePair = { ...mockPoem, arabic: 'بيت واحد', english: 'one line' };
+    render(<ShareCardModal poem={onePair} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /choose lines/i }));
+    const row = screen.getByRole('checkbox');
+    await userEvent.click(row);
+    expect(row).toHaveAttribute('aria-checked', 'true');
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('Keep at least one line');
+    });
+  });
+
+  it('sets alignment via the panel controls', async () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /choose lines/i }));
+    const rightBtn = screen.getByRole('button', { name: /align right/i });
+    await userEvent.click(rightBtn);
+    expect(rightBtn).toHaveAttribute('aria-pressed', 'true');
+    // Clicking again returns to the design default (neither pressed)
+    await userEvent.click(rightBtn);
+    expect(rightBtn).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('closes the panel with Done and restores the dock', async () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /choose lines/i }));
+    expect(screen.queryByRole('button', { name: /^share$/i })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /done/i }));
+    expect(screen.getByRole('button', { name: /^share$/i })).toBeInTheDocument();
+  });
+
+  it('copies the poem link and shows a toast', async () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    await userEvent.click(screen.getByRole('button', { name: /copy link/i }));
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(
+      `${window.location.origin}/poem/${mockPoem.id}`
+    );
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent('Link copied');
+    });
+  });
+
+  it('keeps a hidden canvas for PNG generation', () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
     const hiddenCanvas = document.querySelector('canvas[aria-hidden="true"]');
     expect(hiddenCanvas).toBeInTheDocument();
-  });
-
-  it('has preview image with correct aspect ratio container', () => {
-    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    const preview = screen.getByAltText('Share card preview');
-    expect(preview).toBeInTheDocument();
-    // The image should be inside a container with aspect-ratio styling
-    const container = preview.closest('div');
-    expect(container.style.aspectRatio).toBe('1080 / 1350');
   });
 });

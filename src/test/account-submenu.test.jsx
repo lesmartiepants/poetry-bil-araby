@@ -126,7 +126,7 @@ describe('Account Submenu - Signed In', () => {
     });
 
     // Saved poems count is reflected in the "My poems" button aria-label (separate from Account menu trigger)
-    const myPoemsBtn = screen.getByLabelText(/My poems, 2 saved/);
+    const myPoemsBtn = screen.getByLabelText(/Library, 2 saved/);
     expect(myPoemsBtn).toBeTruthy();
   });
 
@@ -139,7 +139,7 @@ describe('Account Submenu - Signed In', () => {
     });
 
     // The "My poems" sidebar button aria-label includes the count for screen readers
-    const myPoemsBtn = screen.getByLabelText(/My poems, 2 saved/);
+    const myPoemsBtn = screen.getByLabelText(/Library, 2 saved/);
     expect(myPoemsBtn).toBeTruthy();
   });
 
@@ -158,6 +158,20 @@ describe('Account Submenu - Signed In', () => {
     expect(screen.getByLabelText('Sign out')).toBeTruthy();
   });
 
+  it('shows the voice persona using its English pronunciation', async () => {
+    mockAutoLoadFetch();
+    render(<DiwanApp />);
+
+    await waitFor(() => {
+      expect(document.body.textContent).toContain('Nizar Qabbani');
+    });
+
+    await userEvent.click(screen.getByLabelText(/Account menu/));
+
+    expect(screen.getByLabelText(/Reading voice: Azzam/)).toBeTruthy();
+    expect(screen.getByText('Azzam')).toBeTruthy();
+  });
+
   it('opens SavedPoemsView when My Poems sidebar button is clicked', async () => {
     mockAutoLoadFetch();
     render(<DiwanApp />);
@@ -167,7 +181,7 @@ describe('Account Submenu - Signed In', () => {
     });
 
     // Click the "My poems" button directly (it opens the saved poems view)
-    const myPoemsBtn = screen.getByLabelText(/My poems/);
+    const myPoemsBtn = screen.getByLabelText(/Library/);
     await userEvent.click(myPoemsBtn);
 
     // SavedPoemsView modal should open — it shows the header text

@@ -9,35 +9,35 @@
 // Active voices (quality-checked)
 const ACTIVE_VOICES = [
   // Female
-  { name: 'Zephyr', descriptor: 'Bright', gender: 'f' },
+  { name: 'Zephyr', descriptor: 'Bright', gender: 'f', arabicName: 'نور', displayName: 'Noor' },
   // { name: 'Kore', descriptor: 'Firm', gender: 'f' }, // archived: poet-curation exclusion
   // { name: 'Leda', descriptor: 'Youthful', gender: 'f' }, // archived: 48.5 with the production timing profile; validate a rescue profile before returning it
-  { name: 'Aoede', descriptor: 'Breezy', gender: 'f' },
+  { name: 'Aoede', descriptor: 'Breezy', gender: 'f', arabicName: 'نسمة', displayName: 'Nasmah' },
   // { name: 'Callirrhoe', descriptor: 'Easy-going', gender: 'f' }, // archived: 39.0 with the production timing profile; 50/50 fallback is a future rescue candidate
-  { name: 'Autonoe', descriptor: 'Bright', gender: 'f' },
+  { name: 'Autonoe', descriptor: 'Bright', gender: 'f', arabicName: 'إشراق', displayName: 'Ishraq' },
   // { name: 'Despina', descriptor: 'Smooth', gender: 'f' }, // archived: 35.1 with the production timing profile; transcript letters/final mora need repeat validation
   // { name: 'Erinome', descriptor: 'Clear', gender: 'f' }, // archived: poet-curation exclusion
-  { name: 'Laomedeia', descriptor: 'Upbeat', gender: 'f' },
+  { name: 'Laomedeia', descriptor: 'Upbeat', gender: 'f', arabicName: 'بهجة', displayName: 'Bahjah' },
   // { name: 'Achernar', descriptor: 'Soft', gender: 'f' }, // archived: 49.7 with the production timing profile; 50/50 fallback is a future rescue candidate
-  { name: 'Pulcherrima', descriptor: 'Forward', gender: 'f' },
+  { name: 'Pulcherrima', descriptor: 'Forward', gender: 'f', arabicName: 'رائدة', displayName: 'Raidah' },
   // { name: 'Achird', descriptor: 'Friendly', gender: 'f' }, // archived: poet-curation exclusion
   // { name: 'Schedar', descriptor: 'Even', gender: 'f' }, // archived: poet-curation exclusion
-  { name: 'Vindemiatrix', descriptor: 'Gentle', gender: 'f' },
-  { name: 'Sulafat', descriptor: 'Warm', gender: 'f' },
+  { name: 'Vindemiatrix', descriptor: 'Gentle', gender: 'f', arabicName: 'حنان', displayName: 'Hanan' },
+  { name: 'Sulafat', descriptor: 'Warm', gender: 'f', arabicName: 'وداد', displayName: 'Widad' },
   // Male
-  { name: 'Orus', descriptor: 'Firm', gender: 'm' },
+  { name: 'Orus', descriptor: 'Firm', gender: 'm', arabicName: 'عزّام', displayName: 'Azzam' },
   // { name: 'Puck', descriptor: 'Upbeat', gender: 'm' }, // archived: 46.7 with the production timing profile; 75% mora is a future rescue candidate
-  { name: 'Charon', descriptor: 'Informative', gender: 'm' },
+  { name: 'Charon', descriptor: 'Informative', gender: 'm', arabicName: 'عارف', displayName: 'Aref' },
   // { name: 'Fenrir', descriptor: 'Excitable', gender: 'm' }, // archived: poet-curation exclusion
-  { name: 'Enceladus', descriptor: 'Breathy', gender: 'm' },
-  { name: 'Iapetus', descriptor: 'Clear', gender: 'm' },
+  { name: 'Enceladus', descriptor: 'Breathy', gender: 'm', arabicName: 'نسيم', displayName: 'Naseem' },
+  { name: 'Iapetus', descriptor: 'Clear', gender: 'm', arabicName: 'صافي', displayName: 'Safi' },
   // { name: 'Umbriel', descriptor: 'Easy-going', gender: 'm' }, // archived: poet-curation exclusion
-  { name: 'Algieba', descriptor: 'Smooth', gender: 'm' },
-  { name: 'Algenib', descriptor: 'Gravelly', gender: 'm' },
+  { name: 'Algieba', descriptor: 'Smooth', gender: 'm', arabicName: 'سليم', displayName: 'Saleem' },
+  { name: 'Algenib', descriptor: 'Gravelly', gender: 'm', arabicName: 'صخر', displayName: 'Sakhr' },
   // { name: 'Rasalgethi', descriptor: 'Informative', gender: 'm' }, // archived: 34.4 with the production timing profile; full/25% mora needs repeat validation
-  { name: 'Alnilam', descriptor: 'Firm', gender: 'm' },
+  { name: 'Alnilam', descriptor: 'Firm', gender: 'm', arabicName: 'ثابت', displayName: 'Thabit' },
   // { name: 'Gacrux', descriptor: 'Mature', gender: 'm' }, // archived: poet-curation exclusion
-  { name: 'Zubenelgenubi', descriptor: 'Casual', gender: 'm' },
+  { name: 'Zubenelgenubi', descriptor: 'Casual', gender: 'm', arabicName: 'أنس', displayName: 'Anas' },
   // { name: 'Sadachbia', descriptor: 'Lively', gender: 'm' }, // archived: poet-curation exclusion
   // { name: 'Sadaltager', descriptor: 'Knowledgeable', gender: 'm' }, // archived: poet-curation exclusion
 ];
@@ -52,6 +52,11 @@ const _byName = new Map(VOICE_CATALOG.map((v) => [v.name, v]));
 /** Full catalog entry for a voice name, or null if not in the catalog. */
 export function voiceInfo(name) {
   return _byName.get(name) || null;
+}
+
+/** English display name for the matched Arabic persona, or the raw voice id if unknown. */
+export function voiceDisplayName(name) {
+  return _byName.get(name)?.displayName ?? name;
 }
 
 /** 'f' | 'm' for a voice name, or null if unknown. */

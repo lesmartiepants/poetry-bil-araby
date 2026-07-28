@@ -82,6 +82,16 @@ export const isSeeking = { value: false };
 export const lastStopWasPause = { value: false };
 
 /**
+ * The sparkler reader owns its own fixed-line scrolling. Disable the generic
+ * word-follow scroll while that reader is active so the two mechanisms do not
+ * fight each other.
+ */
+export const windowedReveal = { value: false };
+export function setWindowedReveal(value) {
+  windowedReveal.value = !!value;
+}
+
+/**
  * Start a Tone.Player from a given offset and record the wall-clock start time.
  * Replaces all direct player.start() calls in togglePlay.js.
  *
@@ -90,10 +100,17 @@ export const lastStopWasPause = { value: false };
  */
 export function startPlayer(player, offset) {
   playbackPlayerRef.value = player ?? null;
-  pauseOffset.value = offset;
+  // A stale pause offset can exceed a completed live buffer. Starting at or
+  // past Tone's buffer end produces silence, so clamp when the duration exists.
+  let safeOffset = Math.max(0, offset || 0);
+  const duration = player?.buffer?.duration;
+  if (typeof duration === 'number' && duration > 0 && safeOffset > duration - 0.1) {
+    safeOffset = Math.max(0, duration - 0.1);
+  }
+  pauseOffset.value = safeOffset;
   playbackStartTime.value = Date.now() / 1000;
-  if (FEATURES.logging) console.log(`[Playback:startPlayer] offset=${offset.toFixed(2)}s`);
-  player.start(undefined, offset);
+  if (FEATURES.logging) console.log(`[Playback:startPlayer] offset=${safeOffset.toFixed(2)}s`);
+  player.start(undefined, safeOffset);
 }
 
 /** Read playback position in seconds; prefers player-provided content clock. */
@@ -182,9 +199,9 @@ export function applyHighlightsOnce(
       }
     }
 
-    // Scroll active element into view
+    // The sparkler reader owns its own fixed-line scrolling.
     const activeEl = wordRefs[newIndex]?.current;
-    if (activeEl) {
+    if (activeEl && !windowedReveal.value) {
       activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }
@@ -243,11 +260,13 @@ export function useTTSHighlight({
   // the active word flickered off-and-on for the first ~2s. Reading from refs
   // keeps the loop alive and the highlight stable across streaming refinements.
   const timingsRef = useRef(timings);
-  timingsRef.current = timings;
   const totalDurationRef = useRef(totalDuration);
-  totalDurationRef.current = totalDuration;
   const wordOffsetsRef = useRef(wordOffsets);
-  wordOffsetsRef.current = wordOffsets;
+  useEffect(() => {
+    timingsRef.current = timings;
+    totalDurationRef.current = totalDuration;
+    wordOffsetsRef.current = wordOffsets;
+  }, [timings, totalDuration, wordOffsets]);
 
   // Start the rAF loop — called when isPlaying becomes true
   function startLoop() {
@@ -309,8 +328,8 @@ export function useTTSHighlight({
           }
         }
 
-        // Auto-scroll: if active word is below viewport, scroll up to 2 lines
-        if (newIndex >= 0) {
+        // The sparkler reader owns its own fixed-line scrolling.
+        if (newIndex >= 0 && !windowedReveal.value) {
           const activeEl = wordRefs[newIndex]?.current;
           if (activeEl) {
             if (firstTick) {

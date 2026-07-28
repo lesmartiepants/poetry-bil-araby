@@ -92,6 +92,7 @@ const audioState = {
   setUrl: vi.fn(),
   setError: vi.fn(),
   setPlayer: vi.fn(),
+  setWordTimings: vi.fn(),
 };
 const poemState = {
   addActiveAudio: vi.fn(),
@@ -158,6 +159,7 @@ describe('TTS REST<->Live fallback (@wf-tts-fallback)', () => {
     audioState.isGenerating = false;
     audioState.url = null;
     audioState.player = null;
+    audioState.wordTimings = null;
     poemState.hasActiveAudio.mockReturnValue(false);
     globalThis.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
     global.fetch = vi.fn();

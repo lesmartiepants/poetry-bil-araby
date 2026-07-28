@@ -64,3 +64,5 @@ STT or Deepgram) or rolling forced alignment. Those services can return word off
 their own credentials and introduce delayed corrections; do not block Gemini Live first audio on
 them. The [CTC feasibility gate](./CTC_FEASIBILITY.md) is the explicitly staged path for testing a
 local forced aligner against the same recorded captures before a causal sidecar is considered.
+The [production integration plan](./CTC_PRODUCTION_PLAN.md) records the unproven architecture
+assumptions, sample-clock contract, observe-only rollout, and falsification gates.

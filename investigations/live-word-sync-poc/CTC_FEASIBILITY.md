@@ -92,6 +92,11 @@ logic, or live highlight correction. The next irreversible-work-minimizing step 
 local worker that measures only the warm, bounded window before any browser or production code is
 changed.
 
+The detailed production assumptions and the experiment sequence that tests them are in
+[CTC_PRODUCTION_PLAN.md](./CTC_PRODUCTION_PLAN.md). In particular, short-window accuracy, anchor
+timeliness at the browser, confidence calibration, browser sample-clock mapping, and perceptual
+benefit all remain unproven.
+
 ## Research lead, not an approved dependency
 
 The first candidate should be an Arabic-capable Wav2Vec2 CTC model, tested in an isolated local

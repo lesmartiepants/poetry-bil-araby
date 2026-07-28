@@ -51,6 +51,19 @@ per capture. It has not met the 1.5–2 second warm-window requirement, supplied
 confidence, or proven causal future-only correction. The [CTC feasibility gate](./CTC_FEASIBILITY.md)
 defines the next worker/window and live-safety tests; first audio remains independent of it.
 
+## Live Anchor-Contract Prototype
+
+The lab now has paired **observe** and **future-only correct** modes beside the production-equivalent
+`transcript-moras-weighted-fallback` control. The correction planner is unit-tested to preserve past
+boundaries and monotonic word order. It accepts only safely past anchors with a future horizon and
+otherwise remains on the same fallback plan.
+
+The first real-stream checks did not validate an anchor provider: Gemini output-audio transcript
+timings emitted no usable word anchors, while the parallel Chirp streaming relay timed out before
+returning anchors. Those are useful negative results. The recordings, provider error, and zero-anchor
+counts remain in the Runs ledger; no cursor correction was silently applied or interpreted as an
+improvement.
+
 ## Recommendation
 
 Ship this as a line/phrase-first Live experience only if manual Arabic review accepts its drift.

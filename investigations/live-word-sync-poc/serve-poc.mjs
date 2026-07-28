@@ -20,7 +20,12 @@ const port = Number(process.env.POC_PORT || 5180);
 // generalization-screen override: its report keeps the returned poem ID, so it
 // cannot be mistaken for the reference leaderboard.
 const REFERENCE_POEM_ID = Number(process.env.POC_POEM_ID || 87443);
-const types = { '.css': 'text/css', '.html': 'text/html', '.js': 'text/javascript' };
+const types = {
+  '.css': 'text/css',
+  '.html': 'text/html',
+  '.js': 'text/javascript',
+  '.mjs': 'text/javascript',
+};
 const googleSessions = new GoogleSttSessions();
 const requestedVoice = process.env.POC_VOICE || DEFAULT_VOICE;
 const PROMPT_PROFILES = {

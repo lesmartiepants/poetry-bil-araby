@@ -1,3 +1,5 @@
+import { activeIndexAt, applyFutureAnchor, buildPlan } from './future-anchor-planner.mjs';
+
 const API_BASE = new URLSearchParams(location.search).get('api') || '';
 const SAMPLE_RATE = 24_000;
 const pullPoemButton = document.querySelector('#pull-poem');
@@ -20,6 +22,10 @@ const RETAINED_METHODS = new Set([
   'transcript-mora-blend-25',
   'transcript-mora-blend-50-weighted-fallback',
   'transcript-mora-final',
+  'transcript-anchor-observe',
+  'transcript-anchor-correct',
+  'google-anchor-observe',
+  'google-anchor-correct',
 ]);
 const modeNote = document.querySelector('#mode-note');
 const providerStatus = document.querySelector('#provider-status');
@@ -114,6 +120,14 @@ const modeNotes = {
     'Allocation sweep: retain 25% even verse timing and add 75% tashkeel-aware mora mass only after a whole source verse is anchored.',
   'transcript-mora-final':
     'Hypothesis trial: retain mora-weighted transcript-anchored verse timing, but reserve 1.25× mora mass for its final lexical word. It activates only after every word in the verse has an anchor.',
+  'transcript-anchor-observe':
+    'Anchor-contract prototype: existing Gemini transcript timings are mapped as delayed anchors and measured against the immediate weighted/mora fallback, but never alter the visible cursor.',
+  'transcript-anchor-correct':
+    'Anchor-contract prototype: delayed Gemini transcript timings may make a bounded, future-only correction to the immediate weighted/mora plan. It rejects late, active, and contradictory anchors; this validates the CTC integration contract, not CTC accuracy.',
+  'google-anchor-observe':
+    'Live sidecar prototype: stream the same PCM to Google Chirp, record word anchors and their usefulness, but never change the visible production-equivalent fallback cursor.',
+  'google-anchor-correct':
+    'Live sidecar prototype: Google Chirp word anchors can apply bounded, future-only corrections to the production-equivalent fallback. This proves the sidecar contract and safety controls, not CTC quality.',
   'certainty-overlay-transcript-moras':
     'UX-only: preserves transcript-mora word timing while softly contextualizing the current source line and previewing the next line up to 900 ms before its estimated start, upgraded to an observed transcript start when available.',
   'nucleus-clock':
@@ -251,6 +265,60 @@ const PROFILES = {
     nudgeMs: -250,
     finalWeight: 1.25,
     requireFullSegment: true,
+  },
+  'transcript-anchor-observe': {
+    family: 'future-anchor',
+    anchorMode: 'observe',
+    anchorSource: 'gemini-output-audio-transcript-surrogate',
+    fallbackMode: 'weighted',
+    durationPerWord: 0.65,
+    nudgeMs: -250,
+    correctionCapMs: 120,
+    correctionRejectMs: 400,
+    futureHorizonMs: 150,
+    horizonWords: 6,
+    safePastWords: 1,
+  },
+  'transcript-anchor-correct': {
+    family: 'future-anchor',
+    anchorMode: 'correct',
+    anchorSource: 'gemini-output-audio-transcript-surrogate',
+    fallbackMode: 'weighted',
+    durationPerWord: 0.65,
+    nudgeMs: -250,
+    correctionCapMs: 120,
+    correctionRejectMs: 400,
+    futureHorizonMs: 150,
+    horizonWords: 6,
+    safePastWords: 1,
+  },
+  'google-anchor-observe': {
+    family: 'future-anchor',
+    anchorMode: 'observe',
+    anchorProvider: 'google',
+    anchorSource: 'google-chirp-3-streaming',
+    fallbackMode: 'weighted',
+    durationPerWord: 0.65,
+    nudgeMs: -250,
+    correctionCapMs: 120,
+    correctionRejectMs: 400,
+    futureHorizonMs: 150,
+    horizonWords: 6,
+    safePastWords: 1,
+  },
+  'google-anchor-correct': {
+    family: 'future-anchor',
+    anchorMode: 'correct',
+    anchorProvider: 'google',
+    anchorSource: 'google-chirp-3-streaming',
+    fallbackMode: 'weighted',
+    durationPerWord: 0.65,
+    nudgeMs: -250,
+    correctionCapMs: 120,
+    correctionRejectMs: 400,
+    futureHorizonMs: 150,
+    horizonWords: 6,
+    safePastWords: 1,
   },
   'certainty-overlay-transcript-moras': {
     family: 'live-transcript',
@@ -407,21 +475,31 @@ function markNeedsTest() {
 }
 
 async function refreshProviderStatus() {
-  const googleInput = document.querySelector('input[value="google"]');
+  const googleInputs = [
+    document.querySelector('input[value="google"]'),
+    document.querySelector('input[value="google-anchor-observe"]'),
+    document.querySelector('input[value="google-anchor-correct"]'),
+  ].filter(Boolean);
   try {
     const response = await fetch('/alignment/providers');
     const { google } = await response.json();
     if (google.available) {
-      googleInput.disabled = false;
+      googleInputs.forEach((input) => {
+        input.disabled = false;
+      });
       providerStatus.textContent = `Google STT ready: ${google.language}, ${google.location}.`;
     } else {
-      googleInput.disabled = true;
+      googleInputs.forEach((input) => {
+        input.disabled = true;
+      });
       providerStatus.textContent = `Google STT needs ${google.missing.join(', ')} plus server-side Application Default Credentials.`;
-      if (selectedMode() === 'google')
+      if (selectedMode() === 'google' || activeProfile().anchorProvider === 'google')
         document.querySelector('input[value="weighted"]').checked = true;
     }
   } catch {
-    googleInput.disabled = true;
+    googleInputs.forEach((input) => {
+      input.disabled = true;
+    });
     providerStatus.textContent = 'Google STT availability could not be checked.';
   }
 }
@@ -823,6 +901,12 @@ async function refreshRuns() {
         solutionDesign.textContent = `Solution design: ${result.solutionDesign || report.solutionDesign}`;
         details.append(solutionDesign);
       }
+      if (result.metrics.anchor) {
+        const anchor = result.metrics.anchor;
+        const summary = document.createElement('p');
+        summary.textContent = `Anchor contract (${anchor.source}, ${anchor.mode}): ${anchor.acceptedCount}/${anchor.receivedCount} accepted; ${anchor.rejectedCount} rejected. ${anchor.events.at(-1)?.status || 'No anchor event arrived.'}`;
+        details.append(summary);
+      }
       if (result.analysis?.summary) {
         const analysis = document.createElement('p');
         const sourceWordCount =
@@ -1052,6 +1136,97 @@ function liveTranscriptSnapshot(profile, elapsed) {
   );
 }
 
+function weightedFallbackPlan(words) {
+  const fallbackProfile = activeProfile('weighted');
+  return buildPlan(words.map((word) => normalizedWeight(word.text, fallbackProfile) / fallbackProfile.rate));
+}
+
+function anchorPlannerOptions(profile) {
+  return {
+    correctionCapSeconds: profile.correctionCapMs / 1000,
+    correctionRejectSeconds: profile.correctionRejectMs / 1000,
+    futureHorizonSeconds: profile.futureHorizonMs / 1000,
+    horizonWords: profile.horizonWords,
+    safePastWords: profile.safePastWords,
+  };
+}
+
+function contentElapsed() {
+  if (!audioContext || !currentDemo?.audioStart) return null;
+  return Math.max(
+    0,
+    audioContext.currentTime - currentDemo.audioStart - currentDemo.insertedGapSeconds
+  );
+}
+
+function flushTranscriptAnchorQueue() {
+  const anchor = currentDemo?.anchor;
+  const elapsed = contentElapsed();
+  if (!anchor || elapsed == null) return;
+  for (const cue of anchor.pending.values()) {
+    if (anchor.seen.has(cue.key)) continue;
+    anchor.seen.add(cue.key);
+    const outcome = applyFutureAnchor({
+      plan: anchor.plan,
+      anchorIndex: cue.index,
+      observedStart: cue.start,
+      playbackSeconds: elapsed,
+      options: anchorPlannerOptions(currentDemo.profile),
+    });
+    const event = {
+      source: currentDemo.profile.anchorSource,
+      sourceIndex: cue.index,
+      sourceWord: currentDemo.words[cue.index].text,
+      observedStart: cue.start,
+      observedEnd: cue.end,
+      receivedAtContentTime: Number(elapsed.toFixed(3)),
+      stalenessMs: Math.round((elapsed - cue.start) * 1000),
+      status: outcome.status,
+      activeIndex: outcome.activeIndex ?? null,
+      futureStartIndex: outcome.futureStartIndex ?? null,
+      futureHorizonMs:
+        outcome.futureHorizon == null ? null : Math.round(outcome.futureHorizon * 1000),
+      discrepancyMs: outcome.discrepancy == null ? null : Math.round(outcome.discrepancy * 1000),
+      appliedCorrectionMs: outcome.correction == null ? null : Math.round(outcome.correction * 1000),
+    };
+    anchor.events.push(event);
+    if (outcome.status === 'accepted' && currentDemo.profile.anchorMode === 'correct') {
+      anchor.plan = outcome.plan;
+      anchor.lastAcceptedIndex = cue.index;
+    }
+  }
+  anchor.pending.clear();
+}
+
+function queueAnchor(cue) {
+  const anchor = currentDemo?.anchor;
+  if (!anchor) return;
+  if (cue.index <= anchor.lastSeenSourceIndex) return;
+  anchor.lastSeenSourceIndex = cue.index;
+  anchor.pending.set(cue.key, cue);
+  flushTranscriptAnchorQueue();
+}
+
+function futureAnchorSnapshot(profile, elapsed) {
+  flushTranscriptAnchorQueue();
+  const contentTime = Math.max(0, elapsed - currentDemo.insertedGapSeconds);
+  const visualElapsed = Math.max(0, contentTime + currentDemo.nudgeSeconds);
+  const anchor = currentDemo.anchor;
+  const proposedIndex = activeIndexAt(anchor.plan, visualElapsed);
+  const activeIndex = Math.max(anchor.lastRenderedIndex, proposedIndex);
+  anchor.lastRenderedIndex = activeIndex;
+  return {
+    activeIndex,
+    activeEnd: activeIndex + 1,
+    elapsed,
+    expectedDuration: anchor.plan.at(-1)?.end || expectedDuration(currentDemo.words, 'weighted'),
+    mode: selectedMode(),
+    anchorAcceptedCount: anchor.events.filter((event) => event.status === 'accepted').length,
+    anchorRejectedCount: anchor.events.filter((event) => event.status.startsWith('rejected')).length,
+    anchorMode: profile.anchorMode,
+  };
+}
+
 function updateLiveTimings(partialTimings) {
   if (!partialTimings?.length || !currentDemo) return;
   const timings = Array(currentDemo.words.length).fill(null);
@@ -1065,7 +1240,18 @@ function updateLiveTimings(partialTimings) {
     );
     if (index < 0) continue;
     cursor = index + 1;
-    timings[index] = { start: Number(timing.start), end: Number(timing.end) };
+    const start = Number(timing.start);
+    const end = Number(timing.end);
+    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) continue;
+    timings[index] = { start, end };
+    if (currentDemo.profile.family === 'future-anchor') {
+      queueAnchor({
+        index,
+        start,
+        end,
+        key: `${index}:${start.toFixed(3)}:${end.toFixed(3)}`,
+      });
+    }
   }
   currentDemo.liveTimings = timings;
 }
@@ -1121,6 +1307,14 @@ function mapGoogleWords(words) {
     if (match < 0) continue;
     google.sourceCursor = match + 1;
     google.wordCues.set(match, { start: heard.start, end: heard.end });
+    if (currentDemo.profile.anchorProvider === 'google') {
+      queueAnchor({
+        index: match,
+        start: heard.start,
+        end: heard.end,
+        key: `google:${match}:${heard.start.toFixed(3)}:${heard.end.toFixed(3)}`,
+      });
+    }
   }
 }
 
@@ -1180,32 +1374,54 @@ async function startGoogleTiming() {
     phraseAnchors: [],
     polling: false,
     closed: false,
+    pendingWrites: new Set(),
   };
   currentDemo.google.poller = setInterval(pollGoogleCues, 250);
 }
 
 function sendGoogleChunk(pcm) {
   if (!currentDemo.google || currentDemo.google.closed) return;
-  fetch('/alignment/google/chunk', {
+  const google = currentDemo.google;
+  const pendingWrite = fetch('/alignment/google/chunk', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ sessionId: currentDemo.google.sessionId, audio: base64FromBytes(pcm) }),
-  }).catch((error) => {
-    currentDemo.google.error = error.message;
-  });
+    body: JSON.stringify({ sessionId: google.sessionId, audio: base64FromBytes(pcm) }),
+  })
+    .then((response) => {
+      if (!response.ok) throw new Error(`Google PCM copy failed (${response.status})`);
+    })
+    .catch((error) => {
+      google.error = error.message;
+    })
+    .finally(() => {
+      google.pendingWrites.delete(pendingWrite);
+    });
+  google.pendingWrites.add(pendingWrite);
 }
 
 async function stopGoogleTiming() {
   const google = currentDemo?.google;
   if (!google || google.closed) return;
   clearInterval(google.poller);
+  // A sidecar must never hold the playback/UI path hostage. Record unfinished PCM
+  // copies after a short bounded drain and continue with the fallback if its relay is stuck.
+  await Promise.race([
+    Promise.allSettled([...google.pendingWrites]),
+    new Promise((resolve) => setTimeout(resolve, 2_000)),
+  ]);
+  google.unsettledWritesAtClose = google.pendingWrites.size;
   await fetch('/alignment/google/stop', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ sessionId: google.sessionId }),
   });
-  await new Promise((resolve) => setTimeout(resolve, 2_000));
-  await pollGoogleCues();
+  // Final Chirp results can arrive after the audio stream closes. Drain long enough to
+  // record their actual lateness; they remain unusable if playback has no future horizon.
+  const deadline = performance.now() + 6_000;
+  while (performance.now() < deadline) {
+    await pollGoogleCues();
+    await new Promise((resolve) => setTimeout(resolve, 250));
+  }
   google.closed = true;
   await fetch('/alignment/google/dispose', {
     method: 'POST',
@@ -1287,6 +1503,8 @@ function playbackSnapshot() {
   const wholeDuration = expectedDuration(currentDemo.words, mode);
 
   if (profile.family === 'live-transcript') return liveTranscriptSnapshot(profile, elapsed);
+
+  if (profile.family === 'future-anchor') return futureAnchorSnapshot(profile, elapsed);
 
   if (profile.family === 'nucleus-clock') return nucleusClockSnapshot(elapsed, profile);
 
@@ -1740,7 +1958,9 @@ async function streamLiveTts(text) {
       if (!event.chunk) continue;
 
       const pcm = decodePcm(event.chunk);
-      if (selectedMode() === 'google') sendGoogleChunk(pcm);
+      if (selectedMode() === 'google' || currentDemo.profile.anchorProvider === 'google') {
+        sendGoogleChunk(pcm);
+      }
       const samples = pcmToFloat32(pcm);
       const buffer = audioContext.createBuffer(1, samples.length, SAMPLE_RATE);
       buffer.copyToChannel(samples, 0);
@@ -1754,6 +1974,7 @@ async function streamLiveTts(text) {
         currentDemo.audioStart = nextStart;
         startAuditCapture();
         currentDemo.frame = requestAnimationFrame(paintPlayback);
+        flushTranscriptAnchorQueue();
       }
       source.connect(currentDemo.audit.destination);
       const previousNextStart = nextStart;
@@ -1785,6 +2006,12 @@ async function streamLiveTts(text) {
           },
           selectedMode() === 'nucleus-clock'
             ? { value: `${currentDemo.nucleus.events.length}`, label: 'acoustic nuclei found' }
+            : null,
+          currentDemo.profile.family === 'future-anchor'
+            ? {
+                value: `${currentDemo.anchor.events.filter((event) => event.status === 'accepted').length}/${currentDemo.anchor.events.length}`,
+                label: 'accepted / received transcript anchors',
+              }
             : null,
         ].filter(Boolean)
       );
@@ -1825,6 +2052,21 @@ async function streamLiveTts(text) {
             fallback: currentDemo.nucleus.fallback,
           }
         : null,
+    anchor:
+      currentDemo.profile.family === 'future-anchor'
+        ? {
+            source: currentDemo.profile.anchorSource,
+            mode: currentDemo.profile.anchorMode,
+            events: currentDemo.anchor.events,
+            receivedCount: currentDemo.anchor.events.length,
+            acceptedCount: currentDemo.anchor.events.filter((event) => event.status === 'accepted').length,
+            rejectedCount: currentDemo.anchor.events.filter((event) =>
+              event.status.startsWith('rejected')
+            ).length,
+            providerError: currentDemo.google?.error || null,
+            unsettledWritesAtClose: currentDemo.google?.unsettledWritesAtClose || 0,
+          }
+        : null,
     highlightTimeline: currentDemo.highlightTimeline,
   };
   download.href = URL.createObjectURL(wavBlob(pcmChunks));
@@ -1852,6 +2094,11 @@ async function streamLiveTts(text) {
             value: `${currentDemo.google?.phraseAnchors.length || 0}`,
             label: 'Google phrase anchors',
           }
+        : currentDemo.profile.family === 'future-anchor'
+          ? {
+              value: `${currentDemo.metrics.anchor.acceptedCount}/${currentDemo.metrics.anchor.receivedCount}`,
+              label: 'accepted / received transcript anchors',
+            }
         : { value: 'fallback', label: 'external cue source' },
     ].filter(Boolean)
   );
@@ -1894,6 +2141,18 @@ function createDemo(selected) {
     },
     nucleusTextMassByWord: words.map((word) => moraWeight(word.text)),
     liveTimings: Array(words.length).fill(null),
+    anchor:
+      profile.family === 'future-anchor'
+        ? {
+            plan: weightedFallbackPlan(words),
+            events: [],
+            pending: new Map(),
+            seen: new Set(),
+            lastSeenSourceIndex: -1,
+            lastAcceptedIndex: -1,
+            lastRenderedIndex: 0,
+          }
+        : null,
     insertedGapSeconds: 0,
     sources: [],
     stopped: false,
@@ -1937,7 +2196,9 @@ testMethodButton.addEventListener('click', async () => {
     audioContext ||= new AudioContext({ sampleRate: SAMPLE_RATE });
     await audioContext.resume();
     currentDemo = createDemo(loadedPoem);
-    if (selectedMode() === 'google') await startGoogleTiming();
+    if (selectedMode() === 'google' || currentDemo.profile.anchorProvider === 'google') {
+      await startGoogleTiming();
+    }
     setMetrics([{ value: 'Waiting', label: `for ${selectedMode()} strategy audio` }]);
     await streamLiveTts(loadedPoem.arabic);
     testMethodButton.textContent = 'Test selected method again';

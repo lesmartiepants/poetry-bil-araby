@@ -151,6 +151,28 @@ reason, fallback/proposed/applied boundary, correction horizon, and any monotoni
 The Runs viewer should show anchors—including rejected ones—on the recorded timeline. Without this,
 delivery variance can masquerade as algorithmic improvement.
 
+## Anchor-contract prototype status
+
+The POC now contains a functional browser-side `future-anchor` planner with **observe** and
+**correct** modes. It begins with the production-equivalent transcript/mora weighted fallback,
+records every proposed anchor, and permits a correction only for a safely past word with at least
+150 ms of future horizon. A correction is capped at 120 ms, distributed across six future words,
+and the unit checks prove that past boundaries remain unchanged and the plan stays monotonic.
+
+Two live source checks are deliberately part of the prototype:
+
+- Gemini output-audio transcript timings produced zero usable word anchors in the tested production
+  relay stream, so both transcript-anchor modes remained a no-op. This is a result, not a missing
+  fallback: the current event cannot be treated as a word-time source without separate evidence.
+- A parallel Google Chirp streaming sidecar was wired to receive the same PCM and exercised in
+  observe/correct modes. It exposed a relay failure (`ABORTED: Stream timed out after receiving no
+  more client requests`) and emitted no anchors. The harness now records provider errors and bounds
+  outstanding PCM-copy drain time so a stuck sidecar cannot block playback or test completion.
+
+Therefore neither source is a CTC substitute or a candidate for correction. The next worker must
+prove the stream protocol with sequence/sample accounting and produce anchors before the browser's
+future horizon; otherwise the planner safely remains a no-op.
+
 ## Research constraints
 
 CTC forced alignment produces constrained timestamps from frame emissions and a supplied token

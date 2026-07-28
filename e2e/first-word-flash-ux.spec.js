@@ -9,7 +9,8 @@ import { test, expect } from '@playwright/test';
  *
  * Ground truth: the aligned transcript IS the model's report of which word it said and
  * when. So "recited at time t" = the aligned-window word at the playhead. Each combo
- * (timing mode × voice) runs in its OWN fresh page so nothing bleeds between runs.
+ * (shipped timing profile × active voice) runs in its OWN fresh page so nothing bleeds
+ * between runs.
  *
  * Asserts, against that truth:
  *   1) no flash — no word lights more than once,
@@ -31,9 +32,11 @@ const MOCK_POEM = {
   isFromDatabase: true,
 };
 
-const MODES = ['even', 'verseLetterWeighted', 'verseSyllableWeighted'];
-const VOICES = ['Charon', 'Kore'];
-const DELAY_MS = 125;
+// The old generic modes were replaced by named, experimentally-audited profiles.
+// Exercise the production default with two currently available voices; individual
+// profile behaviour is covered by the timing-profile unit tests.
+const PROFILES = ['transcript-moras-weighted-fallback'];
+const VOICES = ['Charon', 'Leda'];
 const SEC_PER_WORD = 0.45;
 
 async function setupMocks(page) {
@@ -45,16 +48,19 @@ async function setupMocks(page) {
 }
 
 // One fresh page per combo → no carousel drift, no wall-clock bleed.
-for (const mode of MODES) {
+for (const profile of PROFILES) {
   for (const voice of VOICES) {
-    test(`highlight tracks recited word — ${mode} / ${voice}`, async ({ page }) => {
-      await page.addInitScript(({ mode, voice, DELAY_MS }) => {
+    test(`highlight tracks recited word — ${profile} / ${voice}`, async ({ page }) => {
+      await page.addInitScript(({ profile, voice, poem }) => {
         localStorage.setItem('hasSeenOnboarding', 'true');
         localStorage.setItem('ttsHighlightDebug', '1');
-        localStorage.setItem('ttsTimingMode', mode);
-        localStorage.setItem('ttsVerseDelayMs', String(DELAY_MS));
+        localStorage.setItem('liveTimingProfile', profile);
+        // poemStore deliberately boots from its local prefetch before making a
+        // random request. Seed that same cache so this timing harness has one
+        // deterministic text/index space instead of a randomly chosen seed poem.
+        localStorage.setItem('qafiyah_nextPoem', JSON.stringify({ poem, storedAt: Date.now() }));
         window.__qaVoice = voice;
-      }, { mode, voice, DELAY_MS });
+      }, { profile, voice, poem: MOCK_POEM });
       await setupMocks(page);
       await page.goto('/');
       await page.waitForLoadState('domcontentloaded');
@@ -146,7 +152,7 @@ for (const mode of MODES) {
 
       expect(r.error, r.error).toBeUndefined();
       console.log(
-        `[${mode}/${voice}] N=${r.N} reLit=[${r.reLit.join(',')}] maxLead=${r.maxLead} ` +
+        `[${profile}/${voice}] N=${r.N} reLit=[${r.reLit.join(',')}] maxLead=${r.maxLead} ` +
         `maxLag=${r.maxLag} backJump=${r.maxBackJump}(x${r.backCount}) within1=${r.within1Pct}% words=${r.activeWords}`
       );
 

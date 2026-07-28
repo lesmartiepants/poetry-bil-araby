@@ -970,12 +970,12 @@ app.post('/api/ai/live-tts', async (req, res) => {
   const WS_MAX_STREAM = 180000;
   const WS_MAX_BUFFER = 90000;
 
-  if (!GEMINI_API_KEY) {
-    return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
-  }
   const { text, voiceName, systemInstruction, temperature } = req.body || {};
   if (!text || typeof text !== 'string' || !text.trim()) {
     return res.status(400).json({ error: 'Missing or empty "text" field' });
+  }
+  if (!GEMINI_API_KEY) {
+    return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
   }
 
   const voice = voiceName || 'Fenrir';

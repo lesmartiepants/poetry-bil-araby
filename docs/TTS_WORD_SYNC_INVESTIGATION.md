@@ -69,15 +69,17 @@ not a per-voice production rule.
 | Sulafat | 59.2 | letters 77.6 | active |
 | Charon | 53.8 | full mora 83.5 | active; 50/50 repeat mean 87.2, floor 85.1 |
 | Achernar | 49.7 | 50/50 fallback 87.6 | archived pending repeat |
-| Leda | 48.5 | 25% mora 88.5 | archived pending repeat |
+| Leda | 48.5 | 25% mora 88.5 | active by product decision; repeat rescue validation |
 | Puck | 46.7 | 75% mora 86.8 | archived pending repeat |
 | Callirrhoe | 39.0 | 50/50 fallback 79.3 | archived pending repeat |
 | Despina | 35.1 | letters/final mora 73.5 | archived pending repeat |
 | Rasalgethi | 34.4 | 25% mora 84.7 | archived pending repeat |
 
-The six archived low-default voices are deliberately kept as comments in the
+The five archived low-default voices are deliberately kept as comments in the
 catalog. They are not declared intrinsically poor: each has a promising rescue
-profile, which must clear a 3–5-run repeat screen before reactivation.
+profile, which must clear a 3–5-run repeat screen before reactivation. Leda was
+reinstated by product decision, with its 25% mora rescue still requiring that
+repeat validation.
 
 ## Rejected and UX-only work
 

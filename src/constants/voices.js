@@ -11,7 +11,9 @@ const ACTIVE_VOICES = [
   // Female
   { name: 'Zephyr', descriptor: 'Bright', gender: 'f', arabicName: 'نور', displayName: 'Noor' },
   // { name: 'Kore', descriptor: 'Firm', gender: 'f' }, // archived: poet-curation exclusion
-  // { name: 'Leda', descriptor: 'Youthful', gender: 'f' }, // archived: 48.5 with the production timing profile; validate a rescue profile before returning it
+  // Reinstated by product decision. Its default screen was 48.5, while the
+  // one-run 25% mora rescue scored 88.5; keep validating that rescue profile.
+  { name: 'Leda', descriptor: 'Youthful', gender: 'f', arabicName: 'صبا', displayName: 'Saba' },
   { name: 'Aoede', descriptor: 'Breezy', gender: 'f', arabicName: 'نسمة', displayName: 'Nasmah' },
   // { name: 'Callirrhoe', descriptor: 'Easy-going', gender: 'f' }, // archived: 39.0 with the production timing profile; 50/50 fallback is a future rescue candidate
   { name: 'Autonoe', descriptor: 'Bright', gender: 'f', arabicName: 'إشراق', displayName: 'Ishraq' },

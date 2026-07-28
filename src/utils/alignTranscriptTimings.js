@@ -133,7 +133,14 @@ export function alignTranscriptTimings(allWords, transcriptTimings) {
     if (timings[i]) {
       if (i - prevAnchor > 1) {
         // gap of unmatched tokens between prevAnchor and i
-        fillRange(timings, allWords, prevAnchor + 1, i - 1, timings[prevAnchor].end, timings[i].start);
+        fillRange(
+          timings,
+          allWords,
+          prevAnchor + 1,
+          i - 1,
+          timings[prevAnchor].end,
+          timings[i].start
+        );
       }
       prevAnchor = i;
     }
@@ -154,7 +161,12 @@ export function alignTranscriptTimings(allWords, transcriptTimings) {
     }
   }
 
-  return { timings, confidence: matchedCount / allWords.length, matchedCount };
+  return {
+    timings,
+    confidence: matchedCount / allWords.length,
+    matchedCount,
+    directMatches: matched.map((match) => match !== null),
+  };
 }
 
 /** Coerce to a finite number, defaulting to 0. */

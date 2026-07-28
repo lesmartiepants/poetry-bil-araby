@@ -85,6 +85,8 @@ import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
 import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
+import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
+import { applyLiveTimingProfile } from './utils/liveTimingProfiles.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -230,6 +232,7 @@ export default function DiwanApp() {
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
   const audioPlayer = useAudioStore((s) => s.player);
+  const serverWordTimings = useAudioStore((s) => s.wordTimings);
   const liveVoice = useUIStore((s) => s.liveVoice);
   const setLiveVoice = useUIStore((s) => s.setLiveVoice);
   const highlightStyle = useUIStore((s) => s.highlightStyle);
@@ -847,6 +850,42 @@ export default function DiwanApp() {
   );
 
   const wordTimings = useMemo(() => {
+    if (serverWordTimings?.length) {
+      const aligned = alignTranscriptTimings(allWords, serverWordTimings);
+      const transcriptMatchRatio = aligned ? aligned.matchedCount / serverWordTimings.length : 0;
+      if (aligned && aligned.matchedCount >= 1 && transcriptMatchRatio >= 0.5) {
+        let timingProfile = 'transcript-moras-weighted-fallback';
+        try {
+          timingProfile = localStorage.getItem('ttsTimingMode') || timingProfile;
+        } catch {
+          /* localStorage unavailable */
+        }
+        const result = applyLiveTimingProfile({
+          profile: timingProfile,
+          alignedTimings: aligned.timings,
+          fallbackTimings: computeWordTimings(allWords, effectiveDuration),
+          wordOffsets,
+          directMatches: aligned.directMatches,
+        });
+        if (FEATURES.logging) {
+          useUIStore
+            .getState()
+            .addLog(
+              'WordTiming:Live',
+              `${timingProfile} | matched=${aligned.matchedCount}/${serverWordTimings.length} transcript (${(transcriptMatchRatio * 100).toFixed(0)}%)`
+            );
+        }
+        return result;
+      }
+      if (FEATURES.logging) {
+        useUIStore
+          .getState()
+          .addLog(
+            'WordTiming:Live',
+            `alignment pending (${(transcriptMatchRatio * 100).toFixed(0)}% transcript match) — weighted fallback`
+          );
+      }
+    }
     // When actual audio is loaded, derive timings from the waveform (VAD alignment).
     // This is far more accurate than character-count estimation because it uses the
     // real pauses between verses detected in the audio signal.
@@ -868,7 +907,12 @@ export default function DiwanApp() {
     }
     // Fallback: character-count proportional distribution (used pre-audio or on VAD failure)
     return computeWordTimings(allWords, effectiveDuration);
-  }, [audioPlayer, verseWords, allWords, effectiveDuration]);
+  }, [audioPlayer, verseWords, allWords, effectiveDuration, serverWordTimings, wordOffsets]);
+
+  const highlightTotalDuration = useMemo(() => {
+    const lastEnd = wordTimings[wordTimings.length - 1]?.end || 0;
+    return Math.max(effectiveDuration, lastEnd);
+  }, [wordTimings, effectiveDuration]);
 
   // Per-verse start times — first word of each verse's timing.start
   const verseStartTimes = useMemo(() => {
@@ -889,7 +933,7 @@ export default function DiwanApp() {
   useTTSHighlight({
     wordRefs,
     timings: wordTimings,
-    totalDuration: effectiveDuration,
+    totalDuration: highlightTotalDuration,
     wordOffsets,
     onVerseChange: setCurrentVerseIndex,
   });
@@ -947,7 +991,7 @@ export default function DiwanApp() {
         wordRefs,
         wordOffsets,
         wordTimings,
-        effectiveDuration,
+        highlightTotalDuration,
         setCurrentVerseIndex
       );
     }

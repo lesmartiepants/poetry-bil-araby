@@ -72,8 +72,8 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 
 ### Inventory at a glance
 
-- **Features tracked:** 36
-- **HTTP endpoints in code:** 31
+- **Features tracked:** 37
+- **HTTP endpoints in code:** 33
 - **Components in code:** 30
 - **Test files in code:** 51
 - **Behavioral coverage:** 6/36 (17%)
@@ -133,6 +133,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 | `internal-tts-lab`       | internal  | none        | -           | Dev-only; no coverage needed.                                                                                                                                                                             |
 | `reader-feed`            | critical  | mocked      | -           | #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted.                                                             |
 | `guided-tour`            | important | mocked      | -           | #582/#602. e2e exercises step flow; conditional-step + resume-lifecycle branches only partly asserted.                                                                                                    |
+| `poem-categorization`    | important | mocked      | -           | server.test.js covers the enabled/disabled API paths with a mocked pool; no e2e yet for the Explore Poems UI (filter chips, in-place poem expand).                                                        |
 
 ### Critical features without behavioral CI coverage
 

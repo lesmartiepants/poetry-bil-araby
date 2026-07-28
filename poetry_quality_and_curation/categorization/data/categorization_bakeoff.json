@@ -1,0 +1,99 @@
+{
+  "gold": {
+    "judge_model": "gemini/gemini-3.1-pro-preview",
+    "taxonomy_version": "2",
+    "n_scored": 120,
+    "n_human": 0,
+    "calibration_fired": "n/a"
+  },
+  "results": [
+    {
+      "model": "gemini/gemini-2.5-flash",
+      "scores": {
+        "n": 120,
+        "per_dim": {
+          "mood": {
+            "f1": 0.761547619047619,
+            "jaccard": 0.6597222222222222
+          },
+          "topic": {
+            "f1": 0.7556349206349205,
+            "jaccard": 0.6441666666666667
+          },
+          "motif": {
+            "f1": 0.6974206349206349,
+            "jaccard": 0.5980357142857143
+          }
+        },
+        "macro_f1": 0.7382010582010582,
+        "macro_jaccard": 0.6339748677248678,
+        "mood_primary_accuracy": 0.7083333333333334,
+        "emotional_intensity_mae": 4.008403361344538,
+        "accessibility_level_mae": 0.3445378151260504
+      },
+      "cost_usd": 0.11715644,
+      "cost_per_1k": 0.9763036666666666,
+      "poems_per_min": 59.79107712076509,
+      "elapsed_s": 120.4193058013916
+    },
+    {
+      "model": "gemini/gemini-3.5-flash",
+      "scores": {
+        "n": 120,
+        "per_dim": {
+          "mood": {
+            "f1": 0.7716071428571428,
+            "jaccard": 0.6655555555555555
+          },
+          "topic": {
+            "f1": 0.7740674603174603,
+            "jaccard": 0.6711111111111111
+          },
+          "motif": {
+            "f1": 0.8083068783068783,
+            "jaccard": 0.726765873015873
+          }
+        },
+        "macro_f1": 0.7846604938271605,
+        "macro_jaccard": 0.6878108465608466,
+        "mood_primary_accuracy": 0.6583333333333333,
+        "emotional_intensity_mae": 4.4789915966386555,
+        "accessibility_level_mae": 0.24369747899159663
+      },
+      "cost_usd": 0.4654425000000001,
+      "cost_per_1k": 3.8786875000000007,
+      "poems_per_min": 51.04699446133566,
+      "elapsed_s": 141.0465018749237
+    },
+    {
+      "model": "gemini/gemini-3.6-flash",
+      "scores": {
+        "n": 120,
+        "per_dim": {
+          "mood": {
+            "f1": 0.7995039682539683,
+            "jaccard": 0.7065277777777778
+          },
+          "topic": {
+            "f1": 0.8089484126984128,
+            "jaccard": 0.7197222222222222
+          },
+          "motif": {
+            "f1": 0.8297883597883597,
+            "jaccard": 0.7495833333333334
+          }
+        },
+        "macro_f1": 0.8127469135802469,
+        "macro_jaccard": 0.7252777777777778,
+        "mood_primary_accuracy": 0.675,
+        "emotional_intensity_mae": 3.7899159663865545,
+        "accessibility_level_mae": 0.2184873949579832
+      },
+      "cost_usd": 0.4378904999999999,
+      "cost_per_1k": 3.6490874999999994,
+      "poems_per_min": 42.51026288062675,
+      "elapsed_s": 169.37086510658264
+    }
+  ],
+  "recommendation": "Use <code>gemini/gemini-3.6-flash</code> for bulk classification (macro-F1 0.813, mood_primary 0.675, $3.649/1k). Cheapest is <code>gemini/gemini-2.5-flash</code> at $0.976/1k (macro-F1 0.738); trade the F1 gap against the cost delta at 84k poems."
+}

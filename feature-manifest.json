@@ -16,6 +16,26 @@
   },
   "features": [
     {
+      "id": "poem-categorization",
+      "name": "Poem categorization / Explore",
+      "tier": "important",
+      "userFacing": "Account menu -> Explore Poems: filter/browse poems by mood, topic, motif, cross-dimension family, emotional intensity, and 0-10 reading difficulty; tap a result to expand the full poem in place.",
+      "entrypoints": [
+        "src/components/CategoryExplorer.jsx",
+        "src/components/category/FamilyPicker.jsx",
+        "src/components/category/PoemResultsGrid.jsx",
+        "src/services/database.js"
+      ],
+      "endpoints": ["GET /api/categories", "GET /api/poems/by-category"],
+      "tests": {
+        "unit": ["src/test/server.test.js"],
+        "e2e": []
+      },
+      "deviceOnly": false,
+      "coverage": "mocked",
+      "gap": "server.test.js covers the enabled/disabled API paths with a mocked pool; no e2e yet for the Explore Poems UI (filter chips, in-place poem expand)."
+    },
+    {
       "id": "poem-display",
       "name": "Poem display (Arabic + translation + transliteration)",
       "tier": "critical",

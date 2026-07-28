@@ -14,7 +14,7 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  * @param {Object} poem - Raw poem object from the API
  * @returns {Object} New poem object with normalised fields
  */
-const normalizeDbPoem = (poem) => {
+export const normalizeDbPoem = (poem) => {
   // The API converts snake_case DB columns to camelCase, but defensively handle both
   // in case the raw DB row leaks through (e.g. from the /api/poems/:id endpoint).
   const rawTranslation = poem.cachedTranslation || poem.cached_translation || poem.english || '';
@@ -66,8 +66,8 @@ export const fetchRandomPoem = async ({ poet, excludeIds = [] } = {}) => {
  *
  * @returns {Promise<Array<{name: string, poem_count?: number}>>} Array of poet objects
  */
-export const fetchPoets = async () => {
-  const res = await fetch(`${apiUrl}/api/poets`);
+export const fetchPoets = async ({ all = false } = {}) => {
+  const res = await fetch(`${apiUrl}/api/poets${all ? '?all=1' : ''}`);
   if (!res.ok) throw new Error(`Failed to fetch poets: ${res.status}`);
   const data = await res.json();
   return Array.isArray(data) ? data : [];
@@ -110,9 +110,65 @@ export const fetchPoemsByPoet = async (poetName, count = 5, excludeIds = []) => 
         seenIds.add(String(poem.id));
         results.push(poem);
       }
-    } catch { /* skip failed fetch */ }
+    } catch {
+      /* skip failed fetch */
+    }
   }
   return results;
+};
+
+/**
+ * Fetch the emotional-categorization taxonomy: dimensions (each with its values
+ * + counts) and the curated families. Data-driven — callers should render
+ * whatever comes back rather than hardcoding dimension keys.
+ *
+ * Gracefully returns the empty shape `{dimensions:[], families:[]}` both when the
+ * backend reports categorization is absent (pre-migration) and on any network /
+ * parse error, so the UI can show a "not available yet" state without crashing.
+ *
+ * @returns {Promise<{dimensions: Array, families: Array}>}
+ */
+export const fetchCategories = async () => {
+  try {
+    const res = await fetch(`${apiUrl}/api/categories`);
+    if (!res.ok) throw new Error(`Categories API returned ${res.status}`);
+    const data = await res.json();
+    return {
+      dimensions: Array.isArray(data?.dimensions) ? data.dimensions : [],
+      families: Array.isArray(data?.families) ? data.families : [],
+    };
+  } catch {
+    return { dimensions: [], families: [] };
+  }
+};
+
+/**
+ * Fetch poems matching a set of category filters.
+ *
+ * Filters are data-driven: any dimension key returned by `fetchCategories`
+ * (e.g. mood/topic/motif) is a valid key here, alongside family, poet, era,
+ * minIntensity, maxAccessibility, and limit. Array values are comma-joined;
+ * null / empty values are dropped.
+ *
+ * Returns `[]` when categorization is absent (the API returns an empty array).
+ * Non-OK HTTP responses throw so callers can surface a real error state.
+ *
+ * @param {Object} [filters] - e.g. { family, mood, topic, minIntensity, poet, limit }
+ * @returns {Promise<Array>} Array of normalised poem objects (with category fields)
+ */
+export const fetchPoemsByCategory = async (filters = {}) => {
+  const queryParams = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value == null || value === '') return;
+    const encoded = Array.isArray(value) ? value.join(',') : String(value);
+    if (encoded) queryParams.set(key, encoded);
+  });
+  const qs = queryParams.toString();
+  const url = `${apiUrl}/api/poems/by-category${qs ? '?' + qs : ''}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Category query returned ${res.status} ${res.statusText}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data.map(normalizeDbPoem) : [];
 };
 
 /**

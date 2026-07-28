@@ -1,0 +1,108 @@
+{
+  "_meta": {
+    "purpose": "ILLUSTRATIVE ONLY — a live 3-poem before/after from the distilled prompt.",
+    "not_persisted": "These 'after' results were NOT written to the database. The corpus is unchanged. This file exists to show the distillation effect qualitatively.",
+    "how_generated": "Real production tags (poem_categories) as 'before'; 'after' produced by re-classifying the same poem text with prompts/distilled_classification_prompt.md via the app proxy POST /api/ai/gemini-3.6-flash/generateContent (temperature 0.2, responseMimeType application/json).",
+    "effect": "Every sample collapsed from 13 tags to 6 (mood/topic/motif each 2), dropping low-confidence noise (e.g. sword-battle@60 on a love/ruins poem) and keeping the poem's core, with an Arabic rationale naming the dominant concept.",
+    "before_format": "value(confidence) from the production poem_categories rows.",
+    "after_format": "raw JSON returned by the distilled prompt."
+  },
+  "samples": [
+    {
+      "id": 5027,
+      "title": "فتنة الحسن وندى الشباب",
+      "poet": "أبو المعالي الطالوي",
+      "before_tag_count": 13,
+      "after_tag_count": 6,
+      "before": {
+        "mood": ["amorous(90)", "pride(85)", "bittersweet(75)", "nostalgia(70)"],
+        "topic": ["love(90)", "honor-pride(85)", "women-feminine(80)", "wisdom-ethics(60)"],
+        "motif": ["garden-flowers(80)", "moon-stars(75)", "dawn(70)", "sea-water(65)", "birds(65)"]
+      },
+      "after": {
+        "id": "5027",
+        "mood_primary": "reverence",
+        "moods": ["reverence", "amorous"],
+        "topics": ["honor-pride", "love"],
+        "motifs": ["garden-flowers", "moon-stars"],
+        "emotional_intensity": 75,
+        "accessibility_level": 65,
+        "confidences": {
+          "reverence": 85,
+          "amorous": 80,
+          "honor-pride": 90,
+          "love": 80,
+          "garden-flowers": 75,
+          "moon-stars": 70
+        },
+        "rationale": "قصيدة مديح كلاسيكية تبدأ بمقدمة غزلية في وصف الحسن والشباب، ثم تنتقل إلى إجلال الممدوح وذكر مناقبه وفضله."
+      }
+    },
+    {
+      "id": 6299,
+      "title": "أطلال الديار وصوت الحمام",
+      "poet": "العرجي",
+      "before_tag_count": 13,
+      "after_tag_count": 6,
+      "before": {
+        "mood": ["nostalgia(95)", "yearning(90)", "melancholy(85)", "amorous(80)"],
+        "topic": ["love(90)", "exile-longing(85)", "time-mortality(75)", "women-feminine(70)"],
+        "motif": ["desert-ruins(95)", "birds(90)", "tears(75)", "night(70)", "sword-battle(60)"]
+      },
+      "after": {
+        "id": "6299",
+        "mood_primary": "nostalgia",
+        "moods": ["nostalgia", "yearning"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["desert-ruins", "birds"],
+        "emotional_intensity": 80,
+        "accessibility_level": 65,
+        "confidences": {
+          "nostalgia": 90,
+          "yearning": 85,
+          "love": 90,
+          "exile-longing": 80,
+          "desert-ruins": 90,
+          "birds": 85
+        },
+        "rationale": "تستحضر القصيدة لوعة الحنين إلى أطلال الأحبة وحسرة الفراق وذكراهم المؤلمة من وراء أسباب العزلة والقيد."
+      }
+    },
+    {
+      "id": 5288,
+      "title": "شوق بغداد ودموع الفراق",
+      "poet": "أبو الحسن الجرجاني",
+      "before_tag_count": 13,
+      "after_tag_count": 6,
+      "before": {
+        "mood": ["nostalgia(95)", "yearning(90)", "bittersweet(80)", "serenity(70)"],
+        "topic": ["exile-longing(95)", "homeland(85)", "nature(85)", "love(80)"],
+        "motif": [
+          "garden-flowers(85)",
+          "tears(85)",
+          "sea-water(80)",
+          "moon-stars(70)",
+          "sword-battle(60)"
+        ]
+      },
+      "after": {
+        "id": "5288",
+        "mood_primary": "nostalgia",
+        "moods": ["nostalgia", "yearning"],
+        "topics": ["exile-longing", "nature"],
+        "motifs": ["tears", "garden-flowers"],
+        "emotional_intensity": 80,
+        "accessibility_level": 75,
+        "confidences": {
+          "nostalgia": 90,
+          "yearning": 85,
+          "exile-longing": 90,
+          "nature": 75,
+          "tears": 85,
+          "garden-flowers": 75
+        },
+        "rationale": "قصيدة حنين وشوق لأيام بغداد ومحاسنها، تمتزج فيها لوعة الفراق بوصف جمال طبيعتها ورياضها."
+      }
+    }
+  ]
+}

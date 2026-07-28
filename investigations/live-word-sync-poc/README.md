@@ -62,4 +62,5 @@ compare each recognized word with the visual-highlight timeline stored by the br
 For genuinely time-aligned words, the next comparison is a parallel streaming STT tap (Google Cloud
 STT or Deepgram) or rolling forced alignment. Those services can return word offsets, but require
 their own credentials and introduce delayed corrections; do not block Gemini Live first audio on
-them.
+them. The [CTC feasibility gate](./CTC_FEASIBILITY.md) is the explicitly staged path for testing a
+local forced aligner against the same recorded captures before a causal sidecar is considered.

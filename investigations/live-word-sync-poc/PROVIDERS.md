@@ -27,11 +27,23 @@ results. Final response words include start, end, and confidence. The adapter sh
 Google's; configure `DEEPGRAM_API_KEY` server-side. Deepgram's timestamps refine playback but are
 not latency measurements, so retain the immediate fallback highlight.
 
-## Rolling forced alignment — delayed refinement
+## CTC rolling forced alignment — gated feasibility experiment
 
-WhisperX, stable-ts, or ElevenLabs Forced Alignment can align Gemini-generated PCM against known
-poem text after enough audio has arrived. Use them in overlapping verse/windows and update only
-future words. They are useful audit/reference modes, not a replacement for Live's first audio.
+The candidate is a local Arabic CTC forced-alignment sidecar. It would tee already-scheduled PCM,
+resample it to 16 kHz, align an overlapping known-text window, and use only high-confidence lexical
+anchors to make bounded corrections to words that have not yet appeared. It must never delay first
+audio, move the cursor backward, or publish a word after it is audible.
+
+The lab first runs this offline against its existing Chirp-audited recordings:
+
+```bash
+npm run poc:ctc -- artifacts/comparisons/poem-87443-<batch>-comparison.json --prepare-only
+```
+
+Then an isolated external adapter can be tested with `CTC_ALIGNER=/absolute/path/to/adapter`.
+The full adapter contract, candidate-model research lead, measurable gates, and the explicit
+six-capture/live exit criteria are in [CTC_FEASIBILITY.md](./CTC_FEASIBILITY.md). Until those gates
+pass, forced alignment remains an audit/reference experiment rather than a Live playback dependency.
 
 ## Native timing marks — alternate audio engine
 

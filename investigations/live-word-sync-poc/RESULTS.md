@@ -38,6 +38,19 @@ events are not ordered relative to audio. The prototype uses weighted Arabic let
 punctuation to divide time across known words. This proves fast-start playback-clock synchronization,
 not accurate karaoke-level word boundaries.
 
+## CTC Offline Feasibility Pilot
+
+An isolated Arabic Wav2Vec2 CTC/Viterbi adapter was evaluated only after capture, using six
+independent fixed-poem Gemini recordings and their existing Chirp word audits. It achieved 39/39
+source-token coverage on every comparable capture; across 211 conservatively matched word starts,
+the pooled median absolute error was **83 ms** and P90 was **122 ms**. This retains CTC as a
+promising alignment lead, but does not make it a live feature.
+
+The adapter was cold and whole-recording: model loading plus alignment took about 5.2–5.7 seconds
+per capture. It has not met the 1.5–2 second warm-window requirement, supplied calibrated
+confidence, or proven causal future-only correction. The [CTC feasibility gate](./CTC_FEASIBILITY.md)
+defines the next worker/window and live-safety tests; first audio remains independent of it.
+
 ## Recommendation
 
 Ship this as a line/phrase-first Live experience only if manual Arabic review accepts its drift.

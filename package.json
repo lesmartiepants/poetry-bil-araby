@@ -24,6 +24,7 @@
     "screenshots": "node scripts/capture-design-screenshots.js",
     "poc:compare": "node investigations/live-word-sync-poc/compare-methods.mjs",
     "poc:analyze": "node investigations/live-word-sync-poc/analyze-comparison.mjs",
+    "poc:ctc": "node investigations/live-word-sync-poc/ctc-feasibility.mjs",
     "poc:voices": "node investigations/live-word-sync-poc/voice-reliability.mjs",
     "render:banner": "node .github/assets/render-header.mjs",
     "lint": "eslint src/",

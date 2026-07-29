@@ -660,21 +660,6 @@
       "deviceOnly": false,
       "coverage": "none",
       "gap": "Dev tooling; no automated coverage by design. /enjoyability is gated by ENABLE_DEV_LAB (404 in prod); the Saved-curation endpoints are gated by SAVED_CURATION_EMAIL (unset in prod)."
-    },
-    {
-      "id": "reconcile-probe",
-      "name": "ReconcileProbe",
-      "tier": "internal",
-      "userFacing": "Auto-added from src/components/ReconcileProbe.jsx; description pending human review.",
-      "entrypoints": ["src/components/ReconcileProbe.jsx"],
-      "endpoints": [],
-      "tests": {
-        "unit": ["src/test/reconcileProbe.test.jsx"],
-        "e2e": []
-      },
-      "deviceOnly": false,
-      "coverage": "behavioral",
-      "gap": "Proven via guard-gauntlet: renders and asserts the reconcile-probe marker text; fails when the marker text is changed."
     }
   ]
 }

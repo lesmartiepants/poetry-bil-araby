@@ -104,3 +104,6 @@ storybook-static
 
 # Local git worktrees (never commit as gitlinks)
 .claude/worktrees/
+
+# Local DB backup dumps — never commit (large data + binaries)
+backups/

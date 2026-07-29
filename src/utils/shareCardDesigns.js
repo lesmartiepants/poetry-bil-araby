@@ -243,7 +243,6 @@ function wrapText(ctx, text, maxWidth) {
 }
 
 /**
-<<<<<<< HEAD
  * Return the largest size (≤ `size`, stepping by 2) at which EVERY string in
  * `texts` fits within `maxWidth`. Used to size a whole set of lines (e.g. all
  * verses) uniformly so the card reads as one and nothing overflows.
@@ -379,8 +378,6 @@ function drawInterleavedVerses(ctx, verses, translation, opts) {
 }
 
 /**
-=======
->>>>>>> origin/main
  * Draw the brand mark "بالعربي poetry" as one left→right unit, anchored either
  * centered on `cx`, at a right edge, or at a left edge — never overlapping
  * itself regardless of alignment. Used by the composition layouts.
@@ -537,11 +534,7 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
     }
   }
 
-<<<<<<< HEAD
   // ── 1. Arabic poem title — biggest, gold foil; shrinks to fit the frame ──
-=======
-  // ── 1. Arabic poem title — biggest, gold foil ──
->>>>>>> origin/main
   if (resolvedTitle.arabic) {
     ctx.fillStyle = colors.poet;
     fitFont(ctx, resolvedTitle.arabic, '"Reem Kufi", "Amiri", sans-serif', 54, maxW, 'bold');
@@ -662,7 +655,6 @@ function renderDiwan(ctx, w, h, poem, opts = {}) {
   // ── Interleaved verses + translations (line by line) ──
   const contentStartY = headerBottom + layout.titleBodyGap;
 
-<<<<<<< HEAD
   drawInterleavedVerses(ctx, verses, translation, {
     xText,
     align,
@@ -672,26 +664,6 @@ function renderDiwan(ctx, w, h, poem, opts = {}) {
     maxWidth: align === 'right' ? xText - 90 : w - 180,
     ink: '#e8e0d0',
     tr: 'rgba(197, 160, 89, 0.55)',
-=======
-  verses.forEach((verse, i) => {
-    const y = contentStartY + i * layout.pairSpacing;
-
-    // Arabic verse
-    ctx.fillStyle = '#e8e0d0';
-    ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = align;
-    ctx.direction = 'rtl';
-    ctx.fillText(verse, xText, y);
-
-    // English translation below
-    if (translation[i]) {
-      ctx.fillStyle = 'rgba(197, 160, 89, 0.55)';
-      ctx.font = 'italic 34px "Playfair Display", serif';
-      ctx.textAlign = align;
-      ctx.direction = 'ltr';
-      ctx.fillText(translation[i], xText, y + 62);
-    }
->>>>>>> origin/main
   });
 
   // Brand — bottom-right, single line
@@ -759,7 +731,6 @@ function renderIbnMuqla(ctx, w, h, poem, opts = {}) {
   // ── Interleaved verses (line by line) ──
   const contentStartY = headerBottom + layout.titleBodyGap;
 
-<<<<<<< HEAD
   drawInterleavedVerses(ctx, verses, translation, {
     xText,
     align,
@@ -769,24 +740,6 @@ function renderIbnMuqla(ctx, w, h, poem, opts = {}) {
     maxWidth: align === 'right' ? xText - 90 : w - 180,
     ink: '#2C1A00',
     tr: 'rgba(74, 40, 0, 0.48)',
-=======
-  verses.forEach((verse, i) => {
-    const y = contentStartY + i * layout.pairSpacing;
-
-    ctx.fillStyle = '#2C1A00';
-    ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = align;
-    ctx.direction = 'rtl';
-    ctx.fillText(verse, xText, y);
-
-    if (translation[i]) {
-      ctx.fillStyle = 'rgba(74, 40, 0, 0.48)';
-      ctx.font = 'italic 34px "Playfair Display", serif';
-      ctx.textAlign = align;
-      ctx.direction = 'ltr';
-      ctx.fillText(translation[i], xText, y + 62);
-    }
->>>>>>> origin/main
   });
 
   // Brand — bottom-right, single line
@@ -866,7 +819,6 @@ function renderSinan(ctx, w, h, poem, opts = {}) {
   // ── Interleaved verses (line by line) ──
   const contentStartY = headerBottom + layout.titleBodyGap;
 
-<<<<<<< HEAD
   drawInterleavedVerses(ctx, verses, translation, {
     xText,
     align,
@@ -876,24 +828,6 @@ function renderSinan(ctx, w, h, poem, opts = {}) {
     maxWidth: align === 'right' ? xText - 90 : w - 180,
     ink: '#E8E4DC',
     tr: 'rgba(79, 166, 183, 0.55)',
-=======
-  verses.forEach((verse, i) => {
-    const y = contentStartY + i * layout.pairSpacing;
-
-    ctx.fillStyle = '#E8E4DC';
-    ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = align;
-    ctx.direction = 'rtl';
-    ctx.fillText(verse, xText, y);
-
-    if (translation[i]) {
-      ctx.fillStyle = 'rgba(79, 166, 183, 0.55)';
-      ctx.font = 'italic 34px "Playfair Display", serif';
-      ctx.textAlign = align;
-      ctx.direction = 'ltr';
-      ctx.fillText(translation[i], xText, y + 62);
-    }
->>>>>>> origin/main
   });
 
   // Brand — bottom-right, single line
@@ -979,7 +913,6 @@ function renderZahaHadid(ctx, w, h, poem, opts = {}) {
   // ── Interleaved verses — right-aligned, line by line ──
   const contentStartY = headerBottom + layout.titleBodyGap;
 
-<<<<<<< HEAD
   drawInterleavedVerses(ctx, verses, translation, {
     xText,
     align,
@@ -989,24 +922,6 @@ function renderZahaHadid(ctx, w, h, poem, opts = {}) {
     maxWidth: align === 'right' ? xText - 90 : w - 180,
     ink: '#F0E8FF',
     tr: 'rgba(150, 180, 255, 0.52)',
-=======
-  verses.forEach((verse, i) => {
-    const y = contentStartY + i * layout.pairSpacing;
-
-    ctx.fillStyle = '#F0E8FF';
-    ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = align;
-    ctx.direction = 'rtl';
-    ctx.fillText(verse, xText, y);
-
-    if (translation[i]) {
-      ctx.fillStyle = 'rgba(150, 180, 255, 0.52)';
-      ctx.font = 'italic 34px "Playfair Display", serif';
-      ctx.textAlign = align;
-      ctx.direction = 'ltr';
-      ctx.fillText(translation[i], xText, y + 62);
-    }
->>>>>>> origin/main
   });
 
   // Brand — bottom-right with subtle neon glow, single line
@@ -1092,7 +1007,6 @@ function renderHassanFathy(ctx, w, h, poem, opts = {}) {
   // ── Interleaved verses (line by line) ──
   const contentStartY = headerBottom + layout.titleBodyGap;
 
-<<<<<<< HEAD
   drawInterleavedVerses(ctx, verses, translation, {
     xText,
     align,
@@ -1102,24 +1016,6 @@ function renderHassanFathy(ctx, w, h, poem, opts = {}) {
     maxWidth: align === 'right' ? xText - 90 : w - 180,
     ink: '#2A1500',
     tr: 'rgba(74, 40, 0, 0.45)',
-=======
-  verses.forEach((verse, i) => {
-    const y = contentStartY + i * layout.pairSpacing;
-
-    ctx.fillStyle = '#2A1500';
-    ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = align;
-    ctx.direction = 'rtl';
-    ctx.fillText(verse, xText, y);
-
-    if (translation[i]) {
-      ctx.fillStyle = 'rgba(74, 40, 0, 0.45)';
-      ctx.font = 'italic 34px "Playfair Display", serif';
-      ctx.textAlign = align;
-      ctx.direction = 'ltr';
-      ctx.fillText(translation[i], xText, y + 62);
-    }
->>>>>>> origin/main
   });
 
   // Brand — bottom-right in terracotta, single line
@@ -1165,7 +1061,6 @@ function renderLayl(ctx, w, h, poem, opts = {}) {
   );
 
   const contentStartY = headerBottom + layout.titleBodyGap;
-<<<<<<< HEAD
   drawInterleavedVerses(ctx, verses, translation, {
     xText,
     align,
@@ -1175,22 +1070,6 @@ function renderLayl(ctx, w, h, poem, opts = {}) {
     maxWidth: align === 'right' ? xText - 90 : w - 180,
     ink: '#ece5d8',
     tr: 'rgba(197, 160, 89, 0.42)',
-=======
-  verses.forEach((verse, i) => {
-    const y = contentStartY + i * layout.pairSpacing;
-    ctx.fillStyle = '#ece5d8';
-    ctx.font = '46px "Amiri", serif';
-    ctx.textAlign = align;
-    ctx.direction = 'rtl';
-    ctx.fillText(verse, xText, y);
-    if (translation[i]) {
-      ctx.fillStyle = 'rgba(197, 160, 89, 0.42)';
-      ctx.font = 'italic 33px "Playfair Display", serif';
-      ctx.textAlign = align;
-      ctx.direction = 'ltr';
-      ctx.fillText(translation[i], xText, y + 62);
-    }
->>>>>>> origin/main
   });
 
   drawBrandBottomRight(ctx, w, h, 'rgba(212, 180, 99, 0.35)', {
@@ -1261,7 +1140,6 @@ function renderMishkat(ctx, w, h, poem, opts = {}) {
   // more lines are added the whole thing rises (the title moves up) and the
   // type steps down so each verse stays clear of the next line's translation.
   const dense = verses.length >= 5;
-<<<<<<< HEAD
   const gapAfterHeader = 46;
   const zoneTop = SPRING + 40;
   const zoneBottom = ARCH_BOTTOM - 64;
@@ -1275,18 +1153,6 @@ function renderMishkat(ctx, w, h, poem, opts = {}) {
     preferredRowGap: dense ? 116 : 150,
   });
   const blockH = 204 + gapAfterHeader + verseLayout.height;
-=======
-  const vSize = dense ? 40 : 46;
-  const tSize = dense ? 27 : 33;
-  const tOffset = dense ? 48 : 60;
-  const rowGap = dense ? 116 : 150;
-  const gapAfterHeader = 46;
-  const zoneTop = SPRING + 40;
-  const zoneBottom = ARCH_BOTTOM - 64;
-  const n = verses.length;
-  // Header baselines span 150 below its title baseline; add cap height (42) above.
-  const blockH = 204 + gapAfterHeader + Math.max(n - 1, 0) * rowGap + tOffset;
->>>>>>> origin/main
   const blockTop = zoneTop + Math.max(0, (zoneBottom - zoneTop - blockH) / 2);
   const titleY = blockTop + 42;
 
@@ -1307,31 +1173,18 @@ function renderMishkat(ctx, w, h, poem, opts = {}) {
 
   const contentTop = headerBottom + gapAfterHeader;
   verses.forEach((verse, i) => {
-<<<<<<< HEAD
     const y = contentTop + i * verseLayout.rowGap;
     ctx.fillStyle = '#efe9da';
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
     ctx.font = `${verseLayout.vSize}px "Amiri", serif`;
-=======
-    const y = contentTop + i * rowGap;
-    ctx.fillStyle = '#efe9da';
-    ctx.textAlign = 'center';
-    ctx.direction = 'rtl';
-    fitFont(ctx, verse, '"Amiri", serif', vSize, textWidth);
->>>>>>> origin/main
     ctx.fillText(verse, xText, y);
     if (translation[i]) {
       ctx.fillStyle = 'rgba(120, 200, 180, 0.55)';
       ctx.textAlign = 'center';
       ctx.direction = 'ltr';
-<<<<<<< HEAD
       ctx.font = `italic ${verseLayout.tSize}px "Playfair Display", serif`;
       ctx.fillText(translation[i], xText, y + verseLayout.translationOffsets[i]);
-=======
-      fitFont(ctx, translation[i], '"Playfair Display", serif', tSize, textWidth, 'italic');
-      ctx.fillText(translation[i], xText, y + tOffset);
->>>>>>> origin/main
     }
   });
 
@@ -1389,17 +1242,9 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
   const tLineH = 40; // line height for wrapped English
   const rowExtra = 42; // gap between verse units
 
-<<<<<<< HEAD
   // The English strapline is the poem's English TITLE, set in the madder-red
   // feature colour (falls back to the English poet if there is no title).
   const enHead = title.english || poet.english || '';
-=======
-  const enPoet = poet.english || '';
-  const enTitle = title.english || '';
-  let enHead = '';
-  if (enPoet && enTitle && enPoet !== enTitle) enHead = `${enPoet} – ${enTitle}`;
-  else enHead = enPoet || enTitle;
->>>>>>> origin/main
 
   // Pre-measure wrapped translation lines to size the block for centering.
   ctx.font = `italic ${tSize}px "Playfair Display", serif`;
@@ -1439,11 +1284,7 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
   }
   if (enHead) {
     ctx.direction = 'ltr';
-<<<<<<< HEAD
     ctx.fillStyle = '#8e2a2a'; // madder-red feature colour
-=======
-    ctx.fillStyle = 'rgba(25, 21, 18, 0.62)';
->>>>>>> origin/main
     fitFont(ctx, enHead, '"Playfair Display", serif', 30, textWidth, '600');
     ctx.fillText(enHead, xText, offset + relEnHead);
   }
@@ -1504,7 +1345,6 @@ function renderMusnad(ctx, w, h, poem, opts = {}) {
   const poet = resolveBilingual(poem.poet, poem.poetArabic);
   const title = resolveBilingual(poem.title, poem.titleArabic);
 
-<<<<<<< HEAD
   // Top-left masthead — the TITLE is the prominent element: Arabic title big,
   // English title beneath, then the poet as a small byline, over a rule. The
   // whole block stacks on the left so a long title never collides with the poet.
@@ -1539,37 +1379,6 @@ function renderMusnad(ctx, w, h, poem, opts = {}) {
   ctx.lineTo(360, hy + 28);
   ctx.stroke();
 
-=======
-  ctx.textAlign = 'left';
-  ctx.direction = 'rtl';
-  ctx.fillStyle = LP.gold;
-  ctx.font = 'bold 52px "Reem Kufi", sans-serif';
-  ctx.fillText(poet.arabic || '', 96, 150);
-  if (poet.english) {
-    ctx.direction = 'ltr';
-    ctx.fillStyle = LP.grey;
-    ctx.font = '26px "Forum", serif';
-    ctx.save();
-    ctx.letterSpacing = '4px';
-    ctx.fillText(poet.english.toUpperCase(), 98, 196);
-    ctx.restore();
-  }
-  ctx.strokeStyle = LP.goldFaint;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(98, 224);
-  ctx.lineTo(360, 224);
-  ctx.stroke();
-
-  if (title.arabic) {
-    ctx.textAlign = 'right';
-    ctx.direction = 'rtl';
-    ctx.fillStyle = LP.goldSoft;
-    ctx.font = '34px "Reem Kufi", sans-serif';
-    ctx.fillText(title.arabic, w - 96, 150);
-  }
-
->>>>>>> origin/main
   const marginX = w - 168;
   ctx.strokeStyle = LP.goldFaint;
   ctx.lineWidth = 1;
@@ -1584,7 +1393,6 @@ function renderMusnad(ctx, w, h, poem, opts = {}) {
   const anchorX = marginX - 34;
   const colWidth = anchorX - 96;
   const dense = verses.length >= 5;
-<<<<<<< HEAD
   const regionTop = 400;
   const regionBottom = h - 170;
   const verseLayout = createBilingualVerseLayout(ctx, verses, tr, {
@@ -1597,16 +1405,6 @@ function renderMusnad(ctx, w, h, poem, opts = {}) {
   const top = regionTop + Math.max(0, (regionBottom - regionTop - verseLayout.height) / 2);
   verses.forEach((v, i) => {
     const y = top + i * verseLayout.rowGap;
-=======
-  const trOffset = 58; // a touch more air between the Arabic and its English
-  const regionTop = 400;
-  const regionBottom = h - 170;
-  const rowGap = dense ? 128 : 152;
-  const blockH = Math.max(verses.length - 1, 0) * rowGap + trOffset + 12;
-  const top = regionTop + Math.max(0, (regionBottom - regionTop - blockH) / 2);
-  verses.forEach((v, i) => {
-    const y = top + i * rowGap;
->>>>>>> origin/main
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
     ctx.fillStyle = LP.goldSoft;
@@ -1614,22 +1412,13 @@ function renderMusnad(ctx, w, h, poem, opts = {}) {
     ctx.fillText(arabicNums[i] || String(i + 1), w - 118, y - 8);
     ctx.textAlign = 'right';
     ctx.fillStyle = LP.ink;
-<<<<<<< HEAD
     ctx.font = `${verseLayout.vSize}px "Amiri", serif`;
-=======
-    fitFont(ctx, v, '"Amiri", serif', 52, colWidth);
->>>>>>> origin/main
     ctx.fillText(v, anchorX, y);
     if (tr[i]) {
       ctx.direction = 'ltr';
       ctx.fillStyle = LP.grey;
-<<<<<<< HEAD
       ctx.font = `italic ${verseLayout.tSize}px "Playfair Display", serif`;
       ctx.fillText(tr[i], anchorX, y + verseLayout.translationOffsets[i]);
-=======
-      fitFont(ctx, tr[i], '"Playfair Display", serif', 34, colWidth, 'italic');
-      ctx.fillText(tr[i], anchorX, y + trOffset);
->>>>>>> origin/main
     }
   });
 
@@ -1679,7 +1468,6 @@ function renderNajma(ctx, w, h, poem, opts = {}) {
     ctx.fillText(title.english, cx, cy - 262);
   }
 
-<<<<<<< HEAD
   // Verse block inside the medallion — the type steps down and the rows tighten
   // as lines are added so the Arabic and English never overlap, and the whole
   // block stays centred within the star's body.
@@ -1701,22 +1489,10 @@ function renderNajma(ctx, w, h, poem, opts = {}) {
     ctx.direction = 'rtl';
     ctx.textAlign = 'center';
     ctx.font = `${verseLayout.vSize}px "Amiri", serif`;
-=======
-  const coreWidth = 620;
-  const top = cy - 150;
-  const gap = Math.min(150, 440 / Math.max(verses.length, 1));
-  verses.forEach((v, i) => {
-    const y = top + i * gap;
-    ctx.fillStyle = LP.ink;
-    ctx.direction = 'rtl';
-    ctx.textAlign = 'center';
-    fitFont(ctx, v, '"Amiri", serif', 42, coreWidth);
->>>>>>> origin/main
     ctx.fillText(v, cx, y);
     if (tr[i]) {
       ctx.fillStyle = LP.grey;
       ctx.direction = 'ltr';
-<<<<<<< HEAD
       ctx.font = `italic ${verseLayout.tSize}px "Playfair Display", serif`;
       ctx.fillText(tr[i], cx, y + verseLayout.translationOffsets[i]);
     }
@@ -1733,24 +1509,6 @@ function renderNajma(ctx, w, h, poem, opts = {}) {
     ctx.fillStyle = LP.grey;
     ctx.font = '22px "Playfair Display", serif';
     ctx.fillText(poet.english, 96, h - 84);
-=======
-      fitFont(ctx, tr[i], '"Playfair Display", serif', 27, coreWidth, 'italic');
-      ctx.fillText(tr[i], cx, y + 40);
-    }
-  });
-
-  // Poet at the bottom point — Arabic, with the English poet name beneath.
-  ctx.fillStyle = LP.goldSoft;
-  ctx.font = '30px "Reem Kufi", sans-serif';
-  ctx.direction = 'rtl';
-  ctx.textAlign = 'center';
-  ctx.fillText(poet.arabic || '', cx, cy + 292);
-  if (poet.english) {
-    ctx.fillStyle = LP.grey;
-    ctx.direction = 'ltr';
-    ctx.font = '24px "Playfair Display", serif';
-    ctx.fillText(poet.english, cx, cy + 330);
->>>>>>> origin/main
   }
 
   // Brand — bottom-right (moved out of the centre).
@@ -1765,7 +1523,6 @@ function renderMuqabala(ctx, w, h, poem, opts = {}) {
   const poet = resolveBilingual(poem.poet, poem.poetArabic);
   const title = resolveBilingual(poem.title, poem.titleArabic);
 
-<<<<<<< HEAD
   // Header — Arabic title, English title, Arabic poet, English poet.
   ctx.textAlign = 'center';
   ctx.direction = 'rtl';
@@ -1789,23 +1546,6 @@ function renderMuqabala(ctx, w, h, poem, opts = {}) {
     ctx.save();
     ctx.letterSpacing = '3px';
     ctx.fillText(poet.english.toUpperCase(), w / 2, 280);
-=======
-  ctx.textAlign = 'center';
-  ctx.direction = 'rtl';
-  ctx.fillStyle = LP.gold;
-  ctx.font = 'bold 50px "Reem Kufi", sans-serif';
-  ctx.fillText(title.arabic || '', w / 2, 168);
-  ctx.fillStyle = LP.goldSoft;
-  ctx.font = '32px "Amiri", serif';
-  ctx.fillText(poet.arabic || '', w / 2, 224);
-  if (poet.english) {
-    ctx.direction = 'ltr';
-    ctx.fillStyle = LP.grey;
-    ctx.font = '24px "Forum", serif';
-    ctx.save();
-    ctx.letterSpacing = '3px';
-    ctx.fillText(poet.english.toUpperCase(), w / 2, 262);
->>>>>>> origin/main
     ctx.restore();
   }
 
@@ -1868,7 +1608,6 @@ function renderIqtibas(ctx, w, h, poem, opts = {}) {
   ctx.fillText('“', 60, 400);
   ctx.restore();
 
-<<<<<<< HEAD
   // Poem title, above the body.
   ctx.textAlign = 'center';
   ctx.direction = 'rtl';
@@ -1903,29 +1642,10 @@ function renderIqtibas(ctx, w, h, poem, opts = {}) {
     ctx.direction = 'rtl';
     ctx.textAlign = 'center';
     ctx.font = `${verseLayout.vSize}px "Amiri", serif`;
-=======
-  // Verse block — larger type, a touch more air to the English, vertically
-  // centred between the quotation mark and the attribution and reflowing.
-  const textW = w - 220;
-  const trOffset = 56;
-  const dense = verses.length >= 5;
-  const rowGap = dense ? 122 : 158;
-  const regionTop = 430;
-  const regionBottom = h - 250;
-  const blockH = Math.max(verses.length - 1, 0) * rowGap + trOffset + 12;
-  const top = regionTop + Math.max(0, (regionBottom - regionTop - blockH) / 2);
-  verses.forEach((v, i) => {
-    const y = top + i * rowGap;
-    ctx.fillStyle = LP.ink;
-    ctx.direction = 'rtl';
-    ctx.textAlign = 'center';
-    fitFont(ctx, v, '"Amiri", serif', 54, textW);
->>>>>>> origin/main
     ctx.fillText(v, w / 2, y);
     if (tr[i]) {
       ctx.fillStyle = LP.grey;
       ctx.direction = 'ltr';
-<<<<<<< HEAD
       ctx.font = `italic ${verseLayout.tSize}px "Playfair Display", serif`;
       ctx.fillText(tr[i], w / 2, y + verseLayout.translationOffsets[i]);
     }
@@ -1946,40 +1666,6 @@ function renderIqtibas(ctx, w, h, poem, opts = {}) {
     ctx.fillStyle = LP.grey;
     ctx.font = 'italic 28px "Playfair Display", serif';
     ctx.fillText(poet.english, w - 96, ay);
-=======
-      fitFont(ctx, tr[i], '"Playfair Display", serif', 33, textW, 'italic');
-      ctx.fillText(tr[i], w / 2, y + trOffset);
-    }
-  });
-
-  // Attribution on a gold rule, bottom-right: Arabic poet, Arabic title, and an
-  // English "[author] – [title]" line.
-  const enPoet = poet.english || '';
-  const enTitle = title.english || '';
-  let enLine = '';
-  if (enPoet && enTitle && enPoet !== enTitle) enLine = `${enPoet} – ${enTitle}`;
-  else enLine = enPoet || enTitle;
-
-  const baseY = h - 208;
-  ctx.textAlign = 'right';
-  ctx.direction = 'rtl';
-  ctx.fillStyle = LP.gold;
-  ctx.font = 'bold 44px "Reem Kufi", sans-serif';
-  ctx.fillText(poet.arabic || '', w - 96, baseY);
-  let ay = baseY;
-  if (title.arabic && title.arabic !== poet.arabic) {
-    ay += 44;
-    ctx.fillStyle = LP.goldSoft;
-    ctx.font = '32px "Amiri", serif';
-    ctx.fillText(title.arabic, w - 96, ay);
-  }
-  if (enLine) {
-    ay += 42;
-    ctx.direction = 'ltr';
-    ctx.fillStyle = LP.grey;
-    ctx.font = 'italic 28px "Playfair Display", serif';
-    ctx.fillText(enLine, w - 96, ay);
->>>>>>> origin/main
   }
   ctx.strokeStyle = LP.goldSoft;
   ctx.lineWidth = 2;

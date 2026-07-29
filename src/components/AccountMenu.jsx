@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { Popover } from 'radix-ui';
-<<<<<<< HEAD
-import { LogOut, Mic, Paintbrush, UserRound, Moon, Sun, SlidersHorizontal } from 'lucide-react';
-=======
 import {
   LogOut,
   Mic,
@@ -14,7 +11,6 @@ import {
   SlidersHorizontal,
   Compass,
 } from 'lucide-react';
->>>>>>> origin/main
 import { THEME } from '../constants/theme.js';
 import { FEATURES } from '../constants/features.js';
 import { useUIStore } from '../stores/uiStore';

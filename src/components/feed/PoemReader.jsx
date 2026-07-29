@@ -383,7 +383,7 @@ const PoemReader = memo(function PoemReader({
           top: 'calc(env(safe-area-inset-top, 0px) + 18px)',
           zIndex: 5,
           maxWidth:
-            'min(680px, calc(100vw - 48px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)))',
+            'min(680px, calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)))',
           // Light mode: a soft dark shadow lifts the gold header off the pale background.
           textShadow: darkMode ? undefined : '0 1px 3px rgba(0,0,0,0.35)',
         }}
@@ -421,23 +421,27 @@ const PoemReader = memo(function PoemReader({
         )}
         <div
           dir="ltr"
-          className="flex items-center gap-[0.4rem]"
+          className="flex items-center justify-center gap-[0.4rem] flex-wrap"
           style={{
             fontFamily: "'Cormorant Garamond', serif",
             fontWeight: 700,
             fontSize: `calc(clamp(0.98rem, 3.9vw, 1.22rem) * ${headerScale})`,
             color: goldColor,
             marginTop: 5,
+            textAlign: 'center',
           }}
         >
-          <span lang="ar" style={{ fontFamily: "'Reem Kufi', sans-serif", fontWeight: 600 }}>
+          <span
+            lang="ar"
+            style={{ fontFamily: "'Reem Kufi', sans-serif", fontWeight: 600, whiteSpace: 'nowrap' }}
+          >
             {poem?.poetArabic || poem?.poet}
           </span>
           {poem?.poet && poem?.poetArabic && poem.poet !== poem.poetArabic && (
             <span style={{ opacity: 0.6, fontWeight: 400 }}>·</span>
           )}
           {poem?.poet && poem?.poetArabic && poem.poet !== poem.poetArabic && (
-            <span>{poem.poet}</span>
+            <span style={{ whiteSpace: 'nowrap' }}>{poem.poet}</span>
           )}
         </div>
       </div>

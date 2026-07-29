@@ -87,6 +87,21 @@ This is intentionally **not wired into the production reader**. The next test is
 identical-PCM replay across fallback, shadow, and correction before range rotation, calibrated
 confidence, or a debug-panel shadow mode is considered.
 
+## Precision-Recitation Pre-roll Prototype
+
+A separate POC-only `ctc-precision-phrase` mode now holds opening PCM while a warm CTC worker
+builds stable, absolute-sample word cues. Unlike the immediate sidecar's 120 ms future correction,
+it can directly use a completed cue schedule only before the phrase begins. Its worker protocol
+supports bounded phrase windows and range rotation; every cue needs two compatible alignment passes
+within 80 ms and can never change a played word.
+
+This validates the transport and a narrow alignment result, not a product mode. In the direct
+opening-phrase dogfood, 4/5 Chirp-comparable CTC cues were within ±80 ms, but they required roughly
+2.8 seconds of pre-roll. In the rotating live run, only 11/37 words (13.5%) were accurate and
+causally available under a 4.2-second pre-roll, far below the 80% target; rendered exact-start
+agreement was 6/37. The full [precision POC report](./PRECISION_RECITATION.md) explains why its
+100% oracle replay is an upper bound rather than a live claim.
+
 ## Recommendation
 
 Ship this as a line/phrase-first Live experience only if manual Arabic review accepts its drift.

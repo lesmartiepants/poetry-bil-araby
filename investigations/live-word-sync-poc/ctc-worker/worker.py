@@ -9,7 +9,8 @@ late to safely affect future highlights.
 The public HTTP contract is intentionally tiny and works with an Express proxy:
 
   GET  /status
-  POST /start   {transcript, sampleRateHertz: 24000}
+  POST /start   {transcript, sampleRateHertz: 24000, pcmBaseSample24k?, sourceStartIndex?, sourceEndIndex?, alignmentStartSample24k?, alignmentEndSample24k?}
+  POST /range   {sessionId, sourceStartIndex, sourceEndIndex, alignmentStartSample24k?, alignmentEndSample24k?}
   POST /chunk   {sessionId, seq, startSample24k, audio, sourceStartIndex?, sourceEndIndex?}
   GET  /cues?session=<id>&after=<integer>
   POST /stop    {sessionId}
@@ -45,6 +46,8 @@ INPUT_SAMPLE_RATE = 24000
 MIN_WINDOW_MS = 1500
 REPROCESS_INTERVAL_MS = 500
 COMMIT_LAG_MS = 750
+STABILITY_TOLERANCE_MS = 80
+STABILITY_REQUIRED_PASSES = 2
 
 
 def split_words(transcript: str) -> list[str]:
@@ -163,15 +166,27 @@ class Session:
     sample_rate: int
     received: np.ndarray = field(default_factory=lambda: np.empty(0, dtype=np.float32))
     expected_seq: int = 0
+    # ``received[0]`` is this absolute source-stream sample. A precision
+    # player can therefore create one session per phrase without losing its
+    # mapping to the browser's PCM trace.
+    pcm_base_sample: int = 0
     expected_sample: int = 0
     received_crc32: int = 0
     source_start: int | None = None
     source_end: int | None = None
+    alignment_start_sample: int = 0
+    # Optional exclusive absolute endpoint. A bounded phrase is not aligned
+    # until contiguous PCM reaches this sample.
+    alignment_end_sample: int | None = None
+    range_revision: int = 0
     stopped: bool = False
     processing: bool = False
     last_processed_samples: int = 0
     cues: list[dict[str, Any]] = field(default_factory=list)
     emitted_source_indices: set[int] = field(default_factory=set)
+    # Most recent result for each word in the current phrase/range. A cue is
+    # marked stable only when two independent growing-window alignments agree.
+    candidate_history: dict[int, dict[str, Any]] = field(default_factory=dict)
     error: str | None = None
     created_at: float = field(default_factory=time.monotonic)
     lock: threading.Lock = field(default_factory=threading.Lock)
@@ -214,6 +229,8 @@ class WorkerState:
             'inputContract': {'sampleRateHertz': INPUT_SAMPLE_RATE, 'format': 'pcm_s16le_mono_base64'},
             'safety': {
                 'commitLagMs': COMMIT_LAG_MS,
+                'stabilityToleranceMs': STABILITY_TOLERANCE_MS,
+                'stabilityRequiredPasses': STABILITY_REQUIRED_PASSES,
                 'requiresSourceWordRange': True,
                 'doesNotControlPlayback': True,
                 'emitsPastAnchorsOnly': True,
@@ -230,10 +247,122 @@ class WorkerState:
         sample_rate = payload.get('sampleRateHertz', INPUT_SAMPLE_RATE)
         if sample_rate != INPUT_SAMPLE_RATE:
             raise ValueError(f'Only {INPUT_SAMPLE_RATE} Hz mono PCM is supported by this feasibility worker.')
-        session = Session(identifier=uuid.uuid4().hex, words=split_words(transcript), sample_rate=sample_rate)
+        base_sample = payload.get('pcmBaseSample24k', 0)
+        if not isinstance(base_sample, int) or base_sample < 0:
+            raise ValueError('start.pcmBaseSample24k must be a non-negative integer when provided.')
+        session = Session(
+            identifier=uuid.uuid4().hex,
+            words=split_words(transcript),
+            sample_rate=sample_rate,
+            pcm_base_sample=base_sample,
+            expected_sample=base_sample,
+            alignment_start_sample=base_sample,
+        )
+        if payload.get('sourceStartIndex') is not None or payload.get('sourceEndIndex') is not None:
+            self._set_range(session, payload, initial=True)
         with self.lock:
             self.sessions[session.identifier] = session
-        return {'sessionId': session.identifier, 'sourceWords': len(session.words), 'modelState': self.model_state}
+        return {
+            'sessionId': session.identifier,
+            'sourceWords': len(session.words),
+            'modelState': self.model_state,
+            'pcmBaseSample24k': session.pcm_base_sample,
+            'range': self._range_snapshot(session),
+        }
+
+    def _range_snapshot(self, session: Session) -> dict[str, Any] | None:
+        if session.source_start is None or session.source_end is None:
+            return None
+        return {
+            'sourceStartIndex': session.source_start,
+            'sourceEndIndex': session.source_end,
+            'alignmentStartSample24k': session.alignment_start_sample,
+            'alignmentEndSample24k': session.alignment_end_sample,
+            'revision': session.range_revision,
+        }
+
+    def _range_ready(self, session: Session) -> bool:
+        if session.source_start is None or session.source_end is None:
+            return False
+        end = session.alignment_end_sample if session.alignment_end_sample is not None else session.expected_sample
+        return session.pcm_base_sample <= session.alignment_start_sample < end <= session.expected_sample
+
+    def _set_range(self, session: Session, payload: dict[str, Any], initial: bool = False) -> None:
+        source_start, source_end = payload.get('sourceStartIndex'), payload.get('sourceEndIndex')
+        if not isinstance(source_start, int) or not isinstance(source_end, int) or not (0 <= source_start < source_end <= len(session.words)):
+            raise ValueError('sourceStartIndex/sourceEndIndex must describe a valid non-empty source word range.')
+        same_source_range = (
+            not initial
+            and session.source_start == source_start
+            and session.source_end == source_end
+        )
+        if 'alignmentStartSample24k' in payload:
+            alignment_start = payload['alignmentStartSample24k']
+        elif same_source_range:
+            # Backward-compatible clients may repeat the same range on every
+            # data chunk. Repeating it must not silently reset the phrase
+            # window and prevent the two-pass stability check from converging.
+            alignment_start = session.alignment_start_sample
+        else:
+            alignment_start = session.expected_sample if not initial else session.pcm_base_sample
+        if not isinstance(alignment_start, int) or not (session.pcm_base_sample <= alignment_start <= session.expected_sample):
+            raise ValueError('alignmentStartSample24k must be within the received absolute PCM range.')
+        if 'alignmentEndSample24k' in payload:
+            alignment_end = payload['alignmentEndSample24k']
+        elif same_source_range:
+            alignment_end = session.alignment_end_sample
+        else:
+            alignment_end = None
+        if alignment_end is not None and (
+            not isinstance(alignment_end, int) or alignment_end <= alignment_start
+        ):
+            raise ValueError('alignmentEndSample24k must be an absolute sample strictly after alignmentStartSample24k.')
+        # Never mutate an emitted phrase: callers must use an undispatched
+        # source range for the next phrase. This keeps cue source indices
+        # immutable even when a client accidentally retries /range.
+        overlaps_emitted = any(source_start <= index < source_end for index in session.emitted_source_indices)
+        if overlaps_emitted and not (
+            session.source_start == source_start
+            and session.source_end == source_end
+            and session.alignment_start_sample == alignment_start
+            and session.alignment_end_sample == alignment_end
+        ):
+            raise ValueError('Cannot replace a source range that contains already emitted cues.')
+        changed = (
+            session.source_start != source_start
+            or session.source_end != source_end
+            or session.alignment_start_sample != alignment_start
+            or session.alignment_end_sample != alignment_end
+        )
+        session.source_start, session.source_end = source_start, source_end
+        session.alignment_start_sample = alignment_start
+        session.alignment_end_sample = alignment_end
+        if changed:
+            session.range_revision += 1
+            session.candidate_history.clear()
+            # Re-process immediately when the range was updated after PCM had
+            # already arrived. The next queued job snapshots the new revision.
+            session.last_processed_samples = 0
+
+    def update_range(self, payload: dict[str, Any]) -> dict[str, Any]:
+        session = self.session(payload.get('sessionId', ''))
+        with session.lock:
+            if session.stopped:
+                raise ValueError('Session has been stopped.')
+            self._set_range(session, payload)
+            available_samples = (
+                (session.alignment_end_sample if session.alignment_end_sample is not None else session.expected_sample)
+                - session.alignment_start_sample
+            )
+            should_process = (
+                not session.processing
+                and self._range_ready(session)
+                and available_samples >= INPUT_SAMPLE_RATE * MIN_WINDOW_MS // 1000
+            )
+            if should_process:
+                session.processing = True
+                self.executor.submit(self._align_session, session, False)
+            return {'ok': True, 'range': self._range_snapshot(session), 'queued': should_process}
 
     def session(self, session_id: str) -> Session:
         with self.lock:
@@ -273,9 +402,10 @@ class WorkerState:
                 raise ValueError(f'Non-contiguous chunk: expected seq {session.expected_seq}, startSample24k {session.expected_sample}.')
             source_start, source_end = payload.get('sourceStartIndex'), payload.get('sourceEndIndex')
             if source_start is not None or source_end is not None:
-                if not isinstance(source_start, int) or not isinstance(source_end, int) or not (0 <= source_start < source_end <= len(session.words)):
-                    raise ValueError('sourceStartIndex/sourceEndIndex must describe a valid non-empty source word range.')
-                session.source_start, session.source_end = source_start, source_end
+                # Backward-compatible convenience for a first range, but new
+                # phrase clients should use /range so the range change is an
+                # explicit, traceable control-plane event.
+                self._set_range(session, payload)
             session.received = np.concatenate((session.received, pcm))
             session.expected_seq += 1
             session.expected_sample += len(pcm)
@@ -284,7 +414,11 @@ class WorkerState:
                 session.source_start is not None
                 and not session.processing
                 and len(session.received) - session.last_processed_samples >= INPUT_SAMPLE_RATE * REPROCESS_INTERVAL_MS // 1000
-                and len(session.received) >= INPUT_SAMPLE_RATE * MIN_WINDOW_MS // 1000
+                and self._range_ready(session)
+                and (
+                    (session.alignment_end_sample if session.alignment_end_sample is not None else session.expected_sample)
+                    - session.alignment_start_sample
+                ) >= INPUT_SAMPLE_RATE * MIN_WINDOW_MS // 1000
             )
             if should_process:
                 session.processing = True
@@ -294,17 +428,18 @@ class WorkerState:
         return {
             'ok': True,
             'receivedThroughSample24k': session.expected_sample,
-            'receivedSampleCount24k': session.expected_sample,
+            'receivedSampleCount24k': len(session.received),
             'receivedCrc32': f'{session.received_crc32:08x}',
             'queued': should_process,
             'awaitingSourceRange': session.source_start is None,
+            'range': self._range_snapshot(session),
         }
 
     def stop(self, payload: dict[str, Any]) -> dict[str, Any]:
         session = self.session(payload.get('sessionId', ''))
         with session.lock:
             session.stopped = True
-            should_process = session.source_start is not None and not session.processing and len(session.received)
+            should_process = session.source_start is not None and not session.processing and self._range_ready(session)
             if should_process:
                 session.processing = True
                 self.executor.submit(self._align_session, session, True)
@@ -328,10 +463,24 @@ class WorkerState:
         started = time.monotonic()
         try:
             with session.lock:
-                # Take a consistent snapshot. Corrections are based on the known
-                # source range supplied by the caller, never an inferred range.
-                pcm = session.received.copy()
+                # Take a consistent snapshot. The caller supplies a bounded
+                # phrase/range and absolute PCM start; neither is inferred from
+                # audio. Slice away preceding phrase audio before CTC.
                 source_start, source_end = session.source_start, session.source_end
+                alignment_start_sample = session.alignment_start_sample
+                alignment_end_sample = session.alignment_end_sample
+                range_revision = session.range_revision
+                start_offset = alignment_start_sample - session.pcm_base_sample
+                end_offset = (
+                    alignment_end_sample - session.pcm_base_sample
+                    if alignment_end_sample is not None
+                    else len(session.received)
+                )
+                if end_offset > len(session.received):
+                    # The range endpoint is a promise about future PCM. Do not
+                    # turn an incomplete phrase into a shorter, false window.
+                    return
+                pcm = session.received[start_offset:end_offset].copy()
                 queued_at = time.monotonic()
             if source_start is None or source_end is None:
                 return
@@ -347,16 +496,51 @@ class WorkerState:
             additions: list[dict[str, Any]] = []
             for item in aligned:
                 absolute_source_index = source_start + item['sourceIndex']
+                start_sample = alignment_start_sample + round(item['startSeconds'] * INPUT_SAMPLE_RATE)
+                end_sample = alignment_start_sample + round(item['endSeconds'] * INPUT_SAMPLE_RATE)
+                with session.lock:
+                    # A range update while this model call was in flight makes
+                    # this entire snapshot stale. Drop it rather than attaching
+                    # an old waveform to a newer phrase configuration.
+                    if session.range_revision != range_revision:
+                        return
+                    previous = session.candidate_history.get(absolute_source_index)
+                    stable = False
+                    stability_passes = 1
+                    if previous and previous['revision'] == range_revision:
+                        start_delta_ms = abs(start_sample - previous['startSample24k']) * 1000 / INPUT_SAMPLE_RATE
+                        end_delta_ms = abs(end_sample - previous['endSample24k']) * 1000 / INPUT_SAMPLE_RATE
+                        if max(start_delta_ms, end_delta_ms) <= STABILITY_TOLERANCE_MS:
+                            stability_passes = previous['passes'] + 1
+                            stable = stability_passes >= STABILITY_REQUIRED_PASSES
+                    session.candidate_history[absolute_source_index] = {
+                        'revision': range_revision,
+                        'startSample24k': start_sample,
+                        'endSample24k': end_sample,
+                        'passes': stability_passes,
+                    }
                 # The end must be safely in the audio past. A browser must still
-                # compare emittedAt against its own Web Audio schedule.
-                if item['endSeconds'] > safe_through or absolute_source_index in session.emitted_source_indices:
+                # compare emittedAt against its own Web Audio schedule. On a
+                # stopped, unplayed phrase ``final`` is allowed to emit the
+                # complete range: this is the precision-buffer use case.
+                if (
+                    (not final and (item['endSeconds'] > safe_through or not stable))
+                    or absolute_source_index in session.emitted_source_indices
+                ):
                     continue
                 additions.append({
                     'word': item['word'],
                     'sourceIndex': absolute_source_index,
                     'start': round(item['startSeconds'], 4),
                     'end': round(item['endSeconds'], 4),
+                    'startSample24k': start_sample,
+                    'endSample24k': end_sample,
+                    'alignmentStartSample24k': alignment_start_sample,
+                    'alignmentEndSample24k': alignment_end_sample,
+                    'rangeRevision': range_revision,
                     'confidence': item['confidence'],
+                    'stable': stable,
+                    'stabilityPasses': stability_passes,
                     'windowMs': round(duration_seconds * 1000),
                     'queueMs': round((time.monotonic() - queued_at) * 1000),
                     'emittedAt': emitted_at,
@@ -367,7 +551,9 @@ class WorkerState:
                     if cue['sourceIndex'] not in session.emitted_source_indices:
                         session.cues.append(cue)
                         session.emitted_source_indices.add(cue['sourceIndex'])
-                session.last_processed_samples = len(pcm)
+                # Track session-total samples so reprocessing is scheduled only
+                # after additional PCM, even when this phrase begins later.
+                session.last_processed_samples = len(session.received)
                 session.error = None
         except Exception as error:
             self.metrics['alignmentFailures'] += 1
@@ -431,6 +617,8 @@ class Handler(BaseHTTPRequestHandler):
                 result = self.state.create(payload)
             elif self.path == '/chunk':
                 result = self.state.chunk(payload)
+            elif self.path == '/range':
+                result = self.state.update_range(payload)
             elif self.path == '/stop':
                 result = self.state.stop(payload)
             elif self.path == '/dispose':

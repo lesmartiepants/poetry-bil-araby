@@ -16,6 +16,7 @@ const downloadAudit = document.querySelector('#download-audit');
 const modeInputs = [...document.querySelectorAll('input[name="mode"]')];
 const RETAINED_METHODS = new Set([
   'transcript-moras-weighted-fallback',
+  'transcript-mora-blend-50',
   'transcript-mora-blend-75',
   'branch-transcript-moras',
   'branch-transcript-letters',
@@ -28,6 +29,7 @@ const RETAINED_METHODS = new Set([
   'google-anchor-correct',
   'ctc-anchor-observe',
   'ctc-anchor-correct',
+  'ctc-precision-phrase',
 ]);
 const modeNote = document.querySelector('#mode-note');
 const providerStatus = document.querySelector('#provider-status');
@@ -134,6 +136,8 @@ const modeNotes = {
     'Local CTC sidecar: tee scheduled PCM to the persistent Arabic CTC worker, record its past-word anchors and timing, but never alter the visible production-equivalent fallback.',
   'ctc-anchor-correct':
     'Local CTC sidecar: apply only the persistent worker’s timely, monotonic past-word anchors as bounded future-only corrections. Any late, uncertain, or contradictory anchor is a no-op.',
+  'ctc-precision-phrase':
+    'Precision Recitation: buffer the opening phrase while a warm local CTC worker aligns it. If every opening word is ready before the bounded deadline, use those direct timings before audio begins; otherwise start Mora 50 unchanged.',
   'certainty-overlay-transcript-moras':
     'UX-only: preserves transcript-mora word timing while softly contextualizing the current source line and previewing the next line up to 900 ms before its estimated start, upgraded to an observed transcript start when available.',
   'nucleus-clock':
@@ -353,6 +357,25 @@ const PROFILES = {
     futureHorizonMs: 150,
     horizonWords: 6,
     safePastWords: 1,
+  },
+  'ctc-precision-phrase': {
+    family: 'precision-ctc',
+    anchorProvider: 'ctc',
+    anchorSource: 'local-arabic-ctc-worker',
+    fallbackMode: 'transcript-mora-blend-50-weighted-fallback',
+    phraseWordCount: 6,
+    alignmentWordCount: 6,
+    // Include the worker's 750 ms commit lag after a six-word phrase; 7 s
+    // proved too tight for the phrase-final word and stalled range rotation.
+    phraseWindowMs: 8_000,
+    minBufferedAudioMs: 1_500,
+    // The first stable six-word phrase currently arrives in ~3.4 s after the
+    // first PCM on this warm local worker. This is deliberately a precision
+    // experiment, not the instant path; the dogfood report decides whether the
+    // extra pre-roll earns its keep.
+    startupDeadlineMs: 4_200,
+    requiredCueCount: 6,
+    nudgeMs: 0,
   },
   'certainty-overlay-transcript-moras': {
     family: 'live-transcript',
@@ -1186,9 +1209,40 @@ function liveTranscriptSnapshot(profile, elapsed) {
   );
 }
 
+function precisionCtcSnapshot(profile, elapsed) {
+  const precision = currentDemo.precision;
+  const contentTime = contentElapsed() ?? Math.max(0, elapsed - currentDemo.insertedGapSeconds);
+  const direct = precision?.timings || [];
+  const directIndex = direct.findIndex(
+    (timing) => timing && contentTime >= timing.start && contentTime < timing.end
+  );
+  if (directIndex >= 0) {
+    precision.lastRenderedIndex = Math.max(precision.lastRenderedIndex, directIndex);
+    return {
+      activeIndex: precision.lastRenderedIndex,
+      activeEnd: precision.lastRenderedIndex + 1,
+      elapsed: contentTime,
+      expectedDuration: direct.at(-1)?.end || expectedDuration(currentDemo.words, 'weighted'),
+      mode: selectedMode(),
+      precisionSource: 'committed-ctc-phrase',
+    };
+  }
+  const fallback = liveTranscriptSnapshot(PROFILES[profile.fallbackMode], elapsed);
+  const activeIndex = Math.max(precision?.lastRenderedIndex || 0, fallback.activeIndex);
+  if (precision) precision.lastRenderedIndex = activeIndex;
+  return {
+    ...fallback,
+    activeIndex,
+    activeEnd: activeIndex + 1,
+    precisionSource: 'mora-50-fallback',
+  };
+}
+
 function weightedFallbackPlan(words) {
   const fallbackProfile = activeProfile('weighted');
-  return buildPlan(words.map((word) => normalizedWeight(word.text, fallbackProfile) / fallbackProfile.rate));
+  return buildPlan(
+    words.map((word) => normalizedWeight(word.text, fallbackProfile) / fallbackProfile.rate)
+  );
 }
 
 function anchorPlannerOptions(profile) {
@@ -1204,9 +1258,7 @@ function anchorPlannerOptions(profile) {
 function contentElapsed() {
   if (!audioContext || !currentDemo?.audioStart) return null;
   const now = audioContext.currentTime;
-  const scheduled = currentDemo.pcmTrace
-    .filter((trace) => trace.scheduledAt <= now)
-    .at(-1);
+  const scheduled = currentDemo.pcmTrace.filter((trace) => trace.scheduledAt <= now).at(-1);
   if (scheduled) {
     return (
       scheduled.contentStartSample / SAMPLE_RATE +
@@ -1256,7 +1308,8 @@ function flushTranscriptAnchorQueue() {
       futureHorizonMs:
         outcome.futureHorizon == null ? null : Math.round(outcome.futureHorizon * 1000),
       discrepancyMs: outcome.discrepancy == null ? null : Math.round(outcome.discrepancy * 1000),
-      appliedCorrectionMs: outcome.correction == null ? null : Math.round(outcome.correction * 1000),
+      appliedCorrectionMs:
+        outcome.correction == null ? null : Math.round(outcome.correction * 1000),
     };
     anchor.events.push(event);
     if (outcome.status === 'accepted' && currentDemo.profile.anchorMode === 'correct') {
@@ -1290,7 +1343,8 @@ function futureAnchorSnapshot(profile, elapsed) {
     expectedDuration: anchor.plan.at(-1)?.end || expectedDuration(currentDemo.words, 'weighted'),
     mode: selectedMode(),
     anchorAcceptedCount: anchor.events.filter((event) => event.status === 'accepted').length,
-    anchorRejectedCount: anchor.events.filter((event) => event.status.startsWith('rejected')).length,
+    anchorRejectedCount: anchor.events.filter((event) => event.status.startsWith('rejected'))
+      .length,
     anchorMode: profile.anchorMode,
   };
 }
@@ -1539,6 +1593,37 @@ function mapCtcWords(cues) {
     }
     if (match < 0) continue;
     ctc.sourceCursor = match + 1;
+    if (currentDemo.profile.family === 'precision-ctc') {
+      const precision = currentDemo.precision;
+      if (cue.stable !== true) continue;
+      const start = Number.isInteger(cue.startSample24k)
+        ? cue.startSample24k / SAMPLE_RATE
+        : Number(cue.start);
+      const end = Number.isInteger(cue.endSample24k)
+        ? cue.endSample24k / SAMPLE_RATE
+        : Number(cue.end);
+      if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) continue;
+      const contentTime = contentElapsed();
+      const safelyFuture = contentTime == null || start - contentTime >= 0.15;
+      if (!safelyFuture) precision.directRejectedLateCount += 1;
+      else precision.timings[match] = { start, end };
+      precision.cues.set(match, {
+        ...cue,
+        sourceIndex: match,
+        directCommitted: safelyFuture,
+        receivedAtWallMs: Math.round(performance.now() - precision.streamStartedAt),
+      });
+      precision.ready = Array.from(
+        { length: currentDemo.profile.requiredCueCount },
+        (_, index) => precision.timings[index]
+      ).every(Boolean);
+      if (precision.ready && !precision.readyAtWallMs) {
+        precision.readyAtWallMs = Math.round(performance.now() - precision.streamStartedAt);
+      }
+      precision.maybeStart?.('ctc-opening-phrase-ready');
+      void maybeAdvancePrecisionRange();
+      continue;
+    }
     queueAnchor({
       index: match,
       start: Number(cue.start),
@@ -1548,12 +1633,47 @@ function mapCtcWords(cues) {
   }
 }
 
+function rangeHasAllCues(precision, range) {
+  for (let index = range.sourceStartIndex; index < range.sourceEndIndex; index += 1) {
+    if (!precision.cues.get(index)?.stable) return false;
+  }
+  return true;
+}
+
+async function maybeAdvancePrecisionRange() {
+  const precision = currentDemo?.precision;
+  if (!precision || precision.rotating) return;
+  const active = precision.ranges[precision.activeRangeIndex];
+  if (!active || active.status === 'committed' || !rangeHasAllCues(precision, active)) return;
+  active.status = 'committed';
+  const next = precision.ranges[precision.activeRangeIndex + 1];
+  if (!next) return;
+  const lastCue = precision.cues.get(active.sourceEndIndex - 1);
+  if (!Number.isInteger(lastCue?.endSample24k)) return;
+  precision.rotating = true;
+  next.alignmentStartSample24k = lastCue.endSample24k;
+  try {
+    await configurePrecisionCtcRange(next.rangeIndex);
+    // A fixed bounded window needs two independent worker passes for the
+    // stability contract. A deliberate second control-plane request triggers
+    // that pass without changing its source/audio range.
+    setTimeout(() => void configurePrecisionCtcRange(next.rangeIndex), 350);
+  } catch (error) {
+    precision.rangeError = error.message;
+    next.status = 'fallback';
+  } finally {
+    precision.rotating = false;
+  }
+}
+
 async function pollCtcCues() {
   const ctc = currentDemo?.ctc;
   if (!ctc || ctc.closed || ctc.polling) return;
   ctc.polling = true;
   try {
-    const response = await fetch(`/alignment/ctc/cues?session=${ctc.sessionId}&after=${ctc.cursor}`);
+    const response = await fetch(
+      `/alignment/ctc/cues?session=${ctc.sessionId}&after=${ctc.cursor}`
+    );
     const data = await response.json();
     if (!response.ok || data.error) throw new Error(data.error || 'CTC cue polling failed');
     ctc.cursor = data.next;
@@ -1588,6 +1708,36 @@ async function startCtcTiming() {
     worker: data.worker || null,
   };
   currentDemo.ctc.poller = setInterval(pollCtcCues, 150);
+  if (currentDemo.profile.family === 'precision-ctc') {
+    await configurePrecisionCtcRange(0);
+  }
+}
+
+async function configurePrecisionCtcRange(rangeIndex) {
+  const precision = currentDemo.precision;
+  const ctc = currentDemo.ctc;
+  const range = precision?.ranges[rangeIndex];
+  if (!precision || !ctc || !range) return;
+  const alignmentStartSample24k = range.alignmentStartSample24k ?? 0;
+  const alignmentEndSample24k =
+    alignmentStartSample24k + Math.round((currentDemo.profile.phraseWindowMs / 1000) * SAMPLE_RATE);
+  const response = await fetch('/alignment/ctc/range', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: ctc.sessionId,
+      sourceStartIndex: range.sourceStartIndex,
+      sourceEndIndex: range.sourceEndIndex,
+      alignmentStartSample24k,
+      alignmentEndSample24k,
+    }),
+  });
+  const data = await response.json();
+  if (!response.ok || data.error) throw new Error(data.error || 'CTC phrase-range setup failed');
+  range.status = 'aligning';
+  range.alignmentStartSample24k = alignmentStartSample24k;
+  range.alignmentEndSample24k = alignmentEndSample24k;
+  precision.activeRangeIndex = rangeIndex;
 }
 
 function sendCtcChunk(pcm, metadata) {
@@ -1610,11 +1760,17 @@ function sendCtcChunk(pcm, metadata) {
           sampleCount24k: metadata.sampleCount,
           checksum: checksumHex(chunkChecksum),
           audio: base64FromBytes(pcm),
-          // The worker requires a bounded known-text window. This first dogfood
-          // session deliberately targets the opening phrase; future work must
-          // rotate ranges from committed anchors rather than force-align a poem.
-          sourceStartIndex: 0,
-          sourceEndIndex: Math.min(currentDemo.words.length, 6),
+          ...(currentDemo.profile.family === 'precision-ctc'
+            ? {}
+            : {
+                // Legacy anchor experiments use the opening known-text range. The
+                // precision path configures an explicit bounded range separately.
+                sourceStartIndex: 0,
+                sourceEndIndex: Math.min(
+                  currentDemo.words.length,
+                  currentDemo.profile.alignmentWordCount || 6
+                ),
+              }),
         }),
       });
       if (!response.ok) throw new Error(`CTC PCM copy failed (${response.status})`);
@@ -1746,6 +1902,8 @@ function playbackSnapshot() {
   if (profile.family === 'live-transcript') return liveTranscriptSnapshot(profile, elapsed);
 
   if (profile.family === 'future-anchor') return futureAnchorSnapshot(profile, elapsed);
+
+  if (profile.family === 'precision-ctc') return precisionCtcSnapshot(profile, elapsed);
 
   if (profile.family === 'nucleus-clock') return nucleusClockSnapshot(elapsed, profile);
 
@@ -2194,6 +2352,70 @@ async function streamLiveTts(text) {
   const pcmChunks = [];
   let chunks = 0;
   let firstAudioMs;
+  const heldPcm = [];
+  const precision = currentDemo.precision;
+
+  function schedulePcm(segment) {
+    const buffer = audioContext.createBuffer(1, segment.samples.length, SAMPLE_RATE);
+    buffer.copyToChannel(segment.samples, 0);
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    currentDemo.sources.push(source);
+    source.connect(audioContext.destination);
+    source.connect(currentDemo.audit.destination);
+    const previousNextStart = nextStart;
+    nextStart = Math.max(nextStart, audioContext.currentTime + 0.02);
+    if (currentDemo.pcmTrace.length && nextStart > previousNextStart) {
+      currentDemo.insertedGapSeconds += nextStart - previousNextStart;
+    }
+    source.start(nextStart);
+    const scheduledContentStart = nextStart - currentDemo.audioStart;
+    currentDemo.pcmTrace.push({
+      seq: segment.seq,
+      contentStartSample: segment.contentStartSample,
+      sampleCount: segment.samples.length,
+      checksum: checksumHex(pcmChecksum(segment.pcm)),
+      scheduledAt: nextStart,
+      scheduledContentStart,
+      durationSeconds: buffer.duration,
+    });
+    inspectVad(segment.samples);
+    inspectNuclei(segment.samples, scheduledContentStart);
+    nextStart += buffer.duration;
+  }
+
+  function startPlayback(reason) {
+    if (currentDemo.audioStart || !heldPcm.length) return false;
+    firstAudioMs = performance.now() - startedAt;
+    nextStart = audioContext.currentTime + 0.05;
+    currentDemo.audioStart = nextStart;
+    if (precision) {
+      precision.scheduledReason = reason;
+      precision.firstAudioMs = Math.round(firstAudioMs);
+      if (reason !== 'ctc-opening-phrase-ready') precision.fallbackReason = reason;
+      clearTimeout(precision.deadlineTimer);
+    }
+    startAuditCapture();
+    currentDemo.frame = requestAnimationFrame(paintPlayback);
+    flushTranscriptAnchorQueue();
+    while (heldPcm.length) schedulePcm(heldPcm.shift());
+    return true;
+  }
+
+  function maybeStartPrecision(reason) {
+    if (!precision || currentDemo.audioStart || !heldPcm.length) return;
+    const minimumBuffered = currentDemo.profile.minBufferedAudioMs / 1000;
+    if (precision.ready && precision.initialBufferDuration >= minimumBuffered) {
+      startPlayback('ctc-opening-phrase-ready');
+      return;
+    }
+    if (precision.deadlineExpired) startPlayback(reason || 'precision-deadline-mora-50-fallback');
+  }
+
+  if (precision) {
+    precision.streamStartedAt = startedAt;
+    precision.maybeStart = maybeStartPrecision;
+  }
 
   while (true) {
     const { done, value } = await reader.read();
@@ -2213,39 +2435,7 @@ async function streamLiveTts(text) {
       const pcm = decodePcm(event.chunk);
       const samples = pcmToFloat32(pcm);
       const contentStartSample = currentDemo.contentSamplesSeen;
-      const buffer = audioContext.createBuffer(1, samples.length, SAMPLE_RATE);
-      buffer.copyToChannel(samples, 0);
-      const source = audioContext.createBufferSource();
-      source.buffer = buffer;
-      currentDemo.sources.push(source);
-      source.connect(audioContext.destination);
-      if (!chunks) {
-        firstAudioMs = performance.now() - startedAt;
-        nextStart = audioContext.currentTime + 0.05;
-        currentDemo.audioStart = nextStart;
-        startAuditCapture();
-        currentDemo.frame = requestAnimationFrame(paintPlayback);
-        flushTranscriptAnchorQueue();
-      }
-      source.connect(currentDemo.audit.destination);
-      const previousNextStart = nextStart;
-      nextStart = Math.max(nextStart, audioContext.currentTime + 0.02);
-      if (chunks > 0 && nextStart > previousNextStart) {
-        currentDemo.insertedGapSeconds += nextStart - previousNextStart;
-      }
-      source.start(nextStart);
-      // Audio is scheduled before either analysis path runs. The nucleus clock is
-      // still gated by this content time, so future queued peaks cannot advance it.
-      const scheduledContentStart = nextStart - currentDemo.audioStart;
-      currentDemo.pcmTrace.push({
-        seq: chunks,
-        contentStartSample,
-        sampleCount: samples.length,
-        checksum: checksumHex(pcmChecksum(pcm)),
-        scheduledAt: nextStart,
-        scheduledContentStart,
-        durationSeconds: buffer.duration,
-      });
+      const segment = { seq: chunks, pcm, samples, contentStartSample };
       currentDemo.contentSamplesSeen += samples.length;
       if (selectedMode() === 'google' || currentDemo.profile.anchorProvider === 'google') {
         sendGoogleChunk(pcm);
@@ -2253,18 +2443,39 @@ async function streamLiveTts(text) {
       if (currentDemo.profile.anchorProvider === 'ctc') {
         sendCtcChunk(pcm, { seq: chunks, contentStartSample, sampleCount: samples.length });
       }
-      inspectVad(samples);
-      inspectNuclei(samples, scheduledContentStart);
-      nextStart += buffer.duration;
       pcmChunks.push(pcm);
       chunks += 1;
+      heldPcm.push(segment);
+      if (precision) {
+        if (!precision.firstPcmAtWallMs) {
+          precision.firstPcmAtWallMs = Math.round(performance.now() - startedAt);
+          precision.deadlineAtWallMs =
+            precision.firstPcmAtWallMs + currentDemo.profile.startupDeadlineMs;
+          precision.deadlineTimer = setTimeout(() => {
+            precision.deadlineExpired = true;
+            maybeStartPrecision('precision-deadline-mora-50-fallback');
+          }, currentDemo.profile.startupDeadlineMs);
+        }
+        precision.initialBufferDuration += samples.length / SAMPLE_RATE;
+        maybeStartPrecision();
+      } else {
+        startPlayback('first-pcm');
+      }
+      if (currentDemo.audioStart) {
+        while (heldPcm.length) schedulePcm(heldPcm.shift());
+      }
       setMetrics(
         [
-          { value: `${Math.round(firstAudioMs)} ms`, label: 'request → first playable audio' },
-          { value: `${chunks}`, label: 'PCM chunks scheduled' },
           {
-            value: `${(nextStart - audioContext.currentTime).toFixed(1)} s`,
-            label: 'audio already queued',
+            value: firstAudioMs == null ? 'buffering' : `${Math.round(firstAudioMs)} ms`,
+            label: 'request → first playable audio',
+          },
+          { value: `${chunks}`, label: 'PCM chunks received' },
+          {
+            value: currentDemo.audioStart
+              ? `${(nextStart - audioContext.currentTime).toFixed(1)} s`
+              : `${precision?.initialBufferDuration.toFixed(1) || 0} s`,
+            label: currentDemo.audioStart ? 'audio already queued' : 'precision pre-roll buffered',
           },
           { value: selectedMode(), label: 'highlight strategy' },
           {
@@ -2280,12 +2491,29 @@ async function streamLiveTts(text) {
                 label: 'accepted / received transcript anchors',
               }
             : null,
+          precision
+            ? {
+                value: `${precision.cues.size}/${currentDemo.profile.requiredCueCount}`,
+                label: precision.ready ? 'opening CTC phrase ready' : 'opening CTC phrase cues',
+              }
+            : null,
         ].filter(Boolean)
       );
     }
   }
 
+  if (precision && !currentDemo.audioStart) {
+    const anchorWallMs = precision.firstPcmAtWallMs ?? Math.round(performance.now() - startedAt);
+    const remainingMs = Math.max(
+      0,
+      anchorWallMs + currentDemo.profile.startupDeadlineMs - (performance.now() - startedAt)
+    );
+    if (remainingMs) await new Promise((resolve) => setTimeout(resolve, remainingMs));
+    precision.deadlineExpired = true;
+    maybeStartPrecision('precision-stream-complete-mora-50-fallback');
+  }
   if (currentDemo.stopped) return;
+  if (!currentDemo.audioStart) throw new Error('No PCM was buffered for playback.');
   const duration = pcmChunks.reduce((sum, chunk) => sum + chunk.length / 2 / SAMPLE_RATE, 0);
   await finishAuditCapture(nextStart);
   await stopGoogleTiming();
@@ -2327,7 +2555,8 @@ async function streamLiveTts(text) {
             mode: currentDemo.profile.anchorMode,
             events: currentDemo.anchor.events,
             receivedCount: currentDemo.anchor.events.length,
-            acceptedCount: currentDemo.anchor.events.filter((event) => event.status === 'accepted').length,
+            acceptedCount: currentDemo.anchor.events.filter((event) => event.status === 'accepted')
+              .length,
             rejectedCount: currentDemo.anchor.events.filter((event) =>
               event.status.startsWith('rejected')
             ).length,
@@ -2345,6 +2574,29 @@ async function streamLiveTts(text) {
                 : null,
           }
         : null,
+    precision: precision
+      ? {
+          openingPhraseWordCount: currentDemo.profile.phraseWordCount,
+          requiredCueCount: currentDemo.profile.requiredCueCount,
+          receivedCueCount: precision.cues.size,
+          ready: precision.ready,
+          readyAtWallMs: precision.readyAtWallMs,
+          firstPcmAtWallMs: precision.firstPcmAtWallMs,
+          deadlineAtWallMs: precision.deadlineAtWallMs,
+          firstAudioMs: precision.firstAudioMs,
+          initialBufferMs: Math.round(precision.initialBufferDuration * 1000),
+          scheduledReason: precision.scheduledReason,
+          fallbackReason: precision.fallbackReason,
+          cues: [...precision.cues.values()],
+          ranges: precision.ranges,
+          directCommittedCueCount: [...precision.cues.values()].filter((cue) => cue.directCommitted)
+            .length,
+          directRejectedLateCount: precision.directRejectedLateCount,
+          rangeError: precision.rangeError || null,
+          providerError: currentDemo.ctc?.error || null,
+          lastAcknowledgement: currentDemo.ctc?.lastAcknowledgement || null,
+        }
+      : null,
     pcmTrace: currentDemo.pcmTrace.map((trace) => ({
       seq: trace.seq,
       contentStartSample: trace.contentStartSample,
@@ -2385,7 +2637,7 @@ async function streamLiveTts(text) {
               value: `${currentDemo.metrics.anchor.acceptedCount}/${currentDemo.metrics.anchor.receivedCount}`,
               label: 'accepted / received transcript anchors',
             }
-        : { value: 'fallback', label: 'external cue source' },
+          : { value: 'fallback', label: 'external cue source' },
     ].filter(Boolean)
   );
 }
@@ -2427,6 +2679,34 @@ function createDemo(selected) {
     },
     nucleusTextMassByWord: words.map((word) => moraWeight(word.text)),
     liveTimings: Array(words.length).fill(null),
+    precision:
+      profile.family === 'precision-ctc'
+        ? {
+            timings: Array(words.length).fill(null),
+            cues: new Map(),
+            ready: false,
+            readyAtWallMs: null,
+            streamStartedAt: null,
+            initialBufferDuration: 0,
+            scheduledReason: null,
+            fallbackReason: null,
+            lastRenderedIndex: 0,
+            ranges: Array.from(
+              { length: Math.ceil(words.length / profile.alignmentWordCount) },
+              (_, rangeIndex) => ({
+                rangeIndex,
+                sourceStartIndex: rangeIndex * profile.alignmentWordCount,
+                sourceEndIndex: Math.min(
+                  words.length,
+                  (rangeIndex + 1) * profile.alignmentWordCount
+                ),
+                status: rangeIndex === 0 ? 'active' : 'pending',
+              })
+            ),
+            activeRangeIndex: 0,
+            directRejectedLateCount: 0,
+          }
+        : null,
     contentSamplesSeen: 0,
     pcmTrace: [],
     anchor:

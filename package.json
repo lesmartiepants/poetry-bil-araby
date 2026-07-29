@@ -27,6 +27,7 @@
     "poc:ctc": "node investigations/live-word-sync-poc/ctc-feasibility.mjs",
     "poc:anchors:test": "node --test investigations/live-word-sync-poc/future-anchor-planner.test.mjs",
     "poc:dogfood": "node investigations/live-word-sync-poc/anchor-dogfood-report.mjs",
+    "poc:precision:eval": "node investigations/live-word-sync-poc/precision-replay-eval.mjs",
     "poc:voices": "node investigations/live-word-sync-poc/voice-reliability.mjs",
     "render:banner": "node .github/assets/render-header.mjs",
     "lint": "eslint src/",

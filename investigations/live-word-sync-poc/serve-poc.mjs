@@ -211,6 +211,13 @@ createServer(async (request, response) => {
         await ctcWorkerRequest('/chunk', { method: 'POST', body: await readJson(request) })
       );
     }
+    if (requestUrl.pathname === '/alignment/ctc/range' && request.method === 'POST') {
+      return sendJson(
+        response,
+        202,
+        await ctcWorkerRequest('/range', { method: 'POST', body: await readJson(request) })
+      );
+    }
     if (requestUrl.pathname === '/alignment/ctc/cues') {
       return sendJson(
         response,

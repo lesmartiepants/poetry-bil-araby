@@ -9,6 +9,12 @@
       "name": "v4 · calibrated intensity + accessibility rubric",
       "changed": "Intensity 0-100 with anti-clustering calibration (use the full range; most poems 30-70, reserve 80+ for overwhelming emotion). Accessibility decomposed into 5 scored sub-factors (lexical, syntax, imagery_abstraction, allusion, narrativity) -> derived 0-10 score, weights allusion=4, lexical=3, syntax=2, imagery=2, narrativity=1. Storytelling counts as harder than imagery.",
       "access": "factors_0_10"
+    },
+    "distill-1": {
+      "name": "v5 · distillation (caps 2/2/2, floor 65)",
+      "changed": "Distillation pass: pick the DOMINANT concept, not everything plausible. Hard caps of <=2 labels per dimension (mood/topic/motif), a confidence floor of 65 (drop anything the model is less than 65% sure of), and no synonym-stacking (one label per idea, no near-duplicate shades). Taxonomy v3. Single-model production run on gemini-3.6-flash (no judge / 2.5-flash columns). Accessibility back to a holistic 1-5 level.",
+      "access": "level_1_5",
+      "prompt_text": "أنت ناقد أدبي عربي خبير بالشعر الكلاسيكي والحديث. مهمتك تصنيف القصيدة المعروضة عليك عبر أبعاد المزاج والموضوع والصورة، بأقلّ عدد من التصنيفات التي تعبّر عن **جوهر** القصيدة، لا كلّ ما هو محتمل. الهدف تمكين القارئ من التصفية والاكتشاف بتصنيفات حادّة مميِّزة.\n\nاختر التصنيفات من القوائم المغلقة التالية فقط، واستخدم الرمز الإنجليزي (key) في إجابتك لا الاسم العربي.\n\n■ المزاج (mood) — اختر من 1 إلى 2: مزاجاً مهيمناً واحداً، وأضف ثانوياً واحداً فقط إن كان مختلفاً جوهرياً لا مجرّد ظلٍّ للأول:\n  - melancholy  (حزن / Melancholy)\n  - nostalgia  (حنين / Nostalgia)\n  - joy  (فرح / Joy)\n  - amorous  (غزل / Amorous)\n  - passion  (وجد / Passion)\n  - contemplation  (تأمّل / Contemplation)\n  - serenity  (سكينة / Serenity)\n  - defiance  (تحدٍّ / Defiance)\n  - pride  (اعتزاز / Pride)\n  - grief  (أسى / Grief)\n  - hope  (أمل / Hope)\n  - despair  (يأس / Despair)\n  - satire  (سخرية / Satire)\n  - reverence  (خشوع / Reverence)\n  - bittersweet  (حلوٌ مرّ / Bittersweet)\n  - yearning  (شوق / Yearning)\n\n■ الموضوع (topic) — اختر من 1 إلى 2: موضوعاً واحداً، أو اثنين إن حمل النصّ موضوعين متمايزين حقاً:\n  - love  (الحب / Love)\n  - loss-death  (الفقد والموت / Loss & Death)\n  - exile-longing  (الغربة والحنين / Exile & Longing)\n  - homeland  (الوطن / Homeland)\n  - nature  (الطبيعة / Nature)\n  - war-conflict  (الحرب والصراع / War & Conflict)\n  - faith-spirit  (الإيمان والروحانية / Faith & Spirituality)\n  - wine-pleasure  (الخمر واللذّة / Wine & Pleasure)\n  - friendship  (الصداقة والوفاء / Friendship & Loyalty)\n  - time-mortality  (الزمن والفناء / Time & Mortality)\n  - wisdom-ethics  (الحكمة والأخلاق / Wisdom & Ethics)\n  - justice-oppression  (العدل والظلم / Justice & Oppression)\n  - freedom  (الحرية / Freedom)\n  - beauty  (الجمال / Beauty)\n  - honor-pride  (الفخر والشرف / Honor & Pride)\n  - women-feminine  (المرأة والأنوثة / Women & the Feminine)\n\n■ الصورة والرموز (motif) — اختر من 0 إلى 2 من الصور الحسّية الحاضرة فعلاً وبقوة في النص. إن لم تبرز صورة، اترك القائمة فارغة:\n  - night  (الليل / Night)\n  - desert-ruins  (الصحراء والطلل / Desert & Ruins)\n  - moon-stars  (القمر والنجوم / Moon & Stars)\n  - sea-water  (البحر والماء / Sea & Water)\n  - garden-flowers  (الروض والزهر / Garden & Flowers)\n  - wine-cup  (الكأس والخمر / The Wine Cup)\n  - sword-battle  (السيف والمعركة / Sword & Battle)\n  - birds  (الطير / Birds)\n  - fire-light  (النار والضوء / Fire & Light)\n  - tears  (الدموع / Tears)\n  - journey  (الرحلة والراحلة / Journey & Mount)\n  - dawn  (الفجر والصبح / Dawn)\n\nقاعدة عدم تكديس المرادفات (مهمّة) — من كلّ مجموعة تالية اختر الأدقّ واحداً فقط:\n  - اختر رمزاً واحداً على الأكثر من: حزن (melancholy)، أسى (grief)، يأس (despair)، حلوٌ مرّ (bittersweet)\n  - اختر رمزاً واحداً على الأكثر من: غزل (amorous)، وجد (passion)، شوق (yearning)\n\nكما تنتج الحقول التالية:\n- mood_primary: المزاج الأوحد الأكثر هيمنة (رمز واحد من قائمة المزاج، ويجب أن يكون ضمن moods).\n- rationale: جملة عربية قصيرة تسمّي المفهوم الجوهري للقصيدة وتبرّر اختيارك.\n- emotional_intensity: عدد من 0 إلى 100 يقيس شدة الشحنة العاطفية.\n- accessibility_level: عدد من 1 إلى 5 (1 = سهلة على متعلّم العربية، 5 = تتطلب معرفة كلاسيكية عميقة).\n- confidences: كائن يربط كل رمز اخترته (من أي بُعد) بدرجة ثقتك فيه من 0 إلى 100، مثل {\"amorous\": 90, \"love\": 80}.\n\nإرشادات:\n- صنّف بناءً على النص نفسه لا على شهرة الشاعر.\n- لا تخترع رموزاً خارج القوائم.\n- سمِّ المفهوم المهيمن أولاً ثم صنّف؛ لا تُدرج تصنيفاً هامشياً لمجرّد وروده.\n- لا تُدرج أي رمز درجة ثقتك فيه دون 65.\n- تمييزات دقيقة: شوق (yearning) حنينٌ نحو شخص، أما حنين (nostalgia) فحنينٌ نحو الوطن أو الديار؛ سخرية (satire) تعني الهجاء اللاذع لا الفكاهة اللطيفة؛ والروض والزهر (garden-flowers) غالباً روض المحبوب لا مجرّد وصف طبيعة.\n\nأجب بصيغة JSON فقط لكل قصيدة، بلا أي شرح خارج الكائن:\n{\"id\": \"...\", \"moods\": [\"...\"], \"mood_primary\": \"...\", \"topics\": [\"...\"], \"motifs\": [\"...\"], \"emotional_intensity\": N, \"accessibility_level\": N, \"confidences\": {\"<key>\": N}, \"rationale\": \"...\"}\n\nإذا عُرضت عدة قصائد، أجب بمصفوفة JSON مرتبة بنفس ترتيب القصائد."
     }
   },
   "models": ["judge", "gemini-2.5-flash", "gemini-3.6-flash"],
@@ -93,6 +99,16 @@
             },
             "accessibility_score": 2.5
           }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["amorous"],
+            "mood_primary": "amorous",
+            "topics": ["love", "wine-pleasure"],
+            "motifs": ["wine-cup", "garden-flowers"],
+            "emotional_intensity": 75,
+            "accessibility_level": 3
+          }
         }
       }
     },
@@ -174,6 +190,16 @@
               "narrativity": 3
             },
             "accessibility_score": 5.8
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["joy", "serenity"],
+            "mood_primary": "joy",
+            "topics": ["nature", "beauty"],
+            "motifs": ["garden-flowers", "birds"],
+            "emotional_intensity": 80,
+            "accessibility_level": 3
           }
         }
       }
@@ -257,6 +283,16 @@
             },
             "accessibility_score": 2.3
           }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["contemplation"],
+            "mood_primary": "contemplation",
+            "topics": ["nature"],
+            "motifs": ["garden-flowers", "tears"],
+            "emotional_intensity": 65,
+            "accessibility_level": 3
+          }
         }
       }
     },
@@ -338,6 +374,16 @@
               "narrativity": 2
             },
             "accessibility_score": 5.6
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["nostalgia", "melancholy"],
+            "mood_primary": "nostalgia",
+            "topics": ["love", "exile-longing"],
+            "motifs": ["desert-ruins", "tears"],
+            "emotional_intensity": 80,
+            "accessibility_level": 3
           }
         }
       }
@@ -421,6 +467,16 @@
             },
             "accessibility_score": 5.8
           }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["nostalgia", "pride"],
+            "mood_primary": "nostalgia",
+            "topics": ["time-mortality", "war-conflict"],
+            "motifs": ["night", "moon-stars"],
+            "emotional_intensity": 75,
+            "accessibility_level": 4
+          }
         }
       }
     },
@@ -502,6 +558,16 @@
               "narrativity": 4
             },
             "accessibility_score": 6.9
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["pride", "defiance"],
+            "mood_primary": "pride",
+            "topics": ["honor-pride"],
+            "motifs": ["night", "sword-battle"],
+            "emotional_intensity": 85,
+            "accessibility_level": 5
           }
         }
       }
@@ -585,6 +651,16 @@
             },
             "accessibility_score": 2.9
           }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["nostalgia", "bittersweet"],
+            "mood_primary": "nostalgia",
+            "topics": ["love", "exile-longing"],
+            "motifs": ["desert-ruins", "night"],
+            "emotional_intensity": 82,
+            "accessibility_level": 3
+          }
         }
       }
     },
@@ -666,6 +742,16 @@
               "narrativity": 2
             },
             "accessibility_score": 4.8
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["grief", "reverence"],
+            "mood_primary": "grief",
+            "topics": ["loss-death", "faith-spirit"],
+            "motifs": ["tears", "desert-ruins"],
+            "emotional_intensity": 90,
+            "accessibility_level": 3
           }
         }
       }
@@ -749,6 +835,16 @@
             },
             "accessibility_score": 4.0
           }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["grief"],
+            "mood_primary": "grief",
+            "topics": ["loss-death"],
+            "motifs": ["tears"],
+            "emotional_intensity": 90,
+            "accessibility_level": 3
+          }
         }
       }
     },
@@ -830,6 +926,16 @@
               "narrativity": 3
             },
             "accessibility_score": 2.7
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["passion", "despair"],
+            "mood_primary": "passion",
+            "topics": ["love"],
+            "motifs": ["journey"],
+            "emotional_intensity": 85,
+            "accessibility_level": 3
           }
         }
       }
@@ -913,6 +1019,16 @@
             },
             "accessibility_score": 6.0
           }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["pride"],
+            "mood_primary": "pride",
+            "topics": ["honor-pride"],
+            "motifs": ["sword-battle"],
+            "emotional_intensity": 85,
+            "accessibility_level": 4
+          }
         }
       }
     },
@@ -994,6 +1110,16 @@
               "narrativity": 2
             },
             "accessibility_score": 3.8
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["grief", "defiance"],
+            "mood_primary": "grief",
+            "topics": ["homeland", "war-conflict"],
+            "motifs": ["tears", "fire-light"],
+            "emotional_intensity": 88,
+            "accessibility_level": 3
           }
         }
       }
@@ -1077,6 +1203,16 @@
             },
             "accessibility_score": 2.9
           }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["amorous", "nostalgia"],
+            "mood_primary": "amorous",
+            "topics": ["love", "nature"],
+            "motifs": ["garden-flowers"],
+            "emotional_intensity": 75,
+            "accessibility_level": 3
+          }
         }
       }
     },
@@ -1158,6 +1294,16 @@
               "narrativity": 3
             },
             "accessibility_score": 4.8
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["grief"],
+            "mood_primary": "grief",
+            "topics": ["love"],
+            "motifs": ["journey", "tears"],
+            "emotional_intensity": 90,
+            "accessibility_level": 4
           }
         }
       }
@@ -1241,6 +1387,16 @@
             },
             "accessibility_score": 4.0
           }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["amorous", "nostalgia"],
+            "mood_primary": "amorous",
+            "topics": ["love", "women-feminine"],
+            "motifs": ["night", "moon-stars"],
+            "emotional_intensity": 70,
+            "accessibility_level": 3
+          }
         }
       }
     },
@@ -1322,6 +1478,16 @@
               "narrativity": 4
             },
             "accessibility_score": 7.7
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["reverence", "nostalgia"],
+            "mood_primary": "reverence",
+            "topics": ["honor-pride"],
+            "motifs": ["desert-ruins", "journey"],
+            "emotional_intensity": 75,
+            "accessibility_level": 4
           }
         }
       }
@@ -1405,6 +1571,16 @@
             },
             "accessibility_score": 6.7
           }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["contemplation", "reverence"],
+            "mood_primary": "contemplation",
+            "topics": [],
+            "motifs": [],
+            "emotional_intensity": 70,
+            "accessibility_level": 4
+          }
         }
       }
     },
@@ -1486,6 +1662,16 @@
               "narrativity": 4
             },
             "accessibility_score": 6.9
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["yearning", "pride"],
+            "mood_primary": "yearning",
+            "topics": ["love", "honor-pride"],
+            "motifs": ["night", "desert-ruins"],
+            "emotional_intensity": 80,
+            "accessibility_level": 5
           }
         }
       }
@@ -1569,6 +1755,16 @@
             },
             "accessibility_score": 4.0
           }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["yearning", "nostalgia"],
+            "mood_primary": "yearning",
+            "topics": ["exile-longing"],
+            "motifs": ["tears", "birds"],
+            "emotional_intensity": 82,
+            "accessibility_level": 3
+          }
         }
       }
     },
@@ -1650,6 +1846,16 @@
               "narrativity": 3
             },
             "accessibility_score": 1.9
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["yearning", "melancholy"],
+            "mood_primary": "yearning",
+            "topics": ["love"],
+            "motifs": ["journey", "desert-ruins"],
+            "emotional_intensity": 85,
+            "accessibility_level": 3
           }
         }
       }

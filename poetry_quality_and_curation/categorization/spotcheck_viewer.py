@@ -37,6 +37,7 @@ import difflib
 import hashlib
 import html
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -59,11 +60,34 @@ JUDGE_MODEL = data.get("judge_model", "judge")
 POEMS = list(data["poems"].values())
 
 VIDS = list(PROMPT_VERSIONS.keys())
-DEFAULT_VID = VIDS[-1]                              # last version (v4-rubric)
+DEFAULT_VID = VIDS[-1]                              # last version (newest)
 CAND_MODELS = [m for m in MODELS if m != "judge"]  # candidates in order
+
+# A version is "judge-less" when no poem carries judge labels for it — e.g. a
+# single-model production run (distill-1 ran only gemini-3.6-flash). Such a
+# version has no judge baseline, so its table/sort/agreement fall back to the
+# one model that has data instead of diffing against an (absent) judge.
+JUDGELESS = {vid for vid in VIDS
+             if not any((p.get("labels", {}).get(vid, {}) or {}).get("judge") for p in POEMS)}
+
+
+def _base_model(labels):
+    """First candidate model with data (the baseline for a judge-less version)."""
+    return next((m for m in CAND_MODELS if labels.get(m)), CAND_MODELS[-1])
+
 
 esc = lambda s: html.escape(s or "", quote=True)
 slug = lambda vid: re.sub(r"[^a-z0-9]", "", vid.lower())
+
+
+def _prompt_text(vid):
+    """Prompt source for a version. Versions run through the prompt library live
+    in prompts.py; versions produced by a standalone run (e.g. distill-1) carry
+    their prompt inline in spotcheck_versions.json under ``prompt_text``."""
+    inline = PROMPT_VERSIONS.get(vid, {}).get("prompt_text")
+    if inline:
+        return inline
+    return prompts.get_text(vid)
 
 # ---------------------------------------------------------------------------
 # English label glosses + dimension tooltips (shared across versions).
@@ -152,7 +176,7 @@ def _load_encache():
         return c["versions"]
     if "hash" in c:  # legacy flat cache — belongs to whichever version matches.
         for vid in VIDS:
-            if hashlib.sha1(prompts.get_text(vid).encode()).hexdigest()[:12] == c["hash"]:
+            if hashlib.sha1(_prompt_text(vid).encode()).hexdigest()[:12] == c["hash"]:
                 return {vid: {"hash": c["hash"], "en": c.get("en", "")}}
     return {}
 
@@ -189,11 +213,14 @@ _encache = _load_encache()
 _encache_dirty = False
 PROMPT_META = {}   # vid -> {name, changed, access, text, ar_html, en_html, has_en}
 for vid in VIDS:
-    text = prompts.get_text(vid)
+    text = _prompt_text(vid)
     h = hashlib.sha1(text.encode()).hexdigest()[:12]
     ce = _encache.get(vid)
     en = ce.get("en") if ce and ce.get("hash") == h else None
-    if en is None:
+    # Live EN translation hits an LLM API; it stays opt-in (SPOTCHECK_TRANSLATE=1)
+    # so a plain rebuild is offline. On a cache miss without it, the version
+    # renders its Arabic source (the sidebar shows a "translation unavailable" note).
+    if en is None and os.environ.get("SPOTCHECK_TRANSLATE") == "1":
         en = _translate_prompt_en(text)
         if en:
             _encache[vid] = {"hash": h, "en": en}
@@ -329,12 +356,43 @@ def _th(access_kind):
             f"<th>2.5-flash</th><th>3.6-flash</th></tr></thead><tbody>")
 
 
+_MODEL_HDR = {"gemini-3.6-flash": "3.6-flash", "gemini-2.5-flash": "2.5-flash", "judge": "judge · 3.1-pro"}
+
+
+def _th_single(model, note):
+    return (f"<table class='cmp'><thead><tr><th></th>"
+            f"<th>{html.escape(_MODEL_HDR.get(model, model))} "
+            f"<span class='ref'>({html.escape(note)})</span></th></tr></thead><tbody>")
+
+
 def _row(label, tip, cells, cls=""):
     tds = "".join(f"<td>{c}</td>" for c in cells)
     return (f"<tr class='{cls}'><td class='rl tip' data-tip=\"{esc(tip)}\">{label}</td>{tds}</tr>")
 
 
+def build_table_single(poem, vid):
+    """Judge-less version (single-model run): show the one model that has data as
+    its own baseline — its labels in green, primary starred, scalar meters with no
+    delta (nothing to diff against). Ordered by that model's own labels."""
+    labels = poem["labels"][vid]
+    model = _base_model(labels)
+    r = labels.get(model, {})
+    kind = PROMPT_META[vid]["access"]
+    acc_tip = ACC_TIP_FACTORS if kind == "factors_0_10" else ACC_TIP_LEVEL
+    prim = r.get("mood_primary")
+    return (_th_single(model, "sole run")
+            + _row("primary", PRIM_TIP, [judge_prim(prim)])
+            + _row("mood", DIM_TIP["mood"], [judge_labels(r.get("moods"), "mood", prim)])
+            + _row("topic", DIM_TIP["topic"], [judge_labels(r.get("topics"), "topic")])
+            + _row("motif", DIM_TIP["motif"], [judge_labels(r.get("motifs"), "motif")])
+            + _row("intensity", INT_TIP, [bar_cell(r.get("emotional_intensity"))], "mtr")
+            + _row("access", acc_tip, [access_cell(kind, r, None)], "mtr")
+            + "</tbody></table>")
+
+
 def build_table(poem, vid):
+    if vid in JUDGELESS:
+        return build_table_single(poem, vid)
     labels = poem["labels"][vid]
     j = labels.get("judge", {})
     cands = [labels.get(m, {}) for m in CAND_MODELS]
@@ -375,16 +433,19 @@ def sort_data(poem):
     out = {}
     for vid in VIDS:
         labels = poem["labels"][vid]
-        j = labels.get("judge", {})
+        judgeless = vid in JUDGELESS
+        # Judge-less versions have no baseline: order by the sole model's own
+        # values, and blank the agreement badge (nothing to agree against).
+        base = labels.get(_base_model(labels), {}) if judgeless else labels.get("judge", {})
         kind = PROMPT_META[vid]["access"]
-        acc = (j.get("accessibility_score") if kind == "factors_0_10"
-               else j.get("accessibility_level"))
-        row = {"int": j.get("emotional_intensity") or 0,
+        acc = (base.get("accessibility_score") if kind == "factors_0_10"
+               else base.get("accessibility_level"))
+        row = {"int": base.get("emotional_intensity") or 0,
                "acc": acc if isinstance(acc, (int, float)) else 0,
-               "prim": j.get("mood_primary") or ""}
+               "prim": base.get("mood_primary") or ""}
         for m in CAND_MODELS:
             key = "a25" if "2.5" in m else "a36"
-            row[key] = agree_pct(labels.get(m, {}), j)
+            row[key] = None if judgeless else agree_pct(labels.get(m, {}), base)
         out[slug(vid)] = row
     return out
 

@@ -1,112 +1,76 @@
-# Auto-reconcile instructions (Claude-in-CI)
+# Auto-reconcile enrichment instructions (headless Claude in CI)
 
-You are running non-interactively in CI after a push to `main`. The feature
-manifest (`feature-manifest.json`) has drifted from the code. Your job is to
-reconcile it **honestly** and, where possible, add a **verified** behavioral
-test. Then leave your changes in the working tree; a later CI step opens the PR.
+You are running non-interactively (`claude -p`) inside the **Manifest Auto-Reconcile**
+workflow, after a push to `main`. A deterministic script has **already** done all the
+mechanical work: it added a skeleton entry to `feature-manifest.json` for each new
+feature (with `coverage:"none"`), re-baselined `feature-hashes.json`, and regenerated
+`docs/APP-STATE.md`. A later CI step opens the PR and merges it.
+
+**Your one job:** for each newly-added feature, try to write a _real_ test that proves
+the feature works, and upgrade its coverage label **only if the test is proven**. That
+is the only thing a human/LLM can do that the script cannot.
 
 ## The one rule that matters
 
 **Never claim coverage you did not verify.** A dishonest `"coverage": "behavioral"`
-label is worse than a red build, because it makes green meaningless. When in
-doubt, label a feature `"none"` and move on. Honesty over completeness.
+label is worse than a red build — it makes green meaningless. If you cannot prove a
+test with the mutation gauntlet, the correct, honest answer is to leave the feature at
+`"none"` and write one true sentence in its `gap`. Honesty over completeness.
 
-## Steps
+## What you are given
 
-1. Read the drift. It was written to `drift.json` (output of
-   `node scripts/check-feature-manifest.mjs --json`). Also run
-   `node scripts/check-feature-manifest.mjs` to see the human-readable report.
+The workflow passes you the list of new feature ids (the `added_ids`). Each already
+exists in `feature-manifest.json` with `coverage:"none"` and real `entrypoints`.
 
-2. For each drift item:
+## Steps (per new feature)
 
-   **`component_unmapped` / `endpoint_*` (an ADDITION):** a feature exists in
-   code but not in the manifest. Add a manifest entry:
-   - `id`, `name`: derive from the component/endpoint.
-   - `userFacing`: read the actual component/source and write one true sentence
-     about what the user experiences. Do not invent.
-   - `entrypoints` / `endpoints`: the real files/routes.
-   - `tier`: `critical` (core reading/playback loop), `important` (frequent real
-     value), `nice` (enhancement/easter egg), `internal` (tooling, not user-facing).
-     If unsure, pick the lower tier and note it in `gap`.
-   - `coverage`: follow the coverage decision below. **Default to `"none"`.**
-   - `gap`: one honest sentence about what is not covered.
+1. Read the feature's `entrypoints` in `feature-manifest.json` and the component/source
+   they point at. Understand what the user actually observes when it works.
 
-   **`dead_entrypoint` / `dead_test` / `endpoint_removed` (a REMOVAL or RENAME):**
-   the manifest points at a file/route that no longer exists. Decide which it is
-   using git — check the recent history of the deleted path
-   (`git log --oneline -3 -- <path>`) and look for a same-named/similar file that
-   appeared (a `component_unmapped` in the same drift is often the moved file):
-   - **Rename / move** (the code moved to a new path): update the feature's
-     `entrypoints`/`endpoints` to the new location. Keep the feature, its coverage,
-     and its tests. This also resolves the paired `component_unmapped`.
-   - **True removal** (the feature is gone from the product): remove the feature
-     entry entirely, and delete any now-orphaned test files it owned.
-     Do not delete a feature just because one of several files moved.
+2. Decide if it is testable in headless Chromium CI:
+   - **NO** (audible audio, real OAuth redirect, iOS-only Safari, PWA install/offline,
+     purely decorative) → leave `coverage:"none"` (or set `"mocked"` / `"device-only"`
+     only if that is literally true) and write an honest `gap`. Do not fake a test.
+   - **YES** (UI state, DOM changes, store transitions, API-mocked flows) → go to step 3.
 
-   **`feature_updated` (an in-place UPDATE):** listed in `drift.json` under
-   `updated`. The feature's own source changed since its last hash baseline, so its
-   coverage may now be stale. For each updated feature:
-   - If `coverage` is `"behavioral"`: RE-VERIFY the guard. Generate a fresh break
-     for the feature's current source and run the gauntlet
-     (`node scripts/guard-gauntlet.mjs`, see step 4) against the feature's existing
-     test. If it still passes-clean-and-fails-on-break → keep `"behavioral"`. If the
-     test now fails on clean code, or no longer fails on the break → the update
-     broke or outdated the guard: downgrade `coverage` to `"none"`, note it in
-     `gap`, and (if you can) regenerate a real test via step 4.
-   - Re-read the component and refresh `userFacing`/`gap` if the behavior changed.
-   - Leave `tier` unless the feature's importance genuinely changed.
+3. Write a test under `src/test/` (Vitest) or `e2e/` (Playwright), following the patterns
+   in the existing tests there. It must assert a **user-observable outcome**, not an
+   implementation detail and not a source string.
 
-3. Coverage decision, per new feature:
-   - **Is it testable in headless Chromium CI?**
-     - NO (audible audio, real OAuth redirect, iOS-only, PWA install/offline,
-       purely decorative) → set `coverage` honestly to `"mocked"`, `"device-only"`,
-       or `"none"`. Do NOT write a fake test. Explain in `gap`.
-     - YES (UI state, DOM changes, store transitions, API-mocked flows) → attempt
-       a behavioral test (step 4).
+4. **Prove it with the mutation gauntlet.** A test only earns `"behavioral"` if it
+   passes on clean code, FAILS when the feature is broken, and is not flaky:
 
-4. Generate + VERIFY a behavioral test (only for CI-testable features):
-   - Write a test under `src/test/` (unit/integration) or `e2e/` (Playwright),
-     following the patterns in the existing tests. It must assert a
-     **user-observable outcome**, not an implementation detail, and not a source
-     string.
-   - Run the mutation gauntlet to prove it is a real guard:
-     ```
-     node scripts/guard-gauntlet.mjs '<spec.json>'
-     ```
-     where the spec names your test and a `break` that disables the feature
-     (a string replacement in the feature's source that should make the test fail):
-     ```json
-     {
-       "test": "src/test/yourFeature.test.js",
-       "break": [{ "file": "src/.../feature.js", "find": "<real line>", "replace": "<disabled>" }],
-       "flakeRuns": 2
-     }
-     ```
-   - If the gauntlet exits 0 (verified: passes clean, FAILS on break, not flaky) →
-     keep the test and set the feature `coverage` to `"behavioral"`.
-   - If it exits 1 (theater / flaky / no baseline) → DELETE the test you wrote,
-     set `coverage` to `"none"`, and note the failed attempt in `gap`. Do not
-     keep an unverified test.
+   ```
+   node scripts/guard-gauntlet.mjs '{
+     "test": "src/test/yourFeature.test.js",
+     "break": [{ "file": "src/.../feature.js", "find": "<real line>", "replace": "<disabled>" }],
+     "flakeRuns": 2
+   }'
+   ```
 
-5. Regenerate the living doc: `node scripts/check-feature-manifest.mjs --update`
-   (updates `docs/APP-STATE.md`).
+   - Exit **0** (proven: passes clean, fails on break, not flaky) → keep the test and set
+     the feature's `coverage` to `"behavioral"`. Add the test file to the feature's
+     `tests.unit` or `tests.e2e` array.
+   - Exit **1** (theater / flaky / no baseline) → **delete the test you wrote**, leave
+     `coverage:"none"`, and note the failed attempt in `gap`. Never keep an unproven test.
 
-6. Re-baseline the update hashes LAST, after all manifest edits:
-   `node scripts/check-feature-manifest.mjs --update-hashes` (rewrites
-   `feature-hashes.json`). This records the current source of every feature so the
-   next push does not re-flag the same update.
+## Boundaries (hard)
 
-7. Confirm the tree is fully in sync:
-   `node scripts/check-feature-manifest.mjs --needs-reconcile` — it must now exit 0
-   (no drift, no un-reconciled updates). Do not push or open a PR yourself; leave
-   the changes staged in the working tree for the workflow to PR.
+- Touch ONLY: **new test files** under `src/test/**` or `e2e/**`, and the `coverage` /
+  `gap` / `tests` fields of the new features in `feature-manifest.json`.
+- Do NOT edit application source (except a gauntlet `break`, which the gauntlet always
+  reverts for you). Do NOT touch `feature-hashes.json` or `docs/APP-STATE.md` — the
+  workflow regenerates those after you. Do NOT re-tier features or rewrite other entries.
+- Do NOT commit, push, or open a PR. Leave your changes in the working tree; the workflow
+  commits and PRs them.
+- If you can honestly cover nothing, that is a fine outcome — the features still merge with
+  an accurate `coverage:"none"`, and the inventory is still complete.
 
-## Boundaries
+## Why it is split this way
 
-- Touch ONLY: `feature-manifest.json`, `feature-hashes.json`, `docs/APP-STATE.md`,
-  and test files under `src/test/**` or `e2e/**` (add new ones; delete only tests
-  orphaned by a true feature removal). Do NOT modify application source (except a
-  gauntlet break, which you must always revert — the gauntlet does this for you).
-- If you cannot honestly classify a feature, `coverage: "none"` with a clear
-  `gap` is the correct, honest answer.
-- Keep the diff minimal and reviewable.
+The mechanical facts (a component exists, its source hash, the doc table) are deterministic,
+so a script does them with zero LLM cost and zero chance of a hallucinated inventory. The
+semantic judgment (does this test actually exercise the feature? is the coverage label
+honest?) is the only part that needs you. Keeping the split means a broken or skipped
+enrichment can never corrupt the inventory — at worst a real feature merges labeled `"none"`,
+which is true.

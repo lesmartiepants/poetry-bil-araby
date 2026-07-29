@@ -20,13 +20,20 @@
  *   node scripts/check-feature-manifest.mjs --check    # check only; never write the doc
  *   node scripts/check-feature-manifest.mjs --update   # refresh doc block; never fail (for local use)
  *   node scripts/check-feature-manifest.mjs --json     # machine output for CI comment
+ *   node scripts/check-feature-manifest.mjs --reconcile      # bot heal: add skeletons for new
+ *                                                            # code, re-baseline hashes, refresh doc
+ *   node scripts/check-feature-manifest.mjs --update-hashes  # re-baseline feature-hashes.json only
+ *   node scripts/check-feature-manifest.mjs --needs-reconcile # exit 1 iff the bot has work to do
+ *
+ * Testability: set FEATURE_MANIFEST_ROOT=<dir> to run against a sandbox copy of
+ * the repo layout (manifest + src/components + server.js) instead of this repo.
  *
  * No external dependencies (Node >= 18 built-ins only).
  */
 
-import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, appendFileSync, readdirSync, existsSync, statSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join, relative, sep } from 'node:path';
+import { dirname, join, relative, resolve, sep } from 'node:path';
 import { createHash } from 'node:crypto';
 
 // Manifest paths are POSIX (forward-slash). path.relative() emits the platform
@@ -34,7 +41,11 @@ import { createHash } from 'node:crypto';
 const toPosix = (p) => p.split(sep).join('/');
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = join(__dirname, '..');
+// FEATURE_MANIFEST_ROOT lets tests point the whole script at a sandbox repo
+// layout (manifest + src/components + server.js) instead of this checkout.
+const ROOT = process.env.FEATURE_MANIFEST_ROOT
+  ? resolve(process.env.FEATURE_MANIFEST_ROOT)
+  : join(__dirname, '..');
 
 const args = new Set(process.argv.slice(2));
 const MODE = {
@@ -51,6 +62,9 @@ const MODE = {
   // needs-reconcile: exit 1 if ANYTHING requires the bot (drift OR a feature
   // whose source changed). This is the trigger the autofix workflow reads.
   needsReconcile: args.has('--needs-reconcile'),
+  // reconcile: the bot's deterministic heal — add skeleton entries for new
+  // components/endpoints, re-baseline hashes, refresh the doc. Never deletes.
+  reconcile: args.has('--reconcile'),
 };
 
 // Drift types that mean "the manifest lies about what exists" → a human must fix.
@@ -337,6 +351,38 @@ function refreshDoc(manifest, discovered, result) {
   return false;
 }
 
+/* ---------- deterministic skeleton reconcile ---------- */
+
+// A schema-valid manifest id: lowercase, starts alnum, only [a-z0-9-].
+function slugify(s) {
+  const out = String(s)
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .toLowerCase();
+  return out || 'feature';
+}
+
+// A fresh, schema-complete feature entry with honest empty coverage. The bot
+// adds these mechanically so no released feature is ever missing from the
+// inventory; the enrichment step (or a human) writes the real description and
+// upgrades coverage once a verified test exists.
+function skeletonFeature({ id, name, entrypoints = [], endpoints = [], userFacing }) {
+  return {
+    id,
+    name,
+    tier: 'internal',
+    userFacing,
+    entrypoints,
+    endpoints,
+    tests: { unit: [], e2e: [] },
+    deviceOnly: false,
+    coverage: 'none',
+    gap: 'Auto-added by reconcile bot; coverage unverified.',
+  };
+}
+
 /* ---------- main ---------- */
 
 const manifest = loadManifest();
@@ -351,6 +397,80 @@ const result = reconcile(manifest, discovered);
 const { updated, unhashed } = detectUpdates(manifest.features);
 result.updated = updated;
 result.unhashed = unhashed;
+
+// --reconcile: the bot's deterministic heal. Add a skeleton entry for every new
+// component/endpoint (honest coverage:"none"), re-baseline hashes, refresh the
+// doc. It never deletes: a dead reference (removed file/endpoint) is a semantic
+// call left for a human, so it stays surfaced and the workflow's follow-up
+// --needs-reconcile check will still fail loudly on it.
+if (MODE.reconcile) {
+  const added = [];
+  const existingIds = new Set(manifest.features.map((f) => f.id));
+  const uniqueId = (base) => {
+    let id = base;
+    let n = 2;
+    while (existingIds.has(id)) id = `${base}-${n++}`;
+    existingIds.add(id);
+    return id;
+  };
+  for (const d of result.fail) {
+    if (d.type === 'component_unmapped') {
+      const baseName = d.detail.split('/').pop().replace(/\.[jt]sx?$/, '');
+      const sk = skeletonFeature({
+        id: uniqueId(slugify(baseName)),
+        name: baseName,
+        entrypoints: [d.detail],
+        userFacing: `Auto-added from ${d.detail}; description pending human review.`,
+      });
+      manifest.raw.features.push(sk);
+      added.push(sk.id);
+    } else if (d.type === 'endpoint_added') {
+      const sk = skeletonFeature({
+        id: uniqueId('endpoint-' + slugify(d.detail)),
+        name: d.detail,
+        endpoints: [d.detail],
+        userFacing: `Auto-added HTTP endpoint ${d.detail}; description pending human review.`,
+      });
+      manifest.raw.features.push(sk);
+      added.push(sk.id);
+    }
+    // endpoint_removed / dead_entrypoint / dead_test → left for a human.
+  }
+
+  if (added.length) writeFileSync(MANIFEST_PATH, JSON.stringify(manifest.raw, null, 2) + '\n');
+
+  // Re-aggregate from disk so the doc + hashes reflect the new feature set.
+  const m2 = loadManifest();
+  const d2 = {
+    endpoints: discoverEndpoints(),
+    components: discoverComponents(),
+    tests: discoverTests(),
+  };
+  const r2 = reconcile(m2, d2);
+  const u2 = detectUpdates(m2.features);
+  r2.updated = u2.updated;
+  r2.unhashed = u2.unhashed;
+  refreshDoc(m2, d2, r2);
+  writeHashes(m2.features);
+
+  const blocking2 = r2.fail.filter((d) => BLOCKING_TYPES.has(d.type));
+  console.log(
+    `🤖 reconcile: added ${added.length} feature(s)` +
+      (added.length ? ` — ${added.join(', ')}` : '') +
+      '; hashes re-baselined; doc refreshed.'
+  );
+  if (blocking2.length) {
+    console.log(`⚠️  ${blocking2.length} issue(s) reconcile can't auto-fix (a human must resolve):`);
+    for (const d of blocking2) console.log(`   [${d.type}] ${d.detail}`);
+  }
+  if (process.env.GITHUB_OUTPUT) {
+    appendFileSync(
+      process.env.GITHUB_OUTPUT,
+      `added=${added.length}\nadded_ids=${added.join(',')}\n`,
+    );
+  }
+  process.exit(0);
+}
 
 // --update-hashes: recompute the baseline and exit. The bot runs this LAST, after
 // reconciling, so the next push compares against current source.

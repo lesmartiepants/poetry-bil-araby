@@ -1,10 +1,20 @@
 name: Manifest Auto-Reconcile
 
-# Self-maintaining feature coverage. On every push to main, a cheap deterministic
-# check looks for manifest drift. Only when drift is found does it wake Claude to
-# reconcile the manifest honestly (and add a gauntlet-verified test where it can),
-# then opens a PR. Feature PRs are never blocked for adding a feature; the bot
-# keeps the inventory current on its own. See docs/ci/manifest-autofix-instructions.md.
+# Self-maintaining feature coverage. On every push to main a cheap deterministic
+# check looks for manifest drift. When found, a deterministic script reconciles
+# the manifest on its own (adds a skeleton entry for each new feature with honest
+# coverage:"none", re-baselines the hashes, refreshes docs/APP-STATE.md). Only
+# when genuinely NEW features were added does headless Claude then attempt a
+# gauntlet-verified test for each. Everything the bot changed is opened as ONE PR
+# that auto-merges, because it only ever touches the manifest, hashes, generated
+# doc, and test files. Feature PRs are never blocked. Playbook:
+# docs/ci/manifest-autofix-instructions.md.
+#
+# Why no claude-code-action here: that action only accepts human-in-the-loop
+# events (issue_comment / pull_request_review / ...) and hard-rejects `push`
+# ("Unsupported event type: push"), which is why the previous version of this
+# workflow failed on every run. The mechanical reconcile needs no LLM at all, and
+# the test-gen uses the headless `claude` CLI, which has no event coupling.
 
 on:
   push:
@@ -18,7 +28,6 @@ on:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write
 
 concurrency:
   group: manifest-autofix
@@ -40,46 +49,64 @@ jobs:
       - name: Install deps
         run: npm ci
 
-      # Cheap gate: if the manifest already matches the code, do nothing (no Claude, $0).
+      # Cheap gate: if the manifest already matches the code, do nothing ($0).
+      # --needs-reconcile exits non-zero when the bot has anything to do (an
+      # addition, a removal/rename, or an in-place update whose source changed).
       - name: Detect drift
         id: drift
         run: |
           set +e
-          node scripts/check-feature-manifest.mjs --json > drift.json 2>/dev/null
-          # --needs-reconcile exits non-zero when the bot has anything to do:
-          # an addition, a removal/rename (dead ref), OR an in-place update
-          # (a feature's source changed since its last hash baseline).
           node scripts/check-feature-manifest.mjs --needs-reconcile > /dev/null 2>&1
-          code=$?
-          if [ "$code" = "0" ]; then
+          if [ "$?" = "0" ]; then
             echo "has_drift=false" >> "$GITHUB_OUTPUT"
-            echo "Manifest is in sync (no add/remove/update). Nothing to do."
+            echo "Manifest is in sync. Nothing to do."
           else
             echo "has_drift=true" >> "$GITHUB_OUTPUT"
-            echo "Reconcile needed — waking Claude."
-            cat drift.json
+            echo "Drift found — reconciling."
           fi
 
-      # Only runs when there is drift. Claude edits the manifest (+ verified test),
-      # following the honest playbook. It must not push or open a PR itself.
-      - name: Claude reconcile
+      # Deterministic heal: add skeletons for new code, re-baseline hashes, refresh
+      # the doc. Emits added=<n> and added_ids=<csv>. No LLM; always works on push.
+      - name: Reconcile manifest (deterministic)
+        id: reconcile
         if: steps.drift.outputs.has_drift == 'true'
-        uses: anthropics/claude-code-action@v1
-        with:
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          prompt: |
-            The feature manifest has drifted from the code (a push to main added or
-            changed a feature). Reconcile it by following, step by step, the
-            instructions in docs/ci/manifest-autofix-instructions.md.
+        run: node scripts/check-feature-manifest.mjs --reconcile
 
-            The drift report is in drift.json in the repo root. Honesty rule: never
-            write coverage:"behavioral" without a gauntlet-verified test
-            (node scripts/guard-gauntlet.mjs). Default new features to coverage:"none".
-            Touch only feature-manifest.json, docs/APP-STATE.md, and new test files.
-            Do NOT commit, push, or open a PR — leave your changes in the working tree.
+      # Only when genuinely NEW features were added: headless Claude attempts a
+      # gauntlet-verified test for each and upgrades coverage none->behavioral ONLY
+      # if the mutation gauntlet proves it. Best-effort: a failure here never blocks
+      # the reconcile PR — the feature just merges with an honest coverage:"none".
+      - name: Enrich new features with verified tests (best-effort)
+        id: enrich
+        if: >
+          steps.drift.outputs.has_drift == 'true' &&
+          steps.reconcile.outputs.added != '0' &&
+          steps.reconcile.outputs.added != ''
+        continue-on-error: true
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          npm i -g @anthropic-ai/claude-code
+          claude -p "The reconcile bot just added these new features to feature-manifest.json with coverage:\"none\": ${{ steps.reconcile.outputs.added_ids }}. Follow docs/ci/manifest-autofix-instructions.md exactly. For each new feature, write a behavioral test and PROVE it with node scripts/guard-gauntlet.mjs; only then set that feature's coverage to \"behavioral\". If you cannot prove it, delete the test and leave coverage \"none\" with an honest gap. Touch ONLY new test files under src/test/ or e2e/ and the coverage/gap fields of those features in feature-manifest.json. Do NOT commit, push, or open a PR." \
+            --dangerously-skip-permissions \
+            || echo "::warning::Enrichment did not complete; new feature(s) remain coverage:none (honest)."
+          # Refresh the generated doc in case coverage labels changed.
+          node scripts/check-feature-manifest.mjs --update > /dev/null 2>&1 || true
 
-      # Deterministic PR creation from whatever Claude changed.
+      # Safety: the tree must now be fully reconciled. If it is not (e.g. a dead
+      # reference — a removed file/endpoint the manifest still points at — which
+      # reconcile deliberately does not auto-delete), fail loudly so a human fixes
+      # it. No PR is opened in that case.
+      - name: Verify fully reconciled
+        if: steps.drift.outputs.has_drift == 'true'
+        run: |
+          node scripts/check-feature-manifest.mjs --needs-reconcile
+          echo "Manifest fully reconciled."
+
+      # Open ONE PR with everything the bot changed (skeleton + hashes + doc + any
+      # verified tests).
       - name: Open reconcile PR
+        id: cpr
         if: steps.drift.outputs.has_drift == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
@@ -92,12 +119,37 @@ jobs:
           body: |
             Automated feature-manifest reconciliation after a push to `main`.
 
-            A cheap drift check found the manifest out of sync with the code, and
-            Claude reconciled it per `docs/ci/manifest-autofix-instructions.md`:
-            new features added with **honest** coverage labels, and any behavioral
-            test included was proven by the mutation gauntlet (passes clean, fails
-            on break, not flaky).
+            A cheap drift check found the manifest out of sync with the code. A
+            deterministic script reconciled it — new features added with **honest**
+            `coverage:"none"`, hashes re-baselined, `docs/APP-STATE.md` regenerated —
+            and, for any genuinely new feature, Claude attempted a test that the
+            mutation gauntlet proved (passes clean, fails on break, not flaky) before
+            labeling it `behavioral`.
 
-            This PR touches only `feature-manifest.json`, `docs/APP-STATE.md`, and
-            test files, so it is eligible for auto-merge (see Manifest Auto-Merge).
-            If it touches anything else, auto-merge is skipped and a human should review.
+            This PR only ever touches `feature-manifest.json`, `feature-hashes.json`,
+            `docs/APP-STATE.md`, and test files, so it auto-merges. If anything else
+            shows up in the diff, auto-merge is skipped and a human is asked to review.
+
+      # Arm auto-merge INLINE. The separate on:pull_request auto-merge workflow
+      # cannot fire for a PR opened with GITHUB_TOKEN, so we gate + enable it here.
+      # Allowlist: manifest, hashes, generated doc, and tests only — anything else
+      # is left for a human. Under the "main protext" ruleset (PR required, 0
+      # approvals, no required status checks) GITHUB_TOKEN can merge this itself.
+      - name: Arm auto-merge (allowlist-guarded)
+        if: steps.cpr.outputs.pull-request-number
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ steps.cpr.outputs.pull-request-number }}
+        run: |
+          files=$(gh pr view "$PR" --json files --jq '.files[].path')
+          echo "Changed files:"; echo "$files"
+          bad=$(echo "$files" | grep -vE '^(feature-manifest\.json|feature-hashes\.json|docs/APP-STATE\.md|src/test/.*|e2e/.*)$' || true)
+          if [ -n "$bad" ]; then
+            echo "::warning::PR touches files outside the manifest/doc/test allowlist — auto-merge skipped:"
+            echo "$bad"
+            gh pr edit "$PR" --add-label needs-human-review
+            gh pr comment "$PR" --body "Auto-merge skipped: this reconcile PR touches files outside the manifest/doc/test allowlist. A human should review before merge."
+          else
+            echo "All changes within the allowlist — enabling auto-merge."
+            gh pr merge "$PR" --auto --squash || gh pr merge "$PR" --squash
+          fi

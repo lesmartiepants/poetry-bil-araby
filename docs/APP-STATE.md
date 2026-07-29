@@ -72,22 +72,22 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 
 ### Inventory at a glance
 
-- **Features tracked:** 39
+- **Features tracked:** 38
 - **HTTP endpoints in code:** 37
-- **Components in code:** 34
-- **Test files in code:** 61
-- **Behavioral coverage:** 7/39 (18%)
+- **Components in code:** 33
+- **Test files in code:** 60
+- **Behavioral coverage:** 6/38 (16%)
 
 | Tier      | Features |
 | --------- | -------- |
 | critical  | 7        |
 | important | 14       |
 | nice      | 13       |
-| internal  | 5        |
+| internal  | 4        |
 
 | Coverage    | Features |
 | ----------- | -------- |
-| behavioral  | 7        |
+| behavioral  | 6        |
 | mocked      | 20       |
 | source-only | 1        |
 | device-only | 3        |
@@ -135,7 +135,6 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 | `reader-feed`            | critical  | mocked      | -           | #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted.                                                             |
 | `guided-tour`            | important | mocked      | -           | #582/#602. e2e exercises step flow; conditional-step + resume-lifecycle branches only partly asserted.                                                                                                    |
 | `enjoyability-lab`       | internal  | none        | -           | Dev tooling; no automated coverage by design. /enjoyability is gated by ENABLE_DEV_LAB (404 in prod); the Saved-curation endpoints are gated by SAVED_CURATION_EMAIL (unset in prod).                     |
-| `reconcile-probe`        | internal  | behavioral  | -           | Proven via guard-gauntlet: renders and asserts the reconcile-probe marker text; fails when the marker text is changed.                                                                                    |
 
 ### Critical features without behavioral CI coverage
 

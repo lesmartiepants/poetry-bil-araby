@@ -1,0 +1,36 @@
+{
+  "created_at": "2026-07-28T00:24:38.520Z",
+  "files": [
+    {
+      "name": "poem_categories.json",
+      "rows": 68838,
+      "bytes": 8381715
+    },
+    {
+      "name": "poems_categorization.json",
+      "rows": 9072,
+      "bytes": 5799265
+    },
+    {
+      "name": "category_dimensions.json",
+      "rows": 3,
+      "bytes": 316
+    },
+    {
+      "name": "category_values.json",
+      "rows": 44,
+      "bytes": 5681
+    },
+    {
+      "name": "category_families.json",
+      "rows": 7,
+      "bytes": 819
+    }
+  ],
+  "fingerprint": {
+    "poem_categories_rows": 68838,
+    "distinct_poems_in_links": 9072,
+    "poems_with_categorization": 9072,
+    "avg_labels_per_poem": 7.588
+  }
+}

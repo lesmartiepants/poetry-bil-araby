@@ -1706,8 +1706,12 @@ app.get('/tts-lab', (_req, res) => {
   res.type('html').send(loadLabHtml());
 });
 
-// Enjoyability Lab — dev-only experiment page (relaxed CSP for inline scripts)
+// Enjoyability Lab — dev-only experiment page (relaxed CSP for inline scripts).
+// Gated on ENABLE_DEV_LAB so it 404s in prod (env unset) and isn't publicly reachable;
+// set ENABLE_DEV_LAB=1 locally to use it. (Its "Hear it" calls the already-public
+// /api/ai/live-tts; the gate hides the dev page itself, not that endpoint.)
 app.get('/enjoyability', (_req, res) => {
+  if (!process.env.ENABLE_DEV_LAB) return res.status(404).send('Not found');
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; media-src blob:"

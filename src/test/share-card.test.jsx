@@ -7,6 +7,8 @@ import {
   SHARE_CARD_DESIGNS,
   CARD_WIDTH,
   CARD_HEIGHT,
+  MIN_BILINGUAL_GAP,
+  createBilingualVerseLayout,
   prepareVerses,
   prepareTranslation,
   renderShareCard,
@@ -297,11 +299,12 @@ describe('renderShareCard', () => {
     }
   });
 
-  it('draws the English poet name and title in the artist designs', () => {
-    // The artist/atmosphere designs use the bilingual header, which renders an
-    // English "[author] – [title]" summary. The composition layouts (musnad,
-    // muqabala, najma, iqtibas) are intentionally Arabic-forward and omit it.
-    const ARTIST_DESIGNS = [
+  it('draws the English poet name and title in the bilingual-header designs', () => {
+    // These designs use the shared bilingual header, which renders an English
+    // "[author] – [title]" summary. Sahifa now uses a custom header (English
+    // title only, in red) and the composition layouts are Arabic-forward, so
+    // they are checked separately below.
+    const HEADER_DESIGNS = [
       'diwan',
       'ibnMuqla',
       'sinan',
@@ -309,9 +312,8 @@ describe('renderShareCard', () => {
       'hassanFathy',
       'layl',
       'mishkat',
-      'sahifa',
     ];
-    for (const id of ARTIST_DESIGNS) {
+    for (const id of HEADER_DESIGNS) {
       ctx.fillText.mockClear();
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, id);
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);
@@ -326,12 +328,61 @@ describe('renderShareCard', () => {
     }
   });
 
+  it('draws the English title on the composition and broadsheet designs', () => {
+    // Sahifa + the composition layouts each surface the English title.
+    for (const id of ['sahifa', 'musnad', 'muqabala', 'najma', 'iqtibas']) {
+      ctx.fillText.mockClear();
+      renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, id);
+      const calls = ctx.fillText.mock.calls.map((c) => c[0]);
+      const hasTitle = calls.some(
+        (text) => typeof text === 'string' && text.includes(mockPoem.title)
+      );
+      expect(hasTitle).toBe(true);
+    }
+  });
+
   it('interleaves English translation with Arabic verses', () => {
     ctx.fillText.mockClear();
     renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, 'diwan');
     const calls = ctx.fillText.mock.calls.map((c) => c[0]);
     expect(calls).toContain('يا دِمَشقُ يا حَبيبَتي');
     expect(calls.some((t) => typeof t === 'string' && t.includes('O Damascus'))).toBe(true);
+  });
+
+  it('keeps fully vocalized six-line Arabic verses clear of English text', () => {
+    const arabicAscent = 32;
+    const arabicDescent = 9;
+    ctx.measureText.mockImplementation(() => ({
+      width: 100,
+      actualBoundingBoxAscent: arabicAscent,
+      actualBoundingBoxDescent: arabicDescent,
+    }));
+    const vocalizedPoem = {
+      ...mockPoem,
+      arabic:
+        'إِنَّ الحَيَاةَ دَقِيقَةٌ\nفَاجْعَلْهَا نُورًا وَسَكِينَةً\nوَاخْتَرْ لِقَلْبِكَ مَوْعِدًا\nيُحْيِي الرُّوحَ وَيُطْمَئِنُهَا\nفَكُلُّ دَرْبٍ فِي المَدَى\nيَبْدَأُ بِخُطْوَةٍ أَمِينَةٍ',
+    };
+    const verses = prepareVerses(vocalizedPoem.arabic, 6);
+    const translation = prepareTranslation(vocalizedPoem.english, 6);
+    const layout = createBilingualVerseLayout(ctx, verses, translation, {
+      maxWidth: 800,
+      maxHeight: 500,
+      arabicSize: 42,
+      englishSize: 27,
+      preferredRowGap: 96,
+    });
+
+    expect(layout.translationOffsets[0] - arabicDescent - arabicAscent).toBeGreaterThanOrEqual(
+      MIN_BILINGUAL_GAP
+    );
+    for (let index = 0; index < verses.length - 1; index++) {
+      const englishBottom = layout.translationOffsets[index] + arabicDescent;
+      const nextArabicTop = layout.rowGap - arabicAscent;
+      expect(nextArabicTop - englishBottom).toBeGreaterThanOrEqual(MIN_BILINGUAL_GAP);
+    }
+    for (const design of SHARE_CARD_DESIGNS) {
+      expect(() => renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, vocalizedPoem, design.id, { maxLines: 6 })).not.toThrow();
+    }
   });
 });
 

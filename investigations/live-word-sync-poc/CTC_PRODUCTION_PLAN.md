@@ -173,6 +173,28 @@ Therefore neither source is a CTC substitute or a candidate for correction. The 
 prove the stream protocol with sequence/sample accounting and produce anchors before the browser's
 future horizon; otherwise the planner safely remains a no-op.
 
+### Persistent local-worker dogfood result
+
+That next POC worker now exists in [`ctc-worker/`](./ctc-worker/): it keeps the Arabic Wav2Vec2 CTC
+model warm, accepts only contiguous `seq`/`startSample24k` chunks, validates optional per-chunk
+CRC32, returns a rolling CRC32 acknowledgement, serializes alignment jobs, and emits immutable
+anchors at least 750 ms behind received PCM. The browser-side proxy schedules audio first, stores
+the resulting content-sample/Web Audio trace, then serially copies the same bytes. Cues created
+from audio that is merely queued—not yet audible—are held until their source word is safely in the
+playback past; then the normal future-horizon/cap policy applies.
+
+The first full dogfood run accepted 6/6 opening-phrase anchors and preserved the playback safety
+invariants, but failed the live quality gate: P90 browser staleness was 972 ms observe / 1,135 ms
+correct (target <=750 ms). The event-level Chirp word-start audit was 10/36 fallback, 15/35
+observe, and 7/36 correct. These are separately generated Live deliveries, so observe is not an
+improvement claim; correction is a negative signal. The worker remains POC-only, has no calibrated
+confidence, and force-aligns one caller-supplied six-word range rather than true rolling windows.
+
+The immediate implementation order is therefore revised: first deterministic identical-PCM replay
+with event-level highlight traces; next rotate bounded source ranges and require overlap agreement;
+then measure receipt-age distribution across six captures. Only if the replay correction wins can
+the planned debug-panel shadow mode be considered.
+
 ## Research constraints
 
 CTC forced alignment produces constrained timestamps from frame emissions and a supplied token

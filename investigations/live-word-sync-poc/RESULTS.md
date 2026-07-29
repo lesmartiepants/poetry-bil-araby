@@ -64,6 +64,29 @@ returning anchors. Those are useful negative results. The recordings, provider e
 counts remain in the Runs ledger; no cursor correction was silently applied or interpreted as an
 improvement.
 
+## Persistent CTC Sidecar Dogfood
+
+The lab now also has a local warm Arabic CTC worker with an explicit browser-to-worker PCM
+contract. Each already-scheduled chunk carries a sequence number, content sample range, sample
+count, per-chunk CRC32, and rolling CRC32 acknowledgement. The worker force-aligns a deliberately
+bounded opening phrase, emits only immutable anchors whose audio is 750 ms behind its received
+stream, and the browser holds any cue generated from still-queued audio until it is safely past the
+Web Audio playhead. The resulting visual highlight trace records every actual word transition, so
+the post-run Chirp audit no longer relies on a 50 ms snapshot approximation.
+
+In batch `20260729T000918493Z-2711e4ea`, observe and correct each received/accepted six anchors
+with a safe future horizon. This proves the end-to-end transport and safety behavior. It does not
+validate correction: P90 anchor staleness was 972 ms observe and 1,135 ms correct (target <=750
+ms). The event-level Chirp word-start audit recorded fallback 10/36 (27.8%), observe 15/35 (42.9%),
+and correct 7/36 (19.4%) exact highlighted-word matches. Because every Live method generated its
+own audio delivery, the observe number is descriptive only; the correction number is a negative
+signal. A transient early short-window alignment failure also occurred, and the current worker only
+handles an externally supplied first-six-word range.
+
+This is intentionally **not wired into the production reader**. The next test is a deterministic
+identical-PCM replay across fallback, shadow, and correction before range rotation, calibrated
+confidence, or a debug-panel shadow mode is considered.
+
 ## Recommendation
 
 Ship this as a line/phrase-first Live experience only if manual Arabic review accepts its drift.

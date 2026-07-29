@@ -10,6 +10,7 @@ import { DEFAULT_VOICE, VOICE_CATALOG } from '../../src/constants/voices.js';
 const root = resolve(import.meta.dirname);
 const comparisonArtifacts = resolve(root, 'artifacts', 'comparisons');
 const apiOrigin = process.env.POC_API_ORIGIN || 'http://localhost:3102';
+const ctcWorkerOrigin = process.env.CTC_WORKER_URL || '';
 // A timing-worktree server can generate Live audio without database access, while
 // the fixed reference poem is served from the existing read-only API. Keeping the
 // two origins configurable lets one POC run characterize a branch's Live-TTS
@@ -83,6 +84,19 @@ async function readJson(request) {
 function sendJson(response, status, data) {
   response.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' });
   response.end(JSON.stringify(data));
+}
+
+async function ctcWorkerRequest(path, options = {}) {
+  if (!ctcWorkerOrigin) throw new Error('CTC worker is not configured');
+  const response = await fetch(`${ctcWorkerOrigin}${path}`, {
+    method: options.method || 'GET',
+    headers: options.body ? { 'content-type': 'application/json' } : undefined,
+    body: options.body ? JSON.stringify(options.body) : undefined,
+    signal: AbortSignal.timeout(options.timeoutMs || 4_000),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || `CTC worker request failed (${response.status})`);
+  return data;
 }
 
 async function serveArtifact(request, response, name, mime) {
@@ -175,7 +189,48 @@ createServer(async (request, response) => {
       return;
     }
     if (requestUrl.pathname === '/alignment/providers') {
-      return sendJson(response, 200, { google: googleSttStatus() });
+      let ctc = { available: false, missing: ['CTC_WORKER_URL'] };
+      if (ctcWorkerOrigin) {
+        try {
+          const worker = await ctcWorkerRequest('/status', { timeoutMs: 1_000 });
+          ctc = { available: worker.ok === true, ...worker };
+        } catch (error) {
+          ctc = { available: false, error: error.message };
+        }
+      }
+      return sendJson(response, 200, { google: googleSttStatus(), ctc });
+    }
+    if (requestUrl.pathname === '/alignment/ctc/start' && request.method === 'POST') {
+      const body = await readJson(request);
+      return sendJson(response, 201, await ctcWorkerRequest('/start', { method: 'POST', body }));
+    }
+    if (requestUrl.pathname === '/alignment/ctc/chunk' && request.method === 'POST') {
+      return sendJson(
+        response,
+        202,
+        await ctcWorkerRequest('/chunk', { method: 'POST', body: await readJson(request) })
+      );
+    }
+    if (requestUrl.pathname === '/alignment/ctc/cues') {
+      return sendJson(
+        response,
+        200,
+        await ctcWorkerRequest(`/cues${requestUrl.search}`, { timeoutMs: 1_000 })
+      );
+    }
+    if (requestUrl.pathname === '/alignment/ctc/stop' && request.method === 'POST') {
+      return sendJson(
+        response,
+        202,
+        await ctcWorkerRequest('/stop', { method: 'POST', body: await readJson(request) })
+      );
+    }
+    if (requestUrl.pathname === '/alignment/ctc/dispose' && request.method === 'POST') {
+      return sendJson(
+        response,
+        204,
+        await ctcWorkerRequest('/dispose', { method: 'POST', body: await readJson(request) })
+      );
     }
     if (requestUrl.pathname === '/alignment/google/start' && request.method === 'POST') {
       return sendJson(response, 201, { sessionId: googleSessions.start() });

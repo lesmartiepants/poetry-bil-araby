@@ -57,6 +57,22 @@ function snapshotAt(timeline, seconds) {
   return snapshot;
 }
 
+function highlightEvents(metrics) {
+  // New captures record a transition every time the rendered single-word
+  // highlight changes. Prefer that event trace over the historical 50 ms
+  // sampled timeline, so a Chirp word-start is judged against the actual
+  // rendered word state rather than a quantized approximation.
+  const transitions = metrics.highlightTransitions || [];
+  if (transitions.length) {
+    return transitions.map((transition) => ({
+      time: transition.contentTime,
+      activeIndex: transition.activeIndex,
+      activeEnd: transition.activeEnd,
+    }));
+  }
+  return metrics.highlightTimeline || [];
+}
+
 function percentile(values, fraction) {
   if (!values.length) return null;
   const sorted = [...values].sort((left, right) => left - right);
@@ -147,8 +163,9 @@ for (const result of report.results.filter((item) => item.status === 'recorded')
   const transcribed = await transcribe(resolve(root, result.recording));
   const mapped = mapWords(transcribed, source);
   const matched = mapped.filter((word) => word.sourceIndex >= 0);
+  const renderedHighlightEvents = highlightEvents(result.metrics);
   const judgments = matched.map((word) => {
-    const snapshot = snapshotAt(result.metrics.highlightTimeline, word.start);
+    const snapshot = snapshotAt(renderedHighlightEvents, word.start);
     const covered = Boolean(
       snapshot && word.sourceIndex >= snapshot.activeIndex && word.sourceIndex < snapshot.activeEnd
     );
@@ -174,7 +191,7 @@ for (const result of report.results.filter((item) => item.status === 'recorded')
   });
   result.analysis = {
     audit:
-      'Post-run Google Chirp 3 synchronous transcription with word timestamps; not part of live playback.',
+      'Post-run Google Chirp 3 synchronous transcription with word timestamps, checked against event-level rendered highlight transitions when available; not part of live playback.',
     summary: `${covered}/${matched.length} conservatively matched spoken words were inside the visual highlight; ${mapped.length - matched.length} transcribed words could not be conservatively matched to the source text.`,
     transcribedWordCount: mapped.length,
     sourceWordCount: source.length,

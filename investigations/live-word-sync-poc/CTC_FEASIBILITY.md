@@ -97,6 +97,33 @@ The detailed production assumptions and the experiment sequence that tests them 
 timeliness at the browser, confidence calibration, browser sample-clock mapping, and perceptual
 benefit all remain unproven.
 
+## Persistent sidecar dogfood: transport works; correction gate fails
+
+The next step was implemented only inside this POC: a local persistent worker plus browser proxy,
+with `ctc-anchor-observe` and `ctc-anchor-correct` runs beside the unchanged
+`transcript-moras-weighted-fallback` control. The browser schedules each PCM chunk before teeing
+it, serializes the tee, and verifies the worker's contiguous sequence, cumulative sample count,
+per-chunk CRC32, and rolling CRC32 acknowledgement. The audit now uses event-level rendered
+single-word highlight transitions rather than the older 50 ms sampled timeline.
+
+In live batch `20260729T000918493Z-2711e4ea`, the worker emitted and the browser accepted all six
+anchors for the opening bounded phrase; every accepted anchor had at least 150 ms of future
+horizon. That proves the local transport, sample-time mapping, cue holdback, and future-only
+planner can operate end to end without waiting for full TTS.
+
+It does **not** pass the quality gate. Accepted-anchor staleness was median/P90 **618/972 ms** in
+observe mode and **805/1,135 ms** in correction mode, exceeding the 750 ms requirement. The
+post-run Chirp word-start audit found 10/36 (27.8%) exact rendered-word matches for the separately
+generated fallback control, 15/35 (42.9%) for observe, and 7/36 (19.4%) for correction. Observe is
+not a causal improvement because Gemini generated a different delivery; correction is a direct
+negative signal for this run. The worker also logged an early short-window alignment failure, and
+it currently covers only the first six words rather than rotating a bounded text range.
+
+Keep this worker in shadow/POC only. The next warranted experiment is deterministic replay of the
+same raw PCM into fallback/observe/correct, followed by sliding-window range rotation and
+overlapping-window agreement. Do not expose CTC correction in the production reader until those
+experiments meet the gates above.
+
 ## Research lead, not an approved dependency
 
 The first candidate should be an Arabic-capable Wav2Vec2 CTC model, tested in an isolated local

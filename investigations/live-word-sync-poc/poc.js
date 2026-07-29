@@ -26,6 +26,8 @@ const RETAINED_METHODS = new Set([
   'transcript-anchor-correct',
   'google-anchor-observe',
   'google-anchor-correct',
+  'ctc-anchor-observe',
+  'ctc-anchor-correct',
 ]);
 const modeNote = document.querySelector('#mode-note');
 const providerStatus = document.querySelector('#provider-status');
@@ -128,6 +130,10 @@ const modeNotes = {
     'Live sidecar prototype: stream the same PCM to Google Chirp, record word anchors and their usefulness, but never change the visible production-equivalent fallback cursor.',
   'google-anchor-correct':
     'Live sidecar prototype: Google Chirp word anchors can apply bounded, future-only corrections to the production-equivalent fallback. This proves the sidecar contract and safety controls, not CTC quality.',
+  'ctc-anchor-observe':
+    'Local CTC sidecar: tee scheduled PCM to the persistent Arabic CTC worker, record its past-word anchors and timing, but never alter the visible production-equivalent fallback.',
+  'ctc-anchor-correct':
+    'Local CTC sidecar: apply only the persistent worker’s timely, monotonic past-word anchors as bounded future-only corrections. Any late, uncertain, or contradictory anchor is a no-op.',
   'certainty-overlay-transcript-moras':
     'UX-only: preserves transcript-mora word timing while softly contextualizing the current source line and previewing the next line up to 900 ms before its estimated start, upgraded to an observed transcript start when available.',
   'nucleus-clock':
@@ -320,6 +326,34 @@ const PROFILES = {
     horizonWords: 6,
     safePastWords: 1,
   },
+  'ctc-anchor-observe': {
+    family: 'future-anchor',
+    anchorMode: 'observe',
+    anchorProvider: 'ctc',
+    anchorSource: 'local-arabic-ctc-worker',
+    fallbackMode: 'weighted',
+    durationPerWord: 0.65,
+    nudgeMs: -250,
+    correctionCapMs: 120,
+    correctionRejectMs: 400,
+    futureHorizonMs: 150,
+    horizonWords: 6,
+    safePastWords: 1,
+  },
+  'ctc-anchor-correct': {
+    family: 'future-anchor',
+    anchorMode: 'correct',
+    anchorProvider: 'ctc',
+    anchorSource: 'local-arabic-ctc-worker',
+    fallbackMode: 'weighted',
+    durationPerWord: 0.65,
+    nudgeMs: -250,
+    correctionCapMs: 120,
+    correctionRejectMs: 400,
+    futureHorizonMs: 150,
+    horizonWords: 6,
+    safePastWords: 1,
+  },
   'certainty-overlay-transcript-moras': {
     family: 'live-transcript',
     schedule: 'moras',
@@ -480,9 +514,13 @@ async function refreshProviderStatus() {
     document.querySelector('input[value="google-anchor-observe"]'),
     document.querySelector('input[value="google-anchor-correct"]'),
   ].filter(Boolean);
+  const ctcInputs = [
+    document.querySelector('input[value="ctc-anchor-observe"]'),
+    document.querySelector('input[value="ctc-anchor-correct"]'),
+  ].filter(Boolean);
   try {
     const response = await fetch('/alignment/providers');
-    const { google } = await response.json();
+    const { google, ctc } = await response.json();
     if (google.available) {
       googleInputs.forEach((input) => {
         input.disabled = false;
@@ -496,8 +534,20 @@ async function refreshProviderStatus() {
       if (selectedMode() === 'google' || activeProfile().anchorProvider === 'google')
         document.querySelector('input[value="weighted"]').checked = true;
     }
+    ctcInputs.forEach((input) => {
+      input.disabled = !ctc?.available;
+    });
+    if (ctc?.available) {
+      providerStatus.textContent = `${providerStatus.textContent} Local CTC worker ready.`;
+    } else if (activeProfile().anchorProvider === 'ctc') {
+      document.querySelector('input[value="transcript-moras-weighted-fallback"]')?.click();
+      providerStatus.textContent = `${providerStatus.textContent} CTC worker unavailable: ${ctc?.error || ctc?.missing?.join(', ') || 'not configured'}.`;
+    }
   } catch {
     googleInputs.forEach((input) => {
+      input.disabled = true;
+    });
+    ctcInputs.forEach((input) => {
       input.disabled = true;
     });
     providerStatus.textContent = 'Google STT availability could not be checked.';
@@ -1153,6 +1203,16 @@ function anchorPlannerOptions(profile) {
 
 function contentElapsed() {
   if (!audioContext || !currentDemo?.audioStart) return null;
+  const now = audioContext.currentTime;
+  const scheduled = currentDemo.pcmTrace
+    .filter((trace) => trace.scheduledAt <= now)
+    .at(-1);
+  if (scheduled) {
+    return (
+      scheduled.contentStartSample / SAMPLE_RATE +
+      Math.max(0, Math.min(scheduled.durationSeconds, now - scheduled.scheduledAt))
+    );
+  }
   return Math.max(
     0,
     audioContext.currentTime - currentDemo.audioStart - currentDemo.insertedGapSeconds
@@ -1163,9 +1223,11 @@ function flushTranscriptAnchorQueue() {
   const anchor = currentDemo?.anchor;
   const elapsed = contentElapsed();
   if (!anchor || elapsed == null) return;
-  for (const cue of anchor.pending.values()) {
-    if (anchor.seen.has(cue.key)) continue;
-    anchor.seen.add(cue.key);
+  for (const [key, cue] of anchor.pending) {
+    if (anchor.seen.has(cue.key)) {
+      anchor.pending.delete(key);
+      continue;
+    }
     const outcome = applyFutureAnchor({
       plan: anchor.plan,
       anchorIndex: cue.index,
@@ -1173,6 +1235,13 @@ function flushTranscriptAnchorQueue() {
       playbackSeconds: elapsed,
       options: anchorPlannerOptions(currentDemo.profile),
     });
+    // The CTC worker may inspect PCM that is already queued in Web Audio but
+    // has not played yet. An early cue is useful later; keep it pending until
+    // its word is safely in the playback past instead of turning safety into a
+    // one-shot false negative. All other outcomes are final for this cue.
+    if (outcome.status === 'rejected-not-safely-past') continue;
+    anchor.seen.add(cue.key);
+    anchor.pending.delete(key);
     const event = {
       source: currentDemo.profile.anchorSource,
       sourceIndex: cue.index,
@@ -1195,7 +1264,6 @@ function flushTranscriptAnchorQueue() {
       anchor.lastAcceptedIndex = cue.index;
     }
   }
-  anchor.pending.clear();
 }
 
 function queueAnchor(cue) {
@@ -1209,7 +1277,7 @@ function queueAnchor(cue) {
 
 function futureAnchorSnapshot(profile, elapsed) {
   flushTranscriptAnchorQueue();
-  const contentTime = Math.max(0, elapsed - currentDemo.insertedGapSeconds);
+  const contentTime = contentElapsed() ?? Math.max(0, elapsed - currentDemo.insertedGapSeconds);
   const visualElapsed = Math.max(0, contentTime + currentDemo.nudgeSeconds);
   const anchor = currentDemo.anchor;
   const proposedIndex = activeIndexAt(anchor.plan, visualElapsed);
@@ -1218,7 +1286,7 @@ function futureAnchorSnapshot(profile, elapsed) {
   return {
     activeIndex,
     activeEnd: activeIndex + 1,
-    elapsed,
+    elapsed: contentTime,
     expectedDuration: anchor.plan.at(-1)?.end || expectedDuration(currentDemo.words, 'weighted'),
     mode: selectedMode(),
     anchorAcceptedCount: anchor.events.filter((event) => event.status === 'accepted').length,
@@ -1291,6 +1359,28 @@ function base64FromBytes(bytes) {
   let binary = '';
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary);
+}
+
+const CRC32_TABLE = Array.from({ length: 256 }, (_, initial) => {
+  let value = initial;
+  for (let bit = 0; bit < 8; bit += 1) {
+    value = (value >>> 1) ^ (value & 1 ? 0xedb88320 : 0);
+  }
+  return value >>> 0;
+});
+
+// Matches zlib.crc32, including incremental use with the prior returned value.
+// This gives the browser an end-to-end byte-integrity check for every cue's PCM.
+function pcmChecksum(bytes, previous = 0) {
+  let checksum = (previous ^ 0xffffffff) >>> 0;
+  for (const byte of bytes) {
+    checksum = (checksum >>> 8) ^ CRC32_TABLE[(checksum ^ byte) & 0xff];
+  }
+  return (checksum ^ 0xffffffff) >>> 0;
+}
+
+function checksumHex(value) {
+  return (value >>> 0).toString(16).padStart(8, '0');
 }
 
 function mapGoogleWords(words) {
@@ -1428,6 +1518,157 @@ async function stopGoogleTiming() {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ sessionId: google.sessionId }),
   });
+}
+
+function mapCtcWords(cues) {
+  const ctc = currentDemo.ctc;
+  for (const cue of cues) {
+    const key = normalizeArabic(cue.word || '');
+    let match = Number.isInteger(cue.sourceIndex) ? cue.sourceIndex : -1;
+    if (
+      match < ctc.sourceCursor ||
+      match >= currentDemo.words.length ||
+      (key && normalizeArabic(currentDemo.words[match].text) !== key)
+    ) {
+      match = currentDemo.words.findIndex(
+        (source, index) =>
+          index >= ctc.sourceCursor &&
+          index < ctc.sourceCursor + 14 &&
+          normalizeArabic(source.text) === key
+      );
+    }
+    if (match < 0) continue;
+    ctc.sourceCursor = match + 1;
+    queueAnchor({
+      index: match,
+      start: Number(cue.start),
+      end: Number(cue.end),
+      key: `ctc:${match}:${Number(cue.start).toFixed(3)}:${Number(cue.end).toFixed(3)}`,
+    });
+  }
+}
+
+async function pollCtcCues() {
+  const ctc = currentDemo?.ctc;
+  if (!ctc || ctc.closed || ctc.polling) return;
+  ctc.polling = true;
+  try {
+    const response = await fetch(`/alignment/ctc/cues?session=${ctc.sessionId}&after=${ctc.cursor}`);
+    const data = await response.json();
+    if (!response.ok || data.error) throw new Error(data.error || 'CTC cue polling failed');
+    ctc.cursor = data.next;
+    mapCtcWords(data.cues || []);
+  } catch (error) {
+    ctc.error = error.message;
+  } finally {
+    ctc.polling = false;
+  }
+}
+
+async function startCtcTiming() {
+  const response = await fetch('/alignment/ctc/start', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
+      transcript: currentDemo.poem.excerpt,
+      sampleRateHertz: SAMPLE_RATE,
+    }),
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'CTC worker is unavailable');
+  currentDemo.ctc = {
+    sessionId: data.sessionId,
+    cursor: -1,
+    sourceCursor: 0,
+    polling: false,
+    closed: false,
+    pendingWrites: new Set(),
+    writeChain: Promise.resolve(),
+    rollingChecksum: 0,
+    worker: data.worker || null,
+  };
+  currentDemo.ctc.poller = setInterval(pollCtcCues, 150);
+}
+
+function sendCtcChunk(pcm, metadata) {
+  const ctc = currentDemo.ctc;
+  if (!ctc || ctc.closed) return;
+  // Fetch completion is not ordered by the browser. Chain requests so strict
+  // sequence validation proves this is one contiguous copy of scheduled PCM.
+  const pendingWrite = ctc.writeChain
+    .catch(() => undefined)
+    .then(async () => {
+      const chunkChecksum = pcmChecksum(pcm);
+      const expectedRollingChecksum = pcmChecksum(pcm, ctc.rollingChecksum);
+      const response = await fetch('/alignment/ctc/chunk', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          sessionId: ctc.sessionId,
+          seq: metadata.seq,
+          startSample24k: metadata.contentStartSample,
+          sampleCount24k: metadata.sampleCount,
+          checksum: checksumHex(chunkChecksum),
+          audio: base64FromBytes(pcm),
+          // The worker requires a bounded known-text window. This first dogfood
+          // session deliberately targets the opening phrase; future work must
+          // rotate ranges from committed anchors rather than force-align a poem.
+          sourceStartIndex: 0,
+          sourceEndIndex: Math.min(currentDemo.words.length, 6),
+        }),
+      });
+      if (!response.ok) throw new Error(`CTC PCM copy failed (${response.status})`);
+      const acknowledgement = await response.json();
+      const expectedThrough = metadata.contentStartSample + metadata.sampleCount;
+      if (acknowledgement.receivedThroughSample24k !== expectedThrough) {
+        throw new Error(`CTC sample acknowledgement mismatch after chunk ${metadata.seq}`);
+      }
+      if (acknowledgement.receivedCrc32 !== checksumHex(expectedRollingChecksum)) {
+        throw new Error(`CTC PCM checksum mismatch after chunk ${metadata.seq}`);
+      }
+      ctc.rollingChecksum = expectedRollingChecksum;
+      ctc.lastAcknowledgement = acknowledgement;
+    })
+    .catch((error) => {
+      ctc.error = error.message;
+    })
+    .finally(() => {
+      ctc.pendingWrites.delete(pendingWrite);
+    });
+  ctc.writeChain = pendingWrite;
+  ctc.pendingWrites.add(pendingWrite);
+}
+
+async function stopCtcTiming() {
+  const ctc = currentDemo?.ctc;
+  if (!ctc || ctc.closed) return;
+  clearInterval(ctc.poller);
+  await Promise.race([
+    Promise.allSettled([...ctc.pendingWrites]),
+    new Promise((resolve) => setTimeout(resolve, 2_000)),
+  ]);
+  ctc.unsettledWritesAtClose = ctc.pendingWrites.size;
+  try {
+    await fetch('/alignment/ctc/stop', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sessionId: ctc.sessionId }),
+    });
+    const deadline = performance.now() + 6_000;
+    while (performance.now() < deadline) {
+      await pollCtcCues();
+      await new Promise((resolve) => setTimeout(resolve, 150));
+    }
+  } catch (error) {
+    ctc.error = error.message;
+  } finally {
+    ctc.closed = true;
+    void fetch('/alignment/ctc/dispose', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ sessionId: ctc.sessionId }),
+    });
+  }
 }
 
 function renderWords(words) {
@@ -1854,6 +2095,18 @@ function paintPlayback() {
       certaintyTier: snapshot.certaintyTier,
     });
   }
+  const lastTransition = currentDemo.highlightTransitions.at(-1);
+  if (
+    !lastTransition ||
+    lastTransition.activeIndex !== snapshot.activeIndex ||
+    lastTransition.activeEnd !== snapshot.activeEnd
+  ) {
+    currentDemo.highlightTransitions.push({
+      contentTime: Number(snapshot.elapsed.toFixed(4)),
+      activeIndex: snapshot.activeIndex,
+      activeEnd: snapshot.activeEnd,
+    });
+  }
   document.querySelectorAll('.word').forEach((node, index) => {
     const segmentIndex = segmentIndexForWord(index);
     node.classList.toggle('active', index >= snapshot.activeIndex && index < snapshot.activeEnd);
@@ -1958,10 +2211,8 @@ async function streamLiveTts(text) {
       if (!event.chunk) continue;
 
       const pcm = decodePcm(event.chunk);
-      if (selectedMode() === 'google' || currentDemo.profile.anchorProvider === 'google') {
-        sendGoogleChunk(pcm);
-      }
       const samples = pcmToFloat32(pcm);
+      const contentStartSample = currentDemo.contentSamplesSeen;
       const buffer = audioContext.createBuffer(1, samples.length, SAMPLE_RATE);
       buffer.copyToChannel(samples, 0);
       const source = audioContext.createBufferSource();
@@ -1986,6 +2237,22 @@ async function streamLiveTts(text) {
       // Audio is scheduled before either analysis path runs. The nucleus clock is
       // still gated by this content time, so future queued peaks cannot advance it.
       const scheduledContentStart = nextStart - currentDemo.audioStart;
+      currentDemo.pcmTrace.push({
+        seq: chunks,
+        contentStartSample,
+        sampleCount: samples.length,
+        checksum: checksumHex(pcmChecksum(pcm)),
+        scheduledAt: nextStart,
+        scheduledContentStart,
+        durationSeconds: buffer.duration,
+      });
+      currentDemo.contentSamplesSeen += samples.length;
+      if (selectedMode() === 'google' || currentDemo.profile.anchorProvider === 'google') {
+        sendGoogleChunk(pcm);
+      }
+      if (currentDemo.profile.anchorProvider === 'ctc') {
+        sendCtcChunk(pcm, { seq: chunks, contentStartSample, sampleCount: samples.length });
+      }
       inspectVad(samples);
       inspectNuclei(samples, scheduledContentStart);
       nextStart += buffer.duration;
@@ -2022,6 +2289,7 @@ async function streamLiveTts(text) {
   const duration = pcmChunks.reduce((sum, chunk) => sum + chunk.length / 2 / SAMPLE_RATE, 0);
   await finishAuditCapture(nextStart);
   await stopGoogleTiming();
+  await stopCtcTiming();
   currentDemo.metrics = {
     firstAudioMs,
     chunks,
@@ -2063,11 +2331,29 @@ async function streamLiveTts(text) {
             rejectedCount: currentDemo.anchor.events.filter((event) =>
               event.status.startsWith('rejected')
             ).length,
-            providerError: currentDemo.google?.error || null,
-            unsettledWritesAtClose: currentDemo.google?.unsettledWritesAtClose || 0,
+            providerError:
+              (currentDemo.profile.anchorProvider === 'ctc'
+                ? currentDemo.ctc?.error
+                : currentDemo.google?.error) || null,
+            unsettledWritesAtClose:
+              (currentDemo.profile.anchorProvider === 'ctc'
+                ? currentDemo.ctc?.unsettledWritesAtClose
+                : currentDemo.google?.unsettledWritesAtClose) || 0,
+            lastAcknowledgement:
+              currentDemo.profile.anchorProvider === 'ctc'
+                ? currentDemo.ctc?.lastAcknowledgement || null
+                : null,
           }
         : null,
+    pcmTrace: currentDemo.pcmTrace.map((trace) => ({
+      seq: trace.seq,
+      contentStartSample: trace.contentStartSample,
+      sampleCount: trace.sampleCount,
+      checksum: trace.checksum,
+      scheduledContentStart: Number(trace.scheduledContentStart.toFixed(4)),
+    })),
     highlightTimeline: currentDemo.highlightTimeline,
+    highlightTransitions: currentDemo.highlightTransitions,
   };
   download.href = URL.createObjectURL(wavBlob(pcmChunks));
   download.download = `live-word-sync-${currentDemo.poem.id}.wav`;
@@ -2141,6 +2427,8 @@ function createDemo(selected) {
     },
     nucleusTextMassByWord: words.map((word) => moraWeight(word.text)),
     liveTimings: Array(words.length).fill(null),
+    contentSamplesSeen: 0,
+    pcmTrace: [],
     anchor:
       profile.family === 'future-anchor'
         ? {
@@ -2158,6 +2446,7 @@ function createDemo(selected) {
     stopped: false,
     audioStart: null,
     highlightTimeline: [],
+    highlightTransitions: [],
   };
 }
 
@@ -2199,6 +2488,7 @@ testMethodButton.addEventListener('click', async () => {
     if (selectedMode() === 'google' || currentDemo.profile.anchorProvider === 'google') {
       await startGoogleTiming();
     }
+    if (currentDemo.profile.anchorProvider === 'ctc') await startCtcTiming();
     setMetrics([{ value: 'Waiting', label: `for ${selectedMode()} strategy audio` }]);
     await streamLiveTts(loadedPoem.arabic);
     testMethodButton.textContent = 'Test selected method again';
@@ -2225,6 +2515,7 @@ stopTestButton.addEventListener('click', () => {
   currentDemo.stopped = true;
   currentDemo.abortController?.abort();
   void stopGoogleTiming();
+  void stopCtcTiming();
   currentDemo.sources.forEach((source) => {
     try {
       source.stop();

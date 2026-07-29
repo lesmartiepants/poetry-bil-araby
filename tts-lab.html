@@ -36,6 +36,12 @@
   #status.ok { color: #4ade80; }
   audio { width: 100%; margin-top: 16px; border-radius: 6px; }
   .note { font-size: 0.7rem; color: #444; margin-top: 4px; }
+  .presets { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; }
+  .presets-lbl { font-size: 0.7rem; color: #777; margin-right: 2px; }
+  .preset-btn { background: transparent; color: #c9a84c; border: 1px solid #3a3320; border-radius: 999px; padding: 5px 12px; font-size: 0.74rem; font-weight: 600; }
+  .preset-btn:hover { background: #1f1c12; opacity: 1; }
+  .preset-btn.active { background: #c9a84c; color: #111; border-color: #c9a84c; }
+  .active-tag { font-size: 0.7rem; color: #8a7a4a; font-style: italic; margin-left: 4px; }
   /* Rating buttons */
   #ratingRow { display: none; align-items: center; gap: 8px; margin-top: 10px; }
   #ratingRow.visible { display: flex; }
@@ -119,16 +125,30 @@
 وَمُهْجَةُ نَفْس مَا أَمَلَّ ادِّكَارُهَا
 سَأَغْفِرُ لِلأَيَّامِ كُلَّ عَظِيمَةٍ
 لَئِنْ قَرَّبَتْ بَعْدَ البِعَادِ مَزَارُهَا</textarea>
+    <div class="presets" id="poemPresets">
+      <span class="presets-lbl">Test poems:</span>
+      <button type="button" class="preset-btn" data-poem="high" onclick="applyPoem('high',this)">High · al-Farazdaq</button>
+      <button type="button" class="preset-btn" data-poem="mid" onclick="applyPoem('mid',this)">Mid · Safi al-Din</button>
+      <button type="button" class="preset-btn" data-poem="low" onclick="applyPoem('low',this)">Low · Ibn al-Ahnaf</button>
+    </div>
   </div>
 </div>
 
 <div class="row">
   <div class="field full">
     <label>System Instruction — controls delivery style + verbatim constraint</label>
-    <textarea id="sysInstruction" rows="6">You are a masculaine arabic speaker, reciting arabic poetry. You don't slow down unnecessarily and do this with the authority of a poet that is well practiced. It flows, and sounds serious. Even when you read this quicker, you take breaths that are audbile. it's like you're pausing to think about what you're going to say, then it comes out heavy and hard.
+    <textarea id="sysInstruction" rows="6">You are a passionate Arabic speaker, reciting Arabic poetry. You don't slow down unnecessarily and do this with the authority of a poet that is well practiced. It flows, and sounds serious. Even when you read this quicker, you take breaths that are audible. It's like you're pausing to think about what you're going to say, then it comes out heavy and hard.
 
 اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية.</textarea>
-    <p class="note">Tip: Add "صوت عميق رنان" for deeper resonance, or "ببطء شديد" for slower delivery.</p>
+    <div class="presets" id="deliveryPresets">
+      <span class="presets-lbl">Delivery:</span>
+      <button type="button" class="preset-btn" data-delivery="raw" onclick="applyDelivery('raw',this)">Raw (none)</button>
+      <button type="button" class="preset-btn" data-delivery="royal" onclick="applyDelivery('royal',this)">Royal (prod)</button>
+      <button type="button" class="preset-btn" data-delivery="tarannum" onclick="applyDelivery('tarannum',this)">Tarannum</button>
+      <button type="button" class="preset-btn" data-delivery="feeling" onclick="applyDelivery('feeling',this)">Feeling</button>
+      <span class="active-tag" id="deliveryActive">custom</span>
+    </div>
+    <p class="note">Tip: Add "صوت عميق رنان" for deeper resonance, or "ببطء شديد" for slower delivery. Delivery presets come from the recitation research (tarannum = traditional chant; feeling = emotion from the meaning, not theatrics).</p>
   </div>
 </div>
 
@@ -142,18 +162,18 @@
         <div class="voice-section-label">♀ Female</div>
         <div class="voice-grid">
           <label class="voice-btn" data-voice="Zephyr"><span class="voice-name">Zephyr</span><span class="voice-desc">Bright</span></label>
-          <label class="voice-btn" data-voice="Kore"><span class="voice-name">Kore</span><span class="voice-desc">Firm</span></label>
+          <!-- <label class="voice-btn" data-voice="Kore"><span class="voice-name">Kore</span><span class="voice-desc">Firm</span></label> removed: too firm -->
           <label class="voice-btn" data-voice="Leda"><span class="voice-name">Leda</span><span class="voice-desc">Youthful</span></label>
           <label class="voice-btn" data-voice="Aoede"><span class="voice-name">Aoede</span><span class="voice-desc">Breezy</span></label>
           <label class="voice-btn" data-voice="Callirrhoe"><span class="voice-name">Callirrhoe</span><span class="voice-desc">Easy-going</span></label>
           <label class="voice-btn" data-voice="Autonoe"><span class="voice-name">Autonoe</span><span class="voice-desc">Bright</span></label>
           <label class="voice-btn" data-voice="Despina"><span class="voice-name">Despina</span><span class="voice-desc">Smooth</span></label>
-          <label class="voice-btn" data-voice="Erinome"><span class="voice-name">Erinome</span><span class="voice-desc">Clear</span></label>
+          <!-- <label class="voice-btn" data-voice="Erinome"><span class="voice-name">Erinome</span><span class="voice-desc">Clear</span></label> removed: too matter of fact -->
           <label class="voice-btn" data-voice="Laomedeia"><span class="voice-name">Laomedeia</span><span class="voice-desc">Upbeat</span></label>
           <label class="voice-btn" data-voice="Achernar"><span class="voice-name">Achernar</span><span class="voice-desc">Soft</span></label>
           <label class="voice-btn" data-voice="Pulcherrima"><span class="voice-name">Pulcherrima</span><span class="voice-desc">Forward</span></label>
-          <label class="voice-btn" data-voice="Achird"><span class="voice-name">Achird</span><span class="voice-desc">Friendly</span></label>
-          <label class="voice-btn" data-voice="Schedar"><span class="voice-name">Schedar</span><span class="voice-desc">Even</span></label>
+          <!-- <label class="voice-btn" data-voice="Achird"><span class="voice-name">Achird</span><span class="voice-desc">Friendly</span></label> removed: too friendly -->
+          <!-- <label class="voice-btn" data-voice="Schedar"><span class="voice-name">Schedar</span><span class="voice-desc">Even</span></label> removed: too formal -->
           <label class="voice-btn" data-voice="Vindemiatrix"><span class="voice-name">Vindemiatrix</span><span class="voice-desc">Gentle</span></label>
           <label class="voice-btn" data-voice="Sulafat"><span class="voice-name">Sulafat</span><span class="voice-desc">Warm</span></label>
         </div>
@@ -164,18 +184,18 @@
           <label class="voice-btn active" data-voice="Orus"><span class="voice-name">Orus</span><span class="voice-desc">Firm</span></label>
           <label class="voice-btn" data-voice="Puck"><span class="voice-name">Puck</span><span class="voice-desc">Upbeat</span></label>
           <label class="voice-btn" data-voice="Charon"><span class="voice-name">Charon</span><span class="voice-desc">Informative</span></label>
-          <label class="voice-btn" data-voice="Fenrir"><span class="voice-name">Fenrir</span><span class="voice-desc">Excitable</span></label>
+          <!-- <label class="voice-btn" data-voice="Fenrir"><span class="voice-name">Fenrir</span><span class="voice-desc">Excitable</span></label> removed: not serious sounding -->
           <label class="voice-btn" data-voice="Enceladus"><span class="voice-name">Enceladus</span><span class="voice-desc">Breathy</span></label>
           <label class="voice-btn" data-voice="Iapetus"><span class="voice-name">Iapetus</span><span class="voice-desc">Clear</span></label>
-          <label class="voice-btn" data-voice="Umbriel"><span class="voice-name">Umbriel</span><span class="voice-desc">Easy-going</span></label>
+          <!-- <label class="voice-btn" data-voice="Umbriel"><span class="voice-name">Umbriel</span><span class="voice-desc">Easy-going</span></label> removed: upbeat, kind of odd sounding -->
           <label class="voice-btn" data-voice="Algieba"><span class="voice-name">Algieba</span><span class="voice-desc">Smooth</span></label>
           <label class="voice-btn" data-voice="Algenib"><span class="voice-name">Algenib</span><span class="voice-desc">Gravelly</span></label>
           <label class="voice-btn" data-voice="Rasalgethi"><span class="voice-name">Rasalgethi</span><span class="voice-desc">Informative</span></label>
           <label class="voice-btn" data-voice="Alnilam"><span class="voice-name">Alnilam</span><span class="voice-desc">Firm</span></label>
-          <label class="voice-btn" data-voice="Gacrux"><span class="voice-name">Gacrux</span><span class="voice-desc">Mature</span></label>
+          <!-- <label class="voice-btn" data-voice="Gacrux"><span class="voice-name">Gacrux</span><span class="voice-desc">Mature</span></label> removed: don't love this one -->
           <label class="voice-btn" data-voice="Zubenelgenubi"><span class="voice-name">Zubenelgenubi</span><span class="voice-desc">Casual</span></label>
-          <label class="voice-btn" data-voice="Sadachbia"><span class="voice-name">Sadachbia</span><span class="voice-desc">Lively</span></label>
-          <label class="voice-btn" data-voice="Sadaltager"><span class="voice-name">Sadaltager</span><span class="voice-desc">Knowledgeable</span></label>
+          <!-- <label class="voice-btn" data-voice="Sadachbia"><span class="voice-name">Sadachbia</span><span class="voice-desc">Lively</span></label> removed: sounds too official -->
+          <!-- <label class="voice-btn" data-voice="Sadaltager"><span class="voice-name">Sadaltager</span><span class="voice-desc">Knowledgeable</span></label> removed: seems like a teacher, not emotional -->
         </div>
       </div>
     </div>
@@ -186,8 +206,8 @@
   <div class="field">
     <label>Temperature</label>
     <div class="slider-wrap">
-      <input type="range" id="temp" min="0" max="2" step="0.05" value="0">
-      <span class="slider-val" id="tempVal">0.00</span>
+      <input type="range" id="temp" min="0" max="2" step="0.05" value="0.35">
+      <span class="slider-val" id="tempVal">0.35</span>
     </div>
     <p class="note">0 = deterministic · 1 = default · 2 = max expressive variation</p>
   </div>
@@ -222,8 +242,41 @@
 </div><!-- end layout -->
 
 <script>
-const API = 'http://localhost:3001';
+const API = window.location.origin; // served by the backend, so same-origin
 let selectedVoice = 'Orus';
+
+// ── Presets wired from the enjoyability / delivery research ──
+const POEM_PRESETS = {
+  high: `نَدِمْتُ نَدَامَةَ الكُسَعِي لَمَّا\nغَدَّتْ مِنِّي مُطَلَّقَةٌ نَوَّارُ\nوَكانَت جَنَّتَي فَخَرَجْتُ مِنْهَا\nكَآدَمَ حَيِّنَّ لَجَّ بِهَا الضِرارُ\nوَكُنتُ كَفاقِئٍ عَيْنَيْهِ عَمْدًا\nفَأَصْبَحَ مَا يُضِيءُ لَهُ النَّهَارُ\nوَمَا فَارَقْتُهَا شِبَعًا وَلَكِنَ\nرَأَيْتُ الدَّهْرَ يَأْخُذُ مَا يُعَارُ`,
+  mid: `بُعِثَتْ بِآيَاتِ الْجَمَالِ فَآمَنَتْ\nبِحُسْنِكَ أَبْصَارٌ لَنَا وَبَصَائِرٌ\nوَأَبْدَيْتَ حُسْنًا بِاللِّحَاظِ مُمَنَّعًا\nفَلا خَاطِرٌ إِلاَّ وَفِيكَ يُخَاطِرُ`,
+  low: `مَنْ كَانَ يَبْكِي لِي لِرُزْء مُوجَعٍ\nفَاليَوْمَ يَوْمُ رَزِيئَتي فَلْيَبْكِ لِي\nظَعَنَ الَّذِينَ أُحِبُّهُمْ فَتَحَمَّلُوا\nنَفْسِي الْفِدَاءُ لِظَاعِنٍ مُتَحَمِّلْ`,
+};
+const DELIVERY_PRESETS = {
+  raw: '',
+  royal: `You are a passionate Arabic speaker, reciting Arabic poetry. You don't slow down unnecessarily and do this with the authority of a poet that is well practiced. It flows, and sounds serious. Even when you read this quicker, you take breaths that are audible. It's like you're pausing to think about what you're going to say, then it comes out heavy and hard.\n\nاقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية.`,
+  tarannum: 'أنشِد هذه الأبيات على سجيّة العرب في الترنّم بالشعر: لحنٌ رخيمٌ خفيفٌ يتبع موسيقى الوزن وتفعيلاته، مع مدِّ الصوت في مواضعه، والوقوفِ على أواخر الأبيات وقافيتها، ونطقٍ فصيحٍ رصينٍ صحيحِ المخارج، بحيث يُحَسُّ الإيقاع.',
+  feeling: 'ألقِ هذه الأبيات بعاطفةٍ صادقةٍ نابعةٍ من المعنى لا من التمثيل: دع الحزنَ والشوقَ يظهرا في تلوين الصوت وتمهّلِه، وارفع حدّة الصوت وثِقَلَه عند ذروة المعنى ثم اخفِضه، مع الحفاظ على وقار الإلقاء وموسيقى البيت والوقوفِ على القافية.',
+};
+function setActive(containerId, attr, key){
+  document.querySelectorAll(`#${containerId} .preset-btn`).forEach(b=>{
+    b.classList.toggle('active', b.getAttribute(attr)===key);
+  });
+}
+const _norm = s => (s||'').replace(/\s+/g,' ').trim();
+function syncDeliveryTag(){
+  const v=_norm(document.getElementById('sysInstruction').value);
+  const match=Object.keys(DELIVERY_PRESETS).find(k=>_norm(DELIVERY_PRESETS[k])===v);
+  setActive('deliveryPresets','data-delivery', match||null);
+  const tag=document.getElementById('deliveryActive');
+  if(tag){ tag.textContent = match ? '' : 'custom'; tag.style.display = match ? 'none' : 'inline'; }
+}
+function syncPoemTag(){
+  const v=_norm(document.getElementById('poem').value);
+  const match=Object.keys(POEM_PRESETS).find(k=>_norm(POEM_PRESETS[k])===v);
+  setActive('poemPresets','data-poem', match||null);
+}
+function applyPoem(k){ const t=POEM_PRESETS[k]; if(t!=null){document.getElementById('poem').value=t; syncPoemTag(); reactivate();} }
+function applyDelivery(k){ const t=DELIVERY_PRESETS[k]; if(t!=null){document.getElementById('sysInstruction').value=t; syncDeliveryTag(); reactivate();} }
 let lastGeneratedTs = null;
 const HISTORY_KEY = 'tts-lab-prompt-history';
 const MAX_HISTORY = 30;
@@ -320,7 +373,10 @@ function formatAge(ts) {
 
 document.addEventListener('DOMContentLoaded', () => {
   renderHistory();
-  document.getElementById('sysInstruction').addEventListener('input', renderHistory);
+  document.getElementById('sysInstruction').addEventListener('input', () => { renderHistory(); syncDeliveryTag(); reactivate(); });
+  document.getElementById('poem').addEventListener('input', () => { syncPoemTag(); reactivate(); });
+  syncDeliveryTag();
+  syncPoemTag();
 });
 
 document.getElementById('voiceGrid').addEventListener('click', e => {
@@ -329,10 +385,12 @@ document.getElementById('voiceGrid').addEventListener('click', e => {
   document.querySelectorAll('.voice-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   selectedVoice = btn.dataset.voice;
+  reactivate();
 });
 
 document.getElementById('temp').addEventListener('input', e => {
   document.getElementById('tempVal').textContent = parseFloat(e.target.value).toFixed(2);
+  reactivate();
 });
 
 async function generate() {
@@ -347,6 +405,11 @@ async function generate() {
 
   if (!text) { status.className = 'error'; status.textContent = 'No poem text.'; return; }
 
+  // Cancel any in-flight generation and stop its audio, so a new pick starts clean.
+  stopCurrent();
+  genAbort = new AbortController();
+  const mySignal = genAbort.signal;
+
   btn.disabled = true;
   ratingRow.classList.remove('visible');
   status.className = '';
@@ -356,44 +419,105 @@ async function generate() {
 
   const t0 = Date.now();
   try {
-    const res = await fetch(`${API}/api/ai/live-tts`, {
+    // Stream like the prod reader: schedule PCM chunks into Web Audio as they
+    // arrive, so the first sound plays ~1s in instead of waiting for the whole clip.
+    const ctx = getCtx();
+    let sr = 24000, nextTime = 0, firstAt = null;
+    const bytes = [];
+    const playChunk = (b64) => {
+      const pcm = Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0));
+      bytes.push(pcm);
+      const i16 = new Int16Array(pcm.buffer, pcm.byteOffset, pcm.length >> 1);
+      const buf = ctx.createBuffer(1, i16.length, sr);
+      const ch = buf.getChannelData(0);
+      for (let i = 0; i < i16.length; i++) ch[i] = i16[i] / 32768;
+      const s = ctx.createBufferSource();
+      s.buffer = buf; s.connect(ctx.destination);
+      genSources.push(s);
+      const now = ctx.currentTime;
+      if (nextTime < now + 0.05) nextTime = now + 0.05;
+      if (firstAt === null) { firstAt = Date.now(); status.className = 'ok'; status.textContent = `▶ streaming · ${selectedVoice} · first sound ${((firstAt - t0) / 1000).toFixed(1)}s`; }
+      s.start(nextTime); nextTime += buf.duration;
+    };
+
+    const res = await fetch(`${API}/api/ai/live-tts?stream=1`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text, voiceName: selectedVoice, systemInstruction: sysInstruction, temperature: temp })
+      body: JSON.stringify({ text, voiceName: selectedVoice, systemInstruction: sysInstruction, temperature: temp }),
+      signal: mySignal
     });
-    const data = await res.json();
-    if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+    if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
-    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
-    const pcmLen = atob(data.audioData.replace(/\s/g, '')).length;
-    const dur = (pcmLen / 2 / 24000).toFixed(1);
+    const reader = res.body.getReader();
+    const dec = new TextDecoder();
+    let sbuf = '';
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) break;
+      sbuf += dec.decode(value, { stream: true });
+      let sep;
+      while ((sep = sbuf.indexOf('\n\n')) !== -1) {
+        const raw = sbuf.slice(0, sep); sbuf = sbuf.slice(sep + 2);
+        for (const line of raw.split('\n')) {
+          if (!line.startsWith('data:')) continue;
+          const p = line.slice(5).trim(); if (!p) continue;
+          let e; try { e = JSON.parse(p); } catch { continue; }
+          if (e.meta) sr = e.meta.sampleRate || sr;
+          else if (e.chunk) playChunk(e.chunk);
+          else if (e.error) throw new Error(e.error);
+        }
+      }
+    }
+    if (bytes.length === 0) throw new Error('No audio returned');
 
-    const wavBlob = pcm16ToWav(data.audioData);
-    player.src = URL.createObjectURL(wavBlob);
-    player.style.display = 'block';
-    player.load();
+    // Build the full clip for replay/scrub + rating.
+    const total = new Uint8Array(bytes.reduce((n, b) => n + b.length, 0));
+    let off = 0; for (const b of bytes) { total.set(b, off); off += b.length; }
+    player.src = URL.createObjectURL(pcmToWav(total, sr));
+    player.style.display = 'block'; player.load();
 
     saveToHistory(sysInstruction, selectedVoice, temp);
-
-    // show rating buttons, reset state
     document.querySelector('.rating-btn.up').classList.remove('selected');
     document.querySelector('.rating-btn.down').classList.remove('selected');
     ratingRow.classList.add('visible');
 
+    const dur = (total.length / 2 / sr).toFixed(1);
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(1);
+    const firstS = firstAt ? ((firstAt - t0) / 1000).toFixed(1) : '?';
     status.className = 'ok';
-    status.textContent = `✓ ${dur}s audio · ${elapsed}s · ${selectedVoice} · temp ${temp.toFixed(2)}`;
-
-    player.play().catch(() => { status.textContent += ' · tap ▶ to play'; });
+    status.textContent = `✓ ${dur}s audio · first sound ${firstS}s · rendered ${elapsed}s · ${selectedVoice} · temp ${temp.toFixed(2)}`;
   } catch (e) {
+    if (mySignal.aborted || e.name === 'AbortError') return; // superseded by a new pick
     status.className = 'error';
     status.textContent = `Error: ${e.message}`;
   } finally {
-    btn.disabled = false;
+    // Only the current (latest) generation re-enables the button, so an aborted
+    // older run can't flip it on mid-stream.
+    if (genAbort && genAbort.signal === mySignal) btn.disabled = false;
   }
+}
+let _ctx = null, genAbort = null, genSources = [];
+function getCtx() {
+  if (!_ctx) _ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_ctx.state === 'suspended') _ctx.resume();
+  return _ctx;
+}
+// Abort an in-flight request and silence any audio it already scheduled.
+function stopCurrent() {
+  if (genAbort) { try { genAbort.abort(); } catch {} }
+  genSources.forEach(s => { try { s.stop(); } catch {} });
+  genSources = [];
+}
+// Any change to voice / prompt / poem / temp re-arms Generate immediately.
+function reactivate() {
+  const b = document.getElementById('generateBtn');
+  if (b) b.disabled = false;
 }
 
 function pcm16ToWav(b64) {
-  const pcm = Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0));
+  return pcmToWav(Uint8Array.from(atob(b64.replace(/\s/g, '')), c => c.charCodeAt(0)), 24000);
+}
+function pcmToWav(pcm, sampleRate) {
   const buf = new ArrayBuffer(44 + pcm.length);
   const v = new DataView(buf);
   const s = (o, t) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
@@ -401,7 +525,7 @@ function pcm16ToWav(b64) {
   const u2 = (o, n) => v.setUint16(o, n, true);
   s(0,'RIFF'); u4(4,36+pcm.length); s(8,'WAVE');
   s(12,'fmt '); u4(16,16); u2(20,1); u2(22,1);
-  u4(24,24000); u4(28,48000); u2(32,2); u2(34,16);
+  u4(24,sampleRate); u4(28,sampleRate*2); u2(32,2); u2(34,16);
   s(36,'data'); u4(40,pcm.length);
   new Uint8Array(buf,44).set(pcm);
   return new Blob([buf], { type: 'audio/wav' });

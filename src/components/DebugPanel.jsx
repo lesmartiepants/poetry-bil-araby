@@ -382,6 +382,21 @@ const DebugPanel = ({ controlBarRef }) => {
           </span>
         </button>
 
+        {/* Enjoyability Lab — dev tooling page (server route gated by ENABLE_DEV_LAB) */}
+        <a
+          href="/enjoyability"
+          target="_blank"
+          rel="noopener noreferrer"
+          title="Open the Enjoyability Lab (dev tooling)"
+          className={`flex items-center gap-2 w-full px-4 py-1.5 border-t ${theme.border} flex-none text-left`}
+        >
+          <span className="text-amber-400 flex-shrink-0 text-[0.5625rem]">◆</span>
+          <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">
+            Enjoyability Lab
+          </span>
+          <span className="text-[0.5625rem] font-mono opacity-40 ml-auto">/enjoyability ↗</span>
+        </a>
+
         {/* Live API voice + temperature — only shown in Live mode */}
         {ttsModel === 'live' && (
           <div className={`flex flex-col gap-2 px-4 py-2 border-t ${theme.border} flex-none`}>

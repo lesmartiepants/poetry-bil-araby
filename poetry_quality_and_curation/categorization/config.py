@@ -31,14 +31,26 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 # Taxonomy schema version. Bump when the vocabularies, families, or output
 # contract change. Stamped into per-poem provenance by the pipeline so we can
 # tell which taxonomy a row was classified under.
-TAXONOMY_VERSION = "2"
+#
+# v3 (distillation): the vocabularies + families are unchanged from v2, but the
+# OUTPUT CONTRACT changed — tighter caps (2/2/2), a dominant-concept prompt that
+# picks one label per synonym family, a confidence floor at import, and a new
+# `rationale` field. Rows tagged under v3 are sharper (a few core labels) than
+# the v2 rows (avg 7.6 labels/poem). See ideas/categorization-audit.md.
+TAXONOMY_VERSION = "3"
+
+# Prompt revision, stamped alongside TAXONOMY_VERSION so we can distinguish rows
+# produced by different prompt builds even within one taxonomy version.
+PROMPT_VERSION = "distill-1"
 
 # -- Run defaults ----------------------------------------------------------
 DEFAULT_MODEL = DEFAULT_HAIKU_MODEL       # bulk classification is cheap on Haiku
 # Gemini is the working bulk provider in this environment (the Anthropic/Bedrock
-# proxy needs a token we don't have here). `gemini-2.5-flash` is the cheap bulk
-# model; `gemini-2.5-pro` is used as the eval judge / reference labeler.
-DEFAULT_GEMINI_MODEL = "gemini/gemini-2.5-flash"
+# proxy needs a token we don't have here). `gemini-3.6-flash` is the cheap bulk
+# model the v2 corpus was actually tagged with (the earlier default said
+# 2.5-flash but every categorization_model value in prod is 3.6-flash);
+# `gemini-2.5-pro` is used as the eval judge / reference labeler.
+DEFAULT_GEMINI_MODEL = "gemini/gemini-3.6-flash"
 DEFAULT_BATCH_SIZE = 4
 DEFAULT_CONCURRENCY = 15
 DEFAULT_MAX_COST = 60
@@ -188,6 +200,14 @@ ERA_CENTURY = {
 CONFIDENCE_MIN = 0
 CONFIDENCE_MAX = 100
 
+# Distillation floor. Labels the model assigns with a confidence below this are
+# dropped at import time (import_categories.py), so weak/hedged tags never reach
+# poem_categories. The distilled prompt also asks the model not to emit anything
+# below this, but the floor is enforced in code as the authoritative guarantee.
+# The one exception is mood_primary, which is always kept so mood is never empty
+# (mood is a required dimension — see DIMENSION_MIN_LABELS).
+CONFIDENCE_FLOOR = 65
+
 
 def clamp_confidence(value):
     """Clamp a model-provided confidence into [CONFIDENCE_MIN, CONFIDENCE_MAX].
@@ -203,6 +223,35 @@ def clamp_confidence(value):
         return None
     return max(CONFIDENCE_MIN, min(CONFIDENCE_MAX, n))
 
+
+def apply_confidence_floor(dim_lists: dict, confidences: dict, mood_primary,
+                           floor: int = CONFIDENCE_FLOOR) -> dict:
+    """Drop labels whose confidence is known and below ``floor``.
+
+    Distillation (v3): weak/hedged tags never reach the DB. Rules:
+      * a label is dropped only when its confidence is present AND < floor
+        (a missing confidence is ambiguous, so it is kept);
+      * ``mood_primary`` is always kept, so the required mood dimension is never
+        emptied by the floor.
+
+    Returns a new ``dim_key -> [value_key]`` dict; inputs are not mutated. The
+    same filtered lists feed both poem_categories and the categories JSONB
+    (see import_categories.import_rows), so the normalized table and the
+    denormalized cache stay consistent. Lives here, in the import-light config
+    module, so it is unit-testable without pulling in pandas/psycopg.
+    """
+    kept = {}
+    for dim, keys in dim_lists.items():
+        out = []
+        for k in keys:
+            c = confidences.get(k)
+            if c is None or c >= floor or (dim == "mood" and k == mood_primary):
+                out.append(k)
+        kept[dim] = out
+    if mood_primary and mood_primary not in kept.get("mood", []):
+        kept.setdefault("mood", []).insert(0, mood_primary)
+    return kept
+
 # Valid key sets, for fast validation in the classifier.
 VALID_KEYS = {dim: {v[0] for v in spec["values"]} for dim, spec in DIMENSIONS.items()}
 
@@ -210,7 +259,12 @@ VALID_KEYS = {dim: {v[0] for v in spec["values"]} for dim, spec in DIMENSIONS.it
 # Max labels we accept per multi-label dimension (keeps output focused). Any
 # dimension not listed here falls back to DEFAULT_MAX_LABELS_PER_DIM, so adding
 # a new dimension needs no edit to this map.
-DEFAULT_MAX_LABELS_PER_DIM = 4
+#
+# DISTILLATION (v3): tightened from 4/4/5 to 2/2/2. The v2 corpus averaged 7.6
+# labels/poem (up to 13), which made discovery filters useless (e.g. `love` sat
+# on 46% of poems). A hard ceiling of 2 per dimension caps a poem at 6 labels
+# and forces the model to name only the dominant concepts.
+DEFAULT_MAX_LABELS_PER_DIM = 2
 
 
 class _MaxLabels(dict):
@@ -222,7 +276,29 @@ class _MaxLabels(dict):
         return DEFAULT_MAX_LABELS_PER_DIM
 
 
-MAX_LABELS_PER_DIM = _MaxLabels({"mood": 4, "topic": 4, "motif": 5})
+MAX_LABELS_PER_DIM = _MaxLabels({"mood": 2, "topic": 2, "motif": 2})
+
+# Minimum labels per dimension = the required-vs-optional contract. mood and
+# topic are REQUIRED (>=1); motif is OPTIONAL (0 allowed) — an abstract or
+# gnomic poem legitimately has no sensory image. This mirrors the min_labels /
+# max_labels columns added to category_dimensions in the v3 migration, so the
+# DB, the prompt, and validation all agree. Dimensions not listed default to 0
+# (optional), so a new dimension needs no edit here.
+DIMENSION_MIN_LABELS = {"mood": 1, "topic": 1, "motif": 0}
+
+
+# Synonym groups: within a dimension, values in the same group are near-synonyms
+# that the v2 model piled on together (audit: 2,191 poems carried >=2 of the
+# sadness group; 524 carried all three of the desire group). The distilled
+# prompt asks for AT MOST ONE label from each group, so a poem is tagged with
+# the sharpest shade, not the whole gradient. Config-driven so the rule extends
+# with the taxonomy — add a group here and the prompt picks it up automatically.
+SYNONYM_GROUPS = {
+    "mood": [
+        ["melancholy", "grief", "despair", "bittersweet"],  # الأسى/الحزن gradient
+        ["amorous", "passion", "yearning"],                 # الهوى/الشوق gradient
+    ],
+}
 
 
 # ==========================================================================
@@ -370,35 +446,70 @@ def _vocab_block(dim: str) -> str:
     return "\n".join(lines)
 
 
+def _ar_label(dim: str, key: str) -> str:
+    """Arabic label for a (dimension, value key), for rendering prompt guidance."""
+    for k, ar, en in DIMENSIONS[dim]["values"]:
+        if k == key:
+            return ar
+    return key
+
+
+def _synonym_block() -> str:
+    """Render the one-per-synonym-group rule from SYNONYM_GROUPS (config-driven).
+
+    Empty string if no groups are defined, so the prompt degrades cleanly.
+    """
+    lines = []
+    for dim, groups in SYNONYM_GROUPS.items():
+        for group in groups:
+            pretty = "، ".join(f"{_ar_label(dim, k)} ({k})" for k in group)
+            lines.append(f"  - اختر رمزاً واحداً على الأكثر من: {pretty}")
+    return "\n".join(lines)
+
+
 def build_classification_prompt() -> str:
-    """Build the Arabic system prompt from the controlled vocabularies."""
-    return f"""أنت ناقد أدبي عربي خبير بالشعر الكلاسيكي والحديث. مهمتك تصنيف القصيدة المعروضة عليك عبر عدة أبعاد لتمكين القارئ من التصفية والاكتشاف حسب المزاج والموضوع والصورة.
+    """Build the distilled Arabic system prompt from the controlled vocabularies.
 
-لكل قصيدة، اختر التصنيفات من القوائم المغلقة التالية فقط. استخدم الرمز الإنجليزي (key) في إجابتك، لا الاسم العربي.
+    Distillation (v3): the model is asked to name the DOMINANT concept of the
+    poem in a few sharp labels rather than every plausible tag. Caps come from
+    MAX_LABELS_PER_DIM (2/2/2); the required-vs-optional contract from
+    DIMENSION_MIN_LABELS (mood/topic >=1, motif 0); the one-per-synonym-group
+    rule from SYNONYM_GROUPS; and a confidence floor from CONFIDENCE_FLOOR. Every
+    number is interpolated from config so prompt and validation never drift.
+    """
+    mn, mx = DIMENSION_MIN_LABELS, MAX_LABELS_PER_DIM
+    return f"""أنت ناقد أدبي عربي خبير بالشعر الكلاسيكي والحديث. مهمتك تصنيف القصيدة المعروضة عليك عبر أبعاد المزاج والموضوع والصورة، بأقلّ عدد من التصنيفات التي تعبّر عن **جوهر** القصيدة، لا كلّ ما هو محتمل. الهدف تمكين القارئ من التصفية والاكتشاف بتصنيفات حادّة مميِّزة.
 
-■ المزاج (mood) — اختر من 1 إلى {MAX_LABELS_PER_DIM['mood']} مزاجاً يغلب على القصيدة:
+اختر التصنيفات من القوائم المغلقة التالية فقط، واستخدم الرمز الإنجليزي (key) في إجابتك لا الاسم العربي.
+
+■ المزاج (mood) — اختر من {mn['mood']} إلى {mx['mood']}: مزاجاً مهيمناً واحداً، وأضف ثانوياً واحداً فقط إن كان مختلفاً جوهرياً لا مجرّد ظلٍّ للأول:
 {_vocab_block('mood')}
 
-■ الموضوع (topic) — اختر من 1 إلى {MAX_LABELS_PER_DIM['topic']} موضوعاً:
+■ الموضوع (topic) — اختر من {mn['topic']} إلى {mx['topic']}: موضوعاً واحداً، أو اثنين إن حمل النصّ موضوعين متمايزين حقاً:
 {_vocab_block('topic')}
 
-■ الصورة والرموز (motif) — اختر من 0 إلى {MAX_LABELS_PER_DIM['motif']} من الصور الحسية الحاضرة فعلاً في النص:
+■ الصورة والرموز (motif) — اختر من {mn['motif']} إلى {mx['motif']} من الصور الحسّية الحاضرة فعلاً وبقوة في النص. إن لم تبرز صورة، اترك القائمة فارغة:
 {_vocab_block('motif')}
 
+قاعدة عدم تكديس المرادفات (مهمّة) — من كلّ مجموعة تالية اختر الأدقّ واحداً فقط:
+{_synonym_block()}
+
 كما تنتج الحقول التالية:
-- mood_primary: المزاج الأوحد الأكثر هيمنة (رمز واحد من قائمة المزاج).
+- mood_primary: المزاج الأوحد الأكثر هيمنة (رمز واحد من قائمة المزاج، ويجب أن يكون ضمن moods).
+- rationale: جملة عربية قصيرة تسمّي المفهوم الجوهري للقصيدة وتبرّر اختيارك.
 - emotional_intensity: عدد من 0 إلى 100 يقيس شدة الشحنة العاطفية.
 - accessibility_level: عدد من 1 إلى 5 (1 = سهلة على متعلّم العربية، 5 = تتطلب معرفة كلاسيكية عميقة).
 - confidences: كائن يربط كل رمز اخترته (من أي بُعد) بدرجة ثقتك فيه من 0 إلى 100، مثل {{"amorous": 90, "love": 80}}.
 
 إرشادات:
 - صنّف بناءً على النص نفسه لا على شهرة الشاعر.
-- لا تخترع رموزاً خارج القوائم. إن لم تنطبق صورة حسية، اترك motifs فارغة.
-- كن انتقائياً: اختر أقوى التصنيفات لا كل ما هو محتمل.
-- تمييزات دقيقة: شوق (yearning) حنينٌ نحو شخص، أما حنين (nostalgia) فحنينٌ نحو الوطن أو الديار؛ سخرية (satire) تعني الهجاء واللاذع لا الفكاهة اللطيفة؛ والروض والزهر (garden-flowers) غالباً روض المحبوب لا مجرد وصف طبيعة.
+- لا تخترع رموزاً خارج القوائم.
+- سمِّ المفهوم المهيمن أولاً ثم صنّف؛ لا تُدرج تصنيفاً هامشياً لمجرّد وروده.
+- لا تُدرج أي رمز درجة ثقتك فيه دون {CONFIDENCE_FLOOR}.
+- تمييزات دقيقة: شوق (yearning) حنينٌ نحو شخص، أما حنين (nostalgia) فحنينٌ نحو الوطن أو الديار؛ سخرية (satire) تعني الهجاء اللاذع لا الفكاهة اللطيفة؛ والروض والزهر (garden-flowers) غالباً روض المحبوب لا مجرّد وصف طبيعة.
 
-أجب بصيغة JSON فقط لكل قصيدة، بلا أي شرح:
-{{"id": "...", "moods": ["..."], "mood_primary": "...", "topics": ["..."], "motifs": ["..."], "emotional_intensity": N, "accessibility_level": N, "confidences": {{"<key>": N}}}}
+أجب بصيغة JSON فقط لكل قصيدة، بلا أي شرح خارج الكائن:
+{{"id": "...", "moods": ["..."], "mood_primary": "...", "topics": ["..."], "motifs": ["..."], "emotional_intensity": N, "accessibility_level": N, "confidences": {{"<key>": N}}, "rationale": "..."}}
 
 إذا عُرضت عدة قصائد، أجب بمصفوفة JSON مرتبة بنفس ترتيب القصائد."""
 
@@ -422,6 +533,16 @@ def print_seed_sql() -> None:
             "INSERT INTO category_dimensions (key, label_ar, label_en, cardinality, sort_order) "
             f"VALUES ('{dim}', '{spec['label_ar']}', '{spec['label_en']}', "
             f"'{spec['cardinality']}', {spec['order']}) ON CONFLICT (key) DO NOTHING;"
+        )
+    print()
+    # v3: required-vs-optional contract (min_labels/max_labels). Idempotent
+    # UPDATEs; harmless no-op if the columns don't exist yet is NOT true, so the
+    # v3 migration adds the columns before applying an equivalent of these.
+    for dim, spec in sorted(DIMENSIONS.items(), key=lambda kv: kv[1]["order"]):
+        print(
+            "UPDATE category_dimensions SET "
+            f"min_labels = {DIMENSION_MIN_LABELS.get(dim, 0)}, "
+            f"max_labels = {MAX_LABELS_PER_DIM[dim]} WHERE key = '{dim}';"
         )
     print()
     for dim, spec in sorted(DIMENSIONS.items(), key=lambda kv: kv[1]["order"]):

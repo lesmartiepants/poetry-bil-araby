@@ -2,21 +2,9 @@
   "base": {
     "85646": {
       "poem_id": "85646",
-      "moods": [
-        "amorous",
-        "passion",
-        "joy"
-      ],
-      "topics": [
-        "love",
-        "beauty",
-        "wine-pleasure"
-      ],
-      "motifs": [
-        "wine-cup",
-        "fire-light",
-        "dawn"
-      ],
+      "moods": ["amorous", "passion", "joy"],
+      "topics": ["love", "beauty", "wine-pleasure"],
+      "motifs": ["wine-cup", "fire-light", "dawn"],
       "mood_primary": "amorous",
       "emotional_intensity": 85,
       "accessibility_level": 2,
@@ -27,19 +15,9 @@
     },
     "85684": {
       "poem_id": "85684",
-      "moods": [
-        "amorous",
-        "yearning",
-        "bittersweet"
-      ],
-      "topics": [
-        "love",
-        "beauty",
-        "nature"
-      ],
-      "motifs": [
-        "garden-flowers"
-      ],
+      "moods": ["amorous", "yearning", "bittersweet"],
+      "topics": ["love", "beauty", "nature"],
+      "motifs": ["garden-flowers"],
       "mood_primary": "amorous",
       "emotional_intensity": 70,
       "accessibility_level": 2,
@@ -50,22 +28,9 @@
     },
     "36953": {
       "poem_id": "36953",
-      "moods": [
-        "grief",
-        "melancholy",
-        "despair",
-        "nostalgia"
-      ],
-      "topics": [
-        "loss-death",
-        "time-mortality",
-        "friendship"
-      ],
-      "motifs": [
-        "tears",
-        "fire-light",
-        "desert-ruins"
-      ],
+      "moods": ["grief", "melancholy", "despair", "nostalgia"],
+      "topics": ["loss-death", "time-mortality", "friendship"],
+      "motifs": ["tears", "fire-light", "desert-ruins"],
       "mood_primary": "grief",
       "emotional_intensity": 90,
       "accessibility_level": 3,
@@ -76,20 +41,9 @@
     },
     "63346": {
       "poem_id": "63346",
-      "moods": [
-        "passion",
-        "reverence",
-        "contemplation",
-        "yearning"
-      ],
-      "topics": [
-        "faith-spirit",
-        "love",
-        "time-mortality"
-      ],
-      "motifs": [
-        "fire-light"
-      ],
+      "moods": ["passion", "reverence", "contemplation", "yearning"],
+      "topics": ["faith-spirit", "love", "time-mortality"],
+      "motifs": ["fire-light"],
       "mood_primary": "passion",
       "emotional_intensity": 90,
       "accessibility_level": 4,
@@ -100,23 +54,9 @@
     },
     "53601": {
       "poem_id": "53601",
-      "moods": [
-        "grief",
-        "reverence",
-        "defiance",
-        "yearning"
-      ],
-      "topics": [
-        "loss-death",
-        "faith-spirit",
-        "justice-oppression",
-        "honor-pride"
-      ],
-      "motifs": [
-        "tears",
-        "fire-light",
-        "sea-water"
-      ],
+      "moods": ["grief", "reverence", "defiance", "yearning"],
+      "topics": ["loss-death", "faith-spirit", "justice-oppression", "honor-pride"],
+      "motifs": ["tears", "fire-light", "sea-water"],
       "mood_primary": "grief",
       "emotional_intensity": 90,
       "accessibility_level": 4,
@@ -127,16 +67,8 @@
     },
     "85512": {
       "poem_id": "85512",
-      "moods": [
-        "defiance",
-        "contemplation",
-        "pride"
-      ],
-      "topics": [
-        "freedom",
-        "wisdom-ethics",
-        "honor-pride"
-      ],
+      "moods": ["defiance", "contemplation", "pride"],
+      "topics": ["freedom", "wisdom-ethics", "honor-pride"],
       "motifs": [],
       "mood_primary": "defiance",
       "emotional_intensity": 70,
@@ -148,19 +80,9 @@
     },
     "78165": {
       "poem_id": "78165",
-      "moods": [
-        "grief",
-        "melancholy",
-        "despair"
-      ],
-      "topics": [
-        "loss-death",
-        "time-mortality"
-      ],
-      "motifs": [
-        "tears",
-        "fire-light"
-      ],
+      "moods": ["grief", "melancholy", "despair"],
+      "topics": ["loss-death", "time-mortality"],
+      "motifs": ["tears", "fire-light"],
       "mood_primary": "grief",
       "emotional_intensity": 95,
       "accessibility_level": 3,
@@ -171,19 +93,9 @@
     },
     "85942": {
       "poem_id": "85942",
-      "moods": [
-        "contemplation",
-        "serenity"
-      ],
-      "topics": [
-        "nature",
-        "beauty"
-      ],
-      "motifs": [
-        "fire-light",
-        "night",
-        "moon-stars"
-      ],
+      "moods": ["contemplation", "serenity"],
+      "topics": ["nature", "beauty"],
+      "motifs": ["fire-light", "night", "moon-stars"],
       "mood_primary": "contemplation",
       "emotional_intensity": 60,
       "accessibility_level": 4,
@@ -194,24 +106,9 @@
     },
     "63352": {
       "poem_id": "63352",
-      "moods": [
-        "passion",
-        "yearning",
-        "melancholy",
-        "contemplation"
-      ],
-      "topics": [
-        "love",
-        "beauty",
-        "faith-spirit"
-      ],
-      "motifs": [
-        "night",
-        "moon-stars",
-        "fire-light",
-        "tears",
-        "dawn"
-      ],
+      "moods": ["passion", "yearning", "melancholy", "contemplation"],
+      "topics": ["love", "beauty", "faith-spirit"],
+      "motifs": ["night", "moon-stars", "fire-light", "tears", "dawn"],
       "mood_primary": "passion",
       "emotional_intensity": 95,
       "accessibility_level": 4,
@@ -222,24 +119,9 @@
     },
     "16199": {
       "poem_id": "16199",
-      "moods": [
-        "melancholy",
-        "yearning",
-        "passion",
-        "grief"
-      ],
-      "topics": [
-        "love",
-        "beauty",
-        "loss-death"
-      ],
-      "motifs": [
-        "tears",
-        "night",
-        "moon-stars",
-        "fire-light",
-        "garden-flowers"
-      ],
+      "moods": ["melancholy", "yearning", "passion", "grief"],
+      "topics": ["love", "beauty", "loss-death"],
+      "motifs": ["tears", "night", "moon-stars", "fire-light", "garden-flowers"],
       "mood_primary": "melancholy",
       "emotional_intensity": 90,
       "accessibility_level": 3,
@@ -252,20 +134,9 @@
   "v3": {
     "85646": {
       "poem_id": "85646",
-      "moods": [
-        "amorous",
-        "passion",
-        "joy"
-      ],
-      "topics": [
-        "love",
-        "beauty",
-        "wine-pleasure"
-      ],
-      "motifs": [
-        "dawn",
-        "wine-cup"
-      ],
+      "moods": ["amorous", "passion", "joy"],
+      "topics": ["love", "beauty", "wine-pleasure"],
+      "motifs": ["dawn", "wine-cup"],
       "mood_primary": "amorous",
       "emotional_intensity": 75,
       "accessibility_level": 2,
@@ -276,19 +147,9 @@
     },
     "85684": {
       "poem_id": "85684",
-      "moods": [
-        "amorous",
-        "joy",
-        "bittersweet"
-      ],
-      "topics": [
-        "love",
-        "beauty",
-        "nature"
-      ],
-      "motifs": [
-        "garden-flowers"
-      ],
+      "moods": ["amorous", "joy", "bittersweet"],
+      "topics": ["love", "beauty", "nature"],
+      "motifs": ["garden-flowers"],
       "mood_primary": "amorous",
       "emotional_intensity": 60,
       "accessibility_level": 2,
@@ -299,22 +160,9 @@
     },
     "36953": {
       "poem_id": "36953",
-      "moods": [
-        "grief",
-        "melancholy",
-        "despair",
-        "nostalgia"
-      ],
-      "topics": [
-        "loss-death",
-        "time-mortality",
-        "friendship"
-      ],
-      "motifs": [
-        "tears",
-        "desert-ruins",
-        "fire-light"
-      ],
+      "moods": ["grief", "melancholy", "despair", "nostalgia"],
+      "topics": ["loss-death", "time-mortality", "friendship"],
+      "motifs": ["tears", "desert-ruins", "fire-light"],
       "mood_primary": "grief",
       "emotional_intensity": 90,
       "accessibility_level": 3,
@@ -325,20 +173,9 @@
     },
     "63346": {
       "poem_id": "63346",
-      "moods": [
-        "passion",
-        "reverence",
-        "contemplation",
-        "yearning"
-      ],
-      "topics": [
-        "faith-spirit",
-        "love",
-        "time-mortality"
-      ],
-      "motifs": [
-        "fire-light"
-      ],
+      "moods": ["passion", "reverence", "contemplation", "yearning"],
+      "topics": ["faith-spirit", "love", "time-mortality"],
+      "motifs": ["fire-light"],
       "mood_primary": "passion",
       "emotional_intensity": 85,
       "accessibility_level": 4,
@@ -349,24 +186,9 @@
     },
     "53601": {
       "poem_id": "53601",
-      "moods": [
-        "grief",
-        "reverence",
-        "defiance",
-        "melancholy"
-      ],
-      "topics": [
-        "loss-death",
-        "faith-spirit",
-        "justice-oppression",
-        "homeland"
-      ],
-      "motifs": [
-        "tears",
-        "fire-light",
-        "night",
-        "desert-ruins"
-      ],
+      "moods": ["grief", "reverence", "defiance", "melancholy"],
+      "topics": ["loss-death", "faith-spirit", "justice-oppression", "homeland"],
+      "motifs": ["tears", "fire-light", "night", "desert-ruins"],
       "mood_primary": "grief",
       "emotional_intensity": 85,
       "accessibility_level": 4,
@@ -377,16 +199,8 @@
     },
     "85512": {
       "poem_id": "85512",
-      "moods": [
-        "defiance",
-        "contemplation",
-        "pride"
-      ],
-      "topics": [
-        "freedom",
-        "wisdom-ethics",
-        "honor-pride"
-      ],
+      "moods": ["defiance", "contemplation", "pride"],
+      "topics": ["freedom", "wisdom-ethics", "honor-pride"],
       "motifs": [],
       "mood_primary": "defiance",
       "emotional_intensity": 70,
@@ -398,20 +212,9 @@
     },
     "78165": {
       "poem_id": "78165",
-      "moods": [
-        "grief",
-        "melancholy",
-        "despair"
-      ],
-      "topics": [
-        "loss-death",
-        "time-mortality",
-        "faith-spirit"
-      ],
-      "motifs": [
-        "tears",
-        "fire-light"
-      ],
+      "moods": ["grief", "melancholy", "despair"],
+      "topics": ["loss-death", "time-mortality", "faith-spirit"],
+      "motifs": ["tears", "fire-light"],
       "mood_primary": "grief",
       "emotional_intensity": 90,
       "accessibility_level": 3,
@@ -422,20 +225,9 @@
     },
     "85942": {
       "poem_id": "85942",
-      "moods": [
-        "contemplation",
-        "serenity"
-      ],
-      "topics": [
-        "nature",
-        "beauty"
-      ],
-      "motifs": [
-        "fire-light",
-        "night",
-        "dawn",
-        "sea-water"
-      ],
+      "moods": ["contemplation", "serenity"],
+      "topics": ["nature", "beauty"],
+      "motifs": ["fire-light", "night", "dawn", "sea-water"],
       "mood_primary": "contemplation",
       "emotional_intensity": 45,
       "accessibility_level": 4,
@@ -446,24 +238,9 @@
     },
     "63352": {
       "poem_id": "63352",
-      "moods": [
-        "passion",
-        "yearning",
-        "melancholy",
-        "reverence"
-      ],
-      "topics": [
-        "love",
-        "beauty",
-        "faith-spirit"
-      ],
-      "motifs": [
-        "night",
-        "moon-stars",
-        "tears",
-        "fire-light",
-        "dawn"
-      ],
+      "moods": ["passion", "yearning", "melancholy", "reverence"],
+      "topics": ["love", "beauty", "faith-spirit"],
+      "motifs": ["night", "moon-stars", "tears", "fire-light", "dawn"],
       "mood_primary": "passion",
       "emotional_intensity": 90,
       "accessibility_level": 4,
@@ -474,22 +251,9 @@
     },
     "16199": {
       "poem_id": "16199",
-      "moods": [
-        "melancholy",
-        "yearning",
-        "passion",
-        "grief"
-      ],
-      "topics": [
-        "love",
-        "beauty",
-        "loss-death"
-      ],
-      "motifs": [
-        "tears",
-        "night",
-        "fire-light"
-      ],
+      "moods": ["melancholy", "yearning", "passion", "grief"],
+      "topics": ["love", "beauty", "loss-death"],
+      "motifs": ["tears", "night", "fire-light"],
       "mood_primary": "melancholy",
       "emotional_intensity": 85,
       "accessibility_level": 3,
@@ -499,16 +263,5 @@
       "categorized_at": "2026-07-23T23:58:15.812379+00:00"
     }
   },
-  "pids": [
-    "85646",
-    "85684",
-    "36953",
-    "63346",
-    "53601",
-    "85512",
-    "78165",
-    "85942",
-    "63352",
-    "16199"
-  ]
+  "pids": ["85646", "85684", "36953", "63346", "53601", "85512", "78165", "85942", "63352", "16199"]
 }

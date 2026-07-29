@@ -9,13 +9,15 @@
       "name": "v4 · calibrated intensity + accessibility rubric",
       "changed": "Intensity 0-100 with anti-clustering calibration (use the full range; most poems 30-70, reserve 80+ for overwhelming emotion). Accessibility decomposed into 5 scored sub-factors (lexical, syntax, imagery_abstraction, allusion, narrativity) -> derived 0-10 score, weights allusion=4, lexical=3, syntax=2, imagery=2, narrativity=1. Storytelling counts as harder than imagery.",
       "access": "factors_0_10"
+    },
+    "distill-1": {
+      "name": "v5 · distillation (caps 2/2/2, floor 65)",
+      "changed": "Distillation pass: pick the DOMINANT concept, not everything plausible. Hard caps of <=2 labels per dimension (mood/topic/motif), a confidence floor of 65 (drop anything the model is less than 65% sure of), and no synonym-stacking (one label per idea, no near-duplicate shades). Taxonomy v3. Single-model production run on gemini-3.6-flash (no judge / 2.5-flash columns). Accessibility back to a holistic 1-5 level.",
+      "access": "level_1_5",
+      "prompt_text": "أنت ناقد أدبي عربي خبير بالشعر الكلاسيكي والحديث. مهمتك تصنيف القصيدة المعروضة عليك عبر أبعاد المزاج والموضوع والصورة، بأقلّ عدد من التصنيفات التي تعبّر عن **جوهر** القصيدة، لا كلّ ما هو محتمل. الهدف تمكين القارئ من التصفية والاكتشاف بتصنيفات حادّة مميِّزة.\n\nاختر التصنيفات من القوائم المغلقة التالية فقط، واستخدم الرمز الإنجليزي (key) في إجابتك لا الاسم العربي.\n\n■ المزاج (mood) — اختر من 1 إلى 2: مزاجاً مهيمناً واحداً، وأضف ثانوياً واحداً فقط إن كان مختلفاً جوهرياً لا مجرّد ظلٍّ للأول:\n  - melancholy  (حزن / Melancholy)\n  - nostalgia  (حنين / Nostalgia)\n  - joy  (فرح / Joy)\n  - amorous  (غزل / Amorous)\n  - passion  (وجد / Passion)\n  - contemplation  (تأمّل / Contemplation)\n  - serenity  (سكينة / Serenity)\n  - defiance  (تحدٍّ / Defiance)\n  - pride  (اعتزاز / Pride)\n  - grief  (أسى / Grief)\n  - hope  (أمل / Hope)\n  - despair  (يأس / Despair)\n  - satire  (سخرية / Satire)\n  - reverence  (خشوع / Reverence)\n  - bittersweet  (حلوٌ مرّ / Bittersweet)\n  - yearning  (شوق / Yearning)\n\n■ الموضوع (topic) — اختر من 1 إلى 2: موضوعاً واحداً، أو اثنين إن حمل النصّ موضوعين متمايزين حقاً:\n  - love  (الحب / Love)\n  - loss-death  (الفقد والموت / Loss & Death)\n  - exile-longing  (الغربة والحنين / Exile & Longing)\n  - homeland  (الوطن / Homeland)\n  - nature  (الطبيعة / Nature)\n  - war-conflict  (الحرب والصراع / War & Conflict)\n  - faith-spirit  (الإيمان والروحانية / Faith & Spirituality)\n  - wine-pleasure  (الخمر واللذّة / Wine & Pleasure)\n  - friendship  (الصداقة والوفاء / Friendship & Loyalty)\n  - time-mortality  (الزمن والفناء / Time & Mortality)\n  - wisdom-ethics  (الحكمة والأخلاق / Wisdom & Ethics)\n  - justice-oppression  (العدل والظلم / Justice & Oppression)\n  - freedom  (الحرية / Freedom)\n  - beauty  (الجمال / Beauty)\n  - honor-pride  (الفخر والشرف / Honor & Pride)\n  - women-feminine  (المرأة والأنوثة / Women & the Feminine)\n\n■ الصورة والرموز (motif) — اختر من 0 إلى 2 من الصور الحسّية الحاضرة فعلاً وبقوة في النص. إن لم تبرز صورة، اترك القائمة فارغة:\n  - night  (الليل / Night)\n  - desert-ruins  (الصحراء والطلل / Desert & Ruins)\n  - moon-stars  (القمر والنجوم / Moon & Stars)\n  - sea-water  (البحر والماء / Sea & Water)\n  - garden-flowers  (الروض والزهر / Garden & Flowers)\n  - wine-cup  (الكأس والخمر / The Wine Cup)\n  - sword-battle  (السيف والمعركة / Sword & Battle)\n  - birds  (الطير / Birds)\n  - fire-light  (النار والضوء / Fire & Light)\n  - tears  (الدموع / Tears)\n  - journey  (الرحلة والراحلة / Journey & Mount)\n  - dawn  (الفجر والصبح / Dawn)\n\nقاعدة عدم تكديس المرادفات (مهمّة) — من كلّ مجموعة تالية اختر الأدقّ واحداً فقط:\n  - اختر رمزاً واحداً على الأكثر من: حزن (melancholy)، أسى (grief)، يأس (despair)، حلوٌ مرّ (bittersweet)\n  - اختر رمزاً واحداً على الأكثر من: غزل (amorous)، وجد (passion)، شوق (yearning)\n\nكما تنتج الحقول التالية:\n- mood_primary: المزاج الأوحد الأكثر هيمنة (رمز واحد من قائمة المزاج، ويجب أن يكون ضمن moods).\n- rationale: جملة عربية قصيرة تسمّي المفهوم الجوهري للقصيدة وتبرّر اختيارك.\n- emotional_intensity: عدد من 0 إلى 100 يقيس شدة الشحنة العاطفية.\n- accessibility_level: عدد من 1 إلى 5 (1 = سهلة على متعلّم العربية، 5 = تتطلب معرفة كلاسيكية عميقة).\n- confidences: كائن يربط كل رمز اخترته (من أي بُعد) بدرجة ثقتك فيه من 0 إلى 100، مثل {\"amorous\": 90, \"love\": 80}.\n\nإرشادات:\n- صنّف بناءً على النص نفسه لا على شهرة الشاعر.\n- لا تخترع رموزاً خارج القوائم.\n- سمِّ المفهوم المهيمن أولاً ثم صنّف؛ لا تُدرج تصنيفاً هامشياً لمجرّد وروده.\n- لا تُدرج أي رمز درجة ثقتك فيه دون 65.\n- تمييزات دقيقة: شوق (yearning) حنينٌ نحو شخص، أما حنين (nostalgia) فحنينٌ نحو الوطن أو الديار؛ سخرية (satire) تعني الهجاء اللاذع لا الفكاهة اللطيفة؛ والروض والزهر (garden-flowers) غالباً روض المحبوب لا مجرّد وصف طبيعة.\n\nأجب بصيغة JSON فقط لكل قصيدة، بلا أي شرح خارج الكائن:\n{\"id\": \"...\", \"moods\": [\"...\"], \"mood_primary\": \"...\", \"topics\": [\"...\"], \"motifs\": [\"...\"], \"emotional_intensity\": N, \"accessibility_level\": N, \"confidences\": {\"<key>\": N}, \"rationale\": \"...\"}\n\nإذا عُرضت عدة قصائد، أجب بمصفوفة JSON مرتبة بنفس ترتيب القصائد."
     }
   },
-  "models": [
-    "judge",
-    "gemini-2.5-flash",
-    "gemini-3.6-flash"
-  ],
+  "models": ["judge", "gemini-2.5-flash", "gemini-3.6-flash"],
   "judge_model": "gemini/gemini-3.1-pro-preview",
   "poems": {
     "85646": {
@@ -27,78 +29,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "amorous",
-              "joy"
-            ],
+            "moods": ["amorous", "joy"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "wine-pleasure"
-            ],
-            "motifs": [
-              "wine-cup",
-              "dawn"
-            ],
+            "topics": ["love", "wine-pleasure"],
+            "motifs": ["wine-cup", "dawn"],
             "emotional_intensity": 80,
             "accessibility_level": 3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "amorous",
-              "passion",
-              "yearning"
-            ],
+            "moods": ["amorous", "passion", "yearning"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty",
-              "women-feminine"
-            ],
-            "motifs": [
-              "wine-cup",
-              "fire-light",
-              "dawn"
-            ],
+            "topics": ["love", "beauty", "women-feminine"],
+            "motifs": ["wine-cup", "fire-light", "dawn"],
             "emotional_intensity": 85,
             "accessibility_level": 2
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "amorous",
-              "passion",
-              "joy"
-            ],
+            "moods": ["amorous", "passion", "joy"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "wine-pleasure",
-              "beauty"
-            ],
-            "motifs": [
-              "wine-cup",
-              "dawn"
-            ],
+            "topics": ["love", "wine-pleasure", "beauty"],
+            "motifs": ["wine-cup", "dawn"],
             "emotional_intensity": 85,
             "accessibility_level": 3
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "amorous",
-              "joy"
-            ],
+            "moods": ["amorous", "joy"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "wine-pleasure",
-              "beauty"
-            ],
-            "motifs": [
-              "wine-cup",
-              "dawn"
-            ],
+            "topics": ["love", "wine-pleasure", "beauty"],
+            "motifs": ["wine-cup", "dawn"],
             "emotional_intensity": 75,
             "accessibility_factors": {
               "lexical": 3,
@@ -110,21 +70,10 @@
             "accessibility_score": 2.5
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "amorous",
-              "passion",
-              "yearning"
-            ],
+            "moods": ["amorous", "passion", "yearning"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty",
-              "women-feminine"
-            ],
-            "motifs": [
-              "wine-cup",
-              "dawn"
-            ],
+            "topics": ["love", "beauty", "women-feminine"],
+            "motifs": ["wine-cup", "dawn"],
             "emotional_intensity": 85,
             "accessibility_factors": {
               "lexical": 2,
@@ -136,22 +85,10 @@
             "accessibility_score": 1.0
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "amorous",
-              "passion",
-              "joy"
-            ],
+            "moods": ["amorous", "passion", "joy"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "wine-pleasure",
-              "beauty"
-            ],
-            "motifs": [
-              "wine-cup",
-              "dawn",
-              "fire-light"
-            ],
+            "topics": ["love", "wine-pleasure", "beauty"],
+            "motifs": ["wine-cup", "dawn", "fire-light"],
             "emotional_intensity": 75,
             "accessibility_factors": {
               "lexical": 3,
@@ -161,6 +98,16 @@
               "narrativity": 1
             },
             "accessibility_score": 2.5
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["amorous"],
+            "mood_primary": "amorous",
+            "topics": ["love", "wine-pleasure"],
+            "motifs": ["wine-cup", "garden-flowers"],
+            "emotional_intensity": 75,
+            "accessibility_level": 3
           }
         }
       }
@@ -174,90 +121,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "joy",
-              "pride",
-              "hope"
-            ],
+            "moods": ["joy", "pride", "hope"],
             "mood_primary": "joy",
-            "topics": [
-              "homeland",
-              "nature",
-              "honor-pride"
-            ],
-            "motifs": [
-              "garden-flowers",
-              "sea-water",
-              "birds"
-            ],
+            "topics": ["homeland", "nature", "honor-pride"],
+            "motifs": ["garden-flowers", "sea-water", "birds"],
             "emotional_intensity": 75,
             "accessibility_level": 3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "joy",
-              "pride",
-              "contemplation",
-              "hope"
-            ],
+            "moods": ["joy", "pride", "contemplation", "hope"],
             "mood_primary": "joy",
-            "topics": [
-              "homeland",
-              "nature",
-              "honor-pride",
-              "beauty"
-            ],
-            "motifs": [
-              "sea-water",
-              "garden-flowers",
-              "birds",
-              "fire-light",
-              "dawn"
-            ],
+            "topics": ["homeland", "nature", "honor-pride", "beauty"],
+            "motifs": ["sea-water", "garden-flowers", "birds", "fire-light", "dawn"],
             "emotional_intensity": 70,
             "accessibility_level": 3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "joy",
-              "pride",
-              "serenity"
-            ],
+            "moods": ["joy", "pride", "serenity"],
             "mood_primary": "joy",
-            "topics": [
-              "nature",
-              "homeland",
-              "honor-pride",
-              "beauty"
-            ],
-            "motifs": [
-              "garden-flowers",
-              "sea-water",
-              "birds",
-              "dawn"
-            ],
+            "topics": ["nature", "homeland", "honor-pride", "beauty"],
+            "motifs": ["garden-flowers", "sea-water", "birds", "dawn"],
             "emotional_intensity": 70,
             "accessibility_level": 3
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "joy",
-              "pride",
-              "hope"
-            ],
+            "moods": ["joy", "pride", "hope"],
             "mood_primary": "joy",
-            "topics": [
-              "homeland",
-              "nature",
-              "honor-pride"
-            ],
-            "motifs": [
-              "garden-flowers",
-              "sea-water",
-              "birds"
-            ],
+            "topics": ["homeland", "nature", "honor-pride"],
+            "motifs": ["garden-flowers", "sea-water", "birds"],
             "emotional_intensity": 65,
             "accessibility_factors": {
               "lexical": 3,
@@ -269,25 +162,10 @@
             "accessibility_score": 5.6
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "joy",
-              "pride",
-              "contemplation",
-              "hope"
-            ],
+            "moods": ["joy", "pride", "contemplation", "hope"],
             "mood_primary": "joy",
-            "topics": [
-              "nature",
-              "homeland",
-              "beauty",
-              "honor-pride"
-            ],
-            "motifs": [
-              "garden-flowers",
-              "sea-water",
-              "birds",
-              "moon-stars"
-            ],
+            "topics": ["nature", "homeland", "beauty", "honor-pride"],
+            "motifs": ["garden-flowers", "sea-water", "birds", "moon-stars"],
             "emotional_intensity": 65,
             "accessibility_factors": {
               "lexical": 2,
@@ -299,25 +177,10 @@
             "accessibility_score": 3.5
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "joy",
-              "pride",
-              "reverence"
-            ],
+            "moods": ["joy", "pride", "reverence"],
             "mood_primary": "joy",
-            "topics": [
-              "nature",
-              "homeland",
-              "beauty",
-              "honor-pride"
-            ],
-            "motifs": [
-              "garden-flowers",
-              "sea-water",
-              "birds",
-              "dawn",
-              "moon-stars"
-            ],
+            "topics": ["nature", "homeland", "beauty", "honor-pride"],
+            "motifs": ["garden-flowers", "sea-water", "birds", "dawn", "moon-stars"],
             "emotional_intensity": 65,
             "accessibility_factors": {
               "lexical": 3,
@@ -327,6 +190,16 @@
               "narrativity": 3
             },
             "accessibility_score": 5.8
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["joy", "serenity"],
+            "mood_primary": "joy",
+            "topics": ["nature", "beauty"],
+            "motifs": ["garden-flowers", "birds"],
+            "emotional_intensity": 80,
+            "accessibility_level": 3
           }
         }
       }
@@ -340,80 +213,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "contemplation",
-              "melancholy"
-            ],
+            "moods": ["contemplation", "melancholy"],
             "mood_primary": "contemplation",
-            "topics": [
-              "nature",
-              "love"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "garden-flowers"
-            ],
+            "topics": ["nature", "love"],
+            "motifs": ["tears", "fire-light", "garden-flowers"],
             "emotional_intensity": 70,
             "accessibility_level": 3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "melancholy",
-              "grief",
-              "yearning"
-            ],
+            "moods": ["melancholy", "grief", "yearning"],
             "mood_primary": "melancholy",
-            "topics": [
-              "loss-death",
-              "love",
-              "nature"
-            ],
-            "motifs": [
-              "tears",
-              "garden-flowers"
-            ],
+            "topics": ["loss-death", "love", "nature"],
+            "motifs": ["tears", "garden-flowers"],
             "emotional_intensity": 90,
             "accessibility_level": 3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "contemplation",
-              "melancholy",
-              "yearning"
-            ],
+            "moods": ["contemplation", "melancholy", "yearning"],
             "mood_primary": "contemplation",
-            "topics": [
-              "nature",
-              "beauty",
-              "love"
-            ],
-            "motifs": [
-              "garden-flowers",
-              "fire-light",
-              "tears",
-              "sea-water"
-            ],
+            "topics": ["nature", "beauty", "love"],
+            "motifs": ["garden-flowers", "fire-light", "tears", "sea-water"],
             "emotional_intensity": 75,
             "accessibility_level": 3
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "contemplation",
-              "melancholy"
-            ],
+            "moods": ["contemplation", "melancholy"],
             "mood_primary": "contemplation",
-            "topics": [
-              "nature",
-              "beauty"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "garden-flowers"
-            ],
+            "topics": ["nature", "beauty"],
+            "motifs": ["tears", "fire-light", "garden-flowers"],
             "emotional_intensity": 60,
             "accessibility_factors": {
               "lexical": 3,
@@ -425,21 +254,10 @@
             "accessibility_score": 2.9
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "melancholy",
-              "grief",
-              "passion"
-            ],
+            "moods": ["melancholy", "grief", "passion"],
             "mood_primary": "melancholy",
-            "topics": [
-              "love",
-              "loss-death",
-              "nature"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light"
-            ],
+            "topics": ["love", "loss-death", "nature"],
+            "motifs": ["tears", "fire-light"],
             "emotional_intensity": 80,
             "accessibility_factors": {
               "lexical": 3,
@@ -451,22 +269,10 @@
             "accessibility_score": 4.2
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "contemplation",
-              "melancholy",
-              "passion"
-            ],
+            "moods": ["contemplation", "melancholy", "passion"],
             "mood_primary": "contemplation",
-            "topics": [
-              "nature",
-              "love",
-              "beauty"
-            ],
-            "motifs": [
-              "tears",
-              "garden-flowers",
-              "fire-light"
-            ],
+            "topics": ["nature", "love", "beauty"],
+            "motifs": ["tears", "garden-flowers", "fire-light"],
             "emotional_intensity": 68,
             "accessibility_factors": {
               "lexical": 2,
@@ -476,6 +282,16 @@
               "narrativity": 1
             },
             "accessibility_score": 2.3
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["contemplation"],
+            "mood_primary": "contemplation",
+            "topics": ["nature"],
+            "motifs": ["garden-flowers", "tears"],
+            "emotional_intensity": 65,
+            "accessibility_level": 3
           }
         }
       }
@@ -489,82 +305,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "nostalgia",
-              "yearning",
-              "melancholy"
-            ],
+            "moods": ["nostalgia", "yearning", "melancholy"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "loss-death",
-              "love"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "tears",
-              "birds"
-            ],
+            "topics": ["loss-death", "love"],
+            "motifs": ["desert-ruins", "tears", "birds"],
             "emotional_intensity": 85,
             "accessibility_level": 4
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "nostalgia",
-              "melancholy",
-              "yearning"
-            ],
+            "moods": ["nostalgia", "melancholy", "yearning"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "love",
-              "exile-longing",
-              "loss-death"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "tears"
-            ],
+            "topics": ["love", "exile-longing", "loss-death"],
+            "motifs": ["desert-ruins", "tears"],
             "emotional_intensity": 80,
             "accessibility_level": 4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "nostalgia",
-              "yearning",
-              "melancholy"
-            ],
+            "moods": ["nostalgia", "yearning", "melancholy"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "exile-longing",
-              "love",
-              "loss-death"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "birds",
-              "tears",
-              "sea-water"
-            ],
+            "topics": ["exile-longing", "love", "loss-death"],
+            "motifs": ["desert-ruins", "birds", "tears", "sea-water"],
             "emotional_intensity": 85,
             "accessibility_level": 4
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "nostalgia",
-              "yearning",
-              "melancholy"
-            ],
+            "moods": ["nostalgia", "yearning", "melancholy"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "loss-death",
-              "love"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "tears",
-              "birds"
-            ],
+            "topics": ["loss-death", "love"],
+            "motifs": ["desert-ruins", "tears", "birds"],
             "emotional_intensity": 80,
             "accessibility_factors": {
               "lexical": 4,
@@ -576,21 +346,10 @@
             "accessibility_score": 4.2
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "nostalgia",
-              "melancholy",
-              "yearning"
-            ],
+            "moods": ["nostalgia", "melancholy", "yearning"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "love",
-              "exile-longing",
-              "loss-death"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "tears"
-            ],
+            "topics": ["love", "exile-longing", "loss-death"],
+            "motifs": ["desert-ruins", "tears"],
             "emotional_intensity": 75,
             "accessibility_factors": {
               "lexical": 4,
@@ -602,23 +361,10 @@
             "accessibility_score": 5.4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "nostalgia",
-              "yearning",
-              "grief",
-              "melancholy"
-            ],
+            "moods": ["nostalgia", "yearning", "grief", "melancholy"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "love",
-              "loss-death",
-              "exile-longing"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "tears",
-              "birds"
-            ],
+            "topics": ["love", "loss-death", "exile-longing"],
+            "motifs": ["desert-ruins", "tears", "birds"],
             "emotional_intensity": 78,
             "accessibility_factors": {
               "lexical": 5,
@@ -628,6 +374,16 @@
               "narrativity": 2
             },
             "accessibility_score": 5.6
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["nostalgia", "melancholy"],
+            "mood_primary": "nostalgia",
+            "topics": ["love", "exile-longing"],
+            "motifs": ["desert-ruins", "tears"],
+            "emotional_intensity": 80,
+            "accessibility_level": 3
           }
         }
       }
@@ -641,94 +397,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "melancholy",
-              "yearning",
-              "pride"
-            ],
+            "moods": ["melancholy", "yearning", "pride"],
             "mood_primary": "melancholy",
-            "topics": [
-              "exile-longing",
-              "honor-pride",
-              "time-mortality"
-            ],
-            "motifs": [
-              "birds",
-              "night",
-              "tears",
-              "moon-stars",
-              "sword-battle"
-            ],
+            "topics": ["exile-longing", "honor-pride", "time-mortality"],
+            "motifs": ["birds", "night", "tears", "moon-stars", "sword-battle"],
             "emotional_intensity": 75,
             "accessibility_level": 4
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "melancholy",
-              "nostalgia",
-              "yearning",
-              "pride"
-            ],
+            "moods": ["melancholy", "nostalgia", "yearning", "pride"],
             "mood_primary": "melancholy",
-            "topics": [
-              "exile-longing",
-              "time-mortality",
-              "honor-pride"
-            ],
-            "motifs": [
-              "night",
-              "birds",
-              "tears",
-              "moon-stars",
-              "fire-light"
-            ],
+            "topics": ["exile-longing", "time-mortality", "honor-pride"],
+            "motifs": ["night", "birds", "tears", "moon-stars", "fire-light"],
             "emotional_intensity": 75,
             "accessibility_level": 4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "nostalgia",
-              "pride",
-              "yearning"
-            ],
+            "moods": ["nostalgia", "pride", "yearning"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "honor-pride",
-              "exile-longing",
-              "war-conflict"
-            ],
-            "motifs": [
-              "birds",
-              "night",
-              "moon-stars",
-              "sword-battle"
-            ],
+            "topics": ["honor-pride", "exile-longing", "war-conflict"],
+            "motifs": ["birds", "night", "moon-stars", "sword-battle"],
             "emotional_intensity": 75,
             "accessibility_level": 4
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "melancholy",
-              "nostalgia",
-              "grief",
-              "yearning"
-            ],
+            "moods": ["melancholy", "nostalgia", "grief", "yearning"],
             "mood_primary": "melancholy",
-            "topics": [
-              "exile-longing",
-              "time-mortality",
-              "honor-pride",
-              "war-conflict"
-            ],
-            "motifs": [
-              "birds",
-              "night",
-              "tears",
-              "moon-stars",
-              "dawn"
-            ],
+            "topics": ["exile-longing", "time-mortality", "honor-pride", "war-conflict"],
+            "motifs": ["birds", "night", "tears", "moon-stars", "dawn"],
             "emotional_intensity": 70,
             "accessibility_factors": {
               "lexical": 4,
@@ -740,25 +438,10 @@
             "accessibility_score": 5.0
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "melancholy",
-              "nostalgia",
-              "grief",
-              "pride"
-            ],
+            "moods": ["melancholy", "nostalgia", "grief", "pride"],
             "mood_primary": "melancholy",
-            "topics": [
-              "exile-longing",
-              "time-mortality",
-              "honor-pride"
-            ],
-            "motifs": [
-              "night",
-              "moon-stars",
-              "birds",
-              "fire-light",
-              "tears"
-            ],
+            "topics": ["exile-longing", "time-mortality", "honor-pride"],
+            "motifs": ["night", "moon-stars", "birds", "fire-light", "tears"],
             "emotional_intensity": 65,
             "accessibility_factors": {
               "lexical": 3,
@@ -770,26 +453,10 @@
             "accessibility_score": 4.4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "nostalgia",
-              "pride",
-              "yearning",
-              "melancholy"
-            ],
+            "moods": ["nostalgia", "pride", "yearning", "melancholy"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "honor-pride",
-              "exile-longing",
-              "love",
-              "war-conflict"
-            ],
-            "motifs": [
-              "birds",
-              "night",
-              "moon-stars",
-              "sword-battle",
-              "tears"
-            ],
+            "topics": ["honor-pride", "exile-longing", "love", "war-conflict"],
+            "motifs": ["birds", "night", "moon-stars", "sword-battle", "tears"],
             "emotional_intensity": 75,
             "accessibility_factors": {
               "lexical": 4,
@@ -799,6 +466,16 @@
               "narrativity": 2
             },
             "accessibility_score": 5.8
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["nostalgia", "pride"],
+            "mood_primary": "nostalgia",
+            "topics": ["time-mortality", "war-conflict"],
+            "motifs": ["night", "moon-stars"],
+            "emotional_intensity": 75,
+            "accessibility_level": 4
           }
         }
       }
@@ -812,78 +489,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "defiance",
-              "pride"
-            ],
+            "moods": ["defiance", "pride"],
             "mood_primary": "pride",
-            "topics": [
-              "honor-pride",
-              "women-feminine"
-            ],
-            "motifs": [
-              "night",
-              "fire-light",
-              "sword-battle",
-              "journey"
-            ],
+            "topics": ["honor-pride", "women-feminine"],
+            "motifs": ["night", "fire-light", "sword-battle", "journey"],
             "emotional_intensity": 65,
             "accessibility_level": 5
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "defiance",
-              "pride",
-              "satire"
-            ],
+            "moods": ["defiance", "pride", "satire"],
             "mood_primary": "defiance",
-            "topics": [
-              "honor-pride",
-              "women-feminine"
-            ],
-            "motifs": [
-              "night",
-              "fire-light"
-            ],
+            "topics": ["honor-pride", "women-feminine"],
+            "motifs": ["night", "fire-light"],
             "emotional_intensity": 60,
             "accessibility_level": 5
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "defiance",
-              "pride"
-            ],
+            "moods": ["defiance", "pride"],
             "mood_primary": "defiance",
-            "topics": [
-              "honor-pride"
-            ],
-            "motifs": [
-              "fire-light",
-              "dawn",
-              "sword-battle"
-            ],
+            "topics": ["honor-pride"],
+            "motifs": ["fire-light", "dawn", "sword-battle"],
             "emotional_intensity": 70,
             "accessibility_level": 5
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "pride",
-              "defiance"
-            ],
+            "moods": ["pride", "defiance"],
             "mood_primary": "pride",
-            "topics": [
-              "honor-pride",
-              "women-feminine",
-              "war-conflict"
-            ],
-            "motifs": [
-              "night",
-              "fire-light",
-              "sword-battle",
-              "dawn"
-            ],
+            "topics": ["honor-pride", "women-feminine", "war-conflict"],
+            "motifs": ["night", "fire-light", "sword-battle", "dawn"],
             "emotional_intensity": 60,
             "accessibility_factors": {
               "lexical": 5,
@@ -895,20 +530,10 @@
             "accessibility_score": 5.2
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "defiance",
-              "pride",
-              "satire"
-            ],
+            "moods": ["defiance", "pride", "satire"],
             "mood_primary": "defiance",
-            "topics": [
-              "honor-pride",
-              "women-feminine"
-            ],
-            "motifs": [
-              "night",
-              "dawn"
-            ],
+            "topics": ["honor-pride", "women-feminine"],
+            "motifs": ["night", "dawn"],
             "emotional_intensity": 70,
             "accessibility_factors": {
               "lexical": 5,
@@ -920,20 +545,10 @@
             "accessibility_score": 6.7
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "defiance",
-              "pride"
-            ],
+            "moods": ["defiance", "pride"],
             "mood_primary": "defiance",
-            "topics": [
-              "honor-pride",
-              "war-conflict"
-            ],
-            "motifs": [
-              "night",
-              "fire-light",
-              "desert-ruins"
-            ],
+            "topics": ["honor-pride", "war-conflict"],
+            "motifs": ["night", "fire-light", "desert-ruins"],
             "emotional_intensity": 70,
             "accessibility_factors": {
               "lexical": 5,
@@ -943,6 +558,16 @@
               "narrativity": 4
             },
             "accessibility_score": 6.9
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["pride", "defiance"],
+            "mood_primary": "pride",
+            "topics": ["honor-pride"],
+            "motifs": ["night", "sword-battle"],
+            "emotional_intensity": 85,
+            "accessibility_level": 5
           }
         }
       }
@@ -956,89 +581,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "passion"
-            ],
+            "moods": ["yearning", "melancholy", "passion"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing",
-              "time-mortality"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "night",
-              "garden-flowers",
-              "tears"
-            ],
+            "topics": ["love", "exile-longing", "time-mortality"],
+            "motifs": ["desert-ruins", "night", "garden-flowers", "tears"],
             "emotional_intensity": 85,
             "accessibility_level": 3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "yearning",
-              "nostalgia",
-              "amorous",
-              "grief"
-            ],
+            "moods": ["yearning", "nostalgia", "amorous", "grief"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "loss-death",
-              "beauty"
-            ],
-            "motifs": [
-              "night",
-              "desert-ruins",
-              "garden-flowers",
-              "tears"
-            ],
+            "topics": ["love", "loss-death", "beauty"],
+            "motifs": ["night", "desert-ruins", "garden-flowers", "tears"],
             "emotional_intensity": 85,
             "accessibility_level": 3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "amorous",
-              "passion",
-              "nostalgia",
-              "yearning"
-            ],
+            "moods": ["amorous", "passion", "nostalgia", "yearning"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "night",
-              "garden-flowers",
-              "tears"
-            ],
+            "topics": ["love", "beauty"],
+            "motifs": ["desert-ruins", "night", "garden-flowers", "tears"],
             "emotional_intensity": 85,
             "accessibility_level": 3
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "yearning",
-              "amorous",
-              "nostalgia"
-            ],
+            "moods": ["yearning", "amorous", "nostalgia"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "night",
-              "fire-light",
-              "tears",
-              "garden-flowers"
-            ],
+            "topics": ["love", "exile-longing"],
+            "motifs": ["desert-ruins", "night", "fire-light", "tears", "garden-flowers"],
             "emotional_intensity": 75,
             "accessibility_factors": {
               "lexical": 2,
@@ -1050,24 +622,10 @@
             "accessibility_score": 2.1
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "yearning",
-              "amorous",
-              "nostalgia",
-              "grief"
-            ],
+            "moods": ["yearning", "amorous", "nostalgia", "grief"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "loss-death",
-              "beauty"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "night",
-              "garden-flowers",
-              "tears"
-            ],
+            "topics": ["love", "loss-death", "beauty"],
+            "motifs": ["desert-ruins", "night", "garden-flowers", "tears"],
             "emotional_intensity": 80,
             "accessibility_factors": {
               "lexical": 3,
@@ -1079,23 +637,10 @@
             "accessibility_score": 4.0
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "amorous",
-              "yearning",
-              "nostalgia",
-              "bittersweet"
-            ],
+            "moods": ["amorous", "yearning", "nostalgia", "bittersweet"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "night",
-              "garden-flowers",
-              "tears"
-            ],
+            "topics": ["love", "beauty"],
+            "motifs": ["desert-ruins", "night", "garden-flowers", "tears"],
             "emotional_intensity": 82,
             "accessibility_factors": {
               "lexical": 2,
@@ -1105,6 +650,16 @@
               "narrativity": 2
             },
             "accessibility_score": 2.9
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["nostalgia", "bittersweet"],
+            "mood_primary": "nostalgia",
+            "topics": ["love", "exile-longing"],
+            "motifs": ["desert-ruins", "night"],
+            "emotional_intensity": 82,
+            "accessibility_level": 3
           }
         }
       }
@@ -1118,83 +673,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "grief",
-              "reverence",
-              "melancholy"
-            ],
+            "moods": ["grief", "reverence", "melancholy"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "faith-spirit",
-              "honor-pride"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "tears",
-              "fire-light"
-            ],
+            "topics": ["loss-death", "faith-spirit", "honor-pride"],
+            "motifs": ["desert-ruins", "tears", "fire-light"],
             "emotional_intensity": 95,
             "accessibility_level": 3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "grief",
-              "reverence",
-              "melancholy",
-              "hope"
-            ],
+            "moods": ["grief", "reverence", "melancholy", "hope"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "faith-spirit",
-              "homeland"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light"
-            ],
+            "topics": ["loss-death", "faith-spirit", "homeland"],
+            "motifs": ["tears", "fire-light"],
             "emotional_intensity": 90,
             "accessibility_level": 3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "grief",
-              "melancholy",
-              "reverence"
-            ],
+            "moods": ["grief", "melancholy", "reverence"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "faith-spirit"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "tears",
-              "fire-light"
-            ],
+            "topics": ["loss-death", "faith-spirit"],
+            "motifs": ["desert-ruins", "tears", "fire-light"],
             "emotional_intensity": 90,
             "accessibility_level": 3
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "grief",
-              "reverence",
-              "melancholy"
-            ],
+            "moods": ["grief", "reverence", "melancholy"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "faith-spirit",
-              "honor-pride"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "tears",
-              "night"
-            ],
+            "topics": ["loss-death", "faith-spirit", "honor-pride"],
+            "motifs": ["desert-ruins", "tears", "night"],
             "emotional_intensity": 85,
             "accessibility_factors": {
               "lexical": 2,
@@ -1206,20 +714,10 @@
             "accessibility_score": 2.3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "grief",
-              "reverence",
-              "melancholy",
-              "contemplation"
-            ],
+            "moods": ["grief", "reverence", "melancholy", "contemplation"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "faith-spirit"
-            ],
-            "motifs": [
-              "tears"
-            ],
+            "topics": ["loss-death", "faith-spirit"],
+            "motifs": ["tears"],
             "emotional_intensity": 90,
             "accessibility_factors": {
               "lexical": 3,
@@ -1231,21 +729,10 @@
             "accessibility_score": 4.4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "grief",
-              "reverence",
-              "melancholy"
-            ],
+            "moods": ["grief", "reverence", "melancholy"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "faith-spirit"
-            ],
-            "motifs": [
-              "tears",
-              "desert-ruins",
-              "fire-light"
-            ],
+            "topics": ["loss-death", "faith-spirit"],
+            "motifs": ["tears", "desert-ruins", "fire-light"],
             "emotional_intensity": 88,
             "accessibility_factors": {
               "lexical": 3,
@@ -1255,6 +742,16 @@
               "narrativity": 2
             },
             "accessibility_score": 4.8
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["grief", "reverence"],
+            "mood_primary": "grief",
+            "topics": ["loss-death", "faith-spirit"],
+            "motifs": ["tears", "desert-ruins"],
+            "emotional_intensity": 90,
+            "accessibility_level": 3
           }
         }
       }
@@ -1268,79 +765,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "grief",
-              "melancholy",
-              "despair"
-            ],
+            "moods": ["grief", "melancholy", "despair"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "time-mortality"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light"
-            ],
+            "topics": ["loss-death", "time-mortality"],
+            "motifs": ["tears", "fire-light"],
             "emotional_intensity": 90,
             "accessibility_level": 3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "grief",
-              "melancholy",
-              "despair"
-            ],
+            "moods": ["grief", "melancholy", "despair"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "time-mortality"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light"
-            ],
+            "topics": ["loss-death", "time-mortality"],
+            "motifs": ["tears", "fire-light"],
             "emotional_intensity": 95,
             "accessibility_level": 3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "grief",
-              "melancholy",
-              "yearning",
-              "bittersweet"
-            ],
+            "moods": ["grief", "melancholy", "yearning", "bittersweet"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "time-mortality",
-              "love"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "sword-battle"
-            ],
+            "topics": ["loss-death", "time-mortality", "love"],
+            "motifs": ["tears", "fire-light", "sword-battle"],
             "emotional_intensity": 90,
             "accessibility_level": 3
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "grief",
-              "melancholy",
-              "despair"
-            ],
+            "moods": ["grief", "melancholy", "despair"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "time-mortality"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light"
-            ],
+            "topics": ["loss-death", "time-mortality"],
+            "motifs": ["tears", "fire-light"],
             "emotional_intensity": 85,
             "accessibility_factors": {
               "lexical": 3,
@@ -1352,20 +806,10 @@
             "accessibility_score": 4.0
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "grief",
-              "melancholy",
-              "despair"
-            ],
+            "moods": ["grief", "melancholy", "despair"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "time-mortality"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light"
-            ],
+            "topics": ["loss-death", "time-mortality"],
+            "motifs": ["tears", "fire-light"],
             "emotional_intensity": 90,
             "accessibility_factors": {
               "lexical": 4,
@@ -1377,21 +821,10 @@
             "accessibility_score": 4.6
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "grief",
-              "melancholy",
-              "yearning"
-            ],
+            "moods": ["grief", "melancholy", "yearning"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "wine-cup",
-              "night"
-            ],
+            "topics": ["loss-death"],
+            "motifs": ["tears", "fire-light", "wine-cup", "night"],
             "emotional_intensity": 85,
             "accessibility_factors": {
               "lexical": 3,
@@ -1401,6 +834,16 @@
               "narrativity": 2
             },
             "accessibility_score": 4.0
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["grief"],
+            "mood_primary": "grief",
+            "topics": ["loss-death"],
+            "motifs": ["tears"],
+            "emotional_intensity": 90,
+            "accessibility_level": 3
           }
         }
       }
@@ -1414,76 +857,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "yearning",
-              "passion",
-              "melancholy"
-            ],
+            "moods": ["yearning", "passion", "melancholy"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "journey",
-              "birds"
-            ],
+            "topics": ["love", "exile-longing"],
+            "motifs": ["journey", "birds"],
             "emotional_intensity": 85,
             "accessibility_level": 3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "despair"
-            ],
+            "moods": ["yearning", "melancholy", "despair"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "journey"
-            ],
+            "topics": ["love", "exile-longing"],
+            "motifs": ["journey"],
             "emotional_intensity": 85,
             "accessibility_level": 3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "yearning",
-              "passion",
-              "melancholy",
-              "despair"
-            ],
+            "moods": ["yearning", "passion", "melancholy", "despair"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "journey",
-              "birds"
-            ],
+            "topics": ["love", "exile-longing"],
+            "motifs": ["journey", "birds"],
             "emotional_intensity": 88,
             "accessibility_level": 2
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "despair"
-            ],
+            "moods": ["yearning", "melancholy", "despair"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "journey",
-              "birds"
-            ],
+            "topics": ["love", "exile-longing"],
+            "motifs": ["journey", "birds"],
             "emotional_intensity": 80,
             "accessibility_factors": {
               "lexical": 3,
@@ -1495,19 +898,10 @@
             "accessibility_score": 2.5
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "despair"
-            ],
+            "moods": ["yearning", "melancholy", "despair"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "journey"
-            ],
+            "topics": ["love", "exile-longing"],
+            "motifs": ["journey"],
             "emotional_intensity": 80,
             "accessibility_factors": {
               "lexical": 3,
@@ -1519,20 +913,10 @@
             "accessibility_score": 5.0
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "passion",
-              "yearning",
-              "despair"
-            ],
+            "moods": ["passion", "yearning", "despair"],
             "mood_primary": "passion",
-            "topics": [
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "birds",
-              "journey"
-            ],
+            "topics": ["love", "exile-longing"],
+            "motifs": ["birds", "journey"],
             "emotional_intensity": 82,
             "accessibility_factors": {
               "lexical": 2,
@@ -1542,6 +926,16 @@
               "narrativity": 3
             },
             "accessibility_score": 2.7
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["passion", "despair"],
+            "mood_primary": "passion",
+            "topics": ["love"],
+            "motifs": ["journey"],
+            "emotional_intensity": 85,
+            "accessibility_level": 3
           }
         }
       }
@@ -1555,70 +949,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "pride",
-              "reverence"
-            ],
+            "moods": ["pride", "reverence"],
             "mood_primary": "pride",
-            "topics": [
-              "honor-pride",
-              "wisdom-ethics"
-            ],
-            "motifs": [
-              "sword-battle",
-              "moon-stars"
-            ],
+            "topics": ["honor-pride", "wisdom-ethics"],
+            "motifs": ["sword-battle", "moon-stars"],
             "emotional_intensity": 60,
             "accessibility_level": 4
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "pride"
-            ],
+            "moods": ["pride"],
             "mood_primary": "pride",
-            "topics": [
-              "honor-pride",
-              "wisdom-ethics"
-            ],
-            "motifs": [
-              "fire-light"
-            ],
+            "topics": ["honor-pride", "wisdom-ethics"],
+            "motifs": ["fire-light"],
             "emotional_intensity": 70,
             "accessibility_level": 4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "pride",
-              "reverence"
-            ],
+            "moods": ["pride", "reverence"],
             "mood_primary": "pride",
-            "topics": [
-              "honor-pride",
-              "wisdom-ethics"
-            ],
-            "motifs": [
-              "moon-stars",
-              "fire-light"
-            ],
+            "topics": ["honor-pride", "wisdom-ethics"],
+            "motifs": ["moon-stars", "fire-light"],
             "emotional_intensity": 75,
             "accessibility_level": 4
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "pride",
-              "reverence"
-            ],
+            "moods": ["pride", "reverence"],
             "mood_primary": "pride",
-            "topics": [
-              "honor-pride",
-              "wisdom-ethics"
-            ],
-            "motifs": [
-              "sword-battle",
-              "moon-stars"
-            ],
+            "topics": ["honor-pride", "wisdom-ethics"],
+            "motifs": ["sword-battle", "moon-stars"],
             "emotional_intensity": 60,
             "accessibility_factors": {
               "lexical": 4,
@@ -1630,17 +990,10 @@
             "accessibility_score": 5.2
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "pride"
-            ],
+            "moods": ["pride"],
             "mood_primary": "pride",
-            "topics": [
-              "honor-pride",
-              "wisdom-ethics"
-            ],
-            "motifs": [
-              "fire-light"
-            ],
+            "topics": ["honor-pride", "wisdom-ethics"],
+            "motifs": ["fire-light"],
             "emotional_intensity": 65,
             "accessibility_factors": {
               "lexical": 3,
@@ -1652,19 +1005,10 @@
             "accessibility_score": 5.4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "pride",
-              "reverence"
-            ],
+            "moods": ["pride", "reverence"],
             "mood_primary": "pride",
-            "topics": [
-              "honor-pride",
-              "wisdom-ethics"
-            ],
-            "motifs": [
-              "moon-stars",
-              "sword-battle"
-            ],
+            "topics": ["honor-pride", "wisdom-ethics"],
+            "motifs": ["moon-stars", "sword-battle"],
             "emotional_intensity": 65,
             "accessibility_factors": {
               "lexical": 4,
@@ -1674,6 +1018,16 @@
               "narrativity": 1
             },
             "accessibility_score": 6.0
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["pride"],
+            "mood_primary": "pride",
+            "topics": ["honor-pride"],
+            "motifs": ["sword-battle"],
+            "emotional_intensity": 85,
+            "accessibility_level": 4
           }
         }
       }
@@ -1687,90 +1041,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "grief",
-              "defiance",
-              "pride"
-            ],
+            "moods": ["grief", "defiance", "pride"],
             "mood_primary": "grief",
-            "topics": [
-              "homeland",
-              "war-conflict",
-              "freedom"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "sea-water"
-            ],
+            "topics": ["homeland", "war-conflict", "freedom"],
+            "motifs": ["tears", "fire-light", "sea-water"],
             "emotional_intensity": 95,
             "accessibility_level": 3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "grief",
-              "defiance",
-              "pride",
-              "hope"
-            ],
+            "moods": ["grief", "defiance", "pride", "hope"],
             "mood_primary": "grief",
-            "topics": [
-              "homeland",
-              "war-conflict",
-              "justice-oppression",
-              "freedom"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "dawn"
-            ],
+            "topics": ["homeland", "war-conflict", "justice-oppression", "freedom"],
+            "motifs": ["tears", "fire-light", "dawn"],
             "emotional_intensity": 90,
             "accessibility_level": 3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "grief",
-              "defiance",
-              "pride",
-              "hope"
-            ],
+            "moods": ["grief", "defiance", "pride", "hope"],
             "mood_primary": "grief",
-            "topics": [
-              "homeland",
-              "war-conflict",
-              "freedom",
-              "justice-oppression"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "night",
-              "garden-flowers"
-            ],
+            "topics": ["homeland", "war-conflict", "freedom", "justice-oppression"],
+            "motifs": ["tears", "fire-light", "night", "garden-flowers"],
             "emotional_intensity": 92,
             "accessibility_level": 2
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "grief",
-              "defiance",
-              "pride"
-            ],
+            "moods": ["grief", "defiance", "pride"],
             "mood_primary": "grief",
-            "topics": [
-              "homeland",
-              "war-conflict",
-              "freedom",
-              "justice-oppression"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "sea-water"
-            ],
+            "topics": ["homeland", "war-conflict", "freedom", "justice-oppression"],
+            "motifs": ["tears", "fire-light", "sea-water"],
             "emotional_intensity": 90,
             "accessibility_factors": {
               "lexical": 3,
@@ -1782,24 +1082,10 @@
             "accessibility_score": 5.2
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "grief",
-              "defiance",
-              "hope",
-              "pride"
-            ],
+            "moods": ["grief", "defiance", "hope", "pride"],
             "mood_primary": "grief",
-            "topics": [
-              "homeland",
-              "war-conflict",
-              "justice-oppression",
-              "freedom"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "night"
-            ],
+            "topics": ["homeland", "war-conflict", "justice-oppression", "freedom"],
+            "motifs": ["tears", "fire-light", "night"],
             "emotional_intensity": 90,
             "accessibility_factors": {
               "lexical": 3,
@@ -1811,26 +1097,10 @@
             "accessibility_score": 5.6
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "defiance",
-              "grief",
-              "pride",
-              "hope"
-            ],
+            "moods": ["defiance", "grief", "pride", "hope"],
             "mood_primary": "defiance",
-            "topics": [
-              "homeland",
-              "war-conflict",
-              "freedom",
-              "justice-oppression"
-            ],
-            "motifs": [
-              "fire-light",
-              "tears",
-              "night",
-              "sword-battle",
-              "sea-water"
-            ],
+            "topics": ["homeland", "war-conflict", "freedom", "justice-oppression"],
+            "motifs": ["fire-light", "tears", "night", "sword-battle", "sea-water"],
             "emotional_intensity": 88,
             "accessibility_factors": {
               "lexical": 2,
@@ -1840,6 +1110,16 @@
               "narrativity": 2
             },
             "accessibility_score": 3.8
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["grief", "defiance"],
+            "mood_primary": "grief",
+            "topics": ["homeland", "war-conflict"],
+            "motifs": ["tears", "fire-light"],
+            "emotional_intensity": 88,
+            "accessibility_level": 3
           }
         }
       }
@@ -1853,73 +1133,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "amorous",
-              "joy"
-            ],
+            "moods": ["amorous", "joy"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "nature"
-            ],
-            "motifs": [
-              "garden-flowers"
-            ],
+            "topics": ["love", "nature"],
+            "motifs": ["garden-flowers"],
             "emotional_intensity": 70,
             "accessibility_level": 2
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "amorous",
-              "joy",
-              "contemplation",
-              "bittersweet"
-            ],
+            "moods": ["amorous", "joy", "contemplation", "bittersweet"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty",
-              "nature"
-            ],
-            "motifs": [
-              "garden-flowers",
-              "night"
-            ],
+            "topics": ["love", "beauty", "nature"],
+            "motifs": ["garden-flowers", "night"],
             "emotional_intensity": 65,
             "accessibility_level": 2
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "amorous",
-              "joy",
-              "bittersweet"
-            ],
+            "moods": ["amorous", "joy", "bittersweet"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty"
-            ],
-            "motifs": [
-              "garden-flowers"
-            ],
+            "topics": ["love", "beauty"],
+            "motifs": ["garden-flowers"],
             "emotional_intensity": 70,
             "accessibility_level": 2
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "amorous",
-              "joy"
-            ],
+            "moods": ["amorous", "joy"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "nature"
-            ],
-            "motifs": [
-              "garden-flowers"
-            ],
+            "topics": ["love", "nature"],
+            "motifs": ["garden-flowers"],
             "emotional_intensity": 65,
             "accessibility_factors": {
               "lexical": 2,
@@ -1931,20 +1174,10 @@
             "accessibility_score": 2.1
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "amorous",
-              "bittersweet",
-              "contemplation"
-            ],
+            "moods": ["amorous", "bittersweet", "contemplation"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty",
-              "nature"
-            ],
-            "motifs": [
-              "garden-flowers"
-            ],
+            "topics": ["love", "beauty", "nature"],
+            "motifs": ["garden-flowers"],
             "emotional_intensity": 55,
             "accessibility_factors": {
               "lexical": 2,
@@ -1956,20 +1189,10 @@
             "accessibility_score": 1.7
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "amorous",
-              "joy",
-              "bittersweet"
-            ],
+            "moods": ["amorous", "joy", "bittersweet"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "women-feminine",
-              "nature"
-            ],
-            "motifs": [
-              "garden-flowers"
-            ],
+            "topics": ["love", "women-feminine", "nature"],
+            "motifs": ["garden-flowers"],
             "emotional_intensity": 62,
             "accessibility_factors": {
               "lexical": 2,
@@ -1979,6 +1202,16 @@
               "narrativity": 2
             },
             "accessibility_score": 2.9
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["amorous", "nostalgia"],
+            "mood_primary": "amorous",
+            "topics": ["love", "nature"],
+            "motifs": ["garden-flowers"],
+            "emotional_intensity": 75,
+            "accessibility_level": 3
           }
         }
       }
@@ -1992,79 +1225,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "grief",
-              "despair",
-              "yearning"
-            ],
+            "moods": ["grief", "despair", "yearning"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "love"
-            ],
-            "motifs": [
-              "tears",
-              "journey"
-            ],
+            "topics": ["loss-death", "love"],
+            "motifs": ["tears", "journey"],
             "emotional_intensity": 95,
             "accessibility_level": 4
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "grief",
-              "despair",
-              "melancholy",
-              "passion"
-            ],
+            "moods": ["grief", "despair", "melancholy", "passion"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "love"
-            ],
-            "motifs": [
-              "tears"
-            ],
+            "topics": ["loss-death", "love"],
+            "motifs": ["tears"],
             "emotional_intensity": 90,
             "accessibility_level": 3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "grief",
-              "yearning",
-              "despair",
-              "melancholy"
-            ],
+            "moods": ["grief", "yearning", "despair", "melancholy"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "tears",
-              "journey"
-            ],
+            "topics": ["loss-death", "love", "exile-longing"],
+            "motifs": ["tears", "journey"],
             "emotional_intensity": 92,
             "accessibility_level": 4
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "grief",
-              "yearning",
-              "despair"
-            ],
+            "moods": ["grief", "yearning", "despair"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "journey",
-              "tears"
-            ],
+            "topics": ["loss-death", "love", "exile-longing"],
+            "motifs": ["journey", "tears"],
             "emotional_intensity": 90,
             "accessibility_factors": {
               "lexical": 4,
@@ -2076,20 +1266,10 @@
             "accessibility_score": 3.8
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "grief",
-              "despair",
-              "yearning",
-              "passion"
-            ],
+            "moods": ["grief", "despair", "yearning", "passion"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "love"
-            ],
-            "motifs": [
-              "tears"
-            ],
+            "topics": ["loss-death", "love"],
+            "motifs": ["tears"],
             "emotional_intensity": 90,
             "accessibility_factors": {
               "lexical": 4,
@@ -2101,22 +1281,10 @@
             "accessibility_score": 5.0
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "grief",
-              "despair",
-              "yearning",
-              "melancholy"
-            ],
+            "moods": ["grief", "despair", "yearning", "melancholy"],
             "mood_primary": "grief",
-            "topics": [
-              "loss-death",
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "journey",
-              "tears"
-            ],
+            "topics": ["loss-death", "love", "exile-longing"],
+            "motifs": ["journey", "tears"],
             "emotional_intensity": 88,
             "accessibility_factors": {
               "lexical": 4,
@@ -2126,6 +1294,16 @@
               "narrativity": 3
             },
             "accessibility_score": 4.8
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["grief"],
+            "mood_primary": "grief",
+            "topics": ["love"],
+            "motifs": ["journey", "tears"],
+            "emotional_intensity": 90,
+            "accessibility_level": 4
           }
         }
       }
@@ -2139,81 +1317,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "amorous",
-              "joy"
-            ],
+            "moods": ["amorous", "joy"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty"
-            ],
-            "motifs": [
-              "night",
-              "moon-stars",
-              "dawn"
-            ],
+            "topics": ["love", "beauty"],
+            "motifs": ["night", "moon-stars", "dawn"],
             "emotional_intensity": 80,
             "accessibility_level": 3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "amorous",
-              "yearning",
-              "joy"
-            ],
+            "moods": ["amorous", "yearning", "joy"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty",
-              "women-feminine"
-            ],
-            "motifs": [
-              "night",
-              "dawn"
-            ],
+            "topics": ["love", "beauty", "women-feminine"],
+            "motifs": ["night", "dawn"],
             "emotional_intensity": 70,
             "accessibility_level": 3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "amorous",
-              "passion",
-              "serenity"
-            ],
+            "moods": ["amorous", "passion", "serenity"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty"
-            ],
-            "motifs": [
-              "night",
-              "moon-stars",
-              "garden-flowers",
-              "dawn"
-            ],
+            "topics": ["love", "beauty"],
+            "motifs": ["night", "moon-stars", "garden-flowers", "dawn"],
             "emotional_intensity": 78,
             "accessibility_level": 3
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "amorous",
-              "joy"
-            ],
+            "moods": ["amorous", "joy"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty",
-              "nature"
-            ],
-            "motifs": [
-              "night",
-              "moon-stars",
-              "garden-flowers",
-              "dawn"
-            ],
+            "topics": ["love", "beauty", "nature"],
+            "motifs": ["night", "moon-stars", "garden-flowers", "dawn"],
             "emotional_intensity": 70,
             "accessibility_factors": {
               "lexical": 3,
@@ -2225,20 +1358,10 @@
             "accessibility_score": 3.5
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "amorous",
-              "passion"
-            ],
+            "moods": ["amorous", "passion"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty",
-              "women-feminine"
-            ],
-            "motifs": [
-              "night",
-              "dawn"
-            ],
+            "topics": ["love", "beauty", "women-feminine"],
+            "motifs": ["night", "dawn"],
             "emotional_intensity": 70,
             "accessibility_factors": {
               "lexical": 3,
@@ -2250,23 +1373,10 @@
             "accessibility_score": 3.1
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "amorous",
-              "passion",
-              "serenity"
-            ],
+            "moods": ["amorous", "passion", "serenity"],
             "mood_primary": "amorous",
-            "topics": [
-              "love",
-              "beauty",
-              "nature"
-            ],
-            "motifs": [
-              "night",
-              "moon-stars",
-              "garden-flowers",
-              "dawn"
-            ],
+            "topics": ["love", "beauty", "nature"],
+            "motifs": ["night", "moon-stars", "garden-flowers", "dawn"],
             "emotional_intensity": 70,
             "accessibility_factors": {
               "lexical": 3,
@@ -2276,6 +1386,16 @@
               "narrativity": 2
             },
             "accessibility_score": 4.0
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["amorous", "nostalgia"],
+            "mood_primary": "amorous",
+            "topics": ["love", "women-feminine"],
+            "motifs": ["night", "moon-stars"],
+            "emotional_intensity": 70,
+            "accessibility_level": 3
           }
         }
       }
@@ -2289,82 +1409,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "nostalgia",
-              "pride"
-            ],
+            "moods": ["nostalgia", "pride"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "honor-pride",
-              "war-conflict"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "journey"
-            ],
+            "topics": ["honor-pride", "war-conflict"],
+            "motifs": ["desert-ruins", "journey"],
             "emotional_intensity": 75,
             "accessibility_level": 5
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "nostalgia",
-              "pride",
-              "amorous"
-            ],
+            "moods": ["nostalgia", "pride", "amorous"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "exile-longing",
-              "love",
-              "honor-pride",
-              "women-feminine"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "journey",
-              "night"
-            ],
+            "topics": ["exile-longing", "love", "honor-pride", "women-feminine"],
+            "motifs": ["desert-ruins", "journey", "night"],
             "emotional_intensity": 60,
             "accessibility_level": 4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "nostalgia",
-              "pride",
-              "reverence"
-            ],
+            "moods": ["nostalgia", "pride", "reverence"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "honor-pride",
-              "exile-longing",
-              "war-conflict"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "journey",
-              "night"
-            ],
+            "topics": ["honor-pride", "exile-longing", "war-conflict"],
+            "motifs": ["desert-ruins", "journey", "night"],
             "emotional_intensity": 75,
             "accessibility_level": 5
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "nostalgia",
-              "pride",
-              "reverence"
-            ],
+            "moods": ["nostalgia", "pride", "reverence"],
             "mood_primary": "pride",
-            "topics": [
-              "honor-pride",
-              "women-feminine",
-              "war-conflict"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "journey",
-              "night"
-            ],
+            "topics": ["honor-pride", "women-feminine", "war-conflict"],
+            "motifs": ["desert-ruins", "journey", "night"],
             "emotional_intensity": 55,
             "accessibility_factors": {
               "lexical": 5,
@@ -2376,22 +1450,10 @@
             "accessibility_score": 6.0
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "nostalgia",
-              "pride",
-              "reverence"
-            ],
+            "moods": ["nostalgia", "pride", "reverence"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "exile-longing",
-              "homeland",
-              "honor-pride",
-              "women-feminine"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "journey"
-            ],
+            "topics": ["exile-longing", "homeland", "honor-pride", "women-feminine"],
+            "motifs": ["desert-ruins", "journey"],
             "emotional_intensity": 65,
             "accessibility_factors": {
               "lexical": 4,
@@ -2403,21 +1465,10 @@
             "accessibility_score": 6.9
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "reverence",
-              "nostalgia",
-              "pride"
-            ],
+            "moods": ["reverence", "nostalgia", "pride"],
             "mood_primary": "reverence",
-            "topics": [
-              "honor-pride",
-              "war-conflict",
-              "time-mortality"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "journey"
-            ],
+            "topics": ["honor-pride", "war-conflict", "time-mortality"],
+            "motifs": ["desert-ruins", "journey"],
             "emotional_intensity": 68,
             "accessibility_factors": {
               "lexical": 5,
@@ -2427,6 +1478,16 @@
               "narrativity": 4
             },
             "accessibility_score": 7.7
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["reverence", "nostalgia"],
+            "mood_primary": "reverence",
+            "topics": ["honor-pride"],
+            "motifs": ["desert-ruins", "journey"],
+            "emotional_intensity": 75,
+            "accessibility_level": 4
           }
         }
       }
@@ -2440,46 +1501,25 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "contemplation",
-              "reverence",
-              "passion"
-            ],
+            "moods": ["contemplation", "reverence", "passion"],
             "mood_primary": "contemplation",
-            "topics": [
-              "faith-spirit",
-              "wisdom-ethics"
-            ],
+            "topics": ["faith-spirit", "wisdom-ethics"],
             "motifs": [],
             "emotional_intensity": 70,
             "accessibility_level": 5
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "contemplation",
-              "reverence",
-              "passion"
-            ],
+            "moods": ["contemplation", "reverence", "passion"],
             "mood_primary": "contemplation",
-            "topics": [
-              "faith-spirit",
-              "wisdom-ethics"
-            ],
+            "topics": ["faith-spirit", "wisdom-ethics"],
             "motifs": [],
             "emotional_intensity": 70,
             "accessibility_level": 5
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "contemplation",
-              "reverence",
-              "passion"
-            ],
+            "moods": ["contemplation", "reverence", "passion"],
             "mood_primary": "contemplation",
-            "topics": [
-              "faith-spirit",
-              "wisdom-ethics"
-            ],
+            "topics": ["faith-spirit", "wisdom-ethics"],
             "motifs": [],
             "emotional_intensity": 75,
             "accessibility_level": 5
@@ -2487,15 +1527,9 @@
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "contemplation",
-              "reverence"
-            ],
+            "moods": ["contemplation", "reverence"],
             "mood_primary": "contemplation",
-            "topics": [
-              "faith-spirit",
-              "wisdom-ethics"
-            ],
+            "topics": ["faith-spirit", "wisdom-ethics"],
             "motifs": [],
             "emotional_intensity": 50,
             "accessibility_factors": {
@@ -2508,15 +1542,9 @@
             "accessibility_score": 5.8
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "contemplation",
-              "reverence"
-            ],
+            "moods": ["contemplation", "reverence"],
             "mood_primary": "contemplation",
-            "topics": [
-              "faith-spirit",
-              "wisdom-ethics"
-            ],
+            "topics": ["faith-spirit", "wisdom-ethics"],
             "motifs": [],
             "emotional_intensity": 40,
             "accessibility_factors": {
@@ -2529,19 +1557,10 @@
             "accessibility_score": 6.5
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "contemplation",
-              "reverence",
-              "passion"
-            ],
+            "moods": ["contemplation", "reverence", "passion"],
             "mood_primary": "contemplation",
-            "topics": [
-              "faith-spirit",
-              "wisdom-ethics"
-            ],
-            "motifs": [
-              "fire-light"
-            ],
+            "topics": ["faith-spirit", "wisdom-ethics"],
+            "motifs": ["fire-light"],
             "emotional_intensity": 65,
             "accessibility_factors": {
               "lexical": 3,
@@ -2551,6 +1570,16 @@
               "narrativity": 1
             },
             "accessibility_score": 6.7
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["contemplation", "reverence"],
+            "mood_primary": "contemplation",
+            "topics": [],
+            "motifs": [],
+            "emotional_intensity": 70,
+            "accessibility_level": 4
           }
         }
       }
@@ -2564,97 +1593,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "nostalgia",
-              "yearning",
-              "pride"
-            ],
+            "moods": ["nostalgia", "yearning", "pride"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "exile-longing",
-              "homeland",
-              "honor-pride",
-              "war-conflict"
-            ],
-            "motifs": [
-              "night",
-              "desert-ruins",
-              "journey",
-              "birds",
-              "sword-battle"
-            ],
+            "topics": ["exile-longing", "homeland", "honor-pride", "war-conflict"],
+            "motifs": ["night", "desert-ruins", "journey", "birds", "sword-battle"],
             "emotional_intensity": 80,
             "accessibility_level": 5
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "yearning",
-              "nostalgia",
-              "melancholy",
-              "pride"
-            ],
+            "moods": ["yearning", "nostalgia", "melancholy", "pride"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing",
-              "homeland",
-              "honor-pride"
-            ],
-            "motifs": [
-              "night",
-              "desert-ruins",
-              "journey",
-              "birds"
-            ],
+            "topics": ["love", "exile-longing", "homeland", "honor-pride"],
+            "motifs": ["night", "desert-ruins", "journey", "birds"],
             "emotional_intensity": 75,
             "accessibility_level": 4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "nostalgia",
-              "yearning",
-              "pride",
-              "defiance"
-            ],
+            "moods": ["nostalgia", "yearning", "pride", "defiance"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "exile-longing",
-              "love",
-              "honor-pride",
-              "war-conflict"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "journey",
-              "birds",
-              "sword-battle",
-              "night"
-            ],
+            "topics": ["exile-longing", "love", "honor-pride", "war-conflict"],
+            "motifs": ["desert-ruins", "journey", "birds", "sword-battle", "night"],
             "emotional_intensity": 70,
             "accessibility_level": 5
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "nostalgia",
-              "yearning",
-              "defiance",
-              "pride"
-            ],
+            "moods": ["nostalgia", "yearning", "defiance", "pride"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "exile-longing",
-              "honor-pride",
-              "war-conflict"
-            ],
-            "motifs": [
-              "night",
-              "desert-ruins",
-              "journey",
-              "birds",
-              "sword-battle"
-            ],
+            "topics": ["exile-longing", "honor-pride", "war-conflict"],
+            "motifs": ["night", "desert-ruins", "journey", "birds", "sword-battle"],
             "emotional_intensity": 75,
             "accessibility_factors": {
               "lexical": 5,
@@ -2666,25 +1634,10 @@
             "accessibility_score": 5.8
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "yearning",
-              "nostalgia",
-              "melancholy",
-              "pride"
-            ],
+            "moods": ["yearning", "nostalgia", "melancholy", "pride"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing",
-              "homeland",
-              "honor-pride"
-            ],
-            "motifs": [
-              "night",
-              "desert-ruins",
-              "journey",
-              "birds"
-            ],
+            "topics": ["love", "exile-longing", "homeland", "honor-pride"],
+            "motifs": ["night", "desert-ruins", "journey", "birds"],
             "emotional_intensity": 75,
             "accessibility_factors": {
               "lexical": 5,
@@ -2696,25 +1649,10 @@
             "accessibility_score": 7.5
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "nostalgia",
-              "yearning",
-              "pride"
-            ],
+            "moods": ["nostalgia", "yearning", "pride"],
             "mood_primary": "nostalgia",
-            "topics": [
-              "exile-longing",
-              "love",
-              "honor-pride",
-              "war-conflict"
-            ],
-            "motifs": [
-              "desert-ruins",
-              "night",
-              "birds",
-              "journey",
-              "sword-battle"
-            ],
+            "topics": ["exile-longing", "love", "honor-pride", "war-conflict"],
+            "motifs": ["desert-ruins", "night", "birds", "journey", "sword-battle"],
             "emotional_intensity": 75,
             "accessibility_factors": {
               "lexical": 5,
@@ -2724,6 +1662,16 @@
               "narrativity": 4
             },
             "accessibility_score": 6.9
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["yearning", "pride"],
+            "mood_primary": "yearning",
+            "topics": ["love", "honor-pride"],
+            "motifs": ["night", "desert-ruins"],
+            "emotional_intensity": 80,
+            "accessibility_level": 5
           }
         }
       }
@@ -2737,86 +1685,36 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "grief"
-            ],
+            "moods": ["yearning", "melancholy", "grief"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "tears",
-              "birds",
-              "fire-light",
-              "journey"
-            ],
+            "topics": ["love", "exile-longing"],
+            "motifs": ["tears", "birds", "fire-light", "journey"],
             "emotional_intensity": 85,
             "accessibility_level": 4
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "grief",
-              "passion"
-            ],
+            "moods": ["yearning", "melancholy", "grief", "passion"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "loss-death",
-              "exile-longing"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "birds"
-            ],
+            "topics": ["love", "loss-death", "exile-longing"],
+            "motifs": ["tears", "fire-light", "birds"],
             "emotional_intensity": 90,
             "accessibility_level": 4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "passion",
-              "despair"
-            ],
+            "moods": ["yearning", "melancholy", "passion", "despair"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing",
-              "loss-death"
-            ],
-            "motifs": [
-              "tears",
-              "birds",
-              "fire-light",
-              "garden-flowers"
-            ],
+            "topics": ["love", "exile-longing", "loss-death"],
+            "motifs": ["tears", "birds", "fire-light", "garden-flowers"],
             "emotional_intensity": 88,
             "accessibility_level": 3
           }
         },
         "v4-rubric": {
           "judge": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "grief"
-            ],
+            "moods": ["yearning", "melancholy", "grief"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing"
-            ],
-            "motifs": [
-              "tears",
-              "birds",
-              "fire-light"
-            ],
+            "topics": ["love", "exile-longing"],
+            "motifs": ["tears", "birds", "fire-light"],
             "emotional_intensity": 85,
             "accessibility_factors": {
               "lexical": 3,
@@ -2828,24 +1726,10 @@
             "accessibility_score": 4.6
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "grief",
-              "passion"
-            ],
+            "moods": ["yearning", "melancholy", "grief", "passion"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing",
-              "loss-death"
-            ],
-            "motifs": [
-              "tears",
-              "fire-light",
-              "birds",
-              "night"
-            ],
+            "topics": ["love", "exile-longing", "loss-death"],
+            "motifs": ["tears", "fire-light", "birds", "night"],
             "emotional_intensity": 90,
             "accessibility_factors": {
               "lexical": 3,
@@ -2857,24 +1741,10 @@
             "accessibility_score": 4.4
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "grief",
-              "bittersweet"
-            ],
+            "moods": ["yearning", "melancholy", "grief", "bittersweet"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "exile-longing",
-              "loss-death"
-            ],
-            "motifs": [
-              "tears",
-              "birds",
-              "fire-light",
-              "sea-water"
-            ],
+            "topics": ["love", "exile-longing", "loss-death"],
+            "motifs": ["tears", "birds", "fire-light", "sea-water"],
             "emotional_intensity": 88,
             "accessibility_factors": {
               "lexical": 3,
@@ -2884,6 +1754,16 @@
               "narrativity": 2
             },
             "accessibility_score": 4.0
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["yearning", "nostalgia"],
+            "mood_primary": "yearning",
+            "topics": ["exile-longing"],
+            "motifs": ["tears", "birds"],
+            "emotional_intensity": 82,
+            "accessibility_level": 3
           }
         }
       }
@@ -2897,58 +1777,26 @@
       "labels": {
         "v2-baseline": {
           "judge": {
-            "moods": [
-              "despair",
-              "yearning",
-              "grief"
-            ],
+            "moods": ["despair", "yearning", "grief"],
             "mood_primary": "despair",
-            "topics": [
-              "love",
-              "loss-death"
-            ],
-            "motifs": [
-              "journey"
-            ],
+            "topics": ["love", "loss-death"],
+            "motifs": ["journey"],
             "emotional_intensity": 90,
             "accessibility_level": 3
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "yearning",
-              "melancholy",
-              "despair",
-              "amorous"
-            ],
+            "moods": ["yearning", "melancholy", "despair", "amorous"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "loss-death",
-              "women-feminine"
-            ],
-            "motifs": [
-              "journey"
-            ],
+            "topics": ["love", "loss-death", "women-feminine"],
+            "motifs": ["journey"],
             "emotional_intensity": 85,
             "accessibility_level": 3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "yearning",
-              "despair",
-              "bittersweet",
-              "melancholy"
-            ],
+            "moods": ["yearning", "despair", "bittersweet", "melancholy"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "loss-death",
-              "exile-longing"
-            ],
-            "motifs": [
-              "journey",
-              "tears"
-            ],
+            "topics": ["love", "loss-death", "exile-longing"],
+            "motifs": ["journey", "tears"],
             "emotional_intensity": 90,
             "accessibility_level": 2
           }
@@ -2970,22 +1818,10 @@
             "accessibility_score": null
           },
           "gemini-2.5-flash": {
-            "moods": [
-              "yearning",
-              "grief",
-              "amorous",
-              "despair"
-            ],
+            "moods": ["yearning", "grief", "amorous", "despair"],
             "mood_primary": "yearning",
-            "topics": [
-              "love",
-              "loss-death",
-              "women-feminine"
-            ],
-            "motifs": [
-              "tears",
-              "journey"
-            ],
+            "topics": ["love", "loss-death", "women-feminine"],
+            "motifs": ["tears", "journey"],
             "emotional_intensity": 85,
             "accessibility_factors": {
               "lexical": 3,
@@ -2997,21 +1833,10 @@
             "accessibility_score": 2.3
           },
           "gemini-3.6-flash": {
-            "moods": [
-              "passion",
-              "despair",
-              "yearning",
-              "melancholy"
-            ],
+            "moods": ["passion", "despair", "yearning", "melancholy"],
             "mood_primary": "despair",
-            "topics": [
-              "love",
-              "loss-death",
-              "exile-longing"
-            ],
-            "motifs": [
-              "journey"
-            ],
+            "topics": ["love", "loss-death", "exile-longing"],
+            "motifs": ["journey"],
             "emotional_intensity": 92,
             "accessibility_factors": {
               "lexical": 2,
@@ -3021,6 +1846,16 @@
               "narrativity": 3
             },
             "accessibility_score": 1.9
+          }
+        },
+        "distill-1": {
+          "gemini-3.6-flash": {
+            "moods": ["yearning", "melancholy"],
+            "mood_primary": "yearning",
+            "topics": ["love"],
+            "motifs": ["journey", "desert-ruins"],
+            "emotional_intensity": 85,
+            "accessibility_level": 3
           }
         }
       }

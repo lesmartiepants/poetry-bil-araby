@@ -12,18 +12,9 @@
       "era_id": 2,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "amorous",
-          "joy"
-        ],
-        "topics": [
-          "love",
-          "beauty"
-        ],
-        "motifs": [
-          "wine-cup",
-          "dawn"
-        ],
+        "moods": ["amorous", "joy"],
+        "topics": ["love", "beauty"],
+        "motifs": ["wine-cup", "dawn"],
         "mood_primary": "amorous",
         "emotional_intensity": 80,
         "accessibility_level": 2,
@@ -39,21 +30,9 @@
       "era_id": 3,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "joy",
-          "pride",
-          "hope"
-        ],
-        "topics": [
-          "nature",
-          "homeland",
-          "honor-pride"
-        ],
-        "motifs": [
-          "garden-flowers",
-          "birds",
-          "sea-water"
-        ],
+        "moods": ["joy", "pride", "hope"],
+        "topics": ["nature", "homeland", "honor-pride"],
+        "motifs": ["garden-flowers", "birds", "sea-water"],
         "mood_primary": "joy",
         "emotional_intensity": 75,
         "accessibility_level": 3,
@@ -69,19 +48,9 @@
       "era_id": 8,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "melancholy",
-          "contemplation"
-        ],
-        "topics": [
-          "nature",
-          "loss-death"
-        ],
-        "motifs": [
-          "tears",
-          "fire-light",
-          "garden-flowers"
-        ],
+        "moods": ["melancholy", "contemplation"],
+        "topics": ["nature", "loss-death"],
+        "motifs": ["tears", "fire-light", "garden-flowers"],
         "mood_primary": "melancholy",
         "emotional_intensity": 70,
         "accessibility_level": 3,
@@ -97,20 +66,9 @@
       "era_id": 4,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "yearning",
-          "melancholy"
-        ],
-        "topics": [
-          "love",
-          "exile-longing"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "tears",
-          "birds"
-        ],
+        "moods": ["nostalgia", "yearning", "melancholy"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["desert-ruins", "tears", "birds"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -126,23 +84,9 @@
       "era_id": 7,
       "quality_score": 85,
       "pro": {
-        "moods": [
-          "melancholy",
-          "nostalgia",
-          "pride"
-        ],
-        "topics": [
-          "exile-longing",
-          "time-mortality",
-          "honor-pride"
-        ],
-        "motifs": [
-          "birds",
-          "night",
-          "moon-stars",
-          "sword-battle",
-          "tears"
-        ],
+        "moods": ["melancholy", "nostalgia", "pride"],
+        "topics": ["exile-longing", "time-mortality", "honor-pride"],
+        "motifs": ["birds", "night", "moon-stars", "sword-battle", "tears"],
         "mood_primary": "melancholy",
         "emotional_intensity": 80,
         "accessibility_level": 4,
@@ -158,19 +102,9 @@
       "era_id": 5,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "defiance",
-          "pride"
-        ],
-        "topics": [
-          "honor-pride",
-          "women-feminine"
-        ],
-        "motifs": [
-          "night",
-          "fire-light",
-          "dawn"
-        ],
+        "moods": ["defiance", "pride"],
+        "topics": ["honor-pride", "women-feminine"],
+        "motifs": ["night", "fire-light", "dawn"],
         "mood_primary": "defiance",
         "emotional_intensity": 70,
         "accessibility_level": 5,
@@ -186,21 +120,9 @@
       "era_id": 10,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "yearning",
-          "nostalgia",
-          "melancholy"
-        ],
-        "topics": [
-          "love",
-          "exile-longing"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "night",
-          "garden-flowers",
-          "tears"
-        ],
+        "moods": ["yearning", "nostalgia", "melancholy"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["desert-ruins", "night", "garden-flowers", "tears"],
         "mood_primary": "yearning",
         "emotional_intensity": 85,
         "accessibility_level": 3,
@@ -216,20 +138,9 @@
       "era_id": 6,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "grief",
-          "reverence",
-          "melancholy"
-        ],
-        "topics": [
-          "loss-death",
-          "faith-spirit"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "tears",
-          "fire-light"
-        ],
+        "moods": ["grief", "reverence", "melancholy"],
+        "topics": ["loss-death", "faith-spirit"],
+        "motifs": ["desert-ruins", "tears", "fire-light"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -245,19 +156,9 @@
       "era_id": 9,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "grief",
-          "despair",
-          "melancholy"
-        ],
-        "topics": [
-          "loss-death",
-          "time-mortality"
-        ],
-        "motifs": [
-          "tears",
-          "fire-light"
-        ],
+        "moods": ["grief", "despair", "melancholy"],
+        "topics": ["loss-death", "time-mortality"],
+        "motifs": ["tears", "fire-light"],
         "mood_primary": "grief",
         "emotional_intensity": 95,
         "accessibility_level": 3,
@@ -273,19 +174,9 @@
       "era_id": 1,
       "quality_score": 87,
       "pro": {
-        "moods": [
-          "yearning",
-          "passion",
-          "despair"
-        ],
-        "topics": [
-          "love",
-          "exile-longing"
-        ],
-        "motifs": [
-          "journey",
-          "birds"
-        ],
+        "moods": ["yearning", "passion", "despair"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["journey", "birds"],
         "mood_primary": "yearning",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -301,19 +192,9 @@
       "era_id": 2,
       "quality_score": 83,
       "pro": {
-        "moods": [
-          "pride",
-          "reverence"
-        ],
-        "topics": [
-          "honor-pride",
-          "wisdom-ethics"
-        ],
-        "motifs": [
-          "moon-stars",
-          "fire-light",
-          "journey"
-        ],
+        "moods": ["pride", "reverence"],
+        "topics": ["honor-pride", "wisdom-ethics"],
+        "motifs": ["moon-stars", "fire-light", "journey"],
         "mood_primary": "pride",
         "emotional_intensity": 70,
         "accessibility_level": 4,
@@ -329,24 +210,9 @@
       "era_id": 3,
       "quality_score": 88,
       "pro": {
-        "moods": [
-          "grief",
-          "defiance",
-          "pride"
-        ],
-        "topics": [
-          "homeland",
-          "war-conflict",
-          "freedom",
-          "justice-oppression"
-        ],
-        "motifs": [
-          "tears",
-          "sea-water",
-          "garden-flowers",
-          "fire-light",
-          "night"
-        ],
+        "moods": ["grief", "defiance", "pride"],
+        "topics": ["homeland", "war-conflict", "freedom", "justice-oppression"],
+        "motifs": ["tears", "sea-water", "garden-flowers", "fire-light", "night"],
         "mood_primary": "grief",
         "emotional_intensity": 95,
         "accessibility_level": 3,
@@ -362,17 +228,9 @@
       "era_id": 8,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "joy",
-          "amorous"
-        ],
-        "topics": [
-          "love",
-          "nature"
-        ],
-        "motifs": [
-          "garden-flowers"
-        ],
+        "moods": ["joy", "amorous"],
+        "topics": ["love", "nature"],
+        "motifs": ["garden-flowers"],
         "mood_primary": "amorous",
         "emotional_intensity": 75,
         "accessibility_level": 2,
@@ -388,19 +246,9 @@
       "era_id": 4,
       "quality_score": 83,
       "pro": {
-        "moods": [
-          "grief",
-          "yearning",
-          "despair"
-        ],
-        "topics": [
-          "loss-death",
-          "love"
-        ],
-        "motifs": [
-          "journey",
-          "tears"
-        ],
+        "moods": ["grief", "yearning", "despair"],
+        "topics": ["loss-death", "love"],
+        "motifs": ["journey", "tears"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 4,
@@ -416,20 +264,9 @@
       "era_id": 7,
       "quality_score": 89,
       "pro": {
-        "moods": [
-          "amorous",
-          "joy"
-        ],
-        "topics": [
-          "love",
-          "beauty"
-        ],
-        "motifs": [
-          "night",
-          "moon-stars",
-          "garden-flowers",
-          "dawn"
-        ],
+        "moods": ["amorous", "joy"],
+        "topics": ["love", "beauty"],
+        "motifs": ["night", "moon-stars", "garden-flowers", "dawn"],
         "mood_primary": "amorous",
         "emotional_intensity": 80,
         "accessibility_level": 3,
@@ -445,20 +282,9 @@
       "era_id": 5,
       "quality_score": 90,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "pride"
-        ],
-        "topics": [
-          "homeland",
-          "honor-pride",
-          "women-feminine"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "night",
-          "journey"
-        ],
+        "moods": ["nostalgia", "pride"],
+        "topics": ["homeland", "honor-pride", "women-feminine"],
+        "motifs": ["desert-ruins", "night", "journey"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 60,
         "accessibility_level": 5,
@@ -474,13 +300,8 @@
       "era_id": 10,
       "quality_score": 88,
       "pro": {
-        "moods": [
-          "contemplation",
-          "reverence"
-        ],
-        "topics": [
-          "faith-spirit"
-        ],
+        "moods": ["contemplation", "reverence"],
+        "topics": ["faith-spirit"],
         "motifs": [],
         "mood_primary": "contemplation",
         "emotional_intensity": 70,
@@ -497,21 +318,9 @@
       "era_id": 6,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "yearning",
-          "defiance"
-        ],
-        "topics": [
-          "love",
-          "war-conflict",
-          "honor-pride"
-        ],
-        "motifs": [
-          "night",
-          "desert-ruins",
-          "journey",
-          "sword-battle"
-        ],
+        "moods": ["yearning", "defiance"],
+        "topics": ["love", "war-conflict", "honor-pride"],
+        "motifs": ["night", "desert-ruins", "journey", "sword-battle"],
         "mood_primary": "yearning",
         "emotional_intensity": 75,
         "accessibility_level": 5,
@@ -527,19 +336,9 @@
       "era_id": 9,
       "quality_score": 83,
       "pro": {
-        "moods": [
-          "yearning",
-          "melancholy"
-        ],
-        "topics": [
-          "exile-longing",
-          "love"
-        ],
-        "motifs": [
-          "tears",
-          "birds",
-          "night"
-        ],
+        "moods": ["yearning", "melancholy"],
+        "topics": ["exile-longing", "love"],
+        "motifs": ["tears", "birds", "night"],
         "mood_primary": "yearning",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -555,18 +354,9 @@
       "era_id": 1,
       "quality_score": 88,
       "pro": {
-        "moods": [
-          "despair",
-          "yearning",
-          "grief"
-        ],
-        "topics": [
-          "love",
-          "loss-death"
-        ],
-        "motifs": [
-          "journey"
-        ],
+        "moods": ["despair", "yearning", "grief"],
+        "topics": ["love", "loss-death"],
+        "motifs": ["journey"],
         "mood_primary": "despair",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -582,22 +372,9 @@
       "era_id": 2,
       "quality_score": 92,
       "pro": {
-        "moods": [
-          "pride",
-          "defiance",
-          "contemplation"
-        ],
-        "topics": [
-          "honor-pride",
-          "time-mortality",
-          "wisdom-ethics"
-        ],
-        "motifs": [
-          "night",
-          "journey",
-          "sword-battle",
-          "sea-water"
-        ],
+        "moods": ["pride", "defiance", "contemplation"],
+        "topics": ["honor-pride", "time-mortality", "wisdom-ethics"],
+        "motifs": ["night", "journey", "sword-battle", "sea-water"],
         "mood_primary": "pride",
         "emotional_intensity": 75,
         "accessibility_level": 4,
@@ -613,22 +390,9 @@
       "era_id": 3,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "contemplation",
-          "melancholy",
-          "bittersweet"
-        ],
-        "topics": [
-          "nature",
-          "beauty",
-          "time-mortality"
-        ],
-        "motifs": [
-          "garden-flowers",
-          "birds",
-          "night",
-          "dawn"
-        ],
+        "moods": ["contemplation", "melancholy", "bittersweet"],
+        "topics": ["nature", "beauty", "time-mortality"],
+        "motifs": ["garden-flowers", "birds", "night", "dawn"],
         "mood_primary": "contemplation",
         "emotional_intensity": 80,
         "accessibility_level": 2,
@@ -644,21 +408,9 @@
       "era_id": 8,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "joy",
-          "pride",
-          "reverence"
-        ],
-        "topics": [
-          "friendship",
-          "honor-pride",
-          "wisdom-ethics"
-        ],
-        "motifs": [
-          "sea-water",
-          "sword-battle",
-          "journey"
-        ],
+        "moods": ["joy", "pride", "reverence"],
+        "topics": ["friendship", "honor-pride", "wisdom-ethics"],
+        "motifs": ["sea-water", "sword-battle", "journey"],
         "mood_primary": "joy",
         "emotional_intensity": 65,
         "accessibility_level": 3,
@@ -674,17 +426,9 @@
       "era_id": 4,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "passion",
-          "yearning",
-          "grief"
-        ],
-        "topics": [
-          "love"
-        ],
-        "motifs": [
-          "tears"
-        ],
+        "moods": ["passion", "yearning", "grief"],
+        "topics": ["love"],
+        "motifs": ["tears"],
         "mood_primary": "passion",
         "emotional_intensity": 95,
         "accessibility_level": 1,
@@ -700,21 +444,9 @@
       "era_id": 7,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "nostalgia"
-        ],
-        "topics": [
-          "loss-death",
-          "friendship",
-          "time-mortality"
-        ],
-        "motifs": [
-          "tears",
-          "desert-ruins",
-          "fire-light"
-        ],
+        "moods": ["grief", "melancholy", "nostalgia"],
+        "topics": ["loss-death", "friendship", "time-mortality"],
+        "motifs": ["tears", "desert-ruins", "fire-light"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -730,19 +462,9 @@
       "era_id": 5,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "satire",
-          "defiance",
-          "bittersweet"
-        ],
-        "topics": [
-          "justice-oppression",
-          "wisdom-ethics"
-        ],
-        "motifs": [
-          "birds",
-          "journey"
-        ],
+        "moods": ["satire", "defiance", "bittersweet"],
+        "topics": ["justice-oppression", "wisdom-ethics"],
+        "motifs": ["birds", "journey"],
         "mood_primary": "satire",
         "emotional_intensity": 60,
         "accessibility_level": 4,
@@ -758,22 +480,9 @@
       "era_id": 10,
       "quality_score": 85,
       "pro": {
-        "moods": [
-          "amorous",
-          "yearning",
-          "passion"
-        ],
-        "topics": [
-          "love",
-          "women-feminine",
-          "beauty"
-        ],
-        "motifs": [
-          "moon-stars",
-          "tears",
-          "journey",
-          "sword-battle"
-        ],
+        "moods": ["amorous", "yearning", "passion"],
+        "topics": ["love", "women-feminine", "beauty"],
+        "motifs": ["moon-stars", "tears", "journey", "sword-battle"],
         "mood_primary": "amorous",
         "emotional_intensity": 80,
         "accessibility_level": 4,
@@ -789,15 +498,8 @@
       "era_id": 6,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "hope",
-          "contemplation",
-          "serenity"
-        ],
-        "topics": [
-          "wisdom-ethics",
-          "faith-spirit"
-        ],
+        "moods": ["hope", "contemplation", "serenity"],
+        "topics": ["wisdom-ethics", "faith-spirit"],
         "motifs": [],
         "mood_primary": "hope",
         "emotional_intensity": 50,
@@ -814,24 +516,9 @@
       "era_id": 9,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "passion",
-          "amorous",
-          "yearning",
-          "nostalgia"
-        ],
-        "topics": [
-          "love",
-          "beauty",
-          "faith-spirit"
-        ],
-        "motifs": [
-          "moon-stars",
-          "sea-water",
-          "fire-light",
-          "garden-flowers",
-          "birds"
-        ],
+        "moods": ["passion", "amorous", "yearning", "nostalgia"],
+        "topics": ["love", "beauty", "faith-spirit"],
+        "motifs": ["moon-stars", "sea-water", "fire-light", "garden-flowers", "birds"],
         "mood_primary": "passion",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -847,22 +534,9 @@
       "era_id": 1,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "grief",
-          "despair",
-          "yearning",
-          "melancholy"
-        ],
-        "topics": [
-          "love",
-          "loss-death",
-          "justice-oppression"
-        ],
-        "motifs": [
-          "birds",
-          "tears",
-          "journey"
-        ],
+        "moods": ["grief", "despair", "yearning", "melancholy"],
+        "topics": ["love", "loss-death", "justice-oppression"],
+        "motifs": ["birds", "tears", "journey"],
         "mood_primary": "grief",
         "emotional_intensity": 95,
         "accessibility_level": 3,
@@ -878,23 +552,9 @@
       "era_id": 2,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "melancholy",
-          "yearning",
-          "pride"
-        ],
-        "topics": [
-          "loss-death",
-          "exile-longing",
-          "honor-pride"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "tears",
-          "journey",
-          "night",
-          "birds"
-        ],
+        "moods": ["melancholy", "yearning", "pride"],
+        "topics": ["loss-death", "exile-longing", "honor-pride"],
+        "motifs": ["desert-ruins", "tears", "journey", "night", "birds"],
         "mood_primary": "melancholy",
         "emotional_intensity": 80,
         "accessibility_level": 4,
@@ -910,21 +570,9 @@
       "era_id": 3,
       "quality_score": 88,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "yearning",
-          "bittersweet"
-        ],
-        "topics": [
-          "exile-longing",
-          "homeland",
-          "beauty"
-        ],
-        "motifs": [
-          "sea-water",
-          "wine-cup",
-          "night"
-        ],
+        "moods": ["nostalgia", "yearning", "bittersweet"],
+        "topics": ["exile-longing", "homeland", "beauty"],
+        "motifs": ["sea-water", "wine-cup", "night"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 75,
         "accessibility_level": 2,
@@ -940,20 +588,9 @@
       "era_id": 8,
       "quality_score": 88,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "despair"
-        ],
-        "topics": [
-          "loss-death",
-          "friendship"
-        ],
-        "motifs": [
-          "moon-stars",
-          "tears",
-          "night"
-        ],
+        "moods": ["grief", "melancholy", "despair"],
+        "topics": ["loss-death", "friendship"],
+        "motifs": ["moon-stars", "tears", "night"],
         "mood_primary": "grief",
         "emotional_intensity": 95,
         "accessibility_level": 3,
@@ -969,22 +606,9 @@
       "era_id": 4,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "pride",
-          "yearning"
-        ],
-        "topics": [
-          "exile-longing",
-          "honor-pride",
-          "war-conflict"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "journey",
-          "sword-battle",
-          "fire-light"
-        ],
+        "moods": ["nostalgia", "pride", "yearning"],
+        "topics": ["exile-longing", "honor-pride", "war-conflict"],
+        "motifs": ["desert-ruins", "journey", "sword-battle", "fire-light"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 70,
         "accessibility_level": 5,
@@ -1000,22 +624,9 @@
       "era_id": 7,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "amorous",
-          "passion",
-          "pride"
-        ],
-        "topics": [
-          "love",
-          "wine-pleasure",
-          "honor-pride"
-        ],
-        "motifs": [
-          "wine-cup",
-          "garden-flowers",
-          "birds",
-          "sword-battle"
-        ],
+        "moods": ["amorous", "passion", "pride"],
+        "topics": ["love", "wine-pleasure", "honor-pride"],
+        "motifs": ["wine-cup", "garden-flowers", "birds", "sword-battle"],
         "mood_primary": "amorous",
         "emotional_intensity": 80,
         "accessibility_level": 4,
@@ -1031,19 +642,9 @@
       "era_id": 5,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "yearning",
-          "melancholy",
-          "defiance"
-        ],
-        "topics": [
-          "love",
-          "exile-longing"
-        ],
-        "motifs": [
-          "journey",
-          "desert-ruins"
-        ],
+        "moods": ["yearning", "melancholy", "defiance"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["journey", "desert-ruins"],
         "mood_primary": "yearning",
         "emotional_intensity": 75,
         "accessibility_level": 5,
@@ -1059,19 +660,9 @@
       "era_id": 10,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "passion",
-          "reverence",
-          "yearning"
-        ],
-        "topics": [
-          "faith-spirit",
-          "love"
-        ],
-        "motifs": [
-          "fire-light",
-          "night"
-        ],
+        "moods": ["passion", "reverence", "yearning"],
+        "topics": ["faith-spirit", "love"],
+        "motifs": ["fire-light", "night"],
         "mood_primary": "passion",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -1087,21 +678,9 @@
       "era_id": 6,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "yearning",
-          "pride",
-          "nostalgia"
-        ],
-        "topics": [
-          "love",
-          "honor-pride",
-          "wine-pleasure"
-        ],
-        "motifs": [
-          "journey",
-          "desert-ruins",
-          "wine-cup"
-        ],
+        "moods": ["yearning", "pride", "nostalgia"],
+        "topics": ["love", "honor-pride", "wine-pleasure"],
+        "motifs": ["journey", "desert-ruins", "wine-cup"],
         "mood_primary": "yearning",
         "emotional_intensity": 70,
         "accessibility_level": 5,
@@ -1117,18 +696,9 @@
       "era_id": 9,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "contemplation",
-          "serenity"
-        ],
-        "topics": [
-          "faith-spirit",
-          "wisdom-ethics"
-        ],
-        "motifs": [
-          "fire-light",
-          "birds"
-        ],
+        "moods": ["contemplation", "serenity"],
+        "topics": ["faith-spirit", "wisdom-ethics"],
+        "motifs": ["fire-light", "birds"],
         "mood_primary": "contemplation",
         "emotional_intensity": 60,
         "accessibility_level": 4,
@@ -1144,15 +714,8 @@
       "era_id": 1,
       "quality_score": 80,
       "pro": {
-        "moods": [
-          "contemplation",
-          "melancholy"
-        ],
-        "topics": [
-          "time-mortality",
-          "wisdom-ethics",
-          "loss-death"
-        ],
+        "moods": ["contemplation", "melancholy"],
+        "topics": ["time-mortality", "wisdom-ethics", "loss-death"],
         "motifs": [],
         "mood_primary": "contemplation",
         "emotional_intensity": 65,
@@ -1169,19 +732,9 @@
       "era_id": 2,
       "quality_score": 83,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "bittersweet"
-        ],
-        "topics": [
-          "loss-death",
-          "love"
-        ],
-        "motifs": [
-          "tears",
-          "sword-battle"
-        ],
+        "moods": ["grief", "melancholy", "bittersweet"],
+        "topics": ["loss-death", "love"],
+        "motifs": ["tears", "sword-battle"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -1197,19 +750,9 @@
       "era_id": 3,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "amorous",
-          "passion",
-          "yearning"
-        ],
-        "topics": [
-          "love",
-          "women-feminine"
-        ],
-        "motifs": [
-          "sea-water",
-          "garden-flowers"
-        ],
+        "moods": ["amorous", "passion", "yearning"],
+        "topics": ["love", "women-feminine"],
+        "motifs": ["sea-water", "garden-flowers"],
         "mood_primary": "passion",
         "emotional_intensity": 85,
         "accessibility_level": 2,
@@ -1225,22 +768,9 @@
       "era_id": 8,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "joy",
-          "serenity"
-        ],
-        "topics": [
-          "wine-pleasure",
-          "nature",
-          "time-mortality"
-        ],
-        "motifs": [
-          "dawn",
-          "garden-flowers",
-          "wine-cup",
-          "birds",
-          "sea-water"
-        ],
+        "moods": ["joy", "serenity"],
+        "topics": ["wine-pleasure", "nature", "time-mortality"],
+        "motifs": ["dawn", "garden-flowers", "wine-cup", "birds", "sea-water"],
         "mood_primary": "joy",
         "emotional_intensity": 75,
         "accessibility_level": 3,
@@ -1256,19 +786,9 @@
       "era_id": 4,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "yearning",
-          "melancholy"
-        ],
-        "topics": [
-          "love",
-          "exile-longing"
-        ],
-        "motifs": [
-          "journey",
-          "tears",
-          "desert-ruins"
-        ],
+        "moods": ["yearning", "melancholy"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["journey", "tears", "desert-ruins"],
         "mood_primary": "yearning",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -1284,20 +804,9 @@
       "era_id": 7,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "contemplation",
-          "defiance"
-        ],
-        "topics": [
-          "nature",
-          "honor-pride"
-        ],
-        "motifs": [
-          "night",
-          "moon-stars",
-          "fire-light",
-          "journey"
-        ],
+        "moods": ["contemplation", "defiance"],
+        "topics": ["nature", "honor-pride"],
+        "motifs": ["night", "moon-stars", "fire-light", "journey"],
         "mood_primary": "contemplation",
         "emotional_intensity": 70,
         "accessibility_level": 4,
@@ -1313,21 +822,9 @@
       "era_id": 5,
       "quality_score": 88,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "yearning"
-        ],
-        "topics": [
-          "loss-death",
-          "honor-pride"
-        ],
-        "motifs": [
-          "night",
-          "moon-stars",
-          "tears",
-          "sword-battle"
-        ],
+        "moods": ["grief", "melancholy", "yearning"],
+        "topics": ["loss-death", "honor-pride"],
+        "motifs": ["night", "moon-stars", "tears", "sword-battle"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 4,
@@ -1343,22 +840,9 @@
       "era_id": 10,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "amorous",
-          "passion",
-          "joy",
-          "bittersweet"
-        ],
-        "topics": [
-          "love",
-          "women-feminine"
-        ],
-        "motifs": [
-          "night",
-          "moon-stars",
-          "dawn",
-          "wine-cup"
-        ],
+        "moods": ["amorous", "passion", "joy", "bittersweet"],
+        "topics": ["love", "women-feminine"],
+        "motifs": ["night", "moon-stars", "dawn", "wine-cup"],
         "mood_primary": "amorous",
         "emotional_intensity": 85,
         "accessibility_level": 3,
@@ -1374,18 +858,9 @@
       "era_id": 6,
       "quality_score": 83,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "reverence"
-        ],
-        "topics": [
-          "loss-death",
-          "faith-spirit"
-        ],
-        "motifs": [
-          "tears"
-        ],
+        "moods": ["grief", "melancholy", "reverence"],
+        "topics": ["loss-death", "faith-spirit"],
+        "motifs": ["tears"],
         "mood_primary": "grief",
         "emotional_intensity": 95,
         "accessibility_level": 3,
@@ -1401,22 +876,9 @@
       "era_id": 9,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "grief",
-          "reverence",
-          "yearning"
-        ],
-        "topics": [
-          "loss-death",
-          "faith-spirit",
-          "justice-oppression"
-        ],
-        "motifs": [
-          "tears",
-          "desert-ruins",
-          "fire-light",
-          "sword-battle"
-        ],
+        "moods": ["grief", "reverence", "yearning"],
+        "topics": ["loss-death", "faith-spirit", "justice-oppression"],
+        "motifs": ["tears", "desert-ruins", "fire-light", "sword-battle"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 4,
@@ -1432,20 +894,9 @@
       "era_id": 1,
       "quality_score": 80,
       "pro": {
-        "moods": [
-          "amorous",
-          "passion",
-          "yearning"
-        ],
-        "topics": [
-          "love",
-          "women-feminine",
-          "beauty"
-        ],
-        "motifs": [
-          "birds",
-          "fire-light"
-        ],
+        "moods": ["amorous", "passion", "yearning"],
+        "topics": ["love", "women-feminine", "beauty"],
+        "motifs": ["birds", "fire-light"],
         "mood_primary": "amorous",
         "emotional_intensity": 80,
         "accessibility_level": 4,
@@ -1461,18 +912,9 @@
       "era_id": 2,
       "quality_score": 90,
       "pro": {
-        "moods": [
-          "grief",
-          "pride",
-          "contemplation"
-        ],
-        "topics": [
-          "loss-death",
-          "honor-pride"
-        ],
-        "motifs": [
-          "wine-cup"
-        ],
+        "moods": ["grief", "pride", "contemplation"],
+        "topics": ["loss-death", "honor-pride"],
+        "motifs": ["wine-cup"],
         "mood_primary": "grief",
         "emotional_intensity": 80,
         "accessibility_level": 4,
@@ -1488,16 +930,9 @@
       "era_id": 3,
       "quality_score": 83,
       "pro": {
-        "moods": [
-          "amorous",
-          "passion"
-        ],
-        "topics": [
-          "love"
-        ],
-        "motifs": [
-          "night"
-        ],
+        "moods": ["amorous", "passion"],
+        "topics": ["love"],
+        "motifs": ["night"],
         "mood_primary": "amorous",
         "emotional_intensity": 70,
         "accessibility_level": 2,
@@ -1513,18 +948,9 @@
       "era_id": 8,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "melancholy",
-          "yearning",
-          "passion"
-        ],
-        "topics": [
-          "love"
-        ],
-        "motifs": [
-          "tears",
-          "sword-battle"
-        ],
+        "moods": ["melancholy", "yearning", "passion"],
+        "topics": ["love"],
+        "motifs": ["tears", "sword-battle"],
         "mood_primary": "melancholy",
         "emotional_intensity": 85,
         "accessibility_level": 3,
@@ -1540,19 +966,9 @@
       "era_id": 4,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "yearning",
-          "contemplation"
-        ],
-        "topics": [
-          "love",
-          "nature"
-        ],
-        "motifs": [
-          "night",
-          "journey",
-          "desert-ruins"
-        ],
+        "moods": ["yearning", "contemplation"],
+        "topics": ["love", "nature"],
+        "motifs": ["night", "journey", "desert-ruins"],
         "mood_primary": "yearning",
         "emotional_intensity": 60,
         "accessibility_level": 5,
@@ -1568,22 +984,9 @@
       "era_id": 7,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "passion",
-          "pride",
-          "yearning"
-        ],
-        "topics": [
-          "love",
-          "honor-pride",
-          "friendship"
-        ],
-        "motifs": [
-          "tears",
-          "garden-flowers",
-          "sword-battle",
-          "night"
-        ],
+        "moods": ["passion", "pride", "yearning"],
+        "topics": ["love", "honor-pride", "friendship"],
+        "motifs": ["tears", "garden-flowers", "sword-battle", "night"],
         "mood_primary": "passion",
         "emotional_intensity": 75,
         "accessibility_level": 4,
@@ -1599,22 +1002,9 @@
       "era_id": 5,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "defiance",
-          "grief",
-          "contemplation"
-        ],
-        "topics": [
-          "justice-oppression",
-          "honor-pride",
-          "loss-death"
-        ],
-        "motifs": [
-          "night",
-          "sword-battle",
-          "tears",
-          "sea-water"
-        ],
+        "moods": ["defiance", "grief", "contemplation"],
+        "topics": ["justice-oppression", "honor-pride", "loss-death"],
+        "motifs": ["night", "sword-battle", "tears", "sea-water"],
         "mood_primary": "defiance",
         "emotional_intensity": 80,
         "accessibility_level": 4,
@@ -1630,21 +1020,9 @@
       "era_id": 10,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "amorous",
-          "yearning"
-        ],
-        "topics": [
-          "love",
-          "honor-pride",
-          "exile-longing"
-        ],
-        "motifs": [
-          "tears",
-          "moon-stars",
-          "wine-cup",
-          "garden-flowers"
-        ],
+        "moods": ["amorous", "yearning"],
+        "topics": ["love", "honor-pride", "exile-longing"],
+        "motifs": ["tears", "moon-stars", "wine-cup", "garden-flowers"],
         "mood_primary": "amorous",
         "emotional_intensity": 75,
         "accessibility_level": 3,
@@ -1660,20 +1038,9 @@
       "era_id": 6,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "pride",
-          "defiance",
-          "reverence"
-        ],
-        "topics": [
-          "honor-pride",
-          "faith-spirit",
-          "war-conflict"
-        ],
-        "motifs": [
-          "sword-battle",
-          "fire-light"
-        ],
+        "moods": ["pride", "defiance", "reverence"],
+        "topics": ["honor-pride", "faith-spirit", "war-conflict"],
+        "motifs": ["sword-battle", "fire-light"],
         "mood_primary": "pride",
         "emotional_intensity": 85,
         "accessibility_level": 2,
@@ -1689,22 +1056,9 @@
       "era_id": 9,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "yearning",
-          "nostalgia",
-          "melancholy"
-        ],
-        "topics": [
-          "love",
-          "time-mortality",
-          "honor-pride"
-        ],
-        "motifs": [
-          "tears",
-          "desert-ruins",
-          "journey",
-          "sword-battle"
-        ],
+        "moods": ["yearning", "nostalgia", "melancholy"],
+        "topics": ["love", "time-mortality", "honor-pride"],
+        "motifs": ["tears", "desert-ruins", "journey", "sword-battle"],
         "mood_primary": "yearning",
         "emotional_intensity": 80,
         "accessibility_level": 3,
@@ -1720,23 +1074,9 @@
       "era_id": 1,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "grief",
-          "defiance",
-          "melancholy"
-        ],
-        "topics": [
-          "loss-death",
-          "war-conflict",
-          "honor-pride"
-        ],
-        "motifs": [
-          "tears",
-          "night",
-          "moon-stars",
-          "sword-battle",
-          "birds"
-        ],
+        "moods": ["grief", "defiance", "melancholy"],
+        "topics": ["loss-death", "war-conflict", "honor-pride"],
+        "motifs": ["tears", "night", "moon-stars", "sword-battle", "birds"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 2,
@@ -1752,14 +1092,8 @@
       "era_id": 2,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "defiance",
-          "pride"
-        ],
-        "topics": [
-          "justice-oppression",
-          "honor-pride"
-        ],
+        "moods": ["defiance", "pride"],
+        "topics": ["justice-oppression", "honor-pride"],
         "motifs": [],
         "mood_primary": "defiance",
         "emotional_intensity": 85,
@@ -1776,19 +1110,9 @@
       "era_id": 3,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "amorous",
-          "passion",
-          "yearning"
-        ],
-        "topics": [
-          "love",
-          "friendship"
-        ],
-        "motifs": [
-          "moon-stars",
-          "garden-flowers"
-        ],
+        "moods": ["amorous", "passion", "yearning"],
+        "topics": ["love", "friendship"],
+        "motifs": ["moon-stars", "garden-flowers"],
         "mood_primary": "passion",
         "emotional_intensity": 80,
         "accessibility_level": 2,
@@ -1804,18 +1128,9 @@
       "era_id": 8,
       "quality_score": 92,
       "pro": {
-        "moods": [
-          "reverence",
-          "joy"
-        ],
-        "topics": [
-          "faith-spirit"
-        ],
-        "motifs": [
-          "dawn",
-          "night",
-          "moon-stars"
-        ],
+        "moods": ["reverence", "joy"],
+        "topics": ["faith-spirit"],
+        "motifs": ["dawn", "night", "moon-stars"],
         "mood_primary": "reverence",
         "emotional_intensity": 90,
         "accessibility_level": 1,
@@ -1831,18 +1146,9 @@
       "era_id": 4,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "amorous",
-          "passion"
-        ],
-        "topics": [
-          "love",
-          "women-feminine"
-        ],
-        "motifs": [
-          "moon-stars",
-          "sea-water"
-        ],
+        "moods": ["amorous", "passion"],
+        "topics": ["love", "women-feminine"],
+        "motifs": ["moon-stars", "sea-water"],
         "mood_primary": "amorous",
         "emotional_intensity": 75,
         "accessibility_level": 3,
@@ -1858,20 +1164,9 @@
       "era_id": 7,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "contemplation",
-          "serenity"
-        ],
-        "topics": [
-          "nature",
-          "time-mortality"
-        ],
-        "motifs": [
-          "night",
-          "moon-stars",
-          "dawn",
-          "fire-light"
-        ],
+        "moods": ["contemplation", "serenity"],
+        "topics": ["nature", "time-mortality"],
+        "motifs": ["night", "moon-stars", "dawn", "fire-light"],
         "mood_primary": "contemplation",
         "emotional_intensity": 60,
         "accessibility_level": 4,
@@ -1887,20 +1182,9 @@
       "era_id": 5,
       "quality_score": 83,
       "pro": {
-        "moods": [
-          "amorous",
-          "joy"
-        ],
-        "topics": [
-          "love",
-          "wine-pleasure",
-          "beauty"
-        ],
-        "motifs": [
-          "wine-cup",
-          "moon-stars",
-          "garden-flowers"
-        ],
+        "moods": ["amorous", "joy"],
+        "topics": ["love", "wine-pleasure", "beauty"],
+        "motifs": ["wine-cup", "moon-stars", "garden-flowers"],
         "mood_primary": "amorous",
         "emotional_intensity": 60,
         "accessibility_level": 3,
@@ -1916,18 +1200,9 @@
       "era_id": 10,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "passion",
-          "yearning",
-          "grief"
-        ],
-        "topics": [
-          "love",
-          "loss-death"
-        ],
-        "motifs": [
-          "desert-ruins"
-        ],
+        "moods": ["passion", "yearning", "grief"],
+        "topics": ["love", "loss-death"],
+        "motifs": ["desert-ruins"],
         "mood_primary": "passion",
         "emotional_intensity": 90,
         "accessibility_level": 2,
@@ -1943,22 +1218,9 @@
       "era_id": 6,
       "quality_score": 90,
       "pro": {
-        "moods": [
-          "contemplation",
-          "melancholy",
-          "grief"
-        ],
-        "topics": [
-          "time-mortality",
-          "loss-death",
-          "wisdom-ethics"
-        ],
-        "motifs": [
-          "moon-stars",
-          "desert-ruins",
-          "sword-battle",
-          "birds"
-        ],
+        "moods": ["contemplation", "melancholy", "grief"],
+        "topics": ["time-mortality", "loss-death", "wisdom-ethics"],
+        "motifs": ["moon-stars", "desert-ruins", "sword-battle", "birds"],
         "mood_primary": "contemplation",
         "emotional_intensity": 75,
         "accessibility_level": 4,
@@ -1974,22 +1236,9 @@
       "era_id": 9,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "reverence",
-          "yearning",
-          "hope"
-        ],
-        "topics": [
-          "faith-spirit",
-          "exile-longing"
-        ],
-        "motifs": [
-          "journey",
-          "desert-ruins",
-          "night",
-          "dawn",
-          "fire-light"
-        ],
+        "moods": ["reverence", "yearning", "hope"],
+        "topics": ["faith-spirit", "exile-longing"],
+        "motifs": ["journey", "desert-ruins", "night", "dawn", "fire-light"],
         "mood_primary": "reverence",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -2005,18 +1254,9 @@
       "era_id": 1,
       "quality_score": 90,
       "pro": {
-        "moods": [
-          "passion",
-          "grief",
-          "despair"
-        ],
-        "topics": [
-          "love",
-          "loss-death"
-        ],
-        "motifs": [
-          "fire-light"
-        ],
+        "moods": ["passion", "grief", "despair"],
+        "topics": ["love", "loss-death"],
+        "motifs": ["fire-light"],
         "mood_primary": "passion",
         "emotional_intensity": 95,
         "accessibility_level": 2,
@@ -2032,19 +1272,9 @@
       "era_id": 2,
       "quality_score": 80,
       "pro": {
-        "moods": [
-          "contemplation",
-          "melancholy",
-          "despair"
-        ],
-        "topics": [
-          "time-mortality",
-          "wisdom-ethics"
-        ],
-        "motifs": [
-          "night",
-          "birds"
-        ],
+        "moods": ["contemplation", "melancholy", "despair"],
+        "topics": ["time-mortality", "wisdom-ethics"],
+        "motifs": ["night", "birds"],
         "mood_primary": "contemplation",
         "emotional_intensity": 60,
         "accessibility_level": 4,
@@ -2060,20 +1290,9 @@
       "era_id": 3,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "amorous",
-          "yearning",
-          "nostalgia"
-        ],
-        "topics": [
-          "love",
-          "women-feminine"
-        ],
-        "motifs": [
-          "wine-cup",
-          "moon-stars",
-          "sea-water"
-        ],
+        "moods": ["amorous", "yearning", "nostalgia"],
+        "topics": ["love", "women-feminine"],
+        "motifs": ["wine-cup", "moon-stars", "sea-water"],
         "mood_primary": "amorous",
         "emotional_intensity": 80,
         "accessibility_level": 3,
@@ -2089,17 +1308,9 @@
       "era_id": 8,
       "quality_score": 88,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy"
-        ],
-        "topics": [
-          "loss-death"
-        ],
-        "motifs": [
-          "moon-stars",
-          "tears"
-        ],
+        "moods": ["grief", "melancholy"],
+        "topics": ["loss-death"],
+        "motifs": ["moon-stars", "tears"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 2,
@@ -2115,20 +1326,9 @@
       "era_id": 4,
       "quality_score": 90,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "yearning",
-          "melancholy"
-        ],
-        "topics": [
-          "love",
-          "exile-longing"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "journey",
-          "night"
-        ],
+        "moods": ["nostalgia", "yearning", "melancholy"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["desert-ruins", "journey", "night"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -2144,23 +1344,9 @@
       "era_id": 7,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "joy",
-          "reverence",
-          "yearning"
-        ],
-        "topics": [
-          "wine-pleasure",
-          "faith-spirit",
-          "love"
-        ],
-        "motifs": [
-          "wine-cup",
-          "garden-flowers",
-          "moon-stars",
-          "journey",
-          "tears"
-        ],
+        "moods": ["joy", "reverence", "yearning"],
+        "topics": ["wine-pleasure", "faith-spirit", "love"],
+        "motifs": ["wine-cup", "garden-flowers", "moon-stars", "journey", "tears"],
         "mood_primary": "reverence",
         "emotional_intensity": 85,
         "accessibility_level": 3,
@@ -2176,21 +1362,9 @@
       "era_id": 5,
       "quality_score": 87,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "melancholy",
-          "yearning"
-        ],
-        "topics": [
-          "loss-death",
-          "time-mortality",
-          "love"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "night",
-          "journey"
-        ],
+        "moods": ["nostalgia", "melancholy", "yearning"],
+        "topics": ["loss-death", "time-mortality", "love"],
+        "motifs": ["desert-ruins", "night", "journey"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -2206,20 +1380,9 @@
       "era_id": 10,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "pride",
-          "joy"
-        ],
-        "topics": [
-          "honor-pride",
-          "justice-oppression",
-          "wisdom-ethics"
-        ],
-        "motifs": [
-          "wine-cup",
-          "sword-battle",
-          "moon-stars"
-        ],
+        "moods": ["pride", "joy"],
+        "topics": ["honor-pride", "justice-oppression", "wisdom-ethics"],
+        "motifs": ["wine-cup", "sword-battle", "moon-stars"],
         "mood_primary": "pride",
         "emotional_intensity": 70,
         "accessibility_level": 4,
@@ -2235,22 +1398,9 @@
       "era_id": 6,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "melancholy"
-        ],
-        "topics": [
-          "loss-death",
-          "nature",
-          "time-mortality"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "tears",
-          "wine-cup",
-          "night",
-          "journey"
-        ],
+        "moods": ["nostalgia", "melancholy"],
+        "topics": ["loss-death", "nature", "time-mortality"],
+        "motifs": ["desert-ruins", "tears", "wine-cup", "night", "journey"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 80,
         "accessibility_level": 5,
@@ -2266,22 +1416,9 @@
       "era_id": 9,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "melancholy",
-          "grief"
-        ],
-        "topics": [
-          "loss-death",
-          "exile-longing",
-          "time-mortality"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "tears",
-          "journey",
-          "night"
-        ],
+        "moods": ["nostalgia", "melancholy", "grief"],
+        "topics": ["loss-death", "exile-longing", "time-mortality"],
+        "motifs": ["desert-ruins", "tears", "journey", "night"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -2297,19 +1434,9 @@
       "era_id": 1,
       "quality_score": 80,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "pride"
-        ],
-        "topics": [
-          "loss-death",
-          "honor-pride"
-        ],
-        "motifs": [
-          "tears",
-          "sea-water"
-        ],
+        "moods": ["grief", "melancholy", "pride"],
+        "topics": ["loss-death", "honor-pride"],
+        "motifs": ["tears", "sea-water"],
         "mood_primary": "grief",
         "emotional_intensity": 95,
         "accessibility_level": 3,
@@ -2325,23 +1452,9 @@
       "era_id": 2,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "pride",
-          "defiance"
-        ],
-        "topics": [
-          "loss-death",
-          "honor-pride",
-          "time-mortality"
-        ],
-        "motifs": [
-          "tears",
-          "night",
-          "sword-battle",
-          "moon-stars"
-        ],
+        "moods": ["grief", "melancholy", "pride", "defiance"],
+        "topics": ["loss-death", "honor-pride", "time-mortality"],
+        "motifs": ["tears", "night", "sword-battle", "moon-stars"],
         "mood_primary": "grief",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -2357,20 +1470,9 @@
       "era_id": 3,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "despair",
-          "grief",
-          "melancholy"
-        ],
-        "topics": [
-          "loss-death",
-          "time-mortality"
-        ],
-        "motifs": [
-          "tears",
-          "night",
-          "dawn"
-        ],
+        "moods": ["despair", "grief", "melancholy"],
+        "topics": ["loss-death", "time-mortality"],
+        "motifs": ["tears", "night", "dawn"],
         "mood_primary": "despair",
         "emotional_intensity": 90,
         "accessibility_level": 2,
@@ -2386,18 +1488,9 @@
       "era_id": 8,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "yearning",
-          "melancholy",
-          "passion"
-        ],
-        "topics": [
-          "love",
-          "exile-longing"
-        ],
-        "motifs": [
-          "tears"
-        ],
+        "moods": ["yearning", "melancholy", "passion"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["tears"],
         "mood_primary": "yearning",
         "emotional_intensity": 80,
         "accessibility_level": 3,
@@ -2413,18 +1506,9 @@
       "era_id": 4,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "pride"
-        ],
-        "topics": [
-          "honor-pride",
-          "wisdom-ethics"
-        ],
-        "motifs": [
-          "fire-light",
-          "night",
-          "sword-battle"
-        ],
+        "moods": ["pride"],
+        "topics": ["honor-pride", "wisdom-ethics"],
+        "motifs": ["fire-light", "night", "sword-battle"],
         "mood_primary": "pride",
         "emotional_intensity": 60,
         "accessibility_level": 5,
@@ -2450,22 +1534,9 @@
       "era_id": 5,
       "quality_score": 87,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "yearning",
-          "melancholy"
-        ],
-        "topics": [
-          "exile-longing",
-          "love",
-          "honor-pride"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "journey",
-          "wine-cup",
-          "tears"
-        ],
+        "moods": ["nostalgia", "yearning", "melancholy"],
+        "topics": ["exile-longing", "love", "honor-pride"],
+        "motifs": ["desert-ruins", "journey", "wine-cup", "tears"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 80,
         "accessibility_level": 5,
@@ -2481,18 +1552,9 @@
       "era_id": 10,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "yearning",
-          "passion"
-        ],
-        "topics": [
-          "love",
-          "exile-longing"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "journey"
-        ],
+        "moods": ["yearning", "passion"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["desert-ruins", "journey"],
         "mood_primary": "yearning",
         "emotional_intensity": 75,
         "accessibility_level": 2,
@@ -2508,22 +1570,9 @@
       "era_id": 6,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "melancholy",
-          "pride"
-        ],
-        "topics": [
-          "love",
-          "time-mortality",
-          "honor-pride"
-        ],
-        "motifs": [
-          "night",
-          "wine-cup",
-          "sword-battle",
-          "journey"
-        ],
+        "moods": ["nostalgia", "melancholy", "pride"],
+        "topics": ["love", "time-mortality", "honor-pride"],
+        "motifs": ["night", "wine-cup", "sword-battle", "journey"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 70,
         "accessibility_level": 4,
@@ -2539,21 +1588,9 @@
       "era_id": 9,
       "quality_score": 83,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "despair"
-        ],
-        "topics": [
-          "loss-death",
-          "time-mortality",
-          "faith-spirit"
-        ],
-        "motifs": [
-          "tears",
-          "night",
-          "moon-stars"
-        ],
+        "moods": ["grief", "melancholy", "despair"],
+        "topics": ["loss-death", "time-mortality", "faith-spirit"],
+        "motifs": ["tears", "night", "moon-stars"],
         "mood_primary": "grief",
         "emotional_intensity": 95,
         "accessibility_level": 3,
@@ -2569,20 +1606,9 @@
       "era_id": 1,
       "quality_score": 80,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "yearning"
-        ],
-        "topics": [
-          "loss-death",
-          "love"
-        ],
-        "motifs": [
-          "night",
-          "moon-stars",
-          "tears"
-        ],
+        "moods": ["grief", "melancholy", "yearning"],
+        "topics": ["loss-death", "love"],
+        "motifs": ["night", "moon-stars", "tears"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 2,
@@ -2598,23 +1624,9 @@
       "era_id": 2,
       "quality_score": 94,
       "pro": {
-        "moods": [
-          "amorous",
-          "pride",
-          "defiance",
-          "yearning"
-        ],
-        "topics": [
-          "love",
-          "honor-pride",
-          "women-feminine"
-        ],
-        "motifs": [
-          "wine-cup",
-          "sword-battle",
-          "tears",
-          "moon-stars"
-        ],
+        "moods": ["amorous", "pride", "defiance", "yearning"],
+        "topics": ["love", "honor-pride", "women-feminine"],
+        "motifs": ["wine-cup", "sword-battle", "tears", "moon-stars"],
         "mood_primary": "amorous",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -2630,21 +1642,9 @@
       "era_id": 3,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "pride",
-          "contemplation",
-          "reverence"
-        ],
-        "topics": [
-          "homeland",
-          "time-mortality",
-          "honor-pride"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "dawn",
-          "moon-stars"
-        ],
+        "moods": ["pride", "contemplation", "reverence"],
+        "topics": ["homeland", "time-mortality", "honor-pride"],
+        "motifs": ["desert-ruins", "dawn", "moon-stars"],
         "mood_primary": "pride",
         "emotional_intensity": 75,
         "accessibility_level": 3,
@@ -2660,24 +1660,9 @@
       "era_id": 8,
       "quality_score": 86,
       "pro": {
-        "moods": [
-          "yearning",
-          "nostalgia",
-          "melancholy",
-          "joy"
-        ],
-        "topics": [
-          "exile-longing",
-          "friendship",
-          "love"
-        ],
-        "motifs": [
-          "tears",
-          "sea-water",
-          "night",
-          "wine-cup",
-          "birds"
-        ],
+        "moods": ["yearning", "nostalgia", "melancholy", "joy"],
+        "topics": ["exile-longing", "friendship", "love"],
+        "motifs": ["tears", "sea-water", "night", "wine-cup", "birds"],
         "mood_primary": "yearning",
         "emotional_intensity": 80,
         "accessibility_level": 3,
@@ -2693,23 +1678,9 @@
       "era_id": 4,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "amorous",
-          "nostalgia",
-          "joy"
-        ],
-        "topics": [
-          "love",
-          "women-feminine",
-          "time-mortality"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "night",
-          "moon-stars",
-          "tears",
-          "dawn"
-        ],
+        "moods": ["amorous", "nostalgia", "joy"],
+        "topics": ["love", "women-feminine", "time-mortality"],
+        "motifs": ["desert-ruins", "night", "moon-stars", "tears", "dawn"],
         "mood_primary": "amorous",
         "emotional_intensity": 75,
         "accessibility_level": 3,
@@ -2725,22 +1696,9 @@
       "era_id": 7,
       "quality_score": 86,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "contemplation",
-          "despair"
-        ],
-        "topics": [
-          "loss-death",
-          "time-mortality",
-          "wisdom-ethics"
-        ],
-        "motifs": [
-          "tears",
-          "moon-stars",
-          "garden-flowers"
-        ],
+        "moods": ["grief", "melancholy", "contemplation", "despair"],
+        "topics": ["loss-death", "time-mortality", "wisdom-ethics"],
+        "motifs": ["tears", "moon-stars", "garden-flowers"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 4,
@@ -2756,20 +1714,9 @@
       "era_id": 5,
       "quality_score": 88,
       "pro": {
-        "moods": [
-          "defiance",
-          "grief",
-          "melancholy"
-        ],
-        "topics": [
-          "loss-death",
-          "honor-pride",
-          "war-conflict"
-        ],
-        "motifs": [
-          "birds",
-          "night"
-        ],
+        "moods": ["defiance", "grief", "melancholy"],
+        "topics": ["loss-death", "honor-pride", "war-conflict"],
+        "motifs": ["birds", "night"],
         "mood_primary": "defiance",
         "emotional_intensity": 75,
         "accessibility_level": 4,
@@ -2785,21 +1732,9 @@
       "era_id": 10,
       "quality_score": 87,
       "pro": {
-        "moods": [
-          "passion",
-          "amorous",
-          "yearning",
-          "reverence"
-        ],
-        "topics": [
-          "love",
-          "faith-spirit"
-        ],
-        "motifs": [
-          "night",
-          "tears",
-          "moon-stars"
-        ],
+        "moods": ["passion", "amorous", "yearning", "reverence"],
+        "topics": ["love", "faith-spirit"],
+        "motifs": ["night", "tears", "moon-stars"],
         "mood_primary": "passion",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -2815,22 +1750,9 @@
       "era_id": 6,
       "quality_score": 86,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "melancholy",
-          "contemplation"
-        ],
-        "topics": [
-          "loss-death",
-          "nature",
-          "time-mortality"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "journey",
-          "night",
-          "sea-water"
-        ],
+        "moods": ["nostalgia", "melancholy", "contemplation"],
+        "topics": ["loss-death", "nature", "time-mortality"],
+        "motifs": ["desert-ruins", "journey", "night", "sea-water"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 70,
         "accessibility_level": 5,
@@ -2846,22 +1768,9 @@
       "era_id": 9,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "passion",
-          "yearning",
-          "contemplation"
-        ],
-        "topics": [
-          "love",
-          "nature"
-        ],
-        "motifs": [
-          "night",
-          "moon-stars",
-          "journey",
-          "birds",
-          "dawn"
-        ],
+        "moods": ["passion", "yearning", "contemplation"],
+        "topics": ["love", "nature"],
+        "motifs": ["night", "moon-stars", "journey", "birds", "dawn"],
         "mood_primary": "passion",
         "emotional_intensity": 80,
         "accessibility_level": 4,
@@ -2877,20 +1786,9 @@
       "era_id": 1,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "melancholy",
-          "grief",
-          "despair"
-        ],
-        "topics": [
-          "loss-death",
-          "time-mortality"
-        ],
-        "motifs": [
-          "night",
-          "moon-stars",
-          "dawn"
-        ],
+        "moods": ["melancholy", "grief", "despair"],
+        "topics": ["loss-death", "time-mortality"],
+        "motifs": ["night", "moon-stars", "dawn"],
         "mood_primary": "melancholy",
         "emotional_intensity": 85,
         "accessibility_level": 2,
@@ -2906,19 +1804,9 @@
       "era_id": 2,
       "quality_score": 85,
       "pro": {
-        "moods": [
-          "pride",
-          "defiance"
-        ],
-        "topics": [
-          "honor-pride",
-          "war-conflict"
-        ],
-        "motifs": [
-          "sword-battle",
-          "night",
-          "birds"
-        ],
+        "moods": ["pride", "defiance"],
+        "topics": ["honor-pride", "war-conflict"],
+        "motifs": ["sword-battle", "night", "birds"],
         "mood_primary": "pride",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -2934,21 +1822,9 @@
       "era_id": 3,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "grief",
-          "despair",
-          "yearning"
-        ],
-        "topics": [
-          "exile-longing",
-          "homeland",
-          "war-conflict"
-        ],
-        "motifs": [
-          "tears",
-          "birds",
-          "night"
-        ],
+        "moods": ["grief", "despair", "yearning"],
+        "topics": ["exile-longing", "homeland", "war-conflict"],
+        "motifs": ["tears", "birds", "night"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 2,
@@ -2964,20 +1840,9 @@
       "era_id": 8,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "yearning",
-          "passion",
-          "melancholy"
-        ],
-        "topics": [
-          "love",
-          "exile-longing"
-        ],
-        "motifs": [
-          "journey",
-          "tears",
-          "night"
-        ],
+        "moods": ["yearning", "passion", "melancholy"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["journey", "tears", "night"],
         "mood_primary": "yearning",
         "emotional_intensity": 85,
         "accessibility_level": 3,
@@ -2993,21 +1858,9 @@
       "era_id": 4,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "nostalgia",
-          "yearning",
-          "contemplation"
-        ],
-        "topics": [
-          "love",
-          "time-mortality",
-          "faith-spirit"
-        ],
-        "motifs": [
-          "journey",
-          "night",
-          "desert-ruins"
-        ],
+        "moods": ["nostalgia", "yearning", "contemplation"],
+        "topics": ["love", "time-mortality", "faith-spirit"],
+        "motifs": ["journey", "night", "desert-ruins"],
         "mood_primary": "nostalgia",
         "emotional_intensity": 75,
         "accessibility_level": 4,
@@ -3023,20 +1876,9 @@
       "era_id": 7,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "grief",
-          "reverence",
-          "melancholy"
-        ],
-        "topics": [
-          "loss-death",
-          "honor-pride"
-        ],
-        "motifs": [
-          "tears",
-          "sea-water",
-          "garden-flowers"
-        ],
+        "moods": ["grief", "reverence", "melancholy"],
+        "topics": ["loss-death", "honor-pride"],
+        "motifs": ["tears", "sea-water", "garden-flowers"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -3052,20 +1894,9 @@
       "era_id": 5,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "grief",
-          "pride",
-          "nostalgia"
-        ],
-        "topics": [
-          "loss-death",
-          "honor-pride"
-        ],
-        "motifs": [
-          "night",
-          "fire-light",
-          "journey"
-        ],
+        "moods": ["grief", "pride", "nostalgia"],
+        "topics": ["loss-death", "honor-pride"],
+        "motifs": ["night", "fire-light", "journey"],
         "mood_primary": "grief",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -3081,22 +1912,9 @@
       "era_id": 10,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "yearning",
-          "melancholy",
-          "nostalgia"
-        ],
-        "topics": [
-          "love",
-          "exile-longing"
-        ],
-        "motifs": [
-          "tears",
-          "night",
-          "birds",
-          "fire-light",
-          "sword-battle"
-        ],
+        "moods": ["yearning", "melancholy", "nostalgia"],
+        "topics": ["love", "exile-longing"],
+        "motifs": ["tears", "night", "birds", "fire-light", "sword-battle"],
         "mood_primary": "yearning",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -3112,23 +1930,9 @@
       "era_id": 6,
       "quality_score": 84,
       "pro": {
-        "moods": [
-          "melancholy",
-          "contemplation",
-          "grief"
-        ],
-        "topics": [
-          "loss-death",
-          "time-mortality",
-          "love"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "sea-water",
-          "wine-cup",
-          "moon-stars",
-          "birds"
-        ],
+        "moods": ["melancholy", "contemplation", "grief"],
+        "topics": ["loss-death", "time-mortality", "love"],
+        "motifs": ["desert-ruins", "sea-water", "wine-cup", "moon-stars", "birds"],
         "mood_primary": "melancholy",
         "emotional_intensity": 80,
         "accessibility_level": 5,
@@ -3144,21 +1948,9 @@
       "era_id": 9,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "amorous",
-          "passion",
-          "yearning"
-        ],
-        "topics": [
-          "love",
-          "beauty"
-        ],
-        "motifs": [
-          "tears",
-          "night",
-          "garden-flowers",
-          "fire-light"
-        ],
+        "moods": ["amorous", "passion", "yearning"],
+        "topics": ["love", "beauty"],
+        "motifs": ["tears", "night", "garden-flowers", "fire-light"],
         "mood_primary": "amorous",
         "emotional_intensity": 95,
         "accessibility_level": 3,
@@ -3174,18 +1966,9 @@
       "era_id": 1,
       "quality_score": 80,
       "pro": {
-        "moods": [
-          "yearning",
-          "pride"
-        ],
-        "topics": [
-          "exile-longing",
-          "honor-pride"
-        ],
-        "motifs": [
-          "fire-light",
-          "night"
-        ],
+        "moods": ["yearning", "pride"],
+        "topics": ["exile-longing", "honor-pride"],
+        "motifs": ["fire-light", "night"],
         "mood_primary": "yearning",
         "emotional_intensity": 75,
         "accessibility_level": 3,
@@ -3201,24 +1984,9 @@
       "era_id": 2,
       "quality_score": 88,
       "pro": {
-        "moods": [
-          "pride",
-          "defiance",
-          "passion",
-          "yearning"
-        ],
-        "topics": [
-          "love",
-          "honor-pride",
-          "war-conflict"
-        ],
-        "motifs": [
-          "night",
-          "tears",
-          "sword-battle",
-          "fire-light",
-          "dawn"
-        ],
+        "moods": ["pride", "defiance", "passion", "yearning"],
+        "topics": ["love", "honor-pride", "war-conflict"],
+        "motifs": ["night", "tears", "sword-battle", "fire-light", "dawn"],
         "mood_primary": "pride",
         "emotional_intensity": 90,
         "accessibility_level": 3,
@@ -3234,19 +2002,9 @@
       "era_id": 3,
       "quality_score": 80,
       "pro": {
-        "moods": [
-          "yearning",
-          "melancholy"
-        ],
-        "topics": [
-          "exile-longing",
-          "love"
-        ],
-        "motifs": [
-          "sea-water",
-          "tears",
-          "journey"
-        ],
+        "moods": ["yearning", "melancholy"],
+        "topics": ["exile-longing", "love"],
+        "motifs": ["sea-water", "tears", "journey"],
         "mood_primary": "yearning",
         "emotional_intensity": 80,
         "accessibility_level": 1,
@@ -3262,20 +2020,9 @@
       "era_id": 8,
       "quality_score": 89,
       "pro": {
-        "moods": [
-          "amorous",
-          "yearning",
-          "nostalgia"
-        ],
-        "topics": [
-          "love",
-          "wine-pleasure"
-        ],
-        "motifs": [
-          "wine-cup",
-          "moon-stars",
-          "tears"
-        ],
+        "moods": ["amorous", "yearning", "nostalgia"],
+        "topics": ["love", "wine-pleasure"],
+        "motifs": ["wine-cup", "moon-stars", "tears"],
         "mood_primary": "amorous",
         "emotional_intensity": 75,
         "accessibility_level": 2,
@@ -3291,22 +2038,9 @@
       "era_id": 4,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "amorous",
-          "joy",
-          "nostalgia"
-        ],
-        "topics": [
-          "love",
-          "women-feminine"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "garden-flowers",
-          "moon-stars",
-          "night",
-          "journey"
-        ],
+        "moods": ["amorous", "joy", "nostalgia"],
+        "topics": ["love", "women-feminine"],
+        "motifs": ["desert-ruins", "garden-flowers", "moon-stars", "night", "journey"],
         "mood_primary": "amorous",
         "emotional_intensity": 70,
         "accessibility_level": 3,
@@ -3322,21 +2056,9 @@
       "era_id": 7,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "grief",
-          "contemplation",
-          "melancholy",
-          "reverence"
-        ],
-        "topics": [
-          "loss-death",
-          "time-mortality",
-          "faith-spirit"
-        ],
-        "motifs": [
-          "tears",
-          "birds"
-        ],
+        "moods": ["grief", "contemplation", "melancholy", "reverence"],
+        "topics": ["loss-death", "time-mortality", "faith-spirit"],
+        "motifs": ["tears", "birds"],
         "mood_primary": "grief",
         "emotional_intensity": 85,
         "accessibility_level": 3,
@@ -3352,21 +2074,9 @@
       "era_id": 5,
       "quality_score": 92,
       "pro": {
-        "moods": [
-          "amorous",
-          "yearning"
-        ],
-        "topics": [
-          "love",
-          "women-feminine",
-          "nature"
-        ],
-        "motifs": [
-          "journey",
-          "dawn",
-          "night",
-          "wine-cup"
-        ],
+        "moods": ["amorous", "yearning"],
+        "topics": ["love", "women-feminine", "nature"],
+        "motifs": ["journey", "dawn", "night", "wine-cup"],
         "mood_primary": "amorous",
         "emotional_intensity": 70,
         "accessibility_level": 5,
@@ -3382,18 +2092,9 @@
       "era_id": 10,
       "quality_score": 81,
       "pro": {
-        "moods": [
-          "amorous",
-          "passion"
-        ],
-        "topics": [
-          "love",
-          "beauty"
-        ],
-        "motifs": [
-          "moon-stars",
-          "dawn"
-        ],
+        "moods": ["amorous", "passion"],
+        "topics": ["love", "beauty"],
+        "motifs": ["moon-stars", "dawn"],
         "mood_primary": "amorous",
         "emotional_intensity": 85,
         "accessibility_level": 2,
@@ -3409,20 +2110,9 @@
       "era_id": 6,
       "quality_score": 85,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy"
-        ],
-        "topics": [
-          "loss-death",
-          "honor-pride",
-          "friendship"
-        ],
-        "motifs": [
-          "tears",
-          "sword-battle",
-          "fire-light"
-        ],
+        "moods": ["grief", "melancholy"],
+        "topics": ["loss-death", "honor-pride", "friendship"],
+        "motifs": ["tears", "sword-battle", "fire-light"],
         "mood_primary": "grief",
         "emotional_intensity": 90,
         "accessibility_level": 4,
@@ -3438,22 +2128,9 @@
       "era_id": 9,
       "quality_score": 82,
       "pro": {
-        "moods": [
-          "grief",
-          "melancholy",
-          "contemplation"
-        ],
-        "topics": [
-          "loss-death",
-          "time-mortality",
-          "friendship"
-        ],
-        "motifs": [
-          "desert-ruins",
-          "tears",
-          "journey",
-          "sword-battle"
-        ],
+        "moods": ["grief", "melancholy", "contemplation"],
+        "topics": ["loss-death", "time-mortality", "friendship"],
+        "motifs": ["desert-ruins", "tears", "journey", "sword-battle"],
         "mood_primary": "grief",
         "emotional_intensity": 85,
         "accessibility_level": 4,
@@ -3469,18 +2146,9 @@
       "era_id": 1,
       "quality_score": 80,
       "pro": {
-        "moods": [
-          "passion",
-          "yearning",
-          "melancholy"
-        ],
-        "topics": [
-          "love",
-          "women-feminine"
-        ],
-        "motifs": [
-          "fire-light"
-        ],
+        "moods": ["passion", "yearning", "melancholy"],
+        "topics": ["love", "women-feminine"],
+        "motifs": ["fire-light"],
         "mood_primary": "passion",
         "emotional_intensity": 95,
         "accessibility_level": 2,

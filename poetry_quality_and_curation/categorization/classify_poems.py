@@ -208,6 +208,7 @@ def parse_categories(text: str, batch: list[dict]) -> list[dict]:
         if mood_primary not in config.VALID_KEYS["mood"]:
             mood_primary = moods[0] if moods else None
         confidences = _clean_confidences(item.get("confidences"), moods + topics + motifs)
+        rationale = str(item.get("rationale", "")).strip() or None
         results.append({
             "poem_id": str(poem["id"]),
             "moods": moods,
@@ -220,8 +221,12 @@ def parse_categories(text: str, batch: list[dict]) -> list[dict]:
             # stays a plain string (keys vary per row; a struct would fight
             # pyarrow's schema inference). import_categories decodes it.
             "confidences": json.dumps(confidences, ensure_ascii=False),
-            # Provenance: which taxonomy version produced this row.
+            # Distillation (v3): the model's one-line justification of the poem's
+            # core concept. Stored as provenance in the categories JSONB.
+            "rationale": rationale,
+            # Provenance: which taxonomy + prompt build produced this row.
             "taxonomy_version": config.TAXONOMY_VERSION,
+            "prompt_version": config.PROMPT_VERSION,
             # `century` is NOT here: it's derived from poet era on the import
             # side (import_categories --backfill-century), never model-guessed.
             "model_used": "",  # filled by caller

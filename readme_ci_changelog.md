@@ -8,6 +8,16 @@ prepends an entry below (newest first) describing **why** it changed and a conci
 
 <!-- New entries are inserted directly below this line, newest first. -->
 
+## 2026-07-28 — f985357 feat(categorization): add Explore Poems (mood/topic/motif filtering) (#652)
+
+**Why:** This merge adds a poem categorization layer (`feature-manifest.json` entry `poem-categorization`, feature flag `categoryExplorer` in `src/constants/features.js`): a new "Explore Poems" entry in the Account menu (`src/components/AccountMenu.jsx`) opens `CategoryExplorer.jsx`, letting readers browse or filter the library by mood, topic, motif, emotional intensity, and reading difficulty. The backend gained two endpoints, `GET /api/categories` and `GET /api/poems/by-category` (`server.js`), gated behind a `hasCategorization` check that stays false until the new `supabase/migrations/20260722000000_add_poem_categorization.sql` migration has run. The README's Discovery feature list and API description were missing this.
+
+**README changes:**
+- Features > Discovery: added "Explore Poems (Account menu): browse or filter the library by mood, topic, and motif, emotional intensity, and reading difficulty, then expand a result in place"
+- Architecture: "exposing random, by-poet, poets, and translation-cache endpoints." -> "exposing random, by-poet, poets, translation-cache, and category-filter endpoints. The category endpoints gracefully report empty results until the categorization migration (mood/topic/motif tagging) has been run against the database."
+
+_Full diff: see the accompanying PR._
+
 ## 2026-07-19 — 919f899 feat(fonts): add Aref Ruqaa as a 10th Arabic typeface (#621)
 
 **Why:** The commit adds Aref Ruqaa to `src/constants/fonts.js`, `src/styles/app.css`, and the Google Fonts link in `index.html`, bringing the total number of selectable Arabic typefaces from nine to ten. The README's Features section listed the old count and omitted the new font.

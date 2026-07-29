@@ -115,6 +115,8 @@ the inline insight panels — is handled with GSAP and Framer Motion for a calm,
 
 - A single tap surfaces a new poem from the curated library
 - Poet filtering and a vertical feed you swipe through, poem to poem
+- Explore Poems (Account menu): browse or filter the library by mood, topic, and motif,
+  emotional intensity, and reading difficulty, then expand a result in place
 - Deep-linkable poems and shareable cards with Open Graph previews
 
 **Personalization**
@@ -161,7 +163,9 @@ insight and TTS recitation), Mishkal (diacritization). Quality is enforced with 
 The app is a single-page React app backed by a small poem-serving API:
 
 - A lightweight Express API (`server.js`) serves the poem library from PostgreSQL,
-  exposing random, by-poet, poets, and translation-cache endpoints.
+  exposing random, by-poet, poets, translation-cache, and category-filter endpoints. The
+  category endpoints gracefully report empty results until the categorization migration
+  (mood/topic/motif tagging) has been run against the database.
 - The frontend reads from that API. UI and domain state live in Zustand stores
   (`src/stores/`), side-effectful flows (fetch, play, analyze) are isolated as store
   actions, and cross-cutting concerns (auth, audio highlighting, shortcuts, query params)

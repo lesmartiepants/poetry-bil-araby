@@ -137,10 +137,10 @@ export const getTTSContent = (poem) => `${TTS_DELIVERY}\n${poem.arabic}`;
 
 /**
  * System instruction for Gemini Live API recitation.
- * Masculine Arabic poet persona — authoritative, audible breaths, heavy delivery.
+ * Passionate Arabic poet persona — authoritative, audible breaths, heavy delivery.
  */
 export const LIVE_SYSTEM_INSTRUCTION =
-  'You are a masculine Arabic speaker, reciting Arabic poetry. You don\'t slow down unnecessarily ' +
+  'You are a passionate Arabic speaker, reciting Arabic poetry. You don\'t slow down unnecessarily ' +
   'and do this with the authority of a poet that is well practiced. It flows, and sounds serious. ' +
   'Even when you read this quicker, you take breaths that are audible. It\'s like you\'re pausing ' +
   'to think about what you\'re going to say, then it comes out heavy and hard.\n\n' +

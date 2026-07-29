@@ -299,12 +299,20 @@ describe('renderShareCard', () => {
     }
   });
 
+<<<<<<< HEAD
   it('draws the English poet name and title in the bilingual-header designs', () => {
     // These designs use the shared bilingual header, which renders an English
     // "[author] – [title]" summary. Sahifa now uses a custom header (English
     // title only, in red) and the composition layouts are Arabic-forward, so
     // they are checked separately below.
     const HEADER_DESIGNS = [
+=======
+  it('draws the English poet name and title in the artist designs', () => {
+    // The artist/atmosphere designs use the bilingual header, which renders an
+    // English "[author] – [title]" summary. The composition layouts (musnad,
+    // muqabala, najma, iqtibas) are intentionally Arabic-forward and omit it.
+    const ARTIST_DESIGNS = [
+>>>>>>> origin/main
       'diwan',
       'ibnMuqla',
       'sinan',
@@ -312,8 +320,14 @@ describe('renderShareCard', () => {
       'hassanFathy',
       'layl',
       'mishkat',
+<<<<<<< HEAD
     ];
     for (const id of HEADER_DESIGNS) {
+=======
+      'sahifa',
+    ];
+    for (const id of ARTIST_DESIGNS) {
+>>>>>>> origin/main
       ctx.fillText.mockClear();
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, id);
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);

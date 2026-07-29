@@ -85,6 +85,8 @@ import './styles/tts-highlight.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
 import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
+import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
+import { applyLiveTimingProfile } from './utils/liveTimingProfiles.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -104,6 +106,7 @@ const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
+import CategoryExplorer from './components/CategoryExplorer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
 import PoemFeed from './components/feed/PoemFeed.jsx';
 import AccountMenu from './components/AccountMenu.jsx';
@@ -132,6 +135,12 @@ export { filterPoemsByCategory } from './utils/filterPoems.js';
 export default function DiwanApp() {
   const [, navigate] = useLocation();
   const [, routeParams] = useRoute('/poem/:id');
+  const [isExploreRoute] = useRoute('/explore');
+  // The reader owns the URL (it writes /poem/:id as you move through the feed).
+  // Suppress those writes while the full-screen explorer route is active so the
+  // feed doesn't clobber /explore out from under the explorer.
+  const navigateReader = (to, opts) =>
+    window.location.pathname.startsWith('/explore') ? undefined : navigate(to, opts);
   const [queryParams, setQueryParams] = useQueryParams();
 
   const mainScrollRef = useRef(null);
@@ -230,6 +239,7 @@ export default function DiwanApp() {
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
   const audioPlayer = useAudioStore((s) => s.player);
+  const serverWordTimings = useAudioStore((s) => s.wordTimings);
   const liveVoice = useUIStore((s) => s.liveVoice);
   const setLiveVoice = useUIStore((s) => s.setLiveVoice);
   const highlightStyle = useUIStore((s) => s.highlightStyle);
@@ -587,7 +597,8 @@ export default function DiwanApp() {
         // Restored from OAuth — stay on this poem, just queue explanation
         addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
         setAutoExplainPending(true);
-        if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
+        if (initial.id)
+          navigateReader('/poem/' + initial.id + window.location.search, { replace: true });
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(
@@ -847,6 +858,42 @@ export default function DiwanApp() {
   );
 
   const wordTimings = useMemo(() => {
+    if (serverWordTimings?.length) {
+      const aligned = alignTranscriptTimings(allWords, serverWordTimings);
+      const transcriptMatchRatio = aligned ? aligned.matchedCount / serverWordTimings.length : 0;
+      if (aligned && aligned.matchedCount >= 1 && transcriptMatchRatio >= 0.5) {
+        let timingProfile = 'transcript-moras-weighted-fallback';
+        try {
+          timingProfile = localStorage.getItem('ttsTimingMode') || timingProfile;
+        } catch {
+          /* localStorage unavailable */
+        }
+        const result = applyLiveTimingProfile({
+          profile: timingProfile,
+          alignedTimings: aligned.timings,
+          fallbackTimings: computeWordTimings(allWords, effectiveDuration),
+          wordOffsets,
+          directMatches: aligned.directMatches,
+        });
+        if (FEATURES.logging) {
+          useUIStore
+            .getState()
+            .addLog(
+              'WordTiming:Live',
+              `${timingProfile} | matched=${aligned.matchedCount}/${serverWordTimings.length} transcript (${(transcriptMatchRatio * 100).toFixed(0)}%)`
+            );
+        }
+        return result;
+      }
+      if (FEATURES.logging) {
+        useUIStore
+          .getState()
+          .addLog(
+            'WordTiming:Live',
+            `alignment pending (${(transcriptMatchRatio * 100).toFixed(0)}% transcript match) — weighted fallback`
+          );
+      }
+    }
     // When actual audio is loaded, derive timings from the waveform (VAD alignment).
     // This is far more accurate than character-count estimation because it uses the
     // real pauses between verses detected in the audio signal.
@@ -868,7 +915,12 @@ export default function DiwanApp() {
     }
     // Fallback: character-count proportional distribution (used pre-audio or on VAD failure)
     return computeWordTimings(allWords, effectiveDuration);
-  }, [audioPlayer, verseWords, allWords, effectiveDuration]);
+  }, [audioPlayer, verseWords, allWords, effectiveDuration, serverWordTimings, wordOffsets]);
+
+  const highlightTotalDuration = useMemo(() => {
+    const lastEnd = wordTimings[wordTimings.length - 1]?.end || 0;
+    return Math.max(effectiveDuration, lastEnd);
+  }, [wordTimings, effectiveDuration]);
 
   // Per-verse start times — first word of each verse's timing.start
   const verseStartTimes = useMemo(() => {
@@ -889,7 +941,7 @@ export default function DiwanApp() {
   useTTSHighlight({
     wordRefs,
     timings: wordTimings,
-    totalDuration: effectiveDuration,
+    totalDuration: highlightTotalDuration,
     wordOffsets,
     onVerseChange: setCurrentVerseIndex,
   });
@@ -947,7 +999,7 @@ export default function DiwanApp() {
         wordRefs,
         wordOffsets,
         wordTimings,
-        effectiveDuration,
+        highlightTotalDuration,
         setCurrentVerseIndex
       );
     }
@@ -993,7 +1045,8 @@ export default function DiwanApp() {
     analyzePoemAction({ current: displayedPoem, addLog, track });
   };
 
-  const handleFetch = () => fetchPoemAction({ addLog, track, emitEvent, navigate, markPoemSeen });
+  const handleFetch = () =>
+    fetchPoemAction({ addLog, track, emitEvent, navigate: navigateReader, markPoemSeen });
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -1035,6 +1088,22 @@ export default function DiwanApp() {
   const handleSignIn = () => {
     track('sign_in_started');
     setShowAuthModal(true);
+  };
+
+  // Open a poem from the explorer in the reader. We load the WHOLE list the user
+  // was looking at (the filtered/saved results) as the feed, positioned at the
+  // chosen poem — so the reader has a real queue to swipe through (next/prev)
+  // instead of a dead-end single poem, and the reveal fires like a normal slide.
+  const openPoemInReader = (list, startIndex = 0) => {
+    const arr = Array.isArray(list) ? list.filter((p) => p && p.id != null) : [];
+    if (arr.length === 0) return;
+    const idx = Math.max(0, Math.min(startIndex, arr.length - 1));
+    const poem = arr[idx];
+    setPoems(arr);
+    setCurrentIndex(idx);
+    setAutoExplainPending(true);
+    updateOGMetaTags(poem);
+    navigate('/poem/' + poem.id);
   };
 
   const handleSignInWithGoogle = async () => {
@@ -1224,9 +1293,9 @@ export default function DiwanApp() {
     // Update URL for DB poems, preserving any existing query params (e.g. ?poet=)
     const qs = window.location.search;
     if (typeof mappedPoem.id === 'number') {
-      navigate('/poem/' + mappedPoem.id + qs);
+      navigateReader('/poem/' + mappedPoem.id + qs);
     } else {
-      navigate('/' + qs);
+      navigateReader('/' + qs);
     }
   };
 
@@ -1656,7 +1725,7 @@ export default function DiwanApp() {
                               );
                             }
                             if (newPoem?.id) {
-                              navigate('/poem/' + newPoem.id + window.location.search, {
+                              navigateReader('/poem/' + newPoem.id + window.location.search, {
                                 replace: true,
                               });
                               updateOGMetaTags(newPoem);
@@ -1769,7 +1838,7 @@ export default function DiwanApp() {
                               );
                             }
                             if (newPoem?.id) {
-                              navigate('/poem/' + newPoem.id + window.location.search, {
+                              navigateReader('/poem/' + newPoem.id + window.location.search, {
                                 replace: true,
                               });
                               updateOGMetaTags(newPoem);
@@ -2070,6 +2139,20 @@ export default function DiwanApp() {
           />
         )}
       </AnimatePresence>
+
+      {/* Category Explorer — full-screen routed view at /explore */}
+      {FEATURES.categoryExplorer && isExploreRoute && (
+        <CategoryExplorer
+          key="category-explorer"
+          user={user}
+          savedPoems={savedPoems}
+          savePoem={savePoem}
+          unsavePoem={unsavePoem}
+          isPoemSaved={isPoemSaved}
+          onRequireAuth={handleSignIn}
+          onOpenPoem={openPoemInReader}
+        />
+      )}
 
       {/* Auth Modal */}
       <AnimatePresence>

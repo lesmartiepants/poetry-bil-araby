@@ -28,7 +28,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
        mobile  → items-end  (sheet anchored to bottom)
        desktop → items-center justify-center (centered modal) */
     <motion.div
-      className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center"
+      className="fixed inset-0 z-[300] flex items-end sm:items-center sm:justify-center"
       style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(2px)' }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}

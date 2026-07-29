@@ -1,0 +1,7 @@
+# Reuses the quality-curation pipeline's stack.
+litellm>=1.40
+psycopg2-binary>=2.9
+pandas>=2.0
+pyarrow>=15.0
+tqdm>=4.66
+python-dotenv>=1.0

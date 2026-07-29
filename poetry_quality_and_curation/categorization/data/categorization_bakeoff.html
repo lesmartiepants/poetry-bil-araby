@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Categorization model bake-off</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; margin: 2rem; color: #222; }
+  h1 { font-size: 1.4rem; } h2 { font-size: 1.1rem; margin-top: 2rem; }
+  table { border-collapse: collapse; margin-top: .5rem; }
+  th, td { padding: 6px 10px; border-bottom: 1px solid #ddd; text-align: left; font-size: .9rem; }
+  th { background: #f6f6f6; }
+  code { background: #f0f0f0; padding: 1px 4px; border-radius: 3px; }
+  .rec { background: #fff8e1; border-left: 4px solid #f59f00; padding: .8rem 1rem; margin-top: 1rem; }
+  .muted { color: #888; font-size: .85rem; }
+</style></head><body>
+<h1>Categorization model bake-off</h1>
+<p class="muted">Judge: <code>gemini/gemini-3.1-pro-preview</code> ·
+  Gold poems scored: 120 ·
+  Human-corrected: 0 ·
+  Calibration fired: n/a</p>
+
+<h2>Headline metrics</h2>
+<table>
+  <tr><th>Model</th><th>Macro F1</th><th>Macro Jaccard</th><th>mood_primary acc</th>
+      <th>intensity MAE</th><th>access MAE</th><th>$/1k</th><th>poems/min</th></tr>
+  
+        <tr>
+          <td><code>gemini/gemini-2.5-flash</code></td>
+          <td><div style="background:#eee;border-radius:4px;height:18px;width:180px;display:inline-block;vertical-align:middle"><div style="background:#2b8a3e;height:18px;width:74%;border-radius:4px"></div></div> 0.738</td>
+          <td><div style="background:#eee;border-radius:4px;height:18px;width:180px;display:inline-block;vertical-align:middle"><div style="background:#1971c2;height:18px;width:63%;border-radius:4px"></div></div> 0.634</td>
+          <td><div style="background:#eee;border-radius:4px;height:18px;width:180px;display:inline-block;vertical-align:middle"><div style="background:#5f3dc4;height:18px;width:71%;border-radius:4px"></div></div> 0.708</td>
+          <td>4.01</td>
+          <td>0.34</td>
+          <td>$0.976</td>
+          <td>60</td>
+        </tr>
+        <tr>
+          <td><code>gemini/gemini-3.5-flash</code></td>
+          <td><div style="background:#eee;border-radius:4px;height:18px;width:180px;display:inline-block;vertical-align:middle"><div style="background:#2b8a3e;height:18px;width:78%;border-radius:4px"></div></div> 0.785</td>
+          <td><div style="background:#eee;border-radius:4px;height:18px;width:180px;display:inline-block;vertical-align:middle"><div style="background:#1971c2;height:18px;width:69%;border-radius:4px"></div></div> 0.688</td>
+          <td><div style="background:#eee;border-radius:4px;height:18px;width:180px;display:inline-block;vertical-align:middle"><div style="background:#5f3dc4;height:18px;width:66%;border-radius:4px"></div></div> 0.658</td>
+          <td>4.48</td>
+          <td>0.24</td>
+          <td>$3.879</td>
+          <td>51</td>
+        </tr>
+        <tr>
+          <td><code>gemini/gemini-3.6-flash</code></td>
+          <td><div style="background:#eee;border-radius:4px;height:18px;width:180px;display:inline-block;vertical-align:middle"><div style="background:#2b8a3e;height:18px;width:81%;border-radius:4px"></div></div> 0.813</td>
+          <td><div style="background:#eee;border-radius:4px;height:18px;width:180px;display:inline-block;vertical-align:middle"><div style="background:#1971c2;height:18px;width:73%;border-radius:4px"></div></div> 0.725</td>
+          <td><div style="background:#eee;border-radius:4px;height:18px;width:180px;display:inline-block;vertical-align:middle"><div style="background:#5f3dc4;height:18px;width:68%;border-radius:4px"></div></div> 0.675</td>
+          <td>3.79</td>
+          <td>0.22</td>
+          <td>$3.649</td>
+          <td>43</td>
+        </tr>
+</table>
+
+<h2>Per-dimension (F1 / Jaccard)</h2>
+<table>
+  <tr><th>Model</th><th>mood</th><th>topic</th><th>motif</th></tr>
+  <tr><td><code>gemini/gemini-2.5-flash</code></td><td>0.762 / 0.660</td><td>0.756 / 0.644</td><td>0.697 / 0.598</td></tr><tr><td><code>gemini/gemini-3.5-flash</code></td><td>0.772 / 0.666</td><td>0.774 / 0.671</td><td>0.808 / 0.727</td></tr><tr><td><code>gemini/gemini-3.6-flash</code></td><td>0.800 / 0.707</td><td>0.809 / 0.720</td><td>0.830 / 0.750</td></tr>
+</table>
+
+<div class="rec"><strong>Recommendation:</strong> Use <code>gemini/gemini-3.6-flash</code> for bulk classification (macro-F1 0.813, mood_primary 0.675, $3.649/1k). Cheapest is <code>gemini/gemini-2.5-flash</code> at $0.976/1k (macro-F1 0.738); trade the F1 gap against the cost delta at 84k poems.</div>
+</body></html>

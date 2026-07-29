@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
 import { FEATURES } from '../../constants/features';
 import { useAudioStore } from '../audioStore';
-import { startPlayer, recordPause, pauseOffset } from '../../hooks/useTTSHighlight.js';
+import { startPlayer, recordPause, pauseOffset, getPlaybackElapsed } from '../../hooks/useTTSHighlight.js';
 import { usePoemStore } from '../poemStore';
 import { useUIStore } from '../uiStore';
 import { getTTSContent, LIVE_SYSTEM_INSTRUCTION, getLiveContent } from '../../prompts';
@@ -365,6 +365,12 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     // replaying stale audio in the wrong voice.
     const keyFor = (mode) => audioCacheKey(current?.id, mode, liveVoice);
 
+    // Real per-word timings from the Live transcript for this generation.
+    // Cleared up front so a previous poem's timings never bleed into this one;
+    // set from the server response on success (Live only — REST stays null → VAD).
+    let serverWordTimings = null;
+    useAudioStore.getState().setWordTimings(null);
+
     // CHECK CACHE
     if (FEATURES.caching && current?.id) {
       const cacheStart = performance.now();
@@ -389,6 +395,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
         const u = URL.createObjectURL(cached.blob);
         setUrl(u);
+        useAudioStore.getState().setWordTimings(cached.wordTimings || null);
 
         try {
           const player = await createPlayerReady(u);
@@ -528,7 +535,37 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
                 setGenerating(false);
               }
             },
-            onDone: () => streamPlayer.markInputDone(),
+            onTiming: (partial) => {
+              // Real per-word timings arrive ahead of the playhead during streaming.
+              // Apply each update live so the highlight tracks the exact recited word
+              // instead of the char estimate.
+              if (_currentPlayId !== playId) return;
+              if (partial && partial.length) {
+                serverWordTimings = partial;
+                useAudioStore.getState().setWordTimings(partial);
+                const span = partial[partial.length - 1]?.end ?? 0;
+                addLog(
+                  'WordTiming:apply',
+                  `partial | ${partial.length} words | span=0–${span.toFixed(2)}s | playhead=${getPlaybackElapsed().toFixed(2)}s | voice=${liveVoice} | playId=${playId}`,
+                  'info'
+                );
+              }
+            },
+            onDone: (done) => {
+              streamPlayer.markInputDone();
+              if (done?.wordTimings) {
+                serverWordTimings = done.wordTimings;
+                if (_currentPlayId === playId) {
+                  useAudioStore.getState().setWordTimings(done.wordTimings);
+                  const span = done.wordTimings[done.wordTimings.length - 1]?.end ?? 0;
+                  addLog(
+                    'WordTiming:apply',
+                    `final | ${done.wordTimings.length} words | span=0–${span.toFixed(2)}s | playhead=${getPlaybackElapsed().toFixed(2)}s | voice=${liveVoice} | playId=${playId}`,
+                    'success'
+                  );
+                }
+              }
+            },
             onError: (msg) => {
               streamErr = msg;
             },
@@ -550,12 +587,14 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             const blob = pcm16ToWav(concatPcmBase64(pcmB64), sampleRate);
             if (blob) {
               setUrl(URL.createObjectURL(blob));
+              useAudioStore.getState().setWordTimings(serverWordTimings || null);
               if (FEATURES.caching && current?.id) {
                 await cacheOperations.set(
                   CACHE_CONFIG.stores.audio,
                   keyFor('live'),
                   {
                     blob,
+                    wordTimings: serverWordTimings || null,
                     metadata: {
                       poet: current.poet,
                       title: current.title,
@@ -673,6 +712,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
               throw new Error('Live API returned no audio data');
             }
             b64 = liveData.audioData;
+            if (liveData.wordTimings) serverWordTimings = liveData.wordTimings;
             const liveDuration = ((performance.now() - liveStart) / 1000).toFixed(2);
             const liveSizeKB = Math.round((b64.length * 0.75) / 1024);
             addLog(
@@ -793,6 +833,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
       const u = URL.createObjectURL(blob);
       setUrl(u);
+      useAudioStore.getState().setWordTimings(serverWordTimings || null);
 
       try {
         const player = await createPlayerReady(u);
@@ -817,6 +858,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           keyFor(ttsMode),
           {
             blob,
+            wordTimings: serverWordTimings || null,
             metadata: {
               poet: current.poet,
               title: current.title,
@@ -880,6 +922,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           }
           const u = URL.createObjectURL(cached.blob);
           setUrl(u);
+          useAudioStore.getState().setWordTimings(cached.wordTimings || null);
 
           try {
             const player = await createPlayerReady(u);
@@ -934,6 +977,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             }
             const u = URL.createObjectURL(finalCheck.blob);
             setUrl(u);
+            useAudioStore.getState().setWordTimings(finalCheck.wordTimings || null);
 
             try {
               const player = await createPlayerReady(u);

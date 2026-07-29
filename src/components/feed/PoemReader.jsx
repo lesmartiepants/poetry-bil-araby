@@ -337,7 +337,6 @@ const PoemReader = memo(function PoemReader({
       if (ro) ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isActive,
     poemId,
@@ -379,10 +378,12 @@ const PoemReader = memo(function PoemReader({
       {/* Title intro / resting meta — pinned at the top (prototype location) */}
       <div
         ref={metaRef}
-        className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-[2px] pointer-events-none whitespace-nowrap"
+        className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-[2px] pointer-events-none"
         style={{
           top: 'calc(env(safe-area-inset-top, 0px) + 18px)',
           zIndex: 5,
+          maxWidth:
+            'min(680px, calc(100vw - 48px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)))',
           // Light mode: a soft dark shadow lifts the gold header off the pale background.
           textShadow: darkMode ? undefined : '0 1px 3px rgba(0,0,0,0.35)',
         }}
@@ -394,6 +395,9 @@ const PoemReader = memo(function PoemReader({
           style={{
             ...POEM_META.title,
             fontSize: `calc(clamp(1.6rem, 6.6vw, 2.25rem) * ${headerScale})`,
+            textAlign: 'center',
+            whiteSpace: 'normal',
+            overflowWrap: 'break-word',
           }}
         >
           {poem?.titleArabic || poem?.title}
@@ -407,6 +411,9 @@ const PoemReader = memo(function PoemReader({
               fontSize: `calc(clamp(1.1rem, 4.4vw, 1.5rem) * ${headerScale})`,
               color: 'rgba(212,180,99,0.9)',
               marginTop: 2,
+              textAlign: 'center',
+              whiteSpace: 'normal',
+              overflowWrap: 'break-word',
             }}
           >
             {poem.title}

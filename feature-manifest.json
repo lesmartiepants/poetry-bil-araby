@@ -20,7 +20,12 @@
       "name": "Poem categorization / Explore",
       "tier": "important",
       "userFacing": "Account menu -> Explore Poems: filter/browse poems by mood, topic, motif, cross-dimension family, emotional intensity, and 0-10 reading difficulty; tap a result to expand the full poem in place.",
-      "entrypoints": ["src/components/CategoryExplorer.jsx", "src/components/category/FamilyPicker.jsx", "src/components/category/PoemResultsGrid.jsx", "src/services/database.js"],
+      "entrypoints": [
+        "src/components/CategoryExplorer.jsx",
+        "src/components/category/FamilyPicker.jsx",
+        "src/components/category/PoemResultsGrid.jsx",
+        "src/services/database.js"
+      ],
       "endpoints": ["GET /api/categories", "GET /api/poems/by-category"],
       "tests": {
         "unit": ["src/test/server.test.js"],
@@ -594,6 +599,26 @@
       "deviceOnly": false,
       "coverage": "none",
       "gap": "Dev-only; no coverage needed."
+    },
+    {
+      "id": "internal-enjoyability-lab",
+      "name": "Enjoyability lab (local curation tooling)",
+      "tier": "internal",
+      "userFacing": "Not user-facing. Local-only curation tool guarded by SAVED_CURATION_EMAIL.",
+      "entrypoints": ["server.js", "enjoyability-lab.html"],
+      "endpoints": [
+        "GET /enjoyability",
+        "GET /api/lab/saved",
+        "DELETE /api/lab/saved/:savedId",
+        "POST /api/lab/saved/restore"
+      ],
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "deviceOnly": false,
+      "coverage": "none",
+      "gap": "Local-only tooling; routes are disabled unless SAVED_CURATION_EMAIL is configured."
     },
     {
       "id": "reader-feed",

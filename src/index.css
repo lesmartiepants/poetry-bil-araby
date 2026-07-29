@@ -161,5 +161,9 @@ button:focus-visible {
   cursor: pointer;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
-.dual-range-input::-webkit-slider-runnable-track { background: transparent; }
-.dual-range-input::-moz-range-track { background: transparent; }
+.dual-range-input::-webkit-slider-runnable-track {
+  background: transparent;
+}
+.dual-range-input::-moz-range-track {
+  background: transparent;
+}

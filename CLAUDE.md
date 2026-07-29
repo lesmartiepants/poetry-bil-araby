@@ -36,6 +36,7 @@ npm run test:e2e:debug   # Debug mode
 > **Living map:** [`docs/APP-STATE.md`](docs/APP-STATE.md) is the feature inventory + test-coverage matrix, generated from [`feature-manifest.json`](feature-manifest.json). Read it first to see what the app does and how well each feature is tested. CI fails if a feature is added/removed without updating the manifest.
 
 ### Modular React app (was single-file, now ~62 modules)
+
 `src/app.jsx` is still the main render tree, but the logic was extracted into modules. Search the right place, not just `app.jsx`:
 
 - `src/stores/` — Zustand stores: `uiStore`, `poemStore`, `audioStore`, `modalStore` (all visual/playback/overlay state lives here)

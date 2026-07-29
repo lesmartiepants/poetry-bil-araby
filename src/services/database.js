@@ -110,7 +110,9 @@ export const fetchPoemsByPoet = async (poetName, count = 5, excludeIds = []) => 
         seenIds.add(String(poem.id));
         results.push(poem);
       }
-    } catch { /* skip failed fetch */ }
+    } catch {
+      /* skip failed fetch */
+    }
   }
   return results;
 };

@@ -34,7 +34,7 @@ describe('voice catalog', () => {
 describe('voiceGender', () => {
   it('returns the gender for a known voice', () => {
     expect(voiceGender('Zephyr')).toBe('f');
-    expect(voiceGender('Kore')).toBe('m');
+    expect(voiceGender('Autonoe')).toBe('f');
     expect(voiceGender('Orus')).toBe('m');
   });
 
@@ -57,28 +57,17 @@ describe('voiceGender', () => {
 });
 
 describe('nextVoice', () => {
-  it('advances to the next voice in order, through the whole catalog', () => {
-    for (let i = 0; i < VOICE_CATALOG.length - 1; i++) {
-      expect(nextVoice(VOICE_CATALOG[i].name)).toBe(VOICE_CATALOG[i + 1].name);
+  it('alternates gender while returning active catalog voices', () => {
+    for (const voice of VOICE_CATALOG) {
+      const next = nextVoice(voice.name);
+      expect(VOICE_CATALOG.some((candidate) => candidate.name === next)).toBe(true);
+      expect(voiceGender(next)).not.toBe(voice.gender);
     }
   });
 
-  it('wraps around from the last voice to the first', () => {
-    const last = VOICE_CATALOG[VOICE_CATALOG.length - 1].name;
-    expect(nextVoice(last)).toBe(VOICE_CATALOG[0].name);
-  });
-
-  it('restarts the cycle for a voice not in the catalog', () => {
-    expect(nextVoice('NotAVoice')).toBe(VOICE_CATALOG[0].name);
-    expect(nextVoice(undefined)).toBe(VOICE_CATALOG[0].name);
-    expect(nextVoice('')).toBe(VOICE_CATALOG[0].name);
-  });
-
-  it('cycles through the entire catalog and returns to the start', () => {
-    let voice = VOICE_CATALOG[0].name;
-    for (let i = 0; i < VOICE_CATALOG.length; i++) {
-      voice = nextVoice(voice);
-    }
-    expect(voice).toBe(VOICE_CATALOG[0].name);
+  it('starts unknown voices with an active male voice', () => {
+    expect(nextVoice('NotAVoice')).toBe('Orus');
+    expect(nextVoice(undefined)).toBe('Orus');
+    expect(nextVoice('')).toBe('Orus');
   });
 });

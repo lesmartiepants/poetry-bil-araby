@@ -26,12 +26,12 @@ import { fileURLToPath } from 'url';
 import { resolve } from 'path';
 import { readFileSync } from 'fs';
 import WebSocket from 'ws';
+import { buildLiveWordTimings } from './src/utils/liveWordTiming.js';
 
 const { Pool } = pg;
 const app = express();
-// TTS Lab HTML is a dev-only page. Load it lazily on first request and cache it, so a
-// missing/unreadable file — or a non-file import.meta.url (as under the test runner) —
-// never crashes server boot.
+// The lab is a development-only page. Loading it lazily prevents a missing file —
+// or a non-file import URL under the test runner — from blocking server startup.
 let _labHtml = null;
 const loadLabHtml = () => {
   if (_labHtml === null) {
@@ -214,7 +214,10 @@ async function checkCategorizationSupport() {
         'SELECT key FROM category_dimensions ORDER BY sort_order, id'
       );
       categorizationDimensions = dimResult.rows.map((r) => r.key);
-      log.info('DB', `Categorization dimensions: ${categorizationDimensions.join(', ') || '(none)'}`);
+      log.info(
+        'DB',
+        `Categorization dimensions: ${categorizationDimensions.join(', ') || '(none)'}`
+      );
     } else {
       categorizationDimensions = [];
     }
@@ -705,21 +708,24 @@ app.get('/api/categories', async (req, res) => {
       });
     }
 
-    // Families group related values ACROSS dimensions. Each row carries the
-    // family's cross-dimension poem_count (COUNT(DISTINCT poem_id) over any
-    // member value) via a correlated subquery — same for every row of a family,
-    // so we read it once when the family is first seen.
+    // Families group related values ACROSS dimensions. Compute each family's
+    // cross-dimension poem count once before joining its member values.
     const famResult = await pool.query(`
+      WITH family_counts AS (
+        SELECT v2.family_id, COUNT(DISTINCT pc.poem_id) AS poem_count
+        FROM category_values v2
+        LEFT JOIN poem_categories pc ON pc.value_id = v2.id
+        WHERE v2.family_id IS NOT NULL
+        GROUP BY v2.family_id
+      )
       SELECT f.key AS family, f.label_ar AS family_ar, f.label_en AS family_en,
              f.sort_order AS family_sort,
              d.key AS dim, v.key AS value, v.label_ar, v.label_en,
-             (SELECT COUNT(DISTINCT pc.poem_id)
-                FROM poem_categories pc
-                JOIN category_values v2 ON pc.value_id = v2.id
-               WHERE v2.family_id = f.id) AS poem_count
+             COALESCE(fc.poem_count, 0) AS poem_count
       FROM category_families f
       JOIN category_values v ON v.family_id = f.id
       JOIN category_dimensions d ON v.dimension_id = d.id
+      LEFT JOIN family_counts fc ON fc.family_id = f.id
       ORDER BY f.sort_order, d.sort_order, v.sort_order
     `);
     const byFamily = new Map();
@@ -1356,8 +1362,6 @@ app.post('/api/ai/live-tts', async (req, res) => {
   const WS_MAX_STREAM = 180000;
   const WS_MAX_BUFFER = 90000;
 
-  // Validate the request body before reporting backend availability so a malformed
-  // request always gets a 400 (not a 503 that hides the real problem).
   const { text, voiceName, systemInstruction, temperature } = req.body || {};
   if (!text || typeof text !== 'string' || !text.trim()) {
     return res.status(400).json({ error: 'Missing or empty "text" field' });
@@ -1391,11 +1395,14 @@ app.post('/api/ai/live-tts', async (req, res) => {
    *
    * @returns {() => void} canceller that closes the socket (for client disconnects)
    */
-  const runSession = ({ maxMs, onFirstChunk, onChunk, onDone, onFail }) => {
+  const runSession = ({ maxMs, onFirstChunk, onChunk, onDone, onFail, onTranscript }) => {
     let settled = false;
     let chunkCount = 0;
     let firstChunkTimer = null;
     let idleTimer = null;
+    let totalBytes = 0;
+    let bytesAtLastTranscriptEnd = 0; // byte offset where the current fragment's audio started
+    const transcriptFragments = [];
 
     const clearTimers = () => {
       clearTimeout(firstChunkTimer);
@@ -1409,7 +1416,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
       try {
         ws.close();
       } catch {}
-      onDone(reason, chunkCount);
+      onDone(reason, chunkCount, { transcriptFragments, totalBytes });
     };
     const fail = (err) => {
       if (settled) return;
@@ -1459,6 +1466,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
               },
             ],
           },
+          outputAudioTranscription: {},
         },
       };
       ws.send(JSON.stringify(setupMsg));
@@ -1495,6 +1503,8 @@ app.post('/api/ai/live-tts', async (req, res) => {
 
         // ── Audio / text parts ───────────────────────────────────────────
         if (msg.serverContent?.modelTurn?.parts) {
+          const bytesBeforeMsg = totalBytes;
+          let msgAudioBytes = 0;
           for (const part of msg.serverContent.modelTurn.parts) {
             if (part.inlineData?.data) {
               if (chunkCount === 0) {
@@ -1506,10 +1516,44 @@ app.post('/api/ai/live-tts', async (req, res) => {
                 if (onFirstChunk) onFirstChunk(part.inlineData.mimeType);
               }
               chunkCount++;
-              onChunk(part.inlineData.data);
+              const base64 = part.inlineData.data;
+              const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+              const chunkBytes = Math.floor((base64.length * 3) / 4) - padding;
+              totalBytes += chunkBytes;
+              msgAudioBytes += chunkBytes;
+              onChunk(base64);
               resetIdle();
             }
           }
+          if (msgAudioBytes > 0) {
+            log.info(
+              'Live TTS',
+              `[Frag] audio +${msgAudioBytes}B → total=${totalBytes} (${(totalBytes / 48000).toFixed(3)}s) | transcript-pending-from=${bytesBeforeMsg}`
+            );
+          }
+        }
+
+        // ── Output transcription (interleaved with audio) ──────────────────
+        // The API sends transcription AFTER the audio it describes, so totalBytes
+        // at this point is already past the end of this fragment's audio.
+        // bytesAtLastTranscriptEnd holds the byte position where THIS fragment's
+        // audio started (= where the previous fragment's audio ended).
+        if (msg.serverContent?.outputTranscription?.text) {
+          const fragText = msg.serverContent.outputTranscription.text;
+          const stamp = bytesAtLastTranscriptEnd;
+          transcriptFragments.push({
+            text: fragText,
+            audioBytesBefore: stamp,
+          });
+          bytesAtLastTranscriptEnd = totalBytes;
+          log.info(
+            'Live TTS',
+            `[Frag] transcript "${fragText.slice(0, 50)}" | stamp=${stamp}B (${(stamp / 48000).toFixed(3)}s) → total=${totalBytes}B (${(totalBytes / 48000).toFixed(3)}s)`
+          );
+          // Forward timings the moment they exist — they lead the playhead by
+          // seconds, so the client can light the exact word during streaming
+          // instead of waiting for the end-of-turn 'done' event.
+          if (onTranscript) onTranscript(transcriptFragments, totalBytes);
         }
 
         // ── Turn complete — all audio received ───────────────────────────
@@ -1573,12 +1617,27 @@ app.post('/api/ai/live-tts', async (req, res) => {
       onFirstChunk: (mime) =>
         sse({ meta: { sampleRate: 24000, mimeType: mime || 'audio/pcm;rate=24000' } }),
       onChunk: (b64) => sse({ chunk: b64 }),
-      onDone: (reason, n) => {
+      onTranscript: (frags, total) => {
+        const partial = buildLiveWordTimings(frags, total);
+        if (partial.length) sse({ partialTimings: partial });
+      },
+      onDone: (reason, n, { transcriptFragments, totalBytes }) => {
+        const wordTimings = buildLiveWordTimings(transcriptFragments, totalBytes);
         log.info(
           'Live TTS',
-          `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice}`
+          `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice} | ${wordTimings.length} words from ${transcriptFragments.length} fragments`
         );
-        sse({ done: true, chunks: n, reason });
+        log.info(
+          'Live TTS',
+          `[Frag] Summary: ${transcriptFragments.length} frags | stamps=[${transcriptFragments.map((f) => `${(f.audioBytesBefore / 48000).toFixed(2)}s`).join(',')}] | totalBytes=${totalBytes} (${(totalBytes / 48000).toFixed(2)}s)`
+        );
+        if (wordTimings.length > 0) {
+          log.info(
+            'Live TTS',
+            `[WordTimings] first=${wordTimings[0].word}@${wordTimings[0].start.toFixed(2)}-${wordTimings[0].end.toFixed(2)}s | last=${wordTimings[wordTimings.length - 1].word}@${wordTimings[wordTimings.length - 1].start.toFixed(2)}-${wordTimings[wordTimings.length - 1].end.toFixed(2)}s`
+          );
+        }
+        sse({ done: true, chunks: n, reason, ...(wordTimings.length ? { wordTimings } : {}) });
         try {
           res.end();
         } catch {}
@@ -1602,7 +1661,7 @@ app.post('/api/ai/live-tts', async (req, res) => {
   runSession({
     maxMs: WS_MAX_BUFFER,
     onChunk: (b64) => chunks.push(b64),
-    onDone: () => {
+    onDone: (_reason, _chunkCount, { transcriptFragments, totalBytes }) => {
       if (!chunks.length) {
         if (!res.headersSent)
           res.status(500).json({ error: 'No audio data received from Live API' });
@@ -1611,11 +1670,15 @@ app.post('/api/ai/live-tts', async (req, res) => {
       // Decode each base64 chunk to binary, concat, re-encode. A plain string join
       // is wrong when chunks carry base64 padding ('=') in the middle.
       const combined = Buffer.concat(chunks.map((b64) => Buffer.from(b64, 'base64')));
+      const wordTimings = buildLiveWordTimings(transcriptFragments, combined.length);
       log.info(
         'Live TTS',
-        `Done (${ms()}) | ${chunks.length} chunks | ${combined.length} bytes PCM | voice: ${voice}`
+        `Done (${ms()}) | ${chunks.length} chunks | ${combined.length} bytes PCM | voice: ${voice} | Word timings: ${wordTimings.length} words from ${transcriptFragments.length} fragments`
       );
-      res.json({ audioData: combined.toString('base64') });
+      res.json({
+        audioData: combined.toString('base64'),
+        ...(wordTimings.length ? { wordTimings } : {}),
+      });
     },
     onFail: (err) => {
       log.error('Live TTS', `Failed: ${err.message}`);

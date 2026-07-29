@@ -945,7 +945,9 @@ describe('Backend API Server', () => {
             label_ar: 'المزاج',
             label_en: 'Mood',
             cardinality: 'multi',
-            values: [{ key: 'melancholy', label_ar: 'حزن', label_en: 'Melancholy', poem_count: 12 }],
+            values: [
+              { key: 'melancholy', label_ar: 'حزن', label_en: 'Melancholy', poem_count: 12 },
+            ],
           },
           {
             key: 'topic',
@@ -988,7 +990,13 @@ describe('Backend API Server', () => {
         mood_primary: 'melancholy',
         emotional_intensity: 80,
         accessibility_score: 4.2,
-        accessibility_factors: { lexical: 4, syntax: 3, imagery_abstraction: 2, allusion: 2, narrativity: 2 },
+        accessibility_factors: {
+          lexical: 4,
+          syntax: 3,
+          imagery_abstraction: 2,
+          allusion: 2,
+          narrativity: 2,
+        },
         categories_json: { moods: ['melancholy'], confidences: { melancholy: 91 } },
         confidence: 91,
       };
@@ -996,11 +1004,9 @@ describe('Backend API Server', () => {
       it('reads the dimension set from the DB (not hardcoded) and accepts a new dimension', async () => {
         // Drive the REAL startup detection with a mocked pool: table exists,
         // then a dimension list that includes a brand-new 'form' dimension.
-        mockPool.query
-          .mockResolvedValueOnce({ rows: [{ exists: 1 }] })
-          .mockResolvedValueOnce({
-            rows: [{ key: 'mood' }, { key: 'topic' }, { key: 'motif' }, { key: 'form' }],
-          });
+        mockPool.query.mockResolvedValueOnce({ rows: [{ exists: 1 }] }).mockResolvedValueOnce({
+          rows: [{ key: 'mood' }, { key: 'topic' }, { key: 'motif' }, { key: 'form' }],
+        });
         await __test.checkCategorizationSupport();
 
         expect(__test.getCategorizationState().categorizationDimensions).toEqual([
@@ -1057,7 +1063,13 @@ describe('Backend API Server', () => {
           moodPrimary: 'melancholy',
           emotionalIntensity: 80,
           accessibilityScore: 4.2,
-          accessibilityFactors: { lexical: 4, syntax: 3, imagery_abstraction: 2, allusion: 2, narrativity: 2 },
+          accessibilityFactors: {
+            lexical: 4,
+            syntax: 3,
+            imagery_abstraction: 2,
+            allusion: 2,
+            narrativity: 2,
+          },
           confidence: 91,
           categories: { moods: ['melancholy'], confidences: { melancholy: 91 } },
         });

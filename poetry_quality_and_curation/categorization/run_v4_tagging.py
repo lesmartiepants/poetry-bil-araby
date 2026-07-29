@@ -12,13 +12,17 @@ categorized_at IS NULL, so re-running continues where it stopped.
 """
 import argparse, asyncio, json, os, re, sys, time
 from pathlib import Path
-sys.path.insert(0, "/Users/siraj/github/poetry-bil-araby/.claude/worktrees/poet-categorization")
-from dotenv import load_dotenv; load_dotenv("/Users/siraj/github/poetry-bil-araby/.env")
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from dotenv import load_dotenv
+
+load_dotenv(ROOT / ".env")
 import psycopg2, psycopg2.extras
 from poetry_quality_and_curation.categorization import config, prompts
 from poetry_quality_and_curation.categorization.classify_poems import classify_batch
 
-ROOT = Path("/Users/siraj/github/poetry-bil-araby/.claude/worktrees/poet-categorization")
 MIGRATION = ROOT / "supabase/migrations/20260722000000_add_poem_categorization.sql"
 
 
@@ -109,8 +113,7 @@ async def classify_with_retry(batch, model, prompt, sem, kw, retries=5, base=5):
     """Backoff-retry around classify_batch to survive the empty-body 404 rate limit."""
     for attempt in range(retries):
         try:
-            resp = await classify_batch(batch, model, prompt, sem, kw)
-            return resp.choices[0].message.content
+            return await classify_batch(batch, model, prompt, sem, kw)
         except Exception as e:
             msg = str(e)[:120]
             if attempt == retries - 1:
@@ -194,19 +197,27 @@ async def main():
     total_cost = 0.0; tagged = 0
     for start in range(0, len(batches), args.concurrency):
         chunk = batches[start:start + args.concurrency]
-        texts = await asyncio.gather(*[classify_with_retry(b, args.model, prompt, sem, kw) for b in chunk])
-        for b, text in zip(chunk, texts):
-            if not text:
+        responses = await asyncio.gather(
+            *[classify_with_retry(b, args.model, prompt, sem, kw) for b in chunk]
+        )
+        for b, response in zip(chunk, responses):
+            if not response:
                 continue
-            rows = parse(text, b)
+            try:
+                total_cost += litellm.completion_cost(completion_response=response)
+            except Exception:
+                pass
+            rows = parse(response.choices[0].message.content, b)
             if rows:
                 try:
                     write_rows(conn, rows, vlook, args.model, args.version); tagged += len(rows)
                 except Exception as e:
                     conn.rollback(); log(f"  write error (skipped batch): {str(e)[:120]}")
-        # cost tracking is best-effort (litellm cost needs the response obj; we estimate by progress)
+        if total_cost >= args.max_cost:
+            log(f"  cost limit reached (${total_cost:.2f} >= ${args.max_cost:.2f}); stopping")
+            break
         if tagged and tagged % 100 < args.batch_size * args.concurrency:
-            log(f"  progress: ~{tagged} tagged")
+            log(f"  progress: ~{tagged} tagged (${total_cost:.2f})")
     backfill_century(conn)
     verify(conn)
     log("DONE.")

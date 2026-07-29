@@ -1,0 +1,54 @@
+{
+  "_note": "Proof-of-concept output produced by classifying 4 real poems pulled live from the production DB, using the taxonomy in config.py. Demonstrates the classifier's target output shape and the value over the existing single-label 'theme'. The 'existing_theme' field shows what the poem is tagged as TODAY.",
+  "samples": [
+    {
+      "id": "86193",
+      "poet": "مصطفى صادق الرافعي / al-Rafi'i",
+      "title": "اعتذار الغزال الجريح",
+      "existing_theme": "خمر  (wine — WRONG; this is a love poem)",
+      "moods": ["amorous", "bittersweet", "yearning"],
+      "mood_primary": "amorous",
+      "topics": ["love", "beauty"],
+      "motifs": [],
+      "emotional_intensity": 74,
+      "accessibility_level": 3,
+      "century": 20
+    },
+    {
+      "poet": "المتنبي / al-Mutanabbi",
+      "title": "بدر والتكوين",
+      "existing_theme": "مدح  (praise — thin, single label)",
+      "moods": ["pride", "reverence", "contemplation"],
+      "mood_primary": "pride",
+      "topics": ["honor-pride", "wisdom-ethics"],
+      "motifs": ["moon-stars"],
+      "emotional_intensity": 62,
+      "accessibility_level": 5,
+      "century": 10
+    },
+    {
+      "poet": "الخنساء / al-Khansa",
+      "title": "أحزان الحرب",
+      "existing_theme": "غير مصنف  (UNCATEGORIZED — a famous elegy!)",
+      "moods": ["grief", "melancholy", "pride", "defiance"],
+      "mood_primary": "grief",
+      "topics": ["loss-death", "war-conflict", "honor-pride"],
+      "motifs": ["sword-battle", "tears"],
+      "emotional_intensity": 92,
+      "accessibility_level": 4,
+      "century": 7
+    },
+    {
+      "poet": "أبو نواس / Abu Nuwas",
+      "title": "نظرات المحب المتخفي",
+      "existing_theme": "قصيرة  (\"short\" — a length label polluting the themes table)",
+      "moods": ["amorous", "yearning", "bittersweet"],
+      "mood_primary": "amorous",
+      "topics": ["love", "beauty"],
+      "motifs": [],
+      "emotional_intensity": 58,
+      "accessibility_level": 3,
+      "century": 8
+    }
+  ]
+}

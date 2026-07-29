@@ -106,6 +106,7 @@ const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
+import CategoryExplorer from './components/CategoryExplorer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
 import PoemFeed from './components/feed/PoemFeed.jsx';
 import AccountMenu from './components/AccountMenu.jsx';
@@ -134,6 +135,12 @@ export { filterPoemsByCategory } from './utils/filterPoems.js';
 export default function DiwanApp() {
   const [, navigate] = useLocation();
   const [, routeParams] = useRoute('/poem/:id');
+  const [isExploreRoute] = useRoute('/explore');
+  // The reader owns the URL (it writes /poem/:id as you move through the feed).
+  // Suppress those writes while the full-screen explorer route is active so the
+  // feed doesn't clobber /explore out from under the explorer.
+  const navigateReader = (to, opts) =>
+    window.location.pathname.startsWith('/explore') ? undefined : navigate(to, opts);
   const [queryParams, setQueryParams] = useQueryParams();
 
   const mainScrollRef = useRef(null);
@@ -590,7 +597,8 @@ export default function DiwanApp() {
         // Restored from OAuth — stay on this poem, just queue explanation
         addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
         setAutoExplainPending(true);
-        if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
+        if (initial.id)
+          navigateReader('/poem/' + initial.id + window.location.search, { replace: true });
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(
@@ -1037,7 +1045,8 @@ export default function DiwanApp() {
     analyzePoemAction({ current: displayedPoem, addLog, track });
   };
 
-  const handleFetch = () => fetchPoemAction({ addLog, track, emitEvent, navigate, markPoemSeen });
+  const handleFetch = () =>
+    fetchPoemAction({ addLog, track, emitEvent, navigate: navigateReader, markPoemSeen });
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -1079,6 +1088,22 @@ export default function DiwanApp() {
   const handleSignIn = () => {
     track('sign_in_started');
     setShowAuthModal(true);
+  };
+
+  // Open a poem from the explorer in the reader. We load the WHOLE list the user
+  // was looking at (the filtered/saved results) as the feed, positioned at the
+  // chosen poem — so the reader has a real queue to swipe through (next/prev)
+  // instead of a dead-end single poem, and the reveal fires like a normal slide.
+  const openPoemInReader = (list, startIndex = 0) => {
+    const arr = Array.isArray(list) ? list.filter((p) => p && p.id != null) : [];
+    if (arr.length === 0) return;
+    const idx = Math.max(0, Math.min(startIndex, arr.length - 1));
+    const poem = arr[idx];
+    setPoems(arr);
+    setCurrentIndex(idx);
+    setAutoExplainPending(true);
+    updateOGMetaTags(poem);
+    navigate('/poem/' + poem.id);
   };
 
   const handleSignInWithGoogle = async () => {
@@ -1268,9 +1293,9 @@ export default function DiwanApp() {
     // Update URL for DB poems, preserving any existing query params (e.g. ?poet=)
     const qs = window.location.search;
     if (typeof mappedPoem.id === 'number') {
-      navigate('/poem/' + mappedPoem.id + qs);
+      navigateReader('/poem/' + mappedPoem.id + qs);
     } else {
-      navigate('/' + qs);
+      navigateReader('/' + qs);
     }
   };
 
@@ -1700,7 +1725,7 @@ export default function DiwanApp() {
                               );
                             }
                             if (newPoem?.id) {
-                              navigate('/poem/' + newPoem.id + window.location.search, {
+                              navigateReader('/poem/' + newPoem.id + window.location.search, {
                                 replace: true,
                               });
                               updateOGMetaTags(newPoem);
@@ -1813,7 +1838,7 @@ export default function DiwanApp() {
                               );
                             }
                             if (newPoem?.id) {
-                              navigate('/poem/' + newPoem.id + window.location.search, {
+                              navigateReader('/poem/' + newPoem.id + window.location.search, {
                                 replace: true,
                               });
                               updateOGMetaTags(newPoem);
@@ -2114,6 +2139,20 @@ export default function DiwanApp() {
           />
         )}
       </AnimatePresence>
+
+      {/* Category Explorer — full-screen routed view at /explore */}
+      {FEATURES.categoryExplorer && isExploreRoute && (
+        <CategoryExplorer
+          key="category-explorer"
+          user={user}
+          savedPoems={savedPoems}
+          savePoem={savePoem}
+          unsavePoem={unsavePoem}
+          isPoemSaved={isPoemSaved}
+          onRequireAuth={handleSignIn}
+          onOpenPoem={openPoemInReader}
+        />
+      )}
 
       {/* Auth Modal */}
       <AnimatePresence>

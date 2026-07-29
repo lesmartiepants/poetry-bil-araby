@@ -183,6 +183,38 @@ async function checkTitleEnColumn() {
   }
 }
 
+// Check if the categorization layer exists (graceful pre-migration fallback).
+// Gates the /api/categories and /api/poems/by-category endpoints.
+let hasCategorization = false;
+// The set of dimension keys is read from the DB at startup (NOT hardcoded), so
+// adding a brand-new dimension row (e.g. 'form') makes it filterable in
+// /api/poems/by-category with zero further code changes.
+let categorizationDimensions = [];
+async function checkCategorizationSupport() {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'poem_categories' LIMIT 1"
+    );
+    hasCategorization = result.rows.length > 0;
+    log.info('DB', `Categorization layer: ${hasCategorization ? 'available' : 'not found'}`);
+    if (hasCategorization) {
+      const dimResult = await pool.query(
+        'SELECT key FROM category_dimensions ORDER BY sort_order, id'
+      );
+      categorizationDimensions = dimResult.rows.map((r) => r.key);
+      log.info(
+        'DB',
+        `Categorization dimensions: ${categorizationDimensions.join(', ') || '(none)'}`
+      );
+    } else {
+      categorizationDimensions = [];
+    }
+  } catch {
+    hasCategorization = false;
+    categorizationDimensions = [];
+  }
+}
+
 // Helper: returns extra SELECT for English poet name (empty string when column doesn't exist)
 function poetNameEnExpr() {
   return hasPoetNameEn ? ', po.name_en as poet_en' : '';
@@ -245,6 +277,7 @@ pool.query('SELECT NOW()', (err, res) => {
     checkPoetNameEnColumn();
     checkTitleEnColumn();
     checkPoemEventsTable();
+    checkCategorizationSupport();
   }
 });
 
@@ -549,6 +582,10 @@ app.get(
 app.get('/api/poets', async (req, res) => {
   try {
     const qf = servingFilters();
+    const all = String(req.query.all || '') === '1' || String(req.query.all || '') === 'true';
+    let limit = parseInt(req.query.limit, 10);
+    if (!Number.isInteger(limit) || limit < 1) limit = all ? 2000 : 50;
+    limit = Math.min(limit, 2000);
     const query = `
       SELECT DISTINCT po.name${hasPoetNameEn ? ', po.name_en' : ''}, COUNT(p.id) as poem_count
       FROM poets po
@@ -557,7 +594,7 @@ app.get('/api/poets', async (req, res) => {
       GROUP BY po.name${hasPoetNameEn ? ', po.name_en' : ''}
       HAVING COUNT(p.id) > 0
       ORDER BY poem_count DESC
-      LIMIT 50
+      LIMIT ${limit}
     `;
 
     const result = await pool.query(query);
@@ -619,6 +656,344 @@ app.get(
     }
   }
 );
+
+// List the available categorization facets (dimensions + values, bilingual).
+// Powers filter UIs. Returns [] gracefully when the migration hasn't run.
+app.get('/api/categories', async (req, res) => {
+  try {
+    // Graceful pre-migration payload — both arrays present, no DB touch.
+    if (!hasCategorization) return res.json({ dimensions: [], families: [] });
+    const result = await pool.query(`
+      SELECT d.key AS dimension, d.label_ar AS dimension_ar, d.label_en AS dimension_en,
+             d.cardinality, v.key AS value, v.label_ar, v.label_en,
+             COUNT(pc.poem_id) AS poem_count
+      FROM category_dimensions d
+      JOIN category_values v ON v.dimension_id = d.id
+      LEFT JOIN poem_categories pc ON pc.value_id = v.id
+      GROUP BY d.id, d.key, d.label_ar, d.label_en, d.cardinality,
+               v.id, v.key, v.label_ar, v.label_en, v.sort_order
+      ORDER BY d.sort_order, v.sort_order
+    `);
+    // Group values under their dimension
+    const byDim = new Map();
+    for (const row of result.rows) {
+      if (!byDim.has(row.dimension)) {
+        byDim.set(row.dimension, {
+          key: row.dimension,
+          label_ar: row.dimension_ar,
+          label_en: row.dimension_en,
+          cardinality: row.cardinality,
+          values: [],
+        });
+      }
+      byDim.get(row.dimension).values.push({
+        key: row.value,
+        label_ar: row.label_ar,
+        label_en: row.label_en,
+        poem_count: parseInt(row.poem_count, 10),
+      });
+    }
+
+    // Families group related values ACROSS dimensions. Each row carries the
+    // family's cross-dimension poem_count (COUNT(DISTINCT poem_id) over any
+    // member value) via a correlated subquery — same for every row of a family,
+    // so we read it once when the family is first seen.
+    const famResult = await pool.query(`
+      SELECT f.key AS family, f.label_ar AS family_ar, f.label_en AS family_en,
+             f.sort_order AS family_sort,
+             d.key AS dim, v.key AS value, v.label_ar, v.label_en,
+             (SELECT COUNT(DISTINCT pc.poem_id)
+                FROM poem_categories pc
+                JOIN category_values v2 ON pc.value_id = v2.id
+               WHERE v2.family_id = f.id) AS poem_count
+      FROM category_families f
+      JOIN category_values v ON v.family_id = f.id
+      JOIN category_dimensions d ON v.dimension_id = d.id
+      ORDER BY f.sort_order, d.sort_order, v.sort_order
+    `);
+    const byFamily = new Map();
+    for (const row of famResult.rows) {
+      if (!byFamily.has(row.family)) {
+        byFamily.set(row.family, {
+          key: row.family,
+          label_ar: row.family_ar,
+          label_en: row.family_en,
+          sort_order: row.family_sort,
+          poem_count: parseInt(row.poem_count, 10),
+          values: [],
+        });
+      }
+      byFamily.get(row.family).values.push({
+        dim: row.dim,
+        key: row.value,
+        label_ar: row.label_ar,
+        label_en: row.label_en,
+      });
+    }
+
+    res.json({
+      dimensions: Array.from(byDim.values()),
+      families: Array.from(byFamily.values()),
+    });
+  } catch (error) {
+    Sentry.captureException(error);
+    log.error('Categories', `Error listing categories: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Filter/recommend poems by category facets.
+// Query params (all optional, AND-combined):
+//   <dimension>         — one query param per dimension key, READ FROM
+//                         category_dimensions at startup (mood, topic, motif,
+//                         and any future dimension e.g. form). Repeatable /
+//                         comma-split value keys; a poem matches ANY value
+//                         within a dimension and ALL specified dimensions.
+//   family              — a category_families key; matches poems having ANY
+//                         member value of that family (cross-dimension OR).
+//   {dim}Mode           — 'and' | 'or' (default 'or'): combine the selected
+//                         values of that dimension with AND (poem carries all)
+//                         or OR (poem carries any). e.g. moodMode=and.
+//   poet                — exact poet name or slug (mirrors /api/poems/by-poet).
+//   era                 — poets.era_id (integer) OR an era name (poets.era_id
+//                         resolved via eras.name).
+//   century             — poems.century (integer CE, era-derived).
+//   minIntensity        — emotional_intensity >= N (0-100)
+//   maxIntensity        — emotional_intensity <= N (0-100)
+//   minAccessibility    — accessibility_score >= N (0-10)
+//   maxAccessibility    — accessibility_score <= N (0-10)
+//   limit               — 1..50 (default 10). Randomized selection.
+// Response: each poem includes moodPrimary, emotionalIntensity,
+//   accessibilityLevel, a `confidence` summary (MAX per-label confidence across
+//   the poem's assignments, 0-100), and the raw `categories` JSONB when present.
+// IMPORTANT: registered BEFORE /api/poems/:id so it is not shadowed.
+app.get('/api/poems/by-category', async (req, res) => {
+  try {
+    if (!hasCategorization) return res.json([]);
+
+    const params = [];
+    const clauses = [];
+    const qf = servingFilters();
+    if (qf) clauses.push(qf.replace(/^\s*AND\s+/i, '')); // qf begins with "AND ..."
+
+    // Dimension filters via EXISTS against the normalized join. The dimension
+    // set is READ FROM the DB (categorizationDimensions, populated at startup),
+    // so a new dimension row becomes filterable with no code change here.
+    for (const dim of categorizationDimensions) {
+      let raw = req.query[dim];
+      if (!raw) continue;
+      const values = (Array.isArray(raw) ? raw : [raw])
+        .flatMap((s) => String(s).split(','))
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .slice(0, 20);
+      if (values.length === 0) continue;
+      // Per-dimension combine mode: `${dim}Mode=and` requires the poem to carry
+      // ALL selected values (one EXISTS each); default `or` matches ANY.
+      const andMode = String(req.query[`${dim}Mode`] || 'or').toLowerCase() === 'and';
+      if (andMode) {
+        for (const v of values) {
+          params.push(dim);
+          const dimIdx = params.length;
+          params.push(v);
+          const valIdx = params.length;
+          clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_dimensions cd ON cv.dimension_id = cd.id
+        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = $${valIdx}
+      )`);
+        }
+      } else {
+        params.push(dim);
+        const dimIdx = params.length;
+        params.push(values);
+        const valIdx = params.length;
+        clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_dimensions cd ON cv.dimension_id = cd.id
+        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = ANY($${valIdx})
+      )`);
+      }
+    }
+
+    // Family filter: match poems having ANY value that belongs to the family
+    // (cross-dimension OR), mirroring the EXISTS style above.
+    const familyRaw = req.query.family;
+    if (familyRaw) {
+      const family = String(familyRaw).trim();
+      if (family) {
+        params.push(family);
+        clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_families cf ON cv.family_id = cf.id
+        WHERE pc.poem_id = p.id AND cf.key = $${params.length}
+      )`);
+      }
+    }
+
+    // Poet passthrough: exact name or slug (mirrors /api/poems/by-poet, which
+    // matches po.name; poets also carry a UUID slug for deep links).
+    const poetRaw = req.query.poet;
+    if (poetRaw) {
+      const poet = String(poetRaw).trim();
+      if (poet && poet !== 'All') {
+        params.push(poet);
+        clauses.push(`(po.name = $${params.length} OR po.slug = $${params.length})`);
+      }
+    }
+
+    // Era passthrough: numeric era id filters po.era_id directly; a non-numeric
+    // value is resolved via eras.name (era is a poet-level facet — poems has no
+    // era column — and po is already joined below).
+    const eraRaw = req.query.era;
+    if (eraRaw != null && String(eraRaw).trim() !== '') {
+      const era = String(eraRaw).trim();
+      const eraId = parseInt(era, 10);
+      if (Number.isInteger(eraId) && String(eraId) === era) {
+        params.push(eraId);
+        clauses.push(`po.era_id = $${params.length}`);
+      } else {
+        params.push(era);
+        clauses.push(`po.era_id = (SELECT id FROM eras WHERE name = $${params.length})`);
+      }
+    }
+
+    // Century passthrough: poems.century is era-derived (integer CE).
+    const centuryRaw = req.query.century;
+    if (centuryRaw != null && String(centuryRaw).trim() !== '') {
+      const century = parseInt(centuryRaw, 10);
+      if (Number.isInteger(century)) {
+        params.push(century);
+        clauses.push(`p.century = $${params.length}`);
+      }
+    }
+
+    // Intensity range (0-100) and difficulty/accessibility range (0-10). Each
+    // bound is independent so the UI can express a min, a max, or both.
+    const minIntensity = parseInt(req.query.minIntensity, 10);
+    if (Number.isInteger(minIntensity)) {
+      params.push(Math.max(0, Math.min(100, minIntensity)));
+      clauses.push(`p.emotional_intensity >= $${params.length}`);
+    }
+    const maxIntensity = parseInt(req.query.maxIntensity, 10);
+    if (Number.isInteger(maxIntensity)) {
+      params.push(Math.max(0, Math.min(100, maxIntensity)));
+      clauses.push(`p.emotional_intensity <= $${params.length}`);
+    }
+    const minAccessibility = parseFloat(req.query.minAccessibility);
+    if (Number.isFinite(minAccessibility)) {
+      params.push(Math.max(0, Math.min(10, minAccessibility)));
+      clauses.push(`p.accessibility_score >= $${params.length}`);
+    }
+    const maxAccessibility = parseFloat(req.query.maxAccessibility);
+    if (Number.isFinite(maxAccessibility)) {
+      params.push(Math.max(0, Math.min(10, maxAccessibility)));
+      clauses.push(`p.accessibility_score <= $${params.length}`);
+    }
+
+    // Explicit id set (e.g. a user's saved poems): return exactly those poems,
+    // fully categorized and in the order given, bypassing the random pick + cap.
+    const idsRaw = req.query.ids;
+    let idList = null;
+    if (idsRaw) {
+      idList = String(idsRaw)
+        .split(',')
+        .map((s) => parseInt(s.trim(), 10))
+        .filter(Number.isInteger)
+        .slice(0, 200);
+      if (!idList.length) idList = null;
+    }
+    let idsIdx = null;
+    if (idList) {
+      params.push(idList);
+      idsIdx = params.length;
+      clauses.push(`p.id = ANY($${idsIdx}::int[])`);
+    }
+
+    // Only the random path takes a LIMIT param; the id-set path returns all
+    // matched ids (bounded to <=200 by the ANY filter). Pushing an unused param
+    // makes pg reject the bind ("supplies N params, requires N-1").
+    let limitIdx = null;
+    if (!idList) {
+      let limit = parseInt(req.query.limit, 10);
+      limit = Number.isInteger(limit) ? Math.max(1, Math.min(50, limit)) : 10;
+      params.push(limit);
+      limitIdx = params.length;
+    }
+
+    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+    // For an explicit id set, keep the caller's order and take all of them;
+    // otherwise pick N random matching ids.
+    const orderLimit = idList
+      ? `ORDER BY array_position($${idsIdx}::int[], p.id::int)`
+      : `ORDER BY RANDOM() LIMIT $${limitIdx}`;
+    // Perf: pick matching poem ids on a minimal projection FIRST, then enrich
+    // only those. Avoids running the content expr, per-row MAX(confidence)
+    // subquery, and themes/translation joins across the whole filtered set (which
+    // ORDER BY RANDOM() would otherwise materialize) — that was the read timeout.
+    const result = await pool.query(
+      `
+      WITH matched AS (
+        SELECT p.id
+        FROM poems p
+        JOIN poets po ON p.poet_id = po.id
+        ${where}
+        ${orderLimit}
+      )
+      SELECT
+        p.id,
+        p.title,
+        ${poemContentExpr()} as arabic,
+        po.name as poet,
+        t.name as theme,
+        p.mood_primary,
+        p.emotional_intensity,
+        p.accessibility_score,
+        p.accessibility_factors,
+        p.categories AS categories_json,
+        po.era_id AS era_id,
+        p.century AS century,
+        (SELECT MAX(pc.confidence) FROM poem_categories pc WHERE pc.poem_id = p.id) AS confidence
+        ${poetNameEnExpr()}
+        ${titleEnExpr()}
+        ${translationSelectExpr()}
+      FROM poems p
+      JOIN poets po ON p.poet_id = po.id
+      JOIN themes t ON p.theme_id = t.id
+      WHERE p.id IN (SELECT id FROM matched)
+      ${idList ? `ORDER BY array_position($${idsIdx}::int[], p.id::int)` : ''}
+    `,
+      params
+    );
+
+    const poems = result.rows.map((poem) => {
+      const formatted = formatPoem(poem);
+      formatted.moodPrimary = poem.mood_primary;
+      formatted.emotionalIntensity = poem.emotional_intensity;
+      formatted.accessibilityScore = poem.accessibility_score;
+      formatted.accessibilityFactors = poem.accessibility_factors;
+      // Confidence summary: MAX per-label confidence across this poem's
+      // category assignments (0-100), plus the raw categories JSONB (which
+      // holds the per-value `confidences` object) when present.
+      if (poem.confidence != null) formatted.confidence = poem.confidence;
+      if (poem.categories_json) formatted.categories = poem.categories_json;
+      if (poem.era_id != null) formatted.eraId = poem.era_id;
+      if (poem.century != null) formatted.century = poem.century;
+      if (poem.cached_translation) formatted.cachedTranslation = poem.cached_translation;
+      return formatted;
+    });
+
+    log.info('Categories', `by-category returned ${poems.length} poems`);
+    res.json(poems);
+  } catch (error) {
+    Sentry.captureException(error);
+    log.error('Categories', `Error filtering by category: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 // Get poem by ID (for deep links / sharing)
 // IMPORTANT: This route uses :id param and must be registered AFTER all /api/poems/<literal> routes
@@ -1045,7 +1420,10 @@ app.post('/api/ai/live-tts', async (req, res) => {
     const resetIdle = () => {
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
-        log.error('Live TTS', `Idle ${WS_IDLE_TIMEOUT}ms, no new chunk (${ms()}) | ${chunkCount} chunks`);
+        log.error(
+          'Live TTS',
+          `Idle ${WS_IDLE_TIMEOUT}ms, no new chunk (${ms()}) | ${chunkCount} chunks`
+        );
         stop('idle', new Error('Live TTS stalled'));
       }, WS_IDLE_TIMEOUT);
     };
@@ -1131,7 +1509,10 @@ app.post('/api/ai/live-tts', async (req, res) => {
             }
           }
           if (msgAudioBytes > 0) {
-            log.info('Live TTS', `[Frag] audio +${msgAudioBytes}B → total=${totalBytes} (${(totalBytes / 48000).toFixed(3)}s) | transcript-pending-from=${bytesBeforeMsg}`);
+            log.info(
+              'Live TTS',
+              `[Frag] audio +${msgAudioBytes}B → total=${totalBytes} (${(totalBytes / 48000).toFixed(3)}s) | transcript-pending-from=${bytesBeforeMsg}`
+            );
           }
         }
 
@@ -1148,7 +1529,10 @@ app.post('/api/ai/live-tts', async (req, res) => {
             audioBytesBefore: stamp,
           });
           bytesAtLastTranscriptEnd = totalBytes;
-          log.info('Live TTS', `[Frag] transcript "${fragText.slice(0, 50)}" | stamp=${stamp}B (${(stamp / 48000).toFixed(3)}s) → total=${totalBytes}B (${(totalBytes / 48000).toFixed(3)}s)`);
+          log.info(
+            'Live TTS',
+            `[Frag] transcript "${fragText.slice(0, 50)}" | stamp=${stamp}B (${(stamp / 48000).toFixed(3)}s) → total=${totalBytes}B (${(totalBytes / 48000).toFixed(3)}s)`
+          );
           // Forward timings the moment they exist — they lead the playhead by
           // seconds, so the client can light the exact word during streaming
           // instead of waiting for the end-of-turn 'done' event.
@@ -1178,8 +1562,14 @@ app.post('/api/ai/live-tts', async (req, res) => {
 
     ws.on('close', (code, reason) => {
       const reasonStr = reason?.toString() || '';
-      log.info('Live TTS', `WS closed (${ms()}) | code: ${code}${reasonStr ? ` | ${reasonStr}` : ''}`);
-      stop('ws-close', new Error(`WebSocket closed: code=${code}${reasonStr ? ` (${reasonStr})` : ''}`));
+      log.info(
+        'Live TTS',
+        `WS closed (${ms()}) | code: ${code}${reasonStr ? ` | ${reasonStr}` : ''}`
+      );
+      stop(
+        'ws-close',
+        new Error(`WebSocket closed: code=${code}${reasonStr ? ` (${reasonStr})` : ''}`)
+      );
     });
 
     return () => {
@@ -1220,9 +1610,15 @@ app.post('/api/ai/live-tts', async (req, res) => {
           'Live TTS',
           `Stream done (${ms()}) | ${n} chunks | reason: ${reason} | voice: ${voice} | ${wordTimings.length} words from ${transcriptFragments.length} fragments`
         );
-        log.info('Live TTS', `[Frag] Summary: ${transcriptFragments.length} frags | stamps=[${transcriptFragments.map((f) => `${(f.audioBytesBefore / 48000).toFixed(2)}s`).join(',')}] | totalBytes=${totalBytes} (${(totalBytes / 48000).toFixed(2)}s)`);
+        log.info(
+          'Live TTS',
+          `[Frag] Summary: ${transcriptFragments.length} frags | stamps=[${transcriptFragments.map((f) => `${(f.audioBytesBefore / 48000).toFixed(2)}s`).join(',')}] | totalBytes=${totalBytes} (${(totalBytes / 48000).toFixed(2)}s)`
+        );
         if (wordTimings.length > 0) {
-          log.info('Live TTS', `[WordTimings] first=${wordTimings[0].word}@${wordTimings[0].start.toFixed(2)}-${wordTimings[0].end.toFixed(2)}s | last=${wordTimings[wordTimings.length-1].word}@${wordTimings[wordTimings.length-1].start.toFixed(2)}-${wordTimings[wordTimings.length-1].end.toFixed(2)}s`);
+          log.info(
+            'Live TTS',
+            `[WordTimings] first=${wordTimings[0].word}@${wordTimings[0].start.toFixed(2)}-${wordTimings[0].end.toFixed(2)}s | last=${wordTimings[wordTimings.length - 1].word}@${wordTimings[wordTimings.length - 1].start.toFixed(2)}-${wordTimings[wordTimings.length - 1].end.toFixed(2)}s`
+          );
         }
         sse({ done: true, chunks: n, reason, ...(wordTimings.length ? { wordTimings } : {}) });
         try {
@@ -1250,7 +1646,8 @@ app.post('/api/ai/live-tts', async (req, res) => {
     onChunk: (b64) => chunks.push(b64),
     onDone: (_reason, _chunkCount, { transcriptFragments, totalBytes }) => {
       if (!chunks.length) {
-        if (!res.headersSent) res.status(500).json({ error: 'No audio data received from Live API' });
+        if (!res.headersSent)
+          res.status(500).json({ error: 'No audio data received from Live API' });
         return;
       }
       // Decode each base64 chunk to binary, concat, re-encode. A plain string join
@@ -2279,6 +2676,24 @@ if (process.env.SENTRY_DSN) {
 
 // Export app for testing
 export { app, pool };
+
+// Test-only hooks. The categorization layer is normally initialized from the
+// live DB in checkCategorizationSupport() (invoked from the SELECT NOW()
+// callback, which never fires under the mocked pool). These let the test suite
+// exercise the enabled path deterministically. Not used by production code.
+export const __test = {
+  // Drive the real startup detection with a mocked pool (proves the dimension
+  // set is READ FROM the DB, not hardcoded).
+  checkCategorizationSupport,
+  // Or set state directly.
+  setCategorizationState(enabled, dimensions = []) {
+    hasCategorization = !!enabled;
+    categorizationDimensions = Array.isArray(dimensions) ? dimensions : [];
+  },
+  getCategorizationState() {
+    return { hasCategorization, categorizationDimensions: [...categorizationDimensions] };
+  },
+};
 
 // Only start server if this file is run directly (not imported)
 // Use fileURLToPath for cross-platform compatibility (Windows/Unix)

@@ -1,0 +1,263 @@
+{
+  "85646": {
+    "id": "85646",
+    "moods": ["amorous", "passion", "joy"],
+    "mood_primary": "amorous",
+    "topics": ["love", "beauty", "women-feminine"],
+    "motifs": ["fire-light", "dawn", "wine-cup"],
+    "emotional_intensity": 75,
+    "accessibility_factors": {
+      "lexical": 2,
+      "syntax": 2,
+      "imagery_abstraction": 2,
+      "allusion": 1,
+      "narrativity": 1
+    },
+    "confidences": {
+      "amorous": 95,
+      "passion": 85,
+      "joy": 70,
+      "love": 90,
+      "beauty": 80,
+      "women-feminine": 75,
+      "fire-light": 70,
+      "dawn": 65,
+      "wine-cup": 80
+    }
+  },
+  "85684": {
+    "id": "85684",
+    "moods": ["amorous", "joy", "bittersweet"],
+    "mood_primary": "amorous",
+    "topics": ["love", "nature", "beauty"],
+    "motifs": ["garden-flowers"],
+    "emotional_intensity": 60,
+    "accessibility_factors": {
+      "lexical": 2,
+      "syntax": 2,
+      "imagery_abstraction": 2,
+      "allusion": 1,
+      "narrativity": 2
+    },
+    "confidences": {
+      "amorous": 90,
+      "joy": 70,
+      "bittersweet": 60,
+      "love": 85,
+      "nature": 75,
+      "beauty": 70,
+      "garden-flowers": 95
+    }
+  },
+  "36953": {
+    "id": "36953",
+    "moods": ["grief", "melancholy", "despair", "nostalgia"],
+    "mood_primary": "grief",
+    "topics": ["loss-death", "time-mortality", "friendship"],
+    "motifs": ["tears", "fire-light", "desert-ruins"],
+    "emotional_intensity": 90,
+    "accessibility_factors": {
+      "lexical": 3,
+      "syntax": 3,
+      "imagery_abstraction": 2,
+      "allusion": 2,
+      "narrativity": 3
+    },
+    "confidences": {
+      "grief": 95,
+      "melancholy": 90,
+      "despair": 80,
+      "nostalgia": 75,
+      "loss-death": 95,
+      "time-mortality": 85,
+      "friendship": 70,
+      "tears": 90,
+      "fire-light": 70,
+      "desert-ruins": 80
+    }
+  },
+  "63346": {
+    "id": "63346",
+    "moods": ["passion", "reverence", "contemplation", "yearning"],
+    "mood_primary": "passion",
+    "topics": ["faith-spirit", "love", "time-mortality"],
+    "motifs": ["fire-light"],
+    "emotional_intensity": 85,
+    "accessibility_factors": {
+      "lexical": 3,
+      "syntax": 3,
+      "imagery_abstraction": 4,
+      "allusion": 4,
+      "narrativity": 2
+    },
+    "confidences": {
+      "passion": 95,
+      "reverence": 85,
+      "contemplation": 75,
+      "yearning": 70,
+      "faith-spirit": 95,
+      "love": 80,
+      "time-mortality": 60,
+      "fire-light": 85
+    }
+  },
+  "53601": {
+    "id": "53601",
+    "moods": ["grief", "reverence", "defiance", "yearning"],
+    "mood_primary": "grief",
+    "topics": ["loss-death", "faith-spirit", "justice-oppression", "honor-pride"],
+    "motifs": ["tears", "fire-light", "night", "sea-water"],
+    "emotional_intensity": 85,
+    "accessibility_factors": {
+      "lexical": 3,
+      "syntax": 3,
+      "imagery_abstraction": 3,
+      "allusion": 4,
+      "narrativity": 2
+    },
+    "confidences": {
+      "grief": 95,
+      "reverence": 90,
+      "defiance": 85,
+      "yearning": 75,
+      "loss-death": 95,
+      "faith-spirit": 90,
+      "justice-oppression": 85,
+      "honor-pride": 70,
+      "tears": 90,
+      "fire-light": 75,
+      "night": 60,
+      "sea-water": 60
+    }
+  },
+  "85512": {
+    "id": "85512",
+    "moods": ["defiance", "contemplation", "pride"],
+    "mood_primary": "defiance",
+    "topics": ["freedom", "honor-pride", "wisdom-ethics"],
+    "motifs": [],
+    "emotional_intensity": 70,
+    "accessibility_factors": {
+      "lexical": 2,
+      "syntax": 2,
+      "imagery_abstraction": 3,
+      "allusion": 2,
+      "narrativity": 1
+    },
+    "confidences": {
+      "defiance": 95,
+      "contemplation": 80,
+      "pride": 75,
+      "freedom": 85,
+      "honor-pride": 80,
+      "wisdom-ethics": 70
+    }
+  },
+  "78165": {
+    "id": "78165",
+    "moods": ["grief", "melancholy", "despair"],
+    "mood_primary": "grief",
+    "topics": ["loss-death", "time-mortality"],
+    "motifs": ["tears", "night", "moon-stars"],
+    "emotional_intensity": 90,
+    "accessibility_factors": {
+      "lexical": 2,
+      "syntax": 2,
+      "imagery_abstraction": 2,
+      "allusion": 1,
+      "narrativity": 1
+    },
+    "confidences": {
+      "grief": 100,
+      "melancholy": 90,
+      "despair": 70,
+      "loss-death": 100,
+      "time-mortality": 80,
+      "tears": 95,
+      "night": 60,
+      "moon-stars": 70
+    }
+  },
+  "85942": {
+    "id": "85942",
+    "moods": ["contemplation", "serenity"],
+    "mood_primary": "contemplation",
+    "topics": ["nature", "beauty"],
+    "motifs": ["fire-light", "night", "moon-stars", "sea-water"],
+    "emotional_intensity": 40,
+    "accessibility_factors": {
+      "lexical": 3,
+      "syntax": 4,
+      "imagery_abstraction": 4,
+      "allusion": 2,
+      "narrativity": 1
+    },
+    "confidences": {
+      "contemplation": 90,
+      "serenity": 70,
+      "nature": 95,
+      "beauty": 80,
+      "fire-light": 90,
+      "night": 85,
+      "moon-stars": 75,
+      "sea-water": 60
+    }
+  },
+  "63352": {
+    "id": "63352",
+    "moods": ["passion", "yearning", "melancholy", "reverence"],
+    "mood_primary": "passion",
+    "topics": ["love", "beauty", "faith-spirit"],
+    "motifs": ["night", "moon-stars", "fire-light", "tears", "dawn"],
+    "emotional_intensity": 95,
+    "accessibility_factors": {
+      "lexical": 4,
+      "syntax": 4,
+      "imagery_abstraction": 4,
+      "allusion": 4,
+      "narrativity": 1
+    },
+    "confidences": {
+      "passion": 95,
+      "yearning": 90,
+      "melancholy": 85,
+      "reverence": 80,
+      "love": 95,
+      "beauty": 85,
+      "faith-spirit": 75,
+      "night": 70,
+      "moon-stars": 65,
+      "fire-light": 60,
+      "tears": 75,
+      "dawn": 50
+    }
+  },
+  "16199": {
+    "id": "16199",
+    "moods": ["melancholy", "yearning", "grief", "contemplation"],
+    "mood_primary": "melancholy",
+    "topics": ["love", "beauty", "wisdom-ethics"],
+    "motifs": ["night", "moon-stars", "tears", "garden-flowers"],
+    "emotional_intensity": 80,
+    "accessibility_factors": {
+      "lexical": 3,
+      "syntax": 3,
+      "imagery_abstraction": 3,
+      "allusion": 2,
+      "narrativity": 1
+    },
+    "confidences": {
+      "melancholy": 90,
+      "yearning": 85,
+      "grief": 75,
+      "contemplation": 70,
+      "love": 90,
+      "beauty": 80,
+      "wisdom-ethics": 65,
+      "night": 70,
+      "moon-stars": 60,
+      "tears": 80,
+      "garden-flowers": 55
+    }
+  }
+}

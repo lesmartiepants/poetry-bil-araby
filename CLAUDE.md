@@ -36,6 +36,7 @@ npm run test:e2e:debug   # Debug mode
 > **Living map:** [`docs/APP-STATE.md`](docs/APP-STATE.md) is the feature inventory + test-coverage matrix, generated from [`feature-manifest.json`](feature-manifest.json). Read it first to see what the app does and how well each feature is tested. CI fails if a feature is added/removed without updating the manifest.
 
 ### Modular React app (was single-file, now ~62 modules)
+
 `src/app.jsx` is still the main render tree, but the logic was extracted into modules. Search the right place, not just `app.jsx`:
 
 - `src/stores/` — Zustand stores: `uiStore`, `poemStore`, `audioStore`, `modalStore` (all visual/playback/overlay state lives here)
@@ -61,12 +62,14 @@ The app supports two poem sources:
 
 **Database Mode (server.js):**
 
-- Express API server with 5 RESTful endpoints:
+- Express API server with RESTful endpoints:
   - `GET /api/health` - Health check with poem count
   - `GET /api/poems/random` - Random poem (supports ?poet= filter)
   - `GET /api/poems/by-poet/:poet` - Poems by specific poet
   - `GET /api/poets` - List available poets
   - `GET /api/poems/search` - Search poems by text
+  - `GET /api/categories` - List categorization facets (mood/topic/motif dimensions + values); empty until the categorization migration runs
+  - `GET /api/poems/by-category` - Filter/recommend poems by facets (`?mood=&topic=&motif=&minIntensity=&maxAccessibility=&limit=`); gated behind `hasCategorization`
 - PostgreSQL connection via `pg` library
 - Supports DATABASE_URL (production) or individual env vars (local)
 - Keep-alive self-ping every 9-13 min (randomized) to prevent Render cold starts (production only)

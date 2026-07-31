@@ -63,6 +63,9 @@ jobs:
           else
             echo "has_drift=true" >> "$GITHUB_OUTPUT"
             echo "Drift found — reconciling."
+            # Snapshot the drift BEFORE reconciling, so the PR body can say which
+            # existing features were re-baselined. (--json is read-only.)
+            node scripts/check-feature-manifest.mjs --json > drift-before.json 2>/dev/null || true
           fi
 
       # Deterministic heal: add skeletons for new code, re-baseline hashes, refresh
@@ -103,8 +106,20 @@ jobs:
           node scripts/check-feature-manifest.mjs --needs-reconcile
           echo "Manifest fully reconciled."
 
+      # Write a run-specific PR body describing exactly what the bot did, so the
+      # auto-merged PR is self-explanatory when reviewed later. (pr-body.md is NOT
+      # in the add-paths allowlist below, so it is never committed to the PR.)
+      - name: Build PR body
+        if: steps.drift.outputs.has_drift == 'true'
+        env:
+          ADDED_IDS: ${{ steps.reconcile.outputs.added_ids }}
+          TRIGGER_SUBJECT: ${{ github.event.head_commit.message }}
+          TRIGGER_SHA: ${{ github.sha }}
+        run: node scripts/manifest-pr-body.mjs > pr-body.md
+
       # Open ONE PR with everything the bot changed (skeleton + hashes + doc + any
-      # verified tests).
+      # verified tests). add-paths restricts the commit to the allowlist, so the
+      # temp files (pr-body.md, drift-before.json) never land in the PR.
       - name: Open reconcile PR
         id: cpr
         if: steps.drift.outputs.has_drift == 'true'
@@ -116,19 +131,13 @@ jobs:
           title: 'chore(manifest): auto-reconcile feature coverage'
           labels: manifest-autofix
           delete-branch: true
-          body: |
-            Automated feature-manifest reconciliation after a push to `main`.
-
-            A cheap drift check found the manifest out of sync with the code. A
-            deterministic script reconciled it — new features added with **honest**
-            `coverage:"none"`, hashes re-baselined, `docs/APP-STATE.md` regenerated —
-            and, for any genuinely new feature, Claude attempted a test that the
-            mutation gauntlet proved (passes clean, fails on break, not flaky) before
-            labeling it `behavioral`.
-
-            This PR only ever touches `feature-manifest.json`, `feature-hashes.json`,
-            `docs/APP-STATE.md`, and test files, so it auto-merges. If anything else
-            shows up in the diff, auto-merge is skipped and a human is asked to review.
+          body-path: pr-body.md
+          add-paths: |
+            feature-manifest.json
+            feature-hashes.json
+            docs/APP-STATE.md
+            src/test/**
+            e2e/**
 
       # Arm auto-merge INLINE. The separate on:pull_request auto-merge workflow
       # cannot fire for a PR opened with GITHUB_TOKEN, so we gate + enable it here.

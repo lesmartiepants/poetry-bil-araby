@@ -22,6 +22,8 @@ voice, and temperature `0`; these settings are imported from `src/`, rather than
 
 ## Repeatable comparison harness
 
+For the canonical add → capture → audit → view workflow, use [RUNBOOK.md](./RUNBOOK.md).
+
 Keep the API and POC proxy running, then use one poem across all enabled strategies:
 
 ```bash

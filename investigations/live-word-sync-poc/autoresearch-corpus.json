@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "referencePoemId": 87443,
+  "purpose": "Retained post-run CTC evidence corpus. This representative capture survives the artifact-retention policy; it is useful for a deterministic regression check, not for generalizing a CTC policy. The corpus does not generate audio or call Gemini.",
+  "reports": [
+    {
+      "path": "artifacts/comparisons/poem-87443-20260729T004538083Z-59641b31-comparison.json",
+      "method": "ctc-precision-phrase",
+      "label": "retained-phrase-quality"
+    }
+  ]
+}

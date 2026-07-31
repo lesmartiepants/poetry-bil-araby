@@ -42,6 +42,10 @@ const updated = (drift.updated || [])
   .map((u) => u.id)
   .filter((id) => !addedIds.includes(id));
 
+// Only files on this allowlist actually land in the PR (the workflow commits
+// them via add-paths); temp files like drift-before.json / pr-body.md do not, so
+// exclude them here to keep the body's file list truthful.
+const COMMITTED = /^(feature-manifest\.json|feature-hashes\.json|docs\/APP-STATE\.md|src\/test\/.*|e2e\/.*)$/;
 let changedFiles = [];
 try {
   changedFiles = execSync('git status --porcelain', {
@@ -52,6 +56,7 @@ try {
     .split('\n')
     .map((l) => l.slice(3).trim())
     .filter(Boolean)
+    .filter((f) => COMMITTED.test(f))
     .sort();
 } catch {
   /* not a git repo (e.g. under test) — leave empty */

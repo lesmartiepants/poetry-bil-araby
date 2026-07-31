@@ -926,7 +926,7 @@ async function refreshRuns() {
     if (!referenceReports.length) {
       const empty = document.createElement('p');
       empty.textContent =
-        'No reference comparison runs yet. Run `npm run poc:compare` to create an audit set.';
+        'No reference comparison runs yet. Run histories are local and ignored, so a fresh clone starts empty. Create your first capture with `npm run poc:compare`.';
       runsView.append(empty);
       return;
     }
@@ -1029,7 +1029,7 @@ async function refreshRuns() {
     }
   } catch (error) {
     const unavailable = document.createElement('p');
-    unavailable.textContent = error.message;
+    unavailable.textContent = `${error.message}. Run histories are local and ignored; create one with \`npm run poc:compare\` after the API and lab are running.`;
     runsView.append(unavailable);
   }
 }

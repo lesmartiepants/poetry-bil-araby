@@ -19,6 +19,13 @@ function parseArgs(argumentsList) {
       );
     }
   }
+  if (options.dryRun && !options.id && !options.label && !options.description) {
+    console.log(
+      'Dry-run needs the same method details as a real scaffold. Example:\n' +
+        "npm run poc:new -- --id my-mora-variant --label 'My mora variant' --description 'What changes and why.' --dry-run"
+    );
+    process.exit(0);
+  }
   if (!/^[a-z][a-z0-9-]*$/.test(options.id || '')) {
     throw new Error('--id must be lowercase kebab-case.');
   }

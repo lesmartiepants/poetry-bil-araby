@@ -62,10 +62,10 @@ const checks = [
     fix: 'Add GEMINI_API_KEY to .env; do not use VITE_GEMINI_API_KEY for the POC server.',
   },
   {
-    name: `API reachable at ${apiOrigin}`,
+    name: `Express API reachable at ${apiOrigin}`,
     required: true,
     ok: await apiReachable(),
-    fix: 'Start the backend with npm run dev:server, or set POC_API_ORIGIN to its origin.',
+    fix: 'In another terminal, start this checkout\'s backend with npm run dev:server, or set POC_API_ORIGIN to its origin.',
   },
   {
     name: 'Chirp audit configuration',
@@ -84,6 +84,17 @@ const checks = [
 for (const check of checks) {
   const status = check.ok ? 'ok' : check.required ? 'missing' : 'optional';
   console.log(`${status.padEnd(8)} ${check.name}${check.ok ? '' : ` — ${check.fix}`}`);
+}
+
+const geminiReady = checks.find((check) => check.name === 'GEMINI_API_KEY configured')?.ok;
+const apiReady = checks.find((check) => check.name.startsWith('Express API reachable'))?.ok;
+if (geminiReady && apiReady) {
+  console.log('\nready    Comparison prerequisites are configured. Start the lab with npm run poc:serve.');
+} else {
+  console.log(
+    '\nblocked  A comparison needs both GEMINI_API_KEY and an Express API started from this checkout. ' +
+      'A reachable localhost API alone does not prove that it is using this checkout or its configuration.'
+  );
 }
 
 try {

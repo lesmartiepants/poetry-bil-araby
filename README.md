@@ -225,12 +225,14 @@ research, recording, and audited comparisons, use the isolated lab; it never shi
 bundle and generated recordings stay local.
 
 ```bash
-npm run poc:doctor   # verify tools, API reachability, and non-secret configuration
-npm run poc:serve    # starts the lab on a free local port
-npm run poc:compare  # records a candidate beside its control using that session
+ npm run poc:doctor      # check prerequisites; it never prints secrets
+ npm run dev:server      # terminal 1: required Express API, using GEMINI_API_KEY from .env
+ npm run poc:serve       # terminal 2: starts the lab on a free local port
+ npm run poc:compare     # terminal 3: records a candidate beside its control
 ```
 
 Open the URL printed by `poc:serve`, then use **Runs** to inspect the recording and post-run audit.
+Run artifacts are intentionally local and ignored, so a fresh clone begins with an empty Runs view.
 See [`investigations/live-word-sync-poc/RUNBOOK.md`](./investigations/live-word-sync-poc/RUNBOOK.md)
 to add a strategy, audit it with Chirp, and retain only useful artifacts.
 

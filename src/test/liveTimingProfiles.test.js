@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyLiveTimingProfile,
+  DEFAULT_LIVE_TIMING_PROFILE,
   LIVE_TIMING_PROFILE_OPTIONS,
 } from '../utils/liveTimingProfiles.js';
 
@@ -16,9 +17,13 @@ const fallback = [
 ];
 
 describe('live timing profiles', () => {
-  it('exposes the seven retained candidates with the shipped winner first', () => {
-    expect(LIVE_TIMING_PROFILE_OPTIONS).toHaveLength(7);
-    expect(LIVE_TIMING_PROFILE_OPTIONS[0].value).toBe('transcript-moras-weighted-fallback');
+  it('defaults to the held-out transcript-mora leader and exposes its audited result', () => {
+    expect(DEFAULT_LIVE_TIMING_PROFILE).toBe('branch-transcript-moras');
+    expect(LIVE_TIMING_PROFILE_OPTIONS[0]).toMatchObject({
+      value: DEFAULT_LIVE_TIMING_PROFILE,
+      label: 'transcript + moras [64.9% exact word]',
+    });
+    expect(LIVE_TIMING_PROFILE_OPTIONS).toHaveLength(9);
   });
 
   it('keeps the weighted fallback until a transcript-anchored verse has boundaries', () => {
@@ -54,5 +59,16 @@ describe('live timing profiles', () => {
       directMatches: [true, false, true],
     });
     expect(result).toEqual(aligned);
+  });
+
+  it('keeps the global weighted control on its fallback clock', () => {
+    const result = applyLiveTimingProfile({
+      profile: 'weighted',
+      alignedTimings: aligned,
+      fallbackTimings: fallback,
+      wordOffsets: [0],
+      directMatches: [true, true, true],
+    });
+    expect(result).toEqual(fallback);
   });
 });

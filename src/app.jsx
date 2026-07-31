@@ -86,7 +86,10 @@ import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
 import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
 import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
-import { applyLiveTimingProfile } from './utils/liveTimingProfiles.js';
+import {
+  applyLiveTimingProfile,
+  DEFAULT_LIVE_TIMING_PROFILE,
+} from './utils/liveTimingProfiles.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -862,7 +865,7 @@ export default function DiwanApp() {
       const aligned = alignTranscriptTimings(allWords, serverWordTimings);
       const transcriptMatchRatio = aligned ? aligned.matchedCount / serverWordTimings.length : 0;
       if (aligned && aligned.matchedCount >= 1 && transcriptMatchRatio >= 0.5) {
-        let timingProfile = 'transcript-moras-weighted-fallback';
+        let timingProfile = DEFAULT_LIVE_TIMING_PROFILE;
         try {
           timingProfile = localStorage.getItem('ttsTimingMode') || timingProfile;
         } catch {

@@ -88,6 +88,50 @@ labels where it matters most.
 
 ---
 
+## Refreshing the categorization (v3 distillation)
+
+The live corpus (9,073 poems) is tagged under the **distilled v3** rubric — caps
+`mood 2 / topic 2 / motif 2`, confidence floor **65**, dominant-concept + no-synonym-stacking prompt,
+`taxonomy_version=3` / `prompt_version=distill-1`. `config.py` is the single source of truth (prompt,
+caps, floor, version). Re-run when: **new poems** were added, or the **taxonomy/prompt** in `config.py`
+changed (bump `TAXONOMY_VERSION`).
+
+```bash
+# 0. Prereqs: GEMINI_API_KEY + DATABASE_URL in .env. The v3 corpus was tagged with
+#    gemini-3.6-flash via the app's proxy. ALWAYS BACK UP FIRST (SELECT dump of
+#    poem_categories + the poems categorization columns) — the merge is destructive.
+
+# 1. Only-new poems (the common case — cheap, safe):
+bash poetry_quality_and_curation/categorization/classify_new.sh   # wraps --scope unclassified
+#    ^ NOT yet on a schedule; run it after bulk inserts (e.g. a newly added poem needs this).
+
+# 2. Full re-tag (taxonomy/prompt changed): classify --scope all, then import.
+python -m poetry_quality_and_curation.categorization.classify_poems \
+    --model gemini/gemini-3.6-flash --scope all --concurrency 6 --max-cost 20 --resume
+python -m poetry_quality_and_curation.categorization.import_categories \
+    --input data/categories_gemini_gemini-3.6-flash.parquet   # enforces floor 65 + caps
+
+# 3. Verify: coverage ~100%, avg labels/poem ~4.4, no orphan/dup poem_categories rows,
+#    JSONB matches the join table. (SQL spot-checks; every poem must keep >=1 mood + >=1 topic.)
+```
+
+**Gemini spend-cap gotcha (learned the hard way):** the proxy 429s a "monthly spending cap"; keep
+`--concurrency` low (~6, not 24 — 24 drained the budget mid-run). The run is **checkpoint-resumable**,
+so on a 429 raise the cap at https://ai.studio/spend and re-run the same command — done poems are skipped.
+
+**Migration tracking:** apply schema migrations with `supabase db push` (records them in
+`schema_migrations`). If one was ever applied via direct `pg`/`psql` and shows unrecorded in
+`supabase migration list --db-url "$DATABASE_URL"`, reconcile the ledger **without re-running** via
+`supabase migration repair --status applied <version...> --db-url "$DATABASE_URL"` (migrations are
+idempotent, so this is safe). Never leave a migration applied-but-unrecorded.
+
+**Motif gaps are expected:** ~23% of poems correctly have **no motif** (it's optional; abstract/wisdom
+poems have no concrete image). Do NOT "fix" this with a raw model pass — a stronger model over-reads
+metaphor as imagery and re-adds noise. Genuine motif recovery needs a tighter, metaphor-excluding rubric
+plus human spot-review.
+
+---
+
 ## Consuming it (already wired into the API)
 
 `server.js` gained two **backward-compatible** endpoints (they return empty

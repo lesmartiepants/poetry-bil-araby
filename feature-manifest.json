@@ -660,6 +660,21 @@
       "deviceOnly": false,
       "coverage": "none",
       "gap": "Dev tooling; no automated coverage by design. /enjoyability is gated by ENABLE_DEV_LAB (404 in prod); the Saved-curation endpoints are gated by SAVED_CURATION_EMAIL (unset in prod)."
+    },
+    {
+      "id": "pr-body-probe",
+      "name": "PrBodyProbe",
+      "tier": "internal",
+      "userFacing": "Auto-added from src/components/PrBodyProbe.jsx; description pending human review.",
+      "entrypoints": ["src/components/PrBodyProbe.jsx"],
+      "endpoints": [],
+      "tests": {
+        "unit": ["src/test/PrBodyProbe.test.jsx"],
+        "e2e": []
+      },
+      "deviceOnly": false,
+      "coverage": "behavioral",
+      "gap": "Proven via guard-gauntlet (render + mutation break of the probe text)."
     }
   ]
 }

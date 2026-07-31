@@ -23,6 +23,8 @@
     "smoke": "node scripts/smoke-deploy.mjs",
     "screenshots": "node scripts/capture-design-screenshots.js",
     "poc:compare": "node investigations/live-word-sync-poc/compare-methods.mjs",
+    "poc:doctor": "node investigations/live-word-sync-poc/poc-doctor.mjs",
+    "poc:new": "node investigations/live-word-sync-poc/poc-new.mjs",
     "poc:serve": "node investigations/live-word-sync-poc/start-poc.mjs",
     "poc:analyze": "node investigations/live-word-sync-poc/analyze-comparison.mjs",
     "poc:ctc": "node investigations/live-word-sync-poc/ctc-feasibility.mjs",

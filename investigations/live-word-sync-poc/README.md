@@ -23,12 +23,14 @@ Read [STATUS.md](./STATUS.md) before treating a lab result as a production recom
 
 ## Repeatable comparison harness
 
-For the canonical add → capture → audit → view workflow, use [RUNBOOK.md](./RUNBOOK.md).
+For the canonical add → capture → audit → view workflow, use [RUNBOOK.md](./RUNBOOK.md). A fresh
+checkout begins with `npm run poc:doctor`, then `npm run poc:serve`; `npm run poc:compare` discovers
+the active local POC session automatically.
 
 Keep the API and POC proxy running, then use one poem across all enabled strategies:
 
 ```bash
-POC_URL=http://localhost:5181 npm run poc:compare
+npm run poc:compare
 ```
 
 The runner saves the one-stream browser capture as a provenance WebM, converts it to a

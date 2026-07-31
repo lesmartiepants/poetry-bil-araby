@@ -9,7 +9,7 @@ import { DEFAULT_VOICE, VOICE_CATALOG } from '../../src/constants/voices.js';
 
 const root = resolve(import.meta.dirname);
 const comparisonArtifacts = resolve(root, 'artifacts', 'comparisons');
-const apiOrigin = process.env.POC_API_ORIGIN || 'http://localhost:3102';
+const apiOrigin = process.env.POC_API_ORIGIN || 'http://localhost:3001';
 const ctcWorkerOrigin = process.env.CTC_WORKER_URL || '';
 // A timing-worktree server can generate Live audio without database access, while
 // the fixed reference poem is served from the existing read-only API. Keeping the

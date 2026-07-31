@@ -1,4 +1,4 @@
-import { appendFile, mkdir, writeFile } from 'node:fs/promises';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
@@ -9,7 +9,25 @@ const execFileAsync = promisify(execFile);
 
 const root = resolve(import.meta.dirname);
 const artifacts = resolve(root, 'artifacts', 'comparisons');
-const pocUrl = process.env.POC_URL || 'http://localhost:5181';
+const sessionPath = resolve(root, 'artifacts', 'poc-session.json');
+
+async function sessionUrl() {
+  if (process.env.POC_URL) return process.env.POC_URL;
+  try {
+    const session = JSON.parse(await readFile(sessionPath, 'utf8'));
+    const url = new URL(session.url);
+    if (!['127.0.0.1', 'localhost'].includes(url.hostname) || !url.port) {
+      throw new Error('session URL must be a local HTTP origin');
+    }
+    return url.origin;
+  } catch (error) {
+    throw new Error(
+      `No active POC session. Run npm run poc:serve first, or set POC_URL explicitly. (${error.message})`
+    );
+  }
+}
+
+const pocUrl = await sessionUrl();
 const batchId = `${new Date().toISOString().replace(/[-:.]/g, '')}-${randomUUID().slice(0, 8)}`;
 const phase = process.env.POC_PHASE || 'broad-sweep';
 const hypothesis =

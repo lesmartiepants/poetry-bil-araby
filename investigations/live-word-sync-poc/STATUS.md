@@ -37,7 +37,7 @@ the reader unless identical-PCM replay meets the gates in [CTC_FEASIBILITY.md](.
 
 ## Resume a hypothesis
 
-1. Start the API with its normal `GEMINI_API_KEY`, then run `npm run poc:serve`.
+1. Start the API with its normal `GEMINI_API_KEY`, run `npm run poc:doctor`, then run `npm run poc:serve`.
 2. Add one named profile and radio option; record its mechanism in `POC_SOLUTION_DESIGN`.
 3. Capture it beside `branch-transcript-moras` with `npm run poc:compare`.
 4. Audit the report with `npm run poc:analyze -- <report.json>`, then inspect **Runs**.

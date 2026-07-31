@@ -196,6 +196,9 @@ VITE_API_URL=http://localhost:3001
 # Frontend — insight, translation, and recitation
 VITE_GEMINI_API_KEY=your-gemini-api-key
 
+# Backend proxy and local word-sync lab — keep this server-side
+GEMINI_API_KEY=your-gemini-api-key
+
 # Frontend — optional, enables auth and saved poems
 VITE_SUPABASE_URL=https://your-ref.supabase.co
 VITE_SUPABASE_ANON_KEY=your-jwt-anon-key   # must start with "eyJ"
@@ -214,6 +217,22 @@ npm run dev:all      # frontend + backend together (recommended)
 npm run dev          # frontend only on http://localhost:5173
 npm run dev:server   # backend API only on http://localhost:3001
 ```
+
+### Word-sync experiment lab
+
+The production reader includes its shipped timing profiles. For low-latency Arabic word-sync
+research, recording, and audited comparisons, use the isolated lab; it never ships in the Vite
+bundle and generated recordings stay local.
+
+```bash
+npm run poc:doctor   # verify tools, API reachability, and non-secret configuration
+npm run poc:serve    # starts the lab on a free local port
+npm run poc:compare  # records a candidate beside its control using that session
+```
+
+Open the URL printed by `poc:serve`, then use **Runs** to inspect the recording and post-run audit.
+See [`investigations/live-word-sync-poc/RUNBOOK.md`](./investigations/live-word-sync-poc/RUNBOOK.md)
+to add a strategy, audit it with Chirp, and retain only useful artifacts.
 
 ## Configuration
 

@@ -15,6 +15,7 @@ const download = document.querySelector('#download');
 const downloadAudit = document.querySelector('#download-audit');
 const modeInputs = [...document.querySelectorAll('input[name="mode"]')];
 const RETAINED_METHODS = new Set([
+  // POC_NEW_METHODS_ACTIVE
   'transcript-moras-weighted-fallback',
   'transcript-mora-blend-50',
   'transcript-mora-blend-75',
@@ -100,6 +101,7 @@ const DISCOVERY_FOCUS = {
 };
 
 const modeNotes = {
+  // POC_NEW_METHODS_NOTES
   'main-char-650':
     'Faithful main baseline: raw JavaScript character count, a 650 ms-per-word whole-poem estimate, and a wall-clock visual cursor.',
   'branch-transcript-raw':
@@ -189,6 +191,7 @@ const modeNotes = {
 };
 
 const PROFILES = {
+  // POC_NEW_METHODS_PROFILES
   // Baseline from main: computeWordTimings(allWords, allWords.length * 0.65),
   // driven by wall time while a Live stream has no decoded player buffer.
   'main-char-650': { family: 'word', mass: 'main-raw-char', durationPerWord: 0.65, nudgeMs: 0 },

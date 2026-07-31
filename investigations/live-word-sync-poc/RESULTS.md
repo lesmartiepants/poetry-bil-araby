@@ -3,6 +3,11 @@
 The proof of concept keeps Gemini Live for immediate audio and drives highlighting from the Web
 Audio scheduled playhead. It does not use the product's current highlighter.
 
+## Pre-fixed-reference historical recordings
+
+These recordings predate the fixed #87443 comparison protocol. They demonstrate one-stream capture
+mechanics only and are not ranked in the current Runs evidence.
+
 ## Clock-Synchronized Audit Recording
 
 | Production poem                                            | First playable audio | PCM chunks | Captured audio | Timing-audit artifacts                                                                                                                                                                       |
@@ -53,10 +58,11 @@ defines the next worker/window and live-safety tests; first audio remains indepe
 
 ## Live Anchor-Contract Prototype
 
-The lab now has paired **observe** and **future-only correct** modes beside the production-equivalent
-`transcript-moras-weighted-fallback` control. The correction planner is unit-tested to preserve past
-boundaries and monotonic word order. It accepts only safely past anchors with a future horizon and
-otherwise remains on the same fallback plan.
+The lab now has paired **observe** and **future-only correct** modes beside historical
+`transcript-moras-weighted-fallback` controls. Production now defaults to
+`branch-transcript-moras`; use that profile for new production-control comparisons. The correction
+planner is unit-tested to preserve past boundaries and monotonic word order. It accepts only safely
+past anchors with a future horizon and otherwise remains on the same fallback plan.
 
 The first real-stream checks did not validate an anchor provider: Gemini output-audio transcript
 timings emitted no usable word anchors, while the parallel Chirp streaming relay timed out before

@@ -12,7 +12,7 @@ All automated comparison runs use production poem **#87443**, _شهادة الس
 (seven lines). Keep this invariant unless the experiment explicitly changes its reference. The ID
 lives in `serve-poc.mjs`; `compare-methods.mjs` rejects a different returned poem. The server
 imports `LIVE_SYSTEM_INSTRUCTION` and `DEFAULT_VOICE` from `src/`, so Live TTS uses the production
-prompt, raw Arabic text, `Orus`, and temperature `0`.
+prompt, raw Arabic text, current production voice, and temperature `0`.
 
 ## Key Files
 
@@ -51,8 +51,9 @@ card; use it to mark a design as retained, rejected, or UX-only rather than sile
 
 ## Running and Auditing
 
-Start the backend with its production-like environment, then run the POC proxy with an explicit
-target, for example `POC_PORT=5181 POC_API_ORIGIN=http://localhost:3011 GOOGLE_CLOUD_PROJECT=... node serve-poc.mjs`.
+Start the backend with its production-like environment, then run `npm run poc:serve`; it chooses an
+available local port and prints the matching `POC_URL` command. Use an explicit `POC_PORT` only when
+a fixed port is required.
 
 Run all enabled strategies with `POC_URL=http://localhost:5181 npm run poc:compare`, or select
 methods with `POC_METHODS=weighted,vad,google`. Audit a report with

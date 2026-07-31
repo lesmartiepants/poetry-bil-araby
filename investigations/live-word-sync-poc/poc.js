@@ -46,13 +46,13 @@ const discoveryResults = document.querySelector('#discovery-results');
 const copyDiscoveryBriefButton = document.querySelector('#copy-discovery-brief');
 const copyCodexWorkshopButton = document.querySelector('#copy-codex-workshop');
 
-// Keep historical profiles and their immutable reports reproducible, but expose
-// only the seven retained candidates in the active lab. The winner is selected
-// by default; archived profiles remain invocable by explicit CLI method name.
+// Keep historical profiles and their immutable reports reproducible. The active lab exposes the
+// retained portfolio plus explicit anchor/CTC comparison modes; archived profiles remain invocable
+// only by explicit CLI method name.
 for (const input of modeInputs) {
   if (!RETAINED_METHODS.has(input.value)) input.closest('label')?.setAttribute('hidden', '');
 }
-document.querySelector('input[value="transcript-moras-weighted-fallback"]')?.click();
+document.querySelector('input[value="branch-transcript-moras"]')?.click();
 
 let audioContext;
 let currentDemo;
@@ -511,7 +511,7 @@ const PROFILES = {
 };
 
 function selectedMode() {
-  return modeInputs.find((input) => input.checked)?.value || 'transcript-moras-weighted-fallback';
+  return modeInputs.find((input) => input.checked)?.value || 'branch-transcript-moras';
 }
 
 function activeProfile(mode = selectedMode()) {

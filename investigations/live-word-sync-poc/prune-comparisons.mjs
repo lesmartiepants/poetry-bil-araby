@@ -126,8 +126,7 @@ for (const family of [...new Set(candidates.map((candidate) => candidate.family)
 const productionControl = candidates
   .filter(
     (candidate) =>
-      candidate.result.method === 'transcript-moras-weighted-fallback' &&
-      isMeaningfulAudit(candidate)
+      candidate.result.method === 'branch-transcript-moras' && isMeaningfulAudit(candidate)
   )
   .sort(comparePerformance)[0];
 if (productionControl) retain(productionControl, 'production-control');

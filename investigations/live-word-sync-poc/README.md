@@ -8,17 +8,18 @@ Run the Express API with `GEMINI_API_KEY` and database configuration, then start
 same-origin development proxy:
 
 ```bash
-node serve-poc.mjs
+npm run poc:serve
 ```
 
-Open `http://localhost:5180`, load the fixed reference poem, and download the WAV
-capture. The page intentionally labels its weighted Arabic word schedule as **estimated**: Gemini
-Live supplies PCM but no word timestamps, so the demo validates low-latency playback-clock sync,
-not word-boundary accuracy.
+Open the URL printed by the launcher, load the fixed reference poem, and inspect the synchronized
+recording. The page intentionally labels heuristic schedules as **estimated**: Gemini Live supplies
+PCM but no word timestamps, so the demo validates low-latency playback-clock sync, not
+word-boundary accuracy.
 
 Every harness run uses production poem **#87443, “شهادة السريرة” by جبران خليل جبران** (7 lines).
-It sends the raw production poem text with the production `LIVE_SYSTEM_INSTRUCTION`, default `Orus`
+It sends the raw production poem text with the production `LIVE_SYSTEM_INSTRUCTION`, current default
 voice, and temperature `0`; these settings are imported from `src/`, rather than copied into the POC.
+Read [STATUS.md](./STATUS.md) before treating a lab result as a production recommendation.
 
 ## Repeatable comparison harness
 
@@ -61,10 +62,7 @@ compare each recognized word with the visual-highlight timeline stored by the br
 - **Manual nudge** shifts only the visual clock in 250 ms increments, making heuristic error easy to
   audit while retaining the original audio schedule.
 
-For genuinely time-aligned words, the next comparison is a parallel streaming STT tap (Google Cloud
-STT or Deepgram) or rolling forced alignment. Those services can return word offsets, but require
-their own credentials and introduce delayed corrections; do not block Gemini Live first audio on
-them. The [CTC feasibility gate](./CTC_FEASIBILITY.md) is the explicitly staged path for testing a
-local forced aligner against the same recorded captures before a causal sidecar is considered.
-The [production integration plan](./CTC_PRODUCTION_PLAN.md) records the unproven architecture
-assumptions, sample-clock contract, observe-only rollout, and falsification gates.
+Streaming STT and CTC experiments have now been tried in this lab. They remain delayed, POC-only
+signals and must never block Gemini Live first audio; the current CTC decision and next gates are in
+[STATUS.md](./STATUS.md), [CTC_FEASIBILITY.md](./CTC_FEASIBILITY.md), and
+[CTC_PRODUCTION_PLAN.md](./CTC_PRODUCTION_PLAN.md).

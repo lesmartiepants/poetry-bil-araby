@@ -32,10 +32,10 @@ you specifically need a chosen port; it then fails safely if unavailable.
 
 ```bash
 POC_URL=http://127.0.0.1:<printed-port> \
-POC_METHODS=transcript-moras-weighted-fallback,transcript-mora-blend-50 \
+POC_METHODS=branch-transcript-moras,transcript-mora-blend-50 \
 POC_PHASE=mora-50-example \
 POC_HYPOTHESIS='A 50% mora / 50% even word allocation improves exact word matching without delaying first audio.' \
-POC_SOLUTION_DESIGN='Fixed production poem and Live voice; compare the shipped mora fallback control against a verse-local 50/50 mora/even schedule.' \
+POC_SOLUTION_DESIGN='Fixed production poem and Live voice; compare the shipped transcript-mora control against a verse-local 50/50 mora/even schedule.' \
 npm run poc:compare
 ```
 

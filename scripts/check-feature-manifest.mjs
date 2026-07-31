@@ -488,11 +488,12 @@ if (MODE.json) {
   }, ...result }, null, 2));
 }
 
-// Write the doc only for --update or a default human run. --json is machine
-// output for CI (the autofix workflow pipes it) and --check are read-only; both
-// must leave docs/APP-STATE.md untouched.
+// Write the doc only for --update or a default human run. Every check-style mode
+// is read-only and must leave docs/APP-STATE.md untouched: --check, --json (CI
+// pipes it), --deadref-only (the PR gate), and --needs-reconcile (the bot's
+// trigger check). (--reconcile / --update-hashes exit before reaching here.)
 let docChanged = false;
-if (!MODE.checkOnly && !MODE.json) {
+if (!MODE.checkOnly && !MODE.json && !MODE.deadrefOnly && !MODE.needsReconcile) {
   docChanged = refreshDoc(manifest, discovered, result);
 }
 

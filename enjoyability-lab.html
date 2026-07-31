@@ -474,6 +474,7 @@
   .cat-none { color:#8a8070; font-style:italic; font-size:.8rem; }
 </style>
 
+<script>window.__API__ = /(^|\.)vercel\.app$/.test(location.hostname) ? 'https://poetry-bil-araby-2mb0.onrender.com' : location.origin;</script>
 <script>
 // ── Saved-poems curation tab (talks to /api/lab/saved; live DB deletes) ──
 let _savedLoaded = false, _savedData = [], _filter = '', _lastRemoved = null, _undoTimer = null;
@@ -485,7 +486,7 @@ async function reloadSaved() {
   const host = document.getElementById('savedList');
   host.innerHTML = '<p class="saved-empty">Loading…</p>';
   try {
-    const j = await (await fetch('/api/lab/saved')).json();
+    const j = await (await fetch(window.__API__ + '/api/lab/saved')).json();
     if (j.error) { host.innerHTML = '<p class="saved-empty">' + escS(j.error) + '</p>'; return; }
     _savedData = j.saved;
     _savedData.forEach(r => { r._key = r.saved_id; r._removed = false; });
@@ -585,7 +586,7 @@ async function translateArabic(text) {
     systemInstruction: { parts: [{ text: 'You are a master literary translator of classical Arabic poetry into English. Output strict JSON.' }] },
     generationConfig: { responseMimeType: 'application/json', responseSchema: { type: 'object', properties: { english: { type: 'string' } }, required: ['english'] }, temperature: 0.2 },
   };
-  const r = await fetch('/api/ai/gemini-3.6-flash/generateContent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const r = await fetch(window.__API__ + '/api/ai/gemini-3.6-flash/generateContent', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!r.ok) throw new Error('HTTP ' + r.status);
   const j = await r.json();
   const txt = j.candidates?.[0]?.content?.parts?.[0]?.text;
@@ -656,7 +657,7 @@ async function hearSaved(key, btn) {
       if (firstAt === null) { firstAt = Date.now(); status.className = 'hear-status ok'; status.textContent = '▶ streaming · first sound ' + ((firstAt - t0) / 1000).toFixed(1) + 's'; }
       s.start(nextTime); nextTime += buf.duration;
     };
-    const res = await fetch(window.location.origin + '/api/ai/live-tts?stream=1', {
+    const res = await fetch(window.__API__ + '/api/ai/live-tts?stream=1', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text: arabic, voiceName: voice, systemInstruction: sys, temperature: temp }), signal: mySignal,
     });
@@ -695,14 +696,14 @@ async function toggleHeart(key) {
   if (!row) return;
   if (!row._removed) {
     try {
-      const j = await (await fetch('/api/lab/saved/' + encodeURIComponent(row.saved_id), { method: 'DELETE' })).json();
+      const j = await (await fetch(window.__API__ + '/api/lab/saved/' + encodeURIComponent(row.saved_id), { method: 'DELETE' })).json();
       if (!j.ok) { alert('Remove failed: ' + (j.error || '?')); return; }
       row._removed = true; row._deleted = j.deleted;
     } catch (e) { alert('Remove failed: ' + e.message); return; }
   } else {
     try {
       const payload = row._deleted || { poem_id: row.poem_id, poet: row.poet, title: row.title };
-      const j = await (await fetch('/api/lab/saved/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })).json();
+      const j = await (await fetch(window.__API__ + '/api/lab/saved/restore', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })).json();
       if (!j.ok) { alert('Restore failed: ' + (j.error || '?')); return; }
       if (j.saved_id) row.saved_id = j.saved_id;
       row._removed = false;
@@ -4470,7 +4471,7 @@ async function hearPoem(idx, btn) {
       src.start(nextTime); nextTime += buf.duration;
     };
 
-    const res = await fetch(`${window.location.origin}/api/ai/live-tts?stream=1`, {
+    const res = await fetch(`${window.__API__}/api/ai/live-tts?stream=1`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

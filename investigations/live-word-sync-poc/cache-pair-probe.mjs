@@ -156,9 +156,10 @@ async function main() {
   };
   const cacheKey = sha256(canonicalJson(keyFields));
   const now = new Date().toISOString();
-  const filename = `cache-pair-probe-${report.batchId || 'legacy'}-${run.method}-${now
-    .replace(/[-:.]/g, '')
-    .replace('Z', 'Z')}-${randomUUID().slice(0, 8)}.json`;
+  const filename = `cache-pair-probe-${report.batchId || 'legacy'}-${run.method}-${now.replace(
+    /[-:.]/g,
+    ''
+  )}-${randomUUID().slice(0, 8)}.json`;
   const artifactPath = resolve(artifacts, filename);
   const probe = {
     schemaVersion: 1,

@@ -96,7 +96,7 @@ const candidateFile = await parseJson(resolve(root, 'autoresearch-candidate.json
 if (corpus.schemaVersion !== 1 || candidateFile.schemaVersion !== 1) {
   throw new Error('Unsupported autoresearch schema version.');
 }
-const tag = options.tag || new Date().toISOString().replace(/[-:.]/g, '').replace('Z', 'Z');
+const tag = options.tag || new Date().toISOString().replace(/[-:.]/g, '');
 const outputDir = resolve(root, 'artifacts', 'autoresearch', tag);
 await mkdir(resolve(root, 'artifacts', 'autoresearch'), { recursive: true });
 try {

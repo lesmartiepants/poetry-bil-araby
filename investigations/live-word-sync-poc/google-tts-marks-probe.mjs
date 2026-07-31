@@ -93,7 +93,7 @@ function safeError(error) {
 
 async function main() {
   await mkdir(artifacts, { recursive: true });
-  const timestampId = new Date().toISOString().replace(/[-:.]/g, '').replace('Z', 'Z');
+  const timestampId = new Date().toISOString().replace(/[-:.]/g, '');
   const filename = `google-tts-marks-probe-${timestampId}-${randomUUID().slice(0, 8)}.json`;
   const artifactPath = resolve(artifacts, filename);
   const words = referenceWords();

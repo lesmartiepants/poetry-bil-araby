@@ -10,7 +10,7 @@ const execFileAsync = promisify(execFile);
 const root = resolve(import.meta.dirname);
 const artifacts = resolve(root, 'artifacts', 'comparisons');
 const pocUrl = process.env.POC_URL || 'http://localhost:5181';
-const batchId = `${new Date().toISOString().replace(/[-:.]/g, '').replace('Z', 'Z')}-${randomUUID().slice(0, 8)}`;
+const batchId = `${new Date().toISOString().replace(/[-:.]/g, '')}-${randomUUID().slice(0, 8)}`;
 const phase = process.env.POC_PHASE || 'broad-sweep';
 const hypothesis =
   process.env.POC_HYPOTHESIS || 'Compare timing strategies on the fixed reference poem.';

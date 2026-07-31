@@ -152,7 +152,7 @@ function renderChart(candidates, maxLatency) {
 }
 
 const options = parseArgs(process.argv.slice(2));
-const tag = options.tag || new Date().toISOString().replace(/[-:.]/g, '').replace('Z', 'Z');
+const tag = options.tag || new Date().toISOString().replace(/[-:.]/g, '');
 const outputDir = resolve(outputs, tag);
 await mkdir(outputs, { recursive: true });
 try {

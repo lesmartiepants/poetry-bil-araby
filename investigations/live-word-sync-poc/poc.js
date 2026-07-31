@@ -563,7 +563,7 @@ async function refreshProviderStatus() {
     if (ctc?.available) {
       providerStatus.textContent = `${providerStatus.textContent} Local CTC worker ready.`;
     } else if (activeProfile().anchorProvider === 'ctc') {
-      document.querySelector('input[value="transcript-moras-weighted-fallback"]')?.click();
+      document.querySelector('input[value="branch-transcript-moras"]')?.click();
       providerStatus.textContent = `${providerStatus.textContent} CTC worker unavailable: ${ctc?.error || ctc?.missing?.join(', ') || 'not configured'}.`;
     }
   } catch {
@@ -584,12 +584,17 @@ async function loadHarnessConfig() {
 }
 
 function setMetrics(items) {
-  metrics.innerHTML = items
-    .map(
-      ({ label, value }) =>
-        `<div class="metric"><strong>${value}</strong><span>${label}</span></div>`
-    )
-    .join('');
+  const metricNodes = items.map(({ label, value }) => {
+    const metric = document.createElement('div');
+    metric.className = 'metric';
+    const strong = document.createElement('strong');
+    strong.textContent = value;
+    const span = document.createElement('span');
+    span.textContent = label;
+    metric.append(strong, span);
+    return metric;
+  });
+  metrics.replaceChildren(...metricNodes);
 }
 
 function runArtifactUrl(name) {

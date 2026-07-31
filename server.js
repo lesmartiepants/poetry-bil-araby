@@ -44,6 +44,7 @@ const loadLabHtml = () => {
   return _labHtml;
 };
 
+let _enjoyabilityHtml = null;
 const loadEnjoyabilityHtml = () => {
   if (_enjoyabilityHtml === null) {
     try {

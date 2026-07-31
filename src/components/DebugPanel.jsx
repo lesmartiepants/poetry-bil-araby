@@ -384,7 +384,7 @@ const DebugPanel = ({ controlBarRef }) => {
 
         {/* Enjoyability Lab — dev tooling page (server route gated by ENABLE_DEV_LAB) */}
         <a
-          href="/enjoyability"
+          href={`${import.meta.env.VITE_API_URL || ''}/enjoyability`}
           target="_blank"
           rel="noopener noreferrer"
           title="Open the Enjoyability Lab (dev tooling)"

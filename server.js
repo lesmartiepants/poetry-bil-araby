@@ -1702,7 +1702,7 @@ async function designTablesExist() {
 app.get('/tts-lab', (_req, res) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; media-src blob:"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://poetry-bil-araby-2mb0.onrender.com; media-src blob:"
   );
   res.type('html').send(loadLabHtml());
 });
@@ -1715,7 +1715,7 @@ app.get('/enjoyability', (_req, res) => {
   if (!process.env.ENABLE_DEV_LAB) return res.status(404).send('Not found');
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; media-src blob:"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://poetry-bil-araby-2mb0.onrender.com; media-src blob:"
   );
   res.type('html').send(loadEnjoyabilityHtml());
 });

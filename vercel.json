@@ -32,6 +32,7 @@
     },
     { "source": "/api/og/:id", "destination": "/api/og/[id]" },
     { "source": "/tts-lab", "destination": "https://poetry-bil-araby-2mb0.onrender.com/tts-lab" },
+    { "source": "/enjoyability", "destination": "https://poetry-bil-araby-2mb0.onrender.com/enjoyability" },
     { "source": "/((?!design-review|api/).*)", "destination": "/index.html" }
   ]
 }

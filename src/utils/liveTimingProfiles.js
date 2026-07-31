@@ -1,37 +1,56 @@
 import { wordMoras } from './verseSyllableWeightedTimings.js';
 
 /**
- * The seven profiles retained from the low-latency word-sync investigation.
- * They all use the same Live transcript anchors and 250 ms visual lag. They
- * differ only in how a measured verse span is divided between its words and
- * what clock remains active before that verse has usable anchors.
+ * The production-safe profiles retained from the low-latency word-sync
+ * investigation. They all use the same Live transcript anchors and 250 ms
+ * visual lag. The selected default is the strongest held-out karaoke result:
+ * 64.9% exact single-word state at audited speech starts.
+ * Profiles differ only in how a measured verse span is divided between its
+ * words and what clock remains active before that verse has usable anchors.
  */
+export const DEFAULT_LIVE_TIMING_PROFILE = 'branch-transcript-moras';
+
 export const LIVE_TIMING_PROFILE_OPTIONS = [
   {
+    value: 'branch-transcript-moras',
+    label: 'transcript + moras [64.9% exact word]',
+    schedule: 'moras',
+  },
+  {
     value: 'transcript-moras-weighted-fallback',
-    label: 'moras + weighted fallback (shipped)',
+    label: 'moras + weighted fallback [56.3% exact word]',
     schedule: 'moras',
     fallback: 'weighted',
   },
   {
+    value: 'transcript-mora-blend-50',
+    label: '50% mora / 50% even [49.8% exact word]',
+    schedule: 'mora-blend',
+    moraBlend: 0.5,
+    requireFullSegment: true,
+  },
+  {
     value: 'transcript-mora-blend-75',
-    label: '75% mora / 25% even',
+    label: '75% mora / 25% even [50.9% exact word]',
     schedule: 'mora-blend',
     moraBlend: 0.75,
     requireFullSegment: true,
   },
-  { value: 'branch-transcript-moras', label: 'transcript + moras', schedule: 'moras' },
-  { value: 'branch-transcript-letters', label: 'transcript + letters', schedule: 'letters' },
+  {
+    value: 'branch-transcript-letters',
+    label: 'transcript + letters [24.1% exact word]',
+    schedule: 'letters',
+  },
   {
     value: 'transcript-mora-blend-25',
-    label: '25% mora / 75% even',
+    label: '25% mora / 75% even [54.2% exact word]',
     schedule: 'mora-blend',
     moraBlend: 0.25,
     requireFullSegment: true,
   },
   {
     value: 'transcript-mora-blend-50-weighted-fallback',
-    label: '50% mora / 50% even + fallback',
+    label: '50% mora / 50% even + fallback [43.6% exact word]',
     schedule: 'mora-blend',
     moraBlend: 0.5,
     fallback: 'weighted',
@@ -39,10 +58,16 @@ export const LIVE_TIMING_PROFILE_OPTIONS = [
   },
   {
     value: 'transcript-mora-final',
-    label: 'moras + final-word reserve',
+    label: 'moras + final-word reserve [37.1% exact word]',
     schedule: 'moras-final',
     finalWeight: 1.25,
     requireFullSegment: true,
+  },
+  {
+    value: 'weighted',
+    label: 'global character-weighted clock [23.5% exact word]',
+    fallback: 'weighted',
+    fallbackOnly: true,
   },
 ];
 
@@ -51,7 +76,7 @@ const PROFILES_BY_VALUE = new Map(
 );
 
 export function liveTimingProfile(value) {
-  return PROFILES_BY_VALUE.get(value) || LIVE_TIMING_PROFILE_OPTIONS[0];
+  return PROFILES_BY_VALUE.get(value) || PROFILES_BY_VALUE.get(DEFAULT_LIVE_TIMING_PROFILE);
 }
 
 /**
@@ -75,6 +100,7 @@ export function applyLiveTimingProfile({
       ...timing,
     })
   );
+  if (profile.fallbackOnly) return output;
   const offsets = Array.isArray(wordOffsets) && wordOffsets.length ? wordOffsets : [0];
 
   for (let verse = 0; verse < offsets.length; verse += 1) {

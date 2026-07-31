@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live TTS Word-Sync POC</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="poc-shell">
+      <header class="poc-header">
+        <p class="eyebrow">Investigation · Gemini Live</p>
+        <h1>Low-latency Arabic word-sync</h1>
+        <p class="summary">
+          Audio begins on the first PCM chunk. Highlights follow the Web Audio playhead, never the
+          network arrival time.
+        </p>
+      </header>
+      <nav class="view-tabs" aria-label="POC views">
+        <button id="show-lab" class="view-tab" type="button" aria-selected="true">Lab</button>
+        <button id="show-runs" class="view-tab" type="button" aria-selected="false">Runs</button>
+      </nav>
+      <section id="lab-view" class="lab-view">
+        <aside class="control-rail">
+          <button id="pull-poem">Load reference poem</button>
+          <section id="mode-lab" class="mode-lab" aria-labelledby="mode-title" hidden>
+            <h2 id="mode-title">Highlight strategy</h2>
+            <label
+              ><input type="radio" name="mode" value="weighted" checked /> Arabic-weighted word
+              clock</label
+            >
+            <label
+              ><input type="radio" name="mode" value="main-char-650" /> Main: character clock, 650
+              ms/word</label
+            >
+            <label
+              ><input type="radio" name="mode" value="branch-transcript-raw" /> Branch: transcript
+              fragments, raw + 250 ms lag</label
+            >
+            <label
+              ><input type="radio" name="mode" value="branch-transcript-even" /> Branch: transcript
+              verse, even + 250 ms lag</label
+            >
+            <label
+              ><input type="radio" name="mode" value="branch-transcript-letters" /> Branch:
+              transcript verse, letters + 250 ms lag</label
+            >
+            <label
+              ><input type="radio" name="mode" value="branch-transcript-moras" /> Branch: transcript
+              verse, mora + 250 ms lag</label
+            >
+            <!-- POC_NEW_METHODS_OPTIONS -->
+            <label
+              ><input type="radio" name="mode" value="transcript-mora-blend-25" /> Trial: transcript
+              verse, 25% mora blend + 250 ms lag</label
+            >
+            <label
+              ><input type="radio" name="mode" value="transcript-mora-blend-50" /> Trial: transcript
+              verse, 50% mora blend + 250 ms lag</label
+            >
+            <label
+              ><input type="radio" name="mode" value="transcript-even-weighted-fallback" /> Trial:
+              transcript even + weighted pre-anchor fallback</label
+            >
+            <label
+              ><input type="radio" name="mode" value="transcript-mora-blend-50-weighted-fallback" />
+              Trial: 50% transcript mora blend + weighted pre-anchor fallback</label
+            >
+            <label
+              ><input type="radio" name="mode" value="transcript-moras-weighted-fallback" /> Trial:
+              transcript mora + weighted pre-anchor fallback</label
+            >
+            <label
+              ><input type="radio" name="mode" value="transcript-mora-blend-75" /> Trial: transcript
+              verse, 75% mora blend + 250 ms lag</label
+            >
+            <label
+              ><input type="radio" name="mode" value="transcript-mora-final" /> Trial: transcript
+              mora, 1.25× verse-final word + 250 ms lag</label
+            >
+            <label
+              ><input type="radio" name="mode" value="transcript-anchor-observe" /> Anchor contract:
+              transcript source, observe only</label
+            >
+            <label
+              ><input type="radio" name="mode" value="transcript-anchor-correct" /> Anchor contract:
+              transcript source, future-only correction</label
+            >
+            <label
+              ><input type="radio" name="mode" value="google-anchor-observe" /> Anchor contract:
+              Chirp sidecar, observe only</label
+            >
+            <label
+              ><input type="radio" name="mode" value="google-anchor-correct" /> Anchor contract:
+              Chirp sidecar, future-only correction</label
+            >
+            <label
+              ><input type="radio" name="mode" value="ctc-anchor-observe" /> CTC worker: observe
+              anchors only</label
+            >
+            <label
+              ><input type="radio" name="mode" value="ctc-anchor-correct" /> CTC worker: future-only
+              correction</label
+            >
+            <label
+              ><input type="radio" name="mode" value="ctc-precision-phrase" /> Precision recitation:
+              buffered CTC opening phrase</label
+            >
+            <label
+              ><input type="radio" name="mode" value="certainty-overlay-transcript-moras" /> UX:
+              transcript mora + progressive line certainty</label
+            >
+            <label
+              ><input type="radio" name="mode" value="nucleus-clock" /> Acoustic nucleus clock (PCM
+              → mora proxy)</label
+            >
+            <label><input type="radio" name="mode" value="uniform" /> Uniform word clock</label>
+            <label><input type="radio" name="mode" value="uniform-slow" /> Uniform, slower</label>
+            <label><input type="radio" name="mode" value="uniform-fast" /> Uniform, faster</label>
+            <label><input type="radio" name="mode" value="phrase" /> Phrase-level clock</label>
+            <label><input type="radio" name="mode" value="verse" /> Verse-local word clock</label>
+            <label
+              ><input type="radio" name="mode" value="verse-pause-250" /> Verse-local, 250 ms
+              predicted pause</label
+            >
+            <label
+              ><input type="radio" name="mode" value="pause" /> Verse clock with predicted
+              pauses</label
+            >
+            <label><input type="radio" name="mode" value="vad" /> VAD phrase re-anchoring</label>
+            <label
+              ><input type="radio" name="mode" value="vad-sensitive" /> VAD, sensitive pauses</label
+            >
+            <label
+              ><input type="radio" name="mode" value="vad-conservative" /> VAD, conservative
+              pauses</label
+            >
+            <label
+              ><input type="radio" name="mode" value="vad-slew" /> VAD, gentle phase lock</label
+            >
+            <label
+              ><input type="radio" name="mode" value="vad-slew-60" /> VAD phase lock, 60 ms
+              maximum</label
+            >
+            <label
+              ><input type="radio" name="mode" value="vad-slew-220" /> VAD phase lock, 220 ms
+              maximum</label
+            >
+            <label
+              ><input type="radio" name="mode" value="agreement-window" /> Agreement-aware reading
+              window</label
+            >
+            <label
+              ><input type="radio" name="mode" value="agreement-strict-2" /> Agreement: ≤2-word
+              difference, 2-word soft window</label
+            >
+            <label
+              ><input type="radio" name="mode" value="agreement-strict-3" /> Agreement: ≤2-word
+              difference, 3-word soft window</label
+            >
+            <label><input type="radio" name="mode" value="weighted-slow" /> Weighted, slower</label>
+            <label><input type="radio" name="mode" value="weighted-fast" /> Weighted, faster</label>
+            <label
+              ><input type="radio" name="mode" value="weighted-lead" /> Weighted, 200 ms lead</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-lag" /> Weighted, 200 ms lag</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-rate-5-6" /> Weighted, rate
+              5.6</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-rate-6-0" /> Weighted, rate
+              6.0</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-lead-50" /> Weighted, 50 ms
+              lead</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-lag-50" /> Weighted, 50 ms lag</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-lead-100" /> Weighted, 100 ms
+              lead</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-lag-100" /> Weighted, 100 ms
+              lag</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-lead-75" /> Weighted, 75 ms
+              lead</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-lead-125" /> Weighted, 125 ms
+              lead</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-lead-150" /> Weighted, 150 ms
+              lead</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-lead-175" /> Weighted, 175 ms
+              lead</label
+            >
+            <label
+              ><input type="radio" name="mode" value="weighted-lead-225" /> Weighted, 225 ms
+              lead</label
+            >
+            <label
+              ><input type="radio" name="mode" value="phonetic" /> Arabic phonetic-mass clock</label
+            >
+            <label
+              ><input type="radio" name="mode" value="google" /> Google STT phrase re-anchoring
+              (experimental)</label
+            >
+            <label class="future-option"
+              ><input type="radio" disabled /> Deepgram timestamp mapping (next API adapter)</label
+            >
+            <label class="future-option"
+              ><input type="radio" disabled /> Rolling forced alignment (delayed refinement)</label
+            >
+            <label class="future-option"
+              ><input type="radio" disabled /> Native TTS marks (alternate audio engine)</label
+            >
+            <p id="mode-note"></p>
+            <p id="provider-status" aria-live="polite"></p>
+            <div class="nudge-controls">
+              <label for="nudge">Delay / advance visual highlight</label>
+              <input id="nudge" type="range" min="-1000" max="1000" step="50" value="0" />
+              <span id="nudge-value">Visual clock: 0 ms</span>
+            </div>
+          </section>
+          <div class="test-controls">
+            <button id="test-method" hidden disabled>Test selected method</button>
+            <button id="stop-test" hidden disabled type="button">Stop</button>
+          </div>
+          <section id="metrics" aria-live="polite" class="metrics"></section>
+          <details class="discovery-studio">
+            <summary>Discovery workflow <span>LLM research panel</span></summary>
+            <p>
+              Generate competing, testable ideas before writing a new timing strategy. The workflow
+              uses independent roles, then a skeptical synthesis pass.
+            </p>
+            <label for="discovery-goal">Exploration focus</label>
+            <select id="discovery-goal">
+              <option value="broad">Broad: seek a novel path beyond clock tuning</option>
+              <option value="alignment">
+                Alignment: find better cues without delaying first audio
+              </option>
+              <option value="perception">
+                Perception: make small timing error feel less visible
+              </option>
+              <option value="architecture">Architecture: identify a shippable hybrid design</option>
+            </select>
+            <button id="start-discovery" type="button">Start discovery workflow</button>
+            <button id="copy-codex-workshop" type="button">Copy Codex research prompt</button>
+            <p id="discovery-status" class="discovery-status" aria-live="polite">
+              Gemini can run four lenses + one critic here. Or copy the same research workflow for
+              Codex. Ideas stay proposals until they have a measured POC run.
+            </p>
+            <div id="discovery-results" class="discovery-results" hidden></div>
+            <button id="copy-discovery-brief" type="button" hidden>
+              Copy selected experiment brief
+            </button>
+          </details>
+          <section class="method">
+            <h2>What this proves</h2>
+            <p>
+              Timing is driven by scheduled audio, so a busy network cannot make the visual cursor
+              run ahead of sound. Boundaries are a weighted estimate because Gemini Live returns no
+              word timestamps; the label exposes that confidence honestly.
+            </p>
+          </section>
+          <a id="download" hidden>Download captured PCM as WAV</a>
+          <a id="download-audit" hidden>Download clock-synchronized recording</a>
+        </aside>
+        <section class="reader-pane" aria-label="Poem reader">
+          <article id="poem" hidden>
+            <p id="byline"></p>
+            <h2 id="title"></h2>
+            <p id="arabic" dir="rtl" lang="ar"></p>
+          </article>
+        </section>
+      </section>
+      <section id="runs-view" class="runs-view" hidden aria-live="polite"></section>
+    </main>
+    <script type="module" src="./poc.js"></script>
+  </body>
+</html>

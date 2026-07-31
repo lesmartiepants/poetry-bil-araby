@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Timing recording</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="poc-shell recording-player-shell">
+      <header class="poc-header">
+        <p class="eyebrow">Timing recording</p>
+        <h1>Focused playback</h1>
+        <p id="recording-status" class="summary">Loading recording…</p>
+      </header>
+      <section class="recording-player-card">
+        <video id="recording-player" controls preload="auto" playsinline></video>
+        <p><a href="./">Back to comparison runs</a></p>
+      </section>
+    </main>
+    <script type="module" src="./recording-player.js"></script>
+  </body>
+</html>

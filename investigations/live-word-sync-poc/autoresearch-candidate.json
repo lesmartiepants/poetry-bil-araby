@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "description": "The sole mutable policy surface for the autoresearch-style replay loop. It controls evidence interpretation only, never Gemini, audio bytes, Chirp, prompts, or the evaluator.",
+  "acceptance": {
+    "targetCausalCoverage": 0.8,
+    "minimumPerCaptureCoverage": 0.6,
+    "maxPrebufferMs": 2000,
+    "maxCueP90ErrorMs": 80
+  },
+  "candidates": [
+    { "id": "control-1500-safe150", "prebufferMs": 1500, "safetyMs": 150 },
+    { "id": "one-second-1200-safe80", "prebufferMs": 1200, "safetyMs": 80 },
+    { "id": "latency-1800-safe80", "prebufferMs": 1800, "safetyMs": 80 },
+    { "id": "boundary-2000-safe0", "prebufferMs": 2000, "safetyMs": 0 },
+    { "id": "precision-2800-safe0", "prebufferMs": 2800, "safetyMs": 0 },
+    { "id": "precision-3000-safe80", "prebufferMs": 3000, "safetyMs": 80 },
+    { "id": "ceiling-4200-safe150", "prebufferMs": 4200, "safetyMs": 150 },
+    { "id": "diagnostic-unbounded-10000-safe0", "prebufferMs": 10000, "safetyMs": 0 }
+  ]
+}

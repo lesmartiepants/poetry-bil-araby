@@ -86,10 +86,7 @@ import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
 import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
 import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
-import {
-  applyLiveTimingProfile,
-  DEFAULT_LIVE_TIMING_PROFILE,
-} from './utils/liveTimingProfiles.js';
+import { applyLiveTimingProfile, DEFAULT_LIVE_TIMING_PROFILE } from './utils/liveTimingProfiles.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -100,6 +97,7 @@ import {
   applyHighlightsOnce,
 } from './hooks/useTTSHighlight.js';
 import { useIdleTimer } from './hooks/useIdleTimer.js';
+import { useIsFullScreenRoute } from './hooks/useIsFullScreenRoute.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import SquoctogonBackground from './components/SquoctogonBackground.jsx';
@@ -282,6 +280,9 @@ export default function DiwanApp() {
   const setShowSavedPoems = useModalStore((s) => s.setSavedPoemsOpen);
   const showSplash = useModalStore((s) => s.splash);
   const showOnboarding = useModalStore((s) => s.onboarding);
+  // True on routes that own the whole viewport (see src/constants/routes.js).
+  // Reader-scoped floating chrome must stay unmounted while one is active.
+  const isFullScreenRoute = useIsFullScreenRoute();
   const showTranslation = useUIStore((s) => s.showTranslation);
   const setShowTranslation = useUIStore((s) => s.setShowTranslation);
   const textSizeLevel = useUIStore((s) => s.textSize);
@@ -2217,10 +2218,12 @@ export default function DiwanApp() {
         )}
       </AnimatePresence>
 
-      {/* Interactive walkthrough launcher — only once the splash is dismissed.
-          Disabled (FEATURES.tour = false) until the tour steps are re-wired to the
-          redesigned reader nav; the code is kept so the follow-up can re-enable it. */}
-      {FEATURES.tour && !showSplash && (
+      {/* Interactive walkthrough launcher — reader-scoped, so it mounts only once the
+          splash is dismissed AND no full-screen route is active. The spotlight paints at
+          z-index 9999, well above every route surface, so mounting it on a routed
+          full-screen view (e.g. /explore) buries that view under the tour. The route list
+          lives in src/constants/routes.js so new full-screen routes are covered there. */}
+      {FEATURES.tour && !showSplash && !isFullScreenRoute && (
         <TourLauncher user={user} savedCount={savedPoems.length} onDemoRecite={togglePlay} />
       )}
 

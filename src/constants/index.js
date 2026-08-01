@@ -1,4 +1,5 @@
 export { FEATURES } from './features.js';
+export { FULL_SCREEN_ROUTES, isFullScreenPath } from './routes.js';
 export { DESIGN, BRAND, BRAND_HEADER, POEM_META } from './design.js';
 export { THEME, GOLD } from './theme.js';
 export { CATEGORIES } from './poets.js';

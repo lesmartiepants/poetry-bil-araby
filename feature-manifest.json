@@ -51,12 +51,12 @@
       ],
       "endpoints": ["GET /api/categories"],
       "tests": {
-        "unit": [],
+        "unit": ["src/test/onboarding-preferences.test.jsx"],
         "e2e": []
       },
       "deviceOnly": false,
-      "coverage": "none",
-      "gap": "No automated coverage yet. Needs a unit test for the categoryTags adapter (dimension -> tag mapping, composite ids, empty pre-migration payload) and an e2e walk of /onboarding asserting the three steps persist to localStorage."
+      "coverage": "behavioral",
+      "gap": "Unit tests cover the categoryTags adapter (dimension -> tag mapping, composite ids, by-category param grouping, empty pre-migration payload) and that OnboardingFlow / PreferencesDrawer render from both a populated and an empty taxonomy. No e2e yet: stepping mood -> era -> topics and asserting the write to localStorage.onboardingPrefs is untested."
     },
     {
       "id": "taxonomy-tag-ui",

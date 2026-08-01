@@ -74,8 +74,8 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 - **Features tracked:** 40
 - **HTTP endpoints in code:** 37
 - **Components in code:** 44
-- **Test files in code:** 60
-- **Behavioral coverage:** 6/40 (15%)
+- **Test files in code:** 61
+- **Behavioral coverage:** 7/40 (18%)
 
 | Tier | Features |
 |------|----------|
@@ -86,18 +86,18 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 
 | Coverage | Features |
 |----------|----------|
-| behavioral | 6 |
+| behavioral | 7 |
 | mocked | 20 |
 | source-only | 1 |
 | device-only | 3 |
-| none | 10 |
+| none | 9 |
 
 ### Feature coverage matrix
 
 | Feature | Tier | Coverage | Device-only | Gap |
 |---------|------|----------|-------------|-----|
 | `poem-categorization` | important | mocked | - | server.test.js covers the enabled/disabled API paths with a mocked pool; no e2e yet for the Explore Poems UI (filter chips, in-place poem expand). |
-| `onboarding-preferences` | nice | none | - | No automated coverage yet. Needs a unit test for the categoryTags adapter (dimension -> tag mapping, composite ids, empty pre-migration payload) and an e2e walk of /onboarding asserting the three steps persist to localStorage. |
+| `onboarding-preferences` | nice | behavioral | - | Unit tests cover the categoryTags adapter (dimension -> tag mapping, composite ids, by-category param grouping, empty pre-migration payload) and that OnboardingFlow / PreferencesDrawer render from both a populated and an empty taxonomy. No e2e yet: stepping mood -> era -> topics and asserting the write to localStorage.onboardingPrefs is untested. |
 | `taxonomy-tag-ui` | nice | none | - | No automated coverage. Components are ported but unmounted; add tests when a surface routes to them. |
 | `poem-display` | critical | behavioral | - | Arabic font rendering (Amiri/Tajawal) differs prod vs CI; no visual regression. |
 | `discover-random` | critical | mocked | - | e2e routes /api/** to canned JSON; real server SERVING filters + exclude fallback only covered by server.test.js in isolation. |

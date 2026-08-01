@@ -10,7 +10,13 @@ vi.mock('../stores/audioStore', () => ({
 }));
 
 import { useAudioStore } from '../stores/audioStore';
-import { useTTSHighlight, playbackStartTime, pauseOffset, startPlayer, recordPause } from '../hooks/useTTSHighlight.js';
+import {
+  useTTSHighlight,
+  playbackStartTime,
+  pauseOffset,
+  startPlayer,
+  recordPause,
+} from '../hooks/useTTSHighlight.js';
 
 // rAF mock
 let rafCallbacks = [];
@@ -49,9 +55,7 @@ afterEach(() => {
 
 // Trigger a state transition via the captured subscribe listener
 function triggerIsPlaying(isPlaying, wasPlaying) {
-  subscribeListeners.forEach((l) =>
-    l({ isPlaying }, { isPlaying: wasPlaying })
-  );
+  subscribeListeners.forEach((l) => l({ isPlaying }, { isPlaying: wasPlaying }));
 }
 
 // Helper: flush one rAF tick
@@ -226,11 +230,34 @@ describe('useTTSHighlight — word advancement over time (@wf-readalong)', () =>
     expect(spans[1].classList.contains('tts-active')).toBe(true);
 
     // Pause: loop stops, highlight should stay on word 1 even though time moves on.
-    act(() => triggerIsPlaying(false, true));
+    // recordPause() is what marks the stop as a user pause (togglePlay.js calls it
+    // immediately before player.stop()). Without it the hook treats the stop as a
+    // natural end of playback and snaps the highlight to the final word.
+    act(() => {
+      recordPause();
+      triggerIsPlaying(false, true);
+    });
     setElapsed(2.5); // time advances past word 2...
     act(() => flushRaf()); // ...but the loop is stopped, so no rAF work happens
     expect(spans[1].classList.contains('tts-active'), 'active word frozen on pause').toBe(true);
     expect(spans[2].classList.contains('tts-active')).toBe(false);
+  });
+
+  it('snaps to the final word on a natural end (stop without recordPause)', () => {
+    const { spans, wordRefs, timings, totalDuration } = threeWords();
+
+    setElapsed(1.5);
+    renderHook(() => useTTSHighlight({ wordRefs, timings, totalDuration }));
+    act(() => triggerIsPlaying(true, false));
+    act(() => flushRaf());
+    expect(spans[1].classList.contains('tts-active')).toBe(true);
+
+    // Playback ends on its own — no recordPause(). The whole poem should read as
+    // completed rather than freezing one word short of the end.
+    act(() => triggerIsPlaying(false, true));
+    expect(spans[2].classList.contains('tts-active')).toBe(true);
+    expect(spans[0].classList.contains('tts-past')).toBe(true);
+    expect(spans[1].classList.contains('tts-past')).toBe(true);
   });
 });
 

@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Popover, ToggleGroup, Select } from 'radix-ui';
-import { Languages, ALargeSmall, ChevronDown, Check, ExternalLink } from 'lucide-react';
+import { Languages, ALargeSmall, ChevronDown, Check, Palette, Hexagon } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
-
-// URL of the geometric-explorer pattern generator (open locally from project root)
-const GENERATOR_URL = '/design-review/islamic-patterns/generate.html';
 
 // Patterns saved as favorites in the geometric-explorer
 const GENERATOR_FAVORITES = [
@@ -146,8 +143,13 @@ const TextSettingsPill = () => {
             side="top"
             align="end"
             sideOffset={8}
+            collisionPadding={8}
             className={`rounded-2xl p-4 w-72 backdrop-blur-xl border ${theme.border} ${panelBg} overflow-y-auto`}
-            style={{ zIndex: 46, maxHeight: '80vh' }}
+            style={{
+              zIndex: 46,
+              maxHeight: 'var(--radix-popover-content-available-height, 85vh)',
+              overflowY: 'auto',
+            }}
           >
             {/* ── Text section ───────────────────────────────────────── */}
             {/* Row 1: Translation + Romanize toggles — paired on one line */}
@@ -452,17 +454,30 @@ const TextSettingsPill = () => {
                   </div>
                 </div>
 
-                {/* Generator link */}
-                <a
-                  href={GENERATOR_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs opacity-40 hover:opacity-70 transition-opacity mt-1"
-                  style={{ color: gold }}
+                {/* ── Design tools links ───────────────────────────────────── */}
+                <div
+                  className="mt-3 pt-3"
+                  style={{
+                    borderTop: `1px solid ${darkMode ? 'rgba(197,160,89,0.15)' : 'rgba(197,160,89,0.25)'}`,
+                  }}
                 >
-                  <ExternalLink size={11} />
-                  Open pattern generator
-                </a>
+                  <a
+                    href="/design-review"
+                    className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 opacity-60 hover:opacity-100 border border-transparent hover:border-gold/30"
+                    style={{ color: gold, textDecoration: 'none' }}
+                  >
+                    <Palette size={14} style={{ color: gold }} />
+                    <span>Design Review</span>
+                  </a>
+                  <a
+                    href="/geometric-explorer"
+                    className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-all duration-200 mt-1 opacity-60 hover:opacity-100 border border-transparent hover:border-gold/30"
+                    style={{ color: gold, textDecoration: 'none' }}
+                  >
+                    <Hexagon size={14} style={{ color: gold }} />
+                    <span>Geometric Explorer</span>
+                  </a>
+                </div>
               </>
             )}
           </Popover.Content>

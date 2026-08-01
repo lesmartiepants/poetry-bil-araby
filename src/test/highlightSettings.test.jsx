@@ -78,4 +78,21 @@ describe('TextSettingsPill — Highlight selector', () => {
     const glowBtn = screen.getByRole('radio', { name: /glow/i });
     expect(glowBtn).toHaveAttribute('data-state', 'on');
   });
+
+  it('renders design links in the same tab, with no duplicate generator link', () => {
+    render(<TextSettingsPill />);
+    fireEvent.click(screen.getByRole('button', { name: /advanced/i }));
+
+    // The pattern generator and the Geometric Explorer are the same destination
+    // (/geometric-explorer rewrites to the generator), so only one link is shown.
+    expect(screen.queryByRole('link', { name: /open pattern generator/i })).toBeNull();
+
+    const designReviewLink = screen.getByRole('link', { name: /design review/i });
+    expect(designReviewLink).toHaveAttribute('href', '/design-review');
+    expect(designReviewLink).not.toHaveAttribute('target');
+
+    const geometricExplorerLink = screen.getByRole('link', { name: /geometric explorer/i });
+    expect(geometricExplorerLink).toHaveAttribute('href', '/geometric-explorer');
+    expect(geometricExplorerLink).not.toHaveAttribute('target');
+  });
 });

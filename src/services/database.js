@@ -172,6 +172,28 @@ export const fetchPoemsByCategory = async (filters = {}) => {
 };
 
 /**
+ * Full-text search over poem title, content and poet name.
+ *
+ * Backed by `GET /api/poems/search?q=&limit=`, which is text-only — it does NOT
+ * accept category filters or a sort order. Callers that need both text and
+ * facets should query one side and narrow the other client-side.
+ *
+ * @param {Object} params
+ * @param {string} params.q - search text (required, max 200 chars server-side)
+ * @param {number} [params.limit=20] - 1..100
+ * @returns {Promise<Array>} Array of normalised poem objects
+ */
+export const searchPoems = async ({ q, limit = 20 } = {}) => {
+  const text = String(q || '').trim();
+  if (!text) return [];
+  const qs = new URLSearchParams({ q: text, limit: String(limit) });
+  const res = await fetch(`${apiUrl}/api/poems/search?${qs.toString()}`);
+  if (!res.ok) throw new Error(`Search returned ${res.status} ${res.statusText}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data.map(normalizeDbPoem) : [];
+};
+
+/**
  * Ping the backend health endpoint.
  * Used for keep-alive to prevent Render free-tier cold starts.
  *

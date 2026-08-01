@@ -1,11 +1,40 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import gsap from 'gsap';
 
+import { fetchDimensionValues } from '../../services/categoryTags.js';
+
 const GOLD = '#c5a059';
 
-const TOPICS = [
+// Node accent per topic. Presentation-only — the taxonomy carries no colour, so
+// this maps by value key and falls back to gold for values it doesn't know.
+const TOPIC_COLORS = {
+  love: '#e8647a',
+  longing: '#c084fc',
+  grief: '#94a3b8',
+  nature: '#4ade80',
+  homeland: '#22c55e',
+  spirituality: '#818cf8',
+  wisdom: '#38bdf8',
+  freedom: '#f59e0b',
+  war: '#ef4444',
+  sea: '#0ea5e9',
+  wine: '#a16207',
+  praise: '#c5a059',
+  death: '#6b7280',
+  friendship: '#2dd4bf',
+  satire: '#fb923c',
+};
+const topicColor = (slug) => TOPIC_COLORS[slug] || GOLD;
+
+// The constellation only stays legible at around a dozen nodes, so we show the
+// best-represented topics (highest poem_count) and cap the rest.
+const MAX_NODES = 12;
+
+// Fallback list used only when /api/categories has no `topic` dimension
+// (pre-migration). Keys match the shipped topic values.
+const FALLBACK_TOPICS = [
   { slug: 'love', name_ar: '\u0627\u0644\u062d\u0628', name_en: 'Love', color: '#e8647a' },
   {
     slug: 'longing',
@@ -55,7 +84,8 @@ const TOPICS = [
   },
 ];
 
-// Desktop positions (% of container)
+// Desktop positions (% of container). One slot per node, up to MAX_NODES; a
+// shorter topic list simply uses the leading slots.
 const POSITIONS = [
   { x: 20, y: 15 }, // love
   { x: 50, y: 8 }, // longing
@@ -95,6 +125,33 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(false);
+
+  // Topic options come from the `topic` dimension of the shipped taxonomy
+  // (GET /api/categories). Pre-migration the dimension is absent, the fetch
+  // resolves to [], and we keep the static fallback so the constellation still
+  // renders. fetchDimensionValues never rejects.
+  const [allTopics, setAllTopics] = useState(FALLBACK_TOPICS);
+  useEffect(() => {
+    let cancelled = false;
+    fetchDimensionValues('topic').then((values) => {
+      if (!cancelled && values.length > 0) setAllTopics(values);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Best-represented topics first, capped so the constellation stays readable.
+  const topics = useMemo(
+    () =>
+      [...allTopics].sort((a, b) => (b.poem_count || 0) - (a.poem_count || 0)).slice(0, MAX_NODES),
+    [allTopics]
+  );
+  // Drop any connection that points past the end of a shorter topic list.
+  const connections = useMemo(
+    () => CONNECTIONS.filter(([a, b]) => a < topics.length && b < topics.length),
+    [topics.length]
+  );
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth <= 768);
@@ -171,7 +228,7 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
   };
 
   // Get connections for a given node index
-  const getNodeConnections = (idx) => CONNECTIONS.filter(([a, b]) => a === idx || b === idx);
+  const getNodeConnections = (idx) => connections.filter(([a, b]) => a === idx || b === idx);
 
   return (
     <motion.div
@@ -266,11 +323,11 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
               viewBox="0 0 100 100"
               preserveAspectRatio="none"
             >
-              {CONNECTIONS.map(([a, b], i) => {
+              {connections.map(([a, b], i) => {
                 const pa = POSITIONS[a];
                 const pb = POSITIONS[b];
-                const aSelected = selected.includes(TOPICS[a].slug);
-                const bSelected = selected.includes(TOPICS[b].slug);
+                const aSelected = selected.includes(topics[a].slug);
+                const bSelected = selected.includes(topics[b].slug);
                 const active = aSelected || bSelected;
 
                 return (
@@ -292,9 +349,10 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
           )}
 
           {/* Topic nodes */}
-          {TOPICS.map((topic, idx) => {
+          {topics.map((topic, idx) => {
             const isSelected = selected.includes(topic.slug);
             const pos = POSITIONS[idx];
+            const color = topicColor(topic.slug);
 
             const nodeStyle = isMobile
               ? {
@@ -329,7 +387,7 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
               <button
                 key={topic.slug}
                 data-testid="topic-node"
-                onClick={(e) => toggleTopic(topic.slug, topic.color, e)}
+                onClick={(e) => toggleTopic(topic.slug, color, e)}
                 style={nodeStyle}
                 aria-pressed={isSelected}
                 aria-label={`${topic.name_ar} \u2014 ${topic.name_en}`}
@@ -340,15 +398,13 @@ const TopicsPicker = ({ selectedMoods, selectedEras, onComplete, initialValue = 
                     width: isMobile ? '52px' : '56px',
                     height: isMobile ? '52px' : '56px',
                     borderRadius: '50%',
-                    border: `2px solid ${isSelected ? topic.color : 'rgba(255,255,255,0.12)'}`,
-                    boxShadow: isSelected
-                      ? `0 0 16px ${topic.color}44, 0 0 32px ${topic.color}22`
-                      : 'none',
+                    border: `2px solid ${isSelected ? color : 'rgba(255,255,255,0.12)'}`,
+                    boxShadow: isSelected ? `0 0 16px ${color}44, 0 0 32px ${color}22` : 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     transition: 'all 0.25s ease',
-                    background: isSelected ? `${topic.color}11` : 'transparent',
+                    background: isSelected ? `${color}11` : 'transparent',
                   }}
                 >
                   <span

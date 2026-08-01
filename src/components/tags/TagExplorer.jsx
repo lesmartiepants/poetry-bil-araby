@@ -4,10 +4,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '../../stores/uiStore';
 import { THEME } from '../../constants/index.js';
 import TagBadge from './TagBadge.jsx';
-import { fetchTags, fetchTagCategories, fetchPoemTags } from '../../services/tags.js';
+import { fetchTagTaxonomy } from '../../services/categoryTags.js';
 
 /**
- * TagExplorer — browse tags by category, preview poems per tag.
+ * TagExplorer — browse the taxonomy by dimension, preview counts per value.
+ *
+ * Reads the shipped categorization taxonomy (`GET /api/categories`) through the
+ * categoryTags adapter: dimensions render as the category rail, values as the
+ * tag badges. Tag ids are composite `"<dimension>:<value>"` keys.
+ *
+ * Pre-migration the API returns empty arrays and this renders its empty state.
  *
  * Props:
  *   onClose       — () => void
@@ -35,9 +41,9 @@ export default function TagExplorer({ onClose, onSelectTag }) {
       setLoading(true);
       setError(null);
       try {
-        const [catData, tagData] = await Promise.all([fetchTagCategories(), fetchTags()]);
+        const { categories: catData, tags: tagData } = await fetchTagTaxonomy();
         setCategories(catData);
-        setTags(tagData.tags || tagData);
+        setTags(tagData);
         if (catData.length > 0) setSelectedCategory(catData[0].slug);
       } catch (e) {
         setError(e.message);

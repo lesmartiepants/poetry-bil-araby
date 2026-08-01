@@ -86,10 +86,7 @@ import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import { computeWordTimings } from './utils/wordTiming.js';
 import { computeWordTimingsFromAudio } from './utils/audioWordTiming.js';
 import { alignTranscriptTimings } from './utils/alignTranscriptTimings.js';
-import {
-  applyLiveTimingProfile,
-  DEFAULT_LIVE_TIMING_PROFILE,
-} from './utils/liveTimingProfiles.js';
+import { applyLiveTimingProfile, DEFAULT_LIVE_TIMING_PROFILE } from './utils/liveTimingProfiles.js';
 import {
   useTTSHighlight,
   startPlayer,
@@ -110,6 +107,7 @@ import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import CategoryExplorer from './components/CategoryExplorer.jsx';
+const OnboardingFlow = lazy(() => import('./components/onboarding/OnboardingFlow.jsx'));
 import PoemCarousel from './components/PoemCarousel.jsx';
 import PoemFeed from './components/feed/PoemFeed.jsx';
 import AccountMenu from './components/AccountMenu.jsx';
@@ -139,11 +137,16 @@ export default function DiwanApp() {
   const [, navigate] = useLocation();
   const [, routeParams] = useRoute('/poem/:id');
   const [isExploreRoute] = useRoute('/explore');
+  // Preference-picker flow (salvaged from #517), reachable at /onboarding.
+  const [isOnboardingRoute] = useRoute('/onboarding');
   // The reader owns the URL (it writes /poem/:id as you move through the feed).
   // Suppress those writes while the full-screen explorer route is active so the
   // feed doesn't clobber /explore out from under the explorer.
   const navigateReader = (to, opts) =>
-    window.location.pathname.startsWith('/explore') ? undefined : navigate(to, opts);
+    window.location.pathname.startsWith('/explore') ||
+    window.location.pathname.startsWith('/onboarding')
+      ? undefined
+      : navigate(to, opts);
   const [queryParams, setQueryParams] = useQueryParams();
 
   const mainScrollRef = useRef(null);
@@ -2155,6 +2158,15 @@ export default function DiwanApp() {
           onRequireAuth={handleSignIn}
           onOpenPoem={openPoemInReader}
         />
+      )}
+
+      {/* Preference pickers — full-screen routed view at /onboarding.
+          Salvaged from #517; gated on FEATURES.onboardingPrefs so it stays out
+          of the default boot path (the app boots straight into the feed). */}
+      {FEATURES.onboardingPrefs && isOnboardingRoute && (
+        <Suspense fallback={null}>
+          <OnboardingFlow key="onboarding-flow" onComplete={() => navigate('/')} />
+        </Suspense>
       )}
 
       {/* Auth Modal */}

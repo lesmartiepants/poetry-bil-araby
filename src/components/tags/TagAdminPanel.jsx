@@ -4,23 +4,32 @@ import { motion } from 'framer-motion';
 import { useUIStore } from '../../stores/uiStore';
 import { THEME } from '../../constants/index.js';
 import TagBadge from './TagBadge.jsx';
-import {
-  fetchTags,
-  fetchTagCategories,
-  createTag,
-  updateTag,
-  deleteTag,
-} from '../../services/tags.js';
+import { fetchTagTaxonomy } from '../../services/categoryTags.js';
 
 /**
- * TagAdminPanel — CRUD UI for tag management.
- * Only rendered when API_SECRET_KEY is configured (protected).
+ * TagAdminPanel — taxonomy inspector.
+ *
+ * ── TODO(write-api): READ-ONLY, mutations removed ─────────────────────────────
+ * #517 built this as full CRUD over its own `tags` table
+ * (POST/PATCH/DELETE /api/tags, guarded by API_SECRET_KEY). The categorization
+ * schema that shipped instead has no such endpoints: server.js exposes only
+ * `GET /api/categories` and `GET /api/poems/by-category`. Dimensions, values and
+ * families are seeded by migration and the offline classification pipeline owns
+ * `poem_categories`, so editing them from the client would need a new,
+ * authenticated admin surface that does not exist.
+ *
+ * Rather than call endpoints that 404, create/edit/delete are disabled here and
+ * the panel lists the live taxonomy (dimension, bilingual labels, poem counts).
+ * To restore editing, add authenticated CRUD over `category_values` (e.g.
+ * `POST /api/categories/:dimension/values`) and reinstate the handlers below.
+ * Do NOT reintroduce #517's tags tables — they are superseded.
+ * ─────────────────────────────────────────────────────────────────────────────
  *
  * Props:
- *   apiKey  — string, passed from env or admin unlock
+ *   apiKey  — retained for signature compatibility; unused while read-only
  *   onClose — () => void
  */
-export default function TagAdminPanel({ apiKey, onClose }) {
+export default function TagAdminPanel({ apiKey: _apiKey, onClose }) {
   const darkMode = useUIStore((s) => s.darkMode);
 
   const [tags, setTags] = useState([]);
@@ -30,16 +39,16 @@ export default function TagAdminPanel({ apiKey, onClose }) {
 
   // Create form state
   const [newTag, setNewTag] = useState({ name_ar: '', name_en: '', category_slug: '' });
-  const [creating, setCreating] = useState(false);
+  const [creating] = useState(false); // read-only: never toggles
   const [createError, setCreateError] = useState(null);
 
   // Edit state
   const [editingId, setEditingId] = useState(null);
   const [editValues, setEditValues] = useState({});
-  const [saving, setSaving] = useState(null);
+  const [saving] = useState(null); // read-only: never toggles
 
   // Delete state
-  const [deletingId, setDeletingId] = useState(null);
+  const [deletingId] = useState(null); // read-only: never toggles
 
   const panelBg = darkMode ? '#0e0e10' : '#FDFCF8';
   const borderColor = darkMode ? 'rgba(197,160,89,0.14)' : 'rgba(107,87,68,0.14)';
@@ -61,11 +70,8 @@ export default function TagAdminPanel({ apiKey, onClose }) {
     setLoading(true);
     setError(null);
     try {
-      const [tagsData, catData] = await Promise.all([
-        fetchTags({ limit: 500 }),
-        fetchTagCategories(),
-      ]);
-      setTags(tagsData.tags || tagsData);
+      const { tags: tagData, categories: catData } = await fetchTagTaxonomy();
+      setTags(tagData);
       setCategories(catData);
     } catch (e) {
       setError(e.message);
@@ -78,45 +84,14 @@ export default function TagAdminPanel({ apiKey, onClose }) {
     load();
   }, [load]);
 
-  const handleCreate = async () => {
-    if (!newTag.name_ar.trim()) return;
-    setCreating(true);
-    setCreateError(null);
-    try {
-      const created = await createTag(newTag, apiKey);
-      setTags((prev) => [...prev, created]);
-      setNewTag({ name_ar: '', name_en: '', category_slug: '' });
-    } catch (e) {
-      setCreateError(e.message);
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const handleSaveEdit = async (tagId) => {
-    setSaving(tagId);
-    try {
-      const updated = await updateTag(tagId, editValues, apiKey);
-      setTags((prev) => prev.map((t) => (t.id === tagId ? { ...t, ...updated } : t)));
-      setEditingId(null);
-    } catch {
-      /* silently fail */
-    } finally {
-      setSaving(null);
-    }
-  };
-
-  const handleDelete = async (tagId) => {
-    setDeletingId(tagId);
-    try {
-      await deleteTag(tagId, apiKey);
-      setTags((prev) => prev.filter((t) => t.id !== tagId));
-    } catch {
-      /* silently fail */
-    } finally {
-      setDeletingId(null);
-    }
-  };
+  // TODO(write-api): all three mutations are inert — the categorization schema
+  // has no write endpoints (see the header block). They keep their signatures so
+  // reinstating them is a one-file change once admin CRUD over `category_values`
+  // exists; every call site stays as-is.
+  const READ_ONLY_MSG = 'Taxonomy editing is not available — the API is read-only.';
+  const handleCreate = async () => setCreateError(READ_ONLY_MSG);
+  const handleSaveEdit = async () => setEditingId(null);
+  const handleDelete = async () => {};
 
   return (
     <motion.div

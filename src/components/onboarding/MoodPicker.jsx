@@ -1,48 +1,77 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import gsap from 'gsap';
 
+import { fetchDimensionValues } from '../../services/categoryTags.js';
+
 const GOLD = '#c5a059';
 
-const MOODS = [
-  { slug: 'joy', name_ar: '\u0641\u0631\u062d', name_en: 'Joy', color: '#c5a059' },
-  {
-    slug: 'melancholy',
-    name_ar: '\u0643\u0622\u0628\u0629',
-    name_en: 'Melancholy',
-    color: '#1E3A6E',
-  },
-  { slug: 'anger', name_ar: '\u063a\u0636\u0628', name_en: 'Anger', color: '#8B2500' },
-  { slug: 'hope', name_ar: '\u0623\u0645\u0644', name_en: 'Hope', color: '#4A7C59' },
-  { slug: 'despair', name_ar: '\u064a\u0623\u0633', name_en: 'Despair', color: '#4A4A4A' },
-  { slug: 'wonder', name_ar: '\u062f\u0647\u0634\u0629', name_en: 'Wonder', color: '#6A4C93' },
-  { slug: 'pride', name_ar: '\u0641\u062e\u0631', name_en: 'Pride', color: '#B8860B' },
-  {
-    slug: 'loneliness',
-    name_ar: '\u0648\u062d\u062f\u0629',
-    name_en: 'Loneliness',
-    color: '#2E3A5F',
-  },
-  {
-    slug: 'nostalgia',
-    name_ar: '\u062d\u0646\u064a\u0646',
-    name_en: 'Nostalgia',
-    color: '#8B7355',
-  },
+// Ink-blot accent per mood. Colours are presentation-only; the taxonomy carries
+// no colour, so this maps by value key with a gold fallback for anything new.
+const MOOD_COLORS = {
+  joy: '#c5a059',
+  melancholy: '#1E3A6E',
+  anger: '#8B2500',
+  hope: '#4A7C59',
+  despair: '#4A4A4A',
+  wonder: '#6A4C93',
+  pride: '#B8860B',
+  loneliness: '#2E3A5F',
+  nostalgia: '#8B7355',
+  love: '#e8647a',
+  longing: '#c084fc',
+  grief: '#94a3b8',
+  fear: '#5B4B8A',
+  serenity: '#4A9D8F',
+};
+const moodColor = (slug) => MOOD_COLORS[slug] || GOLD;
+
+// Fallback list used only when /api/categories has no `mood` dimension
+// (pre-migration). Keys match the shipped mood values so selections stay valid
+// once the taxonomy is populated.
+const FALLBACK_MOODS = [
+  { slug: 'joy', name_ar: '\u0641\u0631\u062d', name_en: 'Joy' },
+  { slug: 'melancholy', name_ar: '\u0643\u0622\u0628\u0629', name_en: 'Melancholy' },
+  { slug: 'anger', name_ar: '\u063a\u0636\u0628', name_en: 'Anger' },
+  { slug: 'hope', name_ar: '\u0623\u0645\u0644', name_en: 'Hope' },
+  { slug: 'despair', name_ar: '\u064a\u0623\u0633', name_en: 'Despair' },
+  { slug: 'wonder', name_ar: '\u062f\u0647\u0634\u0629', name_en: 'Wonder' },
+  { slug: 'pride', name_ar: '\u0641\u062e\u0631', name_en: 'Pride' },
+  { slug: 'loneliness', name_ar: '\u0648\u062d\u062f\u0629', name_en: 'Loneliness' },
+  { slug: 'nostalgia', name_ar: '\u062d\u0646\u064a\u0646', name_en: 'Nostalgia' },
 ];
 
-// Staggered grid: rows of [0,1,2], [3,4,5], [6,7,8]
-// Odd rows shift right, even rows shift left
-const ROWS = [
-  { indices: [0, 1, 2], shiftLeft: true },
-  { indices: [3, 4, 5], shiftLeft: false },
-  { indices: [6, 7, 8], shiftLeft: true },
-];
+// Staggered grid: rows of three, alternating shift. Chunked at render time so
+// the layout holds for any number of taxonomy values, not just the original 9.
+const chunkRows = (items, per = 3) => {
+  const rows = [];
+  for (let i = 0; i < items.length; i += per) {
+    rows.push({ items: items.slice(i, i + per), shiftLeft: rows.length % 2 === 0 });
+  }
+  return rows;
+};
 
 const MoodPicker = ({ onNext, initialValue = [] }) => {
   const [selected, setSelected] = useState(() => initialValue);
   const canvasRef = useRef(null);
+
+  // Mood options come from the `mood` dimension of the shipped taxonomy
+  // (GET /api/categories). Pre-migration that dimension is absent and the
+  // fetch resolves to [], so we render the static fallback rather than an
+  // empty screen. fetchDimensionValues never rejects.
+  const [moods, setMoods] = useState(FALLBACK_MOODS);
+  useEffect(() => {
+    let cancelled = false;
+    fetchDimensionValues('mood').then((values) => {
+      if (!cancelled && values.length > 0) setMoods(values);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const rows = useMemo(() => chunkRows(moods), [moods]);
 
   const spawnInkBlot = useCallback((x, y, color) => {
     const canvas = canvasRef.current;
@@ -207,7 +236,7 @@ const MoodPicker = ({ onNext, initialValue = [] }) => {
         <div
           style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}
         >
-          {ROWS.map((row, ri) => (
+          {rows.map((row, ri) => (
             <div
               key={ri}
               style={{
@@ -217,14 +246,13 @@ const MoodPicker = ({ onNext, initialValue = [] }) => {
                 transform: row.shiftLeft ? 'translateX(-12px)' : 'translateX(12px)',
               }}
             >
-              {row.indices.map((idx) => {
-                const mood = MOODS[idx];
+              {row.items.map((mood) => {
                 const isSelected = selected.includes(mood.slug);
                 return (
                   <button
                     key={mood.slug}
                     data-testid="mood-item"
-                    onClick={(e) => toggleMood(mood.slug, mood.color, e)}
+                    onClick={(e) => toggleMood(mood.slug, moodColor(mood.slug), e)}
                     style={{
                       background: 'transparent',
                       border: 'none',
@@ -274,7 +302,7 @@ const MoodPicker = ({ onNext, initialValue = [] }) => {
                         transform: `translateX(-50%) scaleX(${isSelected ? 1 : 0})`,
                         width: '60%',
                         height: '2px',
-                        background: mood.color,
+                        background: moodColor(mood.slug),
                         borderRadius: '1px',
                         transition: 'transform 0.25s ease',
                         transformOrigin: 'center',

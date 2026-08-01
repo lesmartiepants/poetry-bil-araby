@@ -567,8 +567,15 @@ export function useSparklerReveal({
     return () => controller._stopLoop();
   }, [isActive, reducedMotion, controller]);
 
-  // Reset on poem change.
+  // Reset on poem change. Guarded against React 18 StrictMode's dev-mode
+  // double-invoke of effects: without this, the same poemId can trigger
+  // reset() twice in a row, bumping `gen` after start() has already
+  // captured it and silently aborting the in-flight reveal (revealedCount
+  // stuck at 0). Mirrors the introForRef guard in PoemReader.jsx.
+  const lastResetPoemId = useRef();
   useEffect(() => {
+    if (lastResetPoemId.current === poemId) return;
+    lastResetPoemId.current = poemId;
     controller.reset();
   }, [poemId, controller]);
 

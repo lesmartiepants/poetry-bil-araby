@@ -111,6 +111,7 @@ const PoemReader = memo(function PoemReader({
   const insightWrapRef = useRef(null);
   const scrubWrapRef = useRef(null);
   const introForRef = useRef(null);
+  const introTlRef = useRef(null);
   // Which insight sections have already been opened this poem — the reveal flourish plays only the
   // first time; revisits show the full text instantly. Reset on poem change.
   const seenStagesRef = useRef({});
@@ -156,6 +157,15 @@ const PoemReader = memo(function PoemReader({
     if (!isActive || lineCount === 0) return;
     if (introForRef.current === poemId) return; // run once per poem activation
     introForRef.current = poemId;
+    // Kill any leftover timeline from a prior activation before starting a new one. This
+    // replaces a `return () => tl.kill()` cleanup, which under React 18 StrictMode's dev-mode
+    // double-invoke fires immediately after this effect body (mount → simulated cleanup →
+    // mount again) and killed the just-created timeline before its `ctrl?.start()` callback
+    // ever ran — leaving revealedCount stuck at 0. The introForRef guard above already makes
+    // the StrictMode replay a no-op, so the timeline only needs killing when a genuinely new
+    // poem activation supersedes it.
+    introTlRef.current?.kill();
+    introTlRef.current = null;
     reset();
     setEndStage('idle');
     seenStagesRef.current = {}; // new poem → insight sections animate fresh on first open
@@ -184,6 +194,7 @@ const PoemReader = memo(function PoemReader({
       transformOrigin: 'center top',
     });
     const tl = gsap.timeline();
+    introTlRef.current = tl;
     tl.to(meta, { opacity: 1, duration: 1.0, ease: 'power2.out' })
       .to({}, { duration: 1.1 })
       .to(meta, { y: 0, scale: 1, duration: 0.9, ease: 'power3.inOut' })
@@ -193,13 +204,17 @@ const PoemReader = memo(function PoemReader({
         setIntroDone(true); // header is up → reveal the action buttons
       })
       .add(() => ctrl?.start(), '-=0.05');
-
-    return () => tl.kill();
+    // No cleanup here on purpose — see the introTlRef.current?.kill() guard above. Genuine
+    // deactivation (isActive → false) kills the timeline in the effect below instead.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isActive, poemId, lineCount]);
 
   useEffect(() => {
-    if (!isActive) introForRef.current = null;
+    if (!isActive) {
+      introForRef.current = null;
+      introTlRef.current?.kill();
+      introTlRef.current = null;
+    }
   }, [isActive]);
 
   // ── TTS line-sync: follow the spoken line while playing, keeping the 4-line frame ──
@@ -337,7 +352,6 @@ const PoemReader = memo(function PoemReader({
       if (ro) ro.disconnect();
       window.removeEventListener('resize', measure);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     isActive,
     poemId,

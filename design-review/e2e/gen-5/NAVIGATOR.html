@@ -396,22 +396,47 @@
   </div>
 </div>
 <script>
-  // Resolve absolute URLs for shareable links
+  // Resolve absolute URLs for shareable links.
+  //
+  // This page is copied into dist/ and served publicly (see vercel.json), so the
+  // page URL is attacker-controllable and must never be concatenated into a link.
+  // Instead: allowlist the filename, then let the URL API resolve it against the
+  // page's own base. Both the URL text and the 12 preview links go through this.
   (function () {
-    var base = window.location.href.replace(/NAVIGATOR\.html.*$/, '');
+    // The only filenames this page is ever allowed to link to.
+    var SAFE_NAME = /^(?:[0-9]{2}-[a-z0-9-]+|NAVIGATOR)\.html$/;
+    // Schemes that can execute script if they ever reach an href.
+    var UNSAFE_SCHEME = /^(?:javascript|data|blob|vbscript):/i;
+
+    function safeAbsoluteUrl(name) {
+      if (typeof name !== 'string' || !SAFE_NAME.test(name)) return null;
+      var resolved;
+      try {
+        // Relative resolution against baseURI; drops any query/hash on the page URL.
+        resolved = new URL(name, document.baseURI);
+      } catch (e) {
+        return null;
+      }
+      if (UNSAFE_SCHEME.test(resolved.protocol)) return null;
+      return resolved.href;
+    }
+
     var urlEl = document.getElementById('preview-base-url');
-    var navUrl = base + 'NAVIGATOR.html';
-    // Build via DOM APIs, not innerHTML: navUrl derives from window.location.href,
-    // which is attacker-controllable, and this page is served publicly from dist/.
-    var navLink = document.createElement('a');
-    navLink.href = navUrl;
-    navLink.target = '_blank';
-    navLink.rel = 'noopener noreferrer';
-    navLink.textContent = navUrl;
-    urlEl.textContent = 'Navigator: ';
-    urlEl.appendChild(navLink);
+    var navUrl = safeAbsoluteUrl('NAVIGATOR.html');
+    if (urlEl && navUrl) {
+      // Built with DOM APIs, not innerHTML, so the URL can never become markup.
+      var navLink = document.createElement('a');
+      navLink.href = navUrl;
+      navLink.target = '_blank';
+      navLink.rel = 'noopener noreferrer';
+      navLink.textContent = navUrl;
+      urlEl.textContent = 'Navigator: ';
+      urlEl.appendChild(navLink);
+    }
+
     document.querySelectorAll('.preview-link[data-href]').forEach(function (a) {
-      a.href = base + a.getAttribute('data-href');
+      var target = safeAbsoluteUrl(a.getAttribute('data-href'));
+      if (target) a.href = target;
     });
   })();
 </script>

@@ -1,13 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Popover, ToggleGroup, Select } from 'radix-ui';
-import { Languages, ALargeSmall, ChevronDown, Check, ExternalLink, Palette, Hexagon } from 'lucide-react';
+import { Languages, ALargeSmall, ChevronDown, Check, Palette, Hexagon } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
-
-// URL of the geometric-explorer pattern generator (open locally from project root)
-const GENERATOR_URL = '/design-review/islamic-patterns/generate.html';
 
 // Patterns saved as favorites in the geometric-explorer
 const GENERATOR_FAVORITES = [
@@ -456,18 +453,6 @@ const TextSettingsPill = () => {
                     </Select.Root>
                   </div>
                 </div>
-
-                {/* Generator link */}
-                <a
-                  href={GENERATOR_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 text-xs opacity-40 hover:opacity-70 transition-opacity mt-1"
-                  style={{ color: gold }}
-                >
-                  <ExternalLink size={11} />
-                  Open pattern generator
-                </a>
 
                 {/* ── Design tools links ───────────────────────────────────── */}
                 <div

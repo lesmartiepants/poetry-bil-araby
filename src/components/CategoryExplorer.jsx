@@ -6,25 +6,8 @@ import { useUIStore } from '../stores/uiStore';
 import { fetchCategories, fetchPoemsByCategory, fetchPoets } from '../services/database.js';
 import PoemResultsGrid from './category/PoemResultsGrid.jsx';
 
-// Historical eras (poets.era_id), chronological. Mirrors ERA_CENTURY in
-// categorization/config.py — a stable 8-row set, so kept client-side.
-const ERAS = [
-  { id: 5, en: 'Pre-Islamic', ar: 'جاهلي' },
-  { id: 1, en: 'Early Islam', ar: 'صدر الإسلام' },
-  { id: 4, en: 'Umayyad', ar: 'أموي' },
-  { id: 2, en: 'Abbasid', ar: 'عباسي' },
-  { id: 7, en: 'Andalusian', ar: 'أندلسي' },
-  { id: 6, en: 'Ayyubid', ar: 'أيوبي' },
-  { id: 8, en: 'Mamluk', ar: 'مملوكي' },
-  { id: 3, en: 'Late / Modern', ar: 'متأخر' },
-];
-// Distinct centuries (CE) derived from era, ascending.
-const CENTURIES = [6, 7, 8, 9, 11, 13, 14];
-const ordinal = (n) => {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-};
+// Historical eras (poets.era_id) + derived centuries. Shared with EraPicker.
+import { ERAS, CENTURIES, ordinal } from '../constants/eras.js';
 
 /**
  * CategoryExplorer — dev/admin tool to browse the emotional taxonomy

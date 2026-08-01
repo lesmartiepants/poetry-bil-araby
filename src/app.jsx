@@ -108,6 +108,7 @@ import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import CategoryExplorer from './components/CategoryExplorer.jsx';
+const OnboardingFlow = lazy(() => import('./components/onboarding/OnboardingFlow.jsx'));
 import PoemCarousel from './components/PoemCarousel.jsx';
 import PoemFeed from './components/feed/PoemFeed.jsx';
 import AccountMenu from './components/AccountMenu.jsx';
@@ -143,6 +144,10 @@ export default function DiwanApp() {
   // Derived from wouter's reactive `location` so effects re-run when the route flips.
   // Reader-scoped floating chrome (the guided walkthrough) also gates on this.
   const isFullScreenRoute = useIsFullScreenRoute();
+  // Preference-picker flow (salvaged from #517), reachable at /onboarding.
+  // `/onboarding` is itself a FULL_SCREEN_ROUTE, so the reader-suppression above
+  // already covers it — this route match only decides what to render.
+  const [isOnboardingRoute] = useRoute('/onboarding');
   // The reader owns the URL (it writes /poem/:id as you move through the feed).
   // Suppress those writes while a full-screen route is active so the feed doesn't
   // clobber the URL out from under it.
@@ -2188,6 +2193,15 @@ export default function DiwanApp() {
           onRequireAuth={handleSignIn}
           onOpenPoem={openPoemInReader}
         />
+      )}
+
+      {/* Preference pickers — full-screen routed view at /onboarding.
+          Salvaged from #517; gated on FEATURES.onboardingPrefs so it stays out
+          of the default boot path (the app boots straight into the feed). */}
+      {FEATURES.onboardingPrefs && isOnboardingRoute && (
+        <Suspense fallback={null}>
+          <OnboardingFlow key="onboarding-flow" onComplete={() => navigate('/')} />
+        </Suspense>
       )}
 
       {/* Auth Modal */}

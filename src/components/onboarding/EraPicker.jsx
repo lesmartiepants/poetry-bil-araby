@@ -3,30 +3,34 @@ import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import gsap from 'gsap';
 
+import { ERAS } from '../../constants/eras.js';
+
 const GOLD = '#c5a059';
 const LAPIS = '#1E3A5F';
 
-const CLASSICAL_ERAS = [
-  {
-    slug: 'pre-islamic',
-    name_ar: '\u0645\u0627 \u0642\u0628\u0644 \u0627\u0644\u0625\u0633\u0644\u0627\u0645',
-    name_en: 'Pre-Islamic',
-  },
-  {
-    slug: 'early-islamic',
-    name_ar: '\u0635\u062f\u0631 \u0627\u0644\u0625\u0633\u0644\u0627\u0645',
-    name_en: 'Early Islamic',
-  },
-  { slug: 'umayyad', name_ar: '\u0623\u0645\u0648\u064a', name_en: 'Umayyad' },
-  { slug: 'abbasid', name_ar: '\u0639\u0628\u0627\u0633\u064a', name_en: 'Abbasid' },
-  { slug: 'andalusian', name_ar: '\u0623\u0646\u062f\u0644\u0633\u064a', name_en: 'Andalusian' },
-  { slug: 'ottoman', name_ar: '\u0639\u062b\u0645\u0627\u0646\u064a', name_en: 'Ottoman' },
-];
+// TODO(era-endpoint): era is NOT part of the categorization taxonomy — it is a
+// poet-level column (`poets.era_id`, plus the era-derived `poems.century`).
+// `GET /api/poems/by-category` accepts `?era=` and `?century=`, but there is no
+// endpoint that LISTS eras, so the options are served from the shared
+// src/constants/eras.js table (same source CategoryExplorer uses). If eras ever
+// become editable data, add `GET /api/eras` and fetch here instead.
+//
+// The selected value is `poets.era_id` (a number, stringified) so it can be
+// passed straight through as `?era=`. #517's slugs ('pre-islamic', 'ottoman', …)
+// had no backing column and are gone; note the shipped era table has no Ottoman
+// row, and splits late/modern into a single "Late / Modern" bucket.
+const CLASSICAL_ERA_IDS = [5, 1, 4, 2, 7, 6, 8];
+const MODERN_ERA_IDS = [3];
 
-const MODERN_ERAS = [
-  { slug: 'modern', name_ar: '\u062d\u062f\u064a\u062b', name_en: 'Modern (1900\u20131970)' },
-  { slug: 'contemporary', name_ar: '\u0645\u0639\u0627\u0635\u0631', name_en: 'Contemporary' },
-];
+const toOption = (era) => ({ slug: String(era.id), name_ar: era.ar, name_en: era.en });
+const byId = (ids) =>
+  ids
+    .map((id) => ERAS.find((e) => e.id === id))
+    .filter(Boolean)
+    .map(toOption);
+
+const CLASSICAL_ERAS = byId(CLASSICAL_ERA_IDS);
+const MODERN_ERAS = byId(MODERN_ERA_IDS);
 
 const EraPicker = ({ onNext, initialValue = [] }) => {
   const [selected, setSelected] = useState(() => initialValue);

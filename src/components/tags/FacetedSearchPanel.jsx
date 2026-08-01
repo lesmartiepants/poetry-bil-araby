@@ -14,13 +14,46 @@ import { useUIStore } from '../../stores/uiStore';
 import { usePoemStore } from '../../stores/poemStore';
 import { THEME, GOLD } from '../../constants/index.js';
 import TagBadge from './TagBadge.jsx';
-import { searchPoems, fetchPoemByTags } from '../../services/database.js';
+import { searchPoems, fetchPoemsByCategory } from '../../services/database.js';
+import { tagIdsToFilters, countPoemLabels } from '../../services/categoryTags.js';
 
+// Sorting is applied CLIENT-SIDE over the fetched page. Neither
+// /api/poems/search nor /api/poems/by-category accepts a sort param
+// (by-category always returns a randomized selection), so these reorder what
+// came back rather than changing the query.
 const SORT_OPTIONS = [
   { value: 'relevance', labelEn: 'Relevance', labelAr: 'الصلة' },
   { value: 'random', labelEn: 'Random', labelAr: 'عشوائي' },
   { value: 'tag_count', labelEn: 'Most tagged', labelAr: 'الأكثر وسوماً' },
 ];
+
+// Page size for the category query (API caps at 50).
+const RESULT_LIMIT = 30;
+
+const shuffle = (arr) => {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+const applySort = (poems, sort) => {
+  if (sort === 'random') return shuffle(poems);
+  if (sort === 'tag_count')
+    return [...poems].sort((a, b) => countPoemLabels(b) - countPoemLabels(a));
+  return poems; // 'relevance' — keep server order
+};
+
+// Client-side text narrowing, used when a text query is combined with facets
+// (the backend can do one or the other, not both).
+const matchesText = (poem, text) => {
+  const q = text.toLowerCase();
+  return [poem.arabic, poem.title, poem.titleArabic, poem.poet, poem.poetArabic]
+    .filter(Boolean)
+    .some((f) => String(f).toLowerCase().includes(q));
+};
 
 /**
  * FacetedSearchPanel — unified faceted search combining:
@@ -116,46 +149,30 @@ export default function FacetedSearchPanel({
       setLoading(true);
       setError(null);
       try {
+        // The two backends are disjoint: /api/poems/search is text-only (no
+        // facets), /api/poems/by-category is facet-only (no text). So:
+        //   facets present  -> query by-category, then narrow by text locally
+        //   text only       -> query search
         let poems;
-        if (hasQuery) {
-          poems = await searchPoems({
-            q: debouncedQuery,
-            tagIds: Array.from(selectedTagIds),
-            operator: tagOperator,
-            poet: selectedCategory !== 'All' ? selectedCategory : undefined,
-            sort,
-            limit: 20,
+        const poet = selectedCategory !== 'All' ? selectedCategory : undefined;
+
+        if (hasTags) {
+          poems = await fetchPoemsByCategory({
+            ...tagIdsToFilters(selectedTagIds, tagOperator),
+            poet,
+            limit: RESULT_LIMIT,
           });
+          if (hasQuery) poems = poems.filter((p) => matchesText(p, debouncedQuery));
         } else {
-          // Tag-only browse: fetch a batch by repeatedly calling fetchPoemByTags
-          // (the backend returns one poem per call; we do up to 8 in parallel)
-          const seenIds = new Set();
-          const batch = await Promise.allSettled(
-            Array.from({ length: 8 }, () =>
-              fetchPoemByTags({
-                tagIds: Array.from(selectedTagIds),
-                operator: tagOperator,
-                poet: selectedCategory !== 'All' ? selectedCategory : undefined,
-                excludeIds: [],
-              })
-            )
-          );
-          poems = [];
-          for (const result of batch) {
-            if (
-              result.status === 'fulfilled' &&
-              result.value?.id &&
-              !seenIds.has(result.value.id)
-            ) {
-              seenIds.add(result.value.id);
-              poems.push(result.value);
-            }
-          }
+          poems = await searchPoems({ q: debouncedQuery, limit: RESULT_LIMIT });
+          // /api/poems/search has no poet filter; narrow locally to match.
+          if (poet) poems = poems.filter((p) => p.poet === poet || p.poetArabic === poet);
         }
 
         if (!controller.signal.aborted) {
-          setResults(poems);
-          setTotal(poems.length);
+          const sorted = applySort(poems, sort);
+          setResults(sorted);
+          setTotal(sorted.length);
         }
       } catch (e) {
         if (!controller.signal.aborted) {
@@ -191,6 +208,31 @@ export default function FacetedSearchPanel({
   const activeTags = useMemo(
     () => allTags.filter((t) => selectedTagIds.has(t.id)),
     [allTags, selectedTagIds]
+  );
+
+  // Composite-id -> tag lookup, for turning a poem's `categories` JSONB
+  // ({moods:[key], topics:[key], motifs:[key]}) into labelled badges.
+  const tagsById = useMemo(() => new Map(allTags.map((t) => [t.id, t])), [allTags]);
+  const poemBadges = useCallback(
+    (poem) => {
+      const cats = poem?.categories;
+      if (cats && typeof cats === 'object') {
+        // Plural group name -> dimension key ('moods' -> 'mood').
+        const badges = Object.entries(cats).flatMap(([group, keys]) => {
+          if (!Array.isArray(keys)) return [];
+          const dim = group.replace(/s$/, '');
+          return keys.map(
+            (k) => tagsById.get(`${dim}:${k}`) || { id: `${dim}:${k}`, name_ar: k, name_en: k }
+          );
+        });
+        if (badges.length) return badges;
+      }
+      // Fallback: the legacy `tags` array (a single theme string).
+      return (Array.isArray(poem?.tags) ? poem.tags : [])
+        .filter(Boolean)
+        .map((tag) => (typeof tag === 'object' ? tag : { id: tag, name_ar: tag, name_en: tag }));
+    },
+    [tagsById]
   );
 
   const hasActiveFilters = selectedTagIds.size > 0 || !!debouncedQuery;
@@ -700,29 +742,34 @@ export default function FacetedSearchPanel({
                 </div>
               )}
               {/* Tag badges on result */}
-              {Array.isArray(poem.tags) && poem.tags.length > 0 && (
-                <div
-                  style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap', marginTop: '0.25rem' }}
-                >
-                  {poem.tags.slice(0, 4).map((tag) => {
-                    const tagObj =
-                      typeof tag === 'object' ? tag : { id: tag, name_ar: tag, name_en: tag };
-                    return (
+              {(() => {
+                const badges = poemBadges(poem);
+                if (badges.length === 0) return null;
+                return (
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '0.3rem',
+                      flexWrap: 'wrap',
+                      marginTop: '0.25rem',
+                    }}
+                  >
+                    {badges.slice(0, 4).map((tagObj) => (
                       <TagBadge
-                        key={tagObj.id || tag}
+                        key={tagObj.id}
                         tag={tagObj}
                         active={selectedTagIds.has(tagObj.id)}
                         size="sm"
                       />
-                    );
-                  })}
-                  {poem.tags.length > 4 && (
-                    <span style={{ fontSize: '0.6rem', color: textMuted, alignSelf: 'center' }}>
-                      +{poem.tags.length - 4}
-                    </span>
-                  )}
-                </div>
-              )}
+                    ))}
+                    {badges.length > 4 && (
+                      <span style={{ fontSize: '0.6rem', color: textMuted, alignSelf: 'center' }}>
+                        +{badges.length - 4}
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
             </button>
           ))}
 

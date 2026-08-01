@@ -4,10 +4,25 @@ import { motion } from 'framer-motion';
 import { useUIStore } from '../../stores/uiStore';
 import { THEME } from '../../constants/index.js';
 import TagBadge from './TagBadge.jsx';
-import { fetchTags, fetchPoemTags, addPoemTag, removePoemTag } from '../../services/tags.js';
+import { fetchTagTaxonomy, makeTagId } from '../../services/categoryTags.js';
+import { fetchPoemsByCategory } from '../../services/database.js';
 
 /**
- * Modal to manually add/remove tags from a poem.
+ * Viewer for the category labels attached to a poem.
+ *
+ * ── TODO(write-api): READ-ONLY until category writes exist ────────────────────
+ * #517 shipped this as an editor backed by its own `poem_tags` table
+ * (POST/DELETE /api/poems/:id/tags). The categorization schema that landed
+ * instead exposes NO write endpoints — server.js has only `GET /api/categories`
+ * and `GET /api/poems/by-category`; `poem_categories` rows are written by the
+ * offline classification pipeline, not the app.
+ *
+ * So the reads are rewired (real taxonomy, real per-poem labels) and the toggle
+ * is disabled rather than faked. To restore editing, add authenticated
+ * `POST /api/poems/:id/categories` + `DELETE /api/poems/:id/categories/:valueId`
+ * endpoints writing `poem_categories`, then re-enable `handleToggle` below.
+ * Do NOT re-add #517's tags tables — they are superseded.
+ * ─────────────────────────────────────────────────────────────────────────────
  *
  * Props:
  *   poem    — { id, title, poet, titleArabic, poetArabic }
@@ -22,7 +37,7 @@ export default function PoemTagEditor({ poem, onClose }) {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(null); // tagId being saved
+  const [saving] = useState(null); // read-only: never toggles
 
   const panelBg = darkMode ? '#111113' : '#FDFCF8';
   const borderColor = darkMode ? 'rgba(197,160,89,0.14)' : 'rgba(107,87,68,0.14)';
@@ -41,9 +56,24 @@ export default function PoemTagEditor({ poem, onClose }) {
     const load = async () => {
       setLoading(true);
       try {
-        const [tagsData, poemTags] = await Promise.all([fetchTags(), fetchPoemTags(poem.id)]);
-        setAllTags(tagsData.tags || tagsData);
-        setPoemTagIds(new Set((poemTags || []).map((t) => t.id)));
+        // The taxonomy, plus this poem's own labels. There is no
+        // "tags for poem X" endpoint; by-category with ?ids= returns the poem
+        // with its `categories` JSONB ({moods, topics, motifs} of value keys).
+        const [{ tags }, poems] = await Promise.all([
+          fetchTagTaxonomy(),
+          fetchPoemsByCategory({ ids: [poem.id] }).catch(() => []),
+        ]);
+        setAllTags(tags);
+        const cats = poems?.[0]?.categories;
+        const applied = new Set();
+        if (cats && typeof cats === 'object') {
+          for (const [group, keys] of Object.entries(cats)) {
+            if (!Array.isArray(keys)) continue;
+            const dim = group.replace(/s$/, ''); // 'moods' -> 'mood'
+            keys.forEach((k) => applied.add(makeTagId(dim, k)));
+          }
+        }
+        setPoemTagIds(applied);
       } catch {
         /* silently fail */
       } finally {
@@ -62,31 +92,11 @@ export default function PoemTagEditor({ poem, onClose }) {
     );
   }, [allTags, debouncedSearch]);
 
-  const handleToggle = useCallback(
-    async (tag) => {
-      if (saving) return;
-      setSaving(tag.id);
-      const isAdded = poemTagIds.has(tag.id);
-      try {
-        if (isAdded) {
-          await removePoemTag(poem.id, tag.id);
-          setPoemTagIds((prev) => {
-            const next = new Set(prev);
-            next.delete(tag.id);
-            return next;
-          });
-        } else {
-          await addPoemTag(poem.id, tag.id);
-          setPoemTagIds((prev) => new Set([...prev, tag.id]));
-        }
-      } catch {
-        /* silently fail */
-      } finally {
-        setSaving(null);
-      }
-    },
-    [poem?.id, poemTagIds, saving]
-  );
+  // TODO(write-api): no-op until category write endpoints exist (see the header
+  // block). Re-enable by calling POST/DELETE on /api/poems/:id/categories and
+  // updating poemTagIds optimistically, as the original did.
+  const handleToggle = useCallback(() => {}, []);
+  const readOnly = true;
 
   // Currently applied tags (shown at top)
   const appliedTags = useMemo(
@@ -196,7 +206,7 @@ export default function PoemTagEditor({ poem, onClose }) {
                 key={tag.id}
                 tag={tag}
                 active
-                onClick={saving === tag.id ? undefined : () => handleToggle(tag)}
+                onClick={readOnly || saving === tag.id ? undefined : () => handleToggle(tag)}
                 size="sm"
               />
             ))}
@@ -252,7 +262,7 @@ export default function PoemTagEditor({ poem, onClose }) {
                 <button
                   key={tag.id}
                   onClick={() => handleToggle(tag)}
-                  disabled={!!saving}
+                  disabled={readOnly || !!saving}
                   style={{
                     width: '100%',
                     display: 'flex',
@@ -262,7 +272,7 @@ export default function PoemTagEditor({ poem, onClose }) {
                     background: isApplied ? 'rgba(197,160,89,0.07)' : 'transparent',
                     border: 'none',
                     borderBottom: `1px solid ${borderColor}`,
-                    cursor: saving ? 'wait' : 'pointer',
+                    cursor: readOnly ? 'default' : saving ? 'wait' : 'pointer',
                     transition: 'background 0.15s',
                   }}
                 >

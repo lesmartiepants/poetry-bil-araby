@@ -401,7 +401,15 @@
     var base = window.location.href.replace(/NAVIGATOR\.html.*$/, '');
     var urlEl = document.getElementById('preview-base-url');
     var navUrl = base + 'NAVIGATOR.html';
-    urlEl.innerHTML = 'Navigator: <a href="' + navUrl + '" target="_blank" rel="noopener noreferrer">' + navUrl + '</a>';
+    // Build via DOM APIs, not innerHTML: navUrl derives from window.location.href,
+    // which is attacker-controllable, and this page is served publicly from dist/.
+    var navLink = document.createElement('a');
+    navLink.href = navUrl;
+    navLink.target = '_blank';
+    navLink.rel = 'noopener noreferrer';
+    navLink.textContent = navUrl;
+    urlEl.textContent = 'Navigator: ';
+    urlEl.appendChild(navLink);
     document.querySelectorAll('.preview-link[data-href]').forEach(function (a) {
       a.href = base + a.getAttribute('data-href');
     });

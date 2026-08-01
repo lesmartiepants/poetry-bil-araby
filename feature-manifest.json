@@ -36,6 +36,51 @@
       "gap": "server.test.js covers the enabled/disabled API paths with a mocked pool; no e2e yet for the Explore Poems UI (filter chips, in-place poem expand)."
     },
     {
+      "id": "onboarding-preferences",
+      "name": "Onboarding preference pickers",
+      "tier": "nice",
+      "userFacing": "Full-screen preference flow at /onboarding: pick moods, historical eras, then topics; the selection is saved to localStorage.onboardingPrefs and re-editable through PreferencesDrawer. Salvaged from PR #517 and rewired onto the shipped categorization taxonomy; gated behind FEATURES.onboardingPrefs and not on the app boot path.",
+      "entrypoints": [
+        "src/components/onboarding/OnboardingFlow.jsx",
+        "src/components/onboarding/MoodPicker.jsx",
+        "src/components/onboarding/EraPicker.jsx",
+        "src/components/onboarding/TopicsPicker.jsx",
+        "src/components/PreferencesDrawer.jsx",
+        "src/services/categoryTags.js",
+        "src/constants/eras.js"
+      ],
+      "endpoints": ["GET /api/categories"],
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "deviceOnly": false,
+      "coverage": "none",
+      "gap": "No automated coverage yet. Needs a unit test for the categoryTags adapter (dimension -> tag mapping, composite ids, empty pre-migration payload) and an e2e walk of /onboarding asserting the three steps persist to localStorage."
+    },
+    {
+      "id": "taxonomy-tag-ui",
+      "name": "Taxonomy tag UI (browse / filter / inspect)",
+      "tier": "nice",
+      "userFacing": "Tag surfaces salvaged from PR #517 and rewired onto the shipped categorization taxonomy: TagExplorer browses dimensions and values, TagFilterPanel/FacetedSearchPanel filter poems by them, TagBadge renders a value, and PoemTagEditor/TagAdminPanel inspect labels. Not yet mounted on a route - the two editor surfaces are read-only because the categorization API exposes no writes (see their TODO(write-api) blocks).",
+      "entrypoints": [
+        "src/components/tags/TagBadge.jsx",
+        "src/components/tags/TagExplorer.jsx",
+        "src/components/tags/TagFilterPanel.jsx",
+        "src/components/tags/FacetedSearchPanel.jsx",
+        "src/components/tags/PoemTagEditor.jsx",
+        "src/components/tags/TagAdminPanel.jsx"
+      ],
+      "endpoints": ["GET /api/categories", "GET /api/poems/by-category", "GET /api/poems/search"],
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "deviceOnly": false,
+      "coverage": "none",
+      "gap": "No automated coverage. Components are ported but unmounted; add tests when a surface routes to them."
+    },
+    {
       "id": "poem-display",
       "name": "Poem display (Arabic + translation + transliteration)",
       "tier": "critical",

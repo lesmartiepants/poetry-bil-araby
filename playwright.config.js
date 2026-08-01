@@ -100,6 +100,8 @@ export default defineConfig({
           use: {
             ...devices['Desktop Chrome'],
             viewport: { width: 1920, height: 1080 },
+            // Relax Chromium's autoplay gesture requirement for Web Audio tests.
+            launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
           },
         },
       ]
@@ -111,6 +113,8 @@ export default defineConfig({
           use: {
             ...devices['Desktop Chrome'],
             viewport: { width: 1920, height: 1080 },
+            // Relax Chromium's autoplay gesture requirement for Web Audio tests.
+            launchOptions: { args: ['--autoplay-policy=no-user-gesture-required'] },
           },
         },
         {

@@ -11,18 +11,17 @@ import { test, expect } from '@playwright/test';
  */
 
 test.describe('Production Bug Fix Verification', () => {
-
   // Bug 6: CORS — sentry-trace and baggage headers must not be rejected
   test('Bug 6: backend API calls succeed (no CORS rejection)', async ({ page }) => {
     const corsErrors = [];
-    page.on('console', msg => {
+    page.on('console', (msg) => {
       if (msg.text().includes('CORS') || msg.text().includes('sentry-trace')) {
         corsErrors.push(msg.text());
       }
     });
 
     const failedRequests = [];
-    page.on('requestfailed', req => {
+    page.on('requestfailed', (req) => {
       if (req.url().includes('onrender.com')) {
         failedRequests.push({ url: req.url(), error: req.failure()?.errorText });
       }
@@ -65,25 +64,25 @@ test.describe('Production Bug Fix Verification', () => {
     const debugPanel = page.locator('text=System Logs').first();
     if (await debugPanel.isVisible().catch(() => false)) {
       const panelContainer = debugPanel.locator('..').locator('..');
-      const height = await panelContainer.evaluate(el => el.getBoundingClientRect().height);
+      const height = await panelContainer.evaluate((el) => el.getBoundingClientRect().height);
       // Collapsed = ~28px (h-7), expanded = ~192px (h-48) or ~256px (h-64)
       expect(height).toBeLessThan(50);
     }
     // If debug panel isn't visible at all, that's also fine (FEATURES.debug could be off)
   });
 
-  // Bug 2: Onboarding splash screen should appear
-  test('Bug 2: splash screen shows on page load', async ({ page }) => {
+  // Redesign: the splash/landing screen was removed (FEATURES.landing=false) — the app now boots
+  // straight into the vertical feed reader. Assert the reader loads directly, with no splash.
+  test('app boots straight into the reader (no splash)', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // The splash/onboarding should be visible
-    const splashDialog = page.locator('[aria-label="Welcome to Poetry Bil-Araby"]');
-    await expect(splashDialog).toBeVisible({ timeout: 5000 });
+    // No splash/landing dialog and no "Enter the app" gate.
+    await expect(page.locator('[aria-label="Welcome to Poetry Bil-Araby"]')).toHaveCount(0);
+    await expect(page.locator('button[aria-label="Enter the app"]')).toHaveCount(0);
 
-    // "Enter" button should be present
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    await expect(enterBtn).toBeVisible({ timeout: 5000 });
+    // The reader feed renders on its own.
+    await expect(page.locator('[data-testid="poem-feed"]')).toBeVisible({ timeout: 10000 });
   });
 
   // Bug 5: Bug report form should show meaningful error details (not just "Failed")

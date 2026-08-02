@@ -27,11 +27,13 @@ export default defineConfig({
   //    FEATURES.verticalFeed replaced that whole surface (shipped on main), so these assert
   //    controls that no longer render and already fail on main. They are quarantined pending a
   //    dedicated e2e migration to the vertical-feed reader (see the vertical-feed migration TODO).
-  //    NOTE: these are always excluded — the vertical-feed reader is the app in every environment.
+  //    audio.spec.js was rewritten against the current vertical-feed reader (see its own header
+  //    comment) and is no longer quarantined — it runs normally.
+  //    NOTE: the remaining three are always excluded — the vertical-feed reader is the app in
+  //    every environment.
   testIgnore: [
     ...(process.env.PLAYWRIGHT_TEST_BASE_URL ? [] : ['**/verify-production-fixes.spec.js']),
     '**/carousel.spec.js',
-    '**/audio.spec.js',
     '**/insight-overlay.spec.js',
     '**/tts-highlight.spec.js',
   ],

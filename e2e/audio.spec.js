@@ -1,67 +1,27 @@
 import { test, expect } from '@playwright/test';
+import { silentPCM16Base64, setupCoreRoutes, skipOnboarding, loadApp } from './fixtures/mocks.js';
 
 /**
  * Audio / Listen Feature Tests — Poetry Bil-Araby
  *
- * Tests the TTS audio playback pipeline: Play button → TTS API call →
+ * Tests the TTS audio playback pipeline: Listen button → TTS API call →
  * PCM16 decode → Tone.js Player creation → playback start.
  *
- * Actual sound output can't be verified in CI (no audio device), so these
- * tests verify the pipeline doesn't error and state transitions correctly.
+ * Headless Chromium throttles Web Audio: Tone.js cannot resume the AudioContext
+ * even with --autoplay-policy set, so isPlaying never reaches true in CI (the
+ * sibling tts-highlight.spec.js hits the same wall). The audible-playback path
+ * is therefore verified at the UNIT level (src/test/togglePlay.test.js). What
+ * IS reliably observable here is whether clicking Listen ENGAGES the pipeline:
+ * the store's isGenerating flag flips and a TTS request fires. A green test
+ * means the Listen action wired through to generation — not just that a
+ * button exists. The store is exposed on window.__audioStore in dev builds.
  * All API calls are mocked.
  */
 
-// Minimal valid PCM16 WAV as base64 — 0.1s of silence at 24kHz mono
-// (44 byte WAV header + 4800 bytes of zero samples = 4844 bytes)
-function generateSilentPCM16Base64(durationSec = 0.1, sampleRate = 24000) {
-  const numSamples = Math.floor(sampleRate * durationSec);
-  const bytes = new Uint8Array(numSamples * 2); // 16-bit = 2 bytes per sample, all zeros = silence
-  let binary = '';
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-  return btoa(binary);
-}
-
-const MOCK_POEM = {
-  id: 50001,
-  poet: 'al-Mutanabbi',
-  poetArabic: 'المتنبي',
-  title: 'On Ambition',
-  titleArabic: 'في الهمة',
-  arabic: 'على قدر أهل العزم تأتي العزائم\nوتأتي على قدر الكرام المكارم',
-  english: 'Resolve comes in proportion to the people of resolve\nAnd noble deeds come in proportion to the noble',
-  tags: ['حكمة'],
-  isFromDatabase: true,
-};
-
-async function setupAudioMocks(page, { ttsResponse = 'success' } = {}) {
-  await page.route('**/api/poems/random*', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify(MOCK_POEM),
-    });
-  });
-
-  await page.route('**/api/poets', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify([{ name: 'المتنبي' }]),
-    });
-  });
-
-  await page.route('**/api/health', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ status: 'ok', totalPoems: 84329 }),
-    });
-  });
-
-  // Mock TTS endpoint — return valid audio or error based on config
+/** Mock the TTS generateContent endpoint with success / 429 / 500 behavior. */
+async function setupTTS(page, { ttsResponse = 'success' } = {}) {
   await page.route('**/api/ai/**/generateContent*', async (route) => {
     const url = route.request().url();
-
     // Non-TTS AI calls (insights/streaming) — abort
     if (url.includes('stream')) {
       await route.abort('blockedbyclient');
@@ -69,29 +29,19 @@ async function setupAudioMocks(page, { ttsResponse = 'success' } = {}) {
     }
 
     if (ttsResponse === 'success') {
-      // Generate silent PCM16 audio in the page context
-      const silentB64 = await page.evaluate(() => {
-        const numSamples = 2400; // 0.1s at 24kHz
-        const bytes = new Uint8Array(numSamples * 2);
-        let binary = '';
-        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-        return btoa(binary);
-      });
-
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          candidates: [{
-            content: {
-              parts: [{
-                inlineData: {
-                  mimeType: 'audio/L16;rate=24000',
-                  data: silentB64,
-                },
-              }],
+          candidates: [
+            {
+              content: {
+                parts: [
+                  { inlineData: { mimeType: 'audio/L16;rate=24000', data: silentPCM16Base64() } },
+                ],
+              },
             },
-          }],
+          ],
         }),
       });
     } else if (ttsResponse === '429') {
@@ -109,93 +59,115 @@ async function setupAudioMocks(page, { ttsResponse = 'success' } = {}) {
     }
   });
 
-  // Block model discovery
-  await page.route('**/api/ai/models', async (route) => {
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({ models: [] }),
-    });
-  });
+  // live-tts fallback also fails for the error cases (so the app surfaces the error)
+  await page.route('**/api/ai/live-tts', (route) =>
+    ttsResponse === 'success'
+      ? route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ audioData: silentPCM16Base64() }),
+        })
+      : route.fulfill({
+          status: 500,
+          contentType: 'application/json',
+          body: JSON.stringify({ error: 'live failed' }),
+        })
+  );
 }
 
-async function loadApp(page) {
-  await page.goto('/');
-  await page.waitForLoadState('domcontentloaded');
-  const enterBtn = page.locator('button[aria-label="Enter the app"]');
-  if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await enterBtn.click();
-    await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
-  }
-  await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
-}
+const isPlaying = (page) => page.evaluate(() => window.__audioStore?.getState().isPlaying === true);
+
+// The old footer control-bar Play button is gone; the Listen control now lives in ReaderActions
+// (aria-label "Start recitation"), with "Listen to poem" as an alternate label in some layouts.
+// Match whichever is currently visible.
+const playTrigger = (page) =>
+  page
+    .locator(
+      'button[aria-label="Start recitation"]:visible, button[aria-label="Listen to poem"]:visible'
+    )
+    .first();
 
 test.describe('Audio / Listen Feature', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => {
-      localStorage.setItem('hasSeenOnboarding', 'true');
+    await skipOnboarding(page);
+  });
+
+  test('Listen button is visible with the recitation aria-label', async ({ page }) => {
+    await setupCoreRoutes(page);
+    await setupTTS(page);
+    await loadApp(page);
+
+    await expect(playTrigger(page)).toBeVisible({ timeout: 10000 });
+  });
+
+  test('clicking Listen triggers TTS API request', async ({ page }) => {
+    await setupCoreRoutes(page);
+    await setupTTS(page);
+    await loadApp(page);
+
+    // Start waiting BEFORE the click so we can't miss the request — deterministic instead of a
+    // fixed sleep + boolean flag (which is flaky under CI load).
+    const ttsRequestPromise = page.waitForRequest(
+      (req) =>
+        req.url().includes('/api/ai/') &&
+        req.url().includes('generateContent') &&
+        !req.url().includes('stream'),
+      { timeout: 10000 }
+    );
+
+    await playTrigger(page).click({ timeout: 10000 });
+
+    await ttsRequestPromise;
+  });
+
+  // ── behavioral guard — the Listen action engages generation ──
+  test('clicking Listen engages the audio generation pipeline (isGenerating)', async ({ page }) => {
+    await setupCoreRoutes(page);
+    await setupTTS(page);
+    await loadApp(page);
+
+    await playTrigger(page).click({ timeout: 10000 });
+
+    // The reachable observable in headless: clicking Listen flips the store into the
+    // generating state, proving the action wired through to the TTS pipeline. (isPlaying /
+    // audible output is unit-tested instead — see file header.)
+    await page.waitForFunction(() => window.__audioStore?.getState().isGenerating === true, {
+      timeout: 6000,
     });
   });
 
-  test('Play button is visible with correct aria-label', async ({ page }) => {
-    await setupAudioMocks(page);
+  test('Listen does not crash the app on TTS error', async ({ page }) => {
+    await setupCoreRoutes(page);
+    await setupTTS(page, { ttsResponse: '500' });
     await loadApp(page);
 
-    const playBtn = page.locator('button[aria-label="Play recitation"]');
-    await expect(playBtn).toBeVisible({ timeout: 5000 });
-  });
-
-  test('clicking Play triggers TTS API request', async ({ page }) => {
-    await setupAudioMocks(page);
-    await loadApp(page);
-
-    let ttsRequested = false;
-    page.on('request', (req) => {
-      if (req.url().includes('/api/ai/') && req.url().includes('generateContent') && !req.url().includes('stream')) {
-        ttsRequested = true;
-      }
-    });
-
-    const playBtn = page.locator('button[aria-label="Play recitation"]');
-    await playBtn.click();
-
-    // Wait for TTS request to fire
-    await page.waitForTimeout(3000);
-    expect(ttsRequested).toBe(true);
-  });
-
-  test('Play button does not crash the app on TTS error', async ({ page }) => {
-    await setupAudioMocks(page, { ttsResponse: '500' });
-    await loadApp(page);
-
-    const playBtn = page.locator('button[aria-label="Play recitation"]');
-    await playBtn.click();
+    await playTrigger(page).click({ timeout: 10000 });
     await page.waitForTimeout(3000);
 
-    // App should still be functional — Arabic text visible
+    // App should still be functional — Arabic text visible, and it did NOT enter the
+    // playing state on failure.
+    await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
+    expect(await isPlaying(page)).toBe(false);
+  });
+
+  test('TTS rate limit does not crash the app', async ({ page }) => {
+    await setupCoreRoutes(page);
+    await setupTTS(page, { ttsResponse: '429' });
+    await loadApp(page);
+
+    await playTrigger(page).click({ timeout: 10000 });
+    await page.waitForTimeout(3000);
+
+    // A Sonner toast with the rate-limit message may or may not be visible depending on timing,
+    // but the app shouldn't crash.
     await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
   });
 
-  test('TTS rate limit shows error toast', async ({ page }) => {
-    await setupAudioMocks(page, { ttsResponse: '429' });
+  test('the recitation control shows the Listen label', async ({ page }) => {
+    await setupCoreRoutes(page);
+    await setupTTS(page);
     await loadApp(page);
 
-    const playBtn = page.locator('button[aria-label="Play recitation"]');
-    await playBtn.click();
-    await page.waitForTimeout(3000);
-
-    // Should show a Sonner toast with rate limit message
-    const toast = page.locator('[data-sonner-toast]');
-    // Toast may or may not be visible depending on timing, but app shouldn't crash
-    await expect(page.locator('p[dir="rtl"]').first()).toBeVisible();
-  });
-
-  test('Play button label shows Listen text', async ({ page }) => {
-    await setupAudioMocks(page);
-    await loadApp(page);
-
-    // The label below the play button should say "Listen"
-    const listenLabel = page.locator('text=Listen').first();
-    await expect(listenLabel).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text=Listen').first()).toBeVisible({ timeout: 10000 });
   });
 });

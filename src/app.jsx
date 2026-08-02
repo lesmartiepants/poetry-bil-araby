@@ -134,14 +134,19 @@ export { filterPoemsByCategory } from './utils/filterPoems.js';
 */
 
 export default function DiwanApp() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const [, routeParams] = useRoute('/poem/:id');
   const [isExploreRoute] = useRoute('/explore');
+  // A full-screen route (/explore, /onboarding, …) covers the reader completely.
+  // The reader stays mounted so scroll position and playback survive the round
+  // trip, but it must not do WORK while it's invisible — see src/constants/routes.js.
+  // Derived from wouter's reactive `location` so effects re-run when the route flips.
+  // Reader-scoped floating chrome (the guided walkthrough) also gates on this.
+  const isFullScreenRoute = useIsFullScreenRoute();
   // The reader owns the URL (it writes /poem/:id as you move through the feed).
-  // Suppress those writes while the full-screen explorer route is active so the
-  // feed doesn't clobber /explore out from under the explorer.
-  const navigateReader = (to, opts) =>
-    window.location.pathname.startsWith('/explore') ? undefined : navigate(to, opts);
+  // Suppress those writes while a full-screen route is active so the feed doesn't
+  // clobber the URL out from under it.
+  const navigateReader = (to, opts) => (isFullScreenRoute ? undefined : navigate(to, opts));
   const [queryParams, setQueryParams] = useQueryParams();
 
   const mainScrollRef = useRef(null);
@@ -280,9 +285,6 @@ export default function DiwanApp() {
   const setShowSavedPoems = useModalStore((s) => s.setSavedPoemsOpen);
   const showSplash = useModalStore((s) => s.splash);
   const showOnboarding = useModalStore((s) => s.onboarding);
-  // True on routes that own the whole viewport (see src/constants/routes.js).
-  // Reader-scoped floating chrome must stay unmounted while one is active.
-  const isFullScreenRoute = useIsFullScreenRoute();
   const showTranslation = useUIStore((s) => s.showTranslation);
   const setShowTranslation = useUIStore((s) => s.setShowTranslation);
   const textSizeLevel = useUIStore((s) => s.textSize);
@@ -356,15 +358,16 @@ export default function DiwanApp() {
     }
   }, [interpretation]);
 
-  // Track poem view time (emit 'view' event after 3s on same poem)
+  // Track poem view time (emit 'view' event after 3s on same poem).
+  // Not a view if a full-screen route is covering the poem — don't record it.
   useEffect(() => {
-    if (!current?.id || !user) return;
+    if (!current?.id || !user || isFullScreenRoute) return;
     const timer = setTimeout(() => {
       emitEvent(current.id, 'view', { duration_ms: 3000 });
       addLog('Event', `→ view event emitted | poem_id: ${current.id} | duration: 3000ms`, 'info');
     }, 3000);
     return () => clearTimeout(timer);
-  }, [current?.id, user]);
+  }, [current?.id, user, isFullScreenRoute]);
 
   // Translation progress toast intentionally removed: with the live API + the header intro
   // animation, the translation is ready by the time the reader looks for it — the toast was noise.
@@ -420,6 +423,10 @@ export default function DiwanApp() {
       return;
     }
 
+    // A full-screen route owns the screen — don't fetch a carousel for a hidden
+    // reader. Return without clearing so the existing carousel survives the trip.
+    if (isFullScreenRoute) return;
+
     // Determine which poet to fetch for.
     // The API filters by Arabic poet name (po.name column), so always use poetArabic.
     const targetPoet = selectedCategory !== 'All' ? selectedCategory : current?.poetArabic; // Arabic name for API compatibility
@@ -460,7 +467,7 @@ export default function DiwanApp() {
     return () => {
       cancelled = true;
     };
-  }, [selectedCategory, useDatabase, current?.poetArabic, current?.id]);
+  }, [selectedCategory, useDatabase, current?.poetArabic, current?.id, isFullScreenRoute]);
 
   // When interpretation arrives from an analysis triggered by a carousel poem, patch that
   // poem's english field so PoemCarousel (which reads poem.english) can render the translation.
@@ -512,14 +519,23 @@ export default function DiwanApp() {
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
   // Eagerly discover available AI models via the backend proxy.
+  // Skipped while a full-screen route is up — it re-runs on return, before any
+  // user action that needs the model list.
   useEffect(() => {
+    if (isFullScreenRoute) return;
     discoverTextModels(addLog);
-  }, []);
+  }, [isFullScreenRoute]);
 
   // Auto-load a poem and queue explanation on first mount.
   // If the URL contains /poem/:id, load that specific poem (deep link).
   // OAuth restore and prefetch are handled in poemStore's getInitialPoems().
+  //
+  // Deep-linking straight to a full-screen route (/explore) still mounts the
+  // reader. Defer the whole auto-load until the reader is actually on screen:
+  // we leave hasAutoLoaded false and re-run when isFullScreenRoute flips, so
+  // nothing is lost — the feed loads the moment the user returns to it.
   useEffect(() => {
+    if (isFullScreenRoute) return;
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
 
@@ -622,7 +638,8 @@ export default function DiwanApp() {
       // Background: pre-fetch next visit's poem
       prefetchNextVisitPoem();
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot init, re-armed when the reader becomes visible
+  }, [isFullScreenRoute]);
 
   // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up.
   // Guard against multiple rapid onAuthStateChange fires (INITIAL_SESSION, SIGNED_IN, TOKEN_REFRESHED, etc.)
@@ -653,6 +670,10 @@ export default function DiwanApp() {
   // In ratchet mode, also run for poems that have a cached translation (overrides scholarly cache).
   // When the carousel is active (user has swiped), explain the carousel poem, not the main poem.
   useEffect(() => {
+    // A full-screen route owns the screen — don't spend a Gemini call on a poem
+    // nobody can see. autoExplainPending stays true, so the explain fires as soon
+    // as the reader is visible again.
+    if (isFullScreenRoute) return;
     const poemToExplain = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
     if (autoExplainPending && poemToExplain?.id && !isFetching && !isInterpreting) {
       setAutoExplainPending(false);
@@ -680,6 +701,7 @@ export default function DiwanApp() {
     isInterpreting,
     interpretation,
     ratchetMode,
+    isFullScreenRoute,
   ]);
 
   // When ratchet mode is toggled, clear the current interpretation so the new prompt is used.
@@ -1061,6 +1083,7 @@ export default function DiwanApp() {
     interpretation,
     setShowAuthModal,
     setShowSavedPoems,
+    readerHidden: isFullScreenRoute,
   });
 
   // Pre-fetch a poem in the background for the next visit (stored in localStorage with TTL)
@@ -1103,6 +1126,10 @@ export default function DiwanApp() {
     if (arr.length === 0) return;
     const idx = Math.max(0, Math.min(startIndex, arr.length - 1));
     const poem = arr[idx];
+    // The explorer is seeding the feed itself, so the deferred auto-load must not
+    // run when we leave the full-screen route — it would see /poem/:id, refetch by
+    // id, and collapse this whole list down to a single poem.
+    hasAutoLoaded.current = true;
     setPoems(arr);
     setCurrentIndex(idx);
     setAutoExplainPending(true);
@@ -1409,6 +1436,11 @@ export default function DiwanApp() {
   // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (flash: ~100 RPD, pro: 50 RPD on Tier 1)
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
+    // A full-screen route owns the screen. Prefetch spends TTS + Gemini quota on
+    // the poem the user is about to look at — pointless while they're looking at
+    // something else. Navigating here also runs the cleanup below, which cancels
+    // the two pending timers before they fire.
+    if (isFullScreenRoute) return;
 
     // Warm up the backend immediately so it's awake by the time prefetch fires at 2s.
     // Render free tier cold starts take up to ~15s; this ping starts the wake-up clock.
@@ -1430,7 +1462,7 @@ export default function DiwanApp() {
       clearTimeout(prefetchCurrentAudio);
       clearTimeout(prefetchCurrentInsights);
     };
-  }, [current?.id]);
+  }, [current?.id, isFullScreenRoute]);
 
   // Keep-alive ping to prevent Render free tier from sleeping (15 min idle timeout)
   // Pings every 10 minutes to keep backend awake

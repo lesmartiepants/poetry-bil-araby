@@ -13,6 +13,10 @@ import { useModalStore } from '../stores/modalStore';
  * @param {string|null} params.interpretation - Current interpretation text
  * @param {Function} params.setShowAuthModal  - Close auth modal on Escape
  * @param {Function} params.setShowSavedPoems - Close saved poems on Escape
+ * @param {boolean}  [params.readerHidden]    - True while a full-screen route covers the
+ *   reader. Disables the shortcuts that make the reader do work (Space starts audio,
+ *   ArrowRight fetches a poem, E calls Gemini) so a stray keypress on the overlay can't
+ *   drive an invisible reader. Display-only and modal keys stay live.
  */
 export function useKeyboardShortcuts({
   togglePlay,
@@ -22,6 +26,7 @@ export function useKeyboardShortcuts({
   interpretation,
   setShowAuthModal,
   setShowSavedPoems,
+  readerHidden = false,
 }) {
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -31,14 +36,14 @@ export function useKeyboardShortcuts({
       switch (e.key) {
         case ' ':
           e.preventDefault();
-          togglePlay();
+          if (!readerHidden) togglePlay();
           break;
         case 'ArrowRight':
-          handleFetch();
+          if (!readerHidden) handleFetch();
           break;
         case 'e':
         case 'E':
-          if (!isInterpreting && !interpretation) handleAnalyze();
+          if (!readerHidden && !isInterpreting && !interpretation) handleAnalyze();
           break;
         case 't':
         case 'T':
@@ -61,5 +66,5 @@ export function useKeyboardShortcuts({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isInterpreting, interpretation]);
+  }, [isInterpreting, interpretation, readerHidden]);
 }

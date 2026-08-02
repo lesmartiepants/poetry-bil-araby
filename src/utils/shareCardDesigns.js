@@ -89,7 +89,8 @@ export const SHARE_CARD_DESIGNS = [
     name: 'Musnad',
     nameAr: 'مسند',
     artist: 'Layout — numbered margin',
-    description: 'Numbered margin — editorial manuscript, poet slug top-left, verses numbered against a margin rule',
+    description:
+      'Numbered margin — editorial manuscript, poet slug top-left, verses numbered against a margin rule',
   },
   {
     id: 'muqabala',
@@ -367,9 +368,7 @@ export function createBilingualVerseLayout(ctx, verses, translation, opts) {
       ? translationOffsets[lastIndex] + englishBlocks[lastIndex].depth
       : arabicBounds[lastIndex]?.descent || 0;
     const height =
-      (arabicBounds[0]?.ascent || 0) +
-      Math.max(verses.length - 1, 0) * rowGap +
-      lastBottom;
+      (arabicBounds[0]?.ascent || 0) + Math.max(verses.length - 1, 0) * rowGap + lastBottom;
     layout = {
       vSize,
       tSize,
@@ -408,13 +407,18 @@ function drawInterleavedVerses(ctx, verses, translation, opts) {
     tBase = 34,
     preferredRowGap = 150,
   } = opts;
-  const { vSize, tSize, translationOffsets, rowGap } = createBilingualVerseLayout(ctx, verses, translation, {
-    maxWidth,
-    maxHeight,
-    arabicSize: vBase,
-    englishSize: tBase,
-    preferredRowGap,
-  });
+  const { vSize, tSize, translationOffsets, rowGap } = createBilingualVerseLayout(
+    ctx,
+    verses,
+    translation,
+    {
+      maxWidth,
+      maxHeight,
+      arabicSize: vBase,
+      englishSize: tBase,
+      preferredRowGap,
+    }
+  );
   verses.forEach((verse, i) => {
     const y = startY + i * rowGap;
     ctx.fillStyle = ink;
@@ -1321,11 +1325,21 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
       maxHeight: availForVerses,
       arabicSize: vSize,
       englishSize: tSize,
-      // Above the ~167px floor a two-line English block imposes, so the verse
-      // units keep visible air between them (the old `rowExtra`) instead of
-      // sitting at the bare collision minimum, which would leave a verse's
-      // English as close to the NEXT Arabic line as to its own.
-      preferredRowGap: 180,
+      // Measured against the 6-verse fixture in scripts/render-sahifa-rowgap-compare.mjs,
+      // the between-verse collision floor (minimumRowGap) sits at ~121-133px
+      // through the shrink-to-fit range this layout lands on, so anything
+      // above ~148 already clears it. The real lower bound turned out to be
+      // src/test/share-card.test.jsx's measured within-verse gap check: that
+      // gap is exactly MIN_BILINGUAL_GAP by construction (see
+      // createBilingualVerseLayout's translationOffsets), so which discrete
+      // vSize/tSize the shrink-to-fit loop lands on decides whether the
+      // test's independent recomputation rounds to >=12 or a hair under it.
+      // A binary search over this fixture found 172 fails, 173 passes -- 173
+      // is the smallest value that keeps that test green, and there's no
+      // "safer" number above it since none of them carry real headroom past
+      // 12px, they just land on a different side of the same rounding. See
+      // PR #686 for the rendered comparison across 148/156/160/166/173/180.
+      preferredRowGap: 173,
     });
 
   let trLines = wrapAt(tSize);
@@ -1345,7 +1359,14 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
   ctx.textAlign = 'center';
   ctx.direction = 'rtl';
   ctx.fillStyle = '#191512';
-  fitFont(ctx, title.arabic || '', '"Reem Kufi", "Amiri", sans-serif', titleSize, textWidth, 'bold');
+  fitFont(
+    ctx,
+    title.arabic || '',
+    '"Reem Kufi", "Amiri", sans-serif',
+    titleSize,
+    textWidth,
+    'bold'
+  );
   ctx.fillText(title.arabic || '', xText, titleY);
   if (poet.arabic) {
     ctx.fillStyle = '#8e2a2a';

@@ -48,7 +48,6 @@ import {
   FONTS,
   nextVoice,
   voiceGender,
-  isFullScreenPath,
 } from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
@@ -142,7 +141,8 @@ export default function DiwanApp() {
   // The reader stays mounted so scroll position and playback survive the round
   // trip, but it must not do WORK while it's invisible — see src/constants/routes.js.
   // Derived from wouter's reactive `location` so effects re-run when the route flips.
-  const isFullScreenRoute = isFullScreenPath(location);
+  // Reader-scoped floating chrome (the guided walkthrough) also gates on this.
+  const isFullScreenRoute = useIsFullScreenRoute();
   // The reader owns the URL (it writes /poem/:id as you move through the feed).
   // Suppress those writes while a full-screen route is active so the feed doesn't
   // clobber the URL out from under it.
@@ -285,9 +285,6 @@ export default function DiwanApp() {
   const setShowSavedPoems = useModalStore((s) => s.setSavedPoemsOpen);
   const showSplash = useModalStore((s) => s.splash);
   const showOnboarding = useModalStore((s) => s.onboarding);
-  // True on routes that own the whole viewport (see src/constants/routes.js).
-  // Reader-scoped floating chrome must stay unmounted while one is active.
-  const isFullScreenRoute = useIsFullScreenRoute();
   const showTranslation = useUIStore((s) => s.showTranslation);
   const setShowTranslation = useUIStore((s) => s.setShowTranslation);
   const textSizeLevel = useUIStore((s) => s.textSize);

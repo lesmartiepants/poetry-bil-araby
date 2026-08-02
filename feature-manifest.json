@@ -616,12 +616,12 @@
       ],
       "endpoints": [],
       "tests": {
-        "unit": [],
+        "unit": ["src/test/reader-work-suppression.test.jsx"],
         "e2e": ["e2e/sparkler-reader.spec.js"]
       },
       "deviceOnly": false,
       "coverage": "mocked",
-      "gap": "#580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted."
+      "gap": "#580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted. Unit test covers work-suppression on full-screen routes only."
     },
     {
       "id": "guided-tour",

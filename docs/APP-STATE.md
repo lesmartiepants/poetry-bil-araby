@@ -74,7 +74,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 - **Features tracked:** 38
 - **HTTP endpoints in code:** 37
 - **Components in code:** 33
-- **Test files in code:** 61
+- **Test files in code:** 62
 - **Behavioral coverage:** 6/38 (16%)
 
 | Tier | Features |
@@ -131,7 +131,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 | `internal-design-review` | internal | behavioral | - | Endpoints well covered against mocked pg. |
 | `decorative-visuals` | nice | none | - | Purely decorative; no behavioral coverage, low risk. |
 | `internal-tts-lab` | internal | none | - | Dev-only; no coverage needed. |
-| `reader-feed` | critical | mocked | - | #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted. |
+| `reader-feed` | critical | mocked | - | #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted. Unit test covers work-suppression on full-screen routes only. |
 | `guided-tour` | important | mocked | - | #582/#602. e2e exercises step flow; conditional-step + resume-lifecycle branches only partly asserted. Unit test covers the full-screen-route mount gate only. |
 | `enjoyability-lab` | internal | none | - | Dev tooling; no automated coverage by design. /enjoyability is gated by ENABLE_DEV_LAB (404 in prod); the Saved-curation endpoints are gated by SAVED_CURATION_EMAIL (unset in prod). |
 
@@ -144,7 +144,7 @@ These are the highest-leverage gaps. Each is a critical-tier feature whose real 
 - `tts-playback` — source-only: HIGHEST RISK. togglePlay.js (1025 lines, 105 branches) state machine is never executed behaviorally; makeover-tone asserts source text via regex; e2e runs on silent PCM with the streaming path aborted.
 - `tts-stop-on-swipe` — mocked: Regressed in #552 on streaming/iOS players (no .state). liveAudioStream covers the streaming stop primitive; the togglePlay swipe path is not behaviorally tested.
 - `pwa-release-update` — device-only: Source of #557. checkForNewRelease (fetch+compare+caches.delete+reload) is unit-testable with mocks but currently has NO unit test; iOS Safari SW unreliability is device-only.
-- `reader-feed` — mocked: #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted.
+- `reader-feed` — mocked: #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted. Unit test covers work-suppression on full-screen routes only.
 <!-- AUTO:END -->
 
 ---

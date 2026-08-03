@@ -21,3 +21,44 @@ services:
       # - DATABASE_URL (from .env)
       # - SUPABASE_PROJECT_URL (optional, for direct Supabase API access)
       # - SUPABASE_SECRET_KEY (optional, for direct Supabase API access)
+
+  # Staging backend — tracks the `staging` branch so PRs that change server.js
+  # or add migrations can be verified end to end before they reach production.
+  # See DEPLOYMENT.md "Staging Backend" for the workflow.
+  #
+  # Render free plan does not support per-PR preview environments (setting
+  # previews.generation to "automatic" returns HTTP 200 but stays "off"), so
+  # this is a single long-lived shared service instead.
+  - type: web
+    name: poetry-bil-araby-staging
+    runtime: node
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    branch: staging
+
+    envVars:
+      # Deliberately NOT "production". NODE_ENV=production would enable the
+      # 24/7 self-ping keep-alive; two always-on free services exceed the
+      # workspace's free instance-hour budget. Staging is allowed to cold
+      # start (~1 min on first request). It also keeps verbose validation
+      # error details in API responses, which is what you want when
+      # debugging a PR, and tags Sentry events as `staging`.
+      - key: NODE_ENV
+        value: staging
+
+      - key: PORT
+        value: 10000
+
+      # User must set this manually in Render dashboard before staging can
+      # serve poems — without it /api/health responds but /api/health/full
+      # and every poem route return 500:
+      # - DATABASE_URL
+      #
+      # Optional, only if the PR under test exercises those paths:
+      # - GEMINI_API_KEY (AI mode / TTS proxy)
+      # - GITHUB_TOKEN_SUBMIT_BUG (bug-report → GitHub issue)

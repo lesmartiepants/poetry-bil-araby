@@ -1,6 +1,7 @@
 # Deployment Guide: Supabase + Render + Vercel
 
 This guide walks you through deploying the Poetry app with:
+
 - **Database**: Supabase (Free tier - 500 MB PostgreSQL)
 - **Backend**: Render (Free tier - Express API with keep-alive)
 - **Frontend**: Vercel (Already deployed)
@@ -72,6 +73,7 @@ pg_restore --clean --no-owner --no-acl \
 5. Click **"Run"**
 
 **Verify Upload:**
+
 1. In Supabase dashboard, go to **Table Editor**
 2. You should see tables: `poems`, `poets`, `themes`
 3. Check poem count:
@@ -129,6 +131,7 @@ pg_restore --clean --no-owner --no-acl \
 
 1. Copy your Render URL (e.g., `https://your-service-name.onrender.com`)
 2. Test in browser or terminal:
+
    ```bash
    # Health check:
    curl https://your-service-name.onrender.com/api/health
@@ -141,6 +144,7 @@ pg_restore --clean --no-owner --no-acl \
    ```
 
 **If you see errors**, check Render logs:
+
 - Go to **Logs** tab in Render dashboard
 - Look for database connection errors
 
@@ -154,11 +158,11 @@ pg_restore --clean --no-owner --no-acl \
 2. Go to **Settings** → **Environment Variables**
 3. Add these variables (all for Production, Preview, and Development):
 
-   | Key | Value |
-   |---|---|
-   | `VITE_API_URL` | Your Render URL (e.g. `https://your-service.onrender.com`) |
-   | `VITE_GEMINI_API_KEY` | Your Gemini API key |
-   | `VITE_SUPABASE_URL` | Your Supabase project URL |
+   | Key                      | Value                                                         |
+   | ------------------------ | ------------------------------------------------------------- |
+   | `VITE_API_URL`           | Your Render URL (e.g. `https://your-service.onrender.com`)    |
+   | `VITE_GEMINI_API_KEY`    | Your Gemini API key                                           |
+   | `VITE_SUPABASE_URL`      | Your Supabase project URL                                     |
    | `VITE_SUPABASE_ANON_KEY` | Supabase anon key (**must** be JWT format, starts with `eyJ`) |
 
    **Note**: Do NOT add `DATABASE_URL` to Vercel. The database is only used by the Render backend.
@@ -191,6 +195,7 @@ pg_restore --clean --no-owner --no-acl \
 **Backend Self-Ping (Primary)**
 
 The backend now keeps itself alive automatically:
+
 1. Check Render logs for:
    ```
    🔄 Starting keep-alive self-ping (every 9-13 minutes, initial: 11 min)
@@ -208,6 +213,113 @@ The backend now keeps itself alive automatically:
    [System Logs] Keep-Alive: Backend pinged successfully
    ```
 3. This provides additional keep-alive when users have the app open
+
+---
+
+## Staging Backend
+
+### What it's for
+
+Vercel builds a preview for every PR, but by default every preview talks to the
+**production** backend. So a PR that adds a new API parameter looks broken in its
+own preview: the frontend sends the parameter, production ignores it, and the
+feature appears not to work. A reviewer can't tell that apart from a real bug.
+
+The staging service exists so backend changes can be verified end to end before
+they reach production. Use it for any PR that touches `server.js` or adds a
+migration.
+
+|            | Production                                   | Staging                                         |
+| ---------- | -------------------------------------------- | ----------------------------------------------- |
+| Service    | `poetry-bil-araby`                           | `poetry-bil-araby-staging`                      |
+| URL        | `https://poetry-bil-araby-2mb0.onrender.com` | `https://poetry-bil-araby-staging.onrender.com` |
+| Branch     | `main`                                       | `staging`                                       |
+| Plan       | Free                                         | Free                                            |
+| `NODE_ENV` | `production`                                 | `staging`                                       |
+| Keep-alive | Yes (always warm)                            | No (cold starts)                                |
+
+Render's free plan has no per-PR preview environments. Setting
+`previews.generation` to `"automatic"` returns HTTP 200 but the value stays
+`"off"`, so this is one shared long-lived service rather than one per PR.
+
+### Getting a PR onto staging
+
+`staging` is a normal branch that Render auto-deploys on every push.
+
+```bash
+git fetch origin
+git checkout staging
+git reset --hard origin/main        # start from a clean main
+git merge --no-ff origin/your-pr-branch
+git push origin staging
+```
+
+Render redeploys automatically (~2 min). Confirm the running commit matches what
+you pushed — `/api/health` reports the deployed SHA, which is how you catch a
+stale build:
+
+```bash
+curl https://poetry-bil-araby-staging.onrender.com/api/health
+# {"status":"ok","uptime":14.4,"commit":"7e9749b2..."}
+```
+
+Reset `staging` back to `origin/main` when you're done so the next person starts
+clean.
+
+> **`staging` is a single shared branch.** Two people testing at once will
+> overwrite each other, and the second push silently replaces the first person's
+> build — they'll be reviewing your code without knowing it. Say so in the PR or
+> in chat before you push, and reset when you're finished. If you hit a
+> collision, the `commit` field from `/api/health` tells you whose build is
+> actually running.
+
+### Pointing a Vercel preview at staging
+
+The frontend reads `VITE_API_URL` (`src/services/database.js:5`). Vite inlines it
+at **build** time, so it has to be set before the preview builds — you can't flip
+it on an existing deployment.
+
+In the Vercel dashboard: **Settings → Environment Variables → Add**
+
+- Key: `VITE_API_URL`
+- Value: `https://poetry-bil-araby-staging.onrender.com`
+- Environment: **Preview** only
+- Branch: your PR's branch name
+
+Then redeploy the preview (push a commit, or **Deployments → ⋯ → Redeploy**).
+
+Scope it to a **branch**, not to all previews. A bare Preview-scoped variable
+sends every open PR's preview to staging, which is wrong twice over: unrelated
+PRs get tested against whatever half-merged code is sitting on `staging`, and
+they break outright whenever staging is missing a credential. Delete the variable
+when the PR merges.
+
+CORS needs no change. `server.js` allowlists origins matching
+`poetry-bil-araby-*.vercel.app`, and staging runs the same code, so preview
+origins are already accepted. The staging host itself never needs adding — it's
+the server, not a browser origin.
+
+### Environment variables
+
+Staging is created with `NODE_ENV` and `PORT` only. Secrets must be added by hand
+in the Render dashboard (**poetry-bil-araby-staging → Environment**):
+
+- `DATABASE_URL` — **required** before staging can serve poems. Without it
+  `/api/health` still returns ok, but `/api/health/full` and every poem route
+  return 500.
+- `GEMINI_API_KEY` — only if the PR exercises AI mode or the TTS proxy.
+- `GITHUB_TOKEN_SUBMIT_BUG` — only if the PR exercises bug-report submission.
+
+**Which database?** Prefer a **separate** Supabase project for staging. The whole
+point of staging is to run unreviewed migrations, and a migration is exactly the
+kind of change that can destroy data. Point staging at the production
+`DATABASE_URL` and a bad `ALTER`/`DROP` in a PR hits the real 84k-poem corpus,
+with the free plan's backup retention as the only recovery path. Sharing is
+cheaper and needs no setup, but it removes the safety that justifies having
+staging at all.
+
+If staging shares the production database, treat it as read-only: verify API
+shape changes there, and test migrations somewhere else.
 
 ---
 
@@ -252,6 +364,7 @@ The backend now keeps itself alive automatically:
 **Symptom**: "Backend server is not running" error
 
 **Solutions**:
+
 1. Check Render logs for errors
 2. Verify `DATABASE_URL` is set correctly in Render
 3. Ensure Supabase database is online (check Supabase dashboard)
@@ -262,6 +375,7 @@ The backend now keeps itself alive automatically:
 **Symptom**: "No poems found" or 404 errors
 
 **Solutions**:
+
 1. Verify database was uploaded correctly:
    ```sql
    SELECT COUNT(*) FROM poems;
@@ -274,6 +388,7 @@ The backend now keeps itself alive automatically:
 **Symptom**: Cold starts still happening frequently
 
 **Solutions**:
+
 1. Check Render logs for `🔄 Starting keep-alive self-ping` message
 2. Verify `NODE_ENV=production` is set in Render environment
 3. Check Render logs for periodic `✓ Keep-alive ping successful` messages
@@ -286,6 +401,7 @@ The backend now keeps itself alive automatically:
 **Symptom**: Frontend can't fetch from backend
 
 **Solutions**:
+
 1. Verify `VITE_API_URL` is set in Vercel **Environment Variables**
 2. Redeploy frontend after adding env var
 3. Check that Render URL is correct (no trailing slash)
@@ -294,14 +410,15 @@ The backend now keeps itself alive automatically:
 
 ## Cost Breakdown
 
-| Service | Plan | Cost | Limits |
-|---------|------|------|--------|
-| **Supabase** | Free | $0/month | 500 MB DB, 50K users/month |
-| **Render** | Free | $0/month | 750 hrs/month, sleeps after 15 min |
-| **Vercel** | Hobby | $0/month | 100 GB bandwidth/month |
-| **Total** | | **$0/month** | |
+| Service      | Plan  | Cost         | Limits                             |
+| ------------ | ----- | ------------ | ---------------------------------- |
+| **Supabase** | Free  | $0/month     | 500 MB DB, 50K users/month         |
+| **Render**   | Free  | $0/month     | 750 hrs/month, sleeps after 15 min |
+| **Vercel**   | Hobby | $0/month     | 100 GB bandwidth/month             |
+| **Total**    |       | **$0/month** |                                    |
 
 **Upgrade Path**:
+
 - **Render Pro**: $7/month (always-on, no cold starts)
 - **Supabase Pro**: $25/month (8 GB DB, 250 GB bandwidth)
 
@@ -351,6 +468,7 @@ After successful deployment:
 ---
 
 **Questions?** Check the logs first:
+
 - **Supabase**: Dashboard → **Logs**
 - **Render**: Dashboard → **Logs**
 - **Vercel**: Dashboard → **Deployments** → **Logs**

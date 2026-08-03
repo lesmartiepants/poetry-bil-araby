@@ -1,6 +1,7 @@
 # Deployment Guide: Supabase + Render + Vercel
 
 This guide walks you through deploying the Poetry app with:
+
 - **Database**: Supabase (Free tier - 500 MB PostgreSQL)
 - **Backend**: Render (Free tier - Express API with keep-alive)
 - **Frontend**: Vercel (Already deployed)
@@ -72,12 +73,14 @@ pg_restore --clean --no-owner --no-acl \
 5. Click **"Run"**
 
 **Verify Upload:**
+
 1. In Supabase dashboard, go to **Table Editor**
 2. You should see tables: `poems`, `poets`, `themes`
 3. Check poem count:
    ```sql
    SELECT COUNT(*) FROM poems;
-   -- Should return: 84329
+   -- Should return: 9073
+   -- (curated down from the ~85k-poem raw Qafiyah source; see README "The Library")
    ```
 
 ---
@@ -129,18 +132,20 @@ pg_restore --clean --no-owner --no-acl \
 
 1. Copy your Render URL (e.g., `https://your-service-name.onrender.com`)
 2. Test in browser or terminal:
+
    ```bash
    # Health check:
    curl https://your-service-name.onrender.com/api/health
 
    # Should return:
-   # {"status":"ok","database":"connected","totalPoems":84329}
+   # {"status":"ok","database":"connected","totalPoems":9073}
 
    # Random poem:
    curl https://your-service-name.onrender.com/api/poems/random
    ```
 
 **If you see errors**, check Render logs:
+
 - Go to **Logs** tab in Render dashboard
 - Look for database connection errors
 
@@ -154,11 +159,11 @@ pg_restore --clean --no-owner --no-acl \
 2. Go to **Settings** → **Environment Variables**
 3. Add these variables (all for Production, Preview, and Development):
 
-   | Key | Value |
-   |---|---|
-   | `VITE_API_URL` | Your Render URL (e.g. `https://your-service.onrender.com`) |
-   | `VITE_GEMINI_API_KEY` | Your Gemini API key |
-   | `VITE_SUPABASE_URL` | Your Supabase project URL |
+   | Key                      | Value                                                         |
+   | ------------------------ | ------------------------------------------------------------- |
+   | `VITE_API_URL`           | Your Render URL (e.g. `https://your-service.onrender.com`)    |
+   | `VITE_GEMINI_API_KEY`    | Your Gemini API key                                           |
+   | `VITE_SUPABASE_URL`      | Your Supabase project URL                                     |
    | `VITE_SUPABASE_ANON_KEY` | Supabase anon key (**must** be JWT format, starts with `eyJ`) |
 
    **Note**: Do NOT add `DATABASE_URL` to Vercel. The database is only used by the Render backend.
@@ -191,10 +196,11 @@ pg_restore --clean --no-owner --no-acl \
 **Backend Self-Ping (Primary)**
 
 The backend now keeps itself alive automatically:
+
 1. Check Render logs for:
    ```
    🔄 Starting keep-alive self-ping (every 9-13 minutes, initial: 11 min)
-   ✓ Keep-alive ping successful - 84329 poems in database
+   ✓ Keep-alive ping successful - 9073 poems in database
    ```
 2. This runs automatically in production mode (no user action needed)
 3. Works 24/7 even when no users are active
@@ -236,7 +242,7 @@ The backend now keeps itself alive automatically:
 ┌─────────────────────────────────────────────┐
 │  Supabase (Database - FREE)                 │
 │  - PostgreSQL 17                            │
-│  - 84,329 poems                             │
+│  - 9,073 poems (4,767 pass quality filter)  │
 │  - Design review tables                     │
 │  - Auth tables (optional)                   │
 │  - Pooler: aws-N-region.pooler.supabase.com │
@@ -252,6 +258,7 @@ The backend now keeps itself alive automatically:
 **Symptom**: "Backend server is not running" error
 
 **Solutions**:
+
 1. Check Render logs for errors
 2. Verify `DATABASE_URL` is set correctly in Render
 3. Ensure Supabase database is online (check Supabase dashboard)
@@ -262,6 +269,7 @@ The backend now keeps itself alive automatically:
 **Symptom**: "No poems found" or 404 errors
 
 **Solutions**:
+
 1. Verify database was uploaded correctly:
    ```sql
    SELECT COUNT(*) FROM poems;
@@ -274,6 +282,7 @@ The backend now keeps itself alive automatically:
 **Symptom**: Cold starts still happening frequently
 
 **Solutions**:
+
 1. Check Render logs for `🔄 Starting keep-alive self-ping` message
 2. Verify `NODE_ENV=production` is set in Render environment
 3. Check Render logs for periodic `✓ Keep-alive ping successful` messages
@@ -286,6 +295,7 @@ The backend now keeps itself alive automatically:
 **Symptom**: Frontend can't fetch from backend
 
 **Solutions**:
+
 1. Verify `VITE_API_URL` is set in Vercel **Environment Variables**
 2. Redeploy frontend after adding env var
 3. Check that Render URL is correct (no trailing slash)
@@ -294,14 +304,15 @@ The backend now keeps itself alive automatically:
 
 ## Cost Breakdown
 
-| Service | Plan | Cost | Limits |
-|---------|------|------|--------|
-| **Supabase** | Free | $0/month | 500 MB DB, 50K users/month |
-| **Render** | Free | $0/month | 750 hrs/month, sleeps after 15 min |
-| **Vercel** | Hobby | $0/month | 100 GB bandwidth/month |
-| **Total** | | **$0/month** | |
+| Service      | Plan  | Cost         | Limits                             |
+| ------------ | ----- | ------------ | ---------------------------------- |
+| **Supabase** | Free  | $0/month     | 500 MB DB, 50K users/month         |
+| **Render**   | Free  | $0/month     | 750 hrs/month, sleeps after 15 min |
+| **Vercel**   | Hobby | $0/month     | 100 GB bandwidth/month             |
+| **Total**    |       | **$0/month** |                                    |
 
 **Upgrade Path**:
+
 - **Render Pro**: $7/month (always-on, no cold starts)
 - **Supabase Pro**: $25/month (8 GB DB, 250 GB bandwidth)
 
@@ -351,6 +362,7 @@ After successful deployment:
 ---
 
 **Questions?** Check the logs first:
+
 - **Supabase**: Dashboard → **Logs**
 - **Render**: Dashboard → **Logs**
 - **Vercel**: Dashboard → **Deployments** → **Logs**

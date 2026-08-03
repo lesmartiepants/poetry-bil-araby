@@ -57,7 +57,7 @@ npm run test:e2e:debug   # Debug mode
 **Dual-Mode Architecture:**
 The app supports two poem sources:
 
-1. **Database Mode**: Fetches from PostgreSQL via Express API (84,329 poems)
+1. **Database Mode**: Fetches from PostgreSQL via Express API (9,073 poems, of which 4,767 pass the `quality_score >= 75` serving filter). The ~85k figure that used to appear here was the raw Qafiyah source; the corpus was deliberately curated down to 9,073. Use `/api/health/full` for the live `totalPoems` / `servedPoems` split.
 2. **AI Mode**: Generates using Gemini API (existing behavior)
 
 **Database Mode (server.js):**

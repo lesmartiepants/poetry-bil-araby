@@ -38,11 +38,15 @@ Three principles guide every feature:
 
 ## The Library
 
-The poem corpus holds **84,000+ classical Arabic poems** sourced from the open
-[Qafiyah](https://github.com/WTFoss/qafiyah) dataset and stored in PostgreSQL. To protect
-the reading experience, the API only serves poems above a quality threshold
-(`quality_score >= 75`, see `server.js`), so what reaches the reader is a curated slice of
-the full archive rather than raw bulk text.
+The source material was roughly **85,000 classical Arabic poems** from the open
+[Qafiyah](https://github.com/WTFoss/qafiyah) dataset. That raw archive was deliberately
+curated down to the **9,073 poems** now stored in PostgreSQL. Most of what was cut was
+duplicates, fragments, and text too damaged to read well.
+
+Curation doesn't stop at import. The API only serves poems above a quality threshold
+(`quality_score >= 75`, see `server.js`), which leaves **4,767 poems** actually reachable
+by a reader today. So the number shrinks twice on purpose: 85k of raw text, 9,073 kept,
+4,767 served. Fewer poems, better ones.
 
 Each poem carries its Arabic title, the poet's name (Arabic and English), theme, and the
 verse body. Readers can pull a random poem, filter by poet, or swipe through a vertical feed

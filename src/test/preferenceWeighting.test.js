@@ -10,6 +10,7 @@ import {
   pickPool,
   filtersForPool,
   nextDraw,
+  preferDated,
 } from '../services/preferenceWeighting.js';
 
 const PREFS = {
@@ -59,13 +60,18 @@ describe('mixFor', () => {
   });
 
   it('never lets the biased pools take the whole feed — no lock-in', () => {
-    // This is the guarantee the owner asked for: a reader must never be pinned
-    // to a slice of the corpus. Wild is unfiltered, so its share is the floor on
-    // how much of the library stays reachable on any given draw.
+    // The guarantee: a reader must never be pinned to a slice of the corpus.
+    // Wild is unfiltered, so its share is the floor on how much of the library
+    // stays reachable on any given draw.
+    //
+    // Asserted against SETTLED_MIX rather than a hardcoded number, so tuning the
+    // wild share (which is expected — see the table on SETTLED_MIX) doesn't
+    // break this test. What must hold at ANY setting is that wild stays > 0.
     for (const seen of [0, 1, 5, 30, 500]) {
-      expect(mixFor(seen).wild).toBeGreaterThan(0.1);
+      expect(mixFor(seen).wild).toBeGreaterThan(0);
     }
-    expect(mixFor(DECAY_OVER_POEMS).wild).toBeGreaterThanOrEqual(0.4);
+    expect(mixFor(DECAY_OVER_POEMS).wild).toBeCloseTo(SETTLED_MIX.wild, 10);
+    expect(mixFor(0).wild).toBeCloseTo(INITIAL_MIX.wild, 10);
   });
 
   it('handles junk input', () => {
@@ -106,7 +112,9 @@ describe('pickPool', () => {
 
   it('shifts toward wild as the reader gets through poems', () => {
     // A draw that lands in core early lands outside it once the mix has settled.
-    const r = 0.5;
+    // The probe sits between the settled and initial core boundaries, computed
+    // from the constants so tuning SETTLED_MIX doesn't invalidate the test.
+    const r = (SETTLED_MIX.core + INITIAL_MIX.core) / 2;
     expect(pickPool(PREFS, 0, fixed(r))).toBe(POOL.CORE);
     expect(pickPool(PREFS, DECAY_OVER_POEMS, fixed(r))).not.toBe(POOL.CORE);
   });
@@ -162,6 +170,85 @@ describe('filtersForPool', () => {
 
   it('produces no filters when there are no answers', () => {
     expect(filtersForPool({}, POOL.CORE, BANDS)).toEqual({});
+  });
+});
+
+describe('preferDated', () => {
+  const dated = [
+    { id: 1, century: 9 },
+    { id: 2, century: 9 },
+  ];
+  const undated = [
+    { id: 3, century: null },
+    { id: 4, century: null },
+  ];
+
+  it('drops undated candidates when a dated one is available', () => {
+    // The point of the era step: picking Abbasid over Andalusian has to change
+    // what you actually get. Undated poems qualify under EVERY dated band, so
+    // without this they dilute all four answers identically.
+    expect(preferDated([...dated, ...undated])).toEqual(dated);
+  });
+
+  it('falls back to undated when the band returned nothing dated', () => {
+    // Thin-band recall: better an undated poem than an empty feed.
+    expect(preferDated(undated)).toEqual(undated);
+  });
+
+  it('is a no-op on an all-dated list', () => {
+    expect(preferDated(dated)).toEqual(dated);
+  });
+
+  it('treats undefined century as undated', () => {
+    const mixed = [{ id: 1, century: 9 }, { id: 2 }];
+    expect(preferDated(mixed)).toEqual([{ id: 1, century: 9 }]);
+  });
+
+  it('handles empty and missing input', () => {
+    expect(preferDated([])).toEqual([]);
+    expect(preferDated(undefined)).toEqual([]);
+    expect(preferDated(null)).toEqual([]);
+  });
+
+  it('never invents or reorders within the dated subset', () => {
+    const list = [
+      { id: 5, century: 6 },
+      { id: 3, century: null },
+      { id: 7, century: 14 },
+    ];
+    expect(preferDated(list).map((p) => p.id)).toEqual([5, 7]);
+  });
+
+  it('does not strand undated poems: they still have their own band', () => {
+    // Ranking is a tie-break, not an exclusion. The undated band queries only
+    // undated poems, so preferDated must leave that result untouched.
+    const f = filtersForPool({ ...PREFS, era: 'undated' }, POOL.CORE, BANDS);
+    expect(f.undated).toBe(1);
+    expect(f.centuryFrom).toBeUndefined();
+    expect(preferDated(undated)).toEqual(undated);
+  });
+});
+
+describe('SETTLED_MIX tuning contract', () => {
+  it('sums to 1 so pickPool covers the whole interval', () => {
+    const s = SETTLED_MIX.core + SETTLED_MIX.adjacent + SETTLED_MIX.wild;
+    expect(s).toBeCloseTo(1, 10);
+    const i = INITIAL_MIX.core + INITIAL_MIX.adjacent + INITIAL_MIX.wild;
+    expect(i).toBeCloseTo(1, 10);
+  });
+
+  it('keeps a non-zero wild share, whatever it is tuned to', () => {
+    // The anti-lock-in guarantee: wild > 0 is what keeps every poem in the
+    // corpus reachable on every draw. Tuning the value is fine; zeroing it
+    // silently converts the whole design back into a filter.
+    expect(SETTLED_MIX.wild).toBeGreaterThan(0);
+    expect(INITIAL_MIX.wild).toBeGreaterThan(0);
+  });
+
+  it('starts more biased than it settles', () => {
+    // "Seeds the first feed, then becomes a weight" only holds if core falls.
+    expect(INITIAL_MIX.core).toBeGreaterThan(SETTLED_MIX.core);
+    expect(INITIAL_MIX.wild).toBeLessThan(SETTLED_MIX.wild);
   });
 });
 

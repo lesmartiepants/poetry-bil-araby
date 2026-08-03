@@ -64,14 +64,44 @@ export const POOL = {
 };
 
 /**
- * Mix at the start of a reader's life and the floor it decays to.
- *
- * The floor matters more than the start: 0.35 core / 0.25 adjacent / 0.40 wild
- * means that even for a long-time reader, two out of five poems are drawn from
- * the whole corpus with no reference to their answers at all. That is the
- * guarantee against lock-in.
+ * Mix at the start of a reader's life, before any decay.
  */
 export const INITIAL_MIX = { core: 0.6, adjacent: 0.25, wild: 0.15 };
+
+/**
+ * THE MIX THE FEED SETTLES ON. This is the number to tune.
+ *
+ * `wild` is the only pool that ignores the reader's answers entirely, so its
+ * share is the whole tradeoff: it is simultaneously the guarantee against
+ * lock-in and the risk that the five questions feel ignored. Everything else
+ * follows from it — `core` absorbs the change, `adjacent` stays put.
+ *
+ * What a given `wild` share actually feels like:
+ *
+ *   wild   on-preference   avg gap between      odds a wild appears
+ *                          wild draws           in any 3 poems
+ *   ----   -------------   ------------------   -------------------
+ *   0.50        50%        every 2.0 poems             88%
+ *   0.40        60%        every 2.5 poems             78%   <- current
+ *   0.30        70%        every 3.3 poems             66%
+ *   0.20        80%        every 5.0 poems             49%
+ *   0.10        90%        every 10 poems              27%
+ *
+ * (gap = 1/wild; odds in any 3 = 1 - (1-wild)^3.)
+ *
+ * The thing to weigh: at 0.40 there is a 78% chance that any three consecutive
+ * poems contain one that ignores the answers, and only an 8% chance of five
+ * on-preference poems in a row (0.6^5). For a flow that asks five questions,
+ * that can read as "my answers didn't matter". Lowering it to 0.20 makes five
+ * in a row a 33% event and halves the interruption rate, at the cost of a
+ * narrower feed for a settled reader.
+ *
+ * Whatever you pick, keep `wild` strictly above zero — it is what makes every
+ * poem in the corpus reachable on every draw, which is the property the whole
+ * weighted-not-filtered design exists to preserve.
+ *
+ * The three values must sum to 1; a test enforces that.
+ */
 export const SETTLED_MIX = { core: 0.35, adjacent: 0.25, wild: 0.4 };
 
 /** Poems seen before the mix has fully relaxed to SETTLED_MIX. */
@@ -190,4 +220,47 @@ export const filtersForPool = (prefs, pool, bands = {}) => {
 export const nextDraw = (prefs, poemsSeen = 0, bands = {}, rng = Math.random) => {
   const pool = pickPool(prefs, poemsSeen, rng);
   return { pool, filters: filtersForPool(prefs, pool, bands) };
+};
+
+/**
+ * Rank candidates so a DATED poem wins whenever one is available.
+ *
+ * ## The problem this solves
+ *
+ * A dated era band sends `includeUndated=1`, which keeps the ~25% of the corpus
+ * that has no century eligible. That is right for recall — those poems are the
+ * late/modern period, not missing data, and dropping them from every dated band
+ * would hide a quarter of the library behind four of the five era answers.
+ *
+ * But treating them as EQUALLY eligible makes the era step the weakest question
+ * in the flow: for that quarter of the corpus, answering "Abbasid" and answering
+ * "Andalusian" produce identical results. A reader who deliberately picked a
+ * period should be able to feel it.
+ *
+ * ## The fix
+ *
+ * Eligibility and ranking are separated. Undated poems stay eligible in the
+ * query, then lose the tie-break here. A dated candidate is always preferred;
+ * undated ones are the fallback when the band returned nothing dated, which is
+ * exactly the thin-band case where recall matters.
+ *
+ * This is done client-side on the returned candidates rather than as an ORDER BY
+ * in `by-category`, for two reasons. Ordering `p.century IS NULL ASC` before
+ * `RANDOM()` inside the query would push undated poems past the LIMIT entirely
+ * whenever the dated side is fat — silently re-creating the exclusion this is
+ * meant to avoid, and doing it in SQL where it can't be unit-tested. Ranking a
+ * page we already fetched costs no extra request and keeps the rule in one
+ * readable, testable place.
+ *
+ * Undated poems remain reachable regardless of this ranking, through the
+ * `undated` band itself (which queries only them), the adjacent pool (which
+ * drops the era constraint), and the wild pool (no filters at all).
+ *
+ * @param {Array<{century?: number|null}>} candidates
+ * @returns {Array} the dated subset, or the original list when none are dated
+ */
+export const preferDated = (candidates) => {
+  const list = candidates || [];
+  const dated = list.filter((p) => p?.century != null);
+  return dated.length ? dated : list;
 };

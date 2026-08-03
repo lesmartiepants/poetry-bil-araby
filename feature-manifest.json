@@ -712,7 +712,7 @@
       "id": "feed-preference-weighting",
       "name": "Preference-weighted feed selection",
       "tier": "nice",
-      "userFacing": "Onboarding answers bias which poem the feed serves next WITHOUT filtering the corpus. Each draw picks one of three pools by a weighted coin: core (all answers applied), adjacent (only the broadest answer), wild (no filters at all). The mix starts biased and decays toward a floor as the reader gets through poems, so the first feed is clearly seeded but nothing in the library ever becomes unreachable. A biased draw that matches nothing falls back to a plain random fetch.",
+      "userFacing": "Onboarding answers bias which poem the feed serves next WITHOUT filtering the corpus. Each draw picks one of three pools by a weighted coin: core (all answers applied), adjacent (only the broadest answer), wild (no filters at all). The mix starts biased and decays toward a tunable floor as the reader gets through poems, so the first feed is clearly seeded but nothing in the library ever becomes unreachable. Within a dated era band, undated (late/modern) poems stay ELIGIBLE but lose the tie-break to dated ones, so picking one period over another visibly changes the feed. A biased draw that matches nothing falls back to a plain random fetch.",
       "entrypoints": [
         "src/services/preferenceWeighting.js",
         "src/services/preferences.js",
@@ -725,7 +725,7 @@
       },
       "deviceOnly": false,
       "coverage": "behavioral",
-      "gap": "Unit tests pin the mix curve, the no-lock-in guarantee (wild share never drops below a floor), pool->filter translation including undated-century handling, and graceful degradation when bands are unavailable. The integration in fetchPoem.js (fallback to a plain fetch on an empty biased result) has no dedicated test yet."
+      "gap": "Unit tests pin the mix curve, the no-lock-in guarantee (wild share stays above zero at any tuning), pool->filter translation including undated-century handling, dated-over-undated ranking with its thin-band fallback, and graceful degradation when bands are unavailable. Mix constants are asserted against SETTLED_MIX rather than literals so retuning does not break the suite. The integration in fetchPoem.js (fallback to a plain fetch on an empty biased result) has no dedicated test yet."
     }
   ]
 }

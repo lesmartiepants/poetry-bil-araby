@@ -9,7 +9,7 @@ import { fetchRandomPoem, fetchPoemsByCategory } from '../../services/database.j
 import { geminiTextFetch } from '../../services/gemini.js';
 import { readPrefs } from '../../services/preferences.js';
 import { fetchCategoryBands } from '../../services/categoryBands.js';
-import { nextDraw, hasPreferences, POOL } from '../../services/preferenceWeighting.js';
+import { nextDraw, hasPreferences, preferDated, POOL } from '../../services/preferenceWeighting.js';
 
 /**
  * Band definitions are needed to turn a stored era/difficulty band KEY back into
@@ -59,7 +59,12 @@ async function fetchWeightedPoem({ prefs, poet, excludeIds, addLog }) {
 
   const matches = await fetchPoemsByCategory(query).catch(() => []);
   const fresh = matches.filter((p) => !excludeIds?.includes(p.id));
-  const usable = fresh.length ? fresh : matches;
+  const unseen = fresh.length ? fresh : matches;
+  // A dated era answer keeps undated poems ELIGIBLE (includeUndated=1) but they
+  // lose the tie-break, so picking Abbasid over Andalusian actually changes what
+  // you get. Only applies when the query carried a dated range; the undated band
+  // itself returns nothing dated, so this is a no-op there.
+  const usable = query.centuryFrom != null ? preferDated(unseen) : unseen;
 
   if (!usable.length) {
     addLog(

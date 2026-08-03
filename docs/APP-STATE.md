@@ -136,7 +136,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 | `reader-feed` | critical | mocked | - | #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted. Unit test covers work-suppression on full-screen routes only. |
 | `guided-tour` | important | mocked | - | #582/#602. e2e exercises step flow; conditional-step + resume-lifecycle branches only partly asserted. Unit test covers the full-screen-route mount gate only. |
 | `enjoyability-lab` | internal | none | - | Dev tooling; no automated coverage by design. /enjoyability is gated by ENABLE_DEV_LAB (404 in prod); the Saved-curation endpoints are gated by SAVED_CURATION_EMAIL (unset in prod). |
-| `feed-preference-weighting` | nice | behavioral | - | Unit tests pin the mix curve, the no-lock-in guarantee (wild share never drops below a floor), pool->filter translation including undated-century handling, and graceful degradation when bands are unavailable. The integration in fetchPoem.js (fallback to a plain fetch on an empty biased result) has no dedicated test yet. |
+| `feed-preference-weighting` | nice | behavioral | - | Unit tests pin the mix curve, the no-lock-in guarantee (wild share stays above zero at any tuning), pool->filter translation including undated-century handling, dated-over-undated ranking with its thin-band fallback, and graceful degradation when bands are unavailable. Mix constants are asserted against SETTLED_MIX rather than literals so retuning does not break the suite. The integration in fetchPoem.js (fallback to a plain fetch on an empty biased result) has no dedicated test yet. |
 
 ### Critical features without behavioral CI coverage
 

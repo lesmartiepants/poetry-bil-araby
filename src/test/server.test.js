@@ -843,8 +843,15 @@ describe('Backend API Server', () => {
         .expect('Content-Type', /json/)
         .expect(200);
 
-      // Empty payload now carries both arrays (families added in v2); still no DB touch.
-      expect(response.body).toEqual({ dimensions: [], families: [] });
+      // Empty payload carries every key the populated one does (families added
+      // in v2, distributions for the derived era/difficulty bands) so clients
+      // can render an empty state without null-checking each branch. Still no
+      // DB touch.
+      expect(response.body).toEqual({
+        dimensions: [],
+        families: [],
+        distributions: { eras: [], accessibility: [] },
+      });
       expect(mockPool.query).not.toHaveBeenCalled();
     });
   });
@@ -932,6 +939,21 @@ describe('Backend API Server', () => {
             },
           ],
         });
+        // 3rd + 4th queries: the raw histograms the client cuts era and
+        // difficulty bands from. They run in parallel via Promise.all, so the
+        // order they resolve in is fixed by the array, not by mock order.
+        mockPool.query.mockResolvedValueOnce({
+          rows: [
+            { era_id: 5, era_name: 'جاهلي', century: 6, poem_count: 86 },
+            { era_id: 3, era_name: 'متأخر', century: null, poem_count: 409 },
+          ],
+        });
+        mockPool.query.mockResolvedValueOnce({
+          rows: [
+            { bucket: 3, poem_count: 197 },
+            { bucket: 9, poem_count: 78 },
+          ],
+        });
 
         const response = await request(app)
           .get('/api/categories')
@@ -977,6 +999,50 @@ describe('Backend API Server', () => {
         const familySql = mockPool.query.mock.calls[1][0];
         expect(familySql).toContain('COUNT(DISTINCT pc.poem_id)');
         expect(familySql).toContain('v.family_id = f.id');
+      });
+
+      it('publishes the raw era + accessibility histograms the bands are cut from', async () => {
+        __test.setCategorizationState(true, ['mood', 'topic', 'motif']);
+        // Routed by SQL rather than call order: the two histogram queries run
+        // inside a Promise.all, so a positional mock chain is brittle here.
+        mockPool.query.mockImplementation(async (sql) => {
+          if (sql.includes('p.century')) {
+            return {
+              rows: [
+                { era_id: 5, era_name: 'جاهلي', century: 6, poem_count: 86 },
+                { era_id: 2, era_name: 'عباسي', century: 9, poem_count: 649 },
+                { era_id: 3, era_name: 'متأخر', century: null, poem_count: 409 },
+              ],
+            };
+          }
+          if (sql.includes('width_bucket')) {
+            return {
+              rows: [
+                { bucket: 3, poem_count: 197 },
+                { bucket: 5, poem_count: 275 },
+              ],
+            };
+          }
+          return { rows: [] };
+        });
+
+        const response = await request(app).get('/api/categories').expect(200);
+
+        // Era rows pass through verbatim, INCLUDING the null century — those are
+        // the late/modern poems (~25% of the corpus), which get their own band
+        // rather than being dropped.
+        expect(response.body.distributions.eras).toEqual([
+          { era_id: 5, era_name: 'جاهلي', century: 6, poem_count: 86 },
+          { era_id: 2, era_name: 'عباسي', century: 9, poem_count: 649 },
+          { era_id: 3, era_name: 'متأخر', century: null, poem_count: 409 },
+        ]);
+
+        // width_bucket is 1-indexed over 20 half-unit buckets on a 0-10 scale,
+        // so bucket 3 is [1.0, 1.5).
+        expect(response.body.distributions.accessibility).toEqual([
+          { min: 1, max: 1.5, poem_count: 197 },
+          { min: 2, max: 2.5, poem_count: 275 },
+        ]);
       });
     });
 
@@ -1024,6 +1090,73 @@ describe('Backend API Server', () => {
         expect(sql).toContain('cd.key = $1 AND cv.key = ANY($2)');
         expect(params[0]).toBe('form');
         expect(params[1]).toEqual(['qasida']);
+      });
+
+      describe('century bands', () => {
+        // An era answer in onboarding is a contiguous span of centuries, not one
+        // century, so by-category grew a range alongside the exact match.
+        it('filters a contiguous century range and, by default, excludes undated poems', async () => {
+          __test.setCategorizationState(true, ['mood']);
+          mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+          await request(app).get('/api/poems/by-category?centuryFrom=6&centuryTo=8').expect(200);
+
+          const [sql, params] = mockPool.query.mock.calls[0];
+          expect(sql).toContain('p.century >=');
+          expect(sql).toContain('p.century <=');
+          expect(sql).not.toContain('p.century IS NULL');
+          expect(params).toContain(6);
+          expect(params).toContain(8);
+        });
+
+        it('keeps undated poems eligible when asked', async () => {
+          // ~25% of the corpus has a NULL century by construction: the late and
+          // modern eras have no single representative century. Dropping them
+          // from every dated band would hide a quarter of the library.
+          __test.setCategorizationState(true, ['mood']);
+          mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+          await request(app)
+            .get('/api/poems/by-category?centuryFrom=6&centuryTo=8&includeUndated=1')
+            .expect(200);
+
+          const [sql] = mockPool.query.mock.calls[0];
+          expect(sql).toMatch(/OR p\.century IS NULL/);
+        });
+
+        it('selects only undated poems for the late/modern band', async () => {
+          __test.setCategorizationState(true, ['mood']);
+          mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+          await request(app).get('/api/poems/by-category?undated=1').expect(200);
+
+          const [sql] = mockPool.query.mock.calls[0];
+          expect(sql).toContain('p.century IS NULL');
+          expect(sql).not.toContain('p.century >=');
+        });
+
+        it('lets undated override a range rather than combining incoherently', async () => {
+          __test.setCategorizationState(true, ['mood']);
+          mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+          await request(app)
+            .get('/api/poems/by-category?undated=1&centuryFrom=6&centuryTo=8')
+            .expect(200);
+
+          const [sql] = mockPool.query.mock.calls[0];
+          expect(sql).toContain('p.century IS NULL');
+          expect(sql).not.toContain('p.century >=');
+        });
+
+        it('ignores a non-numeric range instead of erroring', async () => {
+          __test.setCategorizationState(true, ['mood']);
+          mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+          await request(app).get('/api/poems/by-category?centuryFrom=abc').expect(200);
+
+          const [sql] = mockPool.query.mock.calls[0];
+          expect(sql).not.toContain('p.century >=');
+        });
       });
 
       it('composes dimension + family + poet + era filters and returns confidence', async () => {

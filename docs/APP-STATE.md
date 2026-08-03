@@ -71,22 +71,22 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 
 ### Inventory at a glance
 
-- **Features tracked:** 40
+- **Features tracked:** 41
 - **HTTP endpoints in code:** 37
-- **Components in code:** 44
-- **Test files in code:** 63
-- **Behavioral coverage:** 7/40 (18%)
+- **Components in code:** 42
+- **Test files in code:** 65
+- **Behavioral coverage:** 8/41 (20%)
 
 | Tier | Features |
 |------|----------|
 | critical | 7 |
 | important | 14 |
-| nice | 15 |
+| nice | 16 |
 | internal | 4 |
 
 | Coverage | Features |
 |----------|----------|
-| behavioral | 7 |
+| behavioral | 8 |
 | mocked | 20 |
 | source-only | 1 |
 | device-only | 3 |
@@ -97,7 +97,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 | Feature | Tier | Coverage | Device-only | Gap |
 |---------|------|----------|-------------|-----|
 | `poem-categorization` | important | mocked | - | server.test.js covers the enabled/disabled API paths with a mocked pool; no e2e yet for the Explore Poems UI (filter chips, in-place poem expand). |
-| `onboarding-preferences` | nice | behavioral | - | Unit tests cover the categoryTags adapter (dimension -> tag mapping, composite ids, by-category param grouping, empty pre-migration payload) and that OnboardingFlow / PreferencesDrawer render from both a populated and an empty taxonomy. No e2e yet: stepping mood -> era -> topics and asserting the write to localStorage.onboardingPrefs is untested. |
+| `onboarding-preferences` | nice | behavioral | - | Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all five steps to completion, mood ordering, and the empty pre-migration state. No e2e yet for the rendered flow. |
 | `taxonomy-tag-ui` | nice | none | - | No automated coverage. Components are ported but unmounted; add tests when a surface routes to them. |
 | `poem-display` | critical | behavioral | - | Arabic font rendering (Amiri/Tajawal) differs prod vs CI; no visual regression. |
 | `discover-random` | critical | mocked | - | e2e routes /api/** to canned JSON; real server SERVING filters + exclude fallback only covered by server.test.js in isolation. |
@@ -136,6 +136,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 | `reader-feed` | critical | mocked | - | #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted. Unit test covers work-suppression on full-screen routes only. |
 | `guided-tour` | important | mocked | - | #582/#602. e2e exercises step flow; conditional-step + resume-lifecycle branches only partly asserted. Unit test covers the full-screen-route mount gate only. |
 | `enjoyability-lab` | internal | none | - | Dev tooling; no automated coverage by design. /enjoyability is gated by ENABLE_DEV_LAB (404 in prod); the Saved-curation endpoints are gated by SAVED_CURATION_EMAIL (unset in prod). |
+| `feed-preference-weighting` | nice | behavioral | - | Unit tests pin the mix curve, the no-lock-in guarantee (wild share never drops below a floor), pool->filter translation including undated-century handling, and graceful degradation when bands are unavailable. The integration in fetchPoem.js (fallback to a plain fetch on an empty biased result) has no dedicated test yet. |
 
 ### Critical features without behavioral CI coverage
 

@@ -5,8 +5,79 @@ import { CATEGORIES } from '../../constants/index.js';
 import { DISCOVERY_SYSTEM_PROMPT } from '../../prompts';
 import { repairAndParseJSON } from '../../utils/jsonRepair';
 import { pruneSeenPoems, getRecentSeenIds } from '../../utils/seenPoems.js';
-import { fetchRandomPoem } from '../../services/database.js';
+import { fetchRandomPoem, fetchPoemsByCategory } from '../../services/database.js';
 import { geminiTextFetch } from '../../services/gemini.js';
+import { readPrefs } from '../../services/preferences.js';
+import { fetchCategoryBands } from '../../services/categoryBands.js';
+import { nextDraw, hasPreferences, POOL } from '../../services/preferenceWeighting.js';
+
+/**
+ * Band definitions are needed to turn a stored era/difficulty band KEY back into
+ * the numeric range the API wants. They only change when the corpus changes, so
+ * fetch once per session and reuse. Failure is non-fatal: without bands the
+ * era/difficulty constraints are dropped and the other answers still apply.
+ */
+let bandsPromise = null;
+const getBands = () => {
+  if (!bandsPromise) {
+    bandsPromise = fetchCategoryBands().catch(() => ({ eraBands: [], difficultyBands: [] }));
+  }
+  return bandsPromise;
+};
+
+/** Test seam — lets the weighting be reset between cases. */
+export const __resetPreferenceBands = () => {
+  bandsPromise = null;
+};
+
+/**
+ * Try to serve a poem biased by the reader's onboarding answers.
+ *
+ * Returns null whenever the biased draw can't or shouldn't be used, and the
+ * caller falls back to the plain random fetch. That covers a wild draw (which is
+ * by definition unbiased) and a biased draw that matched nothing. The second
+ * case matters — a reader who picks a rare mood plus a narrow era can name a
+ * combination with no poems in it, and the honest response is to widen rather
+ * than show them an error.
+ *
+ * Only called when the reader actually has saved answers; see the call site,
+ * which checks that synchronously so a reader who skipped onboarding hits the
+ * plain fetch on exactly the same tick as before this existed.
+ */
+async function fetchWeightedPoem({ prefs, poet, excludeIds, addLog }) {
+  const bands = await getBands();
+  const poemsSeen = excludeIds?.length || 0;
+  const { pool, filters } = nextDraw(prefs, poemsSeen, bands);
+
+  if (pool === POOL.WILD) {
+    addLog('Discovery Bias', `Pool: wild | unbiased draw (seen: ${poemsSeen})`, 'info');
+    return null;
+  }
+
+  const query = { ...filters, limit: 12 };
+  if (poet) query.poet = poet;
+
+  const matches = await fetchPoemsByCategory(query).catch(() => []);
+  const fresh = matches.filter((p) => !excludeIds?.includes(p.id));
+  const usable = fresh.length ? fresh : matches;
+
+  if (!usable.length) {
+    addLog(
+      'Discovery Bias',
+      `Pool: ${pool} | no matches for ${JSON.stringify(filters)} — widening`,
+      'info'
+    );
+    return null;
+  }
+
+  const picked = usable[Math.floor(Math.random() * usable.length)];
+  addLog(
+    'Discovery Bias',
+    `Pool: ${pool} | ${usable.length} candidates | ${JSON.stringify(filters)}`,
+    'info'
+  );
+  return picked;
+}
 
 /**
  * Fetch a new poem (DB mode or AI mode) and add it to the store.
@@ -107,7 +178,22 @@ async function fetchFromDatabase({
     addLog('Discovery DB', `Excluding ${seenIds.length} recently seen poems`, 'info');
   }
 
-  const newPoem = await fetchRandomPoem({ poet, excludeIds: seenIds });
+  // Bias the draw toward the reader's onboarding answers WITHOUT filtering the
+  // corpus down to them — see src/services/preferenceWeighting.js. Returns null
+  // on a wild draw, when there are no saved answers, or when the biased query
+  // matched nothing; in every one of those cases we fall through to the plain
+  // random fetch, so the feed can never be starved by a narrow preference.
+  //
+  // The `hasPreferences` check is SYNCHRONOUS and deliberately outside the
+  // await: a reader who skipped onboarding must reach fetchRandomPoem on the
+  // same microtask tick as before this code existed. Awaiting unconditionally
+  // shifts the fetch by a tick, which is enough to reorder it against the other
+  // requests the app fires on a poet switch.
+  const prefs = readPrefs();
+  const weighted = hasPreferences(prefs)
+    ? await fetchWeightedPoem({ prefs, poet, excludeIds: seenIds, addLog }).catch(() => null)
+    : null;
+  const newPoem = weighted || (await fetchRandomPoem({ poet, excludeIds: seenIds }));
   const apiTime = performance.now() - apiStart;
 
   markPoemSeen(newPoem.id);

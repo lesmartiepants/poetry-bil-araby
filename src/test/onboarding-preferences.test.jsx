@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 // The pickers read the taxonomy through services/database.js. Mock at that
 // boundary so the adapter (services/categoryTags.js) runs for real.
@@ -109,17 +109,123 @@ describe('categoryTags adapter', () => {
   });
 });
 
+const FULL_TAXONOMY = {
+  dimensions: [
+    {
+      key: 'mood',
+      label_ar: 'المزاج',
+      label_en: 'Mood',
+      values: [
+        { key: 'pride', label_ar: 'اعتزاز', label_en: 'Pride', poem_count: 1983 },
+        { key: 'despair', label_ar: 'يأس', label_en: 'Despair', poem_count: 82 },
+        { key: 'joy', label_ar: 'فرح', label_en: 'Joy', poem_count: 419 },
+      ],
+    },
+    {
+      key: 'motif',
+      label_ar: 'الصورة',
+      label_en: 'Motif',
+      values: [
+        { key: 'tears', label_ar: 'الدموع', label_en: 'Tears', poem_count: 1977 },
+        { key: 'dawn', label_ar: 'الفجر والصبح', label_en: 'Dawn', poem_count: 287 },
+      ],
+    },
+  ],
+  families: [
+    { key: 'love-desire', label_ar: 'الحب والهوى', label_en: 'Love & Desire', poem_count: 4554 },
+    { key: 'grief-loss', label_ar: 'الأسى والفقد', label_en: 'Grief & Loss', poem_count: 3804 },
+  ],
+  distributions: {
+    eras: [
+      { century: 6, poem_count: 86 },
+      { century: 9, poem_count: 649 },
+      { century: 14, poem_count: 146 },
+      { century: null, poem_count: 409 },
+    ],
+    accessibility: [
+      { min: 1, max: 1.5, poem_count: 200 },
+      { min: 2, max: 2.5, poem_count: 200 },
+      { min: 4, max: 4.5, poem_count: 200 },
+    ],
+  },
+};
+
 describe('OnboardingFlow', () => {
-  it('renders the mood step from the fallback list pre-migration', async () => {
+  it('shows an empty state pre-migration instead of hanging or inventing options', async () => {
     render(<OnboardingFlow />);
-    const items = await screen.findAllByTestId('mood-item');
-    expect(items.length).toBeGreaterThan(0);
+    expect(await screen.findByTestId('onboarding-family-empty')).toBeTruthy();
+    // Critically: no options are fabricated when the taxonomy is unavailable.
+    expect(screen.queryAllByTestId('onboarding-family-option')).toHaveLength(0);
   });
 
-  it('renders taxonomy moods when the dimension is populated', async () => {
-    fetchCategories.mockResolvedValue(TAXONOMY);
+  it('renders families from the live taxonomy, ordered by size and bilingual', async () => {
+    fetchCategories.mockResolvedValue(FULL_TAXONOMY);
     render(<OnboardingFlow />);
-    await waitFor(() => expect(screen.getAllByTestId('mood-item')).toHaveLength(2));
+    await waitFor(() => expect(screen.getAllByTestId('onboarding-family-option')).toHaveLength(2));
+    const options = screen.getAllByTestId('onboarding-family-option');
+    expect(options[0]).toHaveAttribute('data-option-key', 'love-desire');
+    expect(options[0].textContent).toContain('الحب والهوى');
+    expect(options[0].textContent).toContain('Love & Desire');
+    // Counts are surfaced so the reader can see how big each shelf is.
+    expect(options[0].textContent).toContain('4,554');
+  });
+
+  it('advances through all five steps, ending on difficulty', async () => {
+    fetchCategories.mockResolvedValue(FULL_TAXONOMY);
+    const onComplete = vi.fn();
+    render(<OnboardingFlow onComplete={onComplete} />);
+
+    await screen.findAllByTestId('onboarding-family-option');
+    fireEvent.click(screen.getAllByTestId('onboarding-family-option')[0]);
+    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
+
+    await screen.findByTestId('onboarding-mood');
+    fireEvent.click(screen.getByTestId('onboarding-mood-continue'));
+
+    await screen.findByTestId('onboarding-motif');
+    fireEvent.click(screen.getByTestId('onboarding-motif-continue'));
+
+    await screen.findByTestId('onboarding-era');
+    const eras = screen.getAllByTestId('onboarding-era-option');
+    expect(eras.length).toBeGreaterThan(1);
+    fireEvent.click(eras[0]);
+    fireEvent.click(screen.getByTestId('onboarding-era-continue'));
+
+    await screen.findByTestId('onboarding-difficulty');
+    fireEvent.click(screen.getAllByTestId('onboarding-difficulty-option')[0]);
+    fireEvent.click(screen.getByTestId('onboarding-difficulty-continue'));
+
+    await waitFor(() => expect(onComplete).toHaveBeenCalled());
+    const saved = onComplete.mock.calls[0][0];
+    expect(saved.family).toBe('love-desire');
+    expect(saved.difficulty).toBe('gentle');
+    expect(saved.completedAt).toBeTruthy();
+  });
+
+  it('orders moods by poem count so the long tail sits at the end', async () => {
+    fetchCategories.mockResolvedValue(FULL_TAXONOMY);
+    render(<OnboardingFlow />);
+    await screen.findAllByTestId('onboarding-family-option');
+    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
+    await screen.findByTestId('onboarding-mood');
+    const keys = screen
+      .getAllByTestId('onboarding-mood-option')
+      .map((el) => el.getAttribute('data-option-key'));
+    // 1983 -> 419 -> 82. Nothing is dropped: the rare mood is still selectable,
+    // because the answer is a weight and cannot strand the reader.
+    expect(keys).toEqual(['pride', 'joy', 'despair']);
+  });
+
+  it('treats the motif step as optional', async () => {
+    fetchCategories.mockResolvedValue(FULL_TAXONOMY);
+    render(<OnboardingFlow />);
+    await screen.findAllByTestId('onboarding-family-option');
+    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
+    await screen.findByTestId('onboarding-mood');
+    fireEvent.click(screen.getByTestId('onboarding-mood-continue'));
+    const cta = await screen.findByTestId('onboarding-motif-continue');
+    // Nothing selected, but the step is skippable at full opacity.
+    expect(cta.textContent).toContain('تخطَّ');
   });
 });
 
@@ -127,9 +233,9 @@ describe('PreferencesDrawer', () => {
   it('renders a section per preference when open', async () => {
     render(<PreferencesDrawer isOpen onClose={() => {}} />);
     expect(await screen.findByTestId('preferences-drawer')).toBeTruthy();
-    expect(screen.getByTestId('prefs-edit-mood')).toBeTruthy();
-    expect(screen.getByTestId('prefs-edit-era')).toBeTruthy();
-    expect(screen.getByTestId('prefs-edit-topic')).toBeTruthy();
+    for (const id of ['family', 'mood', 'motif', 'era', 'difficulty']) {
+      expect(screen.getByTestId(`prefs-edit-${id}`)).toBeTruthy();
+    }
   });
 
   it('renders nothing when closed', () => {

@@ -1,44 +1,42 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import MoodPicker from './onboarding/MoodPicker';
-import EraPicker from './onboarding/EraPicker';
-import TopicsPicker from './onboarding/TopicsPicker';
-import { readPrefs, writePrefs, PREFS_STORAGE_KEY } from './onboarding/OnboardingFlow';
-import { fetchTagTaxonomy } from '../services/categoryTags.js';
-import { ERAS } from '../constants/eras.js';
+import PreferenceStep from './onboarding/PreferenceStep.jsx';
+import { readPrefs, writePrefs, PREFS_STORAGE_KEY } from '../services/preferences.js';
+import { fetchCategoryBands } from '../services/categoryBands.js';
 
 const GOLD = '#c5a059';
 
 /**
- * PreferencesDrawer — bottom sheet for reviewing and editing saved onboarding
- * preferences (moods / eras / topics).
+ * PreferencesDrawer — bottom sheet for reviewing and editing the five saved
+ * onboarding answers.
  *
- * Two changes from #517's version:
+ * Two constraints carried over from #517's version:
  *
  * 1. Props, not modalStore. The original read `prefsDrawer` and friends from a
  *    modalStore slice that shipped differently on main; this takes `isOpen` /
  *    `onClose` / `onSave` so it drops into any surface without a store change.
  *
- * 2. One picker at a time. Each picker is `position: fixed; inset: 0`, so the
- *    original — which mounted all three inside the scrolling sheet — rendered as
- *    three stacked full-screen overlays. Here the sheet summarises the current
- *    selection and opens a single picker on demand.
+ * 2. One step at a time. A step is `position: fixed; inset: 0`, so mounting
+ *    several inside the scrolling sheet renders as stacked full-screen overlays.
+ *    The sheet summarises the current answers and opens a single step on demand.
  *
- * Labels come from the shipped taxonomy (`GET /api/categories`) so a saved key
- * displays its bilingual label; keys with no matching value (pre-migration, or
- * a retired value) fall back to showing the raw key.
+ * Every label comes from the live taxonomy and the derived bands, so a saved key
+ * always displays bilingually; a key with no matching value (pre-migration, or a
+ * retired value) falls back to the raw key rather than disappearing.
  */
 const SECTIONS = [
-  { id: 'mood', ar: 'كيف تشعر الآن؟', en: 'Moods', field: 'moods' },
-  { id: 'era', ar: 'أي عصر يستهويك؟', en: 'Eras', field: 'eras' },
-  { id: 'topic', ar: 'ما الذي يستهويك؟', en: 'Topics', field: 'topics' },
+  { id: 'family', ar: 'ما الذي يستهويك؟', en: 'Draw', field: 'family', multi: false },
+  { id: 'mood', ar: 'كيف تشعر الآن؟', en: 'Moods', field: 'moods', multi: true },
+  { id: 'motif', ar: 'أيّ الصور تسكنك؟', en: 'Motifs', field: 'motifs', multi: true },
+  { id: 'era', ar: 'من أيّ زمن؟', en: 'Age', field: 'era', multi: false },
+  { id: 'difficulty', ar: 'عمق اللغة', en: 'Depth', field: 'difficulty', multi: false },
 ];
 
 const PreferencesDrawer = ({ isOpen = false, onClose, onSave, onReset }) => {
   const [prefs, setPrefs] = useState(readPrefs);
-  const [editing, setEditing] = useState(null); // 'mood' | 'era' | 'topic' | null
-  const [labels, setLabels] = useState({}); // "dim:key" -> { name_ar, name_en }
+  const [editing, setEditing] = useState(null);
+  const [taxonomy, setTaxonomy] = useState(null);
 
   // Re-read storage each time the sheet opens, so it reflects a flow completed
   // elsewhere in the session.
@@ -46,26 +44,37 @@ const PreferencesDrawer = ({ isOpen = false, onClose, onSave, onReset }) => {
     if (isOpen) setPrefs(readPrefs());
   }, [isOpen]);
 
-  // Bilingual labels for the saved keys. Never rejects; empty pre-migration.
+  // Options + bilingual labels. Never rejects; empty pre-migration.
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) return undefined;
     let cancelled = false;
-    fetchTagTaxonomy().then(({ tags }) => {
-      if (cancelled) return;
-      setLabels(Object.fromEntries(tags.map((t) => [t.id, t])));
+    fetchCategoryBands().then((t) => {
+      if (!cancelled) setTaxonomy(t);
     });
     return () => {
       cancelled = true;
     };
   }, [isOpen]);
 
+  const optionsFor = (section) => {
+    if (!taxonomy) return [];
+    if (section === 'family') return taxonomy.families || [];
+    if (section === 'era') return taxonomy.eraBands || [];
+    if (section === 'difficulty') return taxonomy.difficultyBands || [];
+    const dim = (taxonomy.dimensions || []).find((d) => d.key === section);
+    return dim?.values || [];
+  };
+
   const labelFor = (section, key) => {
-    if (section === 'era') {
-      const era = ERAS.find((e) => String(e.id) === String(key));
-      return era ? `${era.ar} · ${era.en}` : String(key);
-    }
-    const tag = labels[`${section}:${key}`];
-    return tag ? `${tag.name_ar} · ${tag.name_en}` : String(key);
+    const match = optionsFor(section).find((o) => o.key === key);
+    return match ? `${match.label_ar} · ${match.label_en}` : String(key);
+  };
+
+  /** A section's saved value as an array, whatever its cardinality. */
+  const valuesFor = (section) => {
+    const raw = prefs[section.field];
+    if (Array.isArray(raw)) return raw;
+    return raw ? [raw] : [];
   };
 
   const commit = (next) => {
@@ -75,7 +84,7 @@ const PreferencesDrawer = ({ isOpen = false, onClose, onSave, onReset }) => {
   };
 
   const handleReset = () => {
-    const empty = { moods: [], eras: [], topics: [] };
+    const empty = { family: null, moods: [], motifs: [], era: null, difficulty: null };
     setPrefs(empty);
     try {
       localStorage.removeItem(PREFS_STORAGE_KEY);
@@ -158,7 +167,7 @@ const PreferencesDrawer = ({ isOpen = false, onClose, onSave, onReset }) => {
               {/* Sections */}
               <div style={{ flex: 1, overflowY: 'auto', padding: '0 16px' }}>
                 {SECTIONS.map((section) => {
-                  const values = prefs[section.field] || [];
+                  const values = valuesFor(section);
                   return (
                     <button
                       key={section.id}
@@ -262,40 +271,36 @@ const PreferencesDrawer = ({ isOpen = false, onClose, onSave, onReset }) => {
         )}
       </AnimatePresence>
 
-      {/* One full-screen picker at a time, above the sheet. */}
+      {/* One full-screen step at a time, above the sheet. */}
       <AnimatePresence>
-        {editing === 'mood' && (
-          <MoodPicker
-            key="prefs-mood"
-            initialValue={prefs.moods}
-            onNext={(moods) => {
-              commit({ ...prefs, moods });
-              setEditing(null);
-            }}
-          />
-        )}
-        {editing === 'era' && (
-          <EraPicker
-            key="prefs-era"
-            initialValue={prefs.eras}
-            onNext={(eras) => {
-              commit({ ...prefs, eras });
-              setEditing(null);
-            }}
-          />
-        )}
-        {editing === 'topic' && (
-          <TopicsPicker
-            key="prefs-topic"
-            selectedMoods={prefs.moods}
-            selectedEras={prefs.eras}
-            initialValue={prefs.topics}
-            onComplete={({ topics }) => {
-              commit({ ...prefs, topics });
-              setEditing(null);
-            }}
-          />
-        )}
+        {editing &&
+          (() => {
+            const section = SECTIONS.find((s) => s.id === editing);
+            if (!section) return null;
+            return (
+              <PreferenceStep
+                key={`prefs-${section.id}`}
+                testId={`prefs-${section.id}`}
+                titleAr={section.ar}
+                titleEn={section.en}
+                options={optionsFor(section.id)}
+                layout={
+                  section.id === 'family' ? 'rows' : section.multi ? 'constellation' : 'stack'
+                }
+                multi={section.multi}
+                optional={section.id === 'motif'}
+                value={valuesFor(section)}
+                stepIndex={SECTIONS.indexOf(section)}
+                stepCount={SECTIONS.length}
+                loading={taxonomy == null}
+                onNext={(next) => {
+                  commit({ ...prefs, [section.field]: section.multi ? next : next[0] || null });
+                  setEditing(null);
+                }}
+                onBack={() => setEditing(null)}
+              />
+            );
+          })()}
       </AnimatePresence>
     </>
   );

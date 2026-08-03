@@ -48,7 +48,10 @@ let _enjoyabilityHtml = null;
 const loadEnjoyabilityHtml = () => {
   if (_enjoyabilityHtml === null) {
     try {
-      _enjoyabilityHtml = readFileSync(fileURLToPath(new URL('enjoyability-lab.html', import.meta.url)), 'utf8');
+      _enjoyabilityHtml = readFileSync(
+        fileURLToPath(new URL('enjoyability-lab.html', import.meta.url)),
+        'utf8'
+      );
     } catch {
       _enjoyabilityHtml = '';
     }
@@ -673,8 +676,14 @@ app.get(
 // Powers filter UIs. Returns [] gracefully when the migration hasn't run.
 app.get('/api/categories', async (req, res) => {
   try {
-    // Graceful pre-migration payload — both arrays present, no DB touch.
-    if (!hasCategorization) return res.json({ dimensions: [], families: [] });
+    // Graceful pre-migration payload — every key present and empty, no DB touch,
+    // so clients can render an empty state without null-checking each branch.
+    if (!hasCategorization)
+      return res.json({
+        dimensions: [],
+        families: [],
+        distributions: { eras: [], accessibility: [] },
+      });
     const result = await pool.query(`
       SELECT d.key AS dimension, d.label_ar AS dimension_ar, d.label_en AS dimension_en,
              d.cardinality, v.key AS value, v.label_ar, v.label_en,
@@ -743,9 +752,61 @@ app.get('/api/categories', async (req, res) => {
       });
     }
 
+    // Distributions power the two onboarding steps whose buckets are NOT part of
+    // the taxonomy — era and difficulty. Both are continuous-ish columns
+    // (poems.century, poems.accessibility_score) rather than category_values, so
+    // there is no seeded list of options to read. Publishing the raw histograms
+    // lets the client cut bands from the ACTUAL shape of the corpus instead of
+    // hardcoding nominal ranges that don't match reality (accessibility is
+    // nominally 0-10 but really tops out around 8.3, and century is dominated by
+    // the 9th).
+    //
+    // Raw counts only — the banding itself lives in one shared pure function on
+    // the client (src/services/categoryBands.js) so it is unit-testable and
+    // behaves identically whether the histogram came from here or from a
+    // client-side sample against an older server.
+    const [eraDist, accDist] = await Promise.all([
+      pool.query(`
+        SELECT po.era_id AS era_id, e.name AS era_name, p.century AS century,
+               COUNT(*)::int AS poem_count
+        FROM poems p
+        JOIN poets po ON p.poet_id = po.id
+        LEFT JOIN eras e ON po.era_id = e.id
+        GROUP BY po.era_id, e.name, p.century
+        ORDER BY p.century NULLS LAST, po.era_id
+      `),
+      pool.query(`
+        SELECT width_bucket(accessibility_score, 0, 10, 20) AS bucket,
+               COUNT(*)::int AS poem_count
+        FROM poems
+        WHERE accessibility_score IS NOT NULL
+        GROUP BY bucket
+        ORDER BY bucket
+      `),
+    ]);
+
     res.json({
       dimensions: Array.from(byDim.values()),
       families: Array.from(byFamily.values()),
+      distributions: {
+        // One row per (era, century) pair. century is null for the late/modern
+        // eras — see the ERA_CENTURY note on by-category's century range params.
+        eras: eraDist.rows.map((r) => ({
+          era_id: r.era_id,
+          era_name: r.era_name,
+          century: r.century,
+          poem_count: r.poem_count,
+        })),
+        // 20 half-unit buckets over the 0-10 accessibility scale. bucket N covers
+        // [ (N-1)/2, N/2 ). Higher score = HARDER (1 = easy for Arabic learners,
+        // 5 = requires deep classical knowledge) — the column name reads the
+        // other way round, so don't invert it.
+        accessibility: accDist.rows.map((r) => ({
+          min: (r.bucket - 1) / 2,
+          max: r.bucket / 2,
+          poem_count: r.poem_count,
+        })),
+      },
     });
   } catch (error) {
     Sentry.captureException(error);
@@ -769,7 +830,15 @@ app.get('/api/categories', async (req, res) => {
 //   poet                — exact poet name or slug (mirrors /api/poems/by-poet).
 //   era                 — poets.era_id (integer) OR an era name (poets.era_id
 //                         resolved via eras.name).
-//   century             — poems.century (integer CE, era-derived).
+//   century             — poems.century (integer CE, era-derived), exact match.
+//   centuryFrom         — p.century >= N. Contiguous band lower bound.
+//   centuryTo           — p.century <= N. Contiguous band upper bound.
+//   includeUndated      — 1|true: NULL-century poems stay eligible alongside the
+//                         centuryFrom/centuryTo range (they are ~25% of the
+//                         corpus — late/modern eras with no representative
+//                         century, NOT missing data).
+//   undated             — 1|true: ONLY NULL-century poems. Expresses the
+//                         late/modern band itself. Overrides the range params.
 //   minIntensity        — emotional_intensity >= N (0-100)
 //   maxIntensity        — emotional_intensity <= N (0-100)
 //   minAccessibility    — accessibility_score >= N (0-10)
@@ -881,6 +950,38 @@ app.get('/api/poems/by-category', async (req, res) => {
         params.push(century);
         clauses.push(`p.century = $${params.length}`);
       }
+    }
+
+    // Century RANGE (centuryFrom / centuryTo), mirroring the min/max pairs used
+    // for intensity and accessibility below. An era "band" in the UI is by
+    // definition a contiguous span of centuries, so a range expresses it
+    // directly instead of forcing the client to fan out one request per century.
+    //
+    // NULL century is NOT missing data: `poems.century` is a representative
+    // century derived 1:1 from the poet's era (categorization/config.py
+    // ERA_CENTURY), and the late/modern eras are deliberately left NULL because
+    // they span too many centuries to pin to one. Those poems are ~25% of the
+    // corpus, so silently dropping them from every dated band would hide a
+    // quarter of the library. `includeUndated=1` keeps them eligible alongside
+    // the range; the undated band itself is expressed as `undated=1`.
+    const centuryFrom = parseInt(req.query.centuryFrom, 10);
+    const centuryTo = parseInt(req.query.centuryTo, 10);
+    const includeUndated = /^(1|true|yes)$/i.test(String(req.query.includeUndated ?? ''));
+    const undatedOnly = /^(1|true|yes)$/i.test(String(req.query.undated ?? ''));
+    if (undatedOnly) {
+      clauses.push(`p.century IS NULL`);
+    } else if (Number.isInteger(centuryFrom) || Number.isInteger(centuryTo)) {
+      const rangeParts = [];
+      if (Number.isInteger(centuryFrom)) {
+        params.push(centuryFrom);
+        rangeParts.push(`p.century >= $${params.length}`);
+      }
+      if (Number.isInteger(centuryTo)) {
+        params.push(centuryTo);
+        rangeParts.push(`p.century <= $${params.length}`);
+      }
+      const range = rangeParts.join(' AND ');
+      clauses.push(includeUndated ? `((${range}) OR p.century IS NULL)` : `(${range})`);
     }
 
     // Intensity range (0-100) and difficulty/accessibility range (0-10). Each
@@ -1740,7 +1841,9 @@ const requireCuration = async (req, res, next) => {
     if (!uid) {
       return res
         .status(404)
-        .json({ error: 'saved-poems curation disabled (set SAVED_CURATION_EMAIL in a local .env)' });
+        .json({
+          error: 'saved-poems curation disabled (set SAVED_CURATION_EMAIL in a local .env)',
+        });
     }
     req.curationUid = uid;
     next();
@@ -1819,7 +1922,15 @@ app.post('/api/lab/saved/restore', requireCuration, async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT DO NOTHING
        RETURNING id`,
-      [req.curationUid, poem_id ?? null, poem_text ?? null, poet ?? null, title ?? null, english ?? null, category ?? null]
+      [
+        req.curationUid,
+        poem_id ?? null,
+        poem_text ?? null,
+        poet ?? null,
+        title ?? null,
+        english ?? null,
+        category ?? null,
+      ]
     );
     res.json({ ok: true, saved_id: r.rows[0]?.id || null });
   } catch (e) {

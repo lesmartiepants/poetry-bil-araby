@@ -37,26 +37,26 @@
     },
     {
       "id": "onboarding-preferences",
-      "name": "Onboarding preference pickers",
+      "name": "Onboarding preference flow (5 steps)",
       "tier": "nice",
-      "userFacing": "Full-screen preference flow at /onboarding: pick moods, historical eras, then topics; the selection is saved to localStorage.onboardingPrefs and re-editable through PreferencesDrawer. Salvaged from PR #517 and rewired onto the shipped categorization taxonomy; gated behind FEATURES.onboardingPrefs and not on the app boot path.",
+      "userFacing": "Full-screen five-step flow at /onboarding: family, mood, motif (optional), era, difficulty. Every option, bilingual label and poem count is read from the live categorization API; the era and difficulty bands are cut from the LIVE DISTRIBUTION (GET /api/categories -> distributions) rather than hardcoded. Answers save to localStorage.onboardingPrefs and are re-editable through PreferencesDrawer. They bias the feed as a weight, never a filter (see feed-preference-weighting). Salvaged from PR #517's visual work and rebuilt against the shipped taxonomy.",
       "entrypoints": [
         "src/components/onboarding/OnboardingFlow.jsx",
-        "src/components/onboarding/MoodPicker.jsx",
-        "src/components/onboarding/EraPicker.jsx",
-        "src/components/onboarding/TopicsPicker.jsx",
+        "src/components/onboarding/PreferenceStep.jsx",
         "src/components/PreferencesDrawer.jsx",
+        "src/services/categoryBands.js",
+        "src/services/preferences.js",
         "src/services/categoryTags.js",
         "src/constants/eras.js"
       ],
       "endpoints": ["GET /api/categories"],
       "tests": {
-        "unit": ["src/test/onboarding-preferences.test.jsx"],
+        "unit": ["src/test/onboarding-preferences.test.jsx", "src/test/categoryBands.test.js"],
         "e2e": []
       },
       "deviceOnly": false,
       "coverage": "behavioral",
-      "gap": "Unit tests cover the categoryTags adapter (dimension -> tag mapping, composite ids, by-category param grouping, empty pre-migration payload) and that OnboardingFlow / PreferencesDrawer render from both a populated and an empty taxonomy. No e2e yet: stepping mood -> era -> topics and asserting the write to localStorage.onboardingPrefs is untested."
+      "gap": "Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all five steps to completion, mood ordering, and the empty pre-migration state. No e2e yet for the rendered flow."
     },
     {
       "id": "taxonomy-tag-ui",
@@ -707,6 +707,25 @@
       "deviceOnly": false,
       "coverage": "none",
       "gap": "Dev tooling; no automated coverage by design. /enjoyability is gated by ENABLE_DEV_LAB (404 in prod); the Saved-curation endpoints are gated by SAVED_CURATION_EMAIL (unset in prod)."
+    },
+    {
+      "id": "feed-preference-weighting",
+      "name": "Preference-weighted feed selection",
+      "tier": "nice",
+      "userFacing": "Onboarding answers bias which poem the feed serves next WITHOUT filtering the corpus. Each draw picks one of three pools by a weighted coin: core (all answers applied), adjacent (only the broadest answer), wild (no filters at all). The mix starts biased and decays toward a floor as the reader gets through poems, so the first feed is clearly seeded but nothing in the library ever becomes unreachable. A biased draw that matches nothing falls back to a plain random fetch.",
+      "entrypoints": [
+        "src/services/preferenceWeighting.js",
+        "src/services/preferences.js",
+        "src/stores/actions/fetchPoem.js"
+      ],
+      "endpoints": ["GET /api/poems/by-category", "GET /api/categories"],
+      "tests": {
+        "unit": ["src/test/preferenceWeighting.test.js"],
+        "e2e": []
+      },
+      "deviceOnly": false,
+      "coverage": "behavioral",
+      "gap": "Unit tests pin the mix curve, the no-lock-in guarantee (wild share never drops below a floor), pool->filter translation including undated-century handling, and graceful degradation when bands are unavailable. The integration in fetchPoem.js (fallback to a plain fetch on an empty biased result) has no dedicated test yet."
     }
   ]
 }

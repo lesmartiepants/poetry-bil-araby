@@ -2,6 +2,11 @@
 
 ## Context
 
+> **Historical note:** this plan was written when the database still held the full ~85,000-poem
+> Qafiyah import. Curation has since happened: the database holds 9,073 poems, and 4,767 of those
+> pass the serving filters. The paragraph below describes the pre-curation starting point, not
+> today's app. See "The Library" in `README.md` for the current numbers.
+
 The app currently serves 84,329 poems from a PostgreSQL database with no quality filtering -- users get random poems of wildly varying quality. We want to combine our existing corpus with the NoorBayan/Diwan dataset (~400K poems), then curate down to the **5,000 best Arabic poems** using Claude AI as a poetry judge. The result is a "greatest hits" collection spanning classical and modern eras, weighted 60-70% modern.
 
 Quality means **poetic beauty** -- how a poem sounds, its imagery, emotional impact, linguistic craft, and cultural significance -- not just technical metadata like completeness or length.
@@ -17,11 +22,11 @@ Quality means **poetic beauty** -- how a poem sounds, its imagery, emotional imp
 
 ## Budget & Scale
 
-| Phase | Model | Poems | Est. Cost |
-|-------|-------|-------|-----------|
-| Haiku scoring | claude-haiku-4 | ~300K | ~$38 |
-| Opus calibration | claude-opus-4-5 | ~3-5K | ~$50-60 |
-| **Total** | | | **~$90-100** |
+| Phase            | Model           | Poems | Est. Cost    |
+| ---------------- | --------------- | ----- | ------------ |
+| Haiku scoring    | claude-haiku-4  | ~300K | ~$38         |
+| Opus calibration | claude-opus-4-5 | ~3-5K | ~$50-60      |
+| **Total**        |                 |       | **~$90-100** |
 
 Target: **5,000 poems** in the final curated collection.
 
@@ -30,9 +35,11 @@ Target: **5,000 poems** in the final curated collection.
 ## Pipeline Steps
 
 ### Step 1: Schema Migration
+
 **File:** `supabase/migrations/20260307000000_add_curation_columns.sql`
 
 Add to `poems` table:
+
 - `quality_score SMALLINT` (0-100)
 - `quality_subscores JSONB` (`{sound, imagery, emotion, language, cultural}`)
 - `source_dataset VARCHAR(20)` (default `'original'`)
@@ -45,6 +52,7 @@ Add indexes: `quality_score DESC`, `source_dataset`, composite `(quality_score, 
 Backfill `source_dataset = 'original'` for existing 84K poems.
 
 ### Step 2: Download & Preprocess Diwan
+
 **File:** `scripts/curation/01_download_diwan.py`
 
 1. Download Diwan TSV (UTF-16) from NoorBayan GitHub/Zenodo
@@ -60,11 +68,13 @@ Backfill `source_dataset = 'original'` for existing 84K poems.
 5. Expected: ~200-300K poems survive pre-filtering
 
 ### Step 3: Score Poems (single configurable script)
+
 **File:** `scripts/curation/02_score_poems.py`
 
 A single scoring script that can be run at any time with configurable model, cost cap, and scope. Uses **LiteLLM** for model routing (supports Claude via `anthropic/` prefix, plus any other provider).
 
 **Usage examples:**
+
 ```bash
 # Initial pass: score all candidates with Haiku (~$38)
 python scripts/curation/02_score_poems.py \
@@ -94,6 +104,7 @@ python scripts/curation/02_score_poems.py \
 ```
 
 **CLI flags:**
+
 - `--model` (required): LiteLLM model string (e.g., `anthropic/claude-haiku-4-20250414`)
 - `--scope`: `all` (every candidate), `top` (top N by existing score), `unscored` (poems without scores)
 - `--top-k`: How many top poems to score when `--scope top` (default 5000)
@@ -107,12 +118,14 @@ python scripts/curation/02_score_poems.py \
 
 **Scoring rubric** (entirely in Arabic, both prompt modes):
 
-*Compact mode* (for Haiku -- JSON-only response):
+_Compact mode_ (for Haiku -- JSON-only response):
+
 - Persona: Arabic literature critic, academic + modern reader
 - 5 dimensions, each 0-100: sound, imagery, emotion, language, cultural
 - Returns: `{"sound": N, "imagery": N, "emotion": N, "language": N, "cultural": N}`
 
-*Detailed mode* (for Opus -- scores + justification):
+_Detailed mode_ (for Opus -- scores + justification):
+
 - Persona: "الدكتور أحمد" -- 40-year Arabic lit professor at Cairo University who also genuinely loves poetry
 - Same 5 dimensions with conversational Arabic rubric questions:
   - "هل يطرب الأذن؟" (Does it delight the ear?)
@@ -120,6 +133,7 @@ python scripts/curation/02_score_poems.py \
 - Returns: scores + one-sentence note per dimension + overall verdict
 
 **Architecture:**
+
 - `asyncio` + `litellm.acompletion` (async, I/O-bound)
 - Checkpoints to Parquet every 1,000 poems (resume-safe)
 - Running cost tracked per call via `litellm.completion_cost()`; stops at `--max-cost`
@@ -128,6 +142,7 @@ python scripts/curation/02_score_poems.py \
 - Scores saved to `scripts/curation/data/scores_{model_slug}.parquet`
 
 ### Step 4: Recalibrate & Validate
+
 **File:** `scripts/curation/03_recalibrate.py`
 
 When two scoring runs exist (e.g., Haiku on all + Opus on top 5K), learn calibration from their overlap:
@@ -149,6 +164,7 @@ Apply calibration to ALL base scores. For poems with calibration scores, use cal
 **Validation:** Print Pearson correlation (target >0.75), biggest disagreements, bias magnitudes.
 
 ### Step 5: Select Final 5K
+
 **File:** `scripts/curation/04_select_final.py`
 
 1. Separate into classical (poem_form=1) and modern (poem_form=2)
@@ -162,15 +178,18 @@ Apply calibration to ALL base scores. For poems with calibration scores, use cal
 Save to `scripts/curation/data/final_selection.parquet`
 
 ### Step 6: Import to Production
+
 **File:** `scripts/curation/05_import_poems.py`
 
 Two operations:
+
 1. **Existing poems:** Update `quality_score`, `quality_subscores`, `scoring_model`, `scored_at` via UNNEST batch writes (following `batch-diacritize.py` pattern)
 2. **New Diwan poems (in final 5K only):** Upsert poets/themes, insert poems with full metadata. New poems are inserted with `diacritized_content = NULL` -- the separate diacritization pipeline (being built by another team, see `scripts/batch-diacritize.py` for current approach) should be run after import to populate tashkeel for new poems.
 
 Flags: `--dry-run` (print without writing), `--scores-only` (update existing scores, skip new imports)
 
 ### Step 7: API Quality Filter
+
 **File:** `server.js` (modify existing)
 
 1. Add `hasQualityScore` column detection (same pattern as `hasDiacritizedColumn` at lines 52-64)

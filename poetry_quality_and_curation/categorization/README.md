@@ -13,7 +13,8 @@ cost caps, `--dry-run`.
 
 ## Why this exists (the gap it fills)
 
-The 84k-poem DB already has some categorization, but it's thin and single-label:
+The DB (9,073 poems, curated down from the ~85k Qafiyah source) already has some
+categorization, but it's thin and single-label:
 
 | Facet           | Where it lives            | Problem for filtering / reccos                                                                     |
 | --------------- | ------------------------- | -------------------------------------------------------------------------------------------------- |

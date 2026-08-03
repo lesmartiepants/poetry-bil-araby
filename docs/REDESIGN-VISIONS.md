@@ -6,9 +6,9 @@
 
 ## What the Product Does Today
 
-A bilingual Arabic poetry discovery app. 84,329 poems. AI-powered recitation and analysis. The core loop: **Discover → Read → Listen → Understand → Collect.**
+A bilingual Arabic poetry discovery app. 9,073 curated poems, of which 4,767 pass the serving filters. AI-powered recitation and analysis. The core loop: **Discover → Read → Listen → Understand → Collect.**
 
-The current UI is functional — dark/light theme, gold accent palette, glass morphism controls, a vertical sidebar, a bottom action bar, and a bottom-sheet insights drawer. It works. But it's a *dashboard* when it should be an *experience*.
+The current UI is functional — dark/light theme, gold accent palette, glass morphism controls, a vertical sidebar, a bottom action bar, and a bottom-sheet insights drawer. It works. But it's a _dashboard_ when it should be an _experience_.
 
 ---
 
@@ -18,18 +18,18 @@ The current UI is functional — dark/light theme, gold accent palette, glass mo
 
 > Every poem is a page in a beautifully typeset book. The UI disappears. The poetry commands the space.
 
-*The New York Times Magazine* meets a medieval Arabic manuscript.
+_The New York Times Magazine_ meets a medieval Arabic manuscript.
 
 ### Core UX Shifts
 
-| Current | Codex |
-|---------|-------|
-| Poem in a card with ornamental SVG frame | Full-bleed text on a bare surface |
-| Bottom button bar (always visible) | Translucent "whisper bar" that fades on scroll |
-| 10-button vertical sidebar | Radial/pie menu triggered by corner gesture |
-| "Discover" button for next poem | Swipe left/right between poems |
-| Tap "Explain" for insights | Long-press any verse for inline insight |
-| Binary modal for saved poems | `/saved` route with masonry grid |
+| Current                                  | Codex                                          |
+| ---------------------------------------- | ---------------------------------------------- |
+| Poem in a card with ornamental SVG frame | Full-bleed text on a bare surface              |
+| Bottom button bar (always visible)       | Translucent "whisper bar" that fades on scroll |
+| 10-button vertical sidebar               | Radial/pie menu triggered by corner gesture    |
+| "Discover" button for next poem          | Swipe left/right between poems                 |
+| Tap "Explain" for insights               | Long-press any verse for inline insight        |
+| Binary modal for saved poems             | `/saved` route with masonry grid               |
 
 ### Visual Language
 
@@ -108,18 +108,18 @@ Readers. Scholars. Linguists. People who want to sit with a poem.
 
 > Poetry is an embodied experience — sound, rhythm, visual texture, emotional atmosphere. The app is not a book; it's a space you enter.
 
-*Headspace* meets a digital art installation.
+_Headspace_ meets a digital art installation.
 
 ### Core UX Shifts
 
-| Current | Living Manuscript |
-|---------|-------------------|
-| Static poem display | Calligraphic stroke animation (SVG path) |
-| "Listen" button for audio | Audio plays automatically; waveform ribbon at bottom |
-| "Discover" button for random | Constellation graph: poems as connected nodes |
-| Dark/light theme toggle | Per-poem atmospheric color (AI-derived mood palette) |
-| Bottom control bar | Waveform ribbon + edge-swipe panels |
-| Poet picker dropdown | Constellation: tap a poet node to see their universe |
+| Current                      | Living Manuscript                                    |
+| ---------------------------- | ---------------------------------------------------- |
+| Static poem display          | Calligraphic stroke animation (SVG path)             |
+| "Listen" button for audio    | Audio plays automatically; waveform ribbon at bottom |
+| "Discover" button for random | Constellation graph: poems as connected nodes        |
+| Dark/light theme toggle      | Per-poem atmospheric color (AI-derived mood palette) |
+| Bottom control bar           | Waveform ribbon + edge-swipe panels                  |
+| Poet picker dropdown         | Constellation: tap a poet node to see their universe |
 
 ### Visual Language
 
@@ -181,30 +181,30 @@ Tailwind 4               → CSS custom properties for dynamic theming
 
 - Synesthetic poetry experience (visual + audio + haptic unified)
 - Intertextual discovery (see how poems relate to each other)
-- Emotional atmosphere (app *feels* different for love vs. war poetry)
+- Emotional atmosphere (app _feels_ different for love vs. war poetry)
 - Audio-first design (recitation is central, not an afterthought)
 - Community layer (user translations, annotations)
 
 ### Best For
 
-Art lovers. Audiophiles. Explorers. People who want to *feel* a poem.
+Art lovers. Audiophiles. Explorers. People who want to _feel_ a poem.
 
 ---
 
 ## Side-by-Side Comparison
 
-| Dimension | Option A: Scholarly Codex | Option B: Living Manuscript |
-|-----------|--------------------------|----------------------------|
-| **Metaphor** | Book / codex | Art installation |
-| **Complexity** | Low (minimal UI) | High (intentional richness) |
-| **Performance** | Excellent (code-split, lazy) | Moderate (3D/canvas overhead) |
-| **Accessibility** | Excellent | Moderate (needs fallbacks) |
-| **Mobile** | Elegant (gesture-native) | Stunning (haptic + audio) |
-| **Technical risk** | Low (proven patterns) | High (SVG calligraphy, force graphs) |
-| **Build time** | 4–6 weeks | 8–12 weeks |
-| **Audience** | Readers, scholars, linguists | Art lovers, audiophiles |
-| **Offline** | Full (Workbox PWA) | Partial (cached poems, not 3D) |
-| **Bundle size** | ~120KB | ~400KB+ |
+| Dimension          | Option A: Scholarly Codex    | Option B: Living Manuscript          |
+| ------------------ | ---------------------------- | ------------------------------------ |
+| **Metaphor**       | Book / codex                 | Art installation                     |
+| **Complexity**     | Low (minimal UI)             | High (intentional richness)          |
+| **Performance**    | Excellent (code-split, lazy) | Moderate (3D/canvas overhead)        |
+| **Accessibility**  | Excellent                    | Moderate (needs fallbacks)           |
+| **Mobile**         | Elegant (gesture-native)     | Stunning (haptic + audio)            |
+| **Technical risk** | Low (proven patterns)        | High (SVG calligraphy, force graphs) |
+| **Build time**     | 4–6 weeks                    | 8–12 weeks                           |
+| **Audience**       | Readers, scholars, linguists | Art lovers, audiophiles              |
+| **Offline**        | Full (Workbox PWA)           | Partial (cached poems, not 3D)       |
+| **Bundle size**    | ~120KB                       | ~400KB+                              |
 
 ---
 
@@ -213,6 +213,7 @@ Art lovers. Audiophiles. Explorers. People who want to *feel* a poem.
 **Start with Option A** as the production target. It solves every architectural problem while dramatically improving the reading experience. It ships faster and serves the broadest audience.
 
 **Prototype Option B features incrementally** on top of the Codex foundation:
+
 1. Atmospheric backgrounds as an optional "immersive mode" toggle
 2. Constellation explorer as a standalone `/explore` route
 3. Verse-synced audio highlighting (without full calligraphic animation)
@@ -222,4 +223,4 @@ This way the app evolves from a solid editorial foundation toward an immersive e
 
 ---
 
-*Both options preserve the soul of the product: celebrating Arabic poetry. They differ in how that celebration is delivered.*
+_Both options preserve the soul of the product: celebrating Arabic poetry. They differ in how that celebration is delivered._

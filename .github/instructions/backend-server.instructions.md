@@ -1,5 +1,5 @@
 ---
-applyTo: "server.js,**/*.server.js"
+applyTo: 'server.js,**/*.server.js'
 ---
 
 # Backend Server
@@ -10,7 +10,8 @@ applyTo: "server.js,**/*.server.js"
 ## API Endpoints
 
 ```javascript
-GET /api/health                      // { status: 'ok', poemCount: 84329 }
+GET /api/health                      // { status: 'ok', uptime, commit } — no DB query
+GET /api/health/full                 // { status: 'ok', database, totalPoems: 9073, servedPoems: 4767 }
 GET /api/poems/random?poet=نزار قباني  // Random poem (optional poet filter)
 GET /api/poems/by-poet/:poet        // Poems by specific poet
 GET /api/poets                      // [{ name, count }, ...]
@@ -29,13 +30,14 @@ const pool = new Pool({
   database: process.env.PGDATABASE || 'qafiyah',
   password: process.env.PGPASSWORD || '',
   port: parseInt(process.env.PGPORT || '5432'),
-  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
 });
 ```
 
 ## Best Practices
 
 **Security:**
+
 ```javascript
 // ✅ Parameterized queries (prevent SQL injection)
 await pool.query('SELECT * FROM poems WHERE poet = $1', [poet]);
@@ -45,11 +47,13 @@ await pool.query(`SELECT * FROM poems WHERE poet = '${poet}'`);
 ```
 
 **Error Handling:**
+
 - Try-catch all database queries
 - Return 200 (success), 404 (not found), 500 (server error)
 - Log errors to console
 
 **Performance:**
+
 - Use `pg.Pool` for connection pooling (reuse connections)
 - Backend self-pings every 9-13min (randomized) in production to prevent Render cold starts (15 min timeout)
 - Frontend provides backup keep-alive pings when users are active

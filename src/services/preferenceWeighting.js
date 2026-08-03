@@ -82,27 +82,35 @@ export const INITIAL_MIX = { core: 0.6, adjacent: 0.25, wild: 0.15 };
  *                          wild draws           in any 3 poems
  *   ----   -------------   ------------------   -------------------
  *   0.50        50%        every 2.0 poems             88%
- *   0.40        60%        every 2.5 poems             78%   <- current
+ *   0.40        60%        every 2.5 poems             78%
  *   0.30        70%        every 3.3 poems             66%
+ *   0.25        75%        every 4.0 poems             58%   <- current floor
  *   0.20        80%        every 5.0 poems             49%
+ *   0.15        85%        every 6.7 poems             39%   <- current start
  *   0.10        90%        every 10 poems              27%
  *
  * (gap = 1/wild; odds in any 3 = 1 - (1-wild)^3.)
  *
- * The thing to weigh: at 0.40 there is a 78% chance that any three consecutive
- * poems contain one that ignores the answers, and only an 8% chance of five
- * on-preference poems in a row (0.6^5). For a flow that asks five questions,
- * that can read as "my answers didn't matter". Lowering it to 0.20 makes five
- * in a row a 33% event and halves the interruption rate, at the cost of a
- * narrower feed for a settled reader.
+ * Where the current numbers came from. An earlier draft floored wild at 0.40,
+ * which meant a 78% chance that any three consecutive poems contained one
+ * ignoring the reader's answers, and only an 8% chance of five on-preference
+ * poems in a row (0.6^5). For a flow that asks five questions, that reads as
+ * "my answers didn't matter".
+ *
+ * A flat 0.15 was considered and rejected: 0.15 is also the INITIAL value, so
+ * the decay would be a no-op and the mix would never change from poem 1 to poem
+ * 1,000 — which throws away the seed-then-broaden mechanism entirely. The floor
+ * therefore sits at 0.25: the feed still visibly opens up as a reader settles
+ * in (a wild poem every ~4 draws instead of every ~6.7), but nowhere near the
+ * every-2.5 churn of the 0.40 draft.
  *
  * Whatever you pick, keep `wild` strictly above zero — it is what makes every
  * poem in the corpus reachable on every draw, which is the property the whole
- * weighted-not-filtered design exists to preserve.
- *
- * The three values must sum to 1; a test enforces that.
+ * weighted-not-filtered design exists to preserve. A test enforces `wild > 0`
+ * and that the three values sum to 1, but deliberately does NOT pin the values
+ * themselves, so retuning this line needs no test edit.
  */
-export const SETTLED_MIX = { core: 0.35, adjacent: 0.25, wild: 0.4 };
+export const SETTLED_MIX = { core: 0.5, adjacent: 0.25, wild: 0.25 };
 
 /** Poems seen before the mix has fully relaxed to SETTLED_MIX. */
 export const DECAY_OVER_POEMS = 30;

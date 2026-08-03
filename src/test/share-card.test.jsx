@@ -15,6 +15,17 @@ import {
   generateShareCardDataURL,
 } from '../utils/shareCardDesigns';
 
+// These gaps are the sum of several chained floating-point offsets (ascent,
+// descent, row gap, translation line height), so a geometrically-exact 12px
+// layout can land a few units of 1e-13 under the line depending on the font
+// sizes involved. GAP_EPSILON absorbs that accumulation noise without
+// masking a real sub-pixel collision, so don't remove it or "tighten" it back
+// to a bare MIN_BILINGUAL_GAP comparison.
+const GAP_EPSILON = 1e-9;
+function expectGapAtLeast(actual, min) {
+  expect(actual).toBeGreaterThanOrEqual(min - GAP_EPSILON);
+}
+
 // ─── Test data ──────────────────────────────────────────────────────────
 const mockPoem = {
   id: 42,
@@ -372,16 +383,19 @@ describe('renderShareCard', () => {
       preferredRowGap: 96,
     });
 
-    expect(layout.translationOffsets[0] - arabicDescent - arabicAscent).toBeGreaterThanOrEqual(
+    expectGapAtLeast(
+      layout.translationOffsets[0] - arabicDescent - arabicAscent,
       MIN_BILINGUAL_GAP
     );
     for (let index = 0; index < verses.length - 1; index++) {
       const englishBottom = layout.translationOffsets[index] + arabicDescent;
       const nextArabicTop = layout.rowGap - arabicAscent;
-      expect(nextArabicTop - englishBottom).toBeGreaterThanOrEqual(MIN_BILINGUAL_GAP);
+      expectGapAtLeast(nextArabicTop - englishBottom, MIN_BILINGUAL_GAP);
     }
     for (const design of SHARE_CARD_DESIGNS) {
-      expect(() => renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, vocalizedPoem, design.id, { maxLines: 6 })).not.toThrow();
+      expect(() =>
+        renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, vocalizedPoem, design.id, { maxLines: 6 })
+      ).not.toThrow();
     }
   });
 
@@ -404,7 +418,10 @@ describe('renderShareCard', () => {
   const isArabicRun = (s) => /[؀-ۿ]/.test(String(s));
 
   /** Font-aware metrics: Arabic descends far below the baseline (diacritics). */
-  function useMeasuredGlyphs(context, { arDescent = 0.42, arAscent = 0.95, enDescent = 0.26, enAscent = 0.72 } = {}) {
+  function useMeasuredGlyphs(
+    context,
+    { arDescent = 0.42, arAscent = 0.95, enDescent = 0.26, enAscent = 0.72 } = {}
+  ) {
     context.measureText.mockImplementation(function measure(text) {
       const match = /(\d+(?:\.\d+)?)px/.exec(context.font || '');
       const size = match ? Number(match[1]) : 16;
@@ -447,14 +464,12 @@ describe('renderShareCard', () => {
 
     for (let index = 0; index < verses.length; index++) {
       // Arabic diacritics → first English line
-      expect(layout.translationOffsets[index] - arDescent - enAscent).toBeGreaterThanOrEqual(
-        MIN_BILINGUAL_GAP
-      );
+      expectGapAtLeast(layout.translationOffsets[index] - arDescent - enAscent, MIN_BILINGUAL_GAP);
       // LAST English line of this verse → next verse's Arabic
       if (index < verses.length - 1) {
         const englishBottom =
           layout.translationOffsets[index] + layout.translationLineHeight + enDescent;
-        expect(layout.rowGap - englishBottom - arAscent).toBeGreaterThanOrEqual(MIN_BILINGUAL_GAP);
+        expectGapAtLeast(layout.rowGap - englishBottom - arAscent, MIN_BILINGUAL_GAP);
       }
     }
   });
@@ -478,7 +493,11 @@ describe('renderShareCard', () => {
     expect(none.translationOffsets[2]).toBeGreaterThan(0);
 
     // More lines must push the block taller, never shorter.
-    const twoLine = [['one', 'more'], ['two', 'more'], ['three', 'more']];
+    const twoLine = [
+      ['one', 'more'],
+      ['two', 'more'],
+      ['three', 'more'],
+    ];
     const two = createBilingualVerseLayout(ctx, verses, twoLine, opts);
     expect(two.height).toBeGreaterThan(flat.height);
     expect(two.rowGap).toBeGreaterThanOrEqual(flat.rowGap);
@@ -529,14 +548,14 @@ describe('renderShareCard', () => {
         // diacritics of this Arabic line → top of its first English line
         const arabicBottom = verse.y + verse.size * 0.42;
         const englishTop = mine[0].y - mine[0].size * 0.72;
-        expect(englishTop - arabicBottom).toBeGreaterThanOrEqual(MIN_BILINGUAL_GAP);
+        expectGapAtLeast(englishTop - arabicBottom, MIN_BILINGUAL_GAP);
 
         // bottom of this verse's LAST English line → next Arabic line
         if (next) {
           const last = mine[mine.length - 1];
           const englishBottom = last.y + last.size * 0.26;
           const nextTop = next.y - next.size * 0.95;
-          expect(nextTop - englishBottom).toBeGreaterThanOrEqual(MIN_BILINGUAL_GAP);
+          expectGapAtLeast(nextTop - englishBottom, MIN_BILINGUAL_GAP);
         }
       }
 

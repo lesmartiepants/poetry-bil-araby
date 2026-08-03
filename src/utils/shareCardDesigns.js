@@ -1327,19 +1327,19 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
       englishSize: tSize,
       // Measured against the 6-verse fixture in scripts/render-sahifa-rowgap-compare.mjs,
       // the between-verse collision floor (minimumRowGap) sits at ~121-133px
-      // through the shrink-to-fit range this layout lands on, so anything
-      // above ~148 already clears it. The real lower bound turned out to be
-      // src/test/share-card.test.jsx's measured within-verse gap check: that
-      // gap is exactly MIN_BILINGUAL_GAP by construction (see
-      // createBilingualVerseLayout's translationOffsets), so which discrete
-      // vSize/tSize the shrink-to-fit loop lands on decides whether the
-      // test's independent recomputation rounds to >=12 or a hair under it.
-      // A binary search over this fixture found 172 fails, 173 passes -- 173
-      // is the smallest value that keeps that test green, and there's no
-      // "safer" number above it since none of them carry real headroom past
-      // 12px, they just land on a different side of the same rounding. See
-      // PR #686 for the rendered comparison across 148/156/160/166/173/180.
-      preferredRowGap: 173,
+      // through the shrink-to-fit range this layout lands on, so 148 already
+      // clears it with real headroom.
+      //
+      // 148 used to fail src/test/share-card.test.jsx's measured within-verse
+      // gap check, but that was a test defect, not a real constraint: the
+      // check compared a chained-float-addition gap against MIN_BILINGUAL_GAP
+      // with zero tolerance, so a geometrically-exact 12px layout could land a
+      // few units of 1e-13 under the line depending on which vSize/tSize the
+      // shrink-to-fit loop landed on. See GAP_EPSILON / expectGapAtLeast in
+      // share-card.test.jsx. With that fixed, 148 passes, and it's the value
+      // the design actually asked for (tighter within-verse pairing).
+      // See PR #686 for the rendered comparison across 148/156/160/166/173/180.
+      preferredRowGap: 148,
     });
 
   let trLines = wrapAt(tSize);

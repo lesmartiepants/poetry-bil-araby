@@ -102,7 +102,15 @@ export default defineConfig({
   ],
   server: {
     watch: {
-      ignored: ['**/poetry-*/**'],
+      // Match the specific sibling checkouts below, NOT a bare `poetry-*` glob.
+      // `**/poetry-*/**` also matches this repo's own path
+      // (…/github/poetry-bil-araby/…), which silently disabled HMR for every
+      // git worktree under the project directory.
+      ignored: [
+        '**/poetry-innovative-*/**',
+        '**/poetry-splash-ci-fixes/**',
+        '**/poetry-database/**',
+      ],
     },
     fs: {
       deny: ['poetry-innovative-78ab', 'poetry-innovative-c0cf', 'poetry-splash-ci-fixes', 'poetry-database'],

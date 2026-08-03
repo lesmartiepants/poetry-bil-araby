@@ -22,6 +22,9 @@ export const CARD_WIDTH = 1080;
 export const CARD_HEIGHT = 1350;
 export const MIN_BILINGUAL_GAP = 12;
 const BILINGUAL_SCALE_STEP = 0.05;
+// Line height for wrapped English translations, as a multiple of the type size.
+// 1.34 keeps the broadsheet's established 40px rhythm at its 30px English.
+const ENGLISH_LINE_FACTOR = 1.34;
 
 // ── Design registry ────────────────────────────────────────────────────
 export const SHARE_CARD_DESIGNS = [
@@ -86,7 +89,8 @@ export const SHARE_CARD_DESIGNS = [
     name: 'Musnad',
     nameAr: 'مسند',
     artist: 'Layout — numbered margin',
-    description: 'Numbered margin — editorial manuscript, poet slug top-left, verses numbered against a margin rule',
+    description:
+      'Numbered margin — editorial manuscript, poet slug top-left, verses numbered against a margin rule',
   },
   {
     id: 'muqabala',
@@ -272,9 +276,36 @@ function textBounds(ctx, text, fallbackSize) {
 }
 
 /**
+ * Normalize the `translation` argument of `createBilingualVerseLayout` into one
+ * array of lines per verse.
+ *
+ * Two shapes are accepted:
+ *   - `string[]`   — one translation line per verse (the original shape)
+ *   - `string[][]` — pre-wrapped, several lines per verse (used by the
+ *                    broadsheet, whose English wraps instead of shrinking)
+ *
+ * A falsy entry or an empty array both mean "this verse has no translation".
+ */
+function toTranslationLines(translation) {
+  return (translation || []).map((entry) => {
+    if (Array.isArray(entry)) return entry.filter(Boolean);
+    return entry ? [entry] : [];
+  });
+}
+
+/**
  * Lay out Arabic lines and their English translations from their rendered glyph
  * bounds. This protects the space below Arabic baselines used by diacritics,
  * rather than relying on a fixed baseline offset.
+ *
+ * `translation` may be `string[]` (one line per verse) or `string[][]`
+ * (pre-wrapped). For the single-line shape the arithmetic is identical to a
+ * plain per-verse descent, so existing callers are unaffected.
+ *
+ * Returns `{ vSize, tSize, translationOffsets, rowGap, height,
+ * translationLineHeight, translationLines }`. `translationOffsets[i]` is the
+ * distance from verse i's Arabic baseline to its FIRST English baseline;
+ * subsequent wrapped lines step down by `translationLineHeight`.
  */
 export function createBilingualVerseLayout(ctx, verses, translation, opts) {
   const {
@@ -285,11 +316,16 @@ export function createBilingualVerseLayout(ctx, verses, translation, opts) {
     preferredRowGap = 150,
     minSize = 14,
     gap = MIN_BILINGUAL_GAP,
+    englishLineFactor = ENGLISH_LINE_FACTOR,
   } = opts;
+  const translationLines = toTranslationLines(translation);
+  // uniformFit needs flat strings; for the single-line shape this is the same
+  // set of strings the original passed straight through.
+  const flatTranslation = translationLines.flat();
   const maxArabic = uniformFit(ctx, verses, '"Amiri", serif', arabicSize, maxWidth);
   const maxEnglish = uniformFit(
     ctx,
-    translation,
+    flatTranslation,
     '"Playfair Display", serif',
     englishSize,
     maxWidth,
@@ -301,29 +337,47 @@ export function createBilingualVerseLayout(ctx, verses, translation, opts) {
   do {
     const vSize = Math.max(minSize, Math.floor(maxArabic * scale));
     const tSize = Math.max(minSize, Math.floor(maxEnglish * scale));
+    const translationLineHeight = Math.max(tSize + 2, Math.round(tSize * englishLineFactor));
     ctx.font = `${vSize}px "Amiri", serif`;
     const arabicBounds = verses.map((verse) => textBounds(ctx, verse, vSize));
     ctx.font = `italic ${tSize}px "Playfair Display", serif`;
-    const englishBounds = translation.map((line) => (line ? textBounds(ctx, line, tSize) : null));
+    // Per verse: the ascent of the FIRST English line, and `depth` — how far the
+    // block reaches below that first baseline (0 for a single line, so this
+    // reduces to the plain descent used before).
+    const englishBlocks = translationLines.map((lines) => {
+      if (!lines.length) return null;
+      const first = textBounds(ctx, lines[0], tSize);
+      const last = textBounds(ctx, lines[lines.length - 1], tSize);
+      return {
+        ascent: first.ascent,
+        depth: (lines.length - 1) * translationLineHeight + last.descent,
+      };
+    });
     const translationOffsets = arabicBounds.map((bounds, index) =>
-      englishBounds[index] ? bounds.descent + gap + englishBounds[index].ascent : 0
+      englishBlocks[index] ? bounds.descent + gap + englishBlocks[index].ascent : 0
     );
     const minimumRowGap = arabicBounds.slice(0, -1).reduce((minimum, bounds, index) => {
-      const previousBottom = englishBounds[index]
-        ? translationOffsets[index] + englishBounds[index].descent
+      const previousBottom = englishBlocks[index]
+        ? translationOffsets[index] + englishBlocks[index].depth
         : bounds.descent;
       return Math.max(minimum, previousBottom + gap + arabicBounds[index + 1].ascent);
     }, 0);
     const rowGap = Math.max(preferredRowGap * scale, minimumRowGap);
     const lastIndex = verses.length - 1;
-    const lastBottom = englishBounds[lastIndex]
-      ? translationOffsets[lastIndex] + englishBounds[lastIndex].descent
+    const lastBottom = englishBlocks[lastIndex]
+      ? translationOffsets[lastIndex] + englishBlocks[lastIndex].depth
       : arabicBounds[lastIndex]?.descent || 0;
     const height =
-      (arabicBounds[0]?.ascent || 0) +
-      Math.max(verses.length - 1, 0) * rowGap +
-      lastBottom;
-    layout = { vSize, tSize, translationOffsets, rowGap, height };
+      (arabicBounds[0]?.ascent || 0) + Math.max(verses.length - 1, 0) * rowGap + lastBottom;
+    layout = {
+      vSize,
+      tSize,
+      translationOffsets,
+      rowGap,
+      height,
+      translationLineHeight,
+      translationLines,
+    };
     scale -= BILINGUAL_SCALE_STEP;
   } while (
     layout.height > maxHeight &&
@@ -353,13 +407,18 @@ function drawInterleavedVerses(ctx, verses, translation, opts) {
     tBase = 34,
     preferredRowGap = 150,
   } = opts;
-  const { vSize, tSize, translationOffsets, rowGap } = createBilingualVerseLayout(ctx, verses, translation, {
-    maxWidth,
-    maxHeight,
-    arabicSize: vBase,
-    englishSize: tBase,
-    preferredRowGap,
-  });
+  const { vSize, tSize, translationOffsets, rowGap } = createBilingualVerseLayout(
+    ctx,
+    verses,
+    translation,
+    {
+      maxWidth,
+      maxHeight,
+      arabicSize: vBase,
+      englishSize: tBase,
+      preferredRowGap,
+    }
+  );
   verses.forEach((verse, i) => {
     const y = startY + i * rowGap;
     ctx.fillStyle = ink;
@@ -1238,71 +1297,106 @@ function renderSahifa(ctx, w, h, poem, opts = {}) {
   const titleSize = 62;
   const vSize = 54;
   const tSize = 30;
-  const arEnGap = 52; // Arabic baseline → its English baseline (a touch more air)
-  const tLineH = 40; // line height for wrapped English
-  const rowExtra = 42; // gap between verse units
 
   // The English strapline is the poem's English TITLE, set in the madder-red
   // feature colour (falls back to the English poet if there is no title).
   const enHead = title.english || poet.english || '';
 
-  // Pre-measure wrapped translation lines to size the block for centering.
-  ctx.font = `italic ${tSize}px "Playfair Display", serif`;
-  const trLines = verses.map((_, i) =>
-    translation[i] ? wrapText(ctx, translation[i], textWidth) : []
-  );
-
-  // Relative layout (title baseline at 0), then offset so the block centres.
+  // Header geometry, relative to the Arabic title's baseline.
   const relPoet = 56;
-  const relEnHead = enHead ? relPoet + 46 : relPoet;
-  const vy = [];
-  let cursor = relEnHead + 74;
-  let lastBottom = cursor;
-  for (let i = 0; i < verses.length; i++) {
-    vy[i] = cursor;
-    const L = trLines[i].length;
-    const enBottom = L ? cursor + arEnGap + (L - 1) * tLineH + 10 : cursor + 12;
-    lastBottom = enBottom;
-    cursor = enBottom + rowExtra + 44; // next Arabic baseline
-  }
-  const blockTopRel = -48; // title cap height above baseline
-  const totalH = lastBottom - blockTopRel;
+  const titleCap = 48; // cap height above the title baseline
+  const headerSpan = enHead ? relPoet + 46 : poet.arabic ? relPoet : 0;
+  const gapAfterHeader = 74; // header's last baseline → first Arabic baseline
   const bandTop = 150;
   const bandBottom = h - 150;
-  const offset = bandTop + Math.max(0, (bandBottom - bandTop - totalH) / 2) - blockTopRel;
+  const availForVerses = bandBottom - bandTop - titleCap - headerSpan - gapAfterHeader;
+
+  // The English keeps a CONSISTENT size and wraps rather than shrinking, so it
+  // is pre-wrapped and handed to the shared layout as one array of lines per
+  // verse. The layout then measures real glyph bounds to guarantee the Arabic
+  // diacritics never touch the English beneath them.
+  const wrapAt = (size) => {
+    ctx.font = `italic ${size}px "Playfair Display", serif`;
+    return verses.map((_, i) => (translation[i] ? wrapText(ctx, translation[i], textWidth) : []));
+  };
+  const layoutFor = (lines) =>
+    createBilingualVerseLayout(ctx, verses, lines, {
+      maxWidth: textWidth,
+      maxHeight: availForVerses,
+      arabicSize: vSize,
+      englishSize: tSize,
+      // Measured against the 6-verse fixture in scripts/render-sahifa-rowgap-compare.mjs,
+      // the between-verse collision floor (minimumRowGap) sits at ~121-133px
+      // through the shrink-to-fit range this layout lands on, so 148 already
+      // clears it with real headroom.
+      //
+      // 148 used to fail src/test/share-card.test.jsx's measured within-verse
+      // gap check, but that was a test defect, not a real constraint: the
+      // check compared a chained-float-addition gap against MIN_BILINGUAL_GAP
+      // with zero tolerance, so a geometrically-exact 12px layout could land a
+      // few units of 1e-13 under the line depending on which vSize/tSize the
+      // shrink-to-fit loop landed on. See GAP_EPSILON / expectGapAtLeast in
+      // share-card.test.jsx. With that fixed, 148 passes, and it's the value
+      // the design actually asked for (tighter within-verse pairing).
+      // See PR #686 for the rendered comparison across 148/156/160/166/173/180.
+      preferredRowGap: 148,
+    });
+
+  let trLines = wrapAt(tSize);
+  let verseLayout = layoutFor(trLines);
+  // If the block had to shrink to fit, the pre-wrap was measured at the old
+  // size — re-wrap once at the size we actually landed on so the lines are
+  // still the right length.
+  if (verseLayout.tSize < tSize) {
+    trLines = wrapAt(verseLayout.tSize);
+    verseLayout = layoutFor(trLines);
+  }
+
+  const totalH = titleCap + headerSpan + gapAfterHeader + verseLayout.height;
+  const titleY = bandTop + Math.max(0, (bandBottom - bandTop - totalH) / 2) + titleCap;
 
   // Header — Arabic title, Arabic poet (madder), English "[poet] – [title]".
   ctx.textAlign = 'center';
   ctx.direction = 'rtl';
   ctx.fillStyle = '#191512';
-  fitFont(ctx, title.arabic || '', '"Reem Kufi", "Amiri", sans-serif', titleSize, textWidth, 'bold');
-  ctx.fillText(title.arabic || '', xText, offset);
+  fitFont(
+    ctx,
+    title.arabic || '',
+    '"Reem Kufi", "Amiri", sans-serif',
+    titleSize,
+    textWidth,
+    'bold'
+  );
+  ctx.fillText(title.arabic || '', xText, titleY);
   if (poet.arabic) {
     ctx.fillStyle = '#8e2a2a';
     ctx.font = '38px "Amiri", serif';
-    ctx.fillText(poet.arabic, xText, offset + relPoet);
+    ctx.fillText(poet.arabic, xText, titleY + relPoet);
   }
   if (enHead) {
     ctx.direction = 'ltr';
     ctx.fillStyle = '#8e2a2a'; // madder-red feature colour
     fitFont(ctx, enHead, '"Playfair Display", serif', 30, textWidth, '600');
-    ctx.fillText(enHead, xText, offset + relEnHead);
+    ctx.fillText(enHead, xText, titleY + relPoet + 46);
   }
 
-  // Verses — big Arabic, consistent wrapped English.
+  // Verses — big Arabic, consistent wrapped English. Baselines come from the
+  // shared layout, so the gap under each Arabic line is measured, not assumed.
+  const verseTop = titleY + headerSpan + gapAfterHeader;
   verses.forEach((verse, i) => {
-    const y = vy[i] + offset;
+    const y = verseTop + i * verseLayout.rowGap;
     ctx.fillStyle = '#191512';
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
-    fitFont(ctx, verse, '"Amiri", serif', vSize, textWidth);
+    ctx.font = `${verseLayout.vSize}px "Amiri", serif`;
     ctx.fillText(verse, xText, y);
     if (trLines[i].length) {
       ctx.fillStyle = 'rgba(25, 21, 18, 0.6)';
       ctx.direction = 'ltr';
-      ctx.font = `italic ${tSize}px "Playfair Display", serif`;
+      ctx.font = `italic ${verseLayout.tSize}px "Playfair Display", serif`;
+      const enTop = y + verseLayout.translationOffsets[i];
       trLines[i].forEach((ln, j) => {
-        ctx.fillText(ln, xText, y + arEnGap + j * tLineH);
+        ctx.fillText(ln, xText, enTop + j * verseLayout.translationLineHeight);
       });
     }
   });

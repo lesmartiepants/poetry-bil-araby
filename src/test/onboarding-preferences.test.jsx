@@ -18,7 +18,7 @@ import {
   tagIdsToFilters,
   countPoemLabels,
 } from '../services/categoryTags.js';
-import { fetchCategories } from '../services/database.js';
+import { fetchCategories, fetchPoemsByCategory } from '../services/database.js';
 
 const TAXONOMY = {
   dimensions: [
@@ -46,6 +46,7 @@ const TAXONOMY = {
 beforeEach(() => {
   vi.clearAllMocks();
   fetchCategories.mockResolvedValue({ dimensions: [], families: [] });
+  fetchPoemsByCategory.mockResolvedValue([]);
 });
 
 describe('categoryTags adapter', () => {
@@ -226,6 +227,52 @@ describe('OnboardingFlow', () => {
     const cta = await screen.findByTestId('onboarding-motif-continue');
     // Nothing selected, but the step is skippable at full opacity.
     expect(cta.textContent).toContain('تخطَّ');
+  });
+});
+
+describe('sampled bands', () => {
+  // When the server predates the `distributions` payload, bands are cut from a
+  // client-side sample. Proportions survive sampling; absolute counts do not —
+  // "37" out of a 300-poem sample would read as 37 poems out of 84,000.
+  const SAMPLE_PAGE = Array.from({ length: 50 }, (_, i) => ({
+    id: i,
+    century: i < 20 ? 9 : i < 35 ? 6 : null,
+    accessibilityScore: 1 + (i % 6) * 0.7,
+  }));
+
+  it('reports a share, not a count, when the histogram came from a sample', async () => {
+    fetchCategories.mockResolvedValue({
+      dimensions: FULL_TAXONOMY.dimensions,
+      families: FULL_TAXONOMY.families,
+      // No `distributions` — an older server.
+    });
+    fetchPoemsByCategory.mockResolvedValue(SAMPLE_PAGE);
+
+    const { fetchCategoryBands } = await import('../services/categoryBands.js');
+    const { eraBands, difficultyBands } = await fetchCategoryBands();
+
+    expect(eraBands.length).toBeGreaterThan(0);
+    for (const b of [...eraBands, ...difficultyBands]) {
+      expect(b.estimated).toBe(true);
+      expect(b.poem_count).toBeUndefined();
+      expect(b.share).toBeGreaterThan(0);
+      expect(b.share).toBeLessThanOrEqual(1);
+    }
+    const total = eraBands.reduce((n, b) => n + b.share, 0);
+    expect(total).toBeCloseTo(1, 5);
+  });
+
+  it('keeps exact counts when the server measured them', async () => {
+    fetchCategories.mockResolvedValue(FULL_TAXONOMY);
+    const { fetchCategoryBands } = await import('../services/categoryBands.js');
+    const { eraBands } = await fetchCategoryBands();
+
+    for (const b of eraBands) {
+      expect(b.estimated).toBe(false);
+      expect(b.poem_count).toBeGreaterThan(0);
+    }
+    // Server-measured: no sampling requests at all.
+    expect(fetchPoemsByCategory).not.toHaveBeenCalled();
   });
 });
 

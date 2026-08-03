@@ -28,21 +28,45 @@ const GOLD = '#c5a059';
 const INK = '#0a0a0f';
 
 /**
- * Deterministic scatter. A seeded hash keeps node positions stable across
- * re-renders (a random layout that reshuffles under the cursor is unusable),
- * while still looking unplanned.
+ * Deterministic constellation layout.
+ *
+ * Nodes sit on two concentric rings. Each ring spreads its OWN members evenly
+ * over the full circle rather than sharing one angular sequence with the other
+ * ring — sharing it packs the outer ring at 2π/n spacing, which is far too tight
+ * for variable-width bilingual chips and makes them collide.
+ *
+ * A seeded hash adds a small jitter so the result looks unplanned, but it is
+ * derived from the value key rather than Math.random: positions must be stable
+ * across re-renders, or nodes shuffle under the cursor as you select them.
+ *
+ * The inner ring is offset half a step so its nodes fall in the gaps of the
+ * outer ring instead of lining up radially behind them.
  */
 const scatter = (key, index, count) => {
   let h = 0;
   for (let i = 0; i < key.length; i += 1) h = (h * 31 + key.charCodeAt(i)) | 0;
-  const jitter = ((h >>> 8) % 1000) / 1000;
-  const jitter2 = ((h >>> 18) % 1000) / 1000;
-  // Two rings so the middle doesn't crowd; outer ring holds the majority.
-  const ring = index % 3 === 0 ? 0.42 : 0.82;
-  const angle = (Math.PI * 2 * index) / count + (jitter - 0.5) * 0.55;
+  const jitter = ((h >>> 8) % 1000) / 1000 - 0.5;
+
+  // Roughly a third inside, two thirds outside — enough room for the inner ring
+  // to breathe while the outer one carries the bulk.
+  const innerCount = Math.max(1, Math.round(count / 3));
+  const isInner = index < innerCount;
+  const ringCount = isInner ? innerCount : count - innerCount;
+  const posInRing = isInner ? index : index - innerCount;
+
+  // Ellipse, not a circle: the field is wider than it is tall, so the vertical
+  // radius has to be a LARGER percentage to cover comparable pixels. Keeping
+  // them equal flattens the inner ring until its chips stack on each other.
+  const radiusX = isInner ? 18 : 38;
+  const radiusY = isInner ? 24 : 40;
+  const step = (Math.PI * 2) / Math.max(1, ringCount);
+  // Half-step offset on the inner ring, and start at -90deg so the first (and
+  // largest, since options arrive count-sorted) node sits at the top.
+  const angle = -Math.PI / 2 + step * posInRing + (isInner ? step / 2 : 0) + jitter * step * 0.16;
+
   return {
-    x: 50 + Math.cos(angle) * ring * 38 + (jitter2 - 0.5) * 5,
-    y: 50 + Math.sin(angle) * ring * 34 + (jitter - 0.5) * 5,
+    x: 50 + Math.cos(angle) * radiusX,
+    y: 50 + Math.sin(angle) * radiusY,
   };
 };
 
@@ -203,7 +227,13 @@ const PreferenceStep = ({
           option.poem_count != null ? ` (${option.poem_count})` : ''
         }`}
         style={{
-          background: isSelected ? `${color}1f` : 'transparent',
+          // Constellation chips sit over the connecting lines, so an unselected
+          // one still needs an opaque backdrop or the strokes run through the text.
+          background: isSelected
+            ? `${color}2e`
+            : layout === 'constellation'
+              ? 'rgba(10,10,15,0.88)'
+              : 'transparent',
           border: `1px solid ${isSelected ? color : 'rgba(255,255,255,0.10)'}`,
           borderRadius: layout === 'stack' ? '14px' : '999px',
           cursor: 'pointer',
@@ -264,7 +294,7 @@ const PreferenceStep = ({
             </span>
           )}
         </span>
-        {option.poem_count != null && (
+        {(option.poem_count != null || option.share != null) && (
           <span
             data-testid={`${testId}-count`}
             style={{
@@ -274,7 +304,11 @@ const PreferenceStep = ({
               whiteSpace: 'nowrap',
             }}
           >
-            {option.poem_count.toLocaleString('en-US')}
+            {/* An exact count when the server measured it; a share when the band
+                was cut from a sample, where the absolute number is meaningless. */}
+            {option.poem_count != null
+              ? option.poem_count.toLocaleString('en-US')
+              : `${Math.round(option.share * 100)}%`}
           </span>
         )}
       </button>
@@ -312,13 +346,21 @@ const PreferenceStep = ({
     if (layout === 'constellation') {
       const positions = options.map((o, i) => ({ o, ...scatter(o.key, i, options.length) }));
       return (
-        <div style={{ position: 'relative', width: '100%', height: 'min(58vh, 460px)' }}>
+        <div style={{ position: 'relative', width: '100%', height: 'min(62vh, 520px)' }}>
           <svg
             aria-hidden="true"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
           >
             {positions.map((p, i) => {
-              const n = positions[(i + 1) % positions.length];
+              // Join each node to its neighbour WITHIN its own ring, so the
+              // lines trace two clean circles instead of zig-zagging between
+              // rings and crossing the whole field.
+              const innerCount = Math.max(1, Math.round(positions.length / 3));
+              const isInner = i < innerCount;
+              const ringStart = isInner ? 0 : innerCount;
+              const ringLen = isInner ? innerCount : positions.length - innerCount;
+              if (ringLen < 2) return null;
+              const n = positions[ringStart + ((i - ringStart + 1) % ringLen)];
               return (
                 <line
                   key={p.o.key}
@@ -326,7 +368,7 @@ const PreferenceStep = ({
                   y1={`${p.y}%`}
                   x2={`${n.x}%`}
                   y2={`${n.y}%`}
-                  stroke="rgba(197,160,89,0.13)"
+                  stroke="rgba(197,160,89,0.10)"
                   strokeWidth="1"
                 />
               );
@@ -341,6 +383,8 @@ const PreferenceStep = ({
                 top: `${p.y}%`,
                 transformOrigin: 'center',
                 translate: '-50% -50%',
+                // Keeps a long bilingual label from sprawling into its neighbour.
+                maxWidth: '120px',
               },
               i
             )

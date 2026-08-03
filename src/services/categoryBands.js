@@ -370,17 +370,34 @@ export const fetchCategoryBands = async () => {
   }
 
   let distributions = payload?.distributions;
+  let estimated = false;
   if (!distributions?.eras?.length && !distributions?.accessibility?.length) {
+    estimated = true;
     // Server predates the distributions payload — derive the same histograms
     // from a live sample so the bands still come from real data.
     distributions = await sampleDistributions().catch(() => ({ eras: [], accessibility: [] }));
   }
 
+  // Bands cut from a SAMPLE have accurate proportions but meaningless absolute
+  // counts — "37 poems" out of a 300-poem sample is really ~13% of 84,000. Mark
+  // them so the UI shows a share instead of a count rather than quoting a number
+  // that is off by two orders of magnitude.
+  const markShares = (bands) => {
+    const total = bands.reduce((n, b) => n + (b.poem_count || 0), 0) || 1;
+    return bands.map((b) => ({
+      ...b,
+      share: b.poem_count / total,
+      estimated,
+      // Absolute counts are only trustworthy when the server measured them.
+      poem_count: estimated ? undefined : b.poem_count,
+    }));
+  };
+
   return {
     dimensions,
     families,
-    eraBands: deriveEraBands(distributions?.eras || []),
-    difficultyBands: deriveDifficultyBands(distributions?.accessibility || []),
+    eraBands: markShares(deriveEraBands(distributions?.eras || [])),
+    difficultyBands: markShares(deriveDifficultyBands(distributions?.accessibility || [])),
     degraded: false,
   };
 };

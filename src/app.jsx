@@ -25,6 +25,7 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
+import { useOnboardingPrefs } from './hooks/useOnboardingPrefs';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useQueryParams } from './hooks/useQueryParams';
 import { useVolumeDetection, PulseGlowBars } from './hooks/useVolumeDetection.jsx';
@@ -279,6 +280,9 @@ export default function DiwanApp() {
   // Auth state
   const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut } = useAuth();
   const { settings, saveSettings } = useUserSettings(user);
+  // Reconciles the onboarding answers with the account on sign-in, and gives the
+  // flow a write-through on completion. Inert while signed out.
+  const { persist: persistOnboardingPrefs } = useOnboardingPrefs(user);
   const { savedPoems, savePoem, unsavePoem, isPoemSaved } = useSavedPoems(user);
   const { downvotedPoemIds, downvotePoem, undownvotePoem, isPoemDownvoted } = useDownvotes(user);
   const { emitEvent } = usePoemEvents(user);
@@ -2200,7 +2204,17 @@ export default function DiwanApp() {
           of the default boot path (the app boots straight into the feed). */}
       {FEATURES.onboardingPrefs && isOnboardingRoute && (
         <Suspense fallback={null}>
-          <OnboardingFlow key="onboarding-flow" onComplete={() => navigate('/')} />
+          <OnboardingFlow
+            key="onboarding-flow"
+            onComplete={(prefs) => {
+              // OnboardingFlow has already written localStorage; this mirrors the
+              // answers to the account when signed in and is a no-op when not.
+              // Not awaited — the reader should not wait on a network round-trip
+              // to leave the last step.
+              persistOnboardingPrefs(prefs);
+              navigate('/');
+            }}
+          />
         </Suspense>
       )}
 

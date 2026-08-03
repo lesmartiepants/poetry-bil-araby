@@ -74,7 +74,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 - **Features tracked:** 41
 - **HTTP endpoints in code:** 37
 - **Components in code:** 42
-- **Test files in code:** 65
+- **Test files in code:** 66
 - **Behavioral coverage:** 8/41 (20%)
 
 | Tier | Features |
@@ -97,7 +97,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 | Feature | Tier | Coverage | Device-only | Gap |
 |---------|------|----------|-------------|-----|
 | `poem-categorization` | important | mocked | - | server.test.js covers the enabled/disabled API paths with a mocked pool; no e2e yet for the Explore Poems UI (filter chips, in-place poem expand). |
-| `onboarding-preferences` | nice | behavioral | - | Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all five steps to completion, mood ordering, and the empty pre-migration state. No e2e yet for the rendered flow. |
+| `onboarding-preferences` | nice | behavioral | - | Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all five steps to completion, mood ordering, and the empty pre-migration state. Cross-device sync is unit-tested in both merge directions, plus write-through, read-back and version mismatch, against a stubbed Supabase client. No e2e yet for the rendered flow, and nothing exercises the JSONB column against a real Postgres row. |
 | `taxonomy-tag-ui` | nice | none | - | No automated coverage. Components are ported but unmounted; add tests when a surface routes to them. |
 | `poem-display` | critical | behavioral | - | Arabic font rendering (Amiri/Tajawal) differs prod vs CI; no visual regression. |
 | `discover-random` | critical | mocked | - | e2e routes /api/** to canned JSON; real server SERVING filters + exclude fallback only covered by server.test.js in isolation. |

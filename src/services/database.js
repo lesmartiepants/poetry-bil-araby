@@ -122,12 +122,22 @@ export const fetchPoemsByPoet = async (poetName, count = 5, excludeIds = []) => 
  * + counts) and the curated families. Data-driven — callers should render
  * whatever comes back rather than hardcoding dimension keys.
  *
- * Gracefully returns the empty shape `{dimensions:[], families:[]}` both when the
- * backend reports categorization is absent (pre-migration) and on any network /
- * parse error, so the UI can show a "not available yet" state without crashing.
+ * Also passes through `distributions` (the era x century and accessibility
+ * histograms). Those are what let the era and difficulty onboarding steps show
+ * REAL counts — `fetchCategoryBands` falls back to sampling ~300 poems and
+ * showing percentages whenever they are missing, so dropping them here silently
+ * downgrades two of the five steps even against a server that publishes them.
+ * Older servers omit the key entirely; the empty shape below keeps that fallback
+ * working without any null-checking at the call site.
  *
- * @returns {Promise<{dimensions: Array, families: Array}>}
+ * Gracefully returns the empty shape both when the backend reports
+ * categorization is absent (pre-migration) and on any network / parse error, so
+ * the UI can show a "not available yet" state without crashing.
+ *
+ * @returns {Promise<{dimensions: Array, families: Array, distributions: {eras: Array, accessibility: Array}}>}
  */
+const EMPTY_DISTRIBUTIONS = { eras: [], accessibility: [] };
+
 export const fetchCategories = async () => {
   try {
     const res = await fetch(`${apiUrl}/api/categories`);
@@ -136,9 +146,15 @@ export const fetchCategories = async () => {
     return {
       dimensions: Array.isArray(data?.dimensions) ? data.dimensions : [],
       families: Array.isArray(data?.families) ? data.families : [],
+      distributions: {
+        eras: Array.isArray(data?.distributions?.eras) ? data.distributions.eras : [],
+        accessibility: Array.isArray(data?.distributions?.accessibility)
+          ? data.distributions.accessibility
+          : [],
+      },
     };
   } catch {
-    return { dimensions: [], families: [] };
+    return { dimensions: [], families: [], distributions: EMPTY_DISTRIBUTIONS };
   }
 };
 

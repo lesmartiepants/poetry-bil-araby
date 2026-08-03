@@ -159,10 +159,12 @@ VERCEL_TOKEN; // For Vercel CLI
 
 7. **Database Mode Requirements**: To use database mode locally:
    - Install PostgreSQL 15+ (17 required for Supabase auth features due to `gen_random_uuid()` requirement)
-   - Create `qafiyah` database
-   - Start backend: `npm run dev:server`
-   - Start frontend: `npm run dev`
-   - Or use `npm run dev:all` to run both concurrently
+   - `npm run db:setup` — creates the `qafiyah` database and applies every migration in `supabase/migrations/`. Idempotent; safe to re-run. Refuses to run against a hosted Supabase URL.
+   - This builds the **schema only**. The 84k-poem corpus is not in the repo (the import SQL is gitignored at ~118MB), so a fresh database is empty and poem endpoints return nothing until it is loaded. AI mode needs no database.
+   - `npm run dev:all` to run backend + frontend (or `dev:server` / `dev` separately)
+   - `npm run db:dump-schema` regenerates `20260101000000_base_poetry_schema.sql` from the live database. Read-only against the source, schema only, needs `DATABASE_URL` on the pooler host.
+   - Base tables (`poems`, `poets`, and the `eras`/`meters`/`patterns`/`rhymes`/`themes`/`tags` lookups) live in `20260101000000_base_poetry_schema.sql`. Everything else only `ALTER`s them, so that file has to stay first. Do not confuse it with the gitignored `*_import_poetry.sql`, which is the data.
+   - Known repo-vs-production drift is listed in `supabase/migrations/README.md`.
 
 8. **Authentication (Optional)**: Supabase auth features are optional:
    - App works fully without authentication

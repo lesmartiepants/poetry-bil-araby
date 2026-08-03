@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS bug_reports (
 );
 
 -- Index for querying recent reports
-CREATE INDEX idx_bug_reports_created_at ON bug_reports (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_bug_reports_created_at ON bug_reports (created_at DESC);
 
 -- Grant access via PostgREST (matches existing pattern)
 GRANT SELECT, INSERT ON bug_reports TO anon, authenticated;

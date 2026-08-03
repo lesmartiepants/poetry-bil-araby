@@ -20,6 +20,8 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
     "test:e2e:full": "playwright test --config=playwright.config.full.js",
+    "db:setup": "bash scripts/db-setup.sh",
+    "db:dump-schema": "bash scripts/db-dump-schema.sh",
     "smoke": "node scripts/smoke-deploy.mjs",
     "screenshots": "node scripts/capture-design-screenshots.js",
     "poc:compare": "node investigations/live-word-sync-poc/compare-methods.mjs",

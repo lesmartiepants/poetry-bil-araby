@@ -207,8 +207,26 @@ VITE_SUPABASE_ANON_KEY=your-jwt-anon-key   # must start with "eyJ"
 DATABASE_URL=postgresql://user:pass@host:6543/postgres   # Supabase pooler host
 ```
 
-For a local database instead of Supabase, install PostgreSQL 15+ and run `createdb qafiyah`;
-the backend defaults to `localhost:5432/qafiyah` when `DATABASE_URL` is unset.
+### Local database (optional)
+
+Database mode needs a schema. To build one from scratch, install PostgreSQL 15+
+(17 recommended) and run:
+
+```bash
+npm run db:setup     # creates the qafiyah database and applies every migration
+```
+
+The backend defaults to `localhost:5432/qafiyah` when `DATABASE_URL` is unset, so
+that is all the wiring needed. Set `LOCAL_DATABASE_URL` to target a different
+database. Migrations are idempotent, so re-running is safe.
+
+This gives you the **schema only**. The 84k-poem corpus is not in this repo — the
+import file is too large to commit. A fresh database comes up empty, and
+`/api/poems/random` will return nothing until it is loaded. Ask a maintainer for
+the import, or skip the database entirely and run in AI mode, which generates
+poems through Gemini and needs no Postgres.
+
+See [`supabase/migrations/README.md`](supabase/migrations/README.md) for details.
 
 ### Run
 

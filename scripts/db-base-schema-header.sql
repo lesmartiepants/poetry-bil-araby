@@ -1,0 +1,52 @@
+-- =============================================================================
+-- Base poetry schema (structure only -- no poem data)
+-- =============================================================================
+--
+-- WHY THIS FILE EXISTS
+--
+-- Every other migration in this directory assumes `poems` and `poets` already
+-- exist: they only ever ALTER them. Those two tables (and the lookup tables,
+-- functions and views they depend on) originally arrived with the one-off 84k
+-- poem import, whose SQL is gitignored (`*_import_poetry.sql`). The result was
+-- that a fresh Postgres could never be brought up from this repo -- `supabase
+-- db push` died on the first `ALTER TABLE poems`.
+--
+-- This file closes that gap. It is a schema-only `pg_dump` of production,
+-- filtered down to the objects that no other migration creates, then rewritten
+-- to be safely re-runnable. It contains NO poem rows. Reference data for the
+-- lookup tables (eras, meters, rhymes, themes, patterns) is not included
+-- either -- see `supabase/migrations/README.md`.
+--
+-- This is NOT the data import. `*_import_poetry.sql` stays gitignored on
+-- purpose; do not confuse the two.
+--
+-- WHAT'S IN HERE
+--
+--   enum         tag_type
+--   tables       poems, poets
+--                eras, meters, patterns, rhymes, themes  (FK targets)
+--                tags, poem_tags, tagging_jobs           (tagging subsystem)
+--                users                                    (legacy, pre-Supabase-auth)
+--                design_review_history                    (design tooling)
+--   functions    normalize_arabic_text (required by the poems.search_vector
+--                generated column), plus the search/lookup helpers
+--   views        the per-facet *_poems / *_stats views and poem_full_data
+--   triggers     poem_tags -> poems.primary_tag_id sync, tags.updated_at
+--   RLS          enabled to match production (base tables carry no policies,
+--                so PostgREST anon cannot read them; the Express API reads
+--                through a privileged connection)
+--
+-- Column sets here reflect production as of the dump, so later migrations that
+-- `ADD COLUMN IF NOT EXISTS` on poems/poets are no-ops on a fresh database and
+-- still apply correctly to an older one. Every statement is guarded (IF NOT
+-- EXISTS / OR REPLACE / DO-block on constraints and types), so this file is
+-- idempotent.
+--
+-- Regenerate with `npm run db:dump-schema` (see supabase/migrations/README.md).
+-- =============================================================================
+
+-- Objects below are emitted in pg_dump order, which puts functions ahead of the
+-- tables they query. Deferring body validation (exactly what pg_dump itself
+-- does) keeps that order valid; it is reset at the bottom of this file.
+SET check_function_bodies = false;
+

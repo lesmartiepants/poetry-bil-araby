@@ -33,7 +33,7 @@ the `tag_type` enum, `normalize_arabic_text()` — which the `poems.search_vecto
 generated column depends on — and the reporting views.
 
 It exists because every other migration only ever _alters_ `poems` and `poets`.
-Those tables originally arrived with the 84k-poem import, whose SQL is gitignored,
+Those tables originally arrived with the corpus import, whose SQL is gitignored,
 so before this file a fresh database died on the first `ALTER TABLE poems`.
 
 Regenerate it from the live database with:

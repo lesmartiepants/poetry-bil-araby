@@ -2,9 +2,9 @@
  * The most recent scored draw, kept for the debug surface.
  *
  * Deliberately a tiny module-level box rather than a Zustand store: nothing
- * re-renders off it, the DebugPanel reads it when it opens, and putting it in a
- * store would make every poem fetch publish a state update that only a
- * flag-gated panel ever looks at.
+ * re-renders off it, the DiscoveryDrawInspector polls it while it is mounted,
+ * and putting it in a store would make every poem fetch publish a state update
+ * that only a flag-gated panel ever looks at.
  *
  * WHY THIS EXISTS AT ALL. Under scoring, a poem matching almost nothing the
  * reader asked for is CORRECT — that is the anti-lock-in guarantee doing its

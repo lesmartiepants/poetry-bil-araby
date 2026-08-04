@@ -44,7 +44,7 @@ export function updateOGMetaTags(poem) {
 export function resetOGMetaTags() {
   const defaultTitle = 'بالعربي | Poetry Bil-Araby — Arabic Poetry Explorer';
   const defaultDesc =
-    'Discover classical and modern Arabic poetry with AI-powered insights, audio recitation, and a curated collection of 84,000+ poems.';
+    'Discover classical and modern Arabic poetry with AI-powered insights, audio recitation, and a curated collection of 9,073 poems.';
   const defaultUrl = window.location.origin;
   const defaultImage = `${window.location.origin}/favicon.svg`;
 

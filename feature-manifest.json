@@ -720,7 +720,7 @@
         "src/services/lastDraw.js",
         "src/stores/actions/fetchPoem.js",
         "src/components/feed/ChosenForLine.jsx",
-        "src/components/DiscoveryDrawDebug.jsx"
+        "src/components/DiscoveryDrawInspector.jsx"
       ],
       "endpoints": ["GET /api/poems/by-category", "GET /api/categories"],
       "tests": {

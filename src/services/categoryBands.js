@@ -379,7 +379,7 @@ export const fetchCategoryBands = async () => {
   }
 
   // Bands cut from a SAMPLE have accurate proportions but meaningless absolute
-  // counts — "37 poems" out of a 300-poem sample is really ~13% of 84,000. Mark
+  // counts — "37 poems" out of a 300-poem sample is really ~13% of the library. Mark
   // them so the UI shows a share instead of a count rather than quoting a number
   // that is off by two orders of magnitude.
   const markShares = (bands) => {

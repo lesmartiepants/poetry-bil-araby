@@ -284,7 +284,7 @@ describe('OnboardingFlow', () => {
 describe('sampled bands', () => {
   // When the server predates the `distributions` payload, bands are cut from a
   // client-side sample. Proportions survive sampling; absolute counts do not —
-  // "37" out of a 300-poem sample would read as 37 poems out of 84,000.
+  // "37" out of a 300-poem sample would read as 37 poems out of the whole library.
   const SAMPLE_PAGE = Array.from({ length: 50 }, (_, i) => ({
     id: i,
     century: i < 20 ? 9 : i < 35 ? 6 : null,

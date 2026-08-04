@@ -99,6 +99,7 @@ import {
 import { useIdleTimer } from './hooks/useIdleTimer.js';
 import { useIsFullScreenRoute } from './hooks/useIsFullScreenRoute.js';
 import DebugPanel from './components/DebugPanel.jsx';
+import DiscoveryDrawInspector from './components/DiscoveryDrawInspector.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import SquoctogonBackground from './components/SquoctogonBackground.jsx';
 
@@ -1515,6 +1516,11 @@ export default function DiwanApp() {
       style={{ touchAction: 'manipulation', overflowX: 'hidden' }}
     >
       <DebugPanel controlBarRef={controlBarRef} />
+
+      {/* الميزان — the scored draw behind the current poem, on its own floating
+          trigger beside the debug one. Self-gating (FEATURES.drawInspector +
+          showDebugLogs), so no flag check is needed here. */}
+      <DiscoveryDrawInspector />
 
       {/* Ratchet Mode glow overlay — full-screen Easter egg effect */}
       {ratchetMode && (

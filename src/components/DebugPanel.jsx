@@ -11,7 +11,6 @@ import { API_MODELS } from '../services/gemini.js';
 import { abortPlay } from '../stores/actions/togglePlay.js';
 import { cacheOperations, CACHE_CONFIG } from '../services/cache.js';
 import { liveTimingProfile, LIVE_TIMING_PROFILE_OPTIONS } from '../utils/liveTimingProfiles.js';
-import DiscoveryDrawDebug from './DiscoveryDrawDebug.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -420,10 +419,10 @@ const DebugPanel = ({ controlBarRef }) => {
         )}
 
         {/*
-          The scored draw behind the current poem. Sits next to the flow that
-          produced the answers, because the two are only meaningful together.
+          The scored draw behind the current poem now has its own floating
+          surface (DiscoveryDrawInspector, mounted in app.jsx) — thirty rows of
+          monospace needed room to scroll, which this panel could not give it.
         */}
-        {FEATURES.onboardingPrefs && <DiscoveryDrawDebug theme={theme} />}
 
         {/* Live API voice + temperature — only shown in Live mode */}
         {ttsModel === 'live' && (

@@ -122,6 +122,10 @@ const PreferenceStep = ({
   loading = false,
   emptyAr = 'لم تُحمَّل التصنيفات بعد',
   emptyEn = 'Categories are not available yet',
+  // Rendered under the options. Carries the running total (MatchTally), which
+  // belongs to the flow rather than to any one question, so the step stays
+  // agnostic about what is in it.
+  footer = null,
 }) => {
   const canvasRef = useRef(null);
   // Seeded once from the incoming value. Every caller mounts a step under a
@@ -572,9 +576,11 @@ const PreferenceStep = ({
 
         {body()}
 
+        {!loading && !!options.length && footer}
+
         <div
           style={{
-            marginTop: '2.2rem',
+            marginTop: '1.6rem',
             display: 'flex',
             gap: '.75rem',
             justifyContent: 'center',

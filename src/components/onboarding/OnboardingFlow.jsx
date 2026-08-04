@@ -3,7 +3,10 @@ import { AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 
 import PreferenceStep from './PreferenceStep.jsx';
+import MatchTally from './MatchTally.jsx';
 import { fetchCategoryBands } from '../../services/categoryBands.js';
+import { fetchCategories } from '../../services/database.js';
+import { scopeFiltersFor, STEP_KEYS } from '../../services/preferenceWeighting.js';
 import {
   readPrefs,
   writePrefs,
@@ -109,6 +112,66 @@ export default function OnboardingFlow({ onComplete }) {
 
   const loading = taxonomy == null;
 
+  /**
+   * Counts narrowed to the answers given SO FAR, refetched as the reader moves
+   * through the flow.
+   *
+   * Scoped to the steps STRICTLY BEFORE the current one. A step's own answer
+   * must not scope its own options, or picking the first mood would drop every
+   * other mood on the same screen to 0 — they mostly do not co-occur. This is
+   * the client half of the faceted-count rule; the server does the same thing
+   * per facet (see scopedCategoryCounts).
+   *
+   * Era and difficulty are cascaded too. They are orthogonal to the taxonomy,
+   * but "9th-century poems within the family you chose" is still a real and
+   * useful narrowing to show.
+   */
+  const [scope, setScope] = useState(null);
+  const [scopeLoading, setScopeLoading] = useState(false);
+  const priorKeys = useMemo(() => STEP_KEYS.slice(0, step), [step]);
+  const scopeQuery = useMemo(
+    () => (taxonomy ? scopeFiltersFor(prefs, taxonomy, priorKeys) : {}),
+    [prefs, taxonomy, priorKeys]
+  );
+  const scopeKey = JSON.stringify(scopeQuery);
+
+  useEffect(() => {
+    if (!taxonomy) return undefined;
+    const query = JSON.parse(scopeKey);
+    if (!Object.keys(query).length) {
+      setScope(null);
+      return undefined;
+    }
+    let cancelled = false;
+    setScopeLoading(true);
+    fetchCategories(query)
+      .then((d) => {
+        if (!cancelled) setScope(d.scope || null);
+      })
+      // A failed count must never block the flow. The picker keeps its
+      // whole-corpus numbers and the tally simply does not render.
+      .catch(() => {
+        if (!cancelled) setScope(null);
+      })
+      .finally(() => {
+        if (!cancelled) setScopeLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [scopeKey, taxonomy]);
+
+  /**
+   * Overlay scoped counts onto a step's options.
+   *
+   * Falls back to the unscoped `poem_count` per option rather than to 0: a value
+   * absent from the scoped map has no poems under the current answers, but a
+   * MISSING scope (first step, or a server without the counts) means we simply
+   * do not know, and showing 0 there would be a lie.
+   */
+  const withCounts = (options, scoped) =>
+    scoped ? options.map((o) => ({ ...o, poem_count: scoped[o.key] ?? 0 })) : options;
+
   const families = useMemo(
     () =>
       (taxonomy?.families || [])
@@ -141,8 +204,44 @@ export default function OnboardingFlow({ onComplete }) {
     return toOptions(dim?.values).sort((a, b) => b.poem_count - a.poem_count);
   }, [taxonomy]);
 
-  const eraBands = taxonomy?.eraBands || [];
-  const difficultyBands = taxonomy?.difficultyBands || [];
+  /*
+   * Era and difficulty bands keep the CUTS derived from the whole servable
+   * corpus and only re-count inside them. Re-deriving the cuts from the scoped
+   * histogram would move the band boundaries as the reader answers — the
+   * "Abbasid" option would silently become a different span of centuries
+   * between two screens — so the identity of the choice stays fixed and only
+   * the number attached to it moves.
+   */
+  const eraBands = useMemo(() => {
+    const bands = taxonomy?.eraBands || [];
+    if (!scope?.eras) return bands;
+    return bands.map((b) => ({
+      ...b,
+      poem_count: scope.eras
+        .filter((r) =>
+          b.undated
+            ? r.century == null
+            : r.century != null && r.century >= b.century_from && r.century <= b.century_to
+        )
+        .reduce((n, r) => n + r.poem_count, 0),
+      // A scoped count is measured, so it supersedes any sampled share.
+      share: undefined,
+    }));
+  }, [taxonomy, scope]);
+
+  const difficultyBands = useMemo(() => {
+    const bands = taxonomy?.difficultyBands || [];
+    if (!scope?.accessibility) return bands;
+    return bands.map((b) => ({
+      ...b,
+      poem_count: scope.accessibility
+        .filter((r) => r.min >= b.min && r.max <= b.max)
+        .reduce((n, r) => n + r.poem_count, 0),
+      share: undefined,
+    }));
+  }, [taxonomy, scope]);
+
+  const tally = <MatchTally scope={scope} loading={scopeLoading} />;
 
   const patch = (delta) => setPrefs((p) => ({ ...p, ...delta }));
 
@@ -160,7 +259,7 @@ export default function OnboardingFlow({ onComplete }) {
   };
 
   const back = step > 0 ? () => setStep((s) => s - 1) : undefined;
-  const common = { stepCount: 5, loading, onBack: back };
+  const common = { stepCount: 5, loading, onBack: back, footer: tally };
 
   return (
     <AnimatePresence mode="wait">
@@ -171,7 +270,7 @@ export default function OnboardingFlow({ onComplete }) {
           stepIndex={0}
           titleAr="ما الذي يستهويك؟"
           titleEn="What draws you in?"
-          options={families}
+          options={withCounts(families, scope?.families)}
           layout="rows"
           multi={false}
           value={prefs.family ? [prefs.family] : []}
@@ -189,7 +288,7 @@ export default function OnboardingFlow({ onComplete }) {
           stepIndex={1}
           titleAr="كيف تشعر الآن؟"
           titleEn="How are you feeling?"
-          options={moods}
+          options={withCounts(moods, scope?.dimensions?.mood)}
           layout="constellation"
           value={prefs.moods}
           onNext={(v) => {
@@ -206,7 +305,7 @@ export default function OnboardingFlow({ onComplete }) {
           stepIndex={2}
           titleAr="أيّ الصور تسكنك؟"
           titleEn="Which images stay with you?"
-          options={motifs}
+          options={withCounts(motifs, scope?.dimensions?.motif)}
           layout="constellation"
           optional
           value={prefs.motifs}

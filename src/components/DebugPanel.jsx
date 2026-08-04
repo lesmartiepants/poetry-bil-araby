@@ -11,6 +11,7 @@ import { API_MODELS } from '../services/gemini.js';
 import { abortPlay } from '../stores/actions/togglePlay.js';
 import { cacheOperations, CACHE_CONFIG } from '../services/cache.js';
 import { liveTimingProfile, LIVE_TIMING_PROFILE_OPTIONS } from '../utils/liveTimingProfiles.js';
+import DiscoveryDrawDebug from './DiscoveryDrawDebug.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -417,6 +418,12 @@ const DebugPanel = ({ controlBarRef }) => {
             <span className="text-[0.5625rem] font-mono opacity-40 ml-auto">/onboarding</span>
           </a>
         )}
+
+        {/*
+          The scored draw behind the current poem. Sits next to the flow that
+          produced the answers, because the two are only meaningful together.
+        */}
+        {FEATURES.onboardingPrefs && <DiscoveryDrawDebug theme={theme} />}
 
         {/* Live API voice + temperature — only shown in Live mode */}
         {ttsModel === 'live' && (

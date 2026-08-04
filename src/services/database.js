@@ -138,14 +138,31 @@ export const fetchPoemsByPoet = async (poetName, count = 5, excludeIds = []) => 
  */
 const EMPTY_DISTRIBUTIONS = { eras: [], accessibility: [] };
 
-export const fetchCategories = async () => {
+/**
+ * @param {Object} [scope] answers already given, as by-category filter params
+ *   (`family`, `mood`, `motif`, `centuryFrom`/`centuryTo`/`includeUndated`/
+ *   `undated`, `minAccessibility`/`maxAccessibility`). When present the server
+ *   adds a `scope` block carrying counts narrowed to those answers plus the
+ *   running totals. Omit it and the payload is exactly what it always was.
+ */
+export const fetchCategories = async (scope = null) => {
   try {
-    const res = await fetch(`${apiUrl}/api/categories`);
+    const qs = new URLSearchParams();
+    if (scope) {
+      for (const [k, v] of Object.entries(scope)) {
+        if (v == null || v === '') continue;
+        const encoded = Array.isArray(v) ? v.join(',') : String(v);
+        if (encoded) qs.set(k, encoded);
+      }
+    }
+    const suffix = qs.toString() ? `?${qs}` : '';
+    const res = await fetch(`${apiUrl}/api/categories${suffix}`);
     if (!res.ok) throw new Error(`Categories API returned ${res.status}`);
     const data = await res.json();
     return {
       dimensions: Array.isArray(data?.dimensions) ? data.dimensions : [],
       families: Array.isArray(data?.families) ? data.families : [],
+      scope: data?.scope || null,
       distributions: {
         eras: Array.isArray(data?.distributions?.eras) ? data.distributions.eras : [],
         accessibility: Array.isArray(data?.distributions?.accessibility)
@@ -154,7 +171,7 @@ export const fetchCategories = async () => {
       },
     };
   } catch {
-    return { dimensions: [], families: [], distributions: EMPTY_DISTRIBUTIONS };
+    return { dimensions: [], families: [], scope: null, distributions: EMPTY_DISTRIBUTIONS };
   }
 };
 

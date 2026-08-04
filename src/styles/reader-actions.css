@@ -444,3 +444,19 @@
   opacity: 1;
   border-bottom-color: rgba(26, 18, 0, 0.6);
 }
+
+/*
+ * "chosen for <label>" — the reader-facing note on a high-scoring draw.
+ * Lives here rather than in a <style> tag inside ChosenForLine because the
+ * carousel mounts one instance per poem, and an inline tag would re-inject the
+ * same rule on every draw.
+ */
+@keyframes chosenForFade {
+  from {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: 0.52;
+  }
+}

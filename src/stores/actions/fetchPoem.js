@@ -9,7 +9,14 @@ import { fetchRandomPoem, fetchPoemsByCategory } from '../../services/database.j
 import { geminiTextFetch } from '../../services/gemini.js';
 import { readPrefs } from '../../services/preferences.js';
 import { fetchCategoryBands } from '../../services/categoryBands.js';
-import { nextDraw, hasPreferences, preferDated, POOL } from '../../services/preferenceWeighting.js';
+import {
+  hasPreferences,
+  candidateQueries,
+  drawFrom,
+  attributionFor,
+  MAX_SCORE,
+} from '../../services/preferenceWeighting.js';
+import { setLastDraw } from '../../services/lastDraw.js';
 
 /**
  * Band definitions are needed to turn a stored era/difficulty band KEY back into
@@ -31,14 +38,26 @@ export const __resetPreferenceBands = () => {
 };
 
 /**
- * Try to serve a poem biased by the reader's onboarding answers.
+ * Serve a poem biased by the reader's onboarding answers, by SCORING candidates
+ * rather than filtering the corpus down to them.
  *
- * Returns null whenever the biased draw can't or shouldn't be used, and the
- * caller falls back to the plain random fetch. That covers a wild draw (which is
- * by definition unbiased) and a biased draw that matched nothing. The second
- * case matters — a reader who picks a rare mood plus a narrow era can name a
- * combination with no poems in it, and the honest response is to widen rather
- * than show them an error.
+ * Three steps, each of which exists for a reason:
+ *
+ *   1. Fetch candidates from `candidateQueries` — an ANCHORED page carrying the
+ *      reader's single broadest answer, plus an UNANCHORED page carrying nothing
+ *      at all. The anchor is what makes a rare answer reachable at speed; the
+ *      open page is what keeps every poem in the corpus reachable full stop.
+ *      Both, always. Dropping either breaks a different guarantee.
+ *   2. Score and sample (`drawFrom`). Sampling, not top-N: the top of a static
+ *      ranking is the same poems every session, which is the lock-in this whole
+ *      design exists to avoid.
+ *   3. Record the draw for the two verification surfaces.
+ *
+ * Returns null only when there was nothing to draw from at all, and the caller
+ * falls back to the plain random fetch. Note what is NOT a reason to return null
+ * any more: under the pool system a `wild` draw and a `core` draw that matched
+ * nothing both bailed to the fallback. Scoring has no unfiltered pool to bail
+ * to, because the open page is already IN the candidate set.
  *
  * Only called when the reader actually has saved answers; see the call site,
  * which checks that synchronously so a reader who skipped onboarding hits the
@@ -47,41 +66,53 @@ export const __resetPreferenceBands = () => {
 async function fetchWeightedPoem({ prefs, poet, excludeIds, addLog }) {
   const bands = await getBands();
   const poemsSeen = excludeIds?.length || 0;
-  const { pool, filters } = nextDraw(prefs, poemsSeen, bands);
+  const queries = candidateQueries(prefs);
 
-  if (pool === POOL.WILD) {
-    addLog('Discovery Bias', `Pool: wild | unbiased draw (seen: ${poemsSeen})`, 'info');
+  const pages = await Promise.all(
+    queries.map((q) => fetchPoemsByCategory(poet ? { ...q.query, poet } : q.query).catch(() => []))
+  );
+
+  // Deduplicate: the anchored and open pages can legitimately return the same
+  // poem, and leaving it in twice would quietly double its draw weight.
+  const byId = new Map();
+  pages.flat().forEach((p) => {
+    if (p?.id != null && !byId.has(p.id)) byId.set(p.id, p);
+  });
+  const all = [...byId.values()];
+
+  // Prefer poems the reader has not seen, but fall back rather than starve — a
+  // reader deep into a narrow corner can have seen every candidate on the page.
+  const fresh = all.filter((p) => !excludeIds?.includes(p.id));
+  const candidates = fresh.length ? fresh : all;
+  if (!candidates.length) {
+    addLog('Discovery Bias', 'No candidates returned — widening to a plain draw', 'info');
     return null;
   }
 
-  const query = { ...filters, limit: 12 };
-  if (poet) query.poet = poet;
+  const { poem, scored, temperature, index } = drawFrom(candidates, prefs, poemsSeen, bands);
+  if (!poem) return null;
 
-  const matches = await fetchPoemsByCategory(query).catch(() => []);
-  const fresh = matches.filter((p) => !excludeIds?.includes(p.id));
-  const unseen = fresh.length ? fresh : matches;
-  // A dated era answer keeps undated poems ELIGIBLE (includeUndated=1) but they
-  // lose the tie-break, so picking Abbasid over Andalusian actually changes what
-  // you get. Only applies when the query carried a dated range; the undated band
-  // itself returns nothing dated, so this is a no-op there.
-  const usable = query.centuryFrom != null ? preferDated(unseen) : unseen;
+  const picked = scored[index];
+  // Ride the score on the poem itself so the reader-facing line survives
+  // scrolling back through the carousel; the module-level box below only ever
+  // holds the LAST draw, which the carousel would outlive.
+  poem.discoveryDraw = {
+    score: picked.score,
+    max: picked.max,
+    ratio: picked.ratio,
+    scaled: picked.scaled,
+    matched: picked.matched,
+    attribution: attributionFor(picked, bands, prefs),
+  };
 
-  if (!usable.length) {
-    addLog(
-      'Discovery Bias',
-      `Pool: ${pool} | no matches for ${JSON.stringify(filters)} — widening`,
-      'info'
-    );
-    return null;
-  }
+  setLastDraw({ scored, temperature, picked: poem, prefs, queries, poemsSeen, bands });
 
-  const picked = usable[Math.floor(Math.random() * usable.length)];
   addLog(
     'Discovery Bias',
-    `Pool: ${pool} | ${usable.length} candidates | ${JSON.stringify(filters)}`,
+    `Scored draw | ${picked.scaled.toFixed(2)}/${MAX_SCORE} | ${candidates.length} candidates | T=${temperature.toFixed(2)} | seen: ${poemsSeen}`,
     'info'
   );
-  return picked;
+  return poem;
 }
 
 /**
@@ -185,9 +216,9 @@ async function fetchFromDatabase({
 
   // Bias the draw toward the reader's onboarding answers WITHOUT filtering the
   // corpus down to them — see src/services/preferenceWeighting.js. Returns null
-  // on a wild draw, when there are no saved answers, or when the biased query
-  // matched nothing; in every one of those cases we fall through to the plain
-  // random fetch, so the feed can never be starved by a narrow preference.
+  // when there are no saved answers or when the candidate pages came back empty;
+  // in both cases we fall through to the plain random fetch, so the feed can
+  // never be starved by a narrow preference.
   //
   // The `hasPreferences` check is SYNCHRONOUS and deliberately outside the
   // await: a reader who skipped onboarding must reach fetchRandomPoem on the

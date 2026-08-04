@@ -39,15 +39,16 @@
       "id": "onboarding-preferences",
       "name": "Onboarding preference flow (5 steps)",
       "tier": "nice",
-      "userFacing": "Full-screen five-step flow at /onboarding: family, mood, motif (optional), era, difficulty. Every option, bilingual label and poem count is read from the live categorization API; the era and difficulty bands are cut from the LIVE DISTRIBUTION (GET /api/categories -> distributions) rather than hardcoded. Answers save to localStorage.onboardingPrefs. PreferencesDrawer was built to re-edit them but is currently mounted nowhere, so there is no in-app way back to these answers yet. They bias the feed as a weight, never a filter (see feed-preference-weighting). Salvaged from PR #517's visual work and rebuilt against the shipped taxonomy. The route has no user-facing link by design (see FEATURES.onboardingPrefs); reach it from the debug panel. Mood (16 options) and motif (12) use a ring constellation only above 640px, since below that the ring is too small to hold the chips without them painting over each other; phones get the staggered rows instead.",
+      "userFacing": "Full-screen five-step flow at /onboarding: family, mood, motif (optional), era, difficulty. Every option, bilingual label and poem count is read from the live categorization API; the era and difficulty bands are cut from the LIVE DISTRIBUTION (GET /api/categories -> distributions) rather than hardcoded. Counts CASCADE: each step's options are re-counted against the answers already given (GET /api/categories now scopes by prior answers), and a running total under the options shows how many poems match all the choices against how many match at least one. Both are labelled as matches, never as feed contents, because under scoring an intersection count is not a promise about the feed. Every count is measured behind the SERVING predicate, so the numbers describe the ~4,767 poems the feed can actually reach rather than the full 9,073. Answers save to localStorage.onboardingPrefs. PreferencesDrawer was built to re-edit them but is currently mounted nowhere, so there is no in-app way back to these answers yet. They bias the feed as a weight, never a filter (see feed-preference-weighting). Salvaged from PR #517's visual work and rebuilt against the shipped taxonomy. The route has no user-facing link by design (see FEATURES.onboardingPrefs); reach it from the debug panel. Mood (16 options) and motif (12) use a ring constellation only above 640px, since below that the ring is too small to hold the chips without them painting over each other; phones get the staggered rows instead.",
       "entrypoints": [
+        "src/components/PreferencesDrawer.jsx",
+        "src/components/onboarding/MatchTally.jsx",
         "src/components/onboarding/OnboardingFlow.jsx",
         "src/components/onboarding/PreferenceStep.jsx",
-        "src/components/PreferencesDrawer.jsx",
+        "src/constants/eras.js",
         "src/services/categoryBands.js",
-        "src/services/preferences.js",
         "src/services/categoryTags.js",
-        "src/constants/eras.js"
+        "src/services/preferences.js"
       ],
       "endpoints": ["GET /api/categories"],
       "tests": {
@@ -710,13 +711,16 @@
     },
     {
       "id": "feed-preference-weighting",
-      "name": "Preference-weighted feed selection",
+      "name": "Preference-scored feed selection",
       "tier": "nice",
-      "userFacing": "Onboarding answers bias which poem the feed serves next WITHOUT filtering the corpus. Each draw picks one of three pools by a weighted coin: core (all answers applied), adjacent (only the broadest answer), wild (no filters at all). The mix starts biased and decays toward a tunable floor as the reader gets through poems, so the first feed is clearly seeded but nothing in the library ever becomes unreachable. Within a dated era band, undated (late/modern) poems stay ELIGIBLE but lose the tie-break to dated ones, so picking one period over another visibly changes the feed. A biased draw that matches nothing falls back to a plain random fetch.",
+      "userFacing": "Onboarding answers bias which poem the feed serves next WITHOUT filtering the corpus. Every candidate is SCORED 0-5 on how much of the answer set it satisfies (family 0.8, mood 1.2, motif 1.0, era 1.0, difficulty 1.0), and one is sampled from that score by a softmax whose temperature loosens over 30 poems seen. Family is weighted below the dimensions it is built out of, and discounted further when the only value carrying the family match is one the reader already named as a mood or motif, so the two correlated answers cannot outvote the three independent ones. Multi-select steps give partial credit: matching two of three chosen moods beats one of three, without punishing a reader for picking more. Era and difficulty give graded credit to near misses (an adjacent century, an accessibility score just outside the band) rather than cutting at the band edge; undated (late/modern) poems stay eligible under a dated band at reduced credit, so picking one period over another visibly changes the feed. Candidates come from two pages: one ANCHORED on the reader's broadest single answer, and one wholly UNANCHORED, which is what keeps every poem in the library reachable on every draw. Replaces the earlier core/adjacent/wild pool mix, which had no gradation between matching five answers and matching one. On a strong match the reader sees a quiet 'chosen for <label>' line; on a weak one, deliberately nothing.",
       "entrypoints": [
         "src/services/preferenceWeighting.js",
         "src/services/preferences.js",
-        "src/stores/actions/fetchPoem.js"
+        "src/services/lastDraw.js",
+        "src/stores/actions/fetchPoem.js",
+        "src/components/feed/ChosenForLine.jsx",
+        "src/components/DiscoveryDrawDebug.jsx"
       ],
       "endpoints": ["GET /api/poems/by-category", "GET /api/categories"],
       "tests": {
@@ -725,7 +729,7 @@
       },
       "deviceOnly": false,
       "coverage": "behavioral",
-      "gap": "Unit tests pin the mix curve, the no-lock-in guarantee (wild share stays above zero at any tuning), pool->filter translation including undated-century handling, dated-over-undated ranking with its thin-band fallback, and graceful degradation when bands are unavailable. Mix constants are asserted against SETTLED_MIX rather than literals so retuning does not break the suite. The integration in fetchPoem.js (fallback to a plain fetch on an empty biased result) has no dedicated test yet."
+      "gap": "Unit tests pin the weighting and every partial-credit rule, the family/mood overlap discount in both directions, both halves of the no-lock-in guarantee (a zero-scoring candidate keeps a strictly positive softmax weight, AND the unanchored candidate page exists so it can be a candidate at all), and the temperature calibration that carries the old wild 0.15 -> 0.25 mix forward. The integration in fetchPoem.js (two-page candidate fetch, dedup, fallback to a plain fetch on an empty result) and the two verification surfaces have no dedicated tests yet."
     }
   ]
 }

@@ -246,6 +246,58 @@ const familyValuesFor = (prefs, bands) => {
   return fam?.values || [];
 };
 
+/**
+ * The reader's answers as `/api/categories` (and `by-category`) filter params.
+ *
+ * Used ONLY for counting — "how many poems match what you have chosen" — never
+ * to fetch the feed. That distinction is the whole design: this is the exact
+ * five-way AND that collapses to fourteen poems, which is precisely why the feed
+ * scores instead. The number is worth showing; drawing from it is not.
+ *
+ * `answeredUpTo` limits the scope to the steps BEFORE the one being rendered, so
+ * a step's own answer never scopes its own counts.
+ *
+ * @param {Object} prefs
+ * @param {Object} bands
+ * @param {string[]} [only] restrict to these answer keys, in flow order
+ * @returns {Object} query params, `{}` when nothing is answered
+ */
+export const scopeFiltersFor = (prefs, bands = {}, only = null) => {
+  const want = (k) => !only || only.includes(k);
+  const filters = {};
+  if (want('family') && prefs?.family) filters.family = prefs.family;
+  if (want('moods') && asArray(prefs?.moods).length) filters.mood = asArray(prefs.moods).join(',');
+  if (want('motifs') && asArray(prefs?.motifs).length)
+    filters.motif = asArray(prefs.motifs).join(',');
+
+  if (want('era')) {
+    const band = eraBandFor(prefs, bands);
+    if (band) {
+      if (band.undated) {
+        filters.undated = 1;
+      } else if (Number.isFinite(band.century_from)) {
+        filters.centuryFrom = band.century_from;
+        filters.centuryTo = band.century_to;
+        // Undated poems are ~25% of the corpus and stay ELIGIBLE under a dated
+        // band, so the count has to include them or it contradicts the feed.
+        filters.includeUndated = 1;
+      }
+    }
+  }
+
+  if (want('difficulty')) {
+    const band = difficultyBandFor(prefs, bands);
+    if (band) {
+      filters.minAccessibility = band.min;
+      filters.maxAccessibility = band.max;
+    }
+  }
+  return filters;
+};
+
+/** The answer keys, in the order the flow asks for them. */
+export const STEP_KEYS = ['family', 'moods', 'motifs', 'era', 'difficulty'];
+
 /* -------------------------------------------------------------------------- */
 /* Poem facets                                                                 */
 /* -------------------------------------------------------------------------- */
@@ -346,7 +398,14 @@ export const scorePoem = (poem, prefs, bands = {}) => {
     });
     if (carried.length) {
       // Is the family match already paid for by an answer on another step?
-      const alsoChosen = carried.some(
+      //
+      // EVERY, not SOME: the discount is for a family term that adds nothing.
+      // A poem in `love-desire` via both `mood:amorous` (which the reader named)
+      // and `topic:love` (which they did not) is telling us something the mood
+      // answer did not, so it keeps the full weight. Only a poem whose sole
+      // route into the family is a value the reader already named is genuinely
+      // being counted twice.
+      const alsoChosen = carried.every(
         (v) =>
           (v.dim === 'mood' && moods.includes(v.key)) ||
           (v.dim === 'motif' && motifs.includes(v.key))

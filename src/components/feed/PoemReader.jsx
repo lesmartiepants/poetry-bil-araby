@@ -4,6 +4,7 @@ import SparklerStage from './SparklerStage.jsx';
 import ProgressScrubber from './ProgressScrubber.jsx';
 import InlineInsights from './InlineInsights.jsx';
 import ReaderActions from './ReaderActions.jsx';
+import ChosenForLine from './ChosenForLine.jsx';
 import '../../styles/reader-actions.css'; // .ra-readfull — the "Read full poem" affordance lives in the cue slot here
 import { useRevealWindow } from '../../hooks/useRevealWindow.js';
 import { useSparklerReveal } from '../../hooks/useSparklerReveal.js';
@@ -447,6 +448,7 @@ const PoemReader = memo(function PoemReader({
             <span>{poem.poet}</span>
           )}
         </div>
+        <ChosenForLine draw={poem?.discoveryDraw} scale={headerScale} />
       </div>
 
       {/* Central body — verses (reading) or the inline insight (end), vertically centred,

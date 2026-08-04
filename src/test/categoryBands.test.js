@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { deriveEraBands, deriveDifficultyBands, ordinal } from '../services/categoryBands.js';
+import { fetchCategories, _resetCategoriesMemo } from '../services/database.js';
 
 /**
  * A real histogram, measured from the production corpus (1,645 sampled poems via
@@ -161,5 +162,58 @@ describe('deriveEraBands', () => {
     const bands = deriveEraBands([{ century: null, poem_count: 100 }]);
     expect(bands).toHaveLength(1);
     expect(bands[0].undated).toBe(true);
+  });
+});
+
+/**
+ * The unscoped taxonomy is the request the onboarding flow blocks on, and four
+ * unrelated consumers ask for it. These lock in that they share ONE request —
+ * which is what makes the boot-time prefetch in prefetch.js worth doing — and
+ * that a scoped call is never served a memoised answer.
+ */
+describe('fetchCategories memo', () => {
+  const payload = {
+    dimensions: [{ key: 'mood', label_ar: 'المزاج', label_en: 'Mood', values: [] }],
+    families: [],
+    distributions: { eras: [], accessibility: [] },
+  };
+
+  beforeEach(() => {
+    _resetCategoriesMemo();
+    globalThis.fetch = vi.fn(async () => ({ ok: true, json: async () => payload }));
+  });
+
+  it('sends one request no matter how many callers want the unscoped taxonomy', async () => {
+    const [a, b, c] = await Promise.all([fetchCategories(), fetchCategories(), fetchCategories()]);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    expect(a.dimensions).toEqual(payload.dimensions);
+    expect(b).toBe(a);
+    expect(c).toBe(a);
+  });
+
+  it('joins an in-flight request rather than starting a second', async () => {
+    let release;
+    globalThis.fetch = vi.fn(
+      () => new Promise((r) => (release = () => r({ ok: true, json: async () => payload })))
+    );
+    const first = fetchCategories();
+    const second = fetchCategories();
+    release();
+    await Promise.all([first, second]);
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('never memoises a scoped call — cascading counts must stay live', async () => {
+    await fetchCategories();
+    await fetchCategories({ family: 'grief-loss' });
+    await fetchCategories({ family: 'grief-loss' });
+    // 1 unscoped + 2 scoped: the scoped pair is deliberately not deduped.
+    expect(globalThis.fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('treats an empty scope object as the unscoped payload', async () => {
+    await fetchCategories();
+    await fetchCategories({});
+    expect(globalThis.fetch).toHaveBeenCalledTimes(1);
   });
 });

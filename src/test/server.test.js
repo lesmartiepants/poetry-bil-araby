@@ -1046,6 +1046,95 @@ describe('Backend API Server', () => {
       });
     });
 
+    // The unscoped taxonomy is ~850ms of aggregates and is the first thing a
+    // reader's browser asks for on /onboarding. These lock in that it is
+    // computed once, that a scoped request rides on the same cached base, and
+    // that the scoped cache cannot grow without bound.
+    describe('GET /api/categories caching', () => {
+      it('computes the unscoped payload once and serves later requests from cache', async () => {
+        __test.setCategorizationState(true, ['mood']);
+        mockPool.query.mockResolvedValue({ rows: [] });
+
+        const first = await request(app).get('/api/categories').expect(200);
+        const afterFirst = mockPool.query.mock.calls.length;
+        expect(afterFirst).toBeGreaterThan(0);
+
+        const second = await request(app).get('/api/categories').expect(200);
+
+        // Not one extra query, and byte-for-byte the same answer.
+        expect(mockPool.query.mock.calls.length).toBe(afterFirst);
+        expect(second.body).toEqual(first.body);
+      });
+
+      it('reuses the cached base for a scoped request, querying only the scope', async () => {
+        __test.setCategorizationState(true, ['mood']);
+        mockPool.query.mockResolvedValue({ rows: [] });
+
+        await request(app).get('/api/categories').expect(200);
+        const afterBase = mockPool.query.mock.calls.length;
+
+        await request(app).get('/api/categories?family=grief-loss').expect(200);
+        const scopedCost = mockPool.query.mock.calls.length - afterBase;
+
+        // Some queries for the scope block, but none of them the base
+        // aggregates — those are the ones that join category_dimensions.
+        expect(scopedCost).toBeGreaterThan(0);
+        const scopedSql = mockPool.query.mock.calls.slice(afterBase).map((c) => c[0]);
+        expect(scopedSql.some((s) => s.includes('FROM category_dimensions'))).toBe(false);
+      });
+
+      it('serves a repeated scoped request from the LRU without re-querying', async () => {
+        __test.setCategorizationState(true, ['mood']);
+        mockPool.query.mockResolvedValue({ rows: [] });
+
+        await request(app).get('/api/categories?family=grief-loss').expect(200);
+        const afterFirst = mockPool.query.mock.calls.length;
+        await request(app).get('/api/categories?family=grief-loss').expect(200);
+
+        expect(mockPool.query.mock.calls.length).toBe(afterFirst);
+      });
+
+      it('bounds the scoped cache, evicting least-recently-used first', () => {
+        // Cascading counts make the scoped key space combinatorial, so the cap
+        // is the property that keeps this from being a memory leak on a free
+        // instance. Driven directly rather than over HTTP: 65 requests would
+        // trip the rate limiter.
+        const lru = __test.scopeCache;
+        __test.resetCategoriesCache();
+
+        for (let i = 0; i < lru.max; i += 1) lru.set(`k${i}`, { total: i });
+        expect(lru.size()).toBe(lru.max);
+
+        lru.get('k0'); // touch the oldest — it should now survive
+        lru.set('overflow', { total: -1 });
+
+        expect(lru.size()).toBe(lru.max);
+        expect(lru.get('k0')).toEqual({ total: 0 });
+        expect(lru.get('k1')).toBeUndefined(); // evicted instead
+      });
+
+      it('keys the scoped cache on the answers, not their order', () => {
+        const lru = __test.scopeCache;
+        expect(lru.key({ family: 'grief-loss', mood: 'melancholy' })).toBe(
+          lru.key({ mood: 'melancholy', family: 'grief-loss' })
+        );
+      });
+
+      it('lets browsers revalidate rather than refetch, and never caches the pre-migration shape', async () => {
+        __test.setCategorizationState(true, ['mood']);
+        mockPool.query.mockResolvedValue({ rows: [] });
+        const enabled = await request(app).get('/api/categories').expect(200);
+        expect(enabled.headers['cache-control']).toContain('stale-while-revalidate');
+        expect(enabled.headers.etag).toBeTruthy();
+
+        // Pre-migration the payload is a placeholder. A browser that cached it
+        // would keep showing an empty picker after the migration finally ran.
+        __test.setCategorizationState(false, []);
+        const disabled = await request(app).get('/api/categories').expect(200);
+        expect(disabled.headers['cache-control']).toBe('no-store');
+      });
+    });
+
     describe('GET /api/poems/by-category (enabled)', () => {
       const matchedRow = {
         id: 7,

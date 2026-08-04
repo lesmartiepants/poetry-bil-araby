@@ -145,7 +145,51 @@ const EMPTY_DISTRIBUTIONS = { eras: [], accessibility: [] };
  *   adds a `scope` block carrying counts narrowed to those answers plus the
  *   running totals. Omit it and the payload is exactly what it always was.
  */
+/**
+ * Per-page-load memo of the UNSCOPED taxonomy.
+ *
+ * That one payload costs ~850ms of aggregates on the server and is asked for by
+ * four unrelated consumers (the onboarding bands, the tag taxonomy, the
+ * dimension pickers, the category explorer). Before this they each sent their
+ * own request. Memoising here — the single place they all go through — collapses
+ * them into one, and is what makes a boot-time prefetch worth doing: the warm-up
+ * and the later mount share a request instead of racing two.
+ *
+ * Storing the PROMISE, not the value, is the point: a caller arriving while the
+ * first request is still in flight joins it rather than starting a second.
+ *
+ * SCOPED calls are deliberately NOT memoised. Their key space is combinatorial
+ * (that is what cascading counts are), the server already keeps a bounded LRU
+ * for them, and a stale count on a step the reader is actively changing is
+ * worse than a fast one.
+ *
+ * Memory only, and short-lived on purpose. Cross-reload freshness is the HTTP
+ * layer's job — /api/categories ships Cache-Control with stale-while-revalidate
+ * — so there is no fourth cache to keep in sync here. The TTL only exists so a
+ * tab left open for hours eventually picks up a pipeline rerun.
+ */
+const CATEGORIES_MEMO_TTL_MS = 5 * 60 * 1000;
+let _categoriesMemo = null; // { at, promise }
+
+/** Drop the unscoped memo. Exported for tests and any explicit refresh. */
+export const _resetCategoriesMemo = () => {
+  _categoriesMemo = null;
+};
+
 export const fetchCategories = async (scope = null) => {
+  const unscoped = !scope || Object.keys(scope).length === 0;
+  if (unscoped) {
+    const now = Date.now();
+    if (_categoriesMemo && now - _categoriesMemo.at < CATEGORIES_MEMO_TTL_MS)
+      return _categoriesMemo.promise;
+    const promise = fetchCategoriesUncached(null);
+    _categoriesMemo = { at: now, promise };
+    return promise;
+  }
+  return fetchCategoriesUncached(scope);
+};
+
+const fetchCategoriesUncached = async (scope) => {
   try {
     const qs = new URLSearchParams();
     if (scope) {

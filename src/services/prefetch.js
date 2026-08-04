@@ -9,8 +9,16 @@
 
 import { FEATURES } from '../constants/index.js';
 import { INSIGHTS_SYSTEM_PROMPT, getTTSContent } from '../prompts';
-import { API_MODELS, TTS_CONFIG, geminiTextFetch, thinkingConfigFor, fetchTTSWithFallback, canPrefetchTts } from './gemini.js';
+import {
+  API_MODELS,
+  TTS_CONFIG,
+  geminiTextFetch,
+  thinkingConfigFor,
+  fetchTTSWithFallback,
+  canPrefetchTts,
+} from './gemini.js';
 import { CACHE_CONFIG, cacheOperations, audioCacheKey } from './cache.js';
+import { fetchCategoryBands } from './categoryBands.js';
 import { pcm16ToWav } from '../utils/audio.js';
 
 import { usePoemStore } from '../stores/poemStore';
@@ -178,16 +186,21 @@ export const prefetchManager = {
           const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
 
           // Cache the blob under the same REST+voice key playback reads.
-          await cacheOperations.set(CACHE_CONFIG.stores.audio, audioKey, {
-            blob,
-            metadata: {
-              poet: poem.poet,
-              title: poem.title,
-              size: blob.size,
-              duration: audioDuration,
-              model: ttsModel,
+          await cacheOperations.set(
+            CACHE_CONFIG.stores.audio,
+            audioKey,
+            {
+              blob,
+              metadata: {
+                poet: poem.poet,
+                title: poem.title,
+                size: blob.size,
+                duration: audioDuration,
+                model: ttsModel,
+              },
             },
-          }, addLog);
+            addLog
+          );
 
           if (addLog)
             addLog(
@@ -288,10 +301,15 @@ export const prefetchManager = {
         const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
 
         // Cache the insights
-        await cacheOperations.set(CACHE_CONFIG.stores.insights, poemId, {
-          interpretation,
-          metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens },
-        }, addLog);
+        await cacheOperations.set(
+          CACHE_CONFIG.stores.insights,
+          poemId,
+          {
+            interpretation,
+            metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens },
+          },
+          addLog
+        );
 
         if (addLog)
           addLog(
@@ -311,6 +329,39 @@ export const prefetchManager = {
     } finally {
       // Clean up in-flight tracking
       usePoemStore.getState().removeActiveInsight(poemId);
+    }
+  },
+
+  /**
+   * Warm the onboarding taxonomy during boot.
+   *
+   * The first screen of /onboarding cannot render a single chip until
+   * /api/categories answers, and that call is not sent until the lazy flow
+   * chunk has loaded and mounted. Sending it at boot instead moves the wait off
+   * the reader's critical path: by the time the flow mounts, the memo in
+   * categoryBands.js already holds the answer (or an in-flight promise for it).
+   *
+   * NOT gated on FEATURES.prefetching. That flag exists to throttle the
+   * expensive, quota-bearing Gemini prefetches above; this is one small GET to
+   * our own API with a fixed cost, and switching it off would slow the flow
+   * down for no saving. It IS gated on FEATURES.onboardingPrefs, because
+   * without the route there is nothing to warm for.
+   *
+   * Never throws — fetchCategoryBands resolves to empty arrays on failure.
+   */
+  prefetchTaxonomy: async (addLog) => {
+    if (!FEATURES.onboardingPrefs) return;
+    try {
+      const t0 = performance.now();
+      const bands = await fetchCategoryBands();
+      if (addLog)
+        addLog(
+          'Prefetch Taxonomy',
+          `Onboarding taxonomy warm in ${Math.round(performance.now() - t0)}ms (${bands.families.length} families)`,
+          'info'
+        );
+    } catch {
+      // Warming is best-effort; the flow refetches on mount if this missed.
     }
   },
 

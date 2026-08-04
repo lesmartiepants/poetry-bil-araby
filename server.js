@@ -79,13 +79,28 @@ const log = {
 
 // PostgreSQL connection pool
 // Supports both DATABASE_URL (Supabase/Render) and individual env vars (local dev)
+// SSL is required by Supabase and Render but is not offered by a stock local
+// Postgres, which drops the handshake with "The server does not support SSL
+// connections". Forcing it unconditionally meant DATABASE_URL — the variable the
+// README tells you to set — could not point at a local database at all: the
+// server booted, logged one line, and then served nothing. Decide from the host.
+function wantsSsl(connectionString) {
+  try {
+    const { hostname, searchParams } = new URL(connectionString);
+    if (searchParams.get('sslmode') === 'disable') return false;
+    return !['localhost', '127.0.0.1', '::1', '[::1]'].includes(hostname);
+  } catch {
+    return true; // unparseable: keep the safe, production-shaped default
+  }
+}
+
 const pool = new Pool(
   process.env.DATABASE_URL
     ? {
         connectionString: process.env.DATABASE_URL,
-        ssl: {
-          rejectUnauthorized: false, // Required for Supabase/Render
-        },
+        ...(wantsSsl(process.env.DATABASE_URL)
+          ? { ssl: { rejectUnauthorized: false } } // Required for Supabase/Render
+          : {}),
         query_timeout: 5000, // 5 seconds
         connectionTimeoutMillis: 5000,
         idleTimeoutMillis: 30000,
@@ -698,19 +713,33 @@ function translationSelectExpr() {
     : '';
 }
 
-// Test database connection
+// Test database connection, then detect which optional columns/tables exist.
+//
+// `capabilitiesReady` resolves once every check above has settled. Nothing in
+// the request path awaits it — the flags default to false and each endpoint
+// degrades gracefully — but a test running against a REAL database has to know
+// when detection finished, otherwise it races the very flags it is asserting on
+// and passes or fails by timing. Exported via __test.ready.
+let markCapabilitiesReady;
+const capabilitiesReady = new Promise((resolve) => {
+  markCapabilitiesReady = resolve;
+});
+
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     log.error('DB', 'Failed to connect to PostgreSQL', err.message);
+    markCapabilitiesReady();
   } else {
     log.info('DB', `Connected to PostgreSQL at ${res.rows[0].now}`);
-    checkDiacritizedColumn();
-    checkQualityScoreColumn();
-    checkTranslationColumns();
-    checkPoetNameEnColumn();
-    checkTitleEnColumn();
-    checkPoemEventsTable();
-    checkCategorizationSupport();
+    Promise.all([
+      checkDiacritizedColumn(),
+      checkQualityScoreColumn(),
+      checkTranslationColumns(),
+      checkPoetNameEnColumn(),
+      checkTitleEnColumn(),
+      checkPoemEventsTable(),
+      checkCategorizationSupport(),
+    ]).then(markCapabilitiesReady, markCapabilitiesReady);
   }
 });
 
@@ -3403,6 +3432,10 @@ export { app, pool };
 // callback, which never fires under the mocked pool). These let the test suite
 // exercise the enabled path deterministically. Not used by production code.
 export const __test = {
+  // Resolves when startup capability detection has settled. Only meaningful
+  // against a real pool; under the mocked pool the probe callback never fires
+  // and this stays pending forever, so don't await it there.
+  ready: capabilitiesReady,
   // Drive the real startup detection with a mocked pool (proves the dimension
   // set is READ FROM the DB, not hardcoded).
   checkCategorizationSupport,

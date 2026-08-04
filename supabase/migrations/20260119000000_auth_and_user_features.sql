@@ -67,50 +67,64 @@ ALTER TABLE discussion_likes ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for user_settings
 -- Users can only read and modify their own settings
+DROP POLICY IF EXISTS "Users can view own settings" ON user_settings;
 CREATE POLICY "Users can view own settings" ON user_settings
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can insert own settings" ON user_settings;
 CREATE POLICY "Users can insert own settings" ON user_settings
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own settings" ON user_settings;
 CREATE POLICY "Users can update own settings" ON user_settings
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own settings" ON user_settings;
 CREATE POLICY "Users can delete own settings" ON user_settings
   FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies for saved_poems
 -- Users can only manage their own saved poems
+DROP POLICY IF EXISTS "Users can view own saved poems" ON saved_poems;
 CREATE POLICY "Users can view own saved poems" ON saved_poems
   FOR SELECT USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can save poems" ON saved_poems;
 CREATE POLICY "Users can save poems" ON saved_poems
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own saved poems" ON saved_poems;
 CREATE POLICY "Users can delete own saved poems" ON saved_poems
   FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies for discussions
 -- Users can view all discussions but only modify their own
+DROP POLICY IF EXISTS "Anyone can view discussions" ON discussions;
 CREATE POLICY "Anyone can view discussions" ON discussions
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Authenticated users can create discussions" ON discussions;
 CREATE POLICY "Authenticated users can create discussions" ON discussions
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own discussions" ON discussions;
 CREATE POLICY "Users can update own discussions" ON discussions
   FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own discussions" ON discussions;
 CREATE POLICY "Users can delete own discussions" ON discussions
   FOR DELETE USING (auth.uid() = user_id);
 
 -- RLS Policies for discussion_likes
+DROP POLICY IF EXISTS "Anyone can view discussion likes" ON discussion_likes;
 CREATE POLICY "Anyone can view discussion likes" ON discussion_likes
   FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Authenticated users can like discussions" ON discussion_likes;
 CREATE POLICY "Authenticated users can like discussions" ON discussion_likes
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own likes" ON discussion_likes;
 CREATE POLICY "Users can delete own likes" ON discussion_likes
   FOR DELETE USING (auth.uid() = user_id);
 
@@ -124,12 +138,12 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Triggers to auto-update updated_at
-CREATE TRIGGER update_user_settings_updated_at
+CREATE OR REPLACE TRIGGER update_user_settings_updated_at
   BEFORE UPDATE ON user_settings
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_discussions_updated_at
+CREATE OR REPLACE TRIGGER update_discussions_updated_at
   BEFORE UPDATE ON discussions
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();

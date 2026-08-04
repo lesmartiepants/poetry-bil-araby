@@ -584,6 +584,111 @@ export const drawFrom = (candidates, prefs, poemsSeen, bands = {}, rng = Math.ra
   };
 };
 
+/**
+ * How many slides at the head of a preference-driven feed are taken by RANK
+ * rather than sampled.
+ *
+ * The reader has just answered five questions. If the very first poem is a
+ * sampled draw, then whether the questions appear to have done anything is
+ * decided by a coin flip at the exact moment the reader is deciding whether to
+ * believe the flow. Two slides is the smallest number that reads as deliberate
+ * (one could be luck) and the largest that does not meaningfully dent guarantee
+ * (1) — every poem stays reachable, because temperature still governs slide 2
+ * onward and the unanchored page is still in the pool that slides 0 and 1 are
+ * ranked over.
+ *
+ * Note what this is NOT: it is not "the same two poems every session". The
+ * candidate pages come back in a different random order on every call, so the
+ * top of the ranking moves with the pool. What is fixed is that slides 0 and 1
+ * are the BEST AVAILABLE match rather than a lucky one.
+ */
+export const DETERMINISTIC_OPENING = 2;
+
+/**
+ * Rank comparator: score first, poem id as a stable tie-break.
+ *
+ * The tie-break matters more than it looks. A reader who answered only the
+ * family step produces a lot of exact ties (every poem in the family scores a
+ * flat 5.00), and without a deterministic second key the "top-ranked" pick would
+ * be decided by the API's row order, which is randomised — i.e. sampling by
+ * another name, in the two slots that exist to not be sampled.
+ */
+const byRank = (a, b) => {
+  const d = (b?.scaled || 0) - (a?.scaled || 0);
+  if (d !== 0) return d;
+  const ai = String(a?.poem?.id ?? '');
+  const bi = String(b?.poem?.id ?? '');
+  return ai < bi ? -1 : ai > bi ? 1 : 0;
+};
+
+/**
+ * Draw N poems from ONE scored candidate pool, without replacement.
+ *
+ * This is the batching that makes a per-slide-scored feed affordable. Scoring is
+ * pure and cheap; the expensive part is the two `by-category` requests that
+ * build the pool. Drawing five slides from one pool costs exactly what drawing
+ * one slide cost before — two requests — instead of the ten a naive per-slide
+ * loop would spend.
+ *
+ * The opening is RANKED and the tail is SAMPLED:
+ *
+ *   slot < deterministic   take the highest-scoring candidate left
+ *   slot >= deterministic  softmax sample at the batch temperature
+ *
+ * `startSlot` is what makes that rule survive infinite scroll: a load-more batch
+ * passes the current feed length, so slides 5-7 are sampled like the rest of the
+ * tail rather than re-running the deterministic opening every time the reader
+ * hits the bottom.
+ *
+ * @param {Array} candidates poems from the API
+ * @param {Object} prefs
+ * @param {number} poemsSeen
+ * @param {Object} bands
+ * @param {Object} [opts]
+ * @param {number} [opts.count] how many to draw
+ * @param {number} [opts.startSlot] feed position of the first draw
+ * @param {number} [opts.deterministic] slots below this are ranked, not sampled
+ * @param {Function} [opts.rng]
+ * @returns {{picks:Array, scored:Array, temperature:number}}
+ */
+export const drawManyFrom = (
+  candidates,
+  prefs,
+  poemsSeen,
+  bands = {},
+  { count = 1, startSlot = 0, deterministic = DETERMINISTIC_OPENING, rng = Math.random } = {}
+) => {
+  const list = candidates || [];
+  const temperature = temperatureFor(poemsSeen);
+  const scored = list.map((p) => ({ poem: p, ...scorePoem(p, prefs, bands) }));
+
+  // Rank once, up front: every pick reports the rank it held in the WHOLE pool,
+  // not its rank among whatever was left when its turn came. "rank 1 of 30" has
+  // to mean the same thing on slide 0 and slide 4 or the inspector is lying.
+  const ranking = [...scored].sort(byRank);
+  const rankOf = new Map(ranking.map((s, i) => [s, i + 1]));
+
+  const remaining = [...scored];
+  const picks = [];
+  for (let i = 0; i < count && remaining.length; i += 1) {
+    const slot = startSlot + i;
+    const ranked = slot < deterministic;
+    let idx;
+    if (ranked) {
+      // Highest-scoring survivor. `remaining` is not kept sorted (splice on a
+      // sorted list is the same cost), so scan it.
+      idx = remaining.reduce((best, s, j) => (byRank(s, remaining[best]) < 0 ? j : best), 0);
+    } else {
+      idx = sampleByScore(remaining, temperature, rng);
+    }
+    if (idx < 0) break;
+    const [taken] = remaining.splice(idx, 1);
+    picks.push({ ...taken, slot, rank: rankOf.get(taken) ?? null, deterministic: ranked });
+  }
+
+  return { picks, scored, temperature };
+};
+
 /* -------------------------------------------------------------------------- */
 /* Presentation                                                                */
 /* -------------------------------------------------------------------------- */

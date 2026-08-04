@@ -12,11 +12,12 @@ import { fetchCategoryBands } from '../../services/categoryBands.js';
 import {
   hasPreferences,
   candidateQueries,
-  drawFrom,
+  drawManyFrom,
   attributionFor,
   MAX_SCORE,
+  DETERMINISTIC_OPENING,
 } from '../../services/preferenceWeighting.js';
-import { setLastDraw } from '../../services/lastDraw.js';
+import { recordFeedDraw } from '../../services/lastDraw.js';
 
 /**
  * Band definitions are needed to turn a stored era/difficulty band KEY back into
@@ -63,7 +64,15 @@ export const __resetPreferenceBands = () => {
  * which checks that synchronously so a reader who skipped onboarding hits the
  * plain fetch on exactly the same tick as before this existed.
  */
-async function fetchWeightedPoem({ prefs, poet, excludeIds, addLog }) {
+export async function fetchWeightedFeed({
+  prefs,
+  poet,
+  excludeIds,
+  addLog,
+  count = 1,
+  startSlot = 0,
+  replaceFeed = true,
+}) {
   const bands = await getBands();
   const poemsSeen = excludeIds?.length || 0;
   const queries = candidateQueries(prefs);
@@ -86,33 +95,68 @@ async function fetchWeightedPoem({ prefs, poet, excludeIds, addLog }) {
   const candidates = fresh.length ? fresh : all;
   if (!candidates.length) {
     addLog('Discovery Bias', 'No candidates returned — widening to a plain draw', 'info');
-    return null;
+    return [];
   }
 
-  const { poem, scored, temperature, index } = drawFrom(candidates, prefs, poemsSeen, bands);
-  if (!poem) return null;
+  const { picks, scored, temperature } = drawManyFrom(candidates, prefs, poemsSeen, bands, {
+    count,
+    startSlot,
+  });
+  if (!picks.length) return [];
 
-  const picked = scored[index];
-  // Ride the score on the poem itself so the reader-facing line survives
-  // scrolling back through the carousel; the module-level box below only ever
-  // holds the LAST draw, which the carousel would outlive.
-  poem.discoveryDraw = {
-    score: picked.score,
-    max: picked.max,
-    ratio: picked.ratio,
-    scaled: picked.scaled,
-    matched: picked.matched,
-    attribution: attributionFor(picked, bands, prefs),
-  };
+  picks.forEach((pick) => {
+    // Ride the score on the poem itself so the reader-facing line survives
+    // scrolling back through the feed; the module-level records are keyed by
+    // poem id and capped, which a long session would eventually outlive.
+    pick.poem.discoveryDraw = {
+      score: pick.score,
+      max: pick.max,
+      ratio: pick.ratio,
+      scaled: pick.scaled,
+      matched: pick.matched,
+      rank: pick.rank,
+      slot: pick.slot,
+      deterministic: pick.deterministic,
+      attribution: attributionFor(pick, bands, prefs),
+    };
+  });
 
-  setLastDraw({ scored, temperature, picked: poem, prefs, queries, poemsSeen, bands });
+  recordFeedDraw({
+    picks,
+    scored,
+    temperature,
+    prefs,
+    queries,
+    poemsSeen,
+    bands,
+    replaceFeed,
+  });
 
   addLog(
     'Discovery Bias',
-    `Scored draw | ${picked.scaled.toFixed(2)}/${MAX_SCORE} | ${candidates.length} candidates | T=${temperature.toFixed(2)} | seen: ${poemsSeen}`,
+    `Scored draw | ${picks.length} slide${picks.length === 1 ? '' : 's'} ${startSlot}-${startSlot + picks.length - 1} | ` +
+      picks.map((p) => `${p.scaled.toFixed(2)}${p.deterministic ? '*' : ''}`).join(' ') +
+      ` /${MAX_SCORE} | ${candidates.length} candidates | T=${temperature.toFixed(2)} | seen: ${poemsSeen}` +
+      (picks.some((p) => p.deterministic) ? ' | * = ranked, not sampled' : ''),
     'info'
   );
-  return poem;
+  return picks.map((p) => p.poem);
+}
+
+/** Single-poem scored draw — the shape the main Discover path wants. */
+async function fetchWeightedPoem({ prefs, poet, excludeIds, addLog }) {
+  const [poem] = await fetchWeightedFeed({
+    prefs,
+    poet,
+    excludeIds,
+    addLog,
+    count: 1,
+    // The single-poem path is the ordinary Discover press, not the head of a
+    // fresh preference feed. Sampling it keeps session-to-session serendipity;
+    // the ranked opening belongs to the feed draw, which owns slots 0 and 1.
+    startSlot: DETERMINISTIC_OPENING,
+  });
+  return poem || null;
 }
 
 /**

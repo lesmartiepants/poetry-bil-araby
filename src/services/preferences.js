@@ -106,12 +106,85 @@ export const readPrefs = () => {
   }
 };
 
+/* -------------------------------------------------------------------------- */
+/* Change notification                                                         */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Answers changing has to be able to REDRAW THE FEED, and until this existed it
+ * could not.
+ *
+ * The feed reads answers synchronously on each draw, which made "the answers are
+ * the input" true and "changing them changes anything you are looking at" false.
+ * A reader finished five questions, landed back on the feed, and saw the poem
+ * that was already there — fetched before they answered — plus four more by that
+ * poem's poet. The whole flow was observably inert.
+ *
+ * A subscription rather than a store because the writers are not components:
+ * OnboardingFlow writes storage itself, and useOnboardingPrefs writes it again
+ * from the account on sign-in. Both funnel through writePrefs/clearPrefs, so one
+ * notify here covers every way the answers can change — completing the flow,
+ * editing them later, and signing in to an account whose answers win the merge.
+ *
+ * The signature guard is what makes the sign-in case safe to wire up at all: the
+ * overwhelmingly common reconcile writes back byte-identical answers, and
+ * redrawing the feed under a reader who just signed in to look at a poem would
+ * be a bug, not a feature.
+ */
+const listeners = new Set();
+
+/** Everything the feed weights on. `completedAt` is deliberately NOT in it. */
+const signatureOf = (p) =>
+  JSON.stringify([
+    p?.family ?? null,
+    [...(p?.moods || [])].sort(),
+    [...(p?.motifs || [])].sort(),
+    p?.era ?? null,
+    p?.difficulty ?? null,
+  ]);
+
+let lastSignature = null;
+
+const notify = (prefs) => {
+  const next = signatureOf(prefs);
+  if (next === lastSignature) return;
+  lastSignature = next;
+  listeners.forEach((fn) => {
+    try {
+      fn(prefs);
+    } catch {
+      /* a listener throwing must not stop the others, or lose the write */
+    }
+  });
+};
+
+/**
+ * Run `fn` whenever the ANSWERS change. Returns an unsubscribe.
+ *
+ * Seeds `lastSignature` from storage on first subscribe so a write that merely
+ * restates what is already saved does not fire on mount.
+ */
+export const subscribePrefs = (fn) => {
+  if (lastSignature === null) lastSignature = signatureOf(readPrefs());
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+};
+
+/** Test seam — forget subscribers and the last-seen answers. */
+export const __resetPrefsSubscribers = () => {
+  listeners.clear();
+  lastSignature = null;
+};
+
 export const writePrefs = (prefs) => {
   try {
     globalThis.localStorage?.setItem(PREFS_STORAGE_KEY, JSON.stringify(prefs));
   } catch {
     /* private mode — selections just aren't persisted */
   }
+  // Outside the try: a reader in private mode still changed their answers, and
+  // the feed they are looking at should still respond to that.
+  notify(prefs);
 };
 
 /** Answered at all? Mirrors preferenceWeighting.hasPreferences without importing it. */
@@ -192,4 +265,5 @@ export const clearPrefs = () => {
   } catch {
     /* nothing to do */
   }
+  notify({ ...EMPTY_PREFS });
 };

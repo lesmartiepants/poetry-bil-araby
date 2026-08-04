@@ -21,6 +21,8 @@ import {
   sampleByScore,
   candidateQueries,
   drawFrom,
+  drawManyFrom,
+  DETERMINISTIC_OPENING,
   attributionFor,
 } from '../services/preferenceWeighting.js';
 
@@ -535,6 +537,92 @@ describe('drawFrom', () => {
     const d = drawFrom([], PREFS, 0, BANDS);
     expect(d.poem).toBe(null);
     expect(d.index).toBe(-1);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe('drawManyFrom', () => {
+  // A pool with an unambiguous ranking: PERFECT > MID > NOTHING, plus filler so
+  // a five-slide draw has somewhere to go after the top two are taken.
+  const MID = poem({ moods: ['amorous'], motifs: [], century: 7, accessibility: 1.0 });
+  const withId = (p, id) => ({ ...p, id });
+  const POOL = [
+    withId(NOTHING, 'n1'),
+    withId(MID, 'm1'),
+    withId(PERFECT, 'p1'),
+    withId(NOTHING, 'n2'),
+    withId(MID, 'm2'),
+  ];
+
+  it('takes the opening slides by RANK, not by sampling', () => {
+    // rng pinned to 0 would make sampleByScore return the FIRST candidate every
+    // time — i.e. NOTHING, which sits at index 0. The ranked slots must ignore
+    // it entirely, which is the whole guarantee.
+    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 2, rng: fixed(0) });
+    expect(picks.map((p) => p.poem.id)).toEqual(['p1', 'm1']);
+    expect(picks.every((p) => p.deterministic)).toBe(true);
+    expect(picks[0].scaled).toBeCloseTo(MAX_SCORE, 4);
+  });
+
+  it('samples once past the deterministic opening', () => {
+    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 5, rng: fixed(0) });
+    expect(picks.slice(0, DETERMINISTIC_OPENING).every((p) => p.deterministic)).toBe(true);
+    expect(picks.slice(DETERMINISTIC_OPENING).every((p) => p.deterministic)).toBe(false);
+  });
+
+  it('never serves the same poem twice in one batch', () => {
+    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 5, rng: fixed(0.5) });
+    const ids = picks.map((p) => p.poem.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('stops at the pool size rather than looping or padding', () => {
+    const { picks } = drawManyFrom(POOL.slice(0, 2), PREFS, 0, BANDS, { count: 9 });
+    expect(picks).toHaveLength(2);
+  });
+
+  it('breaks score ties deterministically, so the opening is not the API row order', () => {
+    // Two identical PERFECT poems: without the id tie-break the "top" pick would
+    // be whichever the API happened to return first, which is sampling wearing a
+    // different hat in the two slots that exist to not be sampled.
+    const tied = [withId(PERFECT, 'zzz'), withId(PERFECT, 'aaa')];
+    const a = drawManyFrom(tied, PREFS, 0, BANDS, { count: 1 });
+    const b = drawManyFrom([...tied].reverse(), PREFS, 0, BANDS, { count: 1 });
+    expect(a.picks[0].poem.id).toBe('aaa');
+    expect(b.picks[0].poem.id).toBe('aaa');
+  });
+
+  it('reports each pick its rank in the WHOLE pool, not among the leftovers', () => {
+    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 2 });
+    expect(picks[0].rank).toBe(1);
+    expect(picks[1].rank).toBe(2);
+  });
+
+  it('startSlot past the opening samples everything — load-more does not re-rank', () => {
+    // Infinite scroll would otherwise serve the two top-ranked candidates again
+    // on every batch, converging the feed instead of broadening it.
+    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, {
+      count: 3,
+      startSlot: 5,
+      rng: fixed(0),
+    });
+    expect(picks.every((p) => p.deterministic)).toBe(false);
+    expect(picks.map((p) => p.slot)).toEqual([5, 6, 7]);
+  });
+
+  it('keeps a zero-scoring poem reachable in the sampled tail', () => {
+    // Guarantee (1) survives batching: the ranked opening takes the top two, and
+    // everything after is a softmax draw where exp(finite) > 0 for every score.
+    const drawn = new Set();
+    for (let i = 0; i < 400; i += 1) {
+      drawManyFrom(POOL, PREFS, 0, BANDS, { count: 3 }).picks.forEach((p) => drawn.add(p.poem.id));
+    }
+    expect(drawn.has('n1')).toBe(true);
+  });
+
+  it('returns an empty pick list rather than throwing on an empty pool', () => {
+    expect(drawManyFrom([], PREFS, 0, BANDS, { count: 5 }).picks).toEqual([]);
   });
 });
 

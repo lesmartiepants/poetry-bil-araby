@@ -54,7 +54,9 @@ import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
 import { useModalStore } from './stores/modalStore';
-import { fetchPoem as fetchPoemAction } from './stores/actions/fetchPoem';
+import { fetchPoem as fetchPoemAction, fetchWeightedFeed } from './stores/actions/fetchPoem';
+import { readPrefs, subscribePrefs } from './services/preferences.js';
+import { hasPreferences } from './services/preferenceWeighting.js';
 import {
   togglePlay as togglePlayAction,
   dismissTTSProgress,
@@ -122,6 +124,15 @@ import PlayControlsStrip from './components/PlayControlsStrip.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+/**
+ * Slides a fresh feed is drawn with. Matches the poet carousel it replaces
+ * (1 main + 4), so the pager dots and the load-more trigger point are unchanged.
+ */
+const FEED_SIZE = 5;
+
+/** Slides each load-more batch appends. */
+const LOAD_MORE_SIZE = 3;
+
 // Re-export filterPoemsByCategory for backwards compatibility with existing tests
 export { filterPoemsByCategory } from './utils/filterPoems.js';
 
@@ -168,6 +179,16 @@ export default function DiwanApp() {
   // Tracks poem IDs that have already had analyzePoemAction fired, so we never
   // fire it more than once per poem (prevents flickering/repeated translations).
   const explainedPoemIds = useRef(new Set());
+  /**
+   * A preference redraw in flight, and the slot 0 it produced.
+   *
+   * The carousel-population effect keys on `current.id`, which means it fires
+   * both DURING the redraw (with the old current, so it starts a second,
+   * pointless draw) and AFTER it (with the new one, where it would clear the
+   * five ranked slides and refill 1-4 by sampling). `pending` covers the first
+   * window, `headId` the second.
+   */
+  const prefsRedraw = useRef({ pending: false, headId: null });
   // autoExplainPending acts as a natural queue: setting it true when isInterpreting
   // is true causes the autoExplainPending effect to retry once isInterpreting clears.
 
@@ -441,7 +462,22 @@ export default function DiwanApp() {
     // The API filters by Arabic poet name (po.name column), so always use poetArabic.
     const targetPoet = selectedCategory !== 'All' ? selectedCategory : current?.poetArabic; // Arabic name for API compatibility
 
-    if (!targetPoet || !current?.id) return;
+    // A scored feed doesn't need a poet — that is the point of it — so only the
+    // poet-run path is gated on having one.
+    const prefsForFeed = FEATURES.onboardingPrefs ? readPrefs() : null;
+    const wantScoredFeed = selectedCategory === 'All' && hasPreferences(prefsForFeed);
+    if ((!targetPoet && !wantScoredFeed) || !current?.id) return;
+
+    // A preference redraw is building the whole feed, or has just built it.
+    // Either way this effect has nothing to add and everything to clobber.
+    //
+    // The headId check is NOT a one-shot: the effect fires more than once after
+    // a redraw, and clearing on the first match let a later run rebuild the feed
+    // anyway. It clears when some OTHER poem becomes current, which is the real
+    // end of the drawn feed's tenure at slot 0.
+    if (prefsRedraw.current.pending) return;
+    if (prefsRedraw.current.headId === current.id) return;
+    prefsRedraw.current.headId = null;
 
     // For poet-selected mode, wait for matching poem before populating.
     // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).
@@ -456,8 +492,39 @@ export default function DiwanApp() {
     let cancelled = false;
     clearCarouselPoems();
     explainedPoemIds.current.clear();
-    // Fetch 4 additional poems (excluding the current main poem) to fill slots 1-4.
-    fetchPoemsByPoet(targetPoet, 4, [current.id])
+
+    // WHICH FEED THIS IS.
+    //
+    // "All" mode with saved answers gets a SCORED feed: slots 1-4 are each their
+    // own draw against the reader's answers, out of one shared candidate pool.
+    // They used to be four more poems by whoever wrote slot 0, which meant the
+    // answers reached exactly one slide in five and the other four were decided
+    // by an accident of who slot 0's poet happened to be. Answering
+    // `valor-defiance` and getting five consecutive ʿAlī ibn Abī Ṭālib poems is
+    // that bug, not a coincidence.
+    //
+    // The poet run is NOT deleted, it is demoted from default to explicit: it is
+    // still exactly what a poet filter (Discover by poet) does, and it is still
+    // what an unanswered reader gets in "All" mode, where there is no better
+    // signal than "more like the one in front of you".
+    const prefs = prefsForFeed;
+    const scoredFeed = wantScoredFeed;
+
+    const populate = scoredFeed
+      ? // startSlot 1 — slot 0 is `current`, already drawn and already on screen,
+        // so this batch owns the deterministic slot 1 and samples 2-4.
+        fetchWeightedFeed({
+          prefs,
+          excludeIds: [current.id],
+          addLog,
+          count: 4,
+          startSlot: 1,
+          replaceFeed: false,
+        })
+      : // Fetch 4 additional poems (excluding the current main poem) to fill slots 1-4.
+        fetchPoemsByPoet(targetPoet, 4, [current.id]);
+
+    populate
       .then((others) => {
         if (cancelled) return;
         // Build carousel with main poem at index 0 so the view never jumps.
@@ -466,7 +533,9 @@ export default function DiwanApp() {
         if (FEATURES.logging)
           addLog(
             'Carousel',
-            `Populated ${carouselList.length} poems for ${targetPoet} (main poem first)`,
+            scoredFeed
+              ? `Populated ${carouselList.length} poems by score (main poem first)`
+              : `Populated ${carouselList.length} poems for ${targetPoet} (main poem first)`,
             'info'
           );
         // Auto-explain is handled by the autoExplainPending path — no direct analyzePoemAction here.
@@ -1101,6 +1170,139 @@ export default function DiwanApp() {
 
   const handleFetch = () =>
     fetchPoemAction({ addLog, track, emitEvent, navigate: navigateReader, markPoemSeen });
+
+  /**
+   * Redraw the whole feed when the ANSWERS change.
+   *
+   * Without this the flow is observably inert: the reader answers five
+   * questions, lands back on the feed, and is looking at a poem that was fetched
+   * before they answered anything — plus four more by that poem's poet. Nothing
+   * about the session responds. The answers only reached the NEXT press of
+   * Discover, which most readers never make, because the whole point of
+   * answering was that they should not have to.
+   *
+   * Three ways the answers can change, one handler:
+   *   - finishing the flow           OnboardingFlow -> writePrefs
+   *   - editing them later           same path
+   *   - signing in                   useOnboardingPrefs -> writePrefs when the
+   *                                  account's answers win the merge
+   *
+   * `subscribePrefs` fires only when the weighted fields actually differ, so the
+   * common sign-in reconcile (which writes back identical answers) does not
+   * yank the feed out from under someone who signed in to save a poem.
+   *
+   * The batch draws the WHOLE feed including slot 0, which the ordinary
+   * population path cannot do — there `current` is already on screen and
+   * replacing it would jump the view. Here the jump is the point.
+   */
+  useEffect(() => {
+    if (!FEATURES.onboardingPrefs) return undefined;
+    return subscribePrefs((prefs) => {
+      if (!usePoemStore.getState().useDatabase) return;
+      if (!hasPreferences(prefs)) return;
+      // Synchronously, before the await: the population effect can run while
+      // this fetch is out, and without the flag it starts a draw of its own that
+      // is cancelled a moment later — two requests spent on nothing.
+      prefsRedraw.current = { pending: true, headId: null };
+      (async () => {
+        try {
+          pruneSeenPoems();
+          const picks = await fetchWeightedFeed({
+            prefs,
+            excludeIds: getRecentSeenIds(),
+            addLog,
+            count: FEED_SIZE,
+            startSlot: 0,
+            replaceFeed: true,
+          });
+          if (!picks.length) {
+            prefsRedraw.current = { pending: false, headId: null };
+            return;
+          }
+          prefsRedraw.current = { pending: false, headId: picks[0].id };
+          picks.forEach((p) => markPoemSeen(p.id));
+          // Move `currentIndex` inside the same updater that appends the poems,
+          // the way fetchPoem does. Relying on the route change to land it is a
+          // render too late: the carousel-population effect runs in between,
+          // sees the OLD current, and rebuilds the feed it was told to leave
+          // alone. That race is what kept overwriting the ranked slide 1.
+          const store = usePoemStore.getState();
+          store.setPoems((prev) => {
+            const updated = [...prev, ...picks];
+            const fresh = filterPoemsByCategory(updated, usePoemStore.getState().selectedCategory);
+            const idx = fresh.findIndex((p) => p.id === picks[0].id);
+            if (idx !== -1) store.setCurrentIndex(idx);
+            return updated;
+          });
+          setCarouselPoems(picks);
+          explainedPoemIds.current.clear();
+          navigateReader('/poem/' + picks[0].id + window.location.search, { replace: true });
+          updateOGMetaTags(picks[0]);
+          setAutoExplainPending(true);
+          addLog(
+            'Discovery Bias',
+            `Preferences changed — feed redrawn from slot 0 (${picks.length} slides)`,
+            'user'
+          );
+        } catch (err) {
+          // Leaving `pending` set would freeze the carousel out permanently.
+          prefsRedraw.current = { pending: false, headId: null };
+          addLog('Discovery Bias', `Preference redraw failed: ${err.message}`, 'error');
+        }
+      })();
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * Infinite scroll. Shared by both feed renderers, which had a copy each — and
+   * both copies called `fetchRandomPoem` directly, so preferences stopped
+   * applying the moment the reader scrolled past slide 4. Everything below the
+   * fold was unweighted, which is most of what a reader actually sees.
+   *
+   * `startSlot` is the current feed length, which is what keeps the ranked
+   * opening from re-running: slides 5+ are past DETERMINISTIC_OPENING, so they
+   * sample like the rest of the tail. Without it every load-more would serve the
+   * two top-ranked candidates again and the feed would converge instead of
+   * broadening.
+   */
+  const loadMorePoems = () => {
+    (async () => {
+      try {
+        const existing = usePoemStore.getState().carouselPoems;
+        const exclude = existing.map((p) => p.id);
+        const poet = selectedCategory !== 'All' ? selectedCategory : undefined;
+        const prefs = FEATURES.onboardingPrefs ? readPrefs() : null;
+
+        if (selectedCategory === 'All' && hasPreferences(prefs)) {
+          const picks = await fetchWeightedFeed({
+            prefs,
+            excludeIds: exclude,
+            addLog,
+            count: LOAD_MORE_SIZE,
+            startSlot: existing.length,
+            // Appending, not restarting: the inspector's ahead/behind queue has
+            // to keep the slides the reader already scrolled through.
+            replaceFeed: false,
+          });
+          picks.forEach((p) => addCarouselPoem(p));
+          return;
+        }
+
+        // Endless feed, unweighted: pull NEW RANDOM poems so scrolling keeps surfacing
+        // variety instead of staying on the current author. If a poet filter is
+        // active (Discover by poet), keep drawing random poems from that poet.
+        for (let i = 0; i < LOAD_MORE_SIZE; i++) {
+          const p = await fetchRandomPoem({ poet, excludeIds: exclude });
+          if (!p?.id || exclude.includes(p.id)) continue;
+          exclude.push(p.id);
+          addCarouselPoem(p);
+        }
+      } catch (err) {
+        if (FEATURES.logging) addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
+      }
+    })();
+  };
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -1811,27 +2013,7 @@ export default function DiwanApp() {
                           currentFontClass={currentFontClass}
                           POEM_META={POEM_META}
                           DESIGN={DESIGN}
-                          onLoadMore={() => {
-                            // Endless feed: pull NEW RANDOM poems so scrolling keeps surfacing
-                            // variety instead of staying on the current author. If a poet filter is
-                            // active (Discover by poet), keep drawing random poems from that poet.
-                            (async () => {
-                              try {
-                                const exclude = carouselPoems.map((p) => p.id);
-                                const poet =
-                                  selectedCategory !== 'All' ? selectedCategory : undefined;
-                                for (let i = 0; i < 3; i++) {
-                                  const p = await fetchRandomPoem({ poet, excludeIds: exclude });
-                                  if (!p?.id || exclude.includes(p.id)) continue;
-                                  exclude.push(p.id);
-                                  addCarouselPoem(p);
-                                }
-                              } catch (err) {
-                                if (FEATURES.logging)
-                                  addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
-                              }
-                            })();
-                          }}
+                          onLoadMore={loadMorePoems}
                           highlightStyle={highlightStyle}
                           currentVerseIndex={currentVerseIndex}
                           wordRefs={wordRefs}
@@ -1927,27 +2109,7 @@ export default function DiwanApp() {
                           currentFontClass={currentFontClass}
                           POEM_META={POEM_META}
                           DESIGN={DESIGN}
-                          onLoadMore={() => {
-                            // Endless feed: pull NEW RANDOM poems so scrolling keeps surfacing
-                            // variety instead of staying on the current author. If a poet filter is
-                            // active (Discover by poet), keep drawing random poems from that poet.
-                            (async () => {
-                              try {
-                                const exclude = carouselPoems.map((p) => p.id);
-                                const poet =
-                                  selectedCategory !== 'All' ? selectedCategory : undefined;
-                                for (let i = 0; i < 3; i++) {
-                                  const p = await fetchRandomPoem({ poet, excludeIds: exclude });
-                                  if (!p?.id || exclude.includes(p.id)) continue;
-                                  exclude.push(p.id);
-                                  addCarouselPoem(p);
-                                }
-                              } catch (err) {
-                                if (FEATURES.logging)
-                                  addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
-                              }
-                            })();
-                          }}
+                          onLoadMore={loadMorePoems}
                           highlightStyle={highlightStyle}
                           activeVersePairs={versePairs}
                           wordRefs={wordRefs}

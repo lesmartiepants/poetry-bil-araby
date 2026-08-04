@@ -1,15 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Scale, X } from 'lucide-react';
 
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
-import { getLastDraw } from '../services/lastDraw.js';
+import { usePoemStore } from '../stores/poemStore';
+import { getDrawFor, getFeedOrder, getLastDraw } from '../services/lastDraw.js';
 import { MAX_SCORE, facetsOf } from '../services/preferenceWeighting.js';
 
 /**
- * الميزان — the scale. The last scored draw, laid out so the weighting can be
- * checked by eye.
+ * الميزان — the scale. The scored draw FOR THE POEM IN FRONT OF THE READER, laid
+ * out so the weighting can be checked by eye.
  *
  * This exists because low-scoring poems appearing in the feed is CORRECT — the
  * open candidate page is what keeps the corpus reachable — and from the outside
@@ -28,6 +29,13 @@ import { MAX_SCORE, facetsOf } from '../services/preferenceWeighting.js';
  * picked row is marked rather than moved to the top, so you can see whether it
  * came from the head or the tail. Seeing a tail pick occasionally is the feature
  * working.
+ *
+ * IT FOLLOWS THE SLIDE. It used to read a single module-level box and poll it
+ * once a second, which was defensible only while there was genuinely one scored
+ * draw per feed. Now that every slide is its own draw, the panel keys off the
+ * carousel index — reactive state it already had — so scrolling moves the
+ * numbers AND the spread rail. The poll is gone: there is nothing left to poll
+ * for, since the index change is what makes the draw change.
  */
 
 const pct = (n) => `${Math.round(n * 100)}%`;
@@ -109,6 +117,56 @@ const SpreadRail = ({ rows }) => (
   </div>
 );
 
+/**
+ * The feed as drawn — every slide, its score, and where the reader is in it.
+ *
+ * "What's ahead and behind" is read as THE QUEUE, not as the neighbouring rows
+ * of this slide's own ranking. The ranking neighbours are already visible in the
+ * table below (that is what the table is), whereas the queue answers the
+ * question the table cannot: is the whole feed well-matched, or did one good
+ * pick land in front of four weak ones. That is the difference between "the
+ * weighting works" and "the weighting worked once".
+ *
+ * `*` marks a slide taken by rank rather than sampled — the deterministic
+ * opening. It should appear on slots 0 and 1 of a fresh draw and nowhere else.
+ */
+const FeedQueue = ({ feed, hereIndex, border }) => {
+  if (!feed?.length) return null;
+  return (
+    <div className={`${MONO} px-4 py-2 border-b ${border} flex-none`}>
+      <div className="opacity-40 mb-1">feed queue · ◆ = you are here · * = ranked, not sampled</div>
+      <div className="flex gap-1 overflow-x-auto pb-0.5">
+        {feed.map((f, i) => {
+          const here = i === hereIndex;
+          return (
+            <span
+              key={`${f.id}-${f.slot}`}
+              title={`slot ${f.slot} · ${f.title || f.id} · ${f.scaled?.toFixed?.(2)}/${MAX_SCORE}${
+                f.rank ? ` · rank ${f.rank}` : ''
+              }`}
+              className="flex-none px-1.5 py-1 rounded-sm text-center"
+              style={{
+                minWidth: 46,
+                color: here ? 'var(--gold)' : undefined,
+                background: here ? 'rgba(197,160,89,0.14)' : 'rgba(255,255,255,0.04)',
+                border: `1px solid ${here ? 'var(--gold)' : 'rgba(255,255,255,0.08)'}`,
+                opacity: here ? 1 : 0.6,
+              }}
+            >
+              <span className="block opacity-60">
+                {here ? '◆' : ''}
+                {f.slot}
+                {f.deterministic ? '*' : ''}
+              </span>
+              <span className="block">{(f.scaled ?? 0).toFixed(2)}</span>
+            </span>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
 const DiscoveryDrawInspector = () => {
   const darkMode = useUIStore((s) => s.darkMode);
   // Rides the same switch as the other developer affordances, so one toggle
@@ -118,14 +176,27 @@ const DiscoveryDrawInspector = () => {
 
   const [open, setOpen] = useState(false);
   const pickedRowRef = useRef(null);
-  // The draw is a module-level box (see services/lastDraw.js) and nothing
-  // re-renders off it, so poll while the trigger is mounted. Dev-only, and a
-  // 1s tick is far cheaper than publishing a store update on every fetch.
-  const [draw, setDraw] = useState(() => getLastDraw());
-  useEffect(() => {
-    const id = setInterval(() => setDraw(getLastDraw()), 1000);
-    return () => clearInterval(id);
-  }, []);
+
+  // The poem the reader is actually on. Both of these are reactive, so the panel
+  // re-renders on every swipe without polling anything.
+  const carouselPoems = usePoemStore((s) => s.carouselPoems);
+  const carouselIndex = usePoemStore((s) => s.carouselIndex);
+  const currentPoemId = carouselPoems[carouselIndex]?.id ?? null;
+
+  const { draw, feed } = useMemo(
+    () => ({
+      // Fall back to the last draw only when this slide has no record of its
+      // own — an unweighted poem (poet filter, load-more without answers) has
+      // nothing to show, and showing a neighbour's numbers under its title is
+      // exactly the frozen-panel bug this replaced.
+      draw: getDrawFor(currentPoemId) || (currentPoemId == null ? getLastDraw() : null),
+      feed: getFeedOrder(),
+    }),
+    // carouselPoems is in the deps because a load-more appends records for
+    // slides that already existed by index; the id alone would not change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentPoemId, carouselPoems]
+  );
 
   useEffect(() => {
     if (!open) return undefined;
@@ -153,6 +224,7 @@ const DiscoveryDrawInspector = () => {
     .sort((a, b) => b.scaled - a.scaled);
   const pickedIndex = rows.findIndex((r) => r.isPicked);
   const pickedRow = pickedIndex >= 0 ? rows[pickedIndex] : null;
+  const hereInFeed = feed.findIndex((f) => f.id === currentPoemId);
 
   const surface = darkMode ? 'bg-black/80' : 'bg-white/90';
 
@@ -230,8 +302,11 @@ const DiscoveryDrawInspector = () => {
         {!draw ? (
           <div className="px-4 py-6">
             <p className={`${MONO} opacity-40`}>
-              No scored draw yet — answer the preference flow, then discover a poem.
+              {currentPoemId == null
+                ? 'No scored draw yet — answer the preference flow, then discover a poem.'
+                : `Slide ${carouselIndex} (#${currentPoemId}) was not drawn by score — it came from a poet run or an unweighted load-more, so there is no ranking behind it.`}
             </p>
+            <FeedQueue feed={feed} hereIndex={hereInFeed} border={theme.border} />
           </div>
         ) : (
           <>
@@ -253,19 +328,29 @@ const DiscoveryDrawInspector = () => {
 
               <div className="flex items-baseline gap-2 mt-1.5">
                 <div className="text-[0.6875rem] truncate">
-                  <span className="opacity-40">#{picked?.id}</span>{' '}
+                  <span className="opacity-40">
+                    slot {draw.slot ?? '?'} · #{picked?.id}
+                  </span>{' '}
                   <span className="opacity-90">{picked?.title}</span>
                 </div>
                 {/* Head or tail — the one thing the raw score can't tell you. */}
                 {pickedIndex >= 0 && (
                   <span className={`${MONO} opacity-45 ml-auto flex-none`}>
-                    rank {pickedIndex + 1} of {rows.length}
+                    {/* The draw's own rank, not this table's row index. They
+                        differ on ties — and a family-only answer produces a lot
+                        of exact 5.00 ties — so showing the row index here would
+                        contradict the tie-break the pick was actually made
+                        with, in the one place a reader checks it. */}
+                    rank {draw.rank ?? pickedIndex + 1} of {rows.length}
+                    {draw.deterministic ? ' · ranked' : ' · sampled'}
                   </span>
                 )}
               </div>
 
               <SpreadRail rows={rows} />
             </div>
+
+            <FeedQueue feed={feed} hereIndex={hereInFeed} border={theme.border} />
 
             {/* What the reader asked for, and what was actually requested for it. */}
             <div className={`${MONO} opacity-50 px-4 py-2 border-b ${theme.border} flex-none`}>

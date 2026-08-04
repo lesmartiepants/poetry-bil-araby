@@ -254,11 +254,17 @@ const PreferenceStep = ({
   }, []);
 
   const toggle = (option, event) => {
+    // Single-select toggles off too. Every step is skippable, so a reader who
+    // picks an era and changes their mind needs a way back to "no answer" —
+    // previously the only escape was reloading the flow. Tapping the chosen
+    // chip clears it, and the CTA falls back from "Next" to "Skip".
     const next = multi
       ? selected.includes(option.key)
         ? selected.filter((k) => k !== option.key)
         : [...selected, option.key]
-      : [option.key];
+      : selected[0] === option.key
+        ? []
+        : [option.key];
     setSelected(next);
     onChange?.(next);
     if (event?.currentTarget) {

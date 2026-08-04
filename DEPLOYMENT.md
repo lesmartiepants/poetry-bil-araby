@@ -236,6 +236,7 @@ migration.
 | Branch     | `main`                                       | `staging`                                       |
 | Plan       | Free                                         | Free                                            |
 | `NODE_ENV` | `production`                                 | `staging`                                       |
+| Database   | `poetry-bil-araby` (Supabase)                | `poetry-bil-araby-staging` (separate Supabase)  |
 | Keep-alive | Yes (always warm)                            | No (cold starts)                                |
 
 Render's free plan has no per-PR preview environments. Setting
@@ -301,25 +302,93 @@ the server, not a browser origin.
 
 ### Environment variables
 
-Staging is created with `NODE_ENV` and `PORT` only. Secrets must be added by hand
-in the Render dashboard (**poetry-bil-araby-staging → Environment**):
+`DATABASE_URL` is **already set** and points at the dedicated staging Supabase
+project (see below). The rest must be added by hand in the Render dashboard
+(**poetry-bil-araby-staging → Environment**), and only if a given PR needs them:
 
-- `DATABASE_URL` — **required** before staging can serve poems. Without it
-  `/api/health` still returns ok, but `/api/health/full` and every poem route
-  return 500.
 - `GEMINI_API_KEY` — only if the PR exercises AI mode or the TTS proxy.
 - `GITHUB_TOKEN_SUBMIT_BUG` — only if the PR exercises bug-report submission.
+- `API_SECRET_KEY` — only if the PR exercises a write endpoint. Left unset,
+  write-endpoint auth is bypassed, which is fine for staging and wrong for prod.
 
-**Which database?** Prefer a **separate** Supabase project for staging. The whole
-point of staging is to run unreviewed migrations, and a migration is exactly the
-kind of change that can destroy data. Point staging at the production
-`DATABASE_URL` and a bad `ALTER`/`DROP` in a PR hits the real 84k-poem corpus,
-with the free plan's backup retention as the only recovery path. Sharing is
-cheaper and needs no setup, but it removes the safety that justifies having
-staging at all.
+Without `DATABASE_URL`, `/api/health` still returns ok but `/api/health/full` and
+every poem route return 500 — with an **empty** error message, so don't go hunting
+for a cause in the logs.
 
-If staging shares the production database, treat it as read-only: verify API
-shape changes there, and test migrations somewhere else.
+### The staging database
+
+Staging has its **own** Supabase project, not a pointer at production.
+
+|             | Production                            | Staging                               |
+| ----------- | ------------------------------------- | ------------------------------------- |
+| Project     | `poetry-bil-araby`                    | `poetry-bil-araby-staging`            |
+| Region      | `us-east-1`                           | `us-east-1`                           |
+| Pooler host | `aws-1-us-east-1.pooler.supabase.com` | `aws-0-us-east-1.pooler.supabase.com` |
+
+Both are free-tier projects in the same org, which is the free plan's limit of two
+active projects. **Everything else in the org is now paused-only** — activating a
+third project means pausing one of these or upgrading.
+
+The pooler subdomains differ (`aws-1` vs `aws-0`). Read the host from
+`GET /v1/projects/{ref}/config/database/pooler` rather than copying production's
+and editing the ref. As everywhere else in this repo, use the **pooler** host on
+port `6543`, never `db.<ref>.supabase.co`.
+
+The staging DB password is in the repo-root `.env` as `STAGING_DB_PASSWORD`.
+
+**What's in it.** A full copy of production's content: all 9,073 poems, 1,013
+poets, and the complete categorization data (40,019 `poem_categories` rows), plus
+eras, meters, rhymes, themes and patterns. Deliberately **not** copied: `users`,
+`user_settings`, `saved_poems`, `bug_reports`, `discussions`, `discussion_likes`,
+`poem_events`, `tagging_jobs` and the `design_*` tables. Those tables exist with
+the right schema but are empty, so staging carries no real user data.
+
+The staging DB is ~102 MB against the 500 MB free cap. Production reports 941 MB
+for the same content, almost all of it index bloat on `poems`; a fresh rebuild is
+an order of magnitude smaller.
+
+**Migration history is replicated too**, so `supabase db push` against staging
+applies only migrations production hasn't seen. That is the whole point: a new
+migration can be proven on staging before it ever touches production.
+
+### Recreating the staging database
+
+There is no single command for this, because **the base schema is not in this
+repo**. `supabase/migrations/` never runs `CREATE TABLE poems` or `poets` — every
+reference is an `ALTER`. Those 37 tables came from the original corpus import, and
+`.gitignore` excludes `*_import_poetry.sql`. Run `supabase db push` at a blank
+project and it fails immediately.
+
+So the schema has to come out of production:
+
+```bash
+# Session mode (port 5432) — pg_dump does not work through the transaction pooler
+pg_dump "$PROD_SESSION_URL" --schema-only --no-owner --no-privileges \
+  --schema=public --schema=supabase_migrations -f prod_schema.sql
+
+pg_dump "$PROD_SESSION_URL" --data-only --no-owner --no-privileges \
+  --schema=public --schema=supabase_migrations \
+  --exclude-table-data=public.users \
+  --exclude-table-data=public.user_settings \
+  --exclude-table-data=public.saved_poems \
+  --exclude-table-data=public.bug_reports \
+  --exclude-table-data=public.discussions \
+  --exclude-table-data=public.discussion_likes \
+  --exclude-table-data=public.poem_events \
+  --exclude-table-data=public.tagging_jobs \
+  --exclude-table-data="public.design_*" -f prod_data.sql
+```
+
+Load the schema first, then the data with `SET session_replication_role = 'replica';`
+ahead of it — `tags` has a circular foreign key that a plain `--data-only` restore
+cannot satisfy in order.
+
+A copy of the schema dump is at `~/pgdump/prod_schema.sql` on the maintainer's
+machine. **Committing it as a baseline migration would remove this whole problem**
+and is worth doing.
+
+**Never point staging at production.** A bad `ALTER`/`DROP` in an unreviewed PR
+would hit the real corpus with free-plan backup retention as the only recovery.
 
 ---
 

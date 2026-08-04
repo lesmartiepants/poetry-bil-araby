@@ -165,11 +165,31 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
       // defensible, so this asserts the bounds instead of picking a side —
       // pinning either number would make a deliberate change to that decision
       // look like a regression.
+      const { rows: tags } = await pool.query(`
+        SELECT count(*)::int AS n
+          FROM poem_categories pc
+          JOIN category_values cv ON cv.id = pc.value_id
+          JOIN category_dimensions cd ON cd.id = cv.dimension_id
+         WHERE cd.key = 'mood' AND cv.key = 'melancholy'
+      `);
+      const tagged = tags[0].n;
       const selected = await request(http)
         .get('/api/poems/by-category?mood=melancholy&limit=50')
         .expect(200);
+
+      // Guard the guard. The bounds below only constrain anything while some
+      // poem is tagged melancholy but unservable — otherwise both ends collapse
+      // onto the same number and the test silently stops testing. Rather than
+      // trusting a comment to keep that true, assert it, and let the servable
+      // side come from the API itself so it cannot drift from SERVING.
+      expect(
+        tagged,
+        'no melancholy-tagged poem is unservable any more — fixtures or SERVING changed, ' +
+          'and the bounds below have gone vacuous. Re-pick a facet that straddles the filter.'
+      ).toBeGreaterThan(selected.body.length);
+
       expect(melancholy.poem_count).toBeGreaterThanOrEqual(selected.body.length);
-      expect(melancholy.poem_count).toBeLessThanOrEqual(2);
+      expect(melancholy.poem_count).toBeLessThanOrEqual(tagged);
       // What must never happen: a facet the vocabulary lists, that poems carry,
       // reading zero. That is what a broken GROUP BY or a wrong join key looks
       // like, and it is invisible to a mocked pool.

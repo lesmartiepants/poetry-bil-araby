@@ -252,6 +252,14 @@ INSERT INTO poems (
   -- Deliberately unservable #1: quality_score below SERVING.minQualityScore
   -- (75). Categorized, so if the quality filter ever stopped applying this row
   -- would show up in by-category results and the test would catch it.
+  --
+  -- DO NOT "fix" this score. Poem 25 is the only poem that is tagged and
+  -- unservable, which is what makes the gap between a facet's advertised count
+  -- and what selecting it returns observable at all. Raise it above 75 (or
+  -- raise minQualityScore past 90) and server.db.test.js's /api/categories
+  -- bounds collapse onto one number and quietly stop testing anything. That
+  -- test asserts this precondition and will fail loudly rather than rot, but
+  -- the fix is to pick another facet straddling the filter, not to relax it.
   (25, 'قصيدة اختبار ٢٥ — دون حد الجودة', 'Test Poem 25 — Below Quality Floor', 1, 1, 4, 5,
    '00000000-0000-4000-8000-000000000025', NULL, 60, 50, 5.0, 'fixture',
    'هذا نص اختبار مختلق دون حد الجودة * وسطر ثان يجب ألا يظهر في النتائج * وخاتمة تعلن أن هذه القصيدة بيانات تجريبية');

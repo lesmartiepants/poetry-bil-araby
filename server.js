@@ -1069,13 +1069,27 @@ app.get('/api/categories', async (req, res) => {
         families: [],
         distributions: { eras: [], accessibility: [] },
       });
+    // Every count on this endpoint is SERVING-SCOPED: joined through `poems` and
+    // gated by servingFilters(), the same predicate the poem routes apply.
+    //
+    // It previously counted the whole 9,073-poem corpus while the feed can only
+    // draw the ~4,767 that clear minQualityScore / maxVerseLines. Roughly half of
+    // every number was unreachable, so "Abbasid, 3,207" promised a reader poems
+    // that no query would ever return. Under scoring that gets worse rather than
+    // better: a running total is a far more direct promise than a number on a
+    // chip, so an inflated one is a more visible lie.
+    //
+    // The LEFT JOIN keeps values with zero servable poems in the payload (as a 0)
+    // instead of dropping them from the picker, which is why the predicate sits
+    // in the ON clause rather than a WHERE.
     const result = await pool.query(`
       SELECT d.key AS dimension, d.label_ar AS dimension_ar, d.label_en AS dimension_en,
              d.cardinality, v.key AS value, v.label_ar, v.label_en,
-             COUNT(pc.poem_id) AS poem_count
+             COUNT(p.id) AS poem_count
       FROM category_dimensions d
       JOIN category_values v ON v.dimension_id = d.id
       LEFT JOIN poem_categories pc ON pc.value_id = v.id
+      LEFT JOIN poems p ON p.id = pc.poem_id ${servingFilters()}
       GROUP BY d.id, d.key, d.label_ar, d.label_en, d.cardinality,
                v.id, v.key, v.label_ar, v.label_en, v.sort_order
       ORDER BY d.sort_order, v.sort_order
@@ -1111,7 +1125,8 @@ app.get('/api/categories', async (req, res) => {
              (SELECT COUNT(DISTINCT pc.poem_id)
                 FROM poem_categories pc
                 JOIN category_values v2 ON pc.value_id = v2.id
-               WHERE v2.family_id = f.id) AS poem_count
+                JOIN poems p ON p.id = pc.poem_id
+               WHERE v2.family_id = f.id ${servingFilters()}) AS poem_count
       FROM category_families f
       JOIN category_values v ON v.family_id = f.id
       JOIN category_dimensions d ON v.dimension_id = d.id
@@ -1157,14 +1172,15 @@ app.get('/api/categories', async (req, res) => {
         FROM poems p
         JOIN poets po ON p.poet_id = po.id
         LEFT JOIN eras e ON po.era_id = e.id
+        WHERE TRUE ${servingFilters()}
         GROUP BY po.era_id, e.name, p.century
         ORDER BY p.century NULLS LAST, po.era_id
       `),
       pool.query(`
-        SELECT width_bucket(accessibility_score, 0, 10, 20) AS bucket,
+        SELECT width_bucket(p.accessibility_score, 0, 10, 20) AS bucket,
                COUNT(*)::int AS poem_count
-        FROM poems
-        WHERE accessibility_score IS NOT NULL
+        FROM poems p
+        WHERE p.accessibility_score IS NOT NULL ${servingFilters()}
         GROUP BY bucket
         ORDER BY bucket
       `),

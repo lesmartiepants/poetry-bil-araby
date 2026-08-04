@@ -1,0 +1,212 @@
+name: Database Reconstruct
+
+# Proves the repo can rebuild its own schema from an empty Postgres.
+#
+# This exists because it silently could not. Every migration only ever ALTERs
+# `poems` and `poets`; nothing created them, and the import that did is
+# gitignored. A base migration now fills that gap.
+#
+# The job also pins migration ORDER. Bare glob expansion is locale-dependent,
+# so a tree that applied cleanly on a macOS laptop failed in a C-locale
+# container — which is exactly this runner. Running here is the only way that
+# class of bug gets caught.
+
+on:
+  pull_request:
+    # Kept in sync with the push filter below by hand — GitHub Actions does not
+    # support YAML anchors.
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/seed/**'
+      - 'scripts/db-setup.sh'
+      - 'scripts/db-seed.sh'
+      - 'server.js'
+      - 'src/test/server.db.test.js'
+      - 'vitest.config.js'
+      - '.github/workflows/db-reconstruct.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'supabase/seed/**'
+      - 'scripts/db-setup.sh'
+      - 'scripts/db-seed.sh'
+      - 'server.js'
+      - 'src/test/server.db.test.js'
+      - 'vitest.config.js'
+      - '.github/workflows/db-reconstruct.yml'
+
+jobs:
+  reconstruct:
+    name: Rebuild schema from empty
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Every migration filename is a 14-digit timestamp
+        run: |
+          # A short or over-long prefix reintroduces the ordering collision:
+          # '0' (0x30) sorts before '_' (0x5F), so `20260220_x.sql` lands
+          # AFTER `20260220000001_y.sql` under LC_ALL=C and before it under a
+          # macOS default locale. Uniform width makes both agree.
+          odd=$(ls supabase/migrations/*.sql | xargs -n1 basename | grep -vE '^[0-9]{14}_' || true)
+          if [ -n "$odd" ]; then
+            echo "Migration filenames must be <14-digit timestamp>_name.sql:" >&2
+            echo "$odd" >&2
+            exit 1
+          fi
+          echo "all migration filenames normalised"
+
+      - name: Apply from empty
+        env:
+          LOCAL_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/qafiyah
+        run: bash scripts/db-setup.sh
+
+      - name: Apply a second time (idempotence)
+        env:
+          LOCAL_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/qafiyah
+        run: bash scripts/db-setup.sh
+
+      - name: Core tables exist
+        env:
+          PGPASSWORD: postgres
+        run: |
+          missing=$(psql -h localhost -U postgres -d qafiyah -tAc "
+            SELECT string_agg(t, ', ')
+            FROM unnest(ARRAY['poems','poets','user_settings','saved_poems',
+                              'category_dimensions','category_values',
+                              'category_families','poem_categories']) AS t
+            WHERE to_regclass('public.' || t) IS NULL")
+          if [ -n "$missing" ]; then
+            echo "missing after reconstruction: $missing" >&2
+            exit 1
+          fi
+          n=$(psql -h localhost -U postgres -d qafiyah -tAc "
+            SELECT count(*) FROM information_schema.tables
+            WHERE table_schema='public' AND table_type='BASE TABLE'")
+          echo "reconstructed $n base tables, all core tables present"
+
+  # ---------------------------------------------------------------------------
+  # The reconstruct job above proves the schema builds. It does not prove the
+  # API can read it — the schema is thrown away empty. This job seeds the
+  # fabricated fixtures and runs the API against real Postgres.
+  #
+  # The whole point is the bugs a mocked pool cannot see. src/test/server.test.js
+  # mocks `pg`, so it answers with whatever the test provided: a column that does
+  # not exist, a join on the wrong key, or a CTE binding the wrong number of
+  # parameters all pass there and fail here.
+  # ---------------------------------------------------------------------------
+  api:
+    name: API against a reconstructed database
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # LOCAL_DATABASE_URL drives db:setup / db:seed; DATABASE_URL drives the
+      # server itself. Pointing DATABASE_URL at localhost is the case that used
+      # to fail outright on forced SSL, so exercising it here is deliberate.
+      LOCAL_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/qafiyah
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/qafiyah
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Same two commands the README hands a new contributor. If either drifts,
+      # the documented onboarding path is broken and this goes red.
+      - name: npm run db:setup
+        run: npm run db:setup
+
+      - name: npm run db:seed
+        run: npm run db:seed
+
+      - name: Seeding twice is a no-op
+        run: npm run db:seed
+
+      - name: API tests against real Postgres
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/qafiyah
+        run: npm run test:db
+
+      # The tests drive the Express app in-process via supertest. This starts the
+      # server the way a contributor does and talks to it over HTTP, which is the
+      # only way the boot path itself (pool config, startup capability detection,
+      # middleware order) gets covered.
+      - name: Smoke the real server over HTTP
+        run: |
+          set -euo pipefail
+          npm run dev:server > /tmp/server.log 2>&1 &
+          for _ in $(seq 1 30); do
+            curl -sf http://localhost:3001/api/health >/dev/null && break
+            sleep 1
+          done
+          curl -sf http://localhost:3001/api/health >/dev/null || {
+            echo "server never became healthy"; cat /tmp/server.log; exit 1; }
+
+          fail() { echo "SMOKE FAIL: $1" >&2; cat /tmp/server.log >&2; exit 1; }
+
+          # Startup detection has to have found the categorization layer, or the
+          # endpoints below silently return their pre-migration empty payloads.
+          grep -q 'Categorization layer: available' /tmp/server.log \
+            || fail "server did not detect the categorization layer"
+
+          total=$(curl -sf http://localhost:3001/api/health/full | jq -r .totalPoems)
+          served=$(curl -sf http://localhost:3001/api/health/full | jq -r .servedPoems)
+          [ "$total" = "26" ] || fail "expected 26 poems, got $total"
+          [ "$served" = "24" ] || fail "expected 24 servable poems, got $served"
+
+          poem=$(curl -sf http://localhost:3001/api/poems/random)
+          echo "$poem" | jq -e '.arabic | length > 0' >/dev/null \
+            || fail "/api/poems/random returned no Arabic text"
+
+          dims=$(curl -sf http://localhost:3001/api/categories | jq -r '.dimensions | length')
+          [ "$dims" = "3" ] || fail "expected 3 category dimensions, got $dims"
+
+          n=$(curl -sf 'http://localhost:3001/api/poems/by-category?family=grief-loss&limit=50' | jq -r 'length')
+          [ "$n" -gt 0 ] || fail "by-category?family=grief-loss returned nothing"
+
+          echo "smoke OK: $total poems, $served servable, $dims dimensions, $n in grief-loss"

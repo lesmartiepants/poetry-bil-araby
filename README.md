@@ -207,8 +207,42 @@ VITE_SUPABASE_ANON_KEY=your-jwt-anon-key   # must start with "eyJ"
 DATABASE_URL=postgresql://user:pass@host:6543/postgres   # Supabase pooler host
 ```
 
-For a local database instead of Supabase, install PostgreSQL 15+ and run `createdb qafiyah`;
-the backend defaults to `localhost:5432/qafiyah` when `DATABASE_URL` is unset.
+### Local database (optional)
+
+Database mode needs a schema and something in it. Both come from this repo. You
+need PostgreSQL 15+ installed (17 recommended) with `psql` on your `PATH` — on
+macOS that is `brew install postgresql@17`; `brew install libpq` alone is
+keg-only and leaves `psql` off the path.
+
+```bash
+npm run db:setup     # creates the qafiyah database and applies every migration
+npm run db:seed      # loads the fabricated test fixtures
+npm run dev:server   # http://localhost:3001/api/poems/random now returns a poem
+```
+
+The backend defaults to `localhost:5432/qafiyah` when `DATABASE_URL` is unset, so
+that is all the wiring needed. If you do set `DATABASE_URL`, a `localhost` host
+works — SSL is required only for remote hosts like Supabase and Render. Set
+`LOCAL_DATABASE_URL` to point `db:setup` / `db:seed` at a different database;
+both refuse to run against a hosted Supabase URL.
+
+Both commands are idempotent, so re-running either is safe.
+
+**What you get is fixtures, not the corpus.** The real poem library is not in
+this repo — it carries AI-generated translations and third-party biography prose
+whose licensing is not settled here. `npm run db:seed` instead loads 26
+completely invented poems by 8 invented poets, written to exercise the schema:
+several eras, some with no century, categorized and uncategorized poems, a
+spread of difficulty and intensity scores, and one fully vocalized poem. They
+are Arabic sentences that say, in Arabic, that they are test data. Every row is
+marked `source_dataset = 'fixture'`, so nothing can be mistaken for the real
+library. See [`supabase/seed/fixtures.sql`](supabase/seed/fixtures.sql).
+
+That is enough to develop against and it is what CI runs the API tests on. For
+the real corpus, ask a maintainer — or skip Postgres entirely and use AI mode,
+which generates poems through Gemini and needs no database.
+
+See [`supabase/migrations/README.md`](supabase/migrations/README.md) for details.
 
 ### Run
 

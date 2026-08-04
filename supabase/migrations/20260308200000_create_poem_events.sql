@@ -11,21 +11,24 @@ CREATE TABLE IF NOT EXISTS poem_events (
 );
 
 -- Unique constraint only for toggle events (downvote, save)
-CREATE UNIQUE INDEX idx_poem_events_unique_toggle
+CREATE UNIQUE INDEX IF NOT EXISTS idx_poem_events_unique_toggle
   ON poem_events (user_id, poem_id, event_type)
   WHERE event_type IN ('downvote', 'save');
 
-CREATE INDEX idx_poem_events_poem_id ON poem_events(poem_id);
-CREATE INDEX idx_poem_events_user_id ON poem_events(user_id);
-CREATE INDEX idx_poem_events_type ON poem_events(event_type);
-CREATE INDEX idx_poem_events_poem_type ON poem_events(poem_id, event_type);
+CREATE INDEX IF NOT EXISTS idx_poem_events_poem_id ON poem_events(poem_id);
+CREATE INDEX IF NOT EXISTS idx_poem_events_user_id ON poem_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_poem_events_type ON poem_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_poem_events_poem_type ON poem_events(poem_id, event_type);
 
 ALTER TABLE poem_events ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can view own events" ON poem_events;
 CREATE POLICY "Users can view own events"
   ON poem_events FOR SELECT USING (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can insert own events" ON poem_events;
 CREATE POLICY "Users can insert own events"
   ON poem_events FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete own events" ON poem_events;
 CREATE POLICY "Users can delete own events"
   ON poem_events FOR DELETE USING (auth.uid() = user_id);
 

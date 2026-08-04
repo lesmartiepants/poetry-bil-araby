@@ -28,7 +28,7 @@
       ],
       "endpoints": ["GET /api/categories", "GET /api/poems/by-category"],
       "tests": {
-        "unit": ["src/test/server.test.js"],
+        "unit": ["src/test/server.test.js", "src/test/server.db.test.js"],
         "e2e": []
       },
       "deviceOnly": false,

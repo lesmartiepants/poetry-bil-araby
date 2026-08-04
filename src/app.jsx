@@ -56,7 +56,7 @@ import { useUIStore } from './stores/uiStore';
 import { useModalStore } from './stores/modalStore';
 import { fetchPoem as fetchPoemAction, fetchWeightedFeed } from './stores/actions/fetchPoem';
 import { readPrefs, subscribePrefs } from './services/preferences.js';
-import { hasPreferences } from './services/preferenceWeighting.js';
+import { hasPreferences, DETERMINISTIC_OPENING } from './services/preferenceWeighting.js';
 import {
   togglePlay as togglePlayAction,
   dismissTTSProgress,
@@ -188,7 +188,9 @@ export default function DiwanApp() {
    * five ranked slides and refill 1-4 by sampling). `pending` covers the first
    * window, `headId` the second.
    */
-  const prefsRedraw = useRef({ pending: false, headId: null });
+  const prefsRedraw = useRef({ pending: false, headId: null, ids: [] });
+  /** A load-more batch is out; see loadMorePoems. */
+  const loadMoreInFlight = useRef(false);
   // autoExplainPending acts as a natural queue: setting it true when isInterpreting
   // is true causes the autoExplainPending effect to retry once isInterpreting clears.
 
@@ -471,13 +473,17 @@ export default function DiwanApp() {
     // A preference redraw is building the whole feed, or has just built it.
     // Either way this effect has nothing to add and everything to clobber.
     //
-    // The headId check is NOT a one-shot: the effect fires more than once after
-    // a redraw, and clearing on the first match let a later run rebuild the feed
-    // anyway. It clears when some OTHER poem becomes current, which is the real
-    // end of the drawn feed's tenure at slot 0.
+    // NOT a one-shot: the effect fires more than once after a redraw, and
+    // clearing on the first match let a later run rebuild the feed anyway.
+    //
+    // The check is against EVERY slide of the drawn feed, not just its head. A
+    // feed built here is already complete, so any poem in it landing at
+    // `current` — the head, or a slide the reader was moved to — means there is
+    // nothing to populate. The claim ends when the reader is on a poem that is
+    // not part of the drawn feed at all, which is the honest end of its tenure.
     if (prefsRedraw.current.pending) return;
-    if (prefsRedraw.current.headId === current.id) return;
-    prefsRedraw.current.headId = null;
+    if (prefsRedraw.current.ids?.includes(current.id)) return;
+    prefsRedraw.current = { pending: false, headId: null, ids: [] };
 
     // For poet-selected mode, wait for matching poem before populating.
     // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).
@@ -511,13 +517,18 @@ export default function DiwanApp() {
     const scoredFeed = wantScoredFeed;
 
     const populate = scoredFeed
-      ? // startSlot 1 — slot 0 is `current`, already drawn and already on screen,
-        // so this batch owns the deterministic slot 1 and samples 2-4.
+      ? // startSlot 1 because slot 0 is `current`, already drawn and already on
+        // screen. Everything here SAMPLES: this is an ordinary refill around a
+        // poem the reader arrived at some other way, not a feed drawn from
+        // answers they just gave. Ranking slide 1 here would put the single
+        // best-scoring candidate of the page in front of the reader on every
+        // poem they ever land on, which converges the feed and — worse — would
+        // overwrite the real ranked opening moments after a redraw produced it.
         fetchWeightedFeed({
           prefs,
           excludeIds: [current.id],
           addLog,
-          count: 4,
+          count: FEED_SIZE - 1,
           startSlot: 1,
           replaceFeed: false,
         })
@@ -1200,10 +1211,25 @@ export default function DiwanApp() {
     return subscribePrefs((prefs) => {
       if (!usePoemStore.getState().useDatabase) return;
       if (!hasPreferences(prefs)) return;
-      // Synchronously, before the await: the population effect can run while
-      // this fetch is out, and without the flag it starts a draw of its own that
-      // is cancelled a moment later — two requests spent on nothing.
-      prefsRedraw.current = { pending: true, headId: null };
+      // Both flags synchronously, before the await.
+      //
+      // `pending` stops the population effect starting a draw of its own while
+      // this fetch is out — two requests spent on something cancelled a moment
+      // later.
+      //
+      // `hasAutoLoaded` is the one that was actually losing the reader. The
+      // deferred auto-load (see the "Auto-load a poem" effect) is armed whenever
+      // the reader has not been on screen yet, and /onboarding is a full-screen
+      // route — so returning from the flow can run it. It then inspects
+      // `poems[0]`, which is the poem from BEFORE the answers and which this
+      // redraw appends after rather than replaces, decides the feed needs a
+      // poem, and calls handleFetch(). That fetch lands a sampled pick and
+      // navigates to it, moving the reader off the ranked slide 0 they were
+      // supposed to wake up on. Claiming the auto-load here is the same thing
+      // openPoemInReader does when the explorer seeds the feed itself, for the
+      // same reason: this handler is now the authority on what the reader sees.
+      prefsRedraw.current = { pending: true, headId: null, ids: [] };
+      hasAutoLoaded.current = true;
       (async () => {
         try {
           pruneSeenPoems();
@@ -1213,13 +1239,19 @@ export default function DiwanApp() {
             addLog,
             count: FEED_SIZE,
             startSlot: 0,
+            // The one call site that earns the ranked opening.
+            deterministic: DETERMINISTIC_OPENING,
             replaceFeed: true,
           });
           if (!picks.length) {
-            prefsRedraw.current = { pending: false, headId: null };
+            prefsRedraw.current = { pending: false, headId: null, ids: [] };
             return;
           }
-          prefsRedraw.current = { pending: false, headId: picks[0].id };
+          prefsRedraw.current = {
+            pending: false,
+            headId: picks[0].id,
+            ids: picks.map((p) => p.id),
+          };
           picks.forEach((p) => markPoemSeen(p.id));
           // Move `currentIndex` inside the same updater that appends the poems,
           // the way fetchPoem does. Relying on the route change to land it is a
@@ -1246,7 +1278,7 @@ export default function DiwanApp() {
           );
         } catch (err) {
           // Leaving `pending` set would freeze the carousel out permanently.
-          prefsRedraw.current = { pending: false, headId: null };
+          prefsRedraw.current = { pending: false, headId: null, ids: [] };
           addLog('Discovery Bias', `Preference redraw failed: ${err.message}`, 'error');
         }
       })();
@@ -1260,13 +1292,21 @@ export default function DiwanApp() {
    * applying the moment the reader scrolled past slide 4. Everything below the
    * fold was unweighted, which is most of what a reader actually sees.
    *
-   * `startSlot` is the current feed length, which is what keeps the ranked
-   * opening from re-running: slides 5+ are past DETERMINISTIC_OPENING, so they
-   * sample like the rest of the tail. Without it every load-more would serve the
-   * two top-ranked candidates again and the feed would converge instead of
-   * broadening.
+   * `startSlot` is the current feed length so the picks are labelled with their
+   * real feed position. It does NOT grant a ranked opening — `deterministic`
+   * defaults to 0 and this call site never raises it, so every appended slide
+   * samples. Relying on startSlot alone to suppress ranking is what let the
+   * ordinary refill re-run the opening mid-feed.
    */
   const loadMorePoems = () => {
+    // One batch at a time. The feed can fire this twice in quick succession near
+    // the bottom, and because `startSlot` and `exclude` are read at call time,
+    // the second call reads them before the first has appended anything — so
+    // both batches claim slots 5-7, and the inspector queue ends up with two
+    // slides labelled 5. Duplicate poems are already excluded by id, but the
+    // slot numbering is not self-healing.
+    if (loadMoreInFlight.current) return;
+    loadMoreInFlight.current = true;
     (async () => {
       try {
         const existing = usePoemStore.getState().carouselPoems;
@@ -1300,6 +1340,8 @@ export default function DiwanApp() {
         }
       } catch (err) {
         if (FEATURES.logging) addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
+      } finally {
+        loadMoreInFlight.current = false;
       }
     })();
   };

@@ -73,7 +73,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 
 - **Features tracked:** 41
 - **HTTP endpoints in code:** 37
-- **Components in code:** 42
+- **Components in code:** 45
 - **Test files in code:** 65
 - **Behavioral coverage:** 8/41 (20%)
 
@@ -136,7 +136,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 | `reader-feed` | critical | mocked | - | #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted. Unit test covers work-suppression on full-screen routes only. |
 | `guided-tour` | important | mocked | - | #582/#602. e2e exercises step flow; conditional-step + resume-lifecycle branches only partly asserted. Unit test covers the full-screen-route mount gate only. |
 | `enjoyability-lab` | internal | none | - | Dev tooling; no automated coverage by design. /enjoyability is gated by ENABLE_DEV_LAB (404 in prod); the Saved-curation endpoints are gated by SAVED_CURATION_EMAIL (unset in prod). |
-| `feed-preference-weighting` | nice | behavioral | - | Unit tests pin the mix curve, the no-lock-in guarantee (wild share stays above zero at any tuning), pool->filter translation including undated-century handling, dated-over-undated ranking with its thin-band fallback, and graceful degradation when bands are unavailable. Mix constants are asserted against SETTLED_MIX rather than literals so retuning does not break the suite. The integration in fetchPoem.js (fallback to a plain fetch on an empty biased result) has no dedicated test yet. |
+| `feed-preference-weighting` | nice | behavioral | - | Unit tests pin the weighting and every partial-credit rule, the family/mood overlap discount in both directions, both halves of the no-lock-in guarantee (a zero-scoring candidate keeps a strictly positive softmax weight, AND the unanchored candidate page exists so it can be a candidate at all), and the temperature calibration that carries the old wild 0.15 -> 0.25 mix forward. The integration in fetchPoem.js (two-page candidate fetch, dedup, fallback to a plain fetch on an empty result) and the two verification surfaces have no dedicated tests yet. |
 
 ### Critical features without behavioral CI coverage
 

@@ -1770,11 +1770,9 @@ const requireCuration = async (req, res, next) => {
   try {
     const uid = await getCurationUid();
     if (!uid) {
-      return res
-        .status(404)
-        .json({
-          error: 'saved-poems curation disabled (set SAVED_CURATION_EMAIL in a local .env)',
-        });
+      return res.status(404).json({
+        error: 'saved-poems curation disabled (set SAVED_CURATION_EMAIL in a local .env)',
+      });
     }
     req.curationUid = uid;
     next();

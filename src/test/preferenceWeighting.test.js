@@ -1,30 +1,71 @@
 import { describe, it, expect } from 'vitest';
 
 import {
-  POOL,
-  INITIAL_MIX,
-  SETTLED_MIX,
+  WEIGHTS,
+  MAX_SCORE,
+  MULTI_BASE,
+  FAMILY_OVERLAP_DISCOUNT,
+  UNDATED_ERA_CREDIT,
+  ADJACENT_ERA_CREDIT,
+  T_INITIAL,
+  T_SETTLED,
   DECAY_OVER_POEMS,
-  mixFor,
+  ATTRIBUTION_RATIO,
+  OPEN_LIMIT,
+  ANCHORED_LIMIT,
+  temperatureFor,
   hasPreferences,
-  pickPool,
-  filtersForPool,
-  nextDraw,
-  preferDated,
+  facetsOf,
+  scorePoem,
+  softmaxWeights,
+  sampleByScore,
+  candidateQueries,
+  drawFrom,
+  attributionFor,
 } from '../services/preferenceWeighting.js';
 
 const PREFS = {
   family: 'love-desire',
-  moods: ['pride', 'yearning'],
+  moods: ['amorous', 'yearning'],
   motifs: ['night'],
   era: 'c6-8',
   difficulty: 'gentle',
 };
 
 const BANDS = {
+  families: [
+    {
+      key: 'love-desire',
+      label_ar: 'الحب والهوى',
+      label_en: 'Love & Desire',
+      values: [
+        { dim: 'mood', key: 'amorous' },
+        { dim: 'mood', key: 'passion' },
+        { dim: 'mood', key: 'yearning' },
+        { dim: 'topic', key: 'love' },
+      ],
+    },
+  ],
+  dimensions: [
+    {
+      key: 'mood',
+      values: [
+        { key: 'amorous', label_ar: 'غزل', label_en: 'Amorous' },
+        { key: 'yearning', label_ar: 'شوق', label_en: 'Yearning' },
+      ],
+    },
+    { key: 'motif', values: [{ key: 'night', label_ar: 'ليل', label_en: 'Night' }] },
+  ],
   eraBands: [
-    { key: 'c6-8', century_from: 6, century_to: 8, undated: false },
-    { key: 'undated', century_from: null, century_to: null, undated: true },
+    { key: 'c6-8', label_ar: 'الجاهلي', label_en: 'Pre-Islamic', century_from: 6, century_to: 8 },
+    {
+      key: 'undated',
+      label_ar: 'المتأخر',
+      label_en: 'Late',
+      century_from: null,
+      century_to: null,
+      undated: true,
+    },
   ],
   difficultyBands: [
     { key: 'gentle', min: 0, max: 2 },
@@ -32,54 +73,280 @@ const BANDS = {
   ],
 };
 
-/** Deterministic rng returning a fixed value. */
+/** A poem carrying exactly the facets named. */
+const poem = ({ moods = [], motifs = [], topics = [], century, accessibility } = {}) => ({
+  categories: { moods, motifs, topics },
+  ...(century !== undefined ? { century } : {}),
+  ...(accessibility !== undefined ? { accessibilityScore: accessibility } : {}),
+});
+
+/**
+ * Everything the reader asked for, INCLUDING a non-overlapping route into the
+ * family (`topic:love`), which is what lets it reach a clean 5.0 — see the
+ * "a full match through overlapping values cannot reach 5" case below.
+ */
+const PERFECT = poem({
+  moods: ['amorous', 'yearning'],
+  motifs: ['night'],
+  topics: ['love'],
+  century: 7,
+  accessibility: 1.2,
+});
+/** Nothing the reader asked for. */
+const NOTHING = poem({ moods: ['satire'], motifs: ['wine-cup'], century: 14, accessibility: 7.5 });
+
 const fixed = (v) => () => v;
 
-describe('mixFor', () => {
-  it('starts at the initial mix and settles at the floor', () => {
-    expect(mixFor(0)).toEqual(INITIAL_MIX);
-    expect(mixFor(DECAY_OVER_POEMS)).toEqual(SETTLED_MIX);
-    expect(mixFor(9999)).toEqual(SETTLED_MIX);
+/* -------------------------------------------------------------------------- */
+
+describe('WEIGHTS', () => {
+  it('sums to 5 so a full match reads as five out of five', () => {
+    expect(MAX_SCORE).toBeCloseTo(5, 10);
   });
 
-  it('always sums to 1', () => {
-    for (const seen of [0, 1, 7, 15, 30, 100]) {
-      const m = mixFor(seen);
-      expect(m.core + m.adjacent + m.wild).toBeCloseTo(1, 10);
-    }
+  it('rates family below the dimensions it is built out of', () => {
+    // A family is a SET of mood/motif/topic values, so it is not an independent
+    // observation. Weighting it at or above a dimension lets the two most
+    // correlated answers outvote the three uncorrelated ones.
+    expect(WEIGHTS.family).toBeLessThan(WEIGHTS.mood);
+    expect(WEIGHTS.family).toBeLessThan(WEIGHTS.motif);
   });
 
-  it('loosens monotonically: core falls, wild rises', () => {
-    let prev = mixFor(0);
-    for (const seen of [5, 10, 20, 30]) {
-      const m = mixFor(seen);
-      expect(m.core).toBeLessThanOrEqual(prev.core);
-      expect(m.wild).toBeGreaterThanOrEqual(prev.wild);
-      prev = m;
-    }
-  });
-
-  it('never lets the biased pools take the whole feed — no lock-in', () => {
-    // The guarantee: a reader must never be pinned to a slice of the corpus.
-    // Wild is unfiltered, so its share is the floor on how much of the library
-    // stays reachable on any given draw.
-    //
-    // Asserted against SETTLED_MIX rather than a hardcoded number, so tuning the
-    // wild share (which is expected — see the table on SETTLED_MIX) doesn't
-    // break this test. What must hold at ANY setting is that wild stays > 0.
-    for (const seen of [0, 1, 5, 30, 500]) {
-      expect(mixFor(seen).wild).toBeGreaterThan(0);
-    }
-    expect(mixFor(DECAY_OVER_POEMS).wild).toBeCloseTo(SETTLED_MIX.wild, 10);
-    expect(mixFor(0).wild).toBeCloseTo(INITIAL_MIX.wild, 10);
-  });
-
-  it('handles junk input', () => {
-    expect(mixFor(undefined)).toEqual(INITIAL_MIX);
-    expect(mixFor(-5)).toEqual(INITIAL_MIX);
-    expect(mixFor(NaN)).toEqual(INITIAL_MIX);
+  it('gives era and difficulty full weight — they are genuinely orthogonal', () => {
+    // These come from poems.century / poems.accessibility_score, not from
+    // poem_categories. Nothing about them is implied by the taxonomy answers.
+    expect(WEIGHTS.era).toBe(1);
+    expect(WEIGHTS.difficulty).toBe(1);
   });
 });
+
+describe('scorePoem', () => {
+  it('scores a full match at the maximum', () => {
+    const s = scorePoem(PERFECT, PREFS, BANDS);
+    expect(s.ratio).toBeCloseTo(1, 6);
+    expect(s.scaled).toBeCloseTo(MAX_SCORE, 4);
+  });
+
+  it('scores a poem sharing nothing at zero', () => {
+    expect(scorePoem(NOTHING, PREFS, BANDS).score).toBe(0);
+  });
+
+  it('grades the middle — which is the whole point of replacing the pools', () => {
+    // Under the pool system these were all worth the same: either you were in
+    // `core` (5 of 5) or in `adjacent` (family only) with nothing between.
+    const four = poem({
+      moods: ['amorous', 'yearning'],
+      motifs: ['night'],
+      century: 7,
+      accessibility: 6,
+    });
+    const three = poem({
+      moods: ['amorous', 'yearning'],
+      motifs: ['night'],
+      century: 14,
+      accessibility: 6,
+    });
+    const one = poem({ moods: ['passion'], century: 14, accessibility: 6 });
+    const a = scorePoem(four, PREFS, BANDS).scaled;
+    const b = scorePoem(three, PREFS, BANDS).scaled;
+    const c = scorePoem(one, PREFS, BANDS).scaled;
+    expect(a).toBeGreaterThan(b);
+    expect(b).toBeGreaterThan(c);
+    expect(c).toBeGreaterThan(0);
+  });
+
+  it('only counts steps the reader answered', () => {
+    // A reader who skipped motif is not permanently capped below one who
+    // answered it — `max` shrinks with the question set.
+    const partial = { moods: ['amorous'] };
+    const s = scorePoem(poem({ moods: ['amorous'] }), partial, BANDS);
+    expect(s.max).toBeCloseTo(WEIGHTS.mood, 6);
+    expect(s.ratio).toBeCloseTo(1, 6);
+  });
+
+  it('returns a zero ratio rather than dividing by zero on no answers', () => {
+    const s = scorePoem(PERFECT, {}, BANDS);
+    expect(s.max).toBe(0);
+    expect(s.ratio).toBe(0);
+    expect(s.scaled).toBe(0);
+  });
+
+  describe('multi-select partial credit', () => {
+    it('rates two of three above one of three', () => {
+      const prefs = { moods: ['amorous', 'yearning', 'joy'] };
+      const two = scorePoem(poem({ moods: ['amorous', 'yearning'] }), prefs, BANDS).score;
+      const one = scorePoem(poem({ moods: ['amorous'] }), prefs, BANDS).score;
+      expect(two).toBeGreaterThan(one);
+    });
+
+    it('does not punish a reader for picking more moods', () => {
+      // Straight matched/chosen would score one-of-three at 0.33 against
+      // one-of-one at 1.00, quietly rewarding the narrowest possible answer.
+      const oneOfThree = scorePoem(
+        poem({ moods: ['amorous'] }),
+        { moods: ['amorous', 'yearning', 'joy'] },
+        BANDS
+      ).ratio;
+      expect(oneOfThree).toBeGreaterThanOrEqual(MULTI_BASE);
+    });
+
+    it('pays the full weight for matching every chosen mood', () => {
+      const s = scorePoem(poem({ moods: ['amorous', 'yearning'] }), { moods: PREFS.moods }, BANDS);
+      expect(s.score).toBeCloseTo(WEIGHTS.mood, 6);
+    });
+  });
+
+  describe('family / mood overlap', () => {
+    // The call the whole weighting turns on. `love-desire` CONTAINS
+    // `mood:amorous`, so a poem matching both is one fact scored twice.
+    it('discounts the family term when the same value already scored as a mood', () => {
+      const both = scorePoem(
+        poem({ moods: ['amorous'] }),
+        { family: 'love-desire', moods: ['amorous'] },
+        BANDS
+      );
+      expect(both.matched.family.overlapping).toBe(true);
+      // mood at full weight + family at the discount, not two full signals.
+      expect(both.score).toBeCloseTo(WEIGHTS.mood + WEIGHTS.family * FAMILY_OVERLAP_DISCOUNT, 6);
+    });
+
+    it('pays the family term in full when it is carried by a value the reader did not name', () => {
+      // Poem is in the family via `topic:love`, which was never a mood answer,
+      // so the family match is genuinely new information.
+      const s = scorePoem(
+        poem({ topics: ['love'] }),
+        { family: 'love-desire', moods: ['amorous'] },
+        BANDS
+      );
+      expect(s.matched.family.overlapping).toBe(false);
+      expect(s.score).toBeCloseTo(WEIGHTS.family, 6);
+    });
+
+    it('a full match through overlapping values alone cannot reach 5', () => {
+      // Worth stating plainly because it looks like a bug the first time you see
+      // it. This poem satisfies every answer, but its ONLY route into
+      // `love-desire` is via moods the reader also named, so the family term is
+      // discounted and it tops out below the maximum. PERFECT clears 5.0 because
+      // it also carries `topic:love`, a family member the reader never named.
+      const viaMoodsOnly = poem({
+        moods: ['amorous', 'yearning'],
+        motifs: ['night'],
+        century: 7,
+        accessibility: 1.2,
+      });
+      const s = scorePoem(viaMoodsOnly, PREFS, BANDS);
+      expect(s.ratio).toBeLessThan(1);
+      expect(s.scaled).toBeCloseTo(MAX_SCORE - WEIGHTS.family * (1 - FAMILY_OVERLAP_DISCOUNT), 4);
+      // and 5.0 is still attainable, so the top of the scale is not dead.
+      expect(scorePoem(PERFECT, PREFS, BANDS).scaled).toBeCloseTo(MAX_SCORE, 4);
+    });
+
+    it('still rates the overlapping poem above one outside the family', () => {
+      const inFamily = scorePoem(
+        poem({ moods: ['amorous'] }),
+        { family: 'love-desire', moods: ['amorous'] },
+        BANDS
+      ).score;
+      const outside = scorePoem(
+        poem({ moods: ['amorous'] }),
+        { family: 'valor-defiance', moods: ['amorous'] },
+        BANDS
+      ).score;
+      expect(inFamily).toBeGreaterThan(outside);
+    });
+
+    it('scores no family credit when the taxonomy was unavailable', () => {
+      // Same posture as era/difficulty: drop the term rather than guess.
+      const s = scorePoem(poem({ moods: ['amorous'] }), { family: 'love-desire' }, {});
+      expect(s.score).toBe(0);
+      expect(s.max).toBeCloseTo(WEIGHTS.family, 6);
+    });
+  });
+
+  describe('era', () => {
+    it('pays in full inside the band', () => {
+      expect(scorePoem(poem({ century: 7 }), { era: 'c6-8' }, BANDS).matched.era).toBe('in-band');
+    });
+
+    it('pays partial credit one or two centuries out', () => {
+      // Era is ordinal: under the pools a 9th-century poem was worth nothing at
+      // all to a reader who picked 6th-8th.
+      const near = scorePoem(poem({ century: 9 }), { era: 'c6-8' }, BANDS);
+      expect(near.matched.era).toBe('adjacent');
+      expect(near.score).toBeCloseTo(WEIGHTS.era * ADJACENT_ERA_CREDIT, 6);
+    });
+
+    it('pays nothing far outside the band', () => {
+      expect(scorePoem(poem({ century: 14 }), { era: 'c6-8' }, BANDS).score).toBe(0);
+    });
+
+    it('keeps undated poems eligible under a dated band, but below dated ones', () => {
+      // ~25% of the corpus is deliberately NULL-century (late/modern eras span
+      // too many centuries to pin to one). Excluding them hides a quarter of the
+      // library; ranking them level with a real match makes the era answer inert.
+      // This is the old preferDated() tie-break, carried forward as a score term.
+      const undated = scorePoem(poem({ century: null }), { era: 'c6-8' }, BANDS);
+      const dated = scorePoem(poem({ century: 7 }), { era: 'c6-8' }, BANDS);
+      expect(undated.score).toBeCloseTo(WEIGHTS.era * UNDATED_ERA_CREDIT, 6);
+      expect(undated.score).toBeGreaterThan(0);
+      expect(dated.score).toBeGreaterThan(undated.score);
+    });
+
+    it('treats a missing century field as undated', () => {
+      expect(facetsOf(poem({})).century).toBe(null);
+      expect(scorePoem(poem({}), { era: 'c6-8' }, BANDS).matched.era).toBe('undated-under-dated');
+    });
+
+    it('makes the undated band mean the undated rows', () => {
+      expect(scorePoem(poem({ century: null }), { era: 'undated' }, BANDS).matched.era).toBe(
+        'undated'
+      );
+      expect(scorePoem(poem({ century: 7 }), { era: 'undated' }, BANDS).score).toBe(0);
+    });
+
+    it('drops the term rather than guessing when bands are unavailable', () => {
+      const s = scorePoem(poem({ century: 7 }), { era: 'c6-8' }, {});
+      expect(s.max).toBe(0);
+    });
+  });
+
+  describe('difficulty', () => {
+    it('pays in full inside the band', () => {
+      expect(
+        scorePoem(poem({ accessibility: 1.2 }), { difficulty: 'gentle' }, BANDS).score
+      ).toBeCloseTo(WEIGHTS.difficulty, 6);
+    });
+
+    it('falls off with distance rather than cutting at the band edge', () => {
+      // The cut is a quantile of a continuous score, so a hard edge would be an
+      // artefact of where the histogram happened to split.
+      const just = scorePoem(poem({ accessibility: 2.3 }), { difficulty: 'gentle' }, BANDS).score;
+      const mid = scorePoem(poem({ accessibility: 3.2 }), { difficulty: 'gentle' }, BANDS).score;
+      // Past DIFFICULTY_FALLOFF points beyond the edge the term is spent.
+      const far = scorePoem(poem({ accessibility: 3.6 }), { difficulty: 'gentle' }, BANDS).score;
+      expect(just).toBeGreaterThan(mid);
+      expect(mid).toBeGreaterThan(far);
+      expect(far).toBe(0);
+      expect(just).toBeLessThan(WEIGHTS.difficulty);
+    });
+
+    it('scores nothing when the poem has no accessibility score', () => {
+      expect(scorePoem(poem({}), { difficulty: 'gentle' }, BANDS).score).toBe(0);
+    });
+  });
+
+  it('survives junk input', () => {
+    expect(() => scorePoem(null, null, null)).not.toThrow();
+    expect(() => scorePoem(undefined, PREFS, BANDS)).not.toThrow();
+    // A null poem carries no taxonomy and no century, so it scores exactly what
+    // any undated poem scores under a dated band — the era allowance and nothing
+    // else. Asserting 0 here would be asserting that undated poems are excluded.
+    expect(scorePoem(null, PREFS, BANDS).score).toBeCloseTo(WEIGHTS.era * UNDATED_ERA_CREDIT, 6);
+    expect(scorePoem({ categories: null }, { moods: ['amorous'] }, BANDS).score).toBe(0);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
 
 describe('hasPreferences', () => {
   it('is false for empty / skipped onboarding', () => {
@@ -95,177 +362,219 @@ describe('hasPreferences', () => {
   });
 });
 
-describe('pickPool', () => {
-  it('is always wild when the reader gave no answers', () => {
-    expect(pickPool({}, 0, fixed(0))).toBe(POOL.WILD);
-    expect(pickPool({}, 0, fixed(0.99))).toBe(POOL.WILD);
+describe('temperatureFor', () => {
+  it('starts sharp and settles soft', () => {
+    expect(temperatureFor(0)).toBeCloseTo(T_INITIAL, 10);
+    expect(temperatureFor(DECAY_OVER_POEMS)).toBeCloseTo(T_SETTLED, 10);
+    expect(temperatureFor(9999)).toBeCloseTo(T_SETTLED, 10);
   });
 
-  it('splits the unit interval by the mix', () => {
-    const m = mixFor(0);
-    expect(pickPool(PREFS, 0, fixed(0))).toBe(POOL.CORE);
-    expect(pickPool(PREFS, 0, fixed(m.core - 0.001))).toBe(POOL.CORE);
-    expect(pickPool(PREFS, 0, fixed(m.core + 0.001))).toBe(POOL.ADJACENT);
-    expect(pickPool(PREFS, 0, fixed(m.core + m.adjacent + 0.001))).toBe(POOL.WILD);
-    expect(pickPool(PREFS, 0, fixed(0.999))).toBe(POOL.WILD);
-  });
-
-  it('shifts toward wild as the reader gets through poems', () => {
-    // A draw that lands in core early lands outside it once the mix has settled.
-    // The probe sits between the settled and initial core boundaries, computed
-    // from the constants so tuning SETTLED_MIX doesn't invalidate the test.
-    const r = (SETTLED_MIX.core + INITIAL_MIX.core) / 2;
-    expect(pickPool(PREFS, 0, fixed(r))).toBe(POOL.CORE);
-    expect(pickPool(PREFS, DECAY_OVER_POEMS, fixed(r))).not.toBe(POOL.CORE);
-  });
-});
-
-describe('filtersForPool', () => {
-  it('wild applies nothing at all', () => {
-    expect(filtersForPool(PREFS, POOL.WILD, BANDS)).toEqual({});
-  });
-
-  it('core applies every answer', () => {
-    const f = filtersForPool(PREFS, POOL.CORE, BANDS);
-    expect(f.family).toBe('love-desire');
-    expect(f.mood).toBe('pride,yearning');
-    expect(f.motif).toBe('night');
-    expect(f.centuryFrom).toBe(6);
-    expect(f.centuryTo).toBe(8);
-    expect(f.minAccessibility).toBe(0);
-    expect(f.maxAccessibility).toBe(2);
-  });
-
-  it('keeps undated poems eligible inside a dated era band', () => {
-    // ~25% of the corpus has no century by construction (late/modern eras have
-    // no single representative century). Excluding them from every dated band
-    // would silently hide a quarter of the library.
-    expect(filtersForPool(PREFS, POOL.CORE, BANDS).includeUndated).toBe(1);
-  });
-
-  it('expresses the late/modern band as the undated rows', () => {
-    const f = filtersForPool({ ...PREFS, era: 'undated' }, POOL.CORE, BANDS);
-    expect(f.undated).toBe(1);
-    expect(f.centuryFrom).toBeUndefined();
-    expect(f.centuryTo).toBeUndefined();
-  });
-
-  it('adjacent keeps only the broadest signal', () => {
-    expect(filtersForPool(PREFS, POOL.ADJACENT, BANDS)).toEqual({ family: 'love-desire' });
-  });
-
-  it('adjacent falls back to moods when the family step was skipped', () => {
-    const f = filtersForPool({ ...PREFS, family: null }, POOL.ADJACENT, BANDS);
-    expect(f).toEqual({ mood: 'pride,yearning' });
-  });
-
-  it('drops era and difficulty rather than guessing when bands are unavailable', () => {
-    const f = filtersForPool(PREFS, POOL.CORE, {});
-    expect(f.centuryFrom).toBeUndefined();
-    expect(f.minAccessibility).toBeUndefined();
-    // The answers we can honour still apply.
-    expect(f.family).toBe('love-desire');
-    expect(f.mood).toBe('pride,yearning');
-  });
-
-  it('produces no filters when there are no answers', () => {
-    expect(filtersForPool({}, POOL.CORE, BANDS)).toEqual({});
-  });
-});
-
-describe('preferDated', () => {
-  const dated = [
-    { id: 1, century: 9 },
-    { id: 2, century: 9 },
-  ];
-  const undated = [
-    { id: 3, century: null },
-    { id: 4, century: null },
-  ];
-
-  it('drops undated candidates when a dated one is available', () => {
-    // The point of the era step: picking Abbasid over Andalusian has to change
-    // what you actually get. Undated poems qualify under EVERY dated band, so
-    // without this they dilute all four answers identically.
-    expect(preferDated([...dated, ...undated])).toEqual(dated);
-  });
-
-  it('falls back to undated when the band returned nothing dated', () => {
-    // Thin-band recall: better an undated poem than an empty feed.
-    expect(preferDated(undated)).toEqual(undated);
-  });
-
-  it('is a no-op on an all-dated list', () => {
-    expect(preferDated(dated)).toEqual(dated);
-  });
-
-  it('treats undefined century as undated', () => {
-    const mixed = [{ id: 1, century: 9 }, { id: 2 }];
-    expect(preferDated(mixed)).toEqual([{ id: 1, century: 9 }]);
-  });
-
-  it('handles empty and missing input', () => {
-    expect(preferDated([])).toEqual([]);
-    expect(preferDated(undefined)).toEqual([]);
-    expect(preferDated(null)).toEqual([]);
-  });
-
-  it('never invents or reorders within the dated subset', () => {
-    const list = [
-      { id: 5, century: 6 },
-      { id: 3, century: null },
-      { id: 7, century: 14 },
-    ];
-    expect(preferDated(list).map((p) => p.id)).toEqual([5, 7]);
-  });
-
-  it('does not strand undated poems: they still have their own band', () => {
-    // Ranking is a tie-break, not an exclusion. The undated band queries only
-    // undated poems, so preferDated must leave that result untouched.
-    const f = filtersForPool({ ...PREFS, era: 'undated' }, POOL.CORE, BANDS);
-    expect(f.undated).toBe(1);
-    expect(f.centuryFrom).toBeUndefined();
-    expect(preferDated(undated)).toEqual(undated);
-  });
-});
-
-describe('SETTLED_MIX tuning contract', () => {
-  it('sums to 1 so pickPool covers the whole interval', () => {
-    const s = SETTLED_MIX.core + SETTLED_MIX.adjacent + SETTLED_MIX.wild;
-    expect(s).toBeCloseTo(1, 10);
-    const i = INITIAL_MIX.core + INITIAL_MIX.adjacent + INITIAL_MIX.wild;
-    expect(i).toBeCloseTo(1, 10);
-  });
-
-  it('keeps a non-zero wild share, whatever it is tuned to', () => {
-    // The anti-lock-in guarantee: wild > 0 is what keeps every poem in the
-    // corpus reachable on every draw. Tuning the value is fine; zeroing it
-    // silently converts the whole design back into a filter.
-    expect(SETTLED_MIX.wild).toBeGreaterThan(0);
-    expect(INITIAL_MIX.wild).toBeGreaterThan(0);
-  });
-
-  it('starts more biased than it settles', () => {
-    // "Seeds the first feed, then becomes a weight" only holds if core falls.
-    expect(INITIAL_MIX.core).toBeGreaterThan(SETTLED_MIX.core);
-    expect(INITIAL_MIX.wild).toBeLessThan(SETTLED_MIX.wild);
-  });
-});
-
-describe('nextDraw', () => {
-  it('returns the pool alongside its filters', () => {
-    const { pool, filters } = nextDraw(PREFS, 0, BANDS, fixed(0));
-    expect(pool).toBe(POOL.CORE);
-    expect(filters.family).toBe('love-desire');
-  });
-
-  it('over many draws, a meaningful share is unbiased', () => {
-    // Statistical statement of the no-lock-in guarantee.
-    let wild = 0;
-    const n = 4000;
-    for (let i = 0; i < n; i += 1) {
-      if (nextDraw(PREFS, 0, BANDS, fixed(i / n)).pool === POOL.WILD) wild += 1;
+  it('loosens monotonically', () => {
+    let prev = temperatureFor(0);
+    for (const seen of [5, 10, 20, 30]) {
+      const t = temperatureFor(seen);
+      expect(t).toBeGreaterThanOrEqual(prev);
+      prev = t;
     }
-    expect(wild / n).toBeCloseTo(INITIAL_MIX.wild, 2);
+  });
+
+  it('handles junk input', () => {
+    expect(temperatureFor(undefined)).toBeCloseTo(T_INITIAL, 10);
+    expect(temperatureFor(-5)).toBeCloseTo(T_INITIAL, 10);
+    expect(temperatureFor(NaN)).toBeCloseTo(T_INITIAL, 10);
+  });
+
+  it('decays over poems seen, not wall-clock', () => {
+    // A reader coming back tomorrow with 40 poems behind them must not be
+    // re-seeded into the narrow opening feed.
+    expect(temperatureFor(40)).toBeCloseTo(temperatureFor(400), 10);
+    expect(temperatureFor(40)).toBeGreaterThan(temperatureFor(0));
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe('sampling: nothing is unreachable', () => {
+  it('gives a zero-scoring candidate a strictly positive weight at every temperature', () => {
+    // Half of the anti-lock-in guarantee. exp() of a finite number is never 0,
+    // so no candidate can be silently excluded however sharp the draw gets.
+    const scored = [{ scaled: 5 }, { scaled: 0 }];
+    for (const seen of [0, 1, 5, 30, 500]) {
+      const w = softmaxWeights(scored, temperatureFor(seen));
+      expect(w[1]).toBeGreaterThan(0);
+    }
+  });
+
+  it('actually draws the zero-scoring candidate given enough draws', () => {
+    const scored = [{ scaled: 5 }, { scaled: 0 }];
+    let low = 0;
+    const n = 20000;
+    for (let i = 0; i < n; i += 1) {
+      if (sampleByScore(scored, temperatureFor(0), fixed((i + 0.5) / n)) === 1) low += 1;
+    }
+    expect(low).toBeGreaterThan(0);
+  });
+
+  it('keeps an UNANCHORED candidate page, so unmatched poems can be candidates at all', () => {
+    // The other half of the guarantee, and the part a positive softmax weight
+    // cannot supply: a weight on a list the poem can never join is not
+    // reachability. Deleting the open page would turn this back into a filter
+    // however flat the temperature got.
+    const qs = candidateQueries(PREFS);
+    const open = qs.find((q) => q.role === 'open');
+    expect(open).toBeTruthy();
+    expect(open.query).toEqual({ limit: OPEN_LIMIT });
+  });
+
+  it('anchors on ONE answer, never five — the funnel is what broke the pools', () => {
+    const anchored = candidateQueries(PREFS).find((q) => q.role === 'anchored');
+    expect(anchored.query).toEqual({ family: 'love-desire', limit: ANCHORED_LIMIT });
+    expect(anchored.query.mood).toBeUndefined();
+    expect(anchored.query.centuryFrom).toBeUndefined();
+  });
+
+  it('falls back to moods as the anchor when the family step was skipped', () => {
+    const qs = candidateQueries({ moods: ['amorous', 'yearning'] });
+    expect(qs.find((q) => q.role === 'anchored').query.mood).toBe('amorous,yearning');
+  });
+
+  it('asks only for the open page when the reader answered nothing anchorable', () => {
+    expect(candidateQueries({ difficulty: 'gentle' })).toEqual([
+      { role: 'open', query: { limit: OPEN_LIMIT } },
+    ]);
+  });
+});
+
+describe('sampling: seed, then broaden', () => {
+  /**
+   * The representative candidate mix the temperature endpoints are calibrated
+   * against — 18 anchored poems (all share the family, spread over how many
+   * further answers land) plus 12 unanchored, mostly matching nothing.
+   */
+  const anchoredScaled = [
+    5.0, 4.4, 4.2, 3.8, 3.4, 3.4, 3.0, 2.8, 2.6, 2.4, 2.2, 2.0, 1.8, 1.6, 1.4, 1.2, 1.0, 0.8,
+  ];
+  const openScaled = [0, 0, 0, 0, 0, 0, 0, 0.7, 1.0, 1.4, 0.35, 0];
+  const MIX = [...anchoredScaled, ...openScaled].map((scaled) => ({ scaled }));
+
+  const openMass = (temperature) => {
+    const w = softmaxWeights(MIX, temperature);
+    const total = w.reduce((a, b) => a + b, 0);
+    return w.slice(anchoredScaled.length).reduce((a, b) => a + b, 0) / total;
+  };
+
+  it('carries the old mix constants forward: wild 0.15 -> 0.25', () => {
+    // The pool system's `wild` was the unfiltered pool. Scoring keeps that pool
+    // as the OPEN candidate page, so the surviving quantity is the share of the
+    // draw's probability mass sitting on it. These are the owner's numbers,
+    // preserved through the mechanism change. If someone retunes T_INITIAL or
+    // T_SETTLED without meaning to move the openness of the feed, this fails.
+    expect(openMass(temperatureFor(0))).toBeCloseTo(0.15, 2);
+    expect(openMass(temperatureFor(DECAY_OVER_POEMS))).toBeCloseTo(0.25, 2);
+  });
+
+  it('opens up monotonically as the reader gets through poems', () => {
+    let prev = openMass(temperatureFor(0));
+    for (const seen of [5, 10, 20, 30]) {
+      const m = openMass(temperatureFor(seen));
+      expect(m).toBeGreaterThanOrEqual(prev);
+      prev = m;
+    }
+  });
+
+  it('still favours high scores hard at the settled temperature', () => {
+    // "Broaden" must not mean "give up". A perfect match has to stay clearly
+    // more likely than a poem matching nothing, forever.
+    const w = softmaxWeights([{ scaled: 5 }, { scaled: 0 }], temperatureFor(9999));
+    expect(w[0] / w[1]).toBeGreaterThan(3);
+  });
+
+  it('does not overflow at a sharp temperature', () => {
+    // Without the max-subtraction in softmaxWeights this is Infinity and the
+    // draw silently degenerates to "first candidate always wins".
+    const w = softmaxWeights([{ scaled: 5 }, { scaled: 0 }], 0.01);
+    expect(w.every((x) => Number.isFinite(x))).toBe(true);
+  });
+});
+
+describe('sampleByScore', () => {
+  it('returns -1 on an empty candidate list', () => {
+    expect(sampleByScore([], 1)).toBe(-1);
+    expect(sampleByScore(null, 1)).toBe(-1);
+  });
+
+  it('picks the strong candidate far more often than the weak one', () => {
+    const scored = [{ scaled: 0 }, { scaled: 5 }];
+    let strong = 0;
+    const n = 5000;
+    for (let i = 0; i < n; i += 1) {
+      if (sampleByScore(scored, temperatureFor(0), fixed((i + 0.5) / n)) === 1) strong += 1;
+    }
+    expect(strong / n).toBeGreaterThan(0.6);
+  });
+
+  it('is uniform when every candidate ties', () => {
+    const scored = [{ scaled: 2 }, { scaled: 2 }, { scaled: 2 }, { scaled: 2 }];
+    const hits = [0, 0, 0, 0];
+    const n = 4000;
+    for (let i = 0; i < n; i += 1) hits[sampleByScore(scored, 1, fixed((i + 0.5) / n))] += 1;
+    for (const h of hits) expect(h / n).toBeCloseTo(0.25, 1);
+  });
+});
+
+describe('drawFrom', () => {
+  it('returns the poem, its scores and the effective temperature', () => {
+    const d = drawFrom([PERFECT, NOTHING], PREFS, 0, BANDS, fixed(0));
+    expect(d.poem).toBe(PERFECT);
+    expect(d.temperature).toBeCloseTo(T_INITIAL, 6);
+    expect(d.scored).toHaveLength(2);
+    expect(d.scored[0].scaled).toBeCloseTo(MAX_SCORE, 4);
+  });
+
+  it('returns a null poem rather than throwing on an empty candidate set', () => {
+    const d = drawFrom([], PREFS, 0, BANDS);
+    expect(d.poem).toBe(null);
+    expect(d.index).toBe(-1);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe('attributionFor', () => {
+  it('says nothing at all about a low-scoring draw', () => {
+    // Deliberate. Low-scoring poems appearing is correct behaviour, and a
+    // surprise that announces itself has stopped being a surprise.
+    expect(attributionFor(scorePoem(NOTHING, PREFS, BANDS), BANDS, PREFS)).toBe(null);
+  });
+
+  it('credits the family on a strong match', () => {
+    const a = attributionFor(scorePoem(PERFECT, PREFS, BANDS), BANDS, PREFS);
+    expect(a).toMatchObject({ dim: 'family', key: 'love-desire', label_ar: 'الحب والهوى' });
+  });
+
+  it('credits a mood when there was no family answer', () => {
+    const prefs = { moods: ['amorous'] };
+    const a = attributionFor(scorePoem(poem({ moods: ['amorous'] }), prefs, BANDS), BANDS, prefs);
+    expect(a).toMatchObject({ dim: 'mood', key: 'amorous', label_ar: 'غزل' });
+  });
+
+  it('names exactly one reason, never a list', () => {
+    const a = attributionFor(scorePoem(PERFECT, PREFS, BANDS), BANDS, PREFS);
+    expect(typeof a.label_ar).toBe('string');
+    expect(a.label_en).toBeTruthy();
+  });
+
+  it('holds its tongue just below the threshold', () => {
+    expect(
+      attributionFor(
+        { ratio: ATTRIBUTION_RATIO - 0.01, matched: { family: { via: ['amorous'] } } },
+        BANDS
+      )
+    ).toBe(null);
+  });
+
+  it('survives a missing taxonomy', () => {
+    expect(attributionFor(scorePoem(PERFECT, PREFS, BANDS), {}, PREFS)).toBe(null);
+    expect(attributionFor(null, BANDS, PREFS)).toBe(null);
   });
 });

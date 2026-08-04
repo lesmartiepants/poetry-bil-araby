@@ -274,6 +274,27 @@ function servingFilters() {
 }
 
 /**
+ * A CTE holding the ids of every SERVABLE poem, for the aggregate queries.
+ *
+ * The serving predicate is cheap on a single-row lookup and expensive in bulk:
+ * the verse-line test is `array_length(string_to_array(content, '*'), 1)`, so
+ * inlining it into an aggregate re-splits the full text of a poem once per
+ * joined row. Applied that way across `poem_categories` it took /api/categories
+ * from ~600ms to a statement timeout.
+ *
+ * Evaluating it ONCE into an id set and joining against that keeps the same
+ * semantics — it is the identical predicate — at a fraction of the cost.
+ * `MATERIALIZED` is explicit because Postgres 12+ will otherwise inline a
+ * single-use CTE and undo exactly the thing this exists to do.
+ */
+function servableCte() {
+  const qf = servingFilters();
+  return `servable AS MATERIALIZED (
+      SELECT p.id FROM poems p WHERE TRUE ${qf}
+    )`;
+}
+
+/**
  * Build the categorization WHERE clauses shared by /api/poems/by-category and
  * the scoped counts on /api/categories.
  *
@@ -498,28 +519,29 @@ async function scopedCategoryCounts(query = {}) {
   const probe = buildCategoryFilters(query);
   if (!probe.clauses.length) return null;
 
-  const qf = servingFilters();
-  const serving = qf ? qf.replace(/^\s*AND\s+/i, '') : null;
+  // Every count below joins the `servable` id set rather than inlining the
+  // serving predicate — see servableCte() for why that distinction is the
+  // difference between ~600ms and a statement timeout.
+  const cte = servableCte();
 
   /** WHERE + params for the scope with one answer group left out. */
   const scoped = (skipGroup) => {
     const built = buildCategoryFilters(query, { skipGroup });
-    const all = serving ? [serving, ...built.clauses] : built.clauses;
-    return { where: all.length ? `WHERE ${all.join(' AND ')}` : '', params: built.params };
-  };
-
-  const countRow = async (sql, params) => {
-    const r = await pool.query(sql, params);
-    return r.rows;
+    return {
+      where: built.clauses.length ? `WHERE ${built.clauses.join(' AND ')}` : '',
+      params: built.params,
+    };
   };
 
   // One query per facet group, in parallel. `p`/`po` are aliased identically to
   // by-category so the clauses buildCategoryFilters emits drop straight in.
   const dimJobs = categorizationDimensions.map(async (dim) => {
     const { where, params } = scoped(dim);
-    const rows = await countRow(
-      `SELECT cv.key AS value, COUNT(DISTINCT p.id)::int AS poem_count
+    const r = await pool.query(
+      `WITH ${cte}
+       SELECT cv.key AS value, COUNT(DISTINCT p.id)::int AS poem_count
          FROM poems p
+         JOIN servable sv ON sv.id = p.id
          JOIN poets po ON p.poet_id = po.id
          JOIN poem_categories pc ON pc.poem_id = p.id
          JOIN category_values cv ON pc.value_id = cv.id
@@ -528,14 +550,16 @@ async function scopedCategoryCounts(query = {}) {
         GROUP BY cv.key`,
       [...params, dim]
     );
-    return [dim, Object.fromEntries(rows.map((r) => [r.value, r.poem_count]))];
+    return [dim, Object.fromEntries(r.rows.map((x) => [x.value, x.poem_count]))];
   });
 
   const famJob = (async () => {
     const { where, params } = scoped('family');
-    const rows = await countRow(
-      `SELECT cf.key AS family, COUNT(DISTINCT p.id)::int AS poem_count
+    const r = await pool.query(
+      `WITH ${cte}
+       SELECT cf.key AS family, COUNT(DISTINCT p.id)::int AS poem_count
          FROM poems p
+         JOIN servable sv ON sv.id = p.id
          JOIN poets po ON p.poet_id = po.id
          JOIN poem_categories pc ON pc.poem_id = p.id
          JOIN category_values cv ON pc.value_id = cv.id
@@ -544,34 +568,41 @@ async function scopedCategoryCounts(query = {}) {
         GROUP BY cf.key`,
       params
     );
-    return Object.fromEntries(rows.map((r) => [r.family, r.poem_count]));
+    return Object.fromEntries(r.rows.map((x) => [x.family, x.poem_count]));
   })();
 
   const eraJob = (async () => {
     const { where, params } = scoped('century');
-    return countRow(
-      `SELECT p.century AS century, COUNT(*)::int AS poem_count
-         FROM poems p JOIN poets po ON p.poet_id = po.id
+    const r = await pool.query(
+      `WITH ${cte}
+       SELECT p.century AS century, COUNT(*)::int AS poem_count
+         FROM poems p
+         JOIN servable sv ON sv.id = p.id
+         JOIN poets po ON p.poet_id = po.id
         ${where}
         GROUP BY p.century ORDER BY p.century NULLS LAST`,
       params
     );
+    return r.rows;
   })();
 
   const accJob = (async () => {
     const { where, params } = scoped('difficulty');
-    const rows = await countRow(
-      `SELECT width_bucket(p.accessibility_score, 0, 10, 20) AS bucket,
+    const r = await pool.query(
+      `WITH ${cte}
+       SELECT width_bucket(p.accessibility_score, 0, 10, 20) AS bucket,
               COUNT(*)::int AS poem_count
-         FROM poems p JOIN poets po ON p.poet_id = po.id
+         FROM poems p
+         JOIN servable sv ON sv.id = p.id
+         JOIN poets po ON p.poet_id = po.id
         ${where ? where + ' AND' : 'WHERE'} p.accessibility_score IS NOT NULL
         GROUP BY bucket ORDER BY bucket`,
       params
     );
-    return rows.map((r) => ({
-      min: (r.bucket - 1) / 2,
-      max: r.bucket / 2,
-      poem_count: r.poem_count,
+    return r.rows.map((x) => ({
+      min: (x.bucket - 1) / 2,
+      max: x.bucket / 2,
+      poem_count: x.poem_count,
     }));
   })();
 
@@ -582,7 +613,10 @@ async function scopedCategoryCounts(query = {}) {
   const totalJob = (async () => {
     const { where, params } = scoped(null);
     const r = await pool.query(
-      `SELECT COUNT(*)::int AS n FROM poems p JOIN poets po ON p.poet_id = po.id ${where}`,
+      `WITH ${cte}
+       SELECT COUNT(*)::int AS n FROM poems p
+        JOIN servable sv ON sv.id = p.id
+        JOIN poets po ON p.poet_id = po.id ${where}`,
       params
     );
     return r.rows[0]?.n ?? 0;
@@ -604,21 +638,19 @@ async function scopedCategoryCounts(query = {}) {
       if (built.clauses.length) perGroup.push(`(${built.clauses.join(' AND ')})`);
     }
     if (!perGroup.length) return 0;
-    const all = [`(${perGroup.join(' OR ')})`];
-    if (serving) all.unshift(serving);
     const r = await pool.query(
-      `SELECT COUNT(*)::int AS n FROM poems p JOIN poets po ON p.poet_id = po.id WHERE ${all.join(' AND ')}`,
+      `WITH ${cte}
+       SELECT COUNT(*)::int AS n FROM poems p
+        JOIN servable sv ON sv.id = p.id
+        JOIN poets po ON p.poet_id = po.id
+        WHERE (${perGroup.join(' OR ')})`,
       params
     );
     return r.rows[0]?.n ?? 0;
   })();
 
   const servableJob = (async () => {
-    const r = await pool.query(
-      `SELECT COUNT(*)::int AS n FROM poems p JOIN poets po ON p.poet_id = po.id${
-        serving ? ` WHERE ${serving}` : ''
-      }`
-    );
+    const r = await pool.query(`WITH ${cte} SELECT COUNT(*)::int AS n FROM servable`);
     return r.rows[0]?.n ?? 0;
   })();
 
@@ -1083,13 +1115,14 @@ app.get('/api/categories', async (req, res) => {
     // instead of dropping them from the picker, which is why the predicate sits
     // in the ON clause rather than a WHERE.
     const result = await pool.query(`
+      WITH ${servableCte()}
       SELECT d.key AS dimension, d.label_ar AS dimension_ar, d.label_en AS dimension_en,
              d.cardinality, v.key AS value, v.label_ar, v.label_en,
-             COUNT(p.id) AS poem_count
+             COUNT(s.id) AS poem_count
       FROM category_dimensions d
       JOIN category_values v ON v.dimension_id = d.id
       LEFT JOIN poem_categories pc ON pc.value_id = v.id
-      LEFT JOIN poems p ON p.id = pc.poem_id ${servingFilters()}
+      LEFT JOIN servable s ON s.id = pc.poem_id
       GROUP BY d.id, d.key, d.label_ar, d.label_en, d.cardinality,
                v.id, v.key, v.label_ar, v.label_en, v.sort_order
       ORDER BY d.sort_order, v.sort_order
@@ -1119,14 +1152,15 @@ app.get('/api/categories', async (req, res) => {
     // member value) via a correlated subquery — same for every row of a family,
     // so we read it once when the family is first seen.
     const famResult = await pool.query(`
+      WITH ${servableCte()}
       SELECT f.key AS family, f.label_ar AS family_ar, f.label_en AS family_en,
              f.sort_order AS family_sort,
              d.key AS dim, v.key AS value, v.label_ar, v.label_en,
              (SELECT COUNT(DISTINCT pc.poem_id)
                 FROM poem_categories pc
                 JOIN category_values v2 ON pc.value_id = v2.id
-                JOIN poems p ON p.id = pc.poem_id
-               WHERE v2.family_id = f.id ${servingFilters()}) AS poem_count
+                JOIN servable s ON s.id = pc.poem_id
+               WHERE v2.family_id = f.id) AS poem_count
       FROM category_families f
       JOIN category_values v ON v.family_id = f.id
       JOIN category_dimensions d ON v.dimension_id = d.id
@@ -1167,20 +1201,23 @@ app.get('/api/categories', async (req, res) => {
     // client-side sample against an older server.
     const [eraDist, accDist] = await Promise.all([
       pool.query(`
+        WITH ${servableCte()}
         SELECT po.era_id AS era_id, e.name AS era_name, p.century AS century,
                COUNT(*)::int AS poem_count
         FROM poems p
+        JOIN servable s ON s.id = p.id
         JOIN poets po ON p.poet_id = po.id
         LEFT JOIN eras e ON po.era_id = e.id
-        WHERE TRUE ${servingFilters()}
         GROUP BY po.era_id, e.name, p.century
         ORDER BY p.century NULLS LAST, po.era_id
       `),
       pool.query(`
+        WITH ${servableCte()}
         SELECT width_bucket(p.accessibility_score, 0, 10, 20) AS bucket,
                COUNT(*)::int AS poem_count
         FROM poems p
-        WHERE p.accessibility_score IS NOT NULL ${servingFilters()}
+        JOIN servable s ON s.id = p.id
+        WHERE p.accessibility_score IS NOT NULL
         GROUP BY bucket
         ORDER BY bucket
       `),

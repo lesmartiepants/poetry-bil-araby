@@ -24,6 +24,7 @@ import {
   drawManyFrom,
   DETERMINISTIC_OPENING,
   attributionFor,
+  explainRows,
 } from '../services/preferenceWeighting.js';
 
 const PREFS = {
@@ -682,5 +683,131 @@ describe('attributionFor', () => {
   it('survives a missing taxonomy', () => {
     expect(attributionFor(scorePoem(PERFECT, PREFS, BANDS), {}, PREFS)).toBe(null);
     expect(attributionFor(null, BANDS, PREFS)).toBe(null);
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe('score decomposition (terms)', () => {
+  it('emits one term per ANSWERED step, in flow order', () => {
+    const { terms } = scorePoem(PERFECT, PREFS, BANDS);
+    expect(terms.map((t) => t.key)).toEqual(['family', 'mood', 'motif', 'era', 'difficulty']);
+  });
+
+  it('says nothing about a step the reader skipped', () => {
+    // A skipped step is out of both the score and the max. Reporting it as a
+    // zero-earning term would show the poem failing a test it was never given.
+    const { terms } = scorePoem(PERFECT, { moods: ['amorous'] }, BANDS);
+    expect(terms.map((t) => t.key)).toEqual(['mood']);
+  });
+
+  it('adds up to the score the scorer actually returned', () => {
+    // The panel renders these numbers next to the total. If the two can drift,
+    // the panel has become a second implementation of the weighting.
+    for (const p of [PERFECT, NOTHING, poem({ moods: ['amorous'], century: 10 })]) {
+      const r = scorePoem(p, PREFS, BANDS);
+      const summed = r.terms.reduce((n, t) => n + t.earned, 0);
+      expect(summed).toBeCloseTo(r.score, 6);
+    }
+  });
+
+  it('flags the family term as DISCOUNTED, not merely partial', () => {
+    // The distinction the panel needs: this term scored low for a reason that
+    // is not "the poem is a worse match".
+    const overlapOnly = poem({
+      moods: ['amorous', 'yearning'],
+      motifs: ['night'],
+      century: 7,
+      accessibility: 1.2,
+    });
+    const fam = scorePoem(overlapOnly, PREFS, BANDS).terms.find((t) => t.key === 'family');
+    expect(fam.state).toBe('discounted');
+    expect(fam.earned).toBeCloseTo(WEIGHTS.family * FAMILY_OVERLAP_DISCOUNT, 6);
+  });
+
+  it('grades a some-of-many multi-select as partial', () => {
+    const half = poem({ moods: ['amorous'], motifs: ['night'], century: 7, accessibility: 1.2 });
+    const mood = scorePoem(half, PREFS, BANDS).terms.find((t) => t.key === 'mood');
+    expect(mood.state).toBe('partial');
+    expect(mood.detail).toBe('1 of 2');
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+
+describe('explainRows — why this poem', () => {
+  const rowsFor = (p, prefs = PREFS) => {
+    const r = scorePoem(p, prefs, BANDS);
+    return Object.fromEntries(explainRows(p, prefs, BANDS, r).map((row) => [row.key, row]));
+  };
+  const states = (row) => Object.fromEntries(row.chips.map((c) => [c.key, c.state]));
+
+  it('returns every dimension every time, so the block does not reshuffle per slide', () => {
+    const keys = explainRows(NOTHING, PREFS, BANDS, scorePoem(NOTHING, PREFS, BANDS)).map(
+      (r) => r.key
+    );
+    expect(keys).toEqual(['family', 'mood', 'topic', 'motif', 'era', 'difficulty']);
+  });
+
+  it('marks a value the reader named and got as MATCHED', () => {
+    expect(states(rowsFor(PERFECT).mood).amorous).toBe('matched');
+    expect(states(rowsFor(PERFECT).motif).night).toBe('matched');
+    expect(states(rowsFor(PERFECT).family)['love-desire']).toBe('matched');
+  });
+
+  it('marks a value the poem carries but nobody asked for as PRESENT', () => {
+    // topic is never an onboarding step, so every topic is context, not a match.
+    expect(states(rowsFor(PERFECT).topic).love).toBe('present');
+  });
+
+  it('marks a value the reader asked for and did NOT get as ABSENT', () => {
+    // The whole reason the block exists: the old columns listed what the poem
+    // HAS and what HIT, so an unmet ask appeared nowhere at all.
+    const noNight = poem({ moods: ['amorous', 'yearning'], topics: ['love'], century: 7 });
+    expect(states(rowsFor(noNight).motif).night).toBe('absent');
+  });
+
+  it('names the band the reader wanted when era misses', () => {
+    const late = poem({ moods: ['amorous'], century: 14, accessibility: 1.2 });
+    const era = rowsFor(late).era;
+    expect(era.chips.find((c) => c.state === 'absent')?.key).toBe('c6-8');
+    expect(era.chips.find((c) => c.wanted)?.label_ar).toBe('الجاهلي');
+  });
+
+  it('grades an adjacent century as PARTIAL rather than a match', () => {
+    const near = poem({ moods: ['amorous'], century: 9, accessibility: 1.2 });
+    expect(rowsFor(near).era.chips[0].state).toBe('partial');
+  });
+
+  it('carries bilingual labels off the taxonomy', () => {
+    const mood = rowsFor(PERFECT).mood.chips.find((c) => c.key === 'amorous');
+    expect(mood.label_ar).toBe('غزل');
+    expect(mood.label_en).toBe('Amorous');
+  });
+
+  it('falls back to the raw key when the taxonomy never loaded', () => {
+    // A degraded /api/categories must not render the block as a row of blanks.
+    const rows = explainRows(PERFECT, PREFS, {}, scorePoem(PERFECT, PREFS, {}));
+    const fam = rows.find((r) => r.key === 'family');
+    expect(fam.chips[0].label_en).toBe('love-desire');
+    expect(rows.find((r) => r.key === 'mood').chips[0].label_en).toBeTruthy();
+  });
+
+  it('sorts the answer to "did I get what I asked for" to the front', () => {
+    const mixed = poem({ moods: ['satire', 'amorous'], century: 7 });
+    expect(rowsFor(mixed).mood.chips[0].state).toBe('matched');
+  });
+
+  it('leaves an unanswered dimension with no arithmetic attached', () => {
+    const rows = rowsFor(PERFECT, { moods: ['amorous'] });
+    expect(rows.mood.term).toBeTruthy();
+    expect(rows.era.term).toBe(null);
+    expect(rows.family.term).toBe(null);
+  });
+
+  it('survives a poem with no facets at all', () => {
+    const rows = explainRows({}, PREFS, BANDS, scorePoem({}, PREFS, BANDS));
+    expect(rows).toHaveLength(6);
+    expect(rows.find((r) => r.key === 'era').chips[0].key).toBe('undated');
   });
 });

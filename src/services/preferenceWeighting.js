@@ -298,6 +298,13 @@ export const scopeFiltersFor = (prefs, bands = {}, only = null) => {
 /** The answer keys, in the order the flow asks for them. */
 export const STEP_KEYS = ['family', 'moods', 'motifs', 'era', 'difficulty'];
 
+/**
+ * The same order, keyed the way a SCORE TERM is keyed. The two lists differ
+ * only in that the multi-select steps are plural as answers (`moods`) and
+ * singular as dimensions (`mood`), which is also how the taxonomy names them.
+ */
+export const TERM_ORDER = ['family', 'mood', 'motif', 'era', 'difficulty'];
+
 /* -------------------------------------------------------------------------- */
 /* Poem facets                                                                 */
 /* -------------------------------------------------------------------------- */
@@ -340,10 +347,16 @@ export const facetsOf = (poem) => ({
  * comparable number and everything downstream (sampling, the product surface)
  * uses it rather than the raw points.
  *
+ * `terms` is the SCORE DECOMPOSITION, one entry per answered step, in flow
+ * order. It exists because the inspector was reverse-engineering the arithmetic
+ * from `matched` and the weight table, which is the kind of duplicate that
+ * silently stops agreeing with the scorer the first time a rule moves. The
+ * scorer emits what it actually credited; the panel only renders it.
+ *
  * @param {Object} poem   an API poem (or a plain object with the same facets)
  * @param {Object} prefs  saved onboarding answers
  * @param {Object} bands  { families, eraBands, difficultyBands } from fetchCategoryBands
- * @returns {{score:number, max:number, ratio:number, scaled:number, matched:Object}}
+ * @returns {{score:number, max:number, ratio:number, scaled:number, matched:Object, terms:Array}}
  */
 export const scorePoem = (poem, prefs, bands = {}) => {
   const f = facetsOf(poem);
@@ -355,6 +368,22 @@ export const scorePoem = (poem, prefs, bands = {}) => {
   let score = 0;
   let max = 0;
   const matched = {};
+  const terms = [];
+  /**
+   * `state` is what the panel colours by, and it is deliberately four-valued:
+   * `full` and `none` are the ends, `partial` covers every graded credit
+   * (some-of-many moods, an adjacent century, a near-miss difficulty), and
+   * `discounted` is reserved for the family overlap — a term that scored, but
+   * scored less for a reason that is not "the poem is a worse match".
+   */
+  const term = (key, weight, earned, state, detail) =>
+    terms.push({
+      key,
+      weight,
+      earned: Number(earned.toFixed(4)),
+      state,
+      detail,
+    });
 
   /* -- mood: multi-select, partial credit ---------------------------------- */
   if (moods.length) {
@@ -364,6 +393,15 @@ export const scorePoem = (poem, prefs, bands = {}) => {
       const credit = MULTI_BASE + (1 - MULTI_BASE) * (hits.length / moods.length);
       score += WEIGHTS.mood * credit;
       matched.mood = hits;
+      term(
+        'mood',
+        WEIGHTS.mood,
+        WEIGHTS.mood * credit,
+        hits.length === moods.length ? 'full' : 'partial',
+        `${hits.length} of ${moods.length}`
+      );
+    } else {
+      term('mood', WEIGHTS.mood, 0, 'none', `0 of ${moods.length}`);
     }
   }
 
@@ -375,6 +413,15 @@ export const scorePoem = (poem, prefs, bands = {}) => {
       const credit = MULTI_BASE + (1 - MULTI_BASE) * (hits.length / motifs.length);
       score += WEIGHTS.motif * credit;
       matched.motif = hits;
+      term(
+        'motif',
+        WEIGHTS.motif,
+        WEIGHTS.motif * credit,
+        hits.length === motifs.length ? 'full' : 'partial',
+        `${hits.length} of ${motifs.length}`
+      );
+    } else {
+      term('motif', WEIGHTS.motif, 0, 'none', `0 of ${motifs.length}`);
     }
   }
 
@@ -412,6 +459,15 @@ export const scorePoem = (poem, prefs, bands = {}) => {
       );
       score += WEIGHTS.family * (alsoChosen ? FAMILY_OVERLAP_DISCOUNT : 1);
       matched.family = { via: carried.map((v) => v.key), overlapping: alsoChosen };
+      term(
+        'family',
+        WEIGHTS.family,
+        WEIGHTS.family * (alsoChosen ? FAMILY_OVERLAP_DISCOUNT : 1),
+        alsoChosen ? 'discounted' : 'full',
+        alsoChosen ? 'via an answer you already gave' : `via ${carried.map((v) => v.key).join('+')}`
+      );
+    } else {
+      term('family', WEIGHTS.family, 0, 'none', 'no member value on this poem');
     }
   }
 
@@ -423,10 +479,14 @@ export const scorePoem = (poem, prefs, bands = {}) => {
       if (f.century == null) {
         score += WEIGHTS.era;
         matched.era = 'undated';
+        term('era', WEIGHTS.era, WEIGHTS.era, 'full', 'undated, as asked');
+      } else {
+        term('era', WEIGHTS.era, 0, 'none', `dated (c${f.century})`);
       }
     } else if (f.century == null) {
       score += WEIGHTS.era * UNDATED_ERA_CREDIT;
       matched.era = 'undated-under-dated';
+      term('era', WEIGHTS.era, WEIGHTS.era * UNDATED_ERA_CREDIT, 'partial', 'undated');
     } else {
       const from = eraBand.century_from;
       const to = eraBand.century_to;
@@ -434,13 +494,25 @@ export const scorePoem = (poem, prefs, bands = {}) => {
         if (f.century >= from && f.century <= to) {
           score += WEIGHTS.era;
           matched.era = 'in-band';
+          term('era', WEIGHTS.era, WEIGHTS.era, 'full', 'in band');
         } else {
           const gap = f.century < from ? from - f.century : f.century - to;
           if (gap <= ADJACENT_CENTURIES) {
             score += WEIGHTS.era * ADJACENT_ERA_CREDIT;
             matched.era = 'adjacent';
+            term(
+              'era',
+              WEIGHTS.era,
+              WEIGHTS.era * ADJACENT_ERA_CREDIT,
+              'partial',
+              `${gap} c. outside`
+            );
+          } else {
+            term('era', WEIGHTS.era, 0, 'none', `${gap} c. outside`);
           }
         }
+      } else {
+        term('era', WEIGHTS.era, 0, 'none', 'band has no century range');
       }
     }
   }
@@ -453,14 +525,26 @@ export const scorePoem = (poem, prefs, bands = {}) => {
       if (a >= diffBand.min && a <= diffBand.max) {
         score += WEIGHTS.difficulty;
         matched.difficulty = 'in-band';
+        term('difficulty', WEIGHTS.difficulty, WEIGHTS.difficulty, 'full', 'in band');
       } else {
         const gap = a < diffBand.min ? diffBand.min - a : a - diffBand.max;
         const near = Math.max(0, 1 - gap / DIFFICULTY_FALLOFF) * DIFFICULTY_NEAR_CREDIT;
         if (near > 0) {
           score += WEIGHTS.difficulty * near;
           matched.difficulty = 'near';
+          term(
+            'difficulty',
+            WEIGHTS.difficulty,
+            WEIGHTS.difficulty * near,
+            'partial',
+            `${gap.toFixed(1)} outside`
+          );
+        } else {
+          term('difficulty', WEIGHTS.difficulty, 0, 'none', `${gap.toFixed(1)} outside`);
         }
       }
+    } else {
+      term('difficulty', WEIGHTS.difficulty, 0, 'none', 'poem has no score');
     }
   }
 
@@ -473,6 +557,9 @@ export const scorePoem = (poem, prefs, bands = {}) => {
     // the same thing whether the reader answered two steps or five.
     scaled: Number((ratio * MAX_SCORE).toFixed(4)),
     matched,
+    // Flow order, not evaluation order — the panel lists the steps the way the
+    // reader was asked them.
+    terms: TERM_ORDER.map((k) => terms.find((t) => t.key === k)).filter(Boolean),
   };
 };
 
@@ -701,6 +788,210 @@ export const drawManyFrom = (
 /* -------------------------------------------------------------------------- */
 /* Presentation                                                                */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * Why THIS poem, dimension by dimension.
+ *
+ * The inspector used to answer this in two truncated table columns — the poem's
+ * facets in one, the matched keys in another — which meant the two fields that
+ * carry the answer were the two that ellipsed first on a phone. This returns
+ * the same information as one row per dimension, so it can be rendered at full
+ * width and wrapped instead of clipped.
+ *
+ * ## The three states, and why the third one is the interesting one
+ *
+ *   matched  the poem carries a value the reader named
+ *   present  the poem carries it, the reader never asked            (context)
+ *   absent   the reader named it, the poem does NOT carry it        (the miss)
+ *
+ * `absent` is the state with no representation in the old columns at all: they
+ * listed what the poem HAS and what HIT, so a reader who asked for
+ * `motif:night` and got a poem with no night saw nothing about night anywhere.
+ * That is precisely the case where someone opens this panel.
+ *
+ * `partial` is a fourth state rather than a fudge of `matched`, because era and
+ * difficulty genuinely score in between (an adjacent century, an accessibility
+ * score just outside the band) and calling that a match would misreport the
+ * arithmetic sitting next to it.
+ *
+ * Rows are returned for EVERY dimension including ones the reader skipped, so
+ * the shape of the block does not change from poem to poem — a row that moves
+ * position between slides is a row you have to re-find every time.
+ *
+ * @param {Object} poem
+ * @param {Object} prefs
+ * @param {Object} bands
+ * @param {{terms:Array, matched:Object}} [scoreResult] from scorePoem; supplies
+ *   the credit annotation. Omit it and the rows carry states but no arithmetic.
+ * @returns {Array<{key:string, label_ar:string, label_en:string, answered:boolean,
+ *   term:Object|null, chips:Array<{key:string,label_ar:string,label_en:string,state:string}>}>}
+ */
+export const explainRows = (poem, prefs, bands = {}, scoreResult = null) => {
+  const f = facetsOf(poem);
+  const terms = scoreResult?.terms || [];
+  const termFor = (k) => terms.find((t) => t.key === k) || null;
+  const dimension = (k) => (bands?.dimensions || []).find((d) => d.key === k) || null;
+
+  /** Label a taxonomy value, falling back to its key when the bands never loaded. */
+  const valueLabel = (dim, key) => {
+    const v = (dimension(dim)?.values || []).find((x) => x.key === key);
+    return { key, label_ar: v?.label_ar || '', label_en: v?.label_en || key };
+  };
+
+  /**
+   * One taxonomy dimension: what the poem carries, then what the reader asked
+   * for and did not get. Chosen values sort first — the answer to "did I get
+   * what I asked for" should not require reading to the end of a wrapped list.
+   */
+  const taxonomyRow = (dim, carried, chosen) => {
+    const chips = carried.map((k) => ({
+      ...valueLabel(dim, k),
+      state: chosen.includes(k) ? 'matched' : 'present',
+    }));
+    for (const k of chosen) {
+      if (!carried.includes(k)) chips.push({ ...valueLabel(dim, k), state: 'absent' });
+    }
+    const rank = { matched: 0, absent: 1, present: 2 };
+    chips.sort((a, b) => rank[a.state] - rank[b.state]);
+    const d = dimension(dim);
+    return {
+      key: dim,
+      label_ar: d?.label_ar || '',
+      label_en: d?.label_en || dim,
+      answered: chosen.length > 0,
+      term: termFor(dim),
+      chips,
+    };
+  };
+
+  const moods = asArray(prefs?.moods);
+  const motifs = asArray(prefs?.motifs);
+
+  /* -- family: the reader's pick, plus any other family the poem sits in ---- */
+  const chosenFamily = prefs?.family || null;
+  const carriesFamily = (fam) =>
+    (fam?.values || []).some((v) => {
+      const bucket =
+        v.dim === 'mood'
+          ? f.moods
+          : v.dim === 'motif'
+            ? f.motifs
+            : v.dim === 'topic'
+              ? f.topics
+              : [];
+      return bucket.includes(v.key);
+    });
+  const familyChips = [];
+  for (const fam of bands?.families || []) {
+    const inIt = carriesFamily(fam);
+    const isChosen = fam.key === chosenFamily;
+    // A family the poem is not in and the reader did not ask for is not a fact
+    // about this poem, so it is simply not a chip.
+    if (!inIt && !isChosen) continue;
+    familyChips.push({
+      key: fam.key,
+      label_ar: fam.label_ar || '',
+      label_en: fam.label_en || fam.key,
+      state: isChosen ? (inIt ? 'matched' : 'absent') : 'present',
+    });
+  }
+  // The chosen family with no bands loaded still deserves a row rather than a
+  // blank — otherwise a taxonomy fetch failure looks like "you asked for
+  // nothing".
+  if (chosenFamily && !familyChips.some((c) => c.key === chosenFamily)) {
+    familyChips.unshift({
+      key: chosenFamily,
+      label_ar: '',
+      label_en: chosenFamily,
+      state: scoreResult?.matched?.family ? 'matched' : 'absent',
+    });
+  }
+  const rankFam = { matched: 0, absent: 1, present: 2 };
+  familyChips.sort((a, b) => rankFam[a.state] - rankFam[b.state]);
+
+  /* -- era: one chip, because a poem has exactly one century ---------------- */
+  //
+  // Note what this can NEVER be: `absent`. A poem's own century is a fact about
+  // the poem, so striking it through would be claiming the poem does not have
+  // the century it has. When the answer went unsatisfied it is the READER'S
+  // BAND that is absent, and `bandRow` appends that as its own chip.
+  const eraBand = eraBandFor(prefs, bands);
+  const eraState = !eraBand
+    ? 'present'
+    : {
+        'in-band': 'matched',
+        undated: 'matched',
+        adjacent: 'partial',
+        'undated-under-dated': 'partial',
+      }[scoreResult?.matched?.era] || 'present';
+  const eraChip = {
+    key: f.century == null ? 'undated' : `c${f.century}`,
+    label_ar: '',
+    label_en: f.century == null ? 'undated' : `${ordinalCentury(f.century)} century`,
+    state: eraState,
+  };
+
+  /* -- difficulty: same, on a continuous axis ------------------------------ */
+  const diffBand = difficultyBandFor(prefs, bands);
+  const diffState = !diffBand
+    ? 'present'
+    : { 'in-band': 'matched', near: 'partial' }[scoreResult?.matched?.difficulty] || 'present';
+  const diffChip = {
+    key: 'accessibility',
+    label_ar: '',
+    label_en:
+      f.accessibility == null ? 'unscored' : `${f.accessibility.toFixed(1)} / 10 (higher = harder)`,
+    state: diffState,
+  };
+
+  return [
+    {
+      key: 'family',
+      label_ar: 'العائلة',
+      label_en: 'family',
+      answered: !!chosenFamily,
+      term: termFor('family'),
+      chips: familyChips,
+    },
+    taxonomyRow('mood', f.moods, moods),
+    taxonomyRow('topic', f.topics, []),
+    taxonomyRow('motif', f.motifs, motifs),
+    bandRow('era', 'العصر', 'era', eraBand, eraChip, termFor('era')),
+    bandRow('difficulty', 'السهولة', 'difficulty', diffBand, diffChip, termFor('difficulty')),
+  ];
+};
+
+/**
+ * Era and difficulty as a row.
+ *
+ * A poem has exactly ONE century and ONE accessibility score, so unlike the
+ * multi-valued taxonomy dimensions there is no list to sort — but the `absent`
+ * state still has to be expressible, and "the poem is 9th century" does not by
+ * itself say what was asked for. So when the poem's own value did not fully
+ * satisfy the answer, the BAND THE READER CHOSE is appended as its own absent
+ * chip. That is the same shape the taxonomy rows use for an unmet ask, which is
+ * the point: one visual grammar for "you asked for this and did not get it".
+ */
+const bandRow = (key, label_ar, label_en, band, chip, term) => {
+  const chips = [chip];
+  if (band && chip.state !== 'matched') {
+    chips.push({
+      key: band.key,
+      label_ar: band.label_ar || '',
+      label_en: band.label_en || band.key,
+      state: 'absent',
+      wanted: true,
+    });
+  }
+  return { key, label_ar, label_en, answered: !!band, term, chips };
+};
+
+/** `6` -> `6th`. Local to the era chip; categoryBands has its own for band labels. */
+const ordinalCentury = (n) => {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return `${n}${s[(v - 20) % 10] || s[v] || s[0]}`;
+};
 
 /**
  * Ratio at or above which the reader is told the poem was chosen for them.

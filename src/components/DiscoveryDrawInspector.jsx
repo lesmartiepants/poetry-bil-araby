@@ -6,7 +6,11 @@ import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { usePoemStore } from '../stores/poemStore';
 import { getDrawFor, getFeedOrder, getLastDraw } from '../services/lastDraw.js';
-import { MAX_SCORE, facetsOf } from '../services/preferenceWeighting.js';
+import {
+  FAMILY_OVERLAP_DISCOUNT,
+  MAX_SCORE,
+  explainRows,
+} from '../services/preferenceWeighting.js';
 
 /**
  * الميزان — the scale. The scored draw FOR THE POEM IN FRONT OF THE READER, laid
@@ -43,26 +47,162 @@ const pct = (n) => `${Math.round(n * 100)}%`;
 const MONO = 'text-[0.5625rem] font-mono leading-tight';
 
 /**
- * score / poem / facets / matched.
+ * score / poem.
  *
  * Fixed score column so the numbers and their bars line up as a single readable
- * strip; the rest share what's left. Below `sm` there isn't room for four
- * columns without shredding every title to "What …", so the row wraps: score
- * keeps its column and spans both lines, the title gets the whole first line,
- * and facets + matched share the second.
+ * strip; the title takes what's left. This used to carry two more columns —
+ * `facets` and `matched` — which is where the poem's own labels and the reasons
+ * it matched lived. At 375px those two were ~90px each and ellipsed to nothing,
+ * so the panel's actual answer was the part you could not read. They moved up
+ * into the WHY block, at full width. The table keeps the job it was always good
+ * at: how this pick compares to the other twenty-nine.
  */
-const ROW_GRID =
-  'grid grid-cols-[92px_minmax(0,1fr)] sm:grid-cols-[104px_minmax(0,1.2fr)_minmax(0,1.5fr)_minmax(0,0.9fr)]';
+const ROW_GRID = 'grid grid-cols-[minmax(0,116px)_minmax(0,1fr)]';
 
-const MatchedCell = ({ matched }) => {
-  const bits = [];
-  if (matched.family) bits.push(matched.family.overlapping ? 'fam*' : 'fam');
-  if (matched.mood) bits.push(`mood:${matched.mood.join('+')}`);
-  if (matched.motif) bits.push(`motif:${matched.motif.join('+')}`);
-  if (matched.era) bits.push(`era:${matched.era}`);
-  if (matched.difficulty) bits.push(`diff:${matched.difficulty}`);
-  return <span>{bits.join(' ') || '—'}</span>;
+/* -------------------------------------------------------------------------- */
+/* The why block                                                               */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * One colour per state, and they have to survive being read at 10px on a phone
+ * in sunlight, so they are separated by HUE, WEIGHT and GLYPH rather than by
+ * opacity alone — opacity was what made the old table unreadable.
+ *
+ *   matched  gold, filled, ✓   the reader asked for it and got it
+ *   partial  gold, hollow, ≈   graded credit: adjacent century, near difficulty
+ *   present  grey, flat,   ·   true of the poem, never asked for
+ *   absent   rose, struck, ✕   asked for and NOT here — the interesting miss
+ */
+const CHIP_STATES = {
+  matched: {
+    glyph: '✓',
+    color: 'var(--gold)',
+    background: 'rgba(197,160,89,0.16)',
+    border: 'rgba(197,160,89,0.55)',
+  },
+  partial: {
+    glyph: '≈',
+    color: 'var(--gold)',
+    background: 'transparent',
+    border: 'rgba(197,160,89,0.4)',
+  },
+  present: {
+    glyph: '',
+    color: 'rgba(255,255,255,0.55)',
+    background: 'rgba(255,255,255,0.05)',
+    border: 'rgba(255,255,255,0.12)',
+  },
+  absent: {
+    glyph: '✕',
+    color: '#d98b83',
+    background: 'rgba(217,139,131,0.10)',
+    border: 'rgba(217,139,131,0.42)',
+  },
 };
+
+/**
+ * One taxonomy value.
+ *
+ * Arabic leads and English follows on the same chip, which is the app's rule
+ * everywhere else and is also the only way this stays useful — the taxonomy
+ * keys are English slugs, so an Arabic-only chip would be unmatchable against
+ * the answers stored in localStorage, and an English-only one would be the one
+ * surface in the app that drops the Arabic.
+ *
+ * `whitespace-normal` + `break-words` is the whole acceptance criterion: a chip
+ * WRAPS. Nothing in this block may truncate.
+ */
+const Chip = ({ chip }) => {
+  const s = CHIP_STATES[chip.state] || CHIP_STATES.present;
+  return (
+    <span
+      className="inline-flex items-baseline gap-1 rounded px-1.5 py-[2px] whitespace-normal break-words max-w-full"
+      style={{ color: s.color, background: s.background, border: `1px solid ${s.border}` }}
+      title={`${chip.label_en} — ${chip.state}`}
+    >
+      {chip.wanted && <span className="opacity-60 text-[0.5rem]">wanted</span>}
+      {chip.label_ar && (
+        <span className="font-brand-ar text-[0.75rem] leading-none" dir="rtl">
+          {chip.label_ar}
+        </span>
+      )}
+      <span
+        className={`font-mono text-[0.5625rem] leading-tight ${chip.label_ar ? 'opacity-70' : ''}`}
+      >
+        {chip.label_en}
+      </span>
+      {s.glyph && <span className="text-[0.625rem] leading-none">{s.glyph}</span>}
+    </span>
+  );
+};
+
+/**
+ * WHY THIS POEM — one row per dimension, full panel width.
+ *
+ * The layout is a two-column grid rather than a flex row so every dimension
+ * name starts at the same x, which is what makes the block scannable when the
+ * chip lists are ragged (mood might carry four values, era carries one).
+ *
+ * The credit sits UNDER the dimension name, in the label column, instead of
+ * being a trailing column of its own. A third column would reintroduce exactly
+ * the squeeze this change removes, and stacking it costs nothing: the label
+ * column is already two lines tall on any row whose chips wrap.
+ */
+const WhyBlock = ({ rows, border }) => (
+  <div className={`px-4 py-2.5 border-b ${border} flex-none`}>
+    <Label className="opacity-40">Why this poem</Label>
+    <div className="mt-1.5 flex flex-col gap-1.5">
+      {rows.map((row) => (
+        <div key={row.key} className="grid grid-cols-[56px_minmax(0,1fr)] gap-x-2 items-start">
+          <div className="pt-[3px]">
+            {/* Lowercased in CSS, not in the data: the taxonomy ships these
+                title-cased ("Mood") and the two non-taxonomy rows are ours, so
+                without this the column reads as two different label styles. */}
+            <div className="font-mono text-[0.5625rem] leading-tight opacity-55 lowercase">
+              {row.label_en}
+            </div>
+            {/* Only ANSWERED steps carry arithmetic — an unanswered step
+                contributes to neither the score nor the max, and printing
+                "0.00/0.0" next to it would read as a poem failing a test it was
+                never given. */}
+            {row.term && (
+              <div
+                className="font-mono text-[0.5rem] leading-tight mt-[1px]"
+                style={{
+                  color: row.term.earned > 0 ? 'var(--gold)' : '#d98b83',
+                  opacity: row.term.earned > 0 ? 0.75 : 0.7,
+                }}
+                title={`${row.term.detail} — ${row.term.earned} of ${row.term.weight} points`}
+              >
+                +{row.term.earned.toFixed(2)}
+                <span className="opacity-50">/{row.term.weight.toFixed(1)}</span>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-1 min-w-0">
+            {row.chips.length ? (
+              row.chips.map((c) => <Chip key={`${c.key}-${c.state}`} chip={c} />)
+            ) : (
+              <span className="font-mono text-[0.5625rem] opacity-30 pt-[3px]">none</span>
+            )}
+            {/* The family overlap discount, annotated where it happens rather
+                than in a footnote. A poem can match all five answers and still
+                score 4.4/5 because of this line; without it on screen next to
+                the number, that reads as arithmetic being broken. */}
+            {row.term?.state === 'discounted' && (
+              <span
+                className="font-mono text-[0.5rem] leading-tight self-center opacity-60"
+                style={{ color: 'var(--gold)' }}
+              >
+                ×{FAMILY_OVERLAP_DISCOUNT} — already counted under a mood/motif you named
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
 
 /** Small caps label used for every chrome heading in the panel. */
 const Label = ({ children, className = '' }) => (
@@ -176,6 +316,7 @@ const DiscoveryDrawInspector = () => {
 
   const [open, setOpen] = useState(false);
   const pickedRowRef = useRef(null);
+  const tableScrollRef = useRef(null);
 
   // The poem the reader is actually on. Both of these are reactive, so the panel
   // re-renders on every swipe without polling anything.
@@ -208,11 +349,19 @@ const DiscoveryDrawInspector = () => {
   // A tail pick is exactly the case worth looking at, and it is also the case
   // that lands thirty rows down. Bring it into view on open so the row the
   // header is talking about is the row you are looking at.
+  //
+  // Deliberately NOT `scrollIntoView`: that scrolls every scrollable ancestor,
+  // and since the whole panel body scrolls now it would drag the why block off
+  // screen to centre a table row. Setting scrollTop on the table's own box
+  // moves exactly one scroller.
   useEffect(() => {
     if (!open) return;
-    const id = requestAnimationFrame(() =>
-      pickedRowRef.current?.scrollIntoView({ block: 'center' })
-    );
+    const id = requestAnimationFrame(() => {
+      const row = pickedRowRef.current;
+      const box = tableScrollRef.current;
+      if (!row || !box) return;
+      box.scrollTop = row.offsetTop - box.clientHeight / 2 + row.clientHeight / 2;
+    });
     return () => cancelAnimationFrame(id);
   }, [open, draw]);
 
@@ -225,6 +374,8 @@ const DiscoveryDrawInspector = () => {
   const pickedIndex = rows.findIndex((r) => r.isPicked);
   const pickedRow = pickedIndex >= 0 ? rows[pickedIndex] : null;
   const hereInFeed = feed.findIndex((f) => f.id === currentPoemId);
+  // The whole point of the panel, for the poem actually on screen.
+  const why = pickedRow ? explainRows(picked, draw?.prefs, draw?.bands, pickedRow) : [];
 
   const surface = darkMode ? 'bg-black/80' : 'bg-white/90';
 
@@ -273,7 +424,10 @@ const DiscoveryDrawInspector = () => {
         style={{
           bottom: 100,
           right: 8,
-          maxHeight: 'min(62vh, 540px)',
+          // Sized so the whole why block clears the fold on a 375x812 phone.
+          // At 62vh the block ended at `topic` and the unmet motif — the row
+          // someone opened the panel to see — sat below the cut.
+          maxHeight: 'min(76vh, 640px)',
           boxShadow: '0 0 24px 4px rgba(197,160,89,0.12), 0 8px 32px rgba(0,0,0,0.5)',
         }}
       >
@@ -350,109 +504,122 @@ const DiscoveryDrawInspector = () => {
               <SpreadRail rows={rows} />
             </div>
 
-            <FeedQueue feed={feed} hereIndex={hereInFeed} border={theme.border} />
+            {/* ONE scroller from here down.
 
-            {/* What the reader asked for, and what was actually requested for it. */}
-            <div className={`${MONO} opacity-50 px-4 py-2 border-b ${theme.border} flex-none`}>
-              <div className="truncate">
-                answers: {draw.prefs?.family || '—'} / {(draw.prefs?.moods || []).join('+') || '—'}{' '}
-                / {(draw.prefs?.motifs || []).join('+') || '—'} / {draw.prefs?.era || '—'} /{' '}
-                {draw.prefs?.difficulty || '—'}
-              </div>
-              <div className="truncate mt-0.5">
-                pages:{' '}
-                {(draw.queries || [])
-                  .map(
-                    (q) =>
-                      `${q.role}(${
-                        Object.keys(q.query)
-                          .filter((k) => k !== 'limit')
-                          .join(',') || 'none'
-                      })`
-                  )
-                  .join(' + ')}
-              </div>
-            </div>
+                These used to be five `flex-none` blocks stacked above a
+                scrolling table, which worked only while their combined height
+                fit the panel. The why block is ~200px of that budget, and at
+                375x812 the sum went past `maxHeight` — so the table's `flex-1`
+                resolved to nothing and the pinned footer drew on top of the
+                rows. Scrolling the whole body instead has no such budget: the
+                score summary stays pinned because it is the answer, the footer
+                stays pinned because it is a legend, and everything between
+                them is content. */}
+            <div className="overflow-y-auto flex-1 min-h-0">
+              <FeedQueue feed={feed} hereIndex={hereInFeed} border={theme.border} />
 
-            {/* Column labels live OUTSIDE the scroller rather than as a sticky
+              {/* What the reader asked for, and what was actually requested for it. */}
+              <div className={`${MONO} opacity-50 px-4 py-2 border-b ${theme.border} flex-none`}>
+                {/* Raw stored keys, wrapped not clipped — this is the literal
+                  contents of `onboardingPrefs`, and half of debugging the flow
+                  is seeing that a key is spelled the way the scorer expects. */}
+                <div className="break-words">
+                  answers: {draw.prefs?.family || '—'} /{' '}
+                  {(draw.prefs?.moods || []).join('+') || '—'} /{' '}
+                  {(draw.prefs?.motifs || []).join('+') || '—'} / {draw.prefs?.era || '—'} /{' '}
+                  {draw.prefs?.difficulty || '—'}
+                </div>
+                <div className="break-words mt-0.5">
+                  pages:{' '}
+                  {(draw.queries || [])
+                    .map(
+                      (q) =>
+                        `${q.role}(${
+                          Object.keys(q.query)
+                            .filter((k) => k !== 'limit')
+                            .join(',') || 'none'
+                        })`
+                    )
+                    .join(' + ')}
+                </div>
+              </div>
+
+              <WhyBlock rows={why} border={theme.border} />
+
+              {/* Column labels live OUTSIDE the scroller rather than as a sticky
                 <thead>. The rows carry `opacity`, which makes each one its own
                 stacking context, and a sticky header loses to them however its
                 z-index is set — it ends up transparent with rows sliding
                 through the labels. A plain header row above the scroll box has
                 no such fight, and grid keeps the columns aligned. */}
-            <div
-              className={`${MONO} ${ROW_GRID} gap-x-2 opacity-40 px-4 pt-2 pb-1 flex-none border-b ${theme.border}`}
-            >
-              <span>score</span>
-              <span>poem</span>
-              <span className="hidden sm:block">facets</span>
-              <span className="hidden sm:block">matched</span>
-            </div>
+              <div
+                className={`${MONO} ${ROW_GRID} gap-x-2 opacity-40 px-4 pt-2 pb-1 flex-none border-b ${theme.border}`}
+              >
+                <span>score</span>
+                <span>the other candidates</span>
+              </div>
 
-            {/* The full list — now the thing that scrolls, rather than the
-                thing that runs off the bottom of the panel. */}
-            <div className={`${MONO} overflow-y-auto flex-1 min-h-0 px-4 py-1`}>
-              {rows.map((s) => {
-                const f = facetsOf(s.poem);
-                return (
-                  <div
-                    key={s.poem?.id ?? s.i}
-                    ref={s.isPicked ? pickedRowRef : undefined}
-                    className={`${ROW_GRID} gap-x-2 py-1 -mx-2 px-2 rounded-sm ${
-                      s.isPicked ? '' : 'opacity-60'
-                    }`}
-                    style={
-                      s.isPicked
-                        ? {
-                            color: 'var(--gold)',
-                            background: 'rgba(197,160,89,0.12)',
-                            boxShadow: 'inset 2px 0 0 var(--gold)',
-                          }
-                        : undefined
-                    }
-                  >
-                    <span className="whitespace-nowrap row-span-2 sm:row-span-1">
-                      <span className="inline-block w-2">{s.isPicked ? '▶' : ''}</span>
-                      {s.scaled.toFixed(2)}
-                      <span className="opacity-50">/{MAX_SCORE}</span>
-                      {/* Per-row bar: the spread again, but per line, so
+              {/* The table keeps a scroller of its OWN, nested inside the body
+                one and capped, for a single reason: the picked row auto-scrolls
+                into view on open, and a scroll that walked up to the body would
+                take the why block off screen — scrolling past the answer to get
+                to the comparison. Capped rather than `flex-1` because inside a
+                scrolling parent there is no height to be a fraction of. */}
+              <div
+                ref={tableScrollRef}
+                className={`${MONO} px-4 py-1 overflow-y-auto`}
+                style={{ maxHeight: '34vh' }}
+              >
+                {rows.map((s) => {
+                  return (
+                    <div
+                      key={s.poem?.id ?? s.i}
+                      ref={s.isPicked ? pickedRowRef : undefined}
+                      className={`${ROW_GRID} gap-x-2 py-1 -mx-2 px-2 rounded-sm ${
+                        s.isPicked ? '' : 'opacity-60'
+                      }`}
+                      style={
+                        s.isPicked
+                          ? {
+                              color: 'var(--gold)',
+                              background: 'rgba(197,160,89,0.12)',
+                              boxShadow: 'inset 2px 0 0 var(--gold)',
+                            }
+                          : undefined
+                      }
+                    >
+                      <span className="whitespace-nowrap">
+                        <span className="inline-block w-2">{s.isPicked ? '▶' : ''}</span>
+                        {s.scaled.toFixed(2)}
+                        <span className="opacity-50">/{MAX_SCORE}</span>
+                        {/* Per-row bar: the spread again, but per line, so
                           scanning the list doesn't mean parsing numbers. */}
-                      <span
-                        className="inline-block align-middle ml-1.5 rounded-full overflow-hidden"
-                        style={{ width: 26, height: 3, background: 'rgba(255,255,255,0.10)' }}
-                      >
                         <span
-                          className="block h-full rounded-full"
-                          style={{
-                            width: `${Math.round(s.ratio * 100)}%`,
-                            background: s.isPicked ? 'var(--gold)' : 'rgba(255,255,255,0.45)',
-                          }}
-                        />
+                          className="inline-block align-middle ml-1.5 rounded-full overflow-hidden"
+                          style={{ width: 26, height: 3, background: 'rgba(255,255,255,0.10)' }}
+                        >
+                          <span
+                            className="block h-full rounded-full"
+                            style={{
+                              width: `${Math.round(s.ratio * 100)}%`,
+                              background: s.isPicked ? 'var(--gold)' : 'rgba(255,255,255,0.45)',
+                            }}
+                          />
+                        </span>
                       </span>
-                    </span>
-                    <span className="truncate">
-                      <span className="opacity-60">#{s.poem?.id}</span> {s.poem?.title}
-                    </span>
-                    {/* Below sm these two share the second line; at sm and up
-                        they are their own columns. */}
-                    <span className="truncate opacity-70">
-                      {[
-                        f.moods.join('+') || '·',
-                        f.motifs.join('+') || '·',
-                        f.century == null ? 'undated' : `c${f.century}`,
-                        f.accessibility == null ? '·' : f.accessibility.toFixed(1),
-                      ].join(' | ')}
-                      <span className="sm:hidden opacity-90">
-                        {' · '}
-                        <MatchedCell matched={s.matched} />
+                      {/* The title is the ONE thing left that may still clip —
+                        it is a free-text field with no upper bound, and a
+                        wrapping title would make every row a different height
+                        and destroy the scannability the table exists for. The
+                        facets that used to clip here are in the block above,
+                        where they wrap. */}
+                      <span className="truncate">
+                        <span className="opacity-60">#{s.poem?.id}</span> {s.poem?.title}
                       </span>
-                    </span>
-                    <span className="truncate opacity-70 hidden sm:block">
-                      <MatchedCell matched={s.matched} />
-                    </span>
-                  </div>
-                );
-              })}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* The sentence that prevents a false bug report. Pinned, because it
@@ -461,8 +628,10 @@ const DiscoveryDrawInspector = () => {
               className={`${MONO} opacity-40 px-4 py-2 border-t ${theme.border} flex-none leading-relaxed`}
             >
               A low-scoring pick is correct, not a bug — the unanchored page keeps every poem
-              reachable. <span className="opacity-80">fam*</span> = family credit discounted because
-              the reader already named the value it matched on.
+              reachable. <span style={{ color: 'var(--gold)' }}>✓ matched</span> ·{' '}
+              <span style={{ color: 'var(--gold)' }}>≈ partial credit</span> ·{' '}
+              <span className="opacity-70">· on the poem, not asked for</span> ·{' '}
+              <span style={{ color: '#d98b83' }}>✕ asked for, not here</span>
             </p>
           </>
         )}

@@ -555,20 +555,37 @@ describe('drawManyFrom', () => {
     withId(MID, 'm2'),
   ];
 
+  const OPENING = { deterministic: DETERMINISTIC_OPENING };
+
   it('takes the opening slides by RANK, not by sampling', () => {
     // rng pinned to 0 would make sampleByScore return the FIRST candidate every
     // time — i.e. NOTHING, which sits at index 0. The ranked slots must ignore
     // it entirely, which is the whole guarantee.
-    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 2, rng: fixed(0) });
+    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 2, ...OPENING, rng: fixed(0) });
     expect(picks.map((p) => p.poem.id)).toEqual(['p1', 'm1']);
     expect(picks.every((p) => p.deterministic)).toBe(true);
     expect(picks[0].scaled).toBeCloseTo(MAX_SCORE, 4);
   });
 
   it('samples once past the deterministic opening', () => {
-    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 5, rng: fixed(0) });
+    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 5, ...OPENING, rng: fixed(0) });
     expect(picks.slice(0, DETERMINISTIC_OPENING).every((p) => p.deterministic)).toBe(true);
     expect(picks.slice(DETERMINISTIC_OPENING).every((p) => p.deterministic)).toBe(false);
+  });
+
+  it('SAMPLES BY DEFAULT — ranking is opt-in, not a property of starting at 0', () => {
+    // The regression this pins: `deterministic` used to default to
+    // DETERMINISTIC_OPENING, so the ordinary carousel refill (which starts at
+    // slot 1) re-ran the ranked opening mid-feed and overwrote the real one
+    // moments after a redraw produced it. Only the post-onboarding redraw asks.
+    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 3 });
+    expect(picks.every((p) => p.deterministic)).toBe(false);
+  });
+
+  it('a batch starting at slot 1 does not rank, even below DETERMINISTIC_OPENING', () => {
+    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 4, startSlot: 1 });
+    expect(picks.map((p) => p.slot)).toEqual([1, 2, 3, 4]);
+    expect(picks.every((p) => p.deterministic)).toBe(false);
   });
 
   it('never serves the same poem twice in one batch', () => {
@@ -587,24 +604,25 @@ describe('drawManyFrom', () => {
     // be whichever the API happened to return first, which is sampling wearing a
     // different hat in the two slots that exist to not be sampled.
     const tied = [withId(PERFECT, 'zzz'), withId(PERFECT, 'aaa')];
-    const a = drawManyFrom(tied, PREFS, 0, BANDS, { count: 1 });
-    const b = drawManyFrom([...tied].reverse(), PREFS, 0, BANDS, { count: 1 });
+    const a = drawManyFrom(tied, PREFS, 0, BANDS, { count: 1, ...OPENING });
+    const b = drawManyFrom([...tied].reverse(), PREFS, 0, BANDS, { count: 1, ...OPENING });
     expect(a.picks[0].poem.id).toBe('aaa');
     expect(b.picks[0].poem.id).toBe('aaa');
   });
 
   it('reports each pick its rank in the WHOLE pool, not among the leftovers', () => {
-    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 2 });
+    const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, { count: 2, ...OPENING });
     expect(picks[0].rank).toBe(1);
     expect(picks[1].rank).toBe(2);
   });
 
-  it('startSlot past the opening samples everything — load-more does not re-rank', () => {
+  it('load-more does not re-rank, even when it asks for the opening', () => {
     // Infinite scroll would otherwise serve the two top-ranked candidates again
     // on every batch, converging the feed instead of broadening it.
     const { picks } = drawManyFrom(POOL, PREFS, 0, BANDS, {
       count: 3,
       startSlot: 5,
+      ...OPENING,
       rng: fixed(0),
     });
     expect(picks.every((p) => p.deterministic)).toBe(false);

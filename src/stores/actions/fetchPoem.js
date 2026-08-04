@@ -15,7 +15,6 @@ import {
   drawManyFrom,
   attributionFor,
   MAX_SCORE,
-  DETERMINISTIC_OPENING,
 } from '../../services/preferenceWeighting.js';
 import { recordFeedDraw } from '../../services/lastDraw.js';
 
@@ -71,6 +70,7 @@ export async function fetchWeightedFeed({
   addLog,
   count = 1,
   startSlot = 0,
+  deterministic = 0,
   replaceFeed = true,
 }) {
   const bands = await getBands();
@@ -101,6 +101,7 @@ export async function fetchWeightedFeed({
   const { picks, scored, temperature } = drawManyFrom(candidates, prefs, poemsSeen, bands, {
     count,
     startSlot,
+    deterministic,
   });
   if (!picks.length) return [];
 
@@ -145,17 +146,11 @@ export async function fetchWeightedFeed({
 
 /** Single-poem scored draw — the shape the main Discover path wants. */
 async function fetchWeightedPoem({ prefs, poet, excludeIds, addLog }) {
-  const [poem] = await fetchWeightedFeed({
-    prefs,
-    poet,
-    excludeIds,
-    addLog,
-    count: 1,
-    // The single-poem path is the ordinary Discover press, not the head of a
-    // fresh preference feed. Sampling it keeps session-to-session serendipity;
-    // the ranked opening belongs to the feed draw, which owns slots 0 and 1.
-    startSlot: DETERMINISTIC_OPENING,
-  });
+  // The ordinary Discover press, not the head of a fresh preference feed, so it
+  // samples — which is now simply the default. It used to fake that by passing
+  // startSlot: DETERMINISTIC_OPENING, which also mislabelled its pick as "slot
+  // 2" in the inspector under a reader who had never scrolled that far.
+  const [poem] = await fetchWeightedFeed({ prefs, poet, excludeIds, addLog, count: 1 });
   return poem || null;
 }
 

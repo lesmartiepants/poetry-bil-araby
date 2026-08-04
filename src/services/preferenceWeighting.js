@@ -635,10 +635,17 @@ const byRank = (a, b) => {
  *   slot < deterministic   take the highest-scoring candidate left
  *   slot >= deterministic  softmax sample at the batch temperature
  *
- * `startSlot` is what makes that rule survive infinite scroll: a load-more batch
- * passes the current feed length, so slides 5-7 are sampled like the rest of the
- * tail rather than re-running the deterministic opening every time the reader
- * hits the bottom.
+ * `deterministic` DEFAULTS TO ZERO, and that default is the load-bearing part.
+ * It used to default to DETERMINISTIC_OPENING, which meant any batch that
+ * happened to start below slot 2 re-ran the ranked opening — including the
+ * ordinary carousel refill, which starts at slot 1. So a mid-feed top-up was
+ * quietly serving the single best-scoring candidate in the corpus page as though
+ * it were the post-onboarding opening, and it would overwrite the real one. The
+ * ranked opening belongs to ONE event: a feed drawn fresh from answers the
+ * reader just gave. Every other caller passes nothing and samples.
+ *
+ * `startSlot` only labels the picks with their feed position (and shifts them
+ * past `deterministic`); it is not, by itself, permission to rank.
  *
  * @param {Array} candidates poems from the API
  * @param {Object} prefs
@@ -647,7 +654,9 @@ const byRank = (a, b) => {
  * @param {Object} [opts]
  * @param {number} [opts.count] how many to draw
  * @param {number} [opts.startSlot] feed position of the first draw
- * @param {number} [opts.deterministic] slots below this are ranked, not sampled
+ * @param {number} [opts.deterministic] slots below this are ranked, not sampled.
+ *   Defaults to 0 (everything sampled) — only a fresh preference feed passes
+ *   DETERMINISTIC_OPENING.
  * @param {Function} [opts.rng]
  * @returns {{picks:Array, scored:Array, temperature:number}}
  */
@@ -656,7 +665,7 @@ export const drawManyFrom = (
   prefs,
   poemsSeen,
   bands = {},
-  { count = 1, startSlot = 0, deterministic = DETERMINISTIC_OPENING, rng = Math.random } = {}
+  { count = 1, startSlot = 0, deterministic = 0, rng = Math.random } = {}
 ) => {
   const list = candidates || [];
   const temperature = temperatureFor(poemsSeen);

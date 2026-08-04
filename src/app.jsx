@@ -531,6 +531,24 @@ export default function DiwanApp() {
     discoverTextModels(addLog);
   }, [isFullScreenRoute]);
 
+  // Warm the onboarding taxonomy at boot.
+  //
+  // DELIBERATELY NOT gated on isFullScreenRoute, unlike the reader work above.
+  // /onboarding is itself a full-screen route, so gating this would suppress it
+  // exactly where it is needed — a reader who deep-links to /onboarding would
+  // get no prefetch at all, which is the whole point of it. The suppression
+  // added in #682 exists to stop reader-scoped poem/audio/AI work burning quota
+  // while the reader cannot see it; this is one cheap GET to our own API for the
+  // resource the full-screen route is about to ask for anyway, so it is the one
+  // thing that should run harder while a full-screen route is up, not less.
+  //
+  // One-shot: fetchCategoryBands memoises per page load, so even if this
+  // re-ran it would cost nothing.
+  useEffect(() => {
+    prefetchManager.prefetchTaxonomy(addLog);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-shot boot warm-up
+  }, []);
+
   // Auto-load a poem and queue explanation on first mount.
   // If the URL contains /poem/:id, load that specific poem (deep link).
   // OAuth restore and prefetch are handled in poemStore's getInitialPoems().

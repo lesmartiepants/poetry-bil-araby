@@ -221,6 +221,7 @@ async function checkCategorizationSupport() {
         'DB',
         `Categorization dimensions: ${categorizationDimensions.join(', ') || '(none)'}`
       );
+      scheduleTaxonomyWarmUp();
     } else {
       categorizationDimensions = [];
     }
@@ -1089,168 +1090,350 @@ app.get(
   }
 );
 
+/**
+ * Build the UNSCOPED half of /api/categories: dimensions, families, and the two
+ * distribution histograms. Four aggregate queries over the whole servable
+ * corpus, ~850ms, and identical for every caller — nothing in here reads
+ * req.query. That is what makes it cacheable (see categoriesBase below).
+ */
+async function buildCategoriesBase() {
+  // Every count on this endpoint is SERVING-SCOPED: joined through `poems` and
+  // gated by servingFilters(), the same predicate the poem routes apply.
+  //
+  // It previously counted the whole 9,073-poem corpus while the feed can only
+  // draw the ~4,767 that clear minQualityScore / maxVerseLines. Roughly half of
+  // every number was unreachable, so "Abbasid, 3,207" promised a reader poems
+  // that no query would ever return. Under scoring that gets worse rather than
+  // better: a running total is a far more direct promise than a number on a
+  // chip, so an inflated one is a more visible lie.
+  //
+  // The LEFT JOIN keeps values with zero servable poems in the payload (as a 0)
+  // instead of dropping them from the picker, which is why the predicate sits
+  // in the ON clause rather than a WHERE.
+  const result = await pool.query(`
+    WITH ${servableCte()}
+    SELECT d.key AS dimension, d.label_ar AS dimension_ar, d.label_en AS dimension_en,
+           d.cardinality, v.key AS value, v.label_ar, v.label_en,
+           COUNT(s.id) AS poem_count
+    FROM category_dimensions d
+    JOIN category_values v ON v.dimension_id = d.id
+    LEFT JOIN poem_categories pc ON pc.value_id = v.id
+    LEFT JOIN servable s ON s.id = pc.poem_id
+    GROUP BY d.id, d.key, d.label_ar, d.label_en, d.cardinality,
+             v.id, v.key, v.label_ar, v.label_en, v.sort_order
+    ORDER BY d.sort_order, v.sort_order
+  `);
+  // Group values under their dimension
+  const byDim = new Map();
+  for (const row of result.rows) {
+    if (!byDim.has(row.dimension)) {
+      byDim.set(row.dimension, {
+        key: row.dimension,
+        label_ar: row.dimension_ar,
+        label_en: row.dimension_en,
+        cardinality: row.cardinality,
+        values: [],
+      });
+    }
+    byDim.get(row.dimension).values.push({
+      key: row.value,
+      label_ar: row.label_ar,
+      label_en: row.label_en,
+      poem_count: parseInt(row.poem_count, 10),
+    });
+  }
+
+  // Families group related values ACROSS dimensions. Each row carries the
+  // family's cross-dimension poem_count (COUNT(DISTINCT poem_id) over any
+  // member value) via a correlated subquery — same for every row of a family,
+  // so we read it once when the family is first seen.
+  const famResult = await pool.query(`
+    WITH ${servableCte()}
+    SELECT f.key AS family, f.label_ar AS family_ar, f.label_en AS family_en,
+           f.sort_order AS family_sort,
+           d.key AS dim, v.key AS value, v.label_ar, v.label_en,
+           (SELECT COUNT(DISTINCT pc.poem_id)
+              FROM poem_categories pc
+              JOIN category_values v2 ON pc.value_id = v2.id
+              JOIN servable s ON s.id = pc.poem_id
+             WHERE v2.family_id = f.id) AS poem_count
+    FROM category_families f
+    JOIN category_values v ON v.family_id = f.id
+    JOIN category_dimensions d ON v.dimension_id = d.id
+    ORDER BY f.sort_order, d.sort_order, v.sort_order
+  `);
+  const byFamily = new Map();
+  for (const row of famResult.rows) {
+    if (!byFamily.has(row.family)) {
+      byFamily.set(row.family, {
+        key: row.family,
+        label_ar: row.family_ar,
+        label_en: row.family_en,
+        sort_order: row.family_sort,
+        poem_count: parseInt(row.poem_count, 10),
+        values: [],
+      });
+    }
+    byFamily.get(row.family).values.push({
+      dim: row.dim,
+      key: row.value,
+      label_ar: row.label_ar,
+      label_en: row.label_en,
+    });
+  }
+
+  // Distributions power the two onboarding steps whose buckets are NOT part of
+  // the taxonomy — era and difficulty. Both are continuous-ish columns
+  // (poems.century, poems.accessibility_score) rather than category_values, so
+  // there is no seeded list of options to read. Publishing the raw histograms
+  // lets the client cut bands from the ACTUAL shape of the corpus instead of
+  // hardcoding nominal ranges that don't match reality (accessibility is
+  // nominally 0-10 but really tops out around 8.3, and century is dominated by
+  // the 9th).
+  //
+  // Raw counts only — the banding itself lives in one shared pure function on
+  // the client (src/services/categoryBands.js) so it is unit-testable and
+  // behaves identically whether the histogram came from here or from a
+  // client-side sample against an older server.
+  const [eraDist, accDist] = await Promise.all([
+    pool.query(`
+      WITH ${servableCte()}
+      SELECT po.era_id AS era_id, e.name AS era_name, p.century AS century,
+             COUNT(*)::int AS poem_count
+      FROM poems p
+      JOIN servable s ON s.id = p.id
+      JOIN poets po ON p.poet_id = po.id
+      LEFT JOIN eras e ON po.era_id = e.id
+      GROUP BY po.era_id, e.name, p.century
+      ORDER BY p.century NULLS LAST, po.era_id
+    `),
+    pool.query(`
+      WITH ${servableCte()}
+      SELECT width_bucket(p.accessibility_score, 0, 10, 20) AS bucket,
+             COUNT(*)::int AS poem_count
+      FROM poems p
+      JOIN servable s ON s.id = p.id
+      WHERE p.accessibility_score IS NOT NULL
+      GROUP BY bucket
+      ORDER BY bucket
+    `),
+  ]);
+
+  return {
+    dimensions: Array.from(byDim.values()),
+    families: Array.from(byFamily.values()),
+    distributions: {
+      // One row per (era, century) pair. century is null for the late/modern
+      // eras — see the ERA_CENTURY note on by-category's century range params.
+      eras: eraDist.rows.map((r) => ({
+        era_id: r.era_id,
+        era_name: r.era_name,
+        century: r.century,
+        poem_count: r.poem_count,
+      })),
+      // 20 half-unit buckets over the 0-10 accessibility scale. bucket N covers
+      // [ (N-1)/2, N/2 ). Higher score = HARDER (1 = easy for Arabic learners,
+      // 5 = requires deep classical knowledge) — the column name reads the
+      // other way round, so don't invert it.
+      accessibility: accDist.rows.map((r) => ({
+        min: (r.bucket - 1) / 2,
+        max: r.bucket / 2,
+        poem_count: r.poem_count,
+      })),
+    },
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* /api/categories cache                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The unscoped taxonomy payload, cached in memory.
+ *
+ * WHY: this is the first thing a reader's browser asks for on /onboarding, and
+ * it is ~850ms of aggregate work before a single chip can render. The answer
+ * only changes when the offline categorization pipeline reruns — a manual job,
+ * not something a request can trigger — so recomputing it per request buys
+ * nothing.
+ *
+ * BOUNDING: exactly ONE entry, keyed by nothing. Scoped requests
+ * (?family=…&mood=…) reuse this same base and compute only their `scope` block
+ * on top, so the cascading-count key space — which is combinatorial and would
+ * be an unbounded leak on a 512MB free instance — never becomes a cache key.
+ * A scoped call still gets most of the win because the base was the expensive
+ * half.
+ *
+ * INVALIDATION: age-based, stale-while-revalidate. Inside TTL we serve the
+ * entry. Past TTL we serve the stale entry AND kick a background rebuild, so
+ * nobody ever waits on the aggregates once the process is warm. The staleness
+ * window is therefore TTL plus one rebuild (~1s): with the default 10 minutes,
+ * a reader can see counts up to ~10 minutes behind a pipeline rerun. That is
+ * fine — counts drift, chips don't. What would NOT be fine is serving a
+ * taxonomy whose values no longer exist, and this cannot do that: the whole
+ * payload is replaced atomically by one rebuild, never patched value-by-value,
+ * so a reader sees an entirely-old or an entirely-new taxonomy and nothing in
+ * between. A deploy or restart drops the cache outright.
+ */
+const CATEGORIES_TTL_MS = Number(process.env.CATEGORIES_CACHE_TTL_MS || 10 * 60 * 1000);
+let categoriesBase = null; // { payload, builtAt }
+let categoriesBaseInflight = null;
+
+async function rebuildCategoriesBase() {
+  // Single-flight: concurrent cold callers share one build instead of firing
+  // four aggregate queries each.
+  if (!categoriesBaseInflight) {
+    categoriesBaseInflight = buildCategoriesBase()
+      .then((payload) => {
+        categoriesBase = { payload, builtAt: Date.now() };
+        return categoriesBase;
+      })
+      .finally(() => {
+        categoriesBaseInflight = null;
+      });
+  }
+  return categoriesBaseInflight;
+}
+
+/**
+ * Scoped `scope` blocks, in a SMALL BOUNDED LRU.
+ *
+ * Cascading counts mean /api/categories?family=…&mood=…&century… has
+ * combinatorially many variants, so this is deliberately capped rather than
+ * keyed-and-forgotten: at 64 entries of ~1KB it cannot grow past ~64KB no
+ * matter what query strings arrive, which is the property that matters on a
+ * free instance. Eviction is plain insertion-order LRU over a Map (re-insert on
+ * hit moves the key to the end).
+ *
+ * The hit rate is lopsided in a useful way. The FIRST scoped step is
+ * `?family=X` — about eight distinct keys shared by every reader, so it hits
+ * almost always. Later steps are near-unique per reader and mostly miss, which
+ * is exactly why we cap instead of trying to hold them all.
+ *
+ * Same freshness story as the base payload: entries carry a timestamp and are
+ * dropped past CATEGORIES_TTL_MS. No stale-while-revalidate here — a miss costs
+ * ~280ms and never blocks the picker, which keeps its unscoped numbers while
+ * the count is in flight.
+ */
+const SCOPE_CACHE_MAX = 64;
+const scopeCache = new Map(); // normalized query string -> { scope, builtAt }
+
+function scopeCacheKey(query) {
+  // Sorted so ?family=love&mood=x and ?mood=x&family=love are one entry.
+  return JSON.stringify(
+    Object.keys(query)
+      .sort()
+      .map((k) => [k, query[k]])
+  );
+}
+
+function scopeCacheGet(key) {
+  const hit = scopeCache.get(key);
+  if (!hit) return undefined;
+  if (Date.now() - hit.builtAt >= CATEGORIES_TTL_MS) {
+    scopeCache.delete(key);
+    return undefined;
+  }
+  scopeCache.delete(key);
+  scopeCache.set(key, hit); // touch: most-recently-used moves to the end
+  return hit.scope;
+}
+
+function scopeCacheSet(key, scope) {
+  scopeCache.set(key, { scope, builtAt: Date.now() });
+  while (scopeCache.size > SCOPE_CACHE_MAX) {
+    scopeCache.delete(scopeCache.keys().next().value); // oldest first
+  }
+}
+
+/**
+ * Warm the taxonomy cache shortly after startup, so the first reader after a
+ * cold start doesn't eat the aggregates on the first screen of /onboarding.
+ * Render's free tier spins the instance down, which makes that the common case
+ * rather than an edge one.
+ *
+ * DELAYED on purpose, and retried. Fired inline it races the seven startup
+ * schema probes for connections on a pool still doing TLS handshakes to the
+ * pooler, and loses: measured, the aggregates queued past the 5s
+ * `query_timeout` and the warm-up died, leaving the first real request to pay
+ * 2.8s — worse than no warm-up. Even 1.5s of headroom was not reliably enough,
+ * so this backs off across a few attempts. Failing all of them is harmless: the
+ * first request rebuilds the cache, which is just the old behaviour.
+ */
+const WARM_UP_DELAYS_MS = [4000, 15000, 45000];
+
+function scheduleTaxonomyWarmUp(attempt = 0) {
+  const delay = WARM_UP_DELAYS_MS[attempt];
+  if (delay === undefined) return;
+  const t = setTimeout(() => {
+    rebuildCategoriesBase().catch((err) => {
+      log.error('Categories', `Taxonomy warm-up attempt ${attempt + 1} failed: ${err.message}`);
+      scheduleTaxonomyWarmUp(attempt + 1);
+    });
+  }, delay);
+  // Never hold the process open for a cache warm-up (tests import server.js).
+  t.unref?.();
+}
+
+async function getCategoriesBase() {
+  if (categoriesBase) {
+    if (Date.now() - categoriesBase.builtAt >= CATEGORIES_TTL_MS) {
+      // Stale — refresh behind the reader's back. Errors must not reject here
+      // or a transient DB blip becomes an unhandled rejection; we keep serving
+      // the stale entry and try again on the next request.
+      rebuildCategoriesBase().catch((err) =>
+        log.error('Categories', `Background taxonomy refresh failed: ${err.message}`)
+      );
+    }
+    return categoriesBase.payload;
+  }
+  return (await rebuildCategoriesBase()).payload;
+}
+
 // List the available categorization facets (dimensions + values, bilingual).
 // Powers filter UIs. Returns [] gracefully when the migration hasn't run.
 app.get('/api/categories', async (req, res) => {
   try {
     // Graceful pre-migration payload — every key present and empty, no DB touch,
     // so clients can render an empty state without null-checking each branch.
-    if (!hasCategorization)
+    // no-store, not the cached header below: this shape is a placeholder, and a
+    // browser that cached it would keep showing an empty picker for max-age
+    // after the migration finally ran.
+    if (!hasCategorization) {
+      res.set('Cache-Control', 'no-store');
       return res.json({
         dimensions: [],
         families: [],
         distributions: { eras: [], accessibility: [] },
       });
-    // Every count on this endpoint is SERVING-SCOPED: joined through `poems` and
-    // gated by servingFilters(), the same predicate the poem routes apply.
-    //
-    // It previously counted the whole 9,073-poem corpus while the feed can only
-    // draw the ~4,767 that clear minQualityScore / maxVerseLines. Roughly half of
-    // every number was unreachable, so "Abbasid, 3,207" promised a reader poems
-    // that no query would ever return. Under scoring that gets worse rather than
-    // better: a running total is a far more direct promise than a number on a
-    // chip, so an inflated one is a more visible lie.
-    //
-    // The LEFT JOIN keeps values with zero servable poems in the payload (as a 0)
-    // instead of dropping them from the picker, which is why the predicate sits
-    // in the ON clause rather than a WHERE.
-    const result = await pool.query(`
-      WITH ${servableCte()}
-      SELECT d.key AS dimension, d.label_ar AS dimension_ar, d.label_en AS dimension_en,
-             d.cardinality, v.key AS value, v.label_ar, v.label_en,
-             COUNT(s.id) AS poem_count
-      FROM category_dimensions d
-      JOIN category_values v ON v.dimension_id = d.id
-      LEFT JOIN poem_categories pc ON pc.value_id = v.id
-      LEFT JOIN servable s ON s.id = pc.poem_id
-      GROUP BY d.id, d.key, d.label_ar, d.label_en, d.cardinality,
-               v.id, v.key, v.label_ar, v.label_en, v.sort_order
-      ORDER BY d.sort_order, v.sort_order
-    `);
-    // Group values under their dimension
-    const byDim = new Map();
-    for (const row of result.rows) {
-      if (!byDim.has(row.dimension)) {
-        byDim.set(row.dimension, {
-          key: row.dimension,
-          label_ar: row.dimension_ar,
-          label_en: row.dimension_en,
-          cardinality: row.cardinality,
-          values: [],
-        });
-      }
-      byDim.get(row.dimension).values.push({
-        key: row.value,
-        label_ar: row.label_ar,
-        label_en: row.label_en,
-        poem_count: parseInt(row.poem_count, 10),
-      });
     }
 
-    // Families group related values ACROSS dimensions. Each row carries the
-    // family's cross-dimension poem_count (COUNT(DISTINCT poem_id) over any
-    // member value) via a correlated subquery — same for every row of a family,
-    // so we read it once when the family is first seen.
-    const famResult = await pool.query(`
-      WITH ${servableCte()}
-      SELECT f.key AS family, f.label_ar AS family_ar, f.label_en AS family_en,
-             f.sort_order AS family_sort,
-             d.key AS dim, v.key AS value, v.label_ar, v.label_en,
-             (SELECT COUNT(DISTINCT pc.poem_id)
-                FROM poem_categories pc
-                JOIN category_values v2 ON pc.value_id = v2.id
-                JOIN servable s ON s.id = pc.poem_id
-               WHERE v2.family_id = f.id) AS poem_count
-      FROM category_families f
-      JOIN category_values v ON v.family_id = f.id
-      JOIN category_dimensions d ON v.dimension_id = d.id
-      ORDER BY f.sort_order, d.sort_order, v.sort_order
-    `);
-    const byFamily = new Map();
-    for (const row of famResult.rows) {
-      if (!byFamily.has(row.family)) {
-        byFamily.set(row.family, {
-          key: row.family,
-          label_ar: row.family_ar,
-          label_en: row.family_en,
-          sort_order: row.family_sort,
-          poem_count: parseInt(row.poem_count, 10),
-          values: [],
-        });
-      }
-      byFamily.get(row.family).values.push({
-        dim: row.dim,
-        key: row.value,
-        label_ar: row.label_ar,
-        label_en: row.label_en,
-      });
-    }
-
-    // Distributions power the two onboarding steps whose buckets are NOT part of
-    // the taxonomy — era and difficulty. Both are continuous-ish columns
-    // (poems.century, poems.accessibility_score) rather than category_values, so
-    // there is no seeded list of options to read. Publishing the raw histograms
-    // lets the client cut bands from the ACTUAL shape of the corpus instead of
-    // hardcoding nominal ranges that don't match reality (accessibility is
-    // nominally 0-10 but really tops out around 8.3, and century is dominated by
-    // the 9th).
-    //
-    // Raw counts only — the banding itself lives in one shared pure function on
-    // the client (src/services/categoryBands.js) so it is unit-testable and
-    // behaves identically whether the histogram came from here or from a
-    // client-side sample against an older server.
-    const [eraDist, accDist] = await Promise.all([
-      pool.query(`
-        WITH ${servableCte()}
-        SELECT po.era_id AS era_id, e.name AS era_name, p.century AS century,
-               COUNT(*)::int AS poem_count
-        FROM poems p
-        JOIN servable s ON s.id = p.id
-        JOIN poets po ON p.poet_id = po.id
-        LEFT JOIN eras e ON po.era_id = e.id
-        GROUP BY po.era_id, e.name, p.century
-        ORDER BY p.century NULLS LAST, po.era_id
-      `),
-      pool.query(`
-        WITH ${servableCte()}
-        SELECT width_bucket(p.accessibility_score, 0, 10, 20) AS bucket,
-               COUNT(*)::int AS poem_count
-        FROM poems p
-        JOIN servable s ON s.id = p.id
-        WHERE p.accessibility_score IS NOT NULL
-        GROUP BY bucket
-        ORDER BY bucket
-      `),
-    ]);
+    const base = await getCategoriesBase();
 
     // Counts SCOPED by the answers already given. Computed only when the caller
     // sent at least one filter param, so the unscoped payload — and every
     // existing caller of it — is byte-for-byte what it was.
-    const scope = await scopedCategoryCounts(req.query);
+    const key = scopeCacheKey(req.query);
+    let scope = scopeCacheGet(key);
+    if (scope === undefined) {
+      scope = await scopedCategoryCounts(req.query);
+      // scopedCategoryCounts returns null for a query with no filter params —
+      // cache that too, so the unscoped path skips even the probe.
+      scopeCacheSet(key, scope);
+    }
 
+    // Let the browser skip the round trip on a revisit. max-age is deliberately
+    // shorter than the server TTL so a rerun of the pipeline reaches readers
+    // roughly a minute after it reaches the server, and stale-while-revalidate
+    // means even an expired copy paints instantly while the refresh runs.
+    // Express already emits a weak ETag over the body, so a revalidation that
+    // does reach us answers 304 off the cache with no DB work at all.
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=600');
     res.json({
-      dimensions: Array.from(byDim.values()),
-      families: Array.from(byFamily.values()),
+      dimensions: base.dimensions,
+      families: base.families,
       ...(scope ? { scope } : {}),
-      distributions: {
-        // One row per (era, century) pair. century is null for the late/modern
-        // eras — see the ERA_CENTURY note on by-category's century range params.
-        eras: eraDist.rows.map((r) => ({
-          era_id: r.era_id,
-          era_name: r.era_name,
-          century: r.century,
-          poem_count: r.poem_count,
-        })),
-        // 20 half-unit buckets over the 0-10 accessibility scale. bucket N covers
-        // [ (N-1)/2, N/2 ). Higher score = HARDER (1 = easy for Arabic learners,
-        // 5 = requires deep classical knowledge) — the column name reads the
-        // other way round, so don't invert it.
-        accessibility: accDist.rows.map((r) => ({
-          min: (r.bucket - 1) / 2,
-          max: r.bucket / 2,
-          poem_count: r.poem_count,
-        })),
-      },
+      distributions: base.distributions,
     });
   } catch (error) {
     Sentry.captureException(error);
@@ -3227,6 +3410,30 @@ export const __test = {
   setCategorizationState(enabled, dimensions = []) {
     hasCategorization = !!enabled;
     categorizationDimensions = Array.isArray(dimensions) ? dimensions : [];
+    // Every categorization test goes through here, so this is the seam where
+    // the taxonomy cache gets dropped. Without it the first test in a file
+    // warms the cache and every later one silently asserts against ITS payload
+    // instead of its own mock — a failure mode that looks like a broken query.
+    __test.resetCategoriesCache();
+  },
+  /** Drop the /api/categories caches (base payload + scoped LRU). */
+  resetCategoriesCache() {
+    categoriesBase = null;
+    categoriesBaseInflight = null;
+    scopeCache.clear();
+  },
+  /**
+   * The scoped LRU, for testing its bound directly. Driving eviction through
+   * HTTP would need 65 requests and trip the rate limiter, and boundedness is a
+   * property of this Map rather than of the route.
+   */
+  scopeCache: {
+    max: SCOPE_CACHE_MAX,
+    size: () => scopeCache.size,
+    keys: () => [...scopeCache.keys()],
+    set: scopeCacheSet,
+    get: scopeCacheGet,
+    key: scopeCacheKey,
   },
   getCategorizationState() {
     return { hasCategorization, categorizationDimensions: [...categorizationDimensions] };

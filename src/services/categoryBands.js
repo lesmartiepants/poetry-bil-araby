@@ -351,6 +351,10 @@ const sampleDistributions = async () => {
  * Never rejects: pre-migration (or on any network failure) every array comes
  * back empty and the pickers show an empty state instead of hanging.
  *
+ * Cheap to call early and again later: the network half is memoised per page
+ * load inside fetchCategories, so a boot-time warm-up and the flow's own mount
+ * share one request. The band derivation below is pure and sub-millisecond.
+ *
  * @returns {Promise<{families:Array, dimensions:Array, eraBands:Array, difficultyBands:Array, degraded:boolean}>}
  */
 export const fetchCategoryBands = async () => {

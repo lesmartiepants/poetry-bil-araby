@@ -38,11 +38,12 @@ Three principles guide every feature:
 
 ## The Library
 
-The poem corpus holds **84,000+ classical Arabic poems** sourced from the open
-[Qafiyah](https://github.com/WTFoss/qafiyah) dataset and stored in PostgreSQL. To protect
-the reading experience, the API only serves poems above a quality threshold
-(`quality_score >= 75`, see `server.js`), so what reaches the reader is a curated slice of
-the full archive rather than raw bulk text.
+The poem corpus is sourced from the open [Qafiyah](https://github.com/WTFoss/qafiyah)
+dataset and stored in PostgreSQL. It is not part of this repo (see "Local database" below),
+so its size isn't tracked here; the docs' long-standing "84,329 poems" figure predates the
+current production data and shouldn't be relied on. To protect the reading experience, the
+API only serves poems above a quality threshold (`quality_score >= 75`, see `server.js`), so
+what reaches the reader is a curated slice of the full archive rather than raw bulk text.
 
 Each poem carries its Arabic title, the poet's name (Arabic and English), theme, and the
 verse body. Readers can pull a random poem, filter by poet, or swipe through a vertical feed
@@ -291,14 +292,19 @@ JWT format (they start with `eyJ`).
 ```bash
 npm run test:run        # unit tests (Vitest)
 npm run test:coverage   # unit tests with coverage
+npm run test:db         # API tests against a real, seeded Postgres (needs TEST_DATABASE_URL)
 npm run test:e2e        # end-to-end tests (Playwright)
 npm run test:e2e:full   # full device matrix (local)
 ```
 
 Unit tests cover components, utilities, and database integration with Vitest and React
-Testing Library. End-to-end suites in `e2e/` exercise core flows, audio and TTS highlighting,
-the reader feed, translation caching, PWA behavior, and UI/UX quality. The GitHub Actions
-pipeline builds, runs unit tests, then runs the E2E suite against a PostgreSQL service.
+Testing Library, mocking `pg`. `test:db` instead runs `src/test/server.db.test.js` against a
+schema built from `supabase/migrations/` and the fixture seed, catching SQL bugs a mocked pool
+can't (wrong joins, wrong bind counts). End-to-end suites in `e2e/` exercise core flows, audio
+and TTS highlighting, the reader feed, translation caching, PWA behavior, and UI/UX quality.
+GitHub Actions runs the main pipeline (build, unit tests, E2E against a PostgreSQL service) and
+a separate `db-reconstruct.yml` workflow that rebuilds the schema from empty, seeds it, and
+runs the database-backed tests.
 
 ## Deployment
 

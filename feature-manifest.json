@@ -39,7 +39,7 @@
       "id": "onboarding-preferences",
       "name": "Onboarding preference flow (5 steps)",
       "tier": "nice",
-      "userFacing": "Full-screen five-step flow at /onboarding: family, mood, motif (optional), era, difficulty. Every option, bilingual label and poem count is read from the live categorization API; the era and difficulty bands are cut from the LIVE DISTRIBUTION (GET /api/categories -> distributions) rather than hardcoded. Counts CASCADE: each step's options are re-counted against the answers already given (GET /api/categories now scopes by prior answers), and a running total under the options shows how many poems match all the choices against how many match at least one. Both are labelled as matches, never as feed contents, because under scoring an intersection count is not a promise about the feed. Every count is measured behind the SERVING predicate, so the numbers describe the ~4,767 poems the feed can actually reach rather than the full 9,073. Answers save to localStorage.onboardingPrefs. PreferencesDrawer was built to re-edit them but is currently mounted nowhere, so there is no in-app way back to these answers yet. They bias the feed as a weight, never a filter (see feed-preference-weighting). Salvaged from PR #517's visual work and rebuilt against the shipped taxonomy. The route has no user-facing link by design (see FEATURES.onboardingPrefs); reach it from the debug panel. Mood (16 options) and motif (12) use a ring constellation only above 640px, since below that the ring is too small to hold the chips without them painting over each other; phones get the staggered rows instead.",
+      "userFacing": "Full-screen five-step flow at /onboarding: family, mood, motif (optional), era, difficulty. Every option, bilingual label and poem count is read from the live categorization API; the era and difficulty bands are cut from the LIVE DISTRIBUTION (GET /api/categories -> distributions) rather than hardcoded. Counts CASCADE: each step's options are re-counted against the answers already given (GET /api/categories now scopes by prior answers), and a running total under the options shows how many poems match all the choices against how many match at least one. Both are labelled as matches, never as feed contents, because under scoring an intersection count is not a promise about the feed. Every count is measured behind the SERVING predicate, so the numbers describe the ~4,767 poems the feed can actually reach rather than the full 9,073. Answers save to localStorage.onboardingPrefs. PreferencesDrawer was built to re-edit them but is currently mounted nowhere, so there is no in-app way back to these answers yet. They bias the feed as a weight, never a filter (see feed-preference-weighting). Salvaged from PR #517's visual work and rebuilt against the shipped taxonomy. The route has no user-facing link by design (see FEATURES.onboardingPrefs); reach it from the debug panel. Mood (16 options) and motif (12) use a ring constellation only above 640px, since below that the ring is too small to hold the chips without them painting over each other; phones get the staggered rows instead. Signed in, they also mirror to user_settings.onboarding_preferences (versioned JSONB) so they follow the reader across devices; on sign-in the two sides are reconciled whole by most-recent completedAt, and a payload whose version this build does not recognise is left untouched on both sides.",
       "entrypoints": [
         "src/components/PreferencesDrawer.jsx",
         "src/components/onboarding/MatchTally.jsx",
@@ -48,16 +48,22 @@
         "src/constants/eras.js",
         "src/services/categoryBands.js",
         "src/services/categoryTags.js",
-        "src/services/preferences.js"
+        "src/services/preferences.js",
+        "src/constants/eras.js",
+        "src/hooks/useOnboardingPrefs.js"
       ],
       "endpoints": ["GET /api/categories"],
       "tests": {
-        "unit": ["src/test/onboarding-preferences.test.jsx", "src/test/categoryBands.test.js"],
+        "unit": [
+          "src/test/onboarding-preferences.test.jsx",
+          "src/test/categoryBands.test.js",
+          "src/test/onboarding-prefs-sync.test.jsx"
+        ],
         "e2e": []
       },
       "deviceOnly": false,
       "coverage": "behavioral",
-      "gap": "Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all five steps to completion, mood ordering, and the empty pre-migration state. No e2e yet for the rendered flow."
+      "gap": "Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all five steps to completion, mood ordering, and the empty pre-migration state. Cross-device sync is unit-tested in both merge directions, plus write-through, read-back and version mismatch, against a stubbed Supabase client. No e2e yet for the rendered flow, and nothing exercises the JSONB column against a real Postgres row."
     },
     {
       "id": "taxonomy-tag-ui",

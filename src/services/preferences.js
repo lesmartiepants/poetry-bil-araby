@@ -34,16 +34,71 @@ export const EMPTY_PREFS = {
   completedAt: null,
 };
 
+/**
+ * Coerce an arbitrary parsed object into a prefs object this build can use.
+ *
+ * Version mismatches return EMPTY_PREFS rather than throwing or half-applying:
+ *
+ *   version < 2  Written by the pre-taxonomy build. Those key lists were
+ *                authored against a schema that never shipped and are wrong in
+ *                almost every entry (`anger`, `wonder`, `sea` and `praise` do
+ *                not exist as taxonomy keys). The shape would survive a spread
+ *                but the CONTENT is garbage — it would weight the feed toward
+ *                keys that match no poem. Discarding is the honest read.
+ *
+ *   version > 2  Written by a newer client (another tab, another device that
+ *                already shipped the next flow). We cannot know what its fields
+ *                mean, so we do not guess. Note the caller must not WRITE over
+ *                such a payload either; see readPrefs.
+ *
+ * In both cases the reader gets an unbiased feed — `hasPreferences` is false for
+ * EMPTY_PREFS — which is the same degradation as a reader who skipped onboarding.
+ *
+ * @param {unknown} parsed
+ * @returns {{prefs: Object, versionMismatch: boolean}}
+ */
+export const sanitizePrefs = (parsed) => {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return { prefs: { ...EMPTY_PREFS }, versionMismatch: false };
+  }
+  // A missing version is treated as version 1: the only build that ever wrote
+  // an unversioned object is the pre-taxonomy one.
+  const version = typeof parsed.version === 'number' ? parsed.version : 1;
+  if (version !== PREFS_VERSION) {
+    return { prefs: { ...EMPTY_PREFS }, versionMismatch: true };
+  }
+  return {
+    prefs: {
+      ...EMPTY_PREFS,
+      ...parsed,
+      version: PREFS_VERSION,
+      moods: Array.isArray(parsed.moods) ? parsed.moods : [],
+      motifs: Array.isArray(parsed.motifs) ? parsed.motifs : [],
+      completedAt: typeof parsed.completedAt === 'string' ? parsed.completedAt : null,
+    },
+    versionMismatch: false,
+  };
+};
+
+/**
+ * True when storage holds a payload this build refuses to interpret. The sync
+ * layer uses it to stay hands-off: a newer client's answers must not be
+ * overwritten by this build's empty ones.
+ */
+export const hasForeignPrefs = () => {
+  try {
+    const raw = globalThis.localStorage?.getItem(PREFS_STORAGE_KEY);
+    if (!raw) return false;
+    return sanitizePrefs(JSON.parse(raw)).versionMismatch;
+  } catch {
+    return false;
+  }
+};
+
 export const readPrefs = () => {
   try {
     const parsed = JSON.parse(globalThis.localStorage?.getItem(PREFS_STORAGE_KEY) || 'null');
-    if (!parsed || typeof parsed !== 'object') return { ...EMPTY_PREFS };
-    return {
-      ...EMPTY_PREFS,
-      ...parsed,
-      moods: Array.isArray(parsed.moods) ? parsed.moods : [],
-      motifs: Array.isArray(parsed.motifs) ? parsed.motifs : [],
-    };
+    return sanitizePrefs(parsed).prefs;
   } catch {
     // Unavailable storage (private mode) or corrupt JSON. An unanswered reader
     // gets an unbiased feed, which is the correct degradation.
@@ -57,6 +112,78 @@ export const writePrefs = (prefs) => {
   } catch {
     /* private mode — selections just aren't persisted */
   }
+};
+
+/** Answered at all? Mirrors preferenceWeighting.hasPreferences without importing it. */
+const isAnswered = (p) =>
+  Boolean(p && (p.family || p.era || p.difficulty || p.moods?.length || p.motifs?.length));
+
+/** Epoch ms for a completedAt, or null when absent/unparseable. */
+const completedMs = (p) => {
+  const t = Date.parse(p?.completedAt ?? '');
+  return Number.isNaN(t) ? null : t;
+};
+
+/**
+ * Reconcile the answers on this device with the answers on the account.
+ *
+ * MOST-RECENT `completedAt` WINS, and it wins WHOLE — never field by field.
+ *
+ * Why most-recent: both sides carry a `completedAt` that is stamped only when a
+ * reader actually finishes the flow, so it is a real answer to "when did this
+ * person last tell us what they like". Local-wins would defeat the point of the
+ * feature (a fresh device would fetch the account's answers and immediately
+ * clobber them with its own empty ones). Remote-wins would throw away the five
+ * answers a reader just gave while signed out and then signed in — which is
+ * precisely the flow this exists to support.
+ *
+ * Why whole-object and not per-field: the five answers are one statement of
+ * taste. Merging a family from March with moods from August produces a
+ * combination the reader never chose, and the feed would then be weighted toward
+ * a person who does not exist. A stale-but-coherent answer set beats a fresh
+ * incoherent one.
+ *
+ * Why not prompt: it buys a modal on the sign-in path — the worst place for
+ * one — to resolve a difference the reader cannot meaningfully evaluate ("night
+ * + pride from Tuesday" vs "dawn + grief from last month"). The answers are a
+ * WEIGHT on the feed, not a filter, so the cost of guessing wrong is a slightly
+ * different mix, and redoing the flow takes about thirty seconds. That is not
+ * worth an interstitial.
+ *
+ * Tie-breaks, in order:
+ *   1. Only one side answered at all -> that side.
+ *   2. Both answered, both timestamped -> newer timestamp; EXACT TIE goes remote,
+ *      because the overwhelmingly common tie is "remote is already a mirror of
+ *      local", and preferring remote makes the merge a no-op instead of a write.
+ *   3. Both answered, only one timestamped -> the timestamped side (a stamped
+ *      completion is evidence of a finished flow; an unstamped one is a partial
+ *      or hand-edited payload).
+ *   4. Neither timestamped -> local, the device in front of the reader.
+ *
+ * Callers pass already-sanitized objects, so a version-mismatched payload
+ * arrives here as EMPTY_PREFS and simply loses to any real answer set.
+ *
+ * @param {Object} local  prefs from localStorage (sanitized)
+ * @param {Object} remote prefs from user_settings.onboarding_preferences (sanitized), or null
+ * @returns {{winner: Object, source: 'local'|'remote'|'neither'}}
+ */
+export const mergePrefs = (local, remote) => {
+  const localAnswered = isAnswered(local);
+  const remoteAnswered = isAnswered(remote);
+
+  if (!localAnswered && !remoteAnswered) return { winner: { ...EMPTY_PREFS }, source: 'neither' };
+  if (!remoteAnswered) return { winner: local, source: 'local' };
+  if (!localAnswered) return { winner: remote, source: 'remote' };
+
+  const l = completedMs(local);
+  const r = completedMs(remote);
+
+  if (l !== null && r !== null) {
+    return l > r ? { winner: local, source: 'local' } : { winner: remote, source: 'remote' };
+  }
+  if (r !== null) return { winner: remote, source: 'remote' };
+  if (l !== null) return { winner: local, source: 'local' };
+  return { winner: local, source: 'local' };
 };
 
 export const clearPrefs = () => {

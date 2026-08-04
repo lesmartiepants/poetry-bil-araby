@@ -229,6 +229,113 @@ The backend now keeps itself alive automatically:
 
 ---
 
+## Staging Backend
+
+### What it's for
+
+Vercel builds a preview for every PR, but by default every preview talks to the
+**production** backend. So a PR that adds a new API parameter looks broken in its
+own preview: the frontend sends the parameter, production ignores it, and the
+feature appears not to work. A reviewer can't tell that apart from a real bug.
+
+The staging service exists so backend changes can be verified end to end before
+they reach production. Use it for any PR that touches `server.js` or adds a
+migration.
+
+|            | Production                                   | Staging                                         |
+| ---------- | -------------------------------------------- | ----------------------------------------------- |
+| Service    | `poetry-bil-araby`                           | `poetry-bil-araby-staging`                      |
+| URL        | `https://poetry-bil-araby-2mb0.onrender.com` | `https://poetry-bil-araby-staging.onrender.com` |
+| Branch     | `main`                                       | `staging`                                       |
+| Plan       | Free                                         | Free                                            |
+| `NODE_ENV` | `production`                                 | `staging`                                       |
+| Keep-alive | Yes (always warm)                            | No (cold starts)                                |
+
+Render's free plan has no per-PR preview environments. Setting
+`previews.generation` to `"automatic"` returns HTTP 200 but the value stays
+`"off"`, so this is one shared long-lived service rather than one per PR.
+
+### Getting a PR onto staging
+
+`staging` is a normal branch that Render auto-deploys on every push.
+
+```bash
+git fetch origin
+git checkout staging
+git reset --hard origin/main        # start from a clean main
+git merge --no-ff origin/your-pr-branch
+git push origin staging
+```
+
+Render redeploys automatically (~2 min). Confirm the running commit matches what
+you pushed — `/api/health` reports the deployed SHA, which is how you catch a
+stale build:
+
+```bash
+curl https://poetry-bil-araby-staging.onrender.com/api/health
+# {"status":"ok","uptime":14.4,"commit":"7e9749b2..."}
+```
+
+Reset `staging` back to `origin/main` when you're done so the next person starts
+clean.
+
+> **`staging` is a single shared branch.** Two people testing at once will
+> overwrite each other, and the second push silently replaces the first person's
+> build — they'll be reviewing your code without knowing it. Say so in the PR or
+> in chat before you push, and reset when you're finished. If you hit a
+> collision, the `commit` field from `/api/health` tells you whose build is
+> actually running.
+
+### Pointing a Vercel preview at staging
+
+The frontend reads `VITE_API_URL` (`src/services/database.js:5`). Vite inlines it
+at **build** time, so it has to be set before the preview builds — you can't flip
+it on an existing deployment.
+
+In the Vercel dashboard: **Settings → Environment Variables → Add**
+
+- Key: `VITE_API_URL`
+- Value: `https://poetry-bil-araby-staging.onrender.com`
+- Environment: **Preview** only
+- Branch: your PR's branch name
+
+Then redeploy the preview (push a commit, or **Deployments → ⋯ → Redeploy**).
+
+Scope it to a **branch**, not to all previews. A bare Preview-scoped variable
+sends every open PR's preview to staging, which is wrong twice over: unrelated
+PRs get tested against whatever half-merged code is sitting on `staging`, and
+they break outright whenever staging is missing a credential. Delete the variable
+when the PR merges.
+
+CORS needs no change. `server.js` allowlists origins matching
+`poetry-bil-araby-*.vercel.app`, and staging runs the same code, so preview
+origins are already accepted. The staging host itself never needs adding — it's
+the server, not a browser origin.
+
+### Environment variables
+
+Staging is created with `NODE_ENV` and `PORT` only. Secrets must be added by hand
+in the Render dashboard (**poetry-bil-araby-staging → Environment**):
+
+- `DATABASE_URL` — **required** before staging can serve poems. Without it
+  `/api/health` still returns ok, but `/api/health/full` and every poem route
+  return 500.
+- `GEMINI_API_KEY` — only if the PR exercises AI mode or the TTS proxy.
+- `GITHUB_TOKEN_SUBMIT_BUG` — only if the PR exercises bug-report submission.
+
+**Which database?** Prefer a **separate** Supabase project for staging. The whole
+point of staging is to run unreviewed migrations, and a migration is exactly the
+kind of change that can destroy data. Point staging at the production
+`DATABASE_URL` and a bad `ALTER`/`DROP` in a PR hits the real 84k-poem corpus,
+with the free plan's backup retention as the only recovery path. Sharing is
+cheaper and needs no setup, but it removes the safety that justifies having
+staging at all.
+
+If staging shares the production database, treat it as read-only: verify API
+shape changes there, and test migrations somewhere else.
+
+---
+
 ## Architecture Diagram
 
 ```

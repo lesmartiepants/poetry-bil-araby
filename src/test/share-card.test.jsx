@@ -15,6 +15,17 @@ import {
   generateShareCardDataURL,
 } from '../utils/shareCardDesigns';
 
+// These gaps are the sum of several chained floating-point offsets (ascent,
+// descent, row gap, translation line height), so a geometrically-exact 12px
+// layout can land a few units of 1e-13 under the line depending on the font
+// sizes involved. GAP_EPSILON absorbs that accumulation noise without
+// masking a real sub-pixel collision, so don't remove it or "tighten" it back
+// to a bare MIN_BILINGUAL_GAP comparison.
+const GAP_EPSILON = 1e-9;
+function expectGapAtLeast(actual, min) {
+  expect(actual).toBeGreaterThanOrEqual(min - GAP_EPSILON);
+}
+
 // ─── Test data ──────────────────────────────────────────────────────────
 const mockPoem = {
   id: 42,
@@ -372,17 +383,188 @@ describe('renderShareCard', () => {
       preferredRowGap: 96,
     });
 
-    expect(layout.translationOffsets[0] - arabicDescent - arabicAscent).toBeGreaterThanOrEqual(
+    expectGapAtLeast(
+      layout.translationOffsets[0] - arabicDescent - arabicAscent,
       MIN_BILINGUAL_GAP
     );
     for (let index = 0; index < verses.length - 1; index++) {
       const englishBottom = layout.translationOffsets[index] + arabicDescent;
       const nextArabicTop = layout.rowGap - arabicAscent;
-      expect(nextArabicTop - englishBottom).toBeGreaterThanOrEqual(MIN_BILINGUAL_GAP);
+      expectGapAtLeast(nextArabicTop - englishBottom, MIN_BILINGUAL_GAP);
     }
     for (const design of SHARE_CARD_DESIGNS) {
-      expect(() => renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, vocalizedPoem, design.id, { maxLines: 6 })).not.toThrow();
+      expect(() =>
+        renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, vocalizedPoem, design.id, { maxLines: 6 })
+      ).not.toThrow();
     }
+  });
+
+  // ── Broadsheet: wrapped (multi-line) English under vocalized Arabic ────
+  // The broadsheet keeps its English at a consistent size and wraps it, so a
+  // verse's translation can be several lines. The layout must still guarantee
+  // MIN_BILINGUAL_GAP under the Arabic diacritics AND between one verse's LAST
+  // English line and the next verse's Arabic.
+  const VOCALIZED_SIX =
+    'إِنَّ الحَيَاةَ دَقِيقَةٌ\nفَاجْعَلْهَا نُورًا وَسَكِينَةً\nوَاخْتَرْ لِقَلْبِكَ مَوْعِدًا\nيُحْيِي الرُّوحَ وَيُطْمَئِنُهَا\nفَكُلُّ دَرْبٍ فِي المَدَى\nيَبْدَأُ بِخُطْوَةٍ أَمِينَةٍ';
+  const LONG_ENGLISH = [
+    'Life is but a fleeting minute, so make of it light and a deep abiding calm',
+    'And choose for your heart a meeting place that revives the weary soul',
+    'For every single road that runs across the far expanse of the world',
+    'Begins, as it always has, with one faithful and unhurried step',
+    'And the one who walks it slowly will arrive before the one who runs',
+    'Such is the way of the road, and such is the way of the patient heart',
+  ].join('\n');
+
+  const isArabicRun = (s) => /[؀-ۿ]/.test(String(s));
+
+  /** Font-aware metrics: Arabic descends far below the baseline (diacritics). */
+  function useMeasuredGlyphs(
+    context,
+    { arDescent = 0.42, arAscent = 0.95, enDescent = 0.26, enAscent = 0.72 } = {}
+  ) {
+    context.measureText.mockImplementation(function measure(text) {
+      const match = /(\d+(?:\.\d+)?)px/.exec(context.font || '');
+      const size = match ? Number(match[1]) : 16;
+      const str = String(text);
+      const arabic = isArabicRun(str);
+      return {
+        width: str.length * size * (arabic ? 0.46 : 0.5),
+        actualBoundingBoxAscent: size * (arabic ? arAscent : enAscent),
+        actualBoundingBoxDescent: size * (arabic ? arDescent : enDescent),
+      };
+    });
+  }
+
+  it('keeps wrapped multi-line English clear of vocalized Arabic (broadsheet layout)', () => {
+    useMeasuredGlyphs(ctx);
+    const verses = prepareVerses(VOCALIZED_SIX, 4);
+    const translation = prepareTranslation(LONG_ENGLISH, 4);
+
+    // Pre-wrap the way the broadsheet does, then hand the helper string[][].
+    ctx.font = 'italic 30px "Playfair Display", serif';
+    const wrapped = translation.map((line) => {
+      const words = String(line).split(/\s+/);
+      const mid = Math.ceil(words.length / 2);
+      return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')];
+    });
+    expect(wrapped.every((lines) => lines.length === 2)).toBe(true);
+
+    const layout = createBilingualVerseLayout(ctx, verses, wrapped, {
+      maxWidth: 900,
+      maxHeight: 830,
+      arabicSize: 54,
+      englishSize: 30,
+      preferredRowGap: 180,
+    });
+
+    const arDescent = layout.vSize * 0.42;
+    const arAscent = layout.vSize * 0.95;
+    const enDescent = layout.tSize * 0.26;
+    const enAscent = layout.tSize * 0.72;
+
+    for (let index = 0; index < verses.length; index++) {
+      // Arabic diacritics → first English line
+      expectGapAtLeast(layout.translationOffsets[index] - arDescent - enAscent, MIN_BILINGUAL_GAP);
+      // LAST English line of this verse → next verse's Arabic
+      if (index < verses.length - 1) {
+        const englishBottom =
+          layout.translationOffsets[index] + layout.translationLineHeight + enDescent;
+        expectGapAtLeast(layout.rowGap - englishBottom - arAscent, MIN_BILINGUAL_GAP);
+      }
+    }
+  });
+
+  it('accepts both flat and wrapped translation shapes', () => {
+    useMeasuredGlyphs(ctx);
+    const verses = prepareVerses(VOCALIZED_SIX, 3);
+    const opts = { maxWidth: 900, arabicSize: 54, englishSize: 30, preferredRowGap: 180 };
+
+    const flat = createBilingualVerseLayout(ctx, verses, ['one', 'two', 'three'], opts);
+    const single = createBilingualVerseLayout(ctx, verses, [['one'], ['two'], ['three']], opts);
+    // A one-element array per verse is exactly the flat shape.
+    expect(single.translationOffsets).toEqual(flat.translationOffsets);
+    expect(single.rowGap).toBe(flat.rowGap);
+    expect(single.height).toBe(flat.height);
+
+    // Empty array means "no translation", same as a falsy entry.
+    const none = createBilingualVerseLayout(ctx, verses, [[], null, ['three']], opts);
+    expect(none.translationOffsets[0]).toBe(0);
+    expect(none.translationOffsets[1]).toBe(0);
+    expect(none.translationOffsets[2]).toBeGreaterThan(0);
+
+    // More lines must push the block taller, never shorter.
+    const twoLine = [
+      ['one', 'more'],
+      ['two', 'more'],
+      ['three', 'more'],
+    ];
+    const two = createBilingualVerseLayout(ctx, verses, twoLine, opts);
+    expect(two.height).toBeGreaterThan(flat.height);
+    expect(two.rowGap).toBeGreaterThanOrEqual(flat.rowGap);
+
+    // With a preferred gap small enough that the collision floor binds, the
+    // extra English line must widen the row gap.
+    const tight = { ...opts, preferredRowGap: 40 };
+    const flatTight = createBilingualVerseLayout(ctx, verses, ['one', 'two', 'three'], tight);
+    const twoTight = createBilingualVerseLayout(ctx, verses, twoLine, tight);
+    expect(twoTight.rowGap - flatTight.rowGap).toBeCloseTo(twoTight.translationLineHeight, 5);
+  });
+
+  it('draws the broadsheet with a measured gap under every vocalized Arabic line', () => {
+    useMeasuredGlyphs(ctx);
+    const poem = { ...mockPoem, arabic: VOCALIZED_SIX, english: LONG_ENGLISH };
+
+    for (const maxLines of [4, 6]) {
+      ctx.fillText.mockClear();
+      const drawn = [];
+      ctx.fillText.mockImplementation((text, x, y) => {
+        const match = /(\d+(?:\.\d+)?)px/.exec(ctx.font || '');
+        drawn.push({
+          text: String(text),
+          y,
+          size: match ? Number(match[1]) : 16,
+          italic: /italic/.test(ctx.font || ''),
+          arabic: isArabicRun(text),
+        });
+      });
+
+      renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, poem, 'sahifa', { maxLines });
+
+      // Verse Arabic is the largest Arabic type that isn't the masthead title.
+      const arabicRuns = drawn.filter((d) => d.arabic);
+      const verseSize = Math.max(...arabicRuns.map((d) => d.size).filter((s) => s <= 60));
+      const verseLines = arabicRuns.filter((d) => d.size === verseSize).sort((a, b) => a.y - b.y);
+      const englishLines = drawn.filter((d) => d.italic && !d.arabic).sort((a, b) => a.y - b.y);
+
+      expect(verseLines.length).toBe(maxLines);
+      expect(englishLines.length).toBeGreaterThanOrEqual(maxLines);
+
+      for (let i = 0; i < verseLines.length; i++) {
+        const verse = verseLines[i];
+        const next = verseLines[i + 1];
+        const mine = englishLines.filter((e) => e.y > verse.y && (!next || e.y < next.y));
+        expect(mine.length).toBeGreaterThan(0);
+
+        // diacritics of this Arabic line → top of its first English line
+        const arabicBottom = verse.y + verse.size * 0.42;
+        const englishTop = mine[0].y - mine[0].size * 0.72;
+        expectGapAtLeast(englishTop - arabicBottom, MIN_BILINGUAL_GAP);
+
+        // bottom of this verse's LAST English line → next Arabic line
+        if (next) {
+          const last = mine[mine.length - 1];
+          const englishBottom = last.y + last.size * 0.26;
+          const nextTop = next.y - next.size * 0.95;
+          expectGapAtLeast(nextTop - englishBottom, MIN_BILINGUAL_GAP);
+        }
+      }
+
+      // Nothing may run into the colophon rules at the foot of the card.
+      const lowest = Math.max(...englishLines.map((e) => e.y + e.size * 0.26));
+      expect(lowest).toBeLessThan(CARD_HEIGHT - 96);
+    }
+
+    ctx.fillText.mockImplementation(() => {});
   });
 });
 

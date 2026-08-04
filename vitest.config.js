@@ -51,7 +51,9 @@ export default defineConfig({
           setupFiles: './src/test/setup.js',
           css: true,
           include: ['src/**/*.test.{js,jsx,ts,tsx}'],
-          exclude: ['node_modules/', 'dist/', 'e2e/'],
+          // server.db.test.js talks to a real Postgres and needs the node
+          // environment; it runs in the `db` project below.
+          exclude: ['node_modules/', 'dist/', 'e2e/', 'src/test/server.db.test.js'],
           // CI timeouts — raised to accommodate coverage-instrumented runs and
           // multi-step poet-picker tests that include several async waitFor calls
           testTimeout: 15000,
@@ -69,6 +71,24 @@ export default defineConfig({
             // Reduce max concurrency in CI
             maxConcurrency: 2,
           }),
+        },
+      },
+      {
+        // API tests against a real PostgreSQL, seeded from supabase/seed.
+        // Separate from `unit` because it needs the node environment: the unit
+        // setup file installs DOM/canvas/Web-Audio mocks that cannot load
+        // without a document, and a suite whose whole point is real SQL has no
+        // use for them. Self-skips unless TEST_DATABASE_URL is set, so
+        // `npm run test:run` is unchanged for anyone without a database.
+        extends: true,
+        test: {
+          name: 'db',
+          globals: true,
+          environment: 'node',
+          include: ['src/test/server.db.test.js'],
+          testTimeout: 20000,
+          hookTimeout: 20000,
+          pool: 'forks',
         },
       },
       {

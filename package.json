@@ -21,6 +21,8 @@
     "test:e2e:report": "playwright show-report",
     "test:e2e:full": "playwright test --config=playwright.config.full.js",
     "db:setup": "bash scripts/db-setup.sh",
+    "db:seed": "bash scripts/db-seed.sh",
+    "test:db": "vitest run --project db",
     "db:dump-schema": "bash scripts/db-dump-schema.sh",
     "smoke": "node scripts/smoke-deploy.mjs",
     "screenshots": "node scripts/capture-design-screenshots.js",

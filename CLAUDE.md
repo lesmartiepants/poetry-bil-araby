@@ -48,6 +48,16 @@ npm run test:e2e:debug   # Debug mode
 
 **Feature Flags** (`src/constants/features.js`): `grounding`, `debug`, `logging`, `caching`, `streaming`, `prefetching`, `database`, `onboarding`, `forceOnboarding`, `designReview`. Toggle here rather than conditionally importing code.
 
+**Routes that nothing links to.** This is a SPA, so every path answers 200 and renders the reader. A route with no entry point is therefore invisible: you can open it, get the reader, and conclude the feature is broken. The full-screen routes are registered in `src/constants/routes.js`; the ones with no user-facing link are reachable from the debug panel (`FEATURES.debug`, the bug icon):
+
+| Route            | Gate                       | How to reach it                                                                                                                                                                                            |
+| ---------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/onboarding`    | `FEATURES.onboardingPrefs` | Debug panel → "Preference Flow". Five preference steps. Deliberately not on the boot path; use `FEATURES.forceOnboarding` if you want it at boot. Reset with `localStorage.removeItem('onboardingPrefs')`. |
+| `/enjoyability`  | server `ENABLE_DEV_LAB`    | Debug panel → "Enjoyability Lab"                                                                                                                                                                           |
+| `/design-review` | `FEATURES.designReview`    | URL only (the flag adds a shortcut icon)                                                                                                                                                                   |
+
+Add the debug-panel row at the same time you add the route, not later.
+
 **Design Constants** (`src/constants/`): `DESIGN` (layout/typography), `THEME` (colors). Never hardcode styles.
 
 **Architecture:** Modular React app with a dual-mode system (Database/AI), Express backend, Zustand + hooks state management.

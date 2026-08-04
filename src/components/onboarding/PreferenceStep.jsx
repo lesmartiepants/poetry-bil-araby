@@ -70,6 +70,25 @@ const scatter = (key, index, count) => {
   };
 };
 
+/**
+ * Width below which the constellation is abandoned for the staggered rows.
+ *
+ * The constellation is not merely cramped on a phone, it cannot fit. Its field
+ * is `min(100%, 760px)` wide and the outer ring sits at 38% of that, so the ring
+ * has a circumference of 2*PI*0.38*W. Mood puts 11 chips on that ring and motif
+ * 8, each up to 120px wide: mood needs ~1,210px of arc, motif ~880px. A 375px
+ * viewport (327px of field after padding) offers 780px. The chips are opaque, so
+ * the shortfall does not read as "tight" — the later chip paints over the earlier
+ * one and both labels become unreadable. Measured at 375px: 17 overlapping pairs
+ * on mood, 16 on motif, with "Moon & Stars" sitting directly on top of "Tears".
+ *
+ * Break-even is ~555px of viewport for mood and ~417px for motif. 640px clears
+ * both with margin and is the usual phone/tablet line. Above it nothing changes:
+ * the field is capped at 760px, so every viewport >= 808px already renders an
+ * identical constellation.
+ */
+const CONSTELLATION_MIN_WIDTH = 640;
+
 const chunkRows = (items, per = 3) => {
   const rows = [];
   for (let i = 0; i < items.length; i += per) {
@@ -91,7 +110,7 @@ const PreferenceStep = ({
   titleAr,
   titleEn,
   options = [],
-  layout = 'rows',
+  layout: requestedLayout = 'rows',
   value = [],
   onChange,
   onNext,
@@ -109,6 +128,42 @@ const PreferenceStep = ({
   // stable `key` per question, so a step remounts (and re-seeds) when the
   // question changes — no effect-based prop sync needed.
   const [selected, setSelected] = useState(value);
+
+  // The constellation needs room it does not have on a phone (see
+  // CONSTELLATION_MIN_WIDTH). Below the line it degrades to the staggered rows
+  // that step 1 already uses, so nothing new is introduced visually and the
+  // desktop constellation is untouched. Tracked live rather than read once so
+  // rotating the device re-lays-out instead of stranding a phone-width
+  // constellation on a landscape screen. jsdom has no matchMedia, and a test
+  // environment is not a phone, so a missing API keeps the constellation.
+  const [isNarrow, setIsNarrow] = useState(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia(`(max-width: ${CONSTELLATION_MIN_WIDTH - 1}px)`).matches;
+  });
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return undefined;
+    const mq = window.matchMedia(`(max-width: ${CONSTELLATION_MIN_WIDTH - 1}px)`);
+    // The lazy initializer above already read `mq.matches` at mount, so this
+    // only has to subscribe.
+    const onChange = (e) => setIsNarrow(e.matches);
+    // addListener is the Safari < 14 spelling; still worth the fallback here.
+    if (mq.addEventListener) mq.addEventListener('change', onChange);
+    else mq.addListener(onChange);
+    return () => {
+      if (mq.removeEventListener) mq.removeEventListener('change', onChange);
+      else mq.removeListener(onChange);
+    };
+  }, []);
+
+  const layout = requestedLayout === 'constellation' && isNarrow ? 'rows' : requestedLayout;
+
+  // Only true for the phone-width stand-in, never for a step that asked for
+  // rows outright (step 1 has 7 options and plenty of room). Motif stacks 12
+  // chips into seven wrapped rows at 375px, which pushed the CTA 16px past the
+  // fold; the tighter rhythm buys ~50px and puts it back on screen without
+  // changing chip size, wording or the stagger.
+  const isConstellationFallback = requestedLayout === 'constellation' && isNarrow;
 
   const maxCount = useMemo(
     () => options.reduce((m, o) => Math.max(m, o.poem_count || 0), 0),
@@ -237,7 +292,8 @@ const PreferenceStep = ({
           border: `1px solid ${isSelected ? color : 'rgba(255,255,255,0.10)'}`,
           borderRadius: layout === 'stack' ? '14px' : '999px',
           cursor: 'pointer',
-          padding: layout === 'stack' ? '14px 18px' : '10px 16px',
+          padding:
+            layout === 'stack' ? '14px 18px' : isConstellationFallback ? '8px 14px' : '10px 16px',
           display: 'flex',
           flexDirection: layout === 'stack' ? 'row' : 'column',
           alignItems: 'center',
@@ -401,14 +457,19 @@ const PreferenceStep = ({
     }
     return (
       <div
-        style={{ display: 'flex', flexDirection: 'column', gap: '.75rem', alignItems: 'center' }}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: isConstellationFallback ? '.5rem' : '.75rem',
+          alignItems: 'center',
+        }}
       >
         {chunkRows(options).map((row, ri) => (
           <div
             key={ri}
             style={{
               display: 'flex',
-              gap: '.6rem',
+              gap: isConstellationFallback ? '.45rem' : '.6rem',
               justifyContent: 'center',
               flexWrap: 'wrap',
               transform: row.shiftLeft ? 'translateX(-10px)' : 'translateX(10px)',

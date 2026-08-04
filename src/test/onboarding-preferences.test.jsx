@@ -228,6 +228,57 @@ describe('OnboardingFlow', () => {
     // Nothing selected, but the step is skippable at full opacity.
     expect(cta.textContent).toContain('تخطَّ');
   });
+
+  // The constellation cannot physically hold mood's 16 chips or motif's 12 at
+  // phone width: the outer ring's circumference is smaller than the chips laid
+  // end to end, and because the chips are opaque the overflow reads as one
+  // label painted over another rather than as crowding. Measured at 375px
+  // before the fallback: 17 overlapping pairs on mood, 16 on motif, with
+  // "Moon & Stars" sitting on top of "Tears". This pair of tests pins the
+  // switch, since the ring geometry has already regressed once.
+  const gotoMoodStep = async () => {
+    fetchCategories.mockResolvedValue(FULL_TAXONOMY);
+    render(<OnboardingFlow />);
+    await screen.findAllByTestId('onboarding-family-option');
+    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
+    await screen.findByTestId('onboarding-mood');
+    return screen.getAllByTestId('onboarding-mood-option');
+  };
+
+  const stubMatchMedia = (matches) => {
+    const original = window.matchMedia;
+    window.matchMedia = () => ({
+      matches,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    });
+    return () => {
+      window.matchMedia = original;
+    };
+  };
+
+  it('keeps the constellation when there is room for it', async () => {
+    const restore = stubMatchMedia(false);
+    try {
+      const options = await gotoMoodStep();
+      // Constellation nodes are placed by absolute left/top percentages.
+      expect(options[0].style.position).toBe('absolute');
+    } finally {
+      restore();
+    }
+  });
+
+  it('drops the constellation for rows at phone width', async () => {
+    const restore = stubMatchMedia(true);
+    try {
+      const options = await gotoMoodStep();
+      expect(options[0].style.position).not.toBe('absolute');
+      // Every option survives the swap; this is a re-layout, not a truncation.
+      expect(options).toHaveLength(3);
+    } finally {
+      restore();
+    }
+  });
 });
 
 describe('sampled bands', () => {

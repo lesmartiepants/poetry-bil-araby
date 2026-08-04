@@ -362,8 +362,13 @@ SELECT a.poem_id, cv.id, a.confidence, 'fixture-v1'
     (20, 'mood',  'joy',           71),
     (20, 'topic', 'friendship',    77),
     -- 25 is categorized but below the quality floor: it must never be served.
+    -- It also shares the `melancholy` mood with poem 1, which is what makes
+    -- "categorized but unservable" observable in a facet count.
     (25, 'mood',  'melancholy',    70),
     (25, 'topic', 'loss-death',    70)
+    -- Note: no fixture poem is tagged topic `war-conflict`. That gap is
+    -- deliberate — server.db.test.js asserts an untagged facet is still listed
+    -- and reads zero rather than being dropped from the response.
   ) AS a(poem_id, dim, val, confidence)
   JOIN category_dimensions cd ON cd.key = a.dim
   JOIN category_values cv ON cv.dimension_id = cd.id AND cv.key = a.val;

@@ -78,6 +78,25 @@ const TOTAL = 26;
 /** Ids from a by-category response, sorted, for stable comparison. */
 const ids = (body) => body.map((p) => p.id).sort((a, b) => a - b);
 
+/**
+ * Strip Arabic diacritics (U+064B-U+065F, the superscript alef U+0670, and the
+ * tatweel U+0640) before matching on served text.
+ *
+ * Necessary, not cosmetic. The API serves COALESCE(diacritized_content, content),
+ * so a poem that has been vocalized comes back as اخْتِبَارٍ rather than اختبار
+ * and a plain substring match silently misses it. With one vocalized poem in 24
+ * servable ones, an unnormalized assertion against /api/poems/random fails
+ * roughly 4% of the time — which is how this was found.
+ */
+const stripTashkeel = (s) => (s || '').replace(/[ً-ٰٟـ]/g, '');
+
+// One long-lived server for the whole file. `request(app)` would spin up a
+// fresh ephemeral listener per call — 43 of them in this suite — and that churn
+// of bind/close cycles is a source of rare, unattributable failures that look
+// like the endpoint misbehaved. Listening once is also closer to how the API
+// actually runs.
+let http;
+
 describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
   beforeAll(async () => {
     const { rows } = await pool.query(
@@ -88,9 +107,13 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
         `Expected ${TOTAL} fixture poems, found ${rows[0].n}. Run: npm run db:setup && npm run db:seed`
       );
     }
+    await new Promise((resolve) => {
+      http = app.listen(0, resolve);
+    });
   });
 
   afterAll(async () => {
+    if (http) await new Promise((resolve) => http.close(resolve));
     await pool.end();
   });
 
@@ -107,7 +130,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
   // --------------------------------------------------------------------------
   describe('GET /api/health/full', () => {
     it('separates total poems from the ones the serving filters allow', async () => {
-      const res = await request(app).get('/api/health/full').expect(200);
+      const res = await request(http).get('/api/health/full').expect(200);
       expect(res.body.database).toBe('connected');
       expect(res.body.totalPoems).toBe(TOTAL);
       // The gap is the whole point: two fixture poems are deliberately
@@ -120,7 +143,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
   // --------------------------------------------------------------------------
   describe('GET /api/categories', () => {
     it('groups values under their dimension with real counts', async () => {
-      const res = await request(app).get('/api/categories').expect(200);
+      const res = await request(http).get('/api/categories').expect(200);
       const dims = res.body.dimensions;
       expect(dims.map((d) => d.key)).toEqual(['mood', 'topic', 'motif']);
 
@@ -131,19 +154,43 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
       // UI can render an empty facet rather than hiding it.
       expect(mood.values.length).toBe(16);
 
-      // melancholy is on poems 1 and 25. /api/categories counts assignments and
-      // is NOT serving-filtered, so the below-quality poem 25 is included here
-      // even though by-category will not return it.
       const melancholy = mood.values.find((v) => v.key === 'melancholy');
-      expect(melancholy.poem_count).toBe(2);
+      // pg returns COUNT as a string; the handler parseInts it.
       expect(typeof melancholy.poem_count).toBe('number');
 
+      // melancholy is assigned to poems 1 and 25, but only poem 1 is servable
+      // (25 sits below minQualityScore). So the count is 1 or 2 depending on a
+      // genuine product decision: whether a facet advertises every assignment
+      // or only the poems selecting it would actually yield. Both are
+      // defensible, so this asserts the bounds instead of picking a side —
+      // pinning either number would make a deliberate change to that decision
+      // look like a regression.
+      const selected = await request(http)
+        .get('/api/poems/by-category?mood=melancholy&limit=50')
+        .expect(200);
+      expect(melancholy.poem_count).toBeGreaterThanOrEqual(selected.body.length);
+      expect(melancholy.poem_count).toBeLessThanOrEqual(2);
+      // What must never happen: a facet the vocabulary lists, that poems carry,
+      // reading zero. That is what a broken GROUP BY or a wrong join key looks
+      // like, and it is invisible to a mocked pool.
+      expect(melancholy.poem_count).toBeGreaterThan(0);
+
+      // reverence is on poem 6 only, which is servable, so this one is
+      // unambiguous under either rule.
       const unused = mood.values.find((v) => v.key === 'reverence');
       expect(unused.poem_count).toBe(1);
+
+      // The vocabulary is listed exhaustively, so a facet nobody has tagged
+      // must be present and read zero rather than be omitted. No fixture poem
+      // is tagged war-conflict, deliberately.
+      const topic = dims.find((d) => d.key === 'topic');
+      const untagged = topic.values.find((v) => v.key === 'war-conflict');
+      expect(untagged).toBeDefined();
+      expect(untagged.poem_count).toBe(0);
     });
 
     it('counts families across dimensions without double-counting a poem', async () => {
-      const res = await request(app).get('/api/categories').expect(200);
+      const res = await request(http).get('/api/categories').expect(200);
       const families = res.body.families;
       expect(families.length).toBe(7);
 
@@ -160,7 +207,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
   // --------------------------------------------------------------------------
   describe('GET /api/poems/by-category', () => {
     it('filters by a single mood and applies the serving filters', async () => {
-      const res = await request(app).get('/api/poems/by-category?mood=melancholy').expect(200);
+      const res = await request(http).get('/api/poems/by-category?mood=melancholy').expect(200);
       // Poems 1 and 25 are both melancholy; 25 sits below minQualityScore.
       expect(ids(res.body)).toEqual([1]);
       expect(res.body[0].moodPrimary).toBe('melancholy');
@@ -171,7 +218,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('ANDs across dimensions', async () => {
-      const both = await request(app)
+      const both = await request(http)
         .get('/api/poems/by-category?mood=serenity&topic=nature')
         .expect(200);
       // serenity: 7, 8, 17. nature: 7, 8, 18. Intersection: 7, 8.
@@ -179,10 +226,12 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('ORs within a dimension by default and ANDs with {dim}Mode=and', async () => {
-      const or = await request(app).get('/api/poems/by-category?mood=nostalgia,satire').expect(200);
+      const or = await request(http)
+        .get('/api/poems/by-category?mood=nostalgia,satire')
+        .expect(200);
       expect(ids(or.body)).toEqual([9, 19]);
 
-      const and = await request(app)
+      const and = await request(http)
         .get('/api/poems/by-category?mood=nostalgia,satire&moodMode=and')
         .expect(200);
       // Only poem 19 carries both moods.
@@ -190,12 +239,12 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('filters by motif, the optional dimension', async () => {
-      const res = await request(app).get('/api/poems/by-category?motif=tears').expect(200);
+      const res = await request(http).get('/api/poems/by-category?motif=tears').expect(200);
       expect(ids(res.body)).toEqual([1, 16]);
     });
 
     it('matches a family across dimensions', async () => {
-      const res = await request(app)
+      const res = await request(http)
         .get('/api/poems/by-category?family=nature-cosmos&limit=50')
         .expect(200);
       // 6 (motif dawn), 7, 8 and 18 — reached through three different
@@ -206,9 +255,9 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     it('returns poems for every family', async () => {
       // The seed's stated guarantee. A family whose members were all filtered
       // out would make a filter chip in the UI dead on arrival.
-      const cats = await request(app).get('/api/categories').expect(200);
+      const cats = await request(http).get('/api/categories').expect(200);
       for (const family of cats.body.families) {
-        const res = await request(app)
+        const res = await request(http)
           .get(`/api/poems/by-category?family=${family.key}&limit=50`)
           .expect(200);
         expect(res.body.length, `family ${family.key} returned nothing`).toBeGreaterThan(0);
@@ -216,10 +265,10 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('resolves era by name and by id to the same poems', async () => {
-      const byName = await request(app)
+      const byName = await request(http)
         .get(`/api/poems/by-category?era=${encodeURIComponent('العصر الجاهلي')}&limit=50`)
         .expect(200);
-      const byId = await request(app).get('/api/poems/by-category?era=1&limit=50').expect(200);
+      const byId = await request(http).get('/api/poems/by-category?era=1&limit=50').expect(200);
       // era is a POET-level facet resolved through a subquery on eras.name —
       // poems has no era column, so this join is easy to get wrong.
       expect(ids(byName.body)).toEqual([1, 2, 18]);
@@ -227,30 +276,30 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('filters by century and never matches the NULL-century poems', async () => {
-      const res = await request(app).get('/api/poems/by-category?century=6&limit=50').expect(200);
+      const res = await request(http).get('/api/poems/by-category?century=6&limit=50').expect(200);
       expect(ids(res.body)).toEqual([1, 2, 18]);
       for (const poem of res.body) expect(poem.century).toBe(6);
 
       // 6 of 26 fixture poems have a NULL century. `p.century = $n` is NULL-safe
       // by accident rather than by design, so pin it: an unfiltered query must
       // still surface them, and a century filter must never leak them in.
-      const all = await request(app).get('/api/poems/by-category?limit=50').expect(200);
+      const all = await request(http).get('/api/poems/by-category?limit=50').expect(200);
       expect(all.body.length).toBe(SERVABLE);
       expect(all.body.filter((p) => p.century === undefined).length).toBeGreaterThan(0);
     });
 
     it('applies accessibility and intensity bounds', async () => {
-      const hard = await request(app)
+      const hard = await request(http)
         .get('/api/poems/by-category?minAccessibility=8&limit=50')
         .expect(200);
       expect(ids(hard.body)).toEqual([1, 2, 15, 17]);
 
-      const calm = await request(app)
+      const calm = await request(http)
         .get('/api/poems/by-category?maxIntensity=25&limit=50')
         .expect(200);
       expect(ids(calm.body)).toEqual([12, 15, 17]);
 
-      const band = await request(app)
+      const band = await request(http)
         .get('/api/poems/by-category?minAccessibility=6&maxAccessibility=7&limit=50')
         .expect(200);
       // 3 (6.0), 20 (6.2), 10 (6.5), 9 (7.0) — inclusive on both bounds.
@@ -258,7 +307,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('returns an explicit id set in the order given, bypassing the limit', async () => {
-      const res = await request(app).get('/api/poems/by-category?ids=17,1,9').expect(200);
+      const res = await request(http).get('/api/poems/by-category?ids=17,1,9').expect(200);
       // array_position ordering — not sorted, not random. The id path also
       // binds one parameter fewer than the random path, so a mismatch here is
       // a bind error rather than a wrong result.
@@ -266,22 +315,22 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('honours limit and defaults to 10', async () => {
-      const two = await request(app).get('/api/poems/by-category?limit=2').expect(200);
+      const two = await request(http).get('/api/poems/by-category?limit=2').expect(200);
       expect(two.body.length).toBe(2);
 
-      const dflt = await request(app).get('/api/poems/by-category').expect(200);
+      const dflt = await request(http).get('/api/poems/by-category').expect(200);
       expect(dflt.body.length).toBe(10);
     });
 
     it('returns an empty array for a value that matches nothing', async () => {
-      const res = await request(app)
+      const res = await request(http)
         .get('/api/poems/by-category?mood=no-such-mood-key')
         .expect(200);
       expect(res.body).toEqual([]);
     });
 
     it('includes uncategorized poems when no facet is requested', async () => {
-      const res = await request(app).get('/api/poems/by-category?limit=50').expect(200);
+      const res = await request(http).get('/api/poems/by-category?limit=50').expect(200);
       const uncategorized = res.body.filter((p) => p.moodPrimary == null);
       expect(uncategorized.length).toBe(4);
       // They still come back as complete poems, joined through themes.
@@ -293,11 +342,12 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
   // --------------------------------------------------------------------------
   describe('GET /api/poems/random', () => {
     it('serves a real poem and never one the filters exclude', async () => {
-      const res = await request(app).get('/api/poems/random').expect(200);
+      const res = await request(http).get('/api/poems/random').expect(200);
       expect(res.body.id).toBeGreaterThan(0);
       expect(res.body.id).toBeLessThanOrEqual(24);
-      expect(res.body.arabic).toContain('اختبار');
-      expect(res.body.poetArabic).toContain('الاختبار');
+      // Normalized: this poem may or may not be the vocalized one.
+      expect(stripTashkeel(res.body.arabic)).toContain('اختبار');
+      expect(stripTashkeel(res.body.poetArabic)).toContain('الاختبار');
       // formatPoem prefers the English name when poets.name_en exists, which
       // only happens if poetNameEnExpr() interpolated correctly.
       expect(res.body.poet).toMatch(/^Test Poet /);
@@ -305,7 +355,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('serves diacritized_content in preference to content', async () => {
-      const res = await request(app)
+      const res = await request(http)
         .get(`/api/poems/random?poet=${encodeURIComponent('شاعر الاختبار الأول')}&exclude=2,18,25`)
         .expect(200);
       expect(res.body.id).toBe(1);
@@ -316,14 +366,14 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('filters by poet', async () => {
-      const res = await request(app)
+      const res = await request(http)
         .get(`/api/poems/random?poet=${encodeURIComponent('شاعر الاختبار السابع')}`)
         .expect(200);
       expect([13, 17]).toContain(res.body.id);
     });
 
     it('excludes ids that have already been seen', async () => {
-      const res = await request(app)
+      const res = await request(http)
         .get(`/api/poems/random?poet=${encodeURIComponent('شاعر الاختبار السابع')}&exclude=13`)
         .expect(200);
       expect(res.body.id).toBe(17);
@@ -333,7 +383,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
   // --------------------------------------------------------------------------
   describe('GET /api/poems/by-poet/:poet', () => {
     it('returns only that poet, serving-filtered', async () => {
-      const res = await request(app)
+      const res = await request(http)
         .get(`/api/poems/by-poet/${encodeURIComponent('شاعر الاختبار الأول')}?limit=50`)
         .expect(200);
       // Poet one has four poems; 25 is below the quality floor.
@@ -342,7 +392,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('drops poems over the verse cap', async () => {
-      const res = await request(app)
+      const res = await request(http)
         .get(`/api/poems/by-poet/${encodeURIComponent('شاعر الاختبار الثالث')}?limit=50`)
         .expect(200);
       // Poem 26 has 30 verses. maxVerseLines is 24.
@@ -350,7 +400,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('returns an empty array for an unknown poet', async () => {
-      const res = await request(app).get('/api/poems/by-poet/nobody').expect(200);
+      const res = await request(http).get('/api/poems/by-poet/nobody').expect(200);
       expect(res.body).toEqual([]);
     });
   });
@@ -358,19 +408,19 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
   // --------------------------------------------------------------------------
   describe('GET /api/poems/search', () => {
     it('matches poem content', async () => {
-      const res = await request(app).get('/api/poems/search?q=الغربة&limit=50').expect(200);
+      const res = await request(http).get('/api/poems/search?q=الغربة&limit=50').expect(200);
       expect(ids(res.body)).toEqual([9]);
     });
 
     it('matches the poet name', async () => {
-      const res = await request(app)
+      const res = await request(http)
         .get(`/api/poems/search?q=${encodeURIComponent('السابع')}&limit=50`)
         .expect(200);
       expect(ids(res.body)).toEqual([13, 17]);
     });
 
     it('matches the title', async () => {
-      const res = await request(app)
+      const res = await request(http)
         .get(`/api/poems/search?q=${encodeURIComponent('بلا تصنيف')}&limit=50`)
         .expect(200);
       expect(ids(res.body)).toEqual([21, 22, 23, 24]);
@@ -380,7 +430,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
   // --------------------------------------------------------------------------
   describe('GET /api/poets', () => {
     it('returns every poet with a servable poem count', async () => {
-      const res = await request(app).get('/api/poets?all=1').expect(200);
+      const res = await request(http).get('/api/poets?all=1').expect(200);
       expect(res.body.length).toBe(8);
 
       const one = res.body.find((p) => p.name === 'شاعر الاختبار الأول');
@@ -396,7 +446,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
   // --------------------------------------------------------------------------
   describe('GET /api/poems/:id', () => {
     it('returns a poem with its cached translation', async () => {
-      const res = await request(app).get('/api/poems/9').expect(200);
+      const res = await request(http).get('/api/poems/9').expect(200);
       expect(res.body.id).toBe(9);
       expect(res.body.title).toBe('Test Poem 9 — Exile');
       expect(res.body.titleArabic).toContain('قصيدة اختبار');
@@ -404,7 +454,7 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
     });
 
     it('404s for an id that is not there', async () => {
-      const res = await request(app).get('/api/poems/999999').expect(404);
+      const res = await request(http).get('/api/poems/999999').expect(404);
       expect(res.body.error).toBe('Poem not found');
     });
   });

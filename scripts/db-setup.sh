@@ -63,10 +63,16 @@ CREATE OR REPLACE FUNCTION auth.role() RETURNS text
 SQL
 
 echo "==> applying migrations"
-for f in "$MIGRATIONS"/*.sql; do
+# Sort under LC_ALL=C explicitly. Bare glob expansion is locale-dependent: a
+# macOS default locale ignores '_' when collating, a C-locale container does
+# not ('0' is 0x30, '_' is 0x5F). That difference silently reordered two
+# migrations and made the same tree apply cleanly on a laptop and fail in
+# Docker/CI. Filenames are now uniformly 14-digit so both agree, and this
+# pins it regardless.
+while IFS= read -r f; do
   printf '    %s\n' "$(basename "$f")"
   psql "$URL" -v ON_ERROR_STOP=1 -q -f "$f"
-done
+done < <(printf '%s\n' "$MIGRATIONS"/*.sql | LC_ALL=C sort)
 
 TABLES=$(psql "$URL" -tAc \
   "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'")

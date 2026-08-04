@@ -1,0 +1,93 @@
+name: Database Reconstruct
+
+# Proves the repo can rebuild its own schema from an empty Postgres.
+#
+# This exists because it silently could not. Every migration only ever ALTERs
+# `poems` and `poets`; nothing created them, and the import that did is
+# gitignored. A base migration now fills that gap.
+#
+# The job also pins migration ORDER. Bare glob expansion is locale-dependent,
+# so a tree that applied cleanly on a macOS laptop failed in a C-locale
+# container — which is exactly this runner. Running here is the only way that
+# class of bug gets caught.
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/db-setup.sh'
+      - '.github/workflows/db-reconstruct.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/db-setup.sh'
+
+jobs:
+  reconstruct:
+    name: Rebuild schema from empty
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+
+      - name: Every migration filename is a 14-digit timestamp
+        run: |
+          # A short or over-long prefix reintroduces the ordering collision:
+          # '0' (0x30) sorts before '_' (0x5F), so `20260220_x.sql` lands
+          # AFTER `20260220000001_y.sql` under LC_ALL=C and before it under a
+          # macOS default locale. Uniform width makes both agree.
+          odd=$(ls supabase/migrations/*.sql | xargs -n1 basename | grep -vE '^[0-9]{14}_' || true)
+          if [ -n "$odd" ]; then
+            echo "Migration filenames must be <14-digit timestamp>_name.sql:" >&2
+            echo "$odd" >&2
+            exit 1
+          fi
+          echo "all migration filenames normalised"
+
+      - name: Apply from empty
+        env:
+          LOCAL_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/qafiyah
+        run: bash scripts/db-setup.sh
+
+      - name: Apply a second time (idempotence)
+        env:
+          LOCAL_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/qafiyah
+        run: bash scripts/db-setup.sh
+
+      - name: Core tables exist
+        env:
+          PGPASSWORD: postgres
+        run: |
+          missing=$(psql -h localhost -U postgres -d qafiyah -tAc "
+            SELECT string_agg(t, ', ')
+            FROM unnest(ARRAY['poems','poets','user_settings','saved_poems',
+                              'category_dimensions','category_values',
+                              'category_families','poem_categories']) AS t
+            WHERE to_regclass('public.' || t) IS NULL")
+          if [ -n "$missing" ]; then
+            echo "missing after reconstruction: $missing" >&2
+            exit 1
+          fi
+          n=$(psql -h localhost -U postgres -d qafiyah -tAc "
+            SELECT count(*) FROM information_schema.tables
+            WHERE table_schema='public' AND table_type='BASE TABLE'")
+          echo "reconstructed $n base tables, all core tables present"

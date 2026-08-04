@@ -73,7 +73,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 
 - **Features tracked:** 41
 - **HTTP endpoints in code:** 37
-- **Components in code:** 45
+- **Components in code:** 44
 - **Test files in code:** 67
 - **Behavioral coverage:** 8/41 (20%)
 

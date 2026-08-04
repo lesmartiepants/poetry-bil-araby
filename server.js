@@ -273,6 +273,391 @@ function servingFilters() {
   return clauses.length ? 'AND ' + clauses.join(' AND ') : '';
 }
 
+/**
+ * Build the categorization WHERE clauses shared by /api/poems/by-category and
+ * the scoped counts on /api/categories.
+ *
+ * ONE implementation on purpose. /api/categories now answers "how many poems
+ * match what you have chosen so far", and the onboarding flow shows that number
+ * next to a feed drawn from by-category. If the two endpoints parsed the same
+ * query params even slightly differently the number would be a lie about the
+ * feed, and the difference would be invisible until someone counted by hand.
+ *
+ * Every clause is tagged with the answer GROUP it came from ('family', a
+ * dimension key, 'era', 'difficulty', 'intensity', 'poet') so a caller can ask
+ * for the set without one group — which is what faceted counts require. On the
+ * mood step, each mood's count must be scoped by the family already chosen but
+ * NOT by the moods currently selected; scoping a facet by itself makes every
+ * other option in the step read 0 the moment you pick one.
+ *
+ * @param {Object} query   req.query
+ * @param {Object} [opts]
+ * @param {string} [opts.skipGroup] group to leave out
+ * @param {Array}  [opts.params] existing bind params to append to
+ * @returns {{clauses:string[], params:Array, groups:string[]}}
+ */
+function buildCategoryFilters(query = {}, opts = {}) {
+  const { skipGroup = null, params = [] } = opts;
+  const clauses = [];
+  const groups = new Set();
+  const takeGroup = (group) => {
+    if (group === skipGroup) return false;
+    groups.add(group);
+    return true;
+  };
+
+  // Dimension filters via EXISTS against the normalized join. The dimension set
+  // is READ FROM the DB (categorizationDimensions, populated at startup), so a
+  // new dimension row becomes filterable with no code change here.
+  for (const dim of categorizationDimensions) {
+    const raw = query[dim];
+    if (!raw) continue;
+    const values = (Array.isArray(raw) ? raw : [raw])
+      .flatMap((s) => String(s).split(','))
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 20);
+    if (values.length === 0) continue;
+    if (!takeGroup(dim)) continue;
+    // Per-dimension combine mode: `${dim}Mode=and` requires the poem to carry
+    // ALL selected values (one EXISTS each); default `or` matches ANY.
+    const andMode = String(query[`${dim}Mode`] || 'or').toLowerCase() === 'and';
+    if (andMode) {
+      for (const v of values) {
+        params.push(dim);
+        const dimIdx = params.length;
+        params.push(v);
+        clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_dimensions cd ON cv.dimension_id = cd.id
+        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = $${params.length}
+      )`);
+      }
+    } else {
+      params.push(dim);
+      const dimIdx = params.length;
+      params.push(values);
+      clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_dimensions cd ON cv.dimension_id = cd.id
+        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = ANY($${params.length})
+      )`);
+    }
+  }
+
+  // Family filter: match poems having ANY value that belongs to the family
+  // (cross-dimension OR), mirroring the EXISTS style above.
+  const familyRaw = query.family;
+  if (familyRaw) {
+    const family = String(familyRaw).trim();
+    if (family && takeGroup('family')) {
+      params.push(family);
+      clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_families cf ON cv.family_id = cf.id
+        WHERE pc.poem_id = p.id AND cf.key = $${params.length}
+      )`);
+    }
+  }
+
+  // Poet passthrough: exact name or slug (mirrors /api/poems/by-poet, which
+  // matches po.name; poets also carry a UUID slug for deep links).
+  const poetRaw = query.poet;
+  if (poetRaw) {
+    const poet = String(poetRaw).trim();
+    if (poet && poet !== 'All' && takeGroup('poet')) {
+      params.push(poet);
+      clauses.push(`(po.name = $${params.length} OR po.slug = $${params.length})`);
+    }
+  }
+
+  // Era passthrough: numeric era id filters po.era_id directly; a non-numeric
+  // value is resolved via eras.name (era is a poet-level facet — poems has no
+  // era column — and po is already joined by both callers).
+  const eraRaw = query.era;
+  if (eraRaw != null && String(eraRaw).trim() !== '' && takeGroup('era')) {
+    const era = String(eraRaw).trim();
+    const eraId = parseInt(era, 10);
+    if (Number.isInteger(eraId) && String(eraId) === era) {
+      params.push(eraId);
+      clauses.push(`po.era_id = $${params.length}`);
+    } else {
+      params.push(era);
+      clauses.push(`po.era_id = (SELECT id FROM eras WHERE name = $${params.length})`);
+    }
+  }
+
+  // Century, exact and range. `poems.century` is a representative century
+  // derived 1:1 from the poet's era (categorization/config.py ERA_CENTURY), and
+  // the late/modern eras are deliberately left NULL because they span too many
+  // centuries to pin to one. Those poems are ~25% of the corpus, so silently
+  // dropping them from every dated band would hide a quarter of the library.
+  // `includeUndated=1` keeps them eligible alongside the range; the undated band
+  // itself is expressed as `undated=1`.
+  const centuryRaw = query.century;
+  const century = parseInt(centuryRaw, 10);
+  const centuryFrom = parseInt(query.centuryFrom, 10);
+  const centuryTo = parseInt(query.centuryTo, 10);
+  const includeUndated = /^(1|true|yes)$/i.test(String(query.includeUndated ?? ''));
+  const undatedOnly = /^(1|true|yes)$/i.test(String(query.undated ?? ''));
+  const wantsCentury =
+    undatedOnly ||
+    Number.isInteger(centuryFrom) ||
+    Number.isInteger(centuryTo) ||
+    (centuryRaw != null && String(centuryRaw).trim() !== '' && Number.isInteger(century));
+  if (wantsCentury && takeGroup('century')) {
+    if (undatedOnly) {
+      clauses.push(`p.century IS NULL`);
+    } else if (Number.isInteger(centuryFrom) || Number.isInteger(centuryTo)) {
+      const rangeParts = [];
+      if (Number.isInteger(centuryFrom)) {
+        params.push(centuryFrom);
+        rangeParts.push(`p.century >= $${params.length}`);
+      }
+      if (Number.isInteger(centuryTo)) {
+        params.push(centuryTo);
+        rangeParts.push(`p.century <= $${params.length}`);
+      }
+      const range = rangeParts.join(' AND ');
+      clauses.push(includeUndated ? `((${range}) OR p.century IS NULL)` : `(${range})`);
+    } else {
+      params.push(century);
+      clauses.push(`p.century = $${params.length}`);
+    }
+  }
+
+  // Intensity range (0-100) and difficulty/accessibility range (0-10). Each
+  // bound is independent so the UI can express a min, a max, or both.
+  const minIntensity = parseInt(query.minIntensity, 10);
+  const maxIntensity = parseInt(query.maxIntensity, 10);
+  if (
+    (Number.isInteger(minIntensity) || Number.isInteger(maxIntensity)) &&
+    takeGroup('intensity')
+  ) {
+    if (Number.isInteger(minIntensity)) {
+      params.push(Math.max(0, Math.min(100, minIntensity)));
+      clauses.push(`p.emotional_intensity >= $${params.length}`);
+    }
+    if (Number.isInteger(maxIntensity)) {
+      params.push(Math.max(0, Math.min(100, maxIntensity)));
+      clauses.push(`p.emotional_intensity <= $${params.length}`);
+    }
+  }
+
+  const minAccessibility = parseFloat(query.minAccessibility);
+  const maxAccessibility = parseFloat(query.maxAccessibility);
+  if (
+    (Number.isFinite(minAccessibility) || Number.isFinite(maxAccessibility)) &&
+    takeGroup('difficulty')
+  ) {
+    if (Number.isFinite(minAccessibility)) {
+      params.push(Math.max(0, Math.min(10, minAccessibility)));
+      clauses.push(`p.accessibility_score >= $${params.length}`);
+    }
+    if (Number.isFinite(maxAccessibility)) {
+      params.push(Math.max(0, Math.min(10, maxAccessibility)));
+      clauses.push(`p.accessibility_score <= $${params.length}`);
+    }
+  }
+
+  return { clauses, params, groups: [...groups] };
+}
+
+/**
+ * Per-facet poem counts SCOPED by the answers a reader has already given, plus
+ * the running totals the onboarding flow shows.
+ *
+ * Returns `null` when the caller sent no filter params at all, which is how the
+ * unscoped /api/categories payload stays exactly what it always was.
+ *
+ * ## Why each facet skips its own group
+ *
+ * These are faceted counts, not filtered counts. On the mood step the reader has
+ * already chosen a family, and each mood chip should read "poems in your family
+ * carrying this mood". If the currently-selected moods were also applied, every
+ * OTHER mood on the screen would drop to 0 the instant the first one was picked,
+ * because a poem carrying `amorous` mostly does not also carry `defiance`. So
+ * each dimension is counted against the scope MINUS its own selection; the same
+ * applies to families, to the century range, and to the accessibility range.
+ *
+ * ## Why serving filters are applied
+ *
+ * The number is shown next to a feed. The feed can only ever draw poems that
+ * pass the quality/length gate (~4,767 of 9,073), so counting the ones it cannot
+ * serve would overstate every figure by roughly 2x. `servable` is returned
+ * alongside so the client can render the count as a share of what is reachable
+ * rather than as a bare number with no denominator.
+ *
+ * @param {Object} query req.query
+ * @returns {Promise<Object|null>}
+ */
+async function scopedCategoryCounts(query = {}) {
+  const probe = buildCategoryFilters(query);
+  if (!probe.clauses.length) return null;
+
+  const qf = servingFilters();
+  const serving = qf ? qf.replace(/^\s*AND\s+/i, '') : null;
+
+  /** WHERE + params for the scope with one answer group left out. */
+  const scoped = (skipGroup) => {
+    const built = buildCategoryFilters(query, { skipGroup });
+    const all = serving ? [serving, ...built.clauses] : built.clauses;
+    return { where: all.length ? `WHERE ${all.join(' AND ')}` : '', params: built.params };
+  };
+
+  const countRow = async (sql, params) => {
+    const r = await pool.query(sql, params);
+    return r.rows;
+  };
+
+  // One query per facet group, in parallel. `p`/`po` are aliased identically to
+  // by-category so the clauses buildCategoryFilters emits drop straight in.
+  const dimJobs = categorizationDimensions.map(async (dim) => {
+    const { where, params } = scoped(dim);
+    const rows = await countRow(
+      `SELECT cv.key AS value, COUNT(DISTINCT p.id)::int AS poem_count
+         FROM poems p
+         JOIN poets po ON p.poet_id = po.id
+         JOIN poem_categories pc ON pc.poem_id = p.id
+         JOIN category_values cv ON pc.value_id = cv.id
+         JOIN category_dimensions cd ON cv.dimension_id = cd.id
+        ${where ? where + ' AND' : 'WHERE'} cd.key = $${params.length + 1}
+        GROUP BY cv.key`,
+      [...params, dim]
+    );
+    return [dim, Object.fromEntries(rows.map((r) => [r.value, r.poem_count]))];
+  });
+
+  const famJob = (async () => {
+    const { where, params } = scoped('family');
+    const rows = await countRow(
+      `SELECT cf.key AS family, COUNT(DISTINCT p.id)::int AS poem_count
+         FROM poems p
+         JOIN poets po ON p.poet_id = po.id
+         JOIN poem_categories pc ON pc.poem_id = p.id
+         JOIN category_values cv ON pc.value_id = cv.id
+         JOIN category_families cf ON cv.family_id = cf.id
+        ${where}
+        GROUP BY cf.key`,
+      params
+    );
+    return Object.fromEntries(rows.map((r) => [r.family, r.poem_count]));
+  })();
+
+  const eraJob = (async () => {
+    const { where, params } = scoped('century');
+    return countRow(
+      `SELECT p.century AS century, COUNT(*)::int AS poem_count
+         FROM poems p JOIN poets po ON p.poet_id = po.id
+        ${where}
+        GROUP BY p.century ORDER BY p.century NULLS LAST`,
+      params
+    );
+  })();
+
+  const accJob = (async () => {
+    const { where, params } = scoped('difficulty');
+    const rows = await countRow(
+      `SELECT width_bucket(p.accessibility_score, 0, 10, 20) AS bucket,
+              COUNT(*)::int AS poem_count
+         FROM poems p JOIN poets po ON p.poet_id = po.id
+        ${where ? where + ' AND' : 'WHERE'} p.accessibility_score IS NOT NULL
+        GROUP BY bucket ORDER BY bucket`,
+      params
+    );
+    return rows.map((r) => ({
+      min: (r.bucket - 1) / 2,
+      max: r.bucket / 2,
+      poem_count: r.poem_count,
+    }));
+  })();
+
+  // total — every answer ANDed. This is the honest "match all your choices"
+  // number, and under scoring it is explicitly NOT a promise about the feed:
+  // the feed draws from a graded set, so a poem outside this count can still
+  // appear. The client labels it accordingly.
+  const totalJob = (async () => {
+    const { where, params } = scoped(null);
+    const r = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM poems p JOIN poets po ON p.poet_id = po.id ${where}`,
+      params
+    );
+    return r.rows[0]?.n ?? 0;
+  })();
+
+  // totalAny — the answers ORed. The other end of the range the feed actually
+  // works over: a poem matching one thing the reader said is a real candidate,
+  // just a lower-scoring one. Showing both numbers is what makes the graded
+  // behaviour legible instead of looking like a broken filter.
+  const anyJob = (async () => {
+    const params = [];
+    const perGroup = [];
+    for (const g of probe.groups) {
+      // buildCategoryFilters skips ONE group; isolating a single group instead
+      // means stripping every OTHER group's params out of a copy of the query.
+      const sub = { ...query };
+      for (const other of probe.groups) if (other !== g) removeGroupParams(sub, other);
+      const built = buildCategoryFilters(sub, { params });
+      if (built.clauses.length) perGroup.push(`(${built.clauses.join(' AND ')})`);
+    }
+    if (!perGroup.length) return 0;
+    const all = [`(${perGroup.join(' OR ')})`];
+    if (serving) all.unshift(serving);
+    const r = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM poems p JOIN poets po ON p.poet_id = po.id WHERE ${all.join(' AND ')}`,
+      params
+    );
+    return r.rows[0]?.n ?? 0;
+  })();
+
+  const servableJob = (async () => {
+    const r = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM poems p JOIN poets po ON p.poet_id = po.id${
+        serving ? ` WHERE ${serving}` : ''
+      }`
+    );
+    return r.rows[0]?.n ?? 0;
+  })();
+
+  const [dimEntries, families, eras, accessibility, total, totalAny, servable] = await Promise.all([
+    Promise.all(dimJobs),
+    famJob,
+    eraJob,
+    accJob,
+    totalJob,
+    anyJob,
+    servableJob,
+  ]);
+
+  return {
+    applied: probe.groups,
+    total,
+    totalAny,
+    servable,
+    dimensions: Object.fromEntries(dimEntries),
+    families,
+    eras,
+    accessibility,
+  };
+}
+
+/** Strip every query param belonging to one answer group (used by totalAny). */
+function removeGroupParams(obj, group) {
+  const byGroup = {
+    family: ['family'],
+    poet: ['poet'],
+    era: ['era'],
+    century: ['century', 'centuryFrom', 'centuryTo', 'includeUndated', 'undated'],
+    intensity: ['minIntensity', 'maxIntensity'],
+    difficulty: ['minAccessibility', 'maxAccessibility'],
+  };
+  const keys = byGroup[group] || [group, `${group}Mode`];
+  for (const k of keys) delete obj[k];
+}
+
 // Helper: returns extra SELECT columns for translation cache (empty string when columns don't exist)
 function translationSelectExpr() {
   return hasTranslationColumns
@@ -785,9 +1170,15 @@ app.get('/api/categories', async (req, res) => {
       `),
     ]);
 
+    // Counts SCOPED by the answers already given. Computed only when the caller
+    // sent at least one filter param, so the unscoped payload — and every
+    // existing caller of it — is byte-for-byte what it was.
+    const scope = await scopedCategoryCounts(req.query);
+
     res.json({
       dimensions: Array.from(byDim.values()),
       families: Array.from(byFamily.values()),
+      ...(scope ? { scope } : {}),
       distributions: {
         // One row per (era, century) pair. century is null for the late/modern
         // eras — see the ERA_CENTURY note on by-category's century range params.
@@ -852,160 +1243,13 @@ app.get('/api/poems/by-category', async (req, res) => {
   try {
     if (!hasCategorization) return res.json([]);
 
-    const params = [];
-    const clauses = [];
     const qf = servingFilters();
-    if (qf) clauses.push(qf.replace(/^\s*AND\s+/i, '')); // qf begins with "AND ..."
-
-    // Dimension filters via EXISTS against the normalized join. The dimension
-    // set is READ FROM the DB (categorizationDimensions, populated at startup),
-    // so a new dimension row becomes filterable with no code change here.
-    for (const dim of categorizationDimensions) {
-      let raw = req.query[dim];
-      if (!raw) continue;
-      const values = (Array.isArray(raw) ? raw : [raw])
-        .flatMap((s) => String(s).split(','))
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .slice(0, 20);
-      if (values.length === 0) continue;
-      // Per-dimension combine mode: `${dim}Mode=and` requires the poem to carry
-      // ALL selected values (one EXISTS each); default `or` matches ANY.
-      const andMode = String(req.query[`${dim}Mode`] || 'or').toLowerCase() === 'and';
-      if (andMode) {
-        for (const v of values) {
-          params.push(dim);
-          const dimIdx = params.length;
-          params.push(v);
-          const valIdx = params.length;
-          clauses.push(`EXISTS (
-        SELECT 1 FROM poem_categories pc
-        JOIN category_values cv ON pc.value_id = cv.id
-        JOIN category_dimensions cd ON cv.dimension_id = cd.id
-        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = $${valIdx}
-      )`);
-        }
-      } else {
-        params.push(dim);
-        const dimIdx = params.length;
-        params.push(values);
-        const valIdx = params.length;
-        clauses.push(`EXISTS (
-        SELECT 1 FROM poem_categories pc
-        JOIN category_values cv ON pc.value_id = cv.id
-        JOIN category_dimensions cd ON cv.dimension_id = cd.id
-        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = ANY($${valIdx})
-      )`);
-      }
-    }
-
-    // Family filter: match poems having ANY value that belongs to the family
-    // (cross-dimension OR), mirroring the EXISTS style above.
-    const familyRaw = req.query.family;
-    if (familyRaw) {
-      const family = String(familyRaw).trim();
-      if (family) {
-        params.push(family);
-        clauses.push(`EXISTS (
-        SELECT 1 FROM poem_categories pc
-        JOIN category_values cv ON pc.value_id = cv.id
-        JOIN category_families cf ON cv.family_id = cf.id
-        WHERE pc.poem_id = p.id AND cf.key = $${params.length}
-      )`);
-      }
-    }
-
-    // Poet passthrough: exact name or slug (mirrors /api/poems/by-poet, which
-    // matches po.name; poets also carry a UUID slug for deep links).
-    const poetRaw = req.query.poet;
-    if (poetRaw) {
-      const poet = String(poetRaw).trim();
-      if (poet && poet !== 'All') {
-        params.push(poet);
-        clauses.push(`(po.name = $${params.length} OR po.slug = $${params.length})`);
-      }
-    }
-
-    // Era passthrough: numeric era id filters po.era_id directly; a non-numeric
-    // value is resolved via eras.name (era is a poet-level facet — poems has no
-    // era column — and po is already joined below).
-    const eraRaw = req.query.era;
-    if (eraRaw != null && String(eraRaw).trim() !== '') {
-      const era = String(eraRaw).trim();
-      const eraId = parseInt(era, 10);
-      if (Number.isInteger(eraId) && String(eraId) === era) {
-        params.push(eraId);
-        clauses.push(`po.era_id = $${params.length}`);
-      } else {
-        params.push(era);
-        clauses.push(`po.era_id = (SELECT id FROM eras WHERE name = $${params.length})`);
-      }
-    }
-
-    // Century passthrough: poems.century is era-derived (integer CE).
-    const centuryRaw = req.query.century;
-    if (centuryRaw != null && String(centuryRaw).trim() !== '') {
-      const century = parseInt(centuryRaw, 10);
-      if (Number.isInteger(century)) {
-        params.push(century);
-        clauses.push(`p.century = $${params.length}`);
-      }
-    }
-
-    // Century RANGE (centuryFrom / centuryTo), mirroring the min/max pairs used
-    // for intensity and accessibility below. An era "band" in the UI is by
-    // definition a contiguous span of centuries, so a range expresses it
-    // directly instead of forcing the client to fan out one request per century.
-    //
-    // NULL century is NOT missing data: `poems.century` is a representative
-    // century derived 1:1 from the poet's era (categorization/config.py
-    // ERA_CENTURY), and the late/modern eras are deliberately left NULL because
-    // they span too many centuries to pin to one. Those poems are ~25% of the
-    // corpus, so silently dropping them from every dated band would hide a
-    // quarter of the library. `includeUndated=1` keeps them eligible alongside
-    // the range; the undated band itself is expressed as `undated=1`.
-    const centuryFrom = parseInt(req.query.centuryFrom, 10);
-    const centuryTo = parseInt(req.query.centuryTo, 10);
-    const includeUndated = /^(1|true|yes)$/i.test(String(req.query.includeUndated ?? ''));
-    const undatedOnly = /^(1|true|yes)$/i.test(String(req.query.undated ?? ''));
-    if (undatedOnly) {
-      clauses.push(`p.century IS NULL`);
-    } else if (Number.isInteger(centuryFrom) || Number.isInteger(centuryTo)) {
-      const rangeParts = [];
-      if (Number.isInteger(centuryFrom)) {
-        params.push(centuryFrom);
-        rangeParts.push(`p.century >= $${params.length}`);
-      }
-      if (Number.isInteger(centuryTo)) {
-        params.push(centuryTo);
-        rangeParts.push(`p.century <= $${params.length}`);
-      }
-      const range = rangeParts.join(' AND ');
-      clauses.push(includeUndated ? `((${range}) OR p.century IS NULL)` : `(${range})`);
-    }
-
-    // Intensity range (0-100) and difficulty/accessibility range (0-10). Each
-    // bound is independent so the UI can express a min, a max, or both.
-    const minIntensity = parseInt(req.query.minIntensity, 10);
-    if (Number.isInteger(minIntensity)) {
-      params.push(Math.max(0, Math.min(100, minIntensity)));
-      clauses.push(`p.emotional_intensity >= $${params.length}`);
-    }
-    const maxIntensity = parseInt(req.query.maxIntensity, 10);
-    if (Number.isInteger(maxIntensity)) {
-      params.push(Math.max(0, Math.min(100, maxIntensity)));
-      clauses.push(`p.emotional_intensity <= $${params.length}`);
-    }
-    const minAccessibility = parseFloat(req.query.minAccessibility);
-    if (Number.isFinite(minAccessibility)) {
-      params.push(Math.max(0, Math.min(10, minAccessibility)));
-      clauses.push(`p.accessibility_score >= $${params.length}`);
-    }
-    const maxAccessibility = parseFloat(req.query.maxAccessibility);
-    if (Number.isFinite(maxAccessibility)) {
-      params.push(Math.max(0, Math.min(10, maxAccessibility)));
-      clauses.push(`p.accessibility_score <= $${params.length}`);
-    }
+    const seed = qf ? [qf.replace(/^\s*AND\s+/i, '')] : []; // qf begins with "AND ..."
+    // Filter parsing is shared with /api/categories' scoped counts so the two
+    // endpoints can never drift — see buildCategoryFilters.
+    const built = buildCategoryFilters(req.query);
+    const params = built.params;
+    const clauses = [...seed, ...built.clauses];
 
     // Explicit id set (e.g. a user's saved poems): return exactly those poems,
     // fully categorized and in the order given, bypassing the random pick + cap.
@@ -1839,11 +2083,9 @@ const requireCuration = async (req, res, next) => {
   try {
     const uid = await getCurationUid();
     if (!uid) {
-      return res
-        .status(404)
-        .json({
-          error: 'saved-poems curation disabled (set SAVED_CURATION_EMAIL in a local .env)',
-        });
+      return res.status(404).json({
+        error: 'saved-poems curation disabled (set SAVED_CURATION_EMAIL in a local .env)',
+      });
     }
     req.curationUid = uid;
     next();

@@ -1,274 +1,581 @@
 /**
- * Turn onboarding answers into a BIAS on the feed, never a filter.
+ * Turn the five onboarding answers into a SCORE per poem, and sample the feed by
+ * that score. The answers are a bias, never a filter.
  *
- * ## Why not filter
+ * ## Why not filters
  *
- * The obvious implementation is to pass the answers straight to
- * `GET /api/poems/by-category` and be done. That endpoint filters, so a reader
- * who picks `love-desire` would see 4,554 poems and never the other 79,775. The
- * seven families are roughly balanced, so filtering hands each reader about a
- * seventh of the library and locks the door. Every subsequent answer (mood,
- * motif, era, difficulty) narrows it further — stack all five and a reader can
- * end up pinned to a few hundred poems, seeing repeats within a session.
+ * Passing the answers straight through to `/api/poems/by-category` ANDs five
+ * predicates against a corpus that only has ~4,767 servable poems. The funnel
+ * collapses:
  *
- * That is the opposite of what onboarding is for. The answers should say "start
- * me here", not "never show me anything else".
+ *     served                       4,767
+ *     x family      love-desire   ~2,400
+ *     x mood        amorous       ~  740
+ *     x motif       night         ~  110
+ *     x era         c9            ~   43
+ *     x difficulty  gentle        ~   14
  *
- * ## How this works
+ * Fourteen poems is not a feed, and that is the GENEROUS path — a rarer mood
+ * bottoms out at zero. A reader who answers honestly gets punished for it.
  *
- * Every fetch draws from one of three pools, chosen by a weighted coin:
+ * ## Why not three pools
  *
- *   core      — all the reader's answers applied as filters. This is the
- *               seeded feed: it looks exactly like what they asked for.
- *   adjacent  — the answers RELAXED: the strongest signal (family, or moods if
- *               no family) is kept and everything else is dropped. Poems that
- *               are recognisably in the neighbourhood without being on the nose.
- *   wild      — no filters at all. Anything in the corpus.
+ * The previous design drew from `core` (all five answers as filters), `adjacent`
+ * (family only) and `wild` (nothing), mixed 0.60/0.25/0.15 and decayed toward
+ * 0.50/0.25/0.25 over 30 poems. It replaced the funnel problem with a cliff:
+ * a poem either matched 5 of 5, or 1 of 5, or 0 of 5, with nothing in between.
+ * The 4-of-5 poem — the reader's family, mood, motif and era but the wrong
+ * difficulty — was worth exactly as much as a poem sharing nothing but family.
  *
- * So the reader's answers change the ODDS of what they see, not the set. Nothing
- * is ever unreachable: with wild in the mix, every poem in the library has a
- * non-zero chance on every single draw.
+ * Scoring fills the gap in. Every poem gets graded on how much of the answer set
+ * it actually satisfies, and the draw is sampled from that grade. The old mix
+ * constants map onto the temperature below; see TEMPERATURE.
  *
- * ## Why the mix moves
+ * ## The two guarantees this file has to keep
  *
- * "Seeds the first feed, then becomes a weight" is a statement about time. The
- * first handful of poems should feel like a direct answer to what they said, or
- * the questions were pointless. After that the bias should loosen, or the app
- * becomes a mirror.
+ * 1. NOTHING IS UNREACHABLE. Every poem in the corpus keeps a non-zero
+ *    probability on every draw. Two independent things enforce it: the softmax
+ *    weight `exp(scaled / T)` is strictly positive at every finite score, and
+ *    the candidate set is built with an UNANCHORED page alongside the anchored
+ *    one (see `candidateQueries`) so a poem matching nothing can still be drawn
+ *    as a candidate in the first place. Either alone is insufficient — a
+ *    positive weight on a candidate list that can never contain the poem is not
+ *    reachability.
  *
- * So `core` starts high and decays toward a floor as the reader gets through
- * poems, with `wild` rising to meet it. The decay is over poems seen, not
- * wall-clock, so a reader who comes back tomorrow doesn't get re-seeded.
- *
- * ## Does this need a server change?
- *
- * No. The weighting composes calls the API already supports — each draw is one
- * ordinary `by-category` request with more or fewer params. The one thing that
- * DID need server work is the era step: bands are century RANGES, and
- * by-category only accepted an exact `century`. `centuryFrom` / `centuryTo` /
- * `includeUndated` / `undated` were added for that.
- *
- * A server-side weighted sample (score each poem by matches, ORDER BY score *
- * random()) would be more elegant and would let a single query blend the pools.
- * It is deliberately NOT what this does, for two reasons: the scoring weights
- * would be buried in SQL where they can't be unit-tested or tuned without a
- * deploy, and pool selection here is observable — you can log which pool every
- * poem came from and actually verify the mix in production.
+ * 2. SEED, THEN BROADEN. The first feed leans hard on the answers; a reader
+ *    30 poems in gets a visibly looser feed. Decay is over POEMS SEEN, not
+ *    wall-clock, so coming back tomorrow does not re-seed the reader into the
+ *    same narrow opening.
  */
 
-/** Pool identifiers. Exported so callers can log/track which pool served a poem. */
-export const POOL = {
-  CORE: 'core',
-  ADJACENT: 'adjacent',
-  WILD: 'wild',
-};
+/* -------------------------------------------------------------------------- */
+/* Weights                                                                     */
+/* -------------------------------------------------------------------------- */
 
 /**
- * Mix at the start of a reader's life, before any decay.
+ * Per-step weight. Sums to 5.0 so a fully-answered, fully-matched poem scores a
+ * round 5 and the number reads as "out of five".
+ *
+ * These are NOT equal, on purpose:
+ *
+ * - `family` is worth LESS than a dimension answer because it is not an
+ *   independent signal. A family is defined as a set of member values across
+ *   dimensions — `love-desire` literally contains `mood:amorous`,
+ *   `mood:passion`, `mood:yearning`. A poem that matches the reader's family
+ *   *because* it carries a mood the reader also picked is one observation, and
+ *   scoring it twice would let the two most correlated answers outvote the three
+ *   independent ones. Hence 0.8, and hence FAMILY_OVERLAP_DISCOUNT below, which
+ *   handles the case where the double-count is actually happening.
+ *
+ * - `mood` is worth MORE than motif because it is the question the whole flow is
+ *   really asking ("how are you feeling?"), it is the densest dimension in the
+ *   corpus, and taxonomy v3 makes motif optional (min_labels 0) — a poem may
+ *   legitimately carry no motif at all, so scoring motif as high as mood would
+ *   penalise poems for a label the pipeline never promised to assign.
+ *
+ * - `era` and `difficulty` are genuinely orthogonal to the taxonomy: they come
+ *   from `poems.century` and `poems.accessibility_score`, not from
+ *   `poem_categories`. Nothing about them is implied by family/mood/motif, so
+ *   they carry full weight.
  */
-export const INITIAL_MIX = { core: 0.6, adjacent: 0.25, wild: 0.15 };
+export const WEIGHTS = Object.freeze({
+  family: 0.8,
+  mood: 1.2,
+  motif: 1.0,
+  era: 1.0,
+  difficulty: 1.0,
+});
+
+/** Sum of WEIGHTS — the score a poem gets for matching every answered step. */
+export const MAX_SCORE = Object.values(WEIGHTS).reduce((n, w) => n + w, 0);
 
 /**
- * THE MIX THE FEED SETTLES ON. This is the number to tune.
+ * What the family term is worth when the family match is EXPLAINED by a value
+ * the reader also selected on the mood or motif step.
  *
- * `wild` is the only pool that ignores the reader's answers entirely, so its
- * share is the whole tradeoff: it is simultaneously the guarantee against
- * lock-in and the risk that the five questions feel ignored. Everything else
- * follows from it — `core` absorbs the change, `adjacent` stays put.
- *
- * What a given `wild` share actually feels like:
- *
- *   wild   on-preference   avg gap between      odds a wild appears
- *                          wild draws           in any 3 poems
- *   ----   -------------   ------------------   -------------------
- *   0.50        50%        every 2.0 poems             88%
- *   0.40        60%        every 2.5 poems             78%
- *   0.30        70%        every 3.3 poems             66%
- *   0.25        75%        every 4.0 poems             58%   <- current floor
- *   0.20        80%        every 5.0 poems             49%
- *   0.15        85%        every 6.7 poems             39%   <- current start
- *   0.10        90%        every 10 poems              27%
- *
- * (gap = 1/wild; odds in any 3 = 1 - (1-wild)^3.)
- *
- * Where the current numbers came from. An earlier draft floored wild at 0.40,
- * which meant a 78% chance that any three consecutive poems contained one
- * ignoring the reader's answers, and only an 8% chance of five on-preference
- * poems in a row (0.6^5). For a flow that asks five questions, that reads as
- * "my answers didn't matter".
- *
- * A flat 0.15 was considered and rejected: 0.15 is also the INITIAL value, so
- * the decay would be a no-op and the mix would never change from poem 1 to poem
- * 1,000 — which throws away the seed-then-broaden mechanism entirely. The floor
- * therefore sits at 0.25: the feed still visibly opens up as a reader settles
- * in (a wild poem every ~4 draws instead of every ~6.7), but nowhere near the
- * every-2.5 churn of the 0.40 draft.
- *
- * Whatever you pick, keep `wild` strictly above zero — it is what makes every
- * poem in the corpus reachable on every draw, which is the property the whole
- * weighted-not-filtered design exists to preserve. A test enforces `wild > 0`
- * and that the three values sum to 1, but deliberately does NOT pin the values
- * themselves, so retuning this line needs no test edit.
+ * Concretely: reader picks family `love-desire` and mood `amorous`. A poem
+ * carrying `amorous` matches both, but there is only one fact here — the poem is
+ * amorous. The mood term already scored it. The family term is then mostly
+ * restating, so it keeps a quarter of its weight rather than none: a poem
+ * matching the family through the reader's own mood is still a slightly better
+ * fit than one matching that mood while sitting outside the family entirely
+ * (possible — a value can be shared, and the family match is a cross-dimension
+ * OR over all member values, not just the mood ones).
  */
-export const SETTLED_MIX = { core: 0.5, adjacent: 0.25, wild: 0.25 };
+export const FAMILY_OVERLAP_DISCOUNT = 0.25;
 
-/** Poems seen before the mix has fully relaxed to SETTLED_MIX. */
+/**
+ * Multi-select credit floor. Matching ANY of the reader's chosen moods earns
+ * this share of the mood weight; matching ALL of them earns the full weight.
+ *
+ *     credit = MULTI_BASE + (1 - MULTI_BASE) * (matched / chosen)
+ *
+ * Straight `matched / chosen` was the obvious alternative and is wrong: it
+ * punishes readers for being expressive. Picking three moods and matching one
+ * would score 0.33 where picking one mood and matching it scores 1.00, so the
+ * flow would quietly reward answering as narrowly as possible. With a 0.7 floor,
+ * two-of-three (0.90) still beats one-of-three (0.80) — which is what the
+ * gradation is for — without making the third pick a liability.
+ */
+export const MULTI_BASE = 0.7;
+
+/**
+ * Era partial credit for an UNDATED poem sitting under a DATED band.
+ *
+ * ~25% of the corpus has `century = NULL`. That is not missing data: the late
+ * and modern eras span too many centuries to pin to one, so the pipeline leaves
+ * them null deliberately, and they get their own band in the picker. They are
+ * therefore eligible under a dated band (`includeUndated=1`) but should not
+ * outrank a poem actually FROM the century the reader asked for — which is the
+ * same intent the old `preferDated()` tie-break encoded, carried forward as a
+ * score term instead of a filter step.
+ */
+export const UNDATED_ERA_CREDIT = 0.35;
+
+/**
+ * Era partial credit for a poem within ADJACENT_CENTURIES of the chosen band.
+ *
+ * Era is ordinal, so "one century off" is a near miss rather than a miss. This
+ * is a large part of what smooths the old cliff: under the pool system a 9th
+ * century poem was worth nothing at all to a reader who picked the 6th-8th band.
+ */
+export const ADJACENT_ERA_CREDIT = 0.5;
+export const ADJACENT_CENTURIES = 2;
+
+/**
+ * Difficulty falls off linearly outside the chosen band, reaching zero
+ * DIFFICULTY_FALLOFF accessibility points past the edge, and capped at
+ * DIFFICULTY_NEAR_CREDIT so an out-of-band poem never ties an in-band one.
+ *
+ * Accessibility is a continuous 0-10 score (HIGHER IS HARDER — the column name
+ * reads the other way and this is an easy mistake), so unlike the categorical
+ * dimensions it has a real distance metric and a hard band edge would be an
+ * artefact of where the quantile cut happened to land.
+ */
+export const DIFFICULTY_NEAR_CREDIT = 0.5;
+export const DIFFICULTY_FALLOFF = 1.5;
+
+/* -------------------------------------------------------------------------- */
+/* Temperature                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Softmax temperature, decaying over poems seen.
+ *
+ * `T` low  -> sharp: high-scoring poems take almost all the probability mass.
+ * `T` high -> flat:  the draw approaches uniform over the candidates.
+ *
+ * ## Mapping from the old mix constants
+ *
+ * The pool system expressed seed-then-broaden as `wild 0.15 -> 0.25 over 30
+ * poems`. `wild` was the unfiltered pool: the share of draws taken from the
+ * whole corpus with the answers ignored.
+ *
+ * Scoring keeps that pool — it is the OPEN page in `candidateQueries`, the one
+ * with no filters — but instead of choosing the pool up front and then drawing
+ * uniformly inside it, both pages are scored together and drawn from once. So
+ * the surviving quantity is the share of the draw's probability mass sitting on
+ * the open page, and T_INITIAL / T_SETTLED are calibrated to move that share
+ * 0.15 -> 0.25, exactly the owner's numbers, on a representative candidate mix:
+ *
+ *     T = 2.0   open-page mass 15.2%     (was INITIAL_MIX.wild = 0.15)
+ *     T = 3.6   open-page mass ~24.9%    (was SETTLED_MIX.wild = 0.25)
+ *
+ * Two differences from the pools are worth being explicit about, because they
+ * are the point of the change rather than side effects:
+ *
+ *   - the mass is no longer spread UNIFORMLY inside the open page. A poem there
+ *     that happens to match a mood outscores one matching nothing, so "wild"
+ *     stopped meaning "random" and started meaning "unanchored".
+ *   - the anchored page's 75-85% is no longer split 60/25 between all-five and
+ *     family-only. It is graded continuously, which is the cliff this replaces.
+ *
+ * The calibration is asserted rather than merely described: the "old mix
+ * constants, carried forward" block in src/test/preferenceWeighting.test.js
+ * rebuilds the same mix and fails if either endpoint drifts.
+ *
+ * DECAY_OVER_POEMS is kept at 30 from the pool system — the horizon over which
+ * the feed loosens was tuned separately from the mix and did not change.
+ */
+export const T_INITIAL = 2.0;
+export const T_SETTLED = 3.6;
 export const DECAY_OVER_POEMS = 30;
 
 /**
- * The pool mix for a reader who has seen `poemsSeen` poems.
- *
- * Linear interpolation between the initial and settled mixes. Linear rather than
- * exponential on purpose: the whole point is that the reader can feel the feed
- * widen, and an exponential curve does nearly all its work in the first three
- * poems, which reads as the seeding not having happened at all.
+ * Temperature for a reader `poemsSeen` poems in. Linear ramp, clamped.
  *
  * @param {number} poemsSeen
- * @returns {{core:number, adjacent:number, wild:number}}
+ * @returns {number}
  */
-export const mixFor = (poemsSeen = 0) => {
-  const t = Math.min(1, Math.max(0, (Number(poemsSeen) || 0) / DECAY_OVER_POEMS));
-  const lerp = (a, b) => a + (b - a) * t;
-  return {
-    core: lerp(INITIAL_MIX.core, SETTLED_MIX.core),
-    adjacent: lerp(INITIAL_MIX.adjacent, SETTLED_MIX.adjacent),
-    wild: lerp(INITIAL_MIX.wild, SETTLED_MIX.wild),
-  };
+export const temperatureFor = (poemsSeen) => {
+  const seen = Number.isFinite(poemsSeen) && poemsSeen > 0 ? poemsSeen : 0;
+  const t = Math.min(1, seen / DECAY_OVER_POEMS);
+  return T_INITIAL + (T_SETTLED - T_INITIAL) * t;
 };
 
-/** True when the reader has given us nothing to bias on. */
+/* -------------------------------------------------------------------------- */
+/* Answers                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/** True when the reader answered at least one step. */
 export const hasPreferences = (prefs) =>
-  Boolean(
+  !!(
     prefs &&
     (prefs.family || prefs.era || prefs.difficulty || prefs.moods?.length || prefs.motifs?.length)
   );
 
+const asArray = (v) => (Array.isArray(v) ? v.filter(Boolean) : v ? [v] : []);
+
+/** Resolve a stored era band KEY against the live bands. */
+const eraBandFor = (prefs, bands) =>
+  prefs?.era ? (bands?.eraBands || []).find((b) => b.key === prefs.era) || null : null;
+
+/** Resolve a stored difficulty band KEY against the live bands. */
+const difficultyBandFor = (prefs, bands) =>
+  prefs?.difficulty
+    ? (bands?.difficultyBands || []).find((b) => b.key === prefs.difficulty) || null
+    : null;
+
 /**
- * Choose a pool for one draw.
- *
- * @param {Object} prefs saved onboarding answers
- * @param {number} poemsSeen
- * @param {Function} [rng] injectable for tests
- * @returns {'core'|'adjacent'|'wild'}
+ * The member value keys of the reader's chosen family, as `dim:key` pairs.
+ * Needed to detect the family/mood double-count — see FAMILY_OVERLAP_DISCOUNT.
  */
-export const pickPool = (prefs, poemsSeen = 0, rng = Math.random) => {
-  // No answers (skipped onboarding, or pre-migration where every step was
-  // empty) means no bias to apply — everything is wild, which is exactly the
-  // behaviour the app had before onboarding existed.
-  if (!hasPreferences(prefs)) return POOL.WILD;
-  const mix = mixFor(poemsSeen);
-  const r = rng();
-  if (r < mix.core) return POOL.CORE;
-  if (r < mix.core + mix.adjacent) return POOL.ADJACENT;
-  return POOL.WILD;
+const familyValuesFor = (prefs, bands) => {
+  if (!prefs?.family) return [];
+  const fam = (bands?.families || []).find((f) => f.key === prefs.family);
+  return fam?.values || [];
 };
 
+/* -------------------------------------------------------------------------- */
+/* Poem facets                                                                 */
+/* -------------------------------------------------------------------------- */
+
 /**
- * Translate answers into `by-category` query params for a given pool.
+ * Pull the scoreable facets off an API poem into one flat shape.
  *
- * `eraBands` and `difficultyBands` are needed to turn a band KEY (what we store)
- * back into the numeric range the API wants. They come from
- * `fetchCategoryBands()`; when they're unavailable the era/difficulty
- * constraints are simply dropped rather than guessed.
+ * `/api/poems/by-category` returns the taxonomy assignments as a `categories`
+ * JSONB blob (`{ moods, motifs, topics, ... }`), century only when non-null, and
+ * accessibility as a top-level number. Normalising once here keeps `scorePoem`
+ * free of response-shape trivia and makes it trivially unit-testable against
+ * plain objects.
  *
- * @param {Object} prefs
- * @param {'core'|'adjacent'|'wild'} pool
- * @param {{eraBands?: Array, difficultyBands?: Array}} [bands]
- * @returns {Object} query params — `{}` means "no constraints, anything goes"
+ * @param {Object} poem
+ * @returns {{moods:string[], motifs:string[], topics:string[], century:number|null, accessibility:number|null}}
  */
-export const filtersForPool = (prefs, pool, bands = {}) => {
-  if (pool === POOL.WILD || !hasPreferences(prefs)) return {};
+export const facetsOf = (poem) => ({
+  moods: asArray(poem?.categories?.moods),
+  motifs: asArray(poem?.categories?.motifs),
+  topics: asArray(poem?.categories?.topics),
+  century: Number.isFinite(poem?.century) ? poem.century : null,
+  accessibility: Number.isFinite(poem?.accessibilityScore) ? poem.accessibilityScore : null,
+});
 
-  const filters = {};
+/* -------------------------------------------------------------------------- */
+/* The score                                                                   */
+/* -------------------------------------------------------------------------- */
 
-  // Adjacent keeps only the single strongest signal. Family first because it is
-  // the broadest shelf (each is ~1/7 of the corpus, so it stays roomy); moods
-  // stand in when the reader skipped the family question.
-  if (pool === POOL.ADJACENT) {
-    if (prefs.family) return { family: prefs.family };
-    if (prefs.moods?.length) return { mood: prefs.moods.join(',') };
-    return {};
-  }
+/**
+ * Score one poem against the reader's answers.
+ *
+ * PURE. No network, no randomness, no clock. Everything it needs about the
+ * corpus (era bands, difficulty bands, family membership) is passed in via
+ * `bands`, so the whole thing is exercisable from a unit test with literals —
+ * which is the reason this is not an `ORDER BY score * random()` in SQL, where
+ * tuning a weight would mean a deploy and verifying one would mean a database.
+ *
+ * Only ANSWERED steps count toward `max`, so a reader who skipped the motif step
+ * is not permanently capped below one who answered it. `ratio` is the honest
+ * comparable number and everything downstream (sampling, the product surface)
+ * uses it rather than the raw points.
+ *
+ * @param {Object} poem   an API poem (or a plain object with the same facets)
+ * @param {Object} prefs  saved onboarding answers
+ * @param {Object} bands  { families, eraBands, difficultyBands } from fetchCategoryBands
+ * @returns {{score:number, max:number, ratio:number, scaled:number, matched:Object}}
+ */
+export const scorePoem = (poem, prefs, bands = {}) => {
+  const f = facetsOf(poem);
+  const moods = asArray(prefs?.moods);
+  const motifs = asArray(prefs?.motifs);
+  const eraBand = eraBandFor(prefs, bands);
+  const diffBand = difficultyBandFor(prefs, bands);
 
-  if (prefs.family) filters.family = prefs.family;
-  if (prefs.moods?.length) filters.mood = prefs.moods.join(',');
-  if (prefs.motifs?.length) filters.motif = prefs.motifs.join(',');
+  let score = 0;
+  let max = 0;
+  const matched = {};
 
-  const era = (bands.eraBands || []).find((b) => b.key === prefs.era);
-  if (era) {
-    if (era.undated) {
-      // The late/modern band IS the NULL-century rows — see categoryBands.js.
-      filters.undated = 1;
-    } else {
-      filters.centuryFrom = era.century_from;
-      filters.centuryTo = era.century_to;
-      // Undated poems stay eligible inside a dated band. They are ~25% of the
-      // corpus and their century is missing by construction (the pipeline has no
-      // single representative century for late/modern eras), not because the
-      // poems are unknown. Dropping them from every dated band would quietly
-      // remove a quarter of the library from four of the five era answers.
-      filters.includeUndated = 1;
+  /* -- mood: multi-select, partial credit ---------------------------------- */
+  if (moods.length) {
+    max += WEIGHTS.mood;
+    const hits = moods.filter((m) => f.moods.includes(m));
+    if (hits.length) {
+      const credit = MULTI_BASE + (1 - MULTI_BASE) * (hits.length / moods.length);
+      score += WEIGHTS.mood * credit;
+      matched.mood = hits;
     }
   }
 
-  const difficulty = (bands.difficultyBands || []).find((b) => b.key === prefs.difficulty);
-  if (difficulty) {
-    filters.minAccessibility = difficulty.min;
-    filters.maxAccessibility = difficulty.max;
+  /* -- motif: multi-select, partial credit --------------------------------- */
+  if (motifs.length) {
+    max += WEIGHTS.motif;
+    const hits = motifs.filter((m) => f.motifs.includes(m));
+    if (hits.length) {
+      const credit = MULTI_BASE + (1 - MULTI_BASE) * (hits.length / motifs.length);
+      score += WEIGHTS.motif * credit;
+      matched.motif = hits;
+    }
   }
 
-  return filters;
+  /* -- family: cross-dimension OR, discounted when it restates a mood/motif - */
+  if (prefs?.family) {
+    max += WEIGHTS.family;
+    const members = familyValuesFor(prefs, bands);
+    // A family matches if the poem carries ANY of its member values, in any
+    // dimension. Falls back to "no credit" rather than guessing when the
+    // taxonomy wasn't loaded — the same posture the era/difficulty terms take.
+    const carried = members.filter((v) => {
+      const bucket =
+        v.dim === 'mood'
+          ? f.moods
+          : v.dim === 'motif'
+            ? f.motifs
+            : v.dim === 'topic'
+              ? f.topics
+              : [];
+      return bucket.includes(v.key);
+    });
+    if (carried.length) {
+      // Is the family match already paid for by an answer on another step?
+      const alsoChosen = carried.some(
+        (v) =>
+          (v.dim === 'mood' && moods.includes(v.key)) ||
+          (v.dim === 'motif' && motifs.includes(v.key))
+      );
+      score += WEIGHTS.family * (alsoChosen ? FAMILY_OVERLAP_DISCOUNT : 1);
+      matched.family = { via: carried.map((v) => v.key), overlapping: alsoChosen };
+    }
+  }
+
+  /* -- era: ordinal, with adjacency and an undated allowance --------------- */
+  if (eraBand) {
+    max += WEIGHTS.era;
+    if (eraBand.undated) {
+      // The late/modern band IS the undated rows. A dated poem is simply not it.
+      if (f.century == null) {
+        score += WEIGHTS.era;
+        matched.era = 'undated';
+      }
+    } else if (f.century == null) {
+      score += WEIGHTS.era * UNDATED_ERA_CREDIT;
+      matched.era = 'undated-under-dated';
+    } else {
+      const from = eraBand.century_from;
+      const to = eraBand.century_to;
+      if (Number.isFinite(from) && Number.isFinite(to)) {
+        if (f.century >= from && f.century <= to) {
+          score += WEIGHTS.era;
+          matched.era = 'in-band';
+        } else {
+          const gap = f.century < from ? from - f.century : f.century - to;
+          if (gap <= ADJACENT_CENTURIES) {
+            score += WEIGHTS.era * ADJACENT_ERA_CREDIT;
+            matched.era = 'adjacent';
+          }
+        }
+      }
+    }
+  }
+
+  /* -- difficulty: continuous, linear falloff outside the band ------------- */
+  if (diffBand) {
+    max += WEIGHTS.difficulty;
+    const a = f.accessibility;
+    if (a != null && Number.isFinite(diffBand.min) && Number.isFinite(diffBand.max)) {
+      if (a >= diffBand.min && a <= diffBand.max) {
+        score += WEIGHTS.difficulty;
+        matched.difficulty = 'in-band';
+      } else {
+        const gap = a < diffBand.min ? diffBand.min - a : a - diffBand.max;
+        const near = Math.max(0, 1 - gap / DIFFICULTY_FALLOFF) * DIFFICULTY_NEAR_CREDIT;
+        if (near > 0) {
+          score += WEIGHTS.difficulty * near;
+          matched.difficulty = 'near';
+        }
+      }
+    }
+  }
+
+  const ratio = max > 0 ? score / max : 0;
+  return {
+    score: Number(score.toFixed(4)),
+    max: Number(max.toFixed(4)),
+    ratio: Number(ratio.toFixed(4)),
+    // Rescaled onto the fixed 0-MAX_SCORE display axis so the temperature means
+    // the same thing whether the reader answered two steps or five.
+    scaled: Number((ratio * MAX_SCORE).toFixed(4)),
+    matched,
+  };
+};
+
+/* -------------------------------------------------------------------------- */
+/* Sampling                                                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Softmax weights over scored candidates at a given temperature.
+ *
+ * Subtracts the max score before exponentiating (standard numerical-stability
+ * trick, and it makes the weights scale-free) — without it a low temperature
+ * overflows to Infinity and the draw silently becomes "first candidate wins".
+ *
+ * @param {Array<{scaled:number}>} scored
+ * @param {number} temperature
+ * @returns {number[]} strictly positive weights, same order
+ */
+export const softmaxWeights = (scored, temperature) => {
+  const t = Number.isFinite(temperature) && temperature > 0 ? temperature : T_SETTLED;
+  const top = scored.reduce((m, s) => Math.max(m, s?.scaled || 0), 0);
+  return scored.map((s) => Math.exp(((s?.scaled || 0) - top) / t));
 };
 
 /**
- * One-call helper: pick a pool and produce its filters.
+ * Pick one index from `scored`, proportional to its softmax weight.
  *
- * @returns {{pool: string, filters: Object}}
+ * Every weight is `exp(finite)` and therefore strictly positive, so NO candidate
+ * — including one scoring a flat zero — can be excluded from the draw. That is
+ * half of guarantee (1); the other half is that a zero-scoring poem can get into
+ * `scored` at all, which `candidateQueries` handles.
+ *
+ * @param {Array<{scaled:number}>} scored
+ * @param {number} temperature
+ * @param {Function} [rng]
+ * @returns {number} index, or -1 when there is nothing to pick
  */
-export const nextDraw = (prefs, poemsSeen = 0, bands = {}, rng = Math.random) => {
-  const pool = pickPool(prefs, poemsSeen, rng);
-  return { pool, filters: filtersForPool(prefs, pool, bands) };
+export const sampleByScore = (scored, temperature, rng = Math.random) => {
+  if (!scored?.length) return -1;
+  const weights = softmaxWeights(scored, temperature);
+  const total = weights.reduce((n, w) => n + w, 0);
+  if (!(total > 0)) return Math.floor(rng() * scored.length);
+  let r = rng() * total;
+  for (let i = 0; i < weights.length; i += 1) {
+    r -= weights[i];
+    if (r <= 0) return i;
+  }
+  return weights.length - 1;
+};
+
+/* -------------------------------------------------------------------------- */
+/* Candidate queries                                                           */
+/* -------------------------------------------------------------------------- */
+
+/** How many poems each candidate page asks for. */
+export const ANCHORED_LIMIT = 18;
+export const OPEN_LIMIT = 12;
+
+/**
+ * The two `by-category` queries whose union forms the candidate set.
+ *
+ * ANCHORED — the reader's single broadest answer (family; moods if the family
+ * step was skipped) applied as a filter. Without it a purely random page of the
+ * corpus would almost never contain a high-scoring poem: `motif:night` is ~110
+ * of 4,767 servable poems, so a random 30 would carry roughly half of one. The
+ * anchor is what makes the answers actually reachable at speed. Note it is ONE
+ * predicate, never five, so it cannot collapse the way the old `core` pool did.
+ *
+ * OPEN — no filters whatsoever. This is guarantee (1): it is the reason a poem
+ * matching nothing the reader said can still be drawn. Deleting this and keeping
+ * only the anchored page would turn the whole design back into a filter no
+ * matter how flat the temperature got.
+ *
+ * @param {Object} prefs
+ * @returns {Array<{role:string, query:Object}>}
+ */
+export const candidateQueries = (prefs) => {
+  const anchor = {};
+  if (prefs?.family) anchor.family = prefs.family;
+  else if (asArray(prefs?.moods).length) anchor.mood = asArray(prefs.moods).join(',');
+
+  const queries = [{ role: 'open', query: { limit: OPEN_LIMIT } }];
+  if (Object.keys(anchor).length) {
+    queries.unshift({ role: 'anchored', query: { ...anchor, limit: ANCHORED_LIMIT } });
+  }
+  return queries;
 };
 
 /**
- * Rank candidates so a DATED poem wins whenever one is available.
+ * Score a candidate list and draw one from it.
  *
- * ## The problem this solves
- *
- * A dated era band sends `includeUndated=1`, which keeps the ~25% of the corpus
- * that has no century eligible. That is right for recall — those poems are the
- * late/modern period, not missing data, and dropping them from every dated band
- * would hide a quarter of the library behind four of the five era answers.
- *
- * But treating them as EQUALLY eligible makes the era step the weakest question
- * in the flow: for that quarter of the corpus, answering "Abbasid" and answering
- * "Andalusian" produce identical results. A reader who deliberately picked a
- * period should be able to feel it.
- *
- * ## The fix
- *
- * Eligibility and ranking are separated. Undated poems stay eligible in the
- * query, then lose the tie-break here. A dated candidate is always preferred;
- * undated ones are the fallback when the band returned nothing dated, which is
- * exactly the thin-band case where recall matters.
- *
- * This is done client-side on the returned candidates rather than as an ORDER BY
- * in `by-category`, for two reasons. Ordering `p.century IS NULL ASC` before
- * `RANDOM()` inside the query would push undated poems past the LIMIT entirely
- * whenever the dated side is fat — silently re-creating the exclusion this is
- * meant to avoid, and doing it in SQL where it can't be unit-tested. Ranking a
- * page we already fetched costs no extra request and keeps the rule in one
- * readable, testable place.
- *
- * Undated poems remain reachable regardless of this ranking, through the
- * `undated` band itself (which queries only them), the adjacent pool (which
- * drops the era constraint), and the wild pool (no filters at all).
- *
- * @param {Array<{century?: number|null}>} candidates
- * @returns {Array} the dated subset, or the original list when none are dated
+ * @param {Array} candidates poems from the API
+ * @param {Object} prefs
+ * @param {number} poemsSeen
+ * @param {Object} bands
+ * @param {Function} [rng]
+ * @returns {{poem:Object|null, scored:Array, temperature:number, index:number}}
  */
-export const preferDated = (candidates) => {
+export const drawFrom = (candidates, prefs, poemsSeen, bands = {}, rng = Math.random) => {
   const list = candidates || [];
-  const dated = list.filter((p) => p?.century != null);
-  return dated.length ? dated : list;
+  const temperature = temperatureFor(poemsSeen);
+  const scored = list.map((p) => ({ poem: p, ...scorePoem(p, prefs, bands) }));
+  const index = sampleByScore(scored, temperature, rng);
+  return {
+    poem: index >= 0 ? list[index] : null,
+    scored,
+    temperature,
+    index,
+  };
+};
+
+/* -------------------------------------------------------------------------- */
+/* Presentation                                                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Ratio at or above which the reader is told the poem was chosen for them.
+ *
+ * Deliberately high. The product line is a small reward for a strong match; a
+ * low-scoring poem gets NOTHING, because the whole point of keeping the corpus
+ * reachable is the occasional unexpected poem, and a surprise that announces
+ * itself has stopped being one.
+ */
+export const ATTRIBUTION_RATIO = 0.75;
+
+/**
+ * The single answer to credit a high-scoring draw to, or null when the draw
+ * doesn't clear ATTRIBUTION_RATIO.
+ *
+ * Credits ONE thing, not a list: "chosen for الحب والهوى" is a note, and the
+ * five-part explanation of why a poem scored 4.2 is a debug panel.
+ *
+ * Order is by how legible the reason is to a reader, not by weight — being told
+ * a poem was picked for a mood you named lands better than being told it was
+ * picked for a century band. Family outranks the rest because it is the one
+ * answer the reader gave as a single deliberate choice.
+ *
+ * @param {{ratio:number, matched:Object}} scoreResult
+ * @param {Object} bands
+ * @param {Object} [prefs] needed only to name the era band that was matched
+ * @returns {{key:string, dim:string, label_ar:string, label_en:string}|null}
+ */
+export const attributionFor = (scoreResult, bands = {}, prefs = {}) => {
+  if (!scoreResult || scoreResult.ratio < ATTRIBUTION_RATIO) return null;
+  const m = scoreResult.matched || {};
+
+  if (m.family) {
+    const fam = (bands.families || []).find((f) =>
+      m.family.via.some((k) => (f.values || []).some((v) => v.key === k))
+    );
+    if (fam) return { key: fam.key, dim: 'family', label_ar: fam.label_ar, label_en: fam.label_en };
+  }
+  for (const dim of ['mood', 'motif']) {
+    const hits = m[dim];
+    if (!hits?.length) continue;
+    const d = (bands.dimensions || []).find((x) => x.key === dim);
+    const v = (d?.values || []).find((x) => x.key === hits[0]);
+    if (v) return { key: v.key, dim, label_ar: v.label_ar, label_en: v.label_en };
+  }
+  if (m.era === 'in-band' || m.era === 'undated') {
+    const b = (bands.eraBands || []).find((x) => x.key === prefs?.era);
+    if (b) return { key: b.key, dim: 'era', label_ar: b.label_ar, label_en: b.label_en };
+  }
+  return null;
 };

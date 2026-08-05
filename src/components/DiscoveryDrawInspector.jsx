@@ -572,8 +572,7 @@ const DiscoveryDrawInspector = () => {
               <div
                 ref={tableScrollRef}
                 className={`${MONO} px-4 py-1 overflow-y-auto`}
-                style={{ overscrollBehavior: 'contain' }}
-                style={{ maxHeight: '34vh' }}
+                style={{ maxHeight: '34vh', overscrollBehavior: 'contain' }}
               >
                 {rows.map((s) => {
                   return (

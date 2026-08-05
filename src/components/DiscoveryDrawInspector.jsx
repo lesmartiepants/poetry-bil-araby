@@ -275,7 +275,7 @@ const FeedQueue = ({ feed, hereIndex, border }) => {
   return (
     <div className={`${MONO} px-4 py-2 border-b ${border} flex-none`}>
       <div className="opacity-40 mb-1">feed queue · ◆ = you are here · * = ranked, not sampled</div>
-      <div className="flex gap-1 overflow-x-auto pb-0.5">
+      <div className="flex gap-1 overflow-x-auto pb-0.5" style={{ overscrollBehavior: 'contain' }}>
         {feed.map((f, i) => {
           const here = i === hereIndex;
           return (
@@ -418,6 +418,10 @@ const DiscoveryDrawInspector = () => {
         role="dialog"
         aria-label="Discovery draw inspector"
         aria-hidden={!open}
+        // PoemFeed binds its pointer listeners on `window`, so without this a drag
+        // inside the panel swipes the poem out from under you while you are reading
+        // why that poem was picked. See the matching guard in PoemFeed.jsx.
+        data-owns-gesture=""
         className={`fixed z-[200] left-2 right-2 md:left-auto md:w-[560px] flex flex-col rounded-2xl border ${theme.border} ${surface} backdrop-blur-xl transition-all duration-200 ${
           open ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
         }`}
@@ -515,7 +519,7 @@ const DiscoveryDrawInspector = () => {
                 score summary stays pinned because it is the answer, the footer
                 stays pinned because it is a legend, and everything between
                 them is content. */}
-            <div className="overflow-y-auto flex-1 min-h-0">
+            <div className="overflow-y-auto flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
               <FeedQueue feed={feed} hereIndex={hereInFeed} border={theme.border} />
 
               {/* What the reader asked for, and what was actually requested for it. */}
@@ -568,6 +572,7 @@ const DiscoveryDrawInspector = () => {
               <div
                 ref={tableScrollRef}
                 className={`${MONO} px-4 py-1 overflow-y-auto`}
+                style={{ overscrollBehavior: 'contain' }}
                 style={{ maxHeight: '34vh' }}
               >
                 {rows.map((s) => {

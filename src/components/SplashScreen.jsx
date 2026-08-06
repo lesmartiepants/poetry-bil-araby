@@ -675,7 +675,7 @@ const SplashScreen = () => {
                   backfaceVisibility: 'hidden',
                 }}
               >
-                84,000 verses await
+                9,073 poems await
               </div>
               <div
                 style={{
@@ -694,7 +694,7 @@ const SplashScreen = () => {
                 lang="ar"
                 dir="rtl"
               >
-                أكثر من 84,000 بيت بانتظارك
+                9,073 قصيدة بانتظارك
               </div>
               <button
                 data-splash-finish="true"

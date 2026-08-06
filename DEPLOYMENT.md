@@ -77,10 +77,15 @@ pg_restore --clean --no-owner --no-acl \
 1. In Supabase dashboard, go to **Table Editor**
 2. You should see tables: `poems`, `poets`, `themes`
 3. Check poem count:
+
    ```sql
    SELECT COUNT(*) FROM poems;
-   -- Should return: 84329
+   -- Should return: 9073
    ```
+
+   That 9,073 is the curated corpus: the ~85,000-poem Qafiyah source archive was whittled
+   down on the way in. A narrower subset (4,767) is what the API actually serves, because
+   of the request-time `SERVING` filters in `server.js`. See "The Library" in `README.md`.
 
 ---
 
@@ -133,11 +138,19 @@ pg_restore --clean --no-owner --no-acl \
 2. Test in browser or terminal:
 
    ```bash
-   # Health check:
+   # Health check (lightweight, no DB query):
    curl https://your-service-name.onrender.com/api/health
 
    # Should return:
-   # {"status":"ok","database":"connected","totalPoems":84329}
+   # {"status":"ok","uptime":123.4,"commit":"<deployed git SHA>"}
+
+   # Health check with database connectivity and corpus counts:
+   curl https://your-service-name.onrender.com/api/health/full
+
+   # Should return:
+   # {"status":"ok","database":"connected","totalPoems":9073,"servedPoems":4767,"uptime":123.4}
+   #   totalPoems  = the curated corpus (~85k Qafiyah source, curated down to 9,073)
+   #   servedPoems = the subset passing the SERVING filters in server.js
 
    # Random poem:
    curl https://your-service-name.onrender.com/api/poems/random
@@ -199,7 +212,7 @@ The backend now keeps itself alive automatically:
 1. Check Render logs for:
    ```
    🔄 Starting keep-alive self-ping (every 9-13 minutes, initial: 11 min)
-   ✓ Keep-alive ping successful - 84329 poems in database
+   ✓ Keep-alive ping successful - 9073 poems in database
    ```
 2. This runs automatically in production mode (no user action needed)
 3. Works 24/7 even when no users are active
@@ -348,7 +361,7 @@ shape changes there, and test migrations somewhere else.
 ┌─────────────────────────────────────────────┐
 │  Supabase (Database - FREE)                 │
 │  - PostgreSQL 17                            │
-│  - 84,329 poems                             │
+│  - 9,073 curated poems (4,767 served)       │
 │  - Design review tables                     │
 │  - Auth tables (optional)                   │
 │  - Pooler: aws-N-region.pooler.supabase.com │

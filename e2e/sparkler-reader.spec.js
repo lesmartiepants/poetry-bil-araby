@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 /**
  * Sparkler Reader E2E — the teleprompter reveal inside the vertical feed.
  *
- * Verifies: poem renders in the feed, tapping reveals more lines (4-line sliding window),
+ * Verifies: poem renders in the feed, "Next Verse" reveals more lines (4-line sliding window),
  * the draggable scrubber seeks without navigating poems, the inline insight end-state, and
  * the reduced-motion path. All backend/AI calls are mocked for determinism.
  */
@@ -90,6 +90,27 @@ async function loadFeed(page) {
 
 const revealedCount = (page) => page.locator('[data-revealed="true"]').count();
 
+// The reveal is buttons-only: PoemReader wires advance() to the "Next Verse" button in
+// ReaderActions, and the poem body itself is deliberately NOT a tap target
+// ("buttons-only — the poem body no longer advances on tap", PoemReader.jsx).
+const nextVerse = (page) => page.getByRole('button', { name: 'Next Verse' }).first();
+
+// controller.start() auto-ignites the first pair (line 0, 250ms gap, line 1) on its own. Any
+// assertion of the form "act, then expect revealedCount to grow" is meaningless until that
+// settles — otherwise the auto-reveal's own second ignite lands during the action window and
+// the assertion passes without the action having done anything. Poll until two consecutive
+// samples agree, then use that as the baseline.
+async function settledRevealed(page) {
+  let last = -1;
+  for (let i = 0; i < 40; i++) {
+    const n = await revealedCount(page);
+    if (n === last && n > 0) return n;
+    last = n;
+    await page.waitForTimeout(400);
+  }
+  return last;
+}
+
 test.describe('Sparkler Reader', () => {
   test.beforeEach(async ({ page }) => {
     await setupMocks(page);
@@ -105,28 +126,29 @@ test.describe('Sparkler Reader', () => {
     await expect(page.locator('p[dir="rtl"]').first()).toContainText(/[؀-ۿ]/);
   });
 
-  test('tap reveals more lines (sliding window)', async ({ page }) => {
+  test('Next Verse reveals more lines (sliding window)', async ({ page }) => {
     test.setTimeout(35000);
     // PoemReader's REDUCED_MOTION flag is read once at module load from matchMedia. Without this,
     // the title intro runs as a real GSAP timeline (~3s of opacity/y/scale tweens on the poem
     // meta) before calling controller.start(), which is what actually kicks off the reveal engine
     // this test exercises. In headless Chromium that timeline's rAF-driven ticker doesn't reliably
     // advance (the page never reaches `ctrl.start()` even after a 20s poll), so the test isn't
-    // testing tap/reveal behavior at all — it's testing whether a background tab's GSAP ticker
+    // testing reveal behavior at all — it's testing whether a background tab's GSAP ticker
     // happens to tick. Force reduced motion so the intro collapses to its synchronous path and
     // controller.start() fires immediately, same as the "reduced motion" test below.
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loadFeed(page);
-    const stage = page.locator('[data-testid="sparkler-stage"]').first();
     await expect.poll(() => revealedCount(page), { timeout: 20000 }).toBeGreaterThanOrEqual(1);
-    const before = await revealedCount(page);
-    await stage.click({ position: { x: 40, y: 30 } });
+    // Baseline AFTER the auto-reveal of the opening pair has settled, so the growth below is
+    // attributable to the button and nothing else.
+    const before = await settledRevealed(page);
+    await nextVerse(page).click();
     await expect.poll(() => revealedCount(page), { timeout: 8000 }).toBeGreaterThan(before);
   });
 
   test('scrubbing seeks the reveal without navigating poems', async ({ page }) => {
     test.setTimeout(35000);
-    // See the note in the sibling "tap reveals" test above — without forcing reduced motion, the
+    // See the note in the sibling "Next Verse reveals" test above — without forcing reduced motion, the
     // real GSAP title-intro timeline never completes in headless Chromium and controller.start()
     // is never reached, so revealedCount stays 0 for the whole poll regardless of scrub behavior.
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -148,19 +170,25 @@ test.describe('Sparkler Reader', () => {
     expect(page.url()).toBe(urlBefore);
   });
 
-  test('reduced motion still reveals on tap', async ({ page }) => {
+  test('reduced motion reveals the whole poem via Next Verse', async ({ page }) => {
     // Reveal poll waits up to 12s; extend beyond the 10s CI per-test timeout.
     test.setTimeout(25000);
-    page.on('console', (msg) => {
-      console.log('BROWSER:', msg.text());
-    });
     page.on('pageerror', (err) => console.log('PAGEERROR:', err));
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await loadFeed(page);
-    const stage = page.locator('[data-testid="sparkler-stage"]').first();
     await expect.poll(() => revealedCount(page), { timeout: 12000 }).toBeGreaterThanOrEqual(1);
-    const before = await revealedCount(page);
-    await stage.click({ position: { x: 40, y: 30 } });
-    await expect.poll(() => revealedCount(page), { timeout: 6000 }).toBeGreaterThan(before);
+    const units = await page.locator('[data-testid^="sparkler-unit-"]').count();
+    // Step to the end: advance() moves a pair at a time, and once everything is revealed the
+    // primary button flips from "Next Verse" to "Poem Insights", so the loop terminates.
+    for (let i = 0; i < units; i++) {
+      const before = await settledRevealed(page);
+      if (before >= units) break;
+      const btn = nextVerse(page);
+      if (!(await btn.isVisible().catch(() => false))) break;
+      await btn.click();
+      await expect.poll(() => revealedCount(page), { timeout: 6000 }).toBeGreaterThan(before);
+    }
+    expect(await revealedCount(page)).toBe(units);
+    await expect(nextVerse(page)).toBeHidden();
   });
 });

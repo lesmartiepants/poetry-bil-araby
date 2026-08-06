@@ -48,6 +48,16 @@ npm run test:e2e:debug   # Debug mode
 
 **Feature Flags** (`src/constants/features.js`): `grounding`, `debug`, `logging`, `caching`, `streaming`, `prefetching`, `database`, `onboarding`, `forceOnboarding`, `designReview`. Toggle here rather than conditionally importing code.
 
+**Routes that nothing links to.** This is a SPA, so every path answers 200 and renders the reader. A route with no entry point is therefore invisible: you can open it, get the reader, and conclude the feature is broken. The full-screen routes are registered in `src/constants/routes.js`; the ones with no user-facing link are reachable from the debug panel (`FEATURES.debug`, the bug icon):
+
+| Route            | Gate                       | How to reach it                                                                                                                                                                                            |
+| ---------------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/onboarding`    | `FEATURES.onboardingPrefs` | Debug panel → "Preference Flow". Five preference steps. Deliberately not on the boot path; use `FEATURES.forceOnboarding` if you want it at boot. Reset with `localStorage.removeItem('onboardingPrefs')`. |
+| `/enjoyability`  | server `ENABLE_DEV_LAB`    | Debug panel → "Enjoyability Lab"                                                                                                                                                                           |
+| `/design-review` | `FEATURES.designReview`    | URL only (the flag adds a shortcut icon)                                                                                                                                                                   |
+
+Add the debug-panel row at the same time you add the route, not later.
+
 **Design Constants** (`src/constants/`): `DESIGN` (layout/typography), `THEME` (colors). Never hardcode styles.
 
 **Architecture:** Modular React app with a dual-mode system (Database/AI), Express backend, Zustand + hooks state management.
@@ -57,8 +67,16 @@ npm run test:e2e:debug   # Debug mode
 **Dual-Mode Architecture:**
 The app supports two poem sources:
 
-1. **Database Mode**: Fetches from PostgreSQL via Express API (the imported corpus; the docs' long-standing "84,329" figure does not match production and should not be relied on)
+1. **Database Mode**: Fetches from PostgreSQL via Express API (9,073 poems)
 2. **AI Mode**: Generates using Gemini API (existing behavior)
+
+**Corpus sizes — three numbers, one per pipeline stage:**
+
+- ~85,000 poems in the source Qafiyah dataset (historical; never lived in this database)
+- **9,073** kept after quality curation — this is the row count of `poems`, reported as `totalPoems`
+- **4,767** actually served, after the request-time `SERVING` filters in `server.js` (`quality_score >= 75`, max 24 verse lines) — reported as `servedPoems`
+
+Both live counts come from `GET /api/health/full`. Changing `SERVING` moves `servedPoems` only.
 
 **Database Mode (server.js):**
 
@@ -159,14 +177,10 @@ VERCEL_TOKEN; // For Vercel CLI
 
 7. **Database Mode Requirements**: To use database mode locally:
    - Install PostgreSQL 15+ (17 required for Supabase auth features due to `gen_random_uuid()` requirement)
-   - `npm run db:setup` — creates the `qafiyah` database and applies every migration in `supabase/migrations/`. Idempotent; safe to re-run. Refuses to run against a hosted Supabase URL.
-   - This builds the **schema only**. The real corpus is not in the repo (the import SQL is gitignored at ~118MB, and carries AI-generated translations plus third-party bio prose whose licensing is unsettled), so a fresh database is empty. AI mode needs no database.
-   - `npm run db:seed` — loads `supabase/seed/fixtures.sql`: 26 **fabricated** poems by 8 **fabricated** poets, marked `source_dataset = 'fixture'`. Shaped to exercise the schema (NULL centuries, categorized and uncategorized poems, all three category dimensions, all 7 families, one vocalized poem, two poems the serving filters must exclude). Never seed a database holding real poems — the SQL aborts if it finds any.
-   - `npm run test:db` — runs `src/test/server.db.test.js` against that seed on real Postgres, catching the wrong-column / wrong-join / wrong-bind bugs that `src/test/server.test.js`'s mocked pool structurally cannot. Needs `TEST_DATABASE_URL`. CI runs it in `.github/workflows/db-reconstruct.yml`.
-   - `npm run dev:all` to run backend + frontend (or `dev:server` / `dev` separately)
-   - `npm run db:dump-schema` regenerates `20260101000000_base_poetry_schema.sql` from the live database. Read-only against the source, schema only, needs `DATABASE_URL` on the pooler host.
-   - Base tables (`poems`, `poets`, and the `eras`/`meters`/`patterns`/`rhymes`/`themes`/`tags` lookups) live in `20260101000000_base_poetry_schema.sql`. Everything else only `ALTER`s them, so that file has to stay first. Do not confuse it with the gitignored `*_import_poetry.sql`, which is the data.
-   - Known repo-vs-production drift is listed in `supabase/migrations/README.md`.
+   - Create `qafiyah` database
+   - Start backend: `npm run dev:server`
+   - Start frontend: `npm run dev`
+   - Or use `npm run dev:all` to run both concurrently
 
 8. **Authentication (Optional)**: Supabase auth features are optional:
    - App works fully without authentication

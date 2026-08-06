@@ -71,32 +71,34 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 
 ### Inventory at a glance
 
-- **Features tracked:** 38
+- **Features tracked:** 41
 - **HTTP endpoints in code:** 37
-- **Components in code:** 33
-- **Test files in code:** 63
-- **Behavioral coverage:** 6/38 (16%)
+- **Components in code:** 44
+- **Test files in code:** 68
+- **Behavioral coverage:** 8/41 (20%)
 
 | Tier | Features |
 |------|----------|
 | critical | 7 |
 | important | 14 |
-| nice | 13 |
+| nice | 16 |
 | internal | 4 |
 
 | Coverage | Features |
 |----------|----------|
-| behavioral | 6 |
+| behavioral | 8 |
 | mocked | 20 |
 | source-only | 1 |
 | device-only | 3 |
-| none | 8 |
+| none | 9 |
 
 ### Feature coverage matrix
 
 | Feature | Tier | Coverage | Device-only | Gap |
 |---------|------|----------|-------------|-----|
 | `poem-categorization` | important | mocked | - | server.test.js covers the enabled/disabled API paths with a mocked pool; no e2e yet for the Explore Poems UI (filter chips, in-place poem expand). |
+| `onboarding-preferences` | nice | behavioral | - | Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all five steps to completion, mood ordering, and the empty pre-migration state. Cross-device sync is unit-tested in both merge directions, plus write-through, read-back and version mismatch, against a stubbed Supabase client. No e2e yet for the rendered flow, and nothing exercises the JSONB column against a real Postgres row. |
+| `taxonomy-tag-ui` | nice | none | - | No automated coverage. Components are ported but unmounted; add tests when a surface routes to them. |
 | `poem-display` | critical | behavioral | - | Arabic font rendering (Amiri/Tajawal) differs prod vs CI; no visual regression. |
 | `discover-random` | critical | mocked | - | e2e routes /api/** to canned JSON; real server SERVING filters + exclude fallback only covered by server.test.js in isolation. |
 | `poem-carousel` | critical | mocked | - | carousel.spec skips silently when <2 dots populate; a broken carousel can pass as skipped. |
@@ -134,6 +136,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 | `reader-feed` | critical | mocked | - | #580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted. Unit test covers work-suppression on full-screen routes only. |
 | `guided-tour` | important | mocked | - | #582/#602. e2e exercises step flow; conditional-step + resume-lifecycle branches only partly asserted. Unit test covers the full-screen-route mount gate only. |
 | `enjoyability-lab` | internal | none | - | Dev tooling; no automated coverage by design. /enjoyability is gated by ENABLE_DEV_LAB (404 in prod); the Saved-curation endpoints are gated by SAVED_CURATION_EMAIL (unset in prod). |
+| `feed-preference-weighting` | nice | behavioral | - | Unit tests pin the weighting and every partial-credit rule, the family/mood overlap discount in both directions, both halves of the no-lock-in guarantee (a zero-scoring candidate keeps a strictly positive softmax weight, AND the unanchored candidate page exists so it can be a candidate at all), the temperature calibration that carries the old wild 0.15 -> 0.25 mix forward, the batched multi-slide draw (ranked opening, sampled tail, no repeats, stable tie-break, load-more does not re-rank), the per-poem draw records the inspector reads, and the preference change notification that triggers the redraw. They also pin what the inspector RENDERS, so the panel cannot become a second implementation of the weighting: the per-term score decomposition sums to the score the scorer returned, and the per-dimension explanation resolves each facet to one of matched / present-but-unasked / asked-for-but-absent / partial, including the asked-for-but-absent case that the old truncating table had no way to express at all. The integration in fetchPoem.js (two-page candidate fetch, dedup, fallback to a plain fetch on an empty result) has no dedicated tests yet, and the inspector's LAYOUT (that nothing in the why block truncates at 375px) is verified in a browser rather than in CI; the end-to-end redraw is verified in a browser, not in CI. The browser check asserts a COUNT (exactly one scored draw fires) and that the reader rests on slot 0 ranked, because the regression it caught passed every non-zero check: the ranked opening was drawn correctly and then clobbered by a second fetch before the reader saw it. |
 
 ### Critical features without behavioral CI coverage
 

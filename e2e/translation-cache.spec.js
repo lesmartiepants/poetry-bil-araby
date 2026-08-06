@@ -517,14 +517,20 @@ test.describe('Translation Cache — Poem Variety', () => {
     await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 12000 });
 
-    // The displayed poem should be Arabic text — not empty, not a placeholder
-    const arabicText = await page.evaluate(() => {
-      const rtlElements = document.querySelectorAll('[dir="rtl"]');
-      return Array.from(rtlElements)
-        .map((el) => el.textContent)
-        .join('');
-    });
-    expect(arabicText.length).toBeGreaterThan(10);
+    // The displayed poem should be Arabic text — not empty, not a placeholder.
+    // Poll rather than sample once: waiting on the FIRST [dir="rtl"] node only guarantees the
+    // reader has begun its title intro, which types the poem meta in character by character.
+    // Sampling at that instant catches a few characters of a half-typed title (observed: 7)
+    // even though the poem itself renders fine a moment later.
+    const joinedRtlText = () =>
+      page.evaluate(() =>
+        Array.from(document.querySelectorAll('[dir="rtl"]'))
+          .map((el) => el.textContent)
+          .join('')
+      );
+    await expect
+      .poll(async () => (await joinedRtlText()).length, { timeout: 12000 })
+      .toBeGreaterThan(10);
 
     // Verify the app is NOT stuck on the hardcoded fallback by checking that
     // the full page renders with proper structure (poet name, title, verses)

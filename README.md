@@ -38,11 +38,22 @@ Three principles guide every feature:
 
 ## The Library
 
-The poem corpus holds **84,000+ classical Arabic poems** sourced from the open
-[Qafiyah](https://github.com/WTFoss/qafiyah) dataset and stored in PostgreSQL. To protect
-the reading experience, the API only serves poems above a quality threshold
-(`quality_score >= 75`, see `server.js`), so what reaches the reader is a curated slice of
-the full archive rather than raw bulk text.
+The source archive was roughly **85,000 classical Arabic poems** from the open
+[Qafiyah](https://github.com/WTFoss/qafiyah) dataset. That bulk was curated down on the way
+in: only the poems worth reading were kept, so the PostgreSQL database now holds **9,073
+poems**. A second gate runs at request time. The API serves only poems that clear
+`quality_score >= 75` and come in at 24 verse lines or fewer (see `SERVING` in `server.js`),
+which is **4,767** of them.
+
+So there are three numbers, one per stage, and you'll meet the last two in the API:
+
+| Stage                       | Count   | Where you see it                        |
+| --------------------------- | ------- | --------------------------------------- |
+| Sourced from Qafiyah        | ~85,000 | historical, not in the database         |
+| Kept after curation         | 9,073   | `totalPoems` in `GET /api/health/full`  |
+| Passing the serving filters | 4,767   | `servedPoems` in `GET /api/health/full` |
+
+Tightening or relaxing `SERVING` moves `servedPoems` without touching `totalPoems`.
 
 Each poem carries its Arabic title, the poet's name (Arabic and English), theme, and the
 verse body. Readers can pull a random poem, filter by poet, or swipe through a vertical feed

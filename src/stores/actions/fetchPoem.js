@@ -5,8 +5,154 @@ import { CATEGORIES } from '../../constants/index.js';
 import { DISCOVERY_SYSTEM_PROMPT } from '../../prompts';
 import { repairAndParseJSON } from '../../utils/jsonRepair';
 import { pruneSeenPoems, getRecentSeenIds } from '../../utils/seenPoems.js';
-import { fetchRandomPoem } from '../../services/database.js';
+import { fetchRandomPoem, fetchPoemsByCategory } from '../../services/database.js';
 import { geminiTextFetch } from '../../services/gemini.js';
+import { readPrefs } from '../../services/preferences.js';
+import { fetchCategoryBands } from '../../services/categoryBands.js';
+import {
+  hasPreferences,
+  candidateQueries,
+  drawManyFrom,
+  attributionFor,
+  MAX_SCORE,
+} from '../../services/preferenceWeighting.js';
+import { recordFeedDraw } from '../../services/lastDraw.js';
+
+/**
+ * Band definitions are needed to turn a stored era/difficulty band KEY back into
+ * the numeric range the API wants. They only change when the corpus changes, so
+ * fetch once per session and reuse. Failure is non-fatal: without bands the
+ * era/difficulty constraints are dropped and the other answers still apply.
+ */
+let bandsPromise = null;
+const getBands = () => {
+  if (!bandsPromise) {
+    bandsPromise = fetchCategoryBands().catch(() => ({ eraBands: [], difficultyBands: [] }));
+  }
+  return bandsPromise;
+};
+
+/** Test seam — lets the weighting be reset between cases. */
+export const __resetPreferenceBands = () => {
+  bandsPromise = null;
+};
+
+/**
+ * Serve a poem biased by the reader's onboarding answers, by SCORING candidates
+ * rather than filtering the corpus down to them.
+ *
+ * Three steps, each of which exists for a reason:
+ *
+ *   1. Fetch candidates from `candidateQueries` — an ANCHORED page carrying the
+ *      reader's single broadest answer, plus an UNANCHORED page carrying nothing
+ *      at all. The anchor is what makes a rare answer reachable at speed; the
+ *      open page is what keeps every poem in the corpus reachable full stop.
+ *      Both, always. Dropping either breaks a different guarantee.
+ *   2. Score and sample (`drawFrom`). Sampling, not top-N: the top of a static
+ *      ranking is the same poems every session, which is the lock-in this whole
+ *      design exists to avoid.
+ *   3. Record the draw for the two verification surfaces.
+ *
+ * Returns null only when there was nothing to draw from at all, and the caller
+ * falls back to the plain random fetch. Note what is NOT a reason to return null
+ * any more: under the pool system a `wild` draw and a `core` draw that matched
+ * nothing both bailed to the fallback. Scoring has no unfiltered pool to bail
+ * to, because the open page is already IN the candidate set.
+ *
+ * Only called when the reader actually has saved answers; see the call site,
+ * which checks that synchronously so a reader who skipped onboarding hits the
+ * plain fetch on exactly the same tick as before this existed.
+ */
+export async function fetchWeightedFeed({
+  prefs,
+  poet,
+  excludeIds,
+  addLog,
+  count = 1,
+  startSlot = 0,
+  deterministic = 0,
+  replaceFeed = true,
+}) {
+  const bands = await getBands();
+  const poemsSeen = excludeIds?.length || 0;
+  const queries = candidateQueries(prefs);
+
+  const pages = await Promise.all(
+    queries.map((q) => fetchPoemsByCategory(poet ? { ...q.query, poet } : q.query).catch(() => []))
+  );
+
+  // Deduplicate: the anchored and open pages can legitimately return the same
+  // poem, and leaving it in twice would quietly double its draw weight.
+  const byId = new Map();
+  pages.flat().forEach((p) => {
+    if (p?.id != null && !byId.has(p.id)) byId.set(p.id, p);
+  });
+  const all = [...byId.values()];
+
+  // Prefer poems the reader has not seen, but fall back rather than starve — a
+  // reader deep into a narrow corner can have seen every candidate on the page.
+  const fresh = all.filter((p) => !excludeIds?.includes(p.id));
+  const candidates = fresh.length ? fresh : all;
+  if (!candidates.length) {
+    addLog('Discovery Bias', 'No candidates returned — widening to a plain draw', 'info');
+    return [];
+  }
+
+  const { picks, scored, temperature } = drawManyFrom(candidates, prefs, poemsSeen, bands, {
+    count,
+    startSlot,
+    deterministic,
+  });
+  if (!picks.length) return [];
+
+  picks.forEach((pick) => {
+    // Ride the score on the poem itself so the reader-facing line survives
+    // scrolling back through the feed; the module-level records are keyed by
+    // poem id and capped, which a long session would eventually outlive.
+    pick.poem.discoveryDraw = {
+      score: pick.score,
+      max: pick.max,
+      ratio: pick.ratio,
+      scaled: pick.scaled,
+      matched: pick.matched,
+      rank: pick.rank,
+      slot: pick.slot,
+      deterministic: pick.deterministic,
+      attribution: attributionFor(pick, bands, prefs),
+    };
+  });
+
+  recordFeedDraw({
+    picks,
+    scored,
+    temperature,
+    prefs,
+    queries,
+    poemsSeen,
+    bands,
+    replaceFeed,
+  });
+
+  addLog(
+    'Discovery Bias',
+    `Scored draw | ${picks.length} slide${picks.length === 1 ? '' : 's'} ${startSlot}-${startSlot + picks.length - 1} | ` +
+      picks.map((p) => `${p.scaled.toFixed(2)}${p.deterministic ? '*' : ''}`).join(' ') +
+      ` /${MAX_SCORE} | ${candidates.length} candidates | T=${temperature.toFixed(2)} | seen: ${poemsSeen}` +
+      (picks.some((p) => p.deterministic) ? ' | * = ranked, not sampled' : ''),
+    'info'
+  );
+  return picks.map((p) => p.poem);
+}
+
+/** Single-poem scored draw — the shape the main Discover path wants. */
+async function fetchWeightedPoem({ prefs, poet, excludeIds, addLog }) {
+  // The ordinary Discover press, not the head of a fresh preference feed, so it
+  // samples — which is now simply the default. It used to fake that by passing
+  // startSlot: DETERMINISTIC_OPENING, which also mislabelled its pick as "slot
+  // 2" in the inspector under a reader who had never scrolled that far.
+  const [poem] = await fetchWeightedFeed({ prefs, poet, excludeIds, addLog, count: 1 });
+  return poem || null;
+}
 
 /**
  * Fetch a new poem (DB mode or AI mode) and add it to the store.
@@ -107,7 +253,22 @@ async function fetchFromDatabase({
     addLog('Discovery DB', `Excluding ${seenIds.length} recently seen poems`, 'info');
   }
 
-  const newPoem = await fetchRandomPoem({ poet, excludeIds: seenIds });
+  // Bias the draw toward the reader's onboarding answers WITHOUT filtering the
+  // corpus down to them — see src/services/preferenceWeighting.js. Returns null
+  // when there are no saved answers or when the candidate pages came back empty;
+  // in both cases we fall through to the plain random fetch, so the feed can
+  // never be starved by a narrow preference.
+  //
+  // The `hasPreferences` check is SYNCHRONOUS and deliberately outside the
+  // await: a reader who skipped onboarding must reach fetchRandomPoem on the
+  // same microtask tick as before this code existed. Awaiting unconditionally
+  // shifts the fetch by a tick, which is enough to reorder it against the other
+  // requests the app fires on a poet switch.
+  const prefs = readPrefs();
+  const weighted = hasPreferences(prefs)
+    ? await fetchWeightedPoem({ prefs, poet, excludeIds: seenIds, addLog }).catch(() => null)
+    : null;
+  const newPoem = weighted || (await fetchRandomPoem({ poet, excludeIds: seenIds }));
   const apiTime = performance.now() - apiStart;
 
   markPoemSeen(newPoem.id);

@@ -321,6 +321,19 @@ export const TERM_ORDER = ['family', 'mood', 'motif', 'era', 'difficulty'];
  * @param {Object} poem
  * @returns {{moods:string[], motifs:string[], topics:string[], century:number|null, accessibility:number|null}}
  */
+/**
+ * Has this poem been through the classifier at all?
+ *
+ * Only the TAXONOMY counts. Century comes from the poet's era and accessibility
+ * from a separate scorer, so a poem can carry both while never having been
+ * classified — treating those as evidence would report an unclassified poem as
+ * classified with everything missing.
+ */
+export const isCategorized = (poem) => {
+  const f = facetsOf(poem);
+  return f.moods.length > 0 || f.motifs.length > 0 || f.topics.length > 0;
+};
+
 export const facetsOf = (poem) => ({
   moods: asArray(poem?.categories?.moods),
   motifs: asArray(poem?.categories?.motifs),
@@ -828,6 +841,7 @@ export const drawManyFrom = (
  */
 export const explainRows = (poem, prefs, bands = {}, scoreResult = null) => {
   const f = facetsOf(poem);
+  const hasFacets = isCategorized(poem);
   const terms = scoreResult?.terms || [];
   const termFor = (k) => terms.find((t) => t.key === k) || null;
   const dimension = (k) => (bands?.dimensions || []).find((d) => d.key === k) || null;
@@ -868,22 +882,38 @@ export const explainRows = (poem, prefs, bands = {}, scoreResult = null) => {
   const motifs = asArray(prefs?.motifs);
 
   /* -- family: the reader's pick, plus any other family the poem sits in ---- */
+  //
+  // A poem has no family FIELD. Family membership is derived: a family is a set
+  // of mood/topic/motif values, and the poem belongs to any family sharing at
+  // least one value with it — usually several at once.
+  //
+  // `via` carries the values that did the placing, because the bare label hides
+  // the interesting part. "grief-loss via melancholy + tears" says which of the
+  // poem's own facets put it there, and it makes the family overlap discount
+  // legible: that discount exists precisely because those same values are
+  // already being credited under mood and motif.
   const chosenFamily = prefs?.family || null;
-  const carriesFamily = (fam) =>
-    (fam?.values || []).some((v) => {
-      const bucket =
-        v.dim === 'mood'
-          ? f.moods
-          : v.dim === 'motif'
-            ? f.motifs
-            : v.dim === 'topic'
-              ? f.topics
-              : [];
-      return bucket.includes(v.key);
-    });
+  const bucketFor = (dim) =>
+    dim === 'mood' ? f.moods : dim === 'motif' ? f.motifs : dim === 'topic' ? f.topics : [];
+  const familyRoute = (fam) =>
+    (fam?.values || [])
+      .filter((v) => bucketFor(v.dim).includes(v.key))
+      .map((v) => {
+        // The family payload usually carries its own labels; fall back to the
+        // dimension lookup so a route reads the same as the chip for the same
+        // value rather than degrading to a raw key beside a labelled chip.
+        const fromDim = valueLabel(v.dim, v.key);
+        return {
+          dim: v.dim,
+          key: v.key,
+          label_ar: v.label_ar || fromDim.label_ar,
+          label_en: v.label_en || fromDim.label_en,
+        };
+      });
   const familyChips = [];
   for (const fam of bands?.families || []) {
-    const inIt = carriesFamily(fam);
+    const via = familyRoute(fam);
+    const inIt = via.length > 0;
     const isChosen = fam.key === chosenFamily;
     // A family the poem is not in and the reader did not ask for is not a fact
     // about this poem, so it is simply not a chip.
@@ -893,6 +923,7 @@ export const explainRows = (poem, prefs, bands = {}, scoreResult = null) => {
       label_ar: fam.label_ar || '',
       label_en: fam.label_en || fam.key,
       state: isChosen ? (inIt ? 'matched' : 'absent') : 'present',
+      via,
     });
   }
   // The chosen family with no bands loaded still deserves a row rather than a
@@ -952,6 +983,12 @@ export const explainRows = (poem, prefs, bands = {}, scoreResult = null) => {
       answered: !!chosenFamily,
       term: termFor('family'),
       chips: familyChips,
+      // A poem CAN carry facets and still sit in no family: the taxonomy has
+      // values that belong to no family's set. That is a real answer, not an
+      // empty state, and it reads differently from "this poem was never
+      // classified" — so the two are distinguished here rather than both
+      // collapsing to a blank row.
+      noFamilyMatch: hasFacets && familyChips.length === 0,
     },
     taxonomyRow('mood', f.moods, moods),
     taxonomyRow('topic', f.topics, []),

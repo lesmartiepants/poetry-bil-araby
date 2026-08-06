@@ -10,7 +10,11 @@ import {
   FAMILY_OVERLAP_DISCOUNT,
   MAX_SCORE,
   explainRows,
+  hasPreferences,
+  isCategorized,
 } from '../services/preferenceWeighting.js';
+import { fetchCategoryBands } from '../services/categoryBands.js';
+import { readPrefs, subscribePrefs } from '../services/preferences.js';
 
 /**
  * الميزان — the scale. The scored draw FOR THE POEM IN FRONT OF THE READER, laid
@@ -148,9 +152,76 @@ const Chip = ({ chip }) => {
  * the squeeze this change removes, and stacking it costs nothing: the label
  * column is already two lines tall on any row whose chips wrap.
  */
-const WhyBlock = ({ rows, border }) => (
+/**
+ * How a poem got into a family: the poem's own values that placed it there.
+ *
+ * A poem has no family field — family membership is derived from mood/topic/
+ * motif, so a poem usually sits in SEVERAL families at once. A bare list of
+ * family labels would leave that looking arbitrary; naming the values that did
+ * the placing makes each membership checkable against the rows right below it.
+ *
+ * It also makes the family overlap discount self-explanatory: the values named
+ * here are the same ones already being credited under mood and motif, which is
+ * the entire reason that discount exists.
+ */
+const ViaRoute = ({ via }) => (
+  <span className="font-mono text-[0.5rem] leading-tight opacity-45 ml-1 mr-0.5 break-words">
+    via{' '}
+    {via.map((v, i) => (
+      <span key={`${v.dim}-${v.key}`}>
+        {i > 0 && <span className="opacity-60"> + </span>}
+        {v.label_en}
+      </span>
+    ))}
+  </span>
+);
+
+/**
+ * The classifier's own sentence about why it assigned these categories.
+ *
+ * Collapsed by default. It is prose, in Arabic, and at 375px it runs three or
+ * four lines — expanded it would push the facet rows the panel exists to show
+ * below the fold. It answers a different question from the rest of the block
+ * ("why is this poem in these categories" rather than "why was it served to
+ * you"), so it reads as a footnote and is shaped like one.
+ */
+const Rationale = ({ text, border }) => {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <div className={`mt-2 pt-2 border-t ${border}`}>
+      <button
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center gap-1.5 opacity-50 hover:opacity-90 transition-opacity"
+        aria-expanded={expanded}
+      >
+        <span className="font-mono text-[0.5rem] leading-none">{expanded ? '▾' : '▸'}</span>
+        <Label>classifier&apos;s rationale</Label>
+      </button>
+      {expanded && (
+        <p
+          className="font-brand-ar text-[0.8125rem] leading-relaxed mt-1.5 opacity-80 break-words"
+          dir="rtl"
+        >
+          {text}
+        </p>
+      )}
+    </div>
+  );
+};
+
+const WhyBlock = ({ rows, border, scored, uncategorized, rationale }) => (
   <div className={`px-4 py-2.5 border-b ${border} flex-none`}>
-    <Label className="opacity-40">Why this poem</Label>
+    {/* The heading names which of the panel's two jobs you are looking at.
+        With a draw this block answers "why was this served to you"; without
+        one it still answers "what is this poem", which is a fact about the
+        poem and does not need a draw to be true. */}
+    <Label className="opacity-40">{scored ? 'Why this poem' : 'What this poem is'}</Label>
+    {uncategorized && (
+      <p className={`${MONO} opacity-50 mt-1.5 leading-relaxed`}>
+        This poem has not been through the classifier — it carries no moods, topics or motifs. The
+        rows below show what is known regardless (century, reading difficulty).
+      </p>
+    )}
     <div className="mt-1.5 flex flex-col gap-1.5">
       {rows.map((row) => (
         <div key={row.key} className="grid grid-cols-[56px_minmax(0,1fr)] gap-x-2 items-start">
@@ -181,7 +252,21 @@ const WhyBlock = ({ rows, border }) => (
           </div>
           <div className="flex flex-wrap gap-1 min-w-0">
             {row.chips.length ? (
-              row.chips.map((c) => <Chip key={`${c.key}-${c.state}`} chip={c} />)
+              row.chips.map((c) => (
+                // A family chip carries its route, so the two stay on the same
+                // line as one unit while the LIST still wraps between families.
+                <span key={`${c.key}-${c.state}`} className="inline-flex flex-wrap items-center">
+                  <Chip chip={c} />
+                  {c.via?.length > 0 && <ViaRoute via={c.via} />}
+                </span>
+              ))
+            ) : row.noFamilyMatch ? (
+              // Not the same statement as "none". The poem HAS facets; none of
+              // them appear in any family's value set, which is a fact about
+              // the taxonomy's coverage rather than about this poem.
+              <span className="font-mono text-[0.5625rem] opacity-45 pt-[3px] leading-relaxed">
+                in no family — none of this poem&apos;s values belong to one
+              </span>
             ) : (
               <span className="font-mono text-[0.5625rem] opacity-30 pt-[3px]">none</span>
             )}
@@ -201,6 +286,7 @@ const WhyBlock = ({ rows, border }) => (
         </div>
       ))}
     </div>
+    {rationale && <Rationale text={rationale} border={border} />}
   </div>
 );
 
@@ -318,6 +404,15 @@ const DiscoveryDrawInspector = () => {
   const pickedRowRef = useRef(null);
   const tableScrollRef = useRef(null);
 
+  // The taxonomy, independent of any draw.
+  //
+  // A draw carries the bands it scored with, but the panel has to label facets
+  // for poems that were never scored — a deep link, a poet run, the default
+  // feed with onboarding skipped. fetchCategoryBands memoises per page load, so
+  // this costs one request per session no matter how often the panel opens.
+  const [ownBands, setOwnBands] = useState(null);
+  const [prefs, setPrefs] = useState(() => readPrefs());
+
   // The poem the reader is actually on. Both of these are reactive, so the panel
   // re-renders on every swipe without polling anything.
   const carouselPoems = usePoemStore((s) => s.carouselPoems);
@@ -345,6 +440,26 @@ const DiscoveryDrawInspector = () => {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
+
+  // Fetched lazily on first open rather than on mount: this is a dev surface,
+  // and a reader who never opens it should not pay for the taxonomy.
+  useEffect(() => {
+    if (!open || ownBands) return undefined;
+    let alive = true;
+    // A failed taxonomy fetch degrades to key-only labels rather than an empty
+    // panel — explainRows falls back to the raw keys when a dimension is
+    // missing, which is still a readable answer.
+    fetchCategoryBands()
+      .then((b) => alive && setOwnBands(b))
+      .catch(() => alive && setOwnBands({}));
+    return () => {
+      alive = false;
+    };
+  }, [open, ownBands]);
+
+  // Answers can change while the panel is open (the preferences drawer writes
+  // them), and the chip states are derived from them.
+  useEffect(() => subscribePrefs(() => setPrefs(readPrefs())), []);
 
   // A tail pick is exactly the case worth looking at, and it is also the case
   // that lands thirty rows down. Bring it into view on open so the row the
@@ -374,8 +489,24 @@ const DiscoveryDrawInspector = () => {
   const pickedIndex = rows.findIndex((r) => r.isPicked);
   const pickedRow = pickedIndex >= 0 ? rows[pickedIndex] : null;
   const hereInFeed = feed.findIndex((f) => f.id === currentPoemId);
-  // The whole point of the panel, for the poem actually on screen.
-  const why = pickedRow ? explainRows(picked, draw?.prefs, draw?.bands, pickedRow) : [];
+
+  /* -- the two halves, degrading independently ----------------------------- */
+  //
+  // The panel does two jobs and they have different preconditions. "What is
+  // this poem" needs only the poem, which is always on screen; "why was it
+  // picked" needs a scored draw, which most poems never get. Deriving the
+  // facets from the DRAW is what made the whole panel dead for a deep link, a
+  // saved poem, or the default feed with onboarding skipped — the facets were
+  // on the poem the entire time.
+  const subject = carouselPoems[carouselIndex] || picked || null;
+  // The draw's bands are preferred only because they are what the arithmetic
+  // was actually computed against.
+  const bands = draw?.bands || ownBands || {};
+  const activePrefs = draw?.prefs || prefs;
+  const why = subject ? explainRows(subject, activePrefs, bands, pickedRow) : [];
+  const categorized = subject ? isCategorized(subject) : false;
+  const rationale = subject?.categories?.rationale || '';
+  const hasAnswers = hasPreferences(activePrefs);
 
   const surface = darkMode ? 'bg-black/80' : 'bg-white/90';
 
@@ -457,56 +588,64 @@ const DiscoveryDrawInspector = () => {
           </button>
         </div>
 
-        {!draw ? (
+        {!subject ? (
           <div className="px-4 py-6">
-            <p className={`${MONO} opacity-40`}>
-              {currentPoemId == null
-                ? 'No scored draw yet — answer the preference flow, then discover a poem.'
-                : `Slide ${carouselIndex} (#${currentPoemId}) was not drawn by score — it came from a poet run or an unweighted load-more, so there is no ranking behind it.`}
+            <p className={`${MONO} opacity-40 leading-relaxed`}>
+              No poem on screen yet. The panel reads whichever poem the carousel is showing.
             </p>
-            <FeedQueue feed={feed} hereIndex={hereInFeed} border={theme.border} />
           </div>
         ) : (
           <>
-            {/* The answer, up top: what was picked and where it landed. */}
-            <div className={`px-4 pt-3 pb-2.5 border-b ${theme.border} flex-none`}>
-              <div className="flex items-baseline gap-2">
-                <span
-                  className="font-brand-en text-2xl leading-none"
-                  style={{ color: 'var(--gold)' }}
-                >
-                  {(pickedRow?.scaled ?? 0).toFixed(2)}
-                </span>
-                <span className="font-brand-en text-sm opacity-40 leading-none">/ {MAX_SCORE}</span>
-                <span className={`${MONO} opacity-50`}>({pct(pickedRow?.ratio ?? 0)})</span>
-                <span className={`${MONO} opacity-40 ml-auto text-right`}>
-                  T={draw.temperature.toFixed(2)} · seen {draw.poemsSeen} · {rows.length} cand.
-                </span>
-              </div>
+            {/* The answer, up top: what was picked and where it landed.
+                DRAW-ONLY, all of it. Score, rank, and the spread are answers to
+                "how did this compare to the alternatives", and with no draw
+                there are no alternatives — rendering 0.00 and an empty rail
+                would be inventing a comparison that never happened. */}
+            {draw && (
+              <>
+                {/* The answer, up top: what was picked and where it landed. */}
+                <div className={`px-4 pt-3 pb-2.5 border-b ${theme.border} flex-none`}>
+                  <div className="flex items-baseline gap-2">
+                    <span
+                      className="font-brand-en text-2xl leading-none"
+                      style={{ color: 'var(--gold)' }}
+                    >
+                      {(pickedRow?.scaled ?? 0).toFixed(2)}
+                    </span>
+                    <span className="font-brand-en text-sm opacity-40 leading-none">
+                      / {MAX_SCORE}
+                    </span>
+                    <span className={`${MONO} opacity-50`}>({pct(pickedRow?.ratio ?? 0)})</span>
+                    <span className={`${MONO} opacity-40 ml-auto text-right`}>
+                      T={draw.temperature.toFixed(2)} · seen {draw.poemsSeen} · {rows.length} cand.
+                    </span>
+                  </div>
 
-              <div className="flex items-baseline gap-2 mt-1.5">
-                <div className="text-[0.6875rem] truncate">
-                  <span className="opacity-40">
-                    slot {draw.slot ?? '?'} · #{picked?.id}
-                  </span>{' '}
-                  <span className="opacity-90">{picked?.title}</span>
-                </div>
-                {/* Head or tail — the one thing the raw score can't tell you. */}
-                {pickedIndex >= 0 && (
-                  <span className={`${MONO} opacity-45 ml-auto flex-none`}>
-                    {/* The draw's own rank, not this table's row index. They
+                  <div className="flex items-baseline gap-2 mt-1.5">
+                    <div className="text-[0.6875rem] truncate">
+                      <span className="opacity-40">
+                        slot {draw.slot ?? '?'} · #{picked?.id}
+                      </span>{' '}
+                      <span className="opacity-90">{picked?.title}</span>
+                    </div>
+                    {/* Head or tail — the one thing the raw score can't tell you. */}
+                    {pickedIndex >= 0 && (
+                      <span className={`${MONO} opacity-45 ml-auto flex-none`}>
+                        {/* The draw's own rank, not this table's row index. They
                         differ on ties — and a family-only answer produces a lot
                         of exact 5.00 ties — so showing the row index here would
                         contradict the tie-break the pick was actually made
                         with, in the one place a reader checks it. */}
-                    rank {draw.rank ?? pickedIndex + 1} of {rows.length}
-                    {draw.deterministic ? ' · ranked' : ' · sampled'}
-                  </span>
-                )}
-              </div>
+                        rank {draw.rank ?? pickedIndex + 1} of {rows.length}
+                        {draw.deterministic ? ' · ranked' : ' · sampled'}
+                      </span>
+                    )}
+                  </div>
 
-              <SpreadRail rows={rows} />
-            </div>
+                  <SpreadRail rows={rows} />
+                </div>
+              </>
+            )}
 
             {/* ONE scroller from here down.
 
@@ -519,36 +658,59 @@ const DiscoveryDrawInspector = () => {
                 score summary stays pinned because it is the answer, the footer
                 stays pinned because it is a legend, and everything between
                 them is content. */}
-            <div className="overflow-y-auto flex-1 min-h-0" style={{ overscrollBehavior: 'contain' }}>
-              <FeedQueue feed={feed} hereIndex={hereInFeed} border={theme.border} />
+            <div
+              className="overflow-y-auto flex-1 min-h-0"
+              style={{ overscrollBehavior: 'contain' }}
+            >
+              {/* Why there is no ranking to show. Stated once, at the top of the
+                  content, so the facets below are not mistaken for a draw. */}
+              {!draw && (
+                <div className={`px-4 py-2.5 border-b ${theme.border}`}>
+                  <p className={`${MONO} opacity-40 leading-relaxed`}>
+                    {`#${subject.id} was not drawn by score — no ranking, no candidates, nothing to compare it against. Its own categories are below.`}
+                  </p>
+                </div>
+              )}
+
+              {/* The feed queue is the draw's ordering. Without a draw there is
+                  no queue — the carousel is whatever the plain fetch returned. */}
+              {draw && <FeedQueue feed={feed} hereIndex={hereInFeed} border={theme.border} />}
 
               {/* What the reader asked for, and what was actually requested for it. */}
-              <div className={`${MONO} opacity-50 px-4 py-2 border-b ${theme.border} flex-none`}>
-                {/* Raw stored keys, wrapped not clipped — this is the literal
+              {draw && (
+                <div className={`${MONO} opacity-50 px-4 py-2 border-b ${theme.border} flex-none`}>
+                  {/* Raw stored keys, wrapped not clipped — this is the literal
                   contents of `onboardingPrefs`, and half of debugging the flow
                   is seeing that a key is spelled the way the scorer expects. */}
-                <div className="break-words">
-                  answers: {draw.prefs?.family || '—'} /{' '}
-                  {(draw.prefs?.moods || []).join('+') || '—'} /{' '}
-                  {(draw.prefs?.motifs || []).join('+') || '—'} / {draw.prefs?.era || '—'} /{' '}
-                  {draw.prefs?.difficulty || '—'}
+                  <div className="break-words">
+                    answers: {draw.prefs?.family || '—'} /{' '}
+                    {(draw.prefs?.moods || []).join('+') || '—'} /{' '}
+                    {(draw.prefs?.motifs || []).join('+') || '—'} / {draw.prefs?.era || '—'} /{' '}
+                    {draw.prefs?.difficulty || '—'}
+                  </div>
+                  <div className="break-words mt-0.5">
+                    pages:{' '}
+                    {(draw.queries || [])
+                      .map(
+                        (q) =>
+                          `${q.role}(${
+                            Object.keys(q.query)
+                              .filter((k) => k !== 'limit')
+                              .join(',') || 'none'
+                          })`
+                      )
+                      .join(' + ')}
+                  </div>
                 </div>
-                <div className="break-words mt-0.5">
-                  pages:{' '}
-                  {(draw.queries || [])
-                    .map(
-                      (q) =>
-                        `${q.role}(${
-                          Object.keys(q.query)
-                            .filter((k) => k !== 'limit')
-                            .join(',') || 'none'
-                        })`
-                    )
-                    .join(' + ')}
-                </div>
-              </div>
+              )}
 
-              <WhyBlock rows={why} border={theme.border} />
+              <WhyBlock
+                rows={why}
+                border={theme.border}
+                scored={!!draw}
+                uncategorized={!categorized}
+                rationale={rationale}
+              />
 
               {/* Column labels live OUTSIDE the scroller rather than as a sticky
                 <thead>. The rows carry `opacity`, which makes each one its own
@@ -556,12 +718,14 @@ const DiscoveryDrawInspector = () => {
                 z-index is set — it ends up transparent with rows sliding
                 through the labels. A plain header row above the scroll box has
                 no such fight, and grid keeps the columns aligned. */}
-              <div
-                className={`${MONO} ${ROW_GRID} gap-x-2 opacity-40 px-4 pt-2 pb-1 flex-none border-b ${theme.border}`}
-              >
-                <span>score</span>
-                <span>the other candidates</span>
-              </div>
+              {draw && (
+                <div
+                  className={`${MONO} ${ROW_GRID} gap-x-2 opacity-40 px-4 pt-2 pb-1 flex-none border-b ${theme.border}`}
+                >
+                  <span>score</span>
+                  <span>the other candidates</span>
+                </div>
+              )}
 
               {/* The table keeps a scroller of its OWN, nested inside the body
                 one and capped, for a single reason: the picked row auto-scrolls
@@ -573,6 +737,7 @@ const DiscoveryDrawInspector = () => {
                 ref={tableScrollRef}
                 className={`${MONO} px-4 py-1 overflow-y-auto`}
                 style={{ maxHeight: '34vh', overscrollBehavior: 'contain' }}
+                hidden={!draw}
               >
                 {rows.map((s) => {
                   return (
@@ -626,16 +791,33 @@ const DiscoveryDrawInspector = () => {
               </div>
             </div>
 
-            {/* The sentence that prevents a false bug report. Pinned, because it
-                is only useful when you are staring at a low-scoring pick. */}
+            {/* The chip legend is always useful — the states describe the block
+                above, which always renders. The low-scoring sentence is not:
+                it prevents a false bug report about a RANK, and with no draw
+                there is no rank to misread. */}
             <p
               className={`${MONO} opacity-40 px-4 py-2 border-t ${theme.border} flex-none leading-relaxed`}
             >
-              A low-scoring pick is correct, not a bug — the unanchored page keeps every poem
-              reachable. <span style={{ color: 'var(--gold)' }}>✓ matched</span> ·{' '}
-              <span style={{ color: 'var(--gold)' }}>≈ partial credit</span> ·{' '}
-              <span className="opacity-70">· on the poem, not asked for</span> ·{' '}
-              <span style={{ color: '#d98b83' }}>✕ asked for, not here</span>
+              {draw && (
+                <>
+                  A low-scoring pick is correct, not a bug — the unanchored page keeps every poem
+                  reachable.{' '}
+                </>
+              )}
+              {/* With no answers saved there is nothing to match against, so
+                  every chip is `present` and the other three states cannot
+                  occur. Listing them anyway would describe a vocabulary the
+                  panel is not currently speaking. */}
+              {hasAnswers ? (
+                <>
+                  <span style={{ color: 'var(--gold)' }}>✓ matched</span> ·{' '}
+                  <span style={{ color: 'var(--gold)' }}>≈ partial credit</span> ·{' '}
+                  <span className="opacity-70">· on the poem, not asked for</span> ·{' '}
+                  <span style={{ color: '#d98b83' }}>✕ asked for, not here</span>
+                </>
+              ) : (
+                <>No answers saved — every chip above is simply what the poem carries.</>
+              )}
             </p>
           </>
         )}

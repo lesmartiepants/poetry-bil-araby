@@ -256,6 +256,56 @@ function titleEnExpr() {
   return hasTitleEn ? ', p.title_en' : '';
 }
 
+/**
+ * Extra SELECT columns carrying a poem's own categorization.
+ *
+ * Empty string before the categorization migration, exactly like the other
+ * capability-gated fragments — every column here ships in the SAME migration
+ * that creates `poem_categories`, which is what `hasCategorization` tests, so
+ * one gate covers all of them.
+ *
+ * Why this exists as a shared fragment rather than staying inline in
+ * /api/poems/by-category: a poem's facets are a fact about the poem, not about
+ * the query that found it. Reaching a poem by deep link, by random, by poet, or
+ * by search used to strip them, so the same poem was categorized or not
+ * depending on how you arrived — which made the category viewer in the draw
+ * inspector blank on every route except the scored feed.
+ */
+function categorizationSelectExpr() {
+  return hasCategorization
+    ? `,
+        p.mood_primary,
+        p.emotional_intensity,
+        p.accessibility_score,
+        p.accessibility_factors,
+        p.categories AS categories_json,
+        po.era_id AS era_id,
+        p.century AS century,
+        (SELECT MAX(pc.confidence) FROM poem_categories pc WHERE pc.poem_id = p.id) AS confidence`
+    : '';
+}
+
+/**
+ * Copy the categorization columns onto a formatted poem, when present.
+ *
+ * Every field is conditional because an uncategorized poem is normal: the
+ * corpus is only partly classified, so `categories` being absent has to mean
+ * "not classified yet" rather than serialising a wall of nulls that reads like
+ * a classification of nothing.
+ */
+function attachCategorization(formatted, poem) {
+  if (poem.mood_primary != null) formatted.moodPrimary = poem.mood_primary;
+  if (poem.emotional_intensity != null) formatted.emotionalIntensity = poem.emotional_intensity;
+  if (poem.accessibility_score != null) formatted.accessibilityScore = poem.accessibility_score;
+  if (poem.accessibility_factors != null)
+    formatted.accessibilityFactors = poem.accessibility_factors;
+  if (poem.categories_json) formatted.categories = poem.categories_json;
+  if (poem.era_id != null) formatted.eraId = poem.era_id;
+  if (poem.century != null) formatted.century = poem.century;
+  if (poem.confidence != null) formatted.confidence = poem.confidence;
+  return formatted;
+}
+
 // Helper: formats a raw DB poem row into the frontend response structure
 function formatPoem(poem) {
   return {
@@ -895,6 +945,7 @@ app.get(
         ${poetNameEnExpr()}
         ${titleEnExpr()}
         ${translationSelectExpr()}
+        ${categorizationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -902,19 +953,27 @@ app.get(
 
       const params = [];
       let paramIndex = 1;
+      // Tracked explicitly rather than sniffed with `query.includes('WHERE')`.
+      // The SELECT list now carries a correlated subquery whose own WHERE would
+      // make that test true with no top-level WHERE present, appending a bare
+      // `AND ...` after the JOINs.
+      let hasWhere = false;
 
       if (poet && poet !== 'All') {
         query += ` WHERE po.name = $${paramIndex} ${servingFilters()}`;
         params.push(poet);
         paramIndex++;
+        hasWhere = true;
       } else {
         const qf = servingFilters();
-        if (qf) query += ` WHERE 1=1 ${qf}`;
+        if (qf) {
+          query += ` WHERE 1=1 ${qf}`;
+          hasWhere = true;
+        }
       }
 
       // Add exclude clause using parameterized ANY() to prevent SQL injection
       if (excludeIds.length > 0) {
-        const hasWhere = query.includes('WHERE');
         query += hasWhere
           ? ` AND p.id != ALL($${paramIndex})`
           : ` WHERE p.id != ALL($${paramIndex})`;
@@ -942,6 +1001,7 @@ app.get(
           t.name as theme
           ${poetNameEnExpr()}
           ${translationSelectExpr()}
+          ${categorizationSelectExpr()}
         FROM poems p
         JOIN poets po ON p.poet_id = po.id
         JOIN themes t ON p.theme_id = t.id
@@ -968,7 +1028,7 @@ app.get(
       log.debug('DB', `Arabic field: exists=${'arabic' in poem}, type=${typeof poem.arabic}`);
 
       // Format the response to match the frontend structure
-      const formattedPoem = formatPoem(poem);
+      const formattedPoem = attachCategorization(formatPoem(poem), poem);
 
       // Include cached translations when available
       if (poem.cached_translation) formattedPoem.cachedTranslation = poem.cached_translation;
@@ -1018,6 +1078,7 @@ app.get(
         t.name as theme
         ${poetNameEnExpr()}
         ${titleEnExpr()}
+        ${categorizationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -1028,7 +1089,7 @@ app.get(
 
       const result = await pool.query(query, [poet, limitNum, offsetNum]);
 
-      const poems = result.rows.map(formatPoem);
+      const poems = result.rows.map((row) => attachCategorization(formatPoem(row), row));
 
       log.info('Poems', `By poet "${poet}": returned ${poems.length} poems`);
       res.json(poems);
@@ -1098,6 +1159,7 @@ app.get(
         t.name as theme
         ${poetNameEnExpr()}
         ${titleEnExpr()}
+        ${categorizationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -1107,7 +1169,7 @@ app.get(
 
       const result = await pool.query(query, [`%${q}%`, limitNum]);
 
-      const poems = result.rows.map(formatPoem);
+      const poems = result.rows.map((row) => attachCategorization(formatPoem(row), row));
 
       log.info('Search', `Query "${q}": returned ${poems.length} results`);
       res.json(poems);
@@ -1592,18 +1654,10 @@ app.get('/api/poems/by-category', async (req, res) => {
     );
 
     const poems = result.rows.map((poem) => {
-      const formatted = formatPoem(poem);
-      formatted.moodPrimary = poem.mood_primary;
-      formatted.emotionalIntensity = poem.emotional_intensity;
-      formatted.accessibilityScore = poem.accessibility_score;
-      formatted.accessibilityFactors = poem.accessibility_factors;
       // Confidence summary: MAX per-label confidence across this poem's
       // category assignments (0-100), plus the raw categories JSONB (which
       // holds the per-value `confidences` object) when present.
-      if (poem.confidence != null) formatted.confidence = poem.confidence;
-      if (poem.categories_json) formatted.categories = poem.categories_json;
-      if (poem.era_id != null) formatted.eraId = poem.era_id;
-      if (poem.century != null) formatted.century = poem.century;
+      const formatted = attachCategorization(formatPoem(poem), poem);
       if (poem.cached_translation) formatted.cachedTranslation = poem.cached_translation;
       return formatted;
     });
@@ -1638,6 +1692,7 @@ app.get(
         ${poetNameEnExpr()}
         ${titleEnExpr()}
         ${translationSelectExpr()}
+        ${categorizationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -1652,7 +1707,7 @@ app.get(
 
       const poem = result.rows[0];
 
-      const formattedPoem = formatPoem(poem);
+      const formattedPoem = attachCategorization(formatPoem(poem), poem);
 
       if (poem.cached_translation) formattedPoem.cachedTranslation = poem.cached_translation;
       if (poem.cached_explanation) formattedPoem.cachedExplanation = poem.cached_explanation;

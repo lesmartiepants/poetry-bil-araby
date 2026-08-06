@@ -25,6 +25,7 @@ import {
   DETERMINISTIC_OPENING,
   attributionFor,
   explainRows,
+  isCategorized,
 } from '../services/preferenceWeighting.js';
 
 const PREFS = {
@@ -809,5 +810,101 @@ describe('explainRows — why this poem', () => {
     const rows = explainRows({}, PREFS, BANDS, scorePoem({}, PREFS, BANDS));
     expect(rows).toHaveLength(6);
     expect(rows.find((r) => r.key === 'era').chips[0].key).toBe('undated');
+  });
+});
+
+/* -------------------------------------------------------------------------- */
+/* Category viewer: the half of the panel that needs no draw                    */
+/* -------------------------------------------------------------------------- */
+
+describe('explainRows — as a category viewer (no prefs, no draw)', () => {
+  /** Exactly how the inspector calls it for an unscored poem. */
+  const viewerRows = (p) =>
+    Object.fromEntries(explainRows(p, {}, BANDS, null).map((row) => [row.key, row]));
+
+  it('describes a poem with no answers and no score', () => {
+    const rows = viewerRows(PERFECT);
+    // Every dimension still reports what the poem carries...
+    expect(rows.mood.chips.map((c) => c.key)).toEqual(['amorous', 'yearning']);
+    expect(rows.era.chips[0].label_en).toBe('7th century');
+    // ...and nothing claims to have been matched or credited.
+    expect(rows.mood.chips.every((c) => c.state === 'present')).toBe(true);
+    expect(rows.mood.term).toBe(null);
+    expect(rows.family.term).toBe(null);
+    expect(rows.mood.answered).toBe(false);
+  });
+
+  it('places the poem in every family it shares a value with, not just one', () => {
+    const bands = {
+      ...BANDS,
+      families: [
+        ...BANDS.families,
+        {
+          key: 'grief-loss',
+          label_en: 'Grief & Loss',
+          values: [
+            { dim: 'mood', key: 'melancholy' },
+            { dim: 'motif', key: 'tears' },
+          ],
+        },
+        { key: 'valor', label_en: 'Valor', values: [{ dim: 'motif', key: 'sword' }] },
+      ],
+    };
+    const p = poem({ moods: ['amorous', 'melancholy'], motifs: ['tears'], topics: ['love'] });
+    const family = explainRows(p, {}, bands, null).find((r) => r.key === 'family');
+    expect(family.chips.map((c) => c.key)).toEqual(['love-desire', 'grief-loss']);
+    // The family the poem shares nothing with is simply not a chip.
+    expect(family.chips.some((c) => c.key === 'valor')).toBe(false);
+  });
+
+  it('names the poem values that placed it in each family', () => {
+    const p = poem({ moods: ['amorous'], topics: ['love'] });
+    const family = explainRows(p, {}, BANDS, null).find((r) => r.key === 'family');
+    const via = family.chips[0].via;
+    // Both routes, each tagged with the dimension it came from — that pairing is
+    // what makes the family overlap discount legible in the panel.
+    expect(via.map((v) => `${v.dim}:${v.key}`)).toEqual(['mood:amorous', 'topic:love']);
+    expect(via[0].label_en).toBe('Amorous');
+  });
+
+  it('carries no route for a family the poem is not in', () => {
+    // The reader asked for love-desire; this poem shares nothing with it.
+    const family = explainRows(NOTHING, PREFS, BANDS, null).find((r) => r.key === 'family');
+    expect(family.chips[0].state).toBe('absent');
+    expect(family.chips[0].via).toEqual([]);
+  });
+
+  it('distinguishes "in no family" from "not classified"', () => {
+    // Facets that belong to no family's value set. Not reachable with today's
+    // taxonomy, but the taxonomy grows and the row must stay honest.
+    const orphan = poem({ moods: ['orphan-mood'], topics: ['orphan-topic'] });
+    const inNoFamily = explainRows(orphan, {}, BANDS, null).find((r) => r.key === 'family');
+    expect(inNoFamily.chips).toEqual([]);
+    expect(inNoFamily.noFamilyMatch).toBe(true);
+
+    // An unclassified poem has no facets at all, so it makes no such claim.
+    const unclassified = explainRows({}, {}, BANDS, null).find((r) => r.key === 'family');
+    expect(unclassified.chips).toEqual([]);
+    expect(unclassified.noFamilyMatch).toBe(false);
+  });
+});
+
+describe('isCategorized', () => {
+  it('is true when the poem carries any taxonomy value', () => {
+    expect(isCategorized(poem({ moods: ['amorous'] }))).toBe(true);
+    expect(isCategorized(poem({ topics: ['love'] }))).toBe(true);
+    expect(isCategorized(poem({ motifs: ['night'] }))).toBe(true);
+  });
+
+  it('is false for a poem the classifier never saw', () => {
+    expect(isCategorized({})).toBe(false);
+    expect(isCategorized(undefined)).toBe(false);
+    expect(isCategorized(poem({}))).toBe(false);
+  });
+
+  it('does not count century or accessibility as classification', () => {
+    // Century comes from the poet's era and accessibility from a separate
+    // scorer, so both exist on poems that were never classified.
+    expect(isCategorized({ century: 7, accessibilityScore: 2.1 })).toBe(false);
   });
 });

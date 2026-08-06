@@ -141,18 +141,6 @@ const Chip = ({ chip }) => {
 };
 
 /**
- * WHY THIS POEM — one row per dimension, full panel width.
- *
- * The layout is a two-column grid rather than a flex row so every dimension
- * name starts at the same x, which is what makes the block scannable when the
- * chip lists are ragged (mood might carry four values, era carries one).
- *
- * The credit sits UNDER the dimension name, in the label column, instead of
- * being a trailing column of its own. A third column would reintroduce exactly
- * the squeeze this change removes, and stacking it costs nothing: the label
- * column is already two lines tall on any row whose chips wrap.
- */
-/**
  * How a poem got into a family: the poem's own values that placed it there.
  *
  * A poem has no family field — family membership is derived from mood/topic/
@@ -209,6 +197,22 @@ const Rationale = ({ text, border }) => {
   );
 };
 
+/**
+ * WHY THIS POEM — one row per dimension, full panel width.
+ *
+ * The layout is a two-column grid rather than a flex row so every dimension
+ * name starts at the same x, which is what makes the block scannable when the
+ * chip lists are ragged (mood might carry four values, era carries one).
+ *
+ * The credit sits UNDER the dimension name, in the label column, instead of
+ * being a trailing column of its own. A third column would reintroduce exactly
+ * the squeeze this change removes, and stacking it costs nothing: the label
+ * column is already two lines tall on any row whose chips wrap.
+ *
+ * Renders WITHOUT a draw. The rows come from the poem, so the block is the
+ * category viewer as much as it is the draw explanation; `scored` only decides
+ * which of those two it says it is.
+ */
 const WhyBlock = ({ rows, border, scored, uncategorized, rationale }) => (
   <div className={`px-4 py-2.5 border-b ${border} flex-none`}>
     {/* The heading names which of the panel's two jobs you are looking at.

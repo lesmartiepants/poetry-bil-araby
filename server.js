@@ -236,6 +236,7 @@ async function checkCategorizationSupport() {
         'DB',
         `Categorization dimensions: ${categorizationDimensions.join(', ') || '(none)'}`
       );
+      scheduleTaxonomyWarmUp();
     } else {
       categorizationDimensions = [];
     }
@@ -253,6 +254,56 @@ function poetNameEnExpr() {
 // Helper: returns extra SELECT for English title (empty string when column doesn't exist)
 function titleEnExpr() {
   return hasTitleEn ? ', p.title_en' : '';
+}
+
+/**
+ * Extra SELECT columns carrying a poem's own categorization.
+ *
+ * Empty string before the categorization migration, exactly like the other
+ * capability-gated fragments — every column here ships in the SAME migration
+ * that creates `poem_categories`, which is what `hasCategorization` tests, so
+ * one gate covers all of them.
+ *
+ * Why this exists as a shared fragment rather than staying inline in
+ * /api/poems/by-category: a poem's facets are a fact about the poem, not about
+ * the query that found it. Reaching a poem by deep link, by random, by poet, or
+ * by search used to strip them, so the same poem was categorized or not
+ * depending on how you arrived — which made the category viewer in the draw
+ * inspector blank on every route except the scored feed.
+ */
+function categorizationSelectExpr() {
+  return hasCategorization
+    ? `,
+        p.mood_primary,
+        p.emotional_intensity,
+        p.accessibility_score,
+        p.accessibility_factors,
+        p.categories AS categories_json,
+        po.era_id AS era_id,
+        p.century AS century,
+        (SELECT MAX(pc.confidence) FROM poem_categories pc WHERE pc.poem_id = p.id) AS confidence`
+    : '';
+}
+
+/**
+ * Copy the categorization columns onto a formatted poem, when present.
+ *
+ * Every field is conditional because an uncategorized poem is normal: the
+ * corpus is only partly classified, so `categories` being absent has to mean
+ * "not classified yet" rather than serialising a wall of nulls that reads like
+ * a classification of nothing.
+ */
+function attachCategorization(formatted, poem) {
+  if (poem.mood_primary != null) formatted.moodPrimary = poem.mood_primary;
+  if (poem.emotional_intensity != null) formatted.emotionalIntensity = poem.emotional_intensity;
+  if (poem.accessibility_score != null) formatted.accessibilityScore = poem.accessibility_score;
+  if (poem.accessibility_factors != null)
+    formatted.accessibilityFactors = poem.accessibility_factors;
+  if (poem.categories_json) formatted.categories = poem.categories_json;
+  if (poem.era_id != null) formatted.eraId = poem.era_id;
+  if (poem.century != null) formatted.century = poem.century;
+  if (poem.confidence != null) formatted.confidence = poem.confidence;
+  return formatted;
 }
 
 // Helper: formats a raw DB poem row into the frontend response structure
@@ -286,6 +337,423 @@ function servingFilters() {
     );
   }
   return clauses.length ? 'AND ' + clauses.join(' AND ') : '';
+}
+
+/**
+ * A CTE holding the ids of every SERVABLE poem, for the aggregate queries.
+ *
+ * The serving predicate is cheap on a single-row lookup and expensive in bulk:
+ * the verse-line test is `array_length(string_to_array(content, '*'), 1)`, so
+ * inlining it into an aggregate re-splits the full text of a poem once per
+ * joined row. Applied that way across `poem_categories` it took /api/categories
+ * from ~600ms to a statement timeout.
+ *
+ * Evaluating it ONCE into an id set and joining against that keeps the same
+ * semantics — it is the identical predicate — at a fraction of the cost.
+ * `MATERIALIZED` is explicit because Postgres 12+ will otherwise inline a
+ * single-use CTE and undo exactly the thing this exists to do.
+ */
+function servableCte() {
+  const qf = servingFilters();
+  return `servable AS MATERIALIZED (
+      SELECT p.id FROM poems p WHERE TRUE ${qf}
+    )`;
+}
+
+/**
+ * Build the categorization WHERE clauses shared by /api/poems/by-category and
+ * the scoped counts on /api/categories.
+ *
+ * ONE implementation on purpose. /api/categories now answers "how many poems
+ * match what you have chosen so far", and the onboarding flow shows that number
+ * next to a feed drawn from by-category. If the two endpoints parsed the same
+ * query params even slightly differently the number would be a lie about the
+ * feed, and the difference would be invisible until someone counted by hand.
+ *
+ * Every clause is tagged with the answer GROUP it came from ('family', a
+ * dimension key, 'era', 'difficulty', 'intensity', 'poet') so a caller can ask
+ * for the set without one group — which is what faceted counts require. On the
+ * mood step, each mood's count must be scoped by the family already chosen but
+ * NOT by the moods currently selected; scoping a facet by itself makes every
+ * other option in the step read 0 the moment you pick one.
+ *
+ * @param {Object} query   req.query
+ * @param {Object} [opts]
+ * @param {string} [opts.skipGroup] group to leave out
+ * @param {Array}  [opts.params] existing bind params to append to
+ * @returns {{clauses:string[], params:Array, groups:string[]}}
+ */
+function buildCategoryFilters(query = {}, opts = {}) {
+  const { skipGroup = null, params = [] } = opts;
+  const clauses = [];
+  const groups = new Set();
+  const takeGroup = (group) => {
+    if (group === skipGroup) return false;
+    groups.add(group);
+    return true;
+  };
+
+  // Dimension filters via EXISTS against the normalized join. The dimension set
+  // is READ FROM the DB (categorizationDimensions, populated at startup), so a
+  // new dimension row becomes filterable with no code change here.
+  for (const dim of categorizationDimensions) {
+    const raw = query[dim];
+    if (!raw) continue;
+    const values = (Array.isArray(raw) ? raw : [raw])
+      .flatMap((s) => String(s).split(','))
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 20);
+    if (values.length === 0) continue;
+    if (!takeGroup(dim)) continue;
+    // Per-dimension combine mode: `${dim}Mode=and` requires the poem to carry
+    // ALL selected values (one EXISTS each); default `or` matches ANY.
+    const andMode = String(query[`${dim}Mode`] || 'or').toLowerCase() === 'and';
+    if (andMode) {
+      for (const v of values) {
+        params.push(dim);
+        const dimIdx = params.length;
+        params.push(v);
+        clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_dimensions cd ON cv.dimension_id = cd.id
+        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = $${params.length}
+      )`);
+      }
+    } else {
+      params.push(dim);
+      const dimIdx = params.length;
+      params.push(values);
+      clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_dimensions cd ON cv.dimension_id = cd.id
+        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = ANY($${params.length})
+      )`);
+    }
+  }
+
+  // Family filter: match poems having ANY value that belongs to the family
+  // (cross-dimension OR), mirroring the EXISTS style above.
+  const familyRaw = query.family;
+  if (familyRaw) {
+    const family = String(familyRaw).trim();
+    if (family && takeGroup('family')) {
+      params.push(family);
+      clauses.push(`EXISTS (
+        SELECT 1 FROM poem_categories pc
+        JOIN category_values cv ON pc.value_id = cv.id
+        JOIN category_families cf ON cv.family_id = cf.id
+        WHERE pc.poem_id = p.id AND cf.key = $${params.length}
+      )`);
+    }
+  }
+
+  // Poet passthrough: exact name or slug (mirrors /api/poems/by-poet, which
+  // matches po.name; poets also carry a UUID slug for deep links).
+  const poetRaw = query.poet;
+  if (poetRaw) {
+    const poet = String(poetRaw).trim();
+    if (poet && poet !== 'All' && takeGroup('poet')) {
+      params.push(poet);
+      clauses.push(`(po.name = $${params.length} OR po.slug = $${params.length})`);
+    }
+  }
+
+  // Era passthrough: numeric era id filters po.era_id directly; a non-numeric
+  // value is resolved via eras.name (era is a poet-level facet — poems has no
+  // era column — and po is already joined by both callers).
+  const eraRaw = query.era;
+  if (eraRaw != null && String(eraRaw).trim() !== '' && takeGroup('era')) {
+    const era = String(eraRaw).trim();
+    const eraId = parseInt(era, 10);
+    if (Number.isInteger(eraId) && String(eraId) === era) {
+      params.push(eraId);
+      clauses.push(`po.era_id = $${params.length}`);
+    } else {
+      params.push(era);
+      clauses.push(`po.era_id = (SELECT id FROM eras WHERE name = $${params.length})`);
+    }
+  }
+
+  // Century, exact and range. `poems.century` is a representative century
+  // derived 1:1 from the poet's era (categorization/config.py ERA_CENTURY), and
+  // the late/modern eras are deliberately left NULL because they span too many
+  // centuries to pin to one. Those poems are ~25% of the corpus, so silently
+  // dropping them from every dated band would hide a quarter of the library.
+  // `includeUndated=1` keeps them eligible alongside the range; the undated band
+  // itself is expressed as `undated=1`.
+  const centuryRaw = query.century;
+  const century = parseInt(centuryRaw, 10);
+  const centuryFrom = parseInt(query.centuryFrom, 10);
+  const centuryTo = parseInt(query.centuryTo, 10);
+  const includeUndated = /^(1|true|yes)$/i.test(String(query.includeUndated ?? ''));
+  const undatedOnly = /^(1|true|yes)$/i.test(String(query.undated ?? ''));
+  const wantsCentury =
+    undatedOnly ||
+    Number.isInteger(centuryFrom) ||
+    Number.isInteger(centuryTo) ||
+    (centuryRaw != null && String(centuryRaw).trim() !== '' && Number.isInteger(century));
+  if (wantsCentury && takeGroup('century')) {
+    if (undatedOnly) {
+      clauses.push(`p.century IS NULL`);
+    } else if (Number.isInteger(centuryFrom) || Number.isInteger(centuryTo)) {
+      const rangeParts = [];
+      if (Number.isInteger(centuryFrom)) {
+        params.push(centuryFrom);
+        rangeParts.push(`p.century >= $${params.length}`);
+      }
+      if (Number.isInteger(centuryTo)) {
+        params.push(centuryTo);
+        rangeParts.push(`p.century <= $${params.length}`);
+      }
+      const range = rangeParts.join(' AND ');
+      clauses.push(includeUndated ? `((${range}) OR p.century IS NULL)` : `(${range})`);
+    } else {
+      params.push(century);
+      clauses.push(`p.century = $${params.length}`);
+    }
+  }
+
+  // Intensity range (0-100) and difficulty/accessibility range (0-10). Each
+  // bound is independent so the UI can express a min, a max, or both.
+  const minIntensity = parseInt(query.minIntensity, 10);
+  const maxIntensity = parseInt(query.maxIntensity, 10);
+  if (
+    (Number.isInteger(minIntensity) || Number.isInteger(maxIntensity)) &&
+    takeGroup('intensity')
+  ) {
+    if (Number.isInteger(minIntensity)) {
+      params.push(Math.max(0, Math.min(100, minIntensity)));
+      clauses.push(`p.emotional_intensity >= $${params.length}`);
+    }
+    if (Number.isInteger(maxIntensity)) {
+      params.push(Math.max(0, Math.min(100, maxIntensity)));
+      clauses.push(`p.emotional_intensity <= $${params.length}`);
+    }
+  }
+
+  const minAccessibility = parseFloat(query.minAccessibility);
+  const maxAccessibility = parseFloat(query.maxAccessibility);
+  if (
+    (Number.isFinite(minAccessibility) || Number.isFinite(maxAccessibility)) &&
+    takeGroup('difficulty')
+  ) {
+    if (Number.isFinite(minAccessibility)) {
+      params.push(Math.max(0, Math.min(10, minAccessibility)));
+      clauses.push(`p.accessibility_score >= $${params.length}`);
+    }
+    if (Number.isFinite(maxAccessibility)) {
+      params.push(Math.max(0, Math.min(10, maxAccessibility)));
+      clauses.push(`p.accessibility_score <= $${params.length}`);
+    }
+  }
+
+  return { clauses, params, groups: [...groups] };
+}
+
+/**
+ * Per-facet poem counts SCOPED by the answers a reader has already given, plus
+ * the running totals the onboarding flow shows.
+ *
+ * Returns `null` when the caller sent no filter params at all, which is how the
+ * unscoped /api/categories payload stays exactly what it always was.
+ *
+ * ## Why each facet skips its own group
+ *
+ * These are faceted counts, not filtered counts. On the mood step the reader has
+ * already chosen a family, and each mood chip should read "poems in your family
+ * carrying this mood". If the currently-selected moods were also applied, every
+ * OTHER mood on the screen would drop to 0 the instant the first one was picked,
+ * because a poem carrying `amorous` mostly does not also carry `defiance`. So
+ * each dimension is counted against the scope MINUS its own selection; the same
+ * applies to families, to the century range, and to the accessibility range.
+ *
+ * ## Why serving filters are applied
+ *
+ * The number is shown next to a feed. The feed can only ever draw poems that
+ * pass the quality/length gate (~4,767 of 9,073), so counting the ones it cannot
+ * serve would overstate every figure by roughly 2x. `servable` is returned
+ * alongside so the client can render the count as a share of what is reachable
+ * rather than as a bare number with no denominator.
+ *
+ * @param {Object} query req.query
+ * @returns {Promise<Object|null>}
+ */
+async function scopedCategoryCounts(query = {}) {
+  const probe = buildCategoryFilters(query);
+  if (!probe.clauses.length) return null;
+
+  // Every count below joins the `servable` id set rather than inlining the
+  // serving predicate — see servableCte() for why that distinction is the
+  // difference between ~600ms and a statement timeout.
+  const cte = servableCte();
+
+  /** WHERE + params for the scope with one answer group left out. */
+  const scoped = (skipGroup) => {
+    const built = buildCategoryFilters(query, { skipGroup });
+    return {
+      where: built.clauses.length ? `WHERE ${built.clauses.join(' AND ')}` : '',
+      params: built.params,
+    };
+  };
+
+  // One query per facet group, in parallel. `p`/`po` are aliased identically to
+  // by-category so the clauses buildCategoryFilters emits drop straight in.
+  const dimJobs = categorizationDimensions.map(async (dim) => {
+    const { where, params } = scoped(dim);
+    const r = await pool.query(
+      `WITH ${cte}
+       SELECT cv.key AS value, COUNT(DISTINCT p.id)::int AS poem_count
+         FROM poems p
+         JOIN servable sv ON sv.id = p.id
+         JOIN poets po ON p.poet_id = po.id
+         JOIN poem_categories pc ON pc.poem_id = p.id
+         JOIN category_values cv ON pc.value_id = cv.id
+         JOIN category_dimensions cd ON cv.dimension_id = cd.id
+        ${where ? where + ' AND' : 'WHERE'} cd.key = $${params.length + 1}
+        GROUP BY cv.key`,
+      [...params, dim]
+    );
+    return [dim, Object.fromEntries(r.rows.map((x) => [x.value, x.poem_count]))];
+  });
+
+  const famJob = (async () => {
+    const { where, params } = scoped('family');
+    const r = await pool.query(
+      `WITH ${cte}
+       SELECT cf.key AS family, COUNT(DISTINCT p.id)::int AS poem_count
+         FROM poems p
+         JOIN servable sv ON sv.id = p.id
+         JOIN poets po ON p.poet_id = po.id
+         JOIN poem_categories pc ON pc.poem_id = p.id
+         JOIN category_values cv ON pc.value_id = cv.id
+         JOIN category_families cf ON cv.family_id = cf.id
+        ${where}
+        GROUP BY cf.key`,
+      params
+    );
+    return Object.fromEntries(r.rows.map((x) => [x.family, x.poem_count]));
+  })();
+
+  const eraJob = (async () => {
+    const { where, params } = scoped('century');
+    const r = await pool.query(
+      `WITH ${cte}
+       SELECT p.century AS century, COUNT(*)::int AS poem_count
+         FROM poems p
+         JOIN servable sv ON sv.id = p.id
+         JOIN poets po ON p.poet_id = po.id
+        ${where}
+        GROUP BY p.century ORDER BY p.century NULLS LAST`,
+      params
+    );
+    return r.rows;
+  })();
+
+  const accJob = (async () => {
+    const { where, params } = scoped('difficulty');
+    const r = await pool.query(
+      `WITH ${cte}
+       SELECT width_bucket(p.accessibility_score, 0, 10, 20) AS bucket,
+              COUNT(*)::int AS poem_count
+         FROM poems p
+         JOIN servable sv ON sv.id = p.id
+         JOIN poets po ON p.poet_id = po.id
+        ${where ? where + ' AND' : 'WHERE'} p.accessibility_score IS NOT NULL
+        GROUP BY bucket ORDER BY bucket`,
+      params
+    );
+    return r.rows.map((x) => ({
+      min: (x.bucket - 1) / 2,
+      max: x.bucket / 2,
+      poem_count: x.poem_count,
+    }));
+  })();
+
+  // total — every answer ANDed. This is the honest "match all your choices"
+  // number, and under scoring it is explicitly NOT a promise about the feed:
+  // the feed draws from a graded set, so a poem outside this count can still
+  // appear. The client labels it accordingly.
+  const totalJob = (async () => {
+    const { where, params } = scoped(null);
+    const r = await pool.query(
+      `WITH ${cte}
+       SELECT COUNT(*)::int AS n FROM poems p
+        JOIN servable sv ON sv.id = p.id
+        JOIN poets po ON p.poet_id = po.id ${where}`,
+      params
+    );
+    return r.rows[0]?.n ?? 0;
+  })();
+
+  // totalAny — the answers ORed. The other end of the range the feed actually
+  // works over: a poem matching one thing the reader said is a real candidate,
+  // just a lower-scoring one. Showing both numbers is what makes the graded
+  // behaviour legible instead of looking like a broken filter.
+  const anyJob = (async () => {
+    const params = [];
+    const perGroup = [];
+    for (const g of probe.groups) {
+      // buildCategoryFilters skips ONE group; isolating a single group instead
+      // means stripping every OTHER group's params out of a copy of the query.
+      const sub = { ...query };
+      for (const other of probe.groups) if (other !== g) removeGroupParams(sub, other);
+      const built = buildCategoryFilters(sub, { params });
+      if (built.clauses.length) perGroup.push(`(${built.clauses.join(' AND ')})`);
+    }
+    if (!perGroup.length) return 0;
+    const r = await pool.query(
+      `WITH ${cte}
+       SELECT COUNT(*)::int AS n FROM poems p
+        JOIN servable sv ON sv.id = p.id
+        JOIN poets po ON p.poet_id = po.id
+        WHERE (${perGroup.join(' OR ')})`,
+      params
+    );
+    return r.rows[0]?.n ?? 0;
+  })();
+
+  const servableJob = (async () => {
+    const r = await pool.query(`WITH ${cte} SELECT COUNT(*)::int AS n FROM servable`);
+    return r.rows[0]?.n ?? 0;
+  })();
+
+  const [dimEntries, families, eras, accessibility, total, totalAny, servable] = await Promise.all([
+    Promise.all(dimJobs),
+    famJob,
+    eraJob,
+    accJob,
+    totalJob,
+    anyJob,
+    servableJob,
+  ]);
+
+  return {
+    applied: probe.groups,
+    total,
+    totalAny,
+    servable,
+    dimensions: Object.fromEntries(dimEntries),
+    families,
+    eras,
+    accessibility,
+  };
+}
+
+/** Strip every query param belonging to one answer group (used by totalAny). */
+function removeGroupParams(obj, group) {
+  const byGroup = {
+    family: ['family'],
+    poet: ['poet'],
+    era: ['era'],
+    century: ['century', 'centuryFrom', 'centuryTo', 'includeUndated', 'undated'],
+    intensity: ['minIntensity', 'maxIntensity'],
+    difficulty: ['minAccessibility', 'maxAccessibility'],
+  };
+  const keys = byGroup[group] || [group, `${group}Mode`];
+  for (const k of keys) delete obj[k];
 }
 
 // Helper: returns extra SELECT columns for translation cache (empty string when columns don't exist)
@@ -477,6 +945,7 @@ app.get(
         ${poetNameEnExpr()}
         ${titleEnExpr()}
         ${translationSelectExpr()}
+        ${categorizationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -484,19 +953,27 @@ app.get(
 
       const params = [];
       let paramIndex = 1;
+      // Tracked explicitly rather than sniffed with `query.includes('WHERE')`.
+      // The SELECT list now carries a correlated subquery whose own WHERE would
+      // make that test true with no top-level WHERE present, appending a bare
+      // `AND ...` after the JOINs.
+      let hasWhere = false;
 
       if (poet && poet !== 'All') {
         query += ` WHERE po.name = $${paramIndex} ${servingFilters()}`;
         params.push(poet);
         paramIndex++;
+        hasWhere = true;
       } else {
         const qf = servingFilters();
-        if (qf) query += ` WHERE 1=1 ${qf}`;
+        if (qf) {
+          query += ` WHERE 1=1 ${qf}`;
+          hasWhere = true;
+        }
       }
 
       // Add exclude clause using parameterized ANY() to prevent SQL injection
       if (excludeIds.length > 0) {
-        const hasWhere = query.includes('WHERE');
         query += hasWhere
           ? ` AND p.id != ALL($${paramIndex})`
           : ` WHERE p.id != ALL($${paramIndex})`;
@@ -524,6 +1001,7 @@ app.get(
           t.name as theme
           ${poetNameEnExpr()}
           ${translationSelectExpr()}
+          ${categorizationSelectExpr()}
         FROM poems p
         JOIN poets po ON p.poet_id = po.id
         JOIN themes t ON p.theme_id = t.id
@@ -550,7 +1028,7 @@ app.get(
       log.debug('DB', `Arabic field: exists=${'arabic' in poem}, type=${typeof poem.arabic}`);
 
       // Format the response to match the frontend structure
-      const formattedPoem = formatPoem(poem);
+      const formattedPoem = attachCategorization(formatPoem(poem), poem);
 
       // Include cached translations when available
       if (poem.cached_translation) formattedPoem.cachedTranslation = poem.cached_translation;
@@ -600,6 +1078,7 @@ app.get(
         t.name as theme
         ${poetNameEnExpr()}
         ${titleEnExpr()}
+        ${categorizationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -610,7 +1089,7 @@ app.get(
 
       const result = await pool.query(query, [poet, limitNum, offsetNum]);
 
-      const poems = result.rows.map(formatPoem);
+      const poems = result.rows.map((row) => attachCategorization(formatPoem(row), row));
 
       log.info('Poems', `By poet "${poet}": returned ${poems.length} poems`);
       res.json(poems);
@@ -680,6 +1159,7 @@ app.get(
         t.name as theme
         ${poetNameEnExpr()}
         ${titleEnExpr()}
+        ${categorizationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -689,7 +1169,7 @@ app.get(
 
       const result = await pool.query(query, [`%${q}%`, limitNum]);
 
-      const poems = result.rows.map(formatPoem);
+      const poems = result.rows.map((row) => attachCategorization(formatPoem(row), row));
 
       log.info('Search', `Query "${q}": returned ${poems.length} results`);
       res.json(poems);
@@ -701,83 +1181,350 @@ app.get(
   }
 );
 
+/**
+ * Build the UNSCOPED half of /api/categories: dimensions, families, and the two
+ * distribution histograms. Four aggregate queries over the whole servable
+ * corpus, ~850ms, and identical for every caller — nothing in here reads
+ * req.query. That is what makes it cacheable (see categoriesBase below).
+ */
+async function buildCategoriesBase() {
+  // Every count on this endpoint is SERVING-SCOPED: joined through `poems` and
+  // gated by servingFilters(), the same predicate the poem routes apply.
+  //
+  // It previously counted the whole 9,073-poem corpus while the feed can only
+  // draw the ~4,767 that clear minQualityScore / maxVerseLines. Roughly half of
+  // every number was unreachable, so "Abbasid, 3,207" promised a reader poems
+  // that no query would ever return. Under scoring that gets worse rather than
+  // better: a running total is a far more direct promise than a number on a
+  // chip, so an inflated one is a more visible lie.
+  //
+  // The LEFT JOIN keeps values with zero servable poems in the payload (as a 0)
+  // instead of dropping them from the picker, which is why the predicate sits
+  // in the ON clause rather than a WHERE.
+  const result = await pool.query(`
+    WITH ${servableCte()}
+    SELECT d.key AS dimension, d.label_ar AS dimension_ar, d.label_en AS dimension_en,
+           d.cardinality, v.key AS value, v.label_ar, v.label_en,
+           COUNT(s.id) AS poem_count
+    FROM category_dimensions d
+    JOIN category_values v ON v.dimension_id = d.id
+    LEFT JOIN poem_categories pc ON pc.value_id = v.id
+    LEFT JOIN servable s ON s.id = pc.poem_id
+    GROUP BY d.id, d.key, d.label_ar, d.label_en, d.cardinality,
+             v.id, v.key, v.label_ar, v.label_en, v.sort_order
+    ORDER BY d.sort_order, v.sort_order
+  `);
+  // Group values under their dimension
+  const byDim = new Map();
+  for (const row of result.rows) {
+    if (!byDim.has(row.dimension)) {
+      byDim.set(row.dimension, {
+        key: row.dimension,
+        label_ar: row.dimension_ar,
+        label_en: row.dimension_en,
+        cardinality: row.cardinality,
+        values: [],
+      });
+    }
+    byDim.get(row.dimension).values.push({
+      key: row.value,
+      label_ar: row.label_ar,
+      label_en: row.label_en,
+      poem_count: parseInt(row.poem_count, 10),
+    });
+  }
+
+  // Families group related values ACROSS dimensions. Each row carries the
+  // family's cross-dimension poem_count (COUNT(DISTINCT poem_id) over any
+  // member value) via a correlated subquery — same for every row of a family,
+  // so we read it once when the family is first seen.
+  const famResult = await pool.query(`
+    WITH ${servableCte()}
+    SELECT f.key AS family, f.label_ar AS family_ar, f.label_en AS family_en,
+           f.sort_order AS family_sort,
+           d.key AS dim, v.key AS value, v.label_ar, v.label_en,
+           (SELECT COUNT(DISTINCT pc.poem_id)
+              FROM poem_categories pc
+              JOIN category_values v2 ON pc.value_id = v2.id
+              JOIN servable s ON s.id = pc.poem_id
+             WHERE v2.family_id = f.id) AS poem_count
+    FROM category_families f
+    JOIN category_values v ON v.family_id = f.id
+    JOIN category_dimensions d ON v.dimension_id = d.id
+    ORDER BY f.sort_order, d.sort_order, v.sort_order
+  `);
+  const byFamily = new Map();
+  for (const row of famResult.rows) {
+    if (!byFamily.has(row.family)) {
+      byFamily.set(row.family, {
+        key: row.family,
+        label_ar: row.family_ar,
+        label_en: row.family_en,
+        sort_order: row.family_sort,
+        poem_count: parseInt(row.poem_count, 10),
+        values: [],
+      });
+    }
+    byFamily.get(row.family).values.push({
+      dim: row.dim,
+      key: row.value,
+      label_ar: row.label_ar,
+      label_en: row.label_en,
+    });
+  }
+
+  // Distributions power the two onboarding steps whose buckets are NOT part of
+  // the taxonomy — era and difficulty. Both are continuous-ish columns
+  // (poems.century, poems.accessibility_score) rather than category_values, so
+  // there is no seeded list of options to read. Publishing the raw histograms
+  // lets the client cut bands from the ACTUAL shape of the corpus instead of
+  // hardcoding nominal ranges that don't match reality (accessibility is
+  // nominally 0-10 but really tops out around 8.3, and century is dominated by
+  // the 9th).
+  //
+  // Raw counts only — the banding itself lives in one shared pure function on
+  // the client (src/services/categoryBands.js) so it is unit-testable and
+  // behaves identically whether the histogram came from here or from a
+  // client-side sample against an older server.
+  const [eraDist, accDist] = await Promise.all([
+    pool.query(`
+      WITH ${servableCte()}
+      SELECT po.era_id AS era_id, e.name AS era_name, p.century AS century,
+             COUNT(*)::int AS poem_count
+      FROM poems p
+      JOIN servable s ON s.id = p.id
+      JOIN poets po ON p.poet_id = po.id
+      LEFT JOIN eras e ON po.era_id = e.id
+      GROUP BY po.era_id, e.name, p.century
+      ORDER BY p.century NULLS LAST, po.era_id
+    `),
+    pool.query(`
+      WITH ${servableCte()}
+      SELECT width_bucket(p.accessibility_score, 0, 10, 20) AS bucket,
+             COUNT(*)::int AS poem_count
+      FROM poems p
+      JOIN servable s ON s.id = p.id
+      WHERE p.accessibility_score IS NOT NULL
+      GROUP BY bucket
+      ORDER BY bucket
+    `),
+  ]);
+
+  return {
+    dimensions: Array.from(byDim.values()),
+    families: Array.from(byFamily.values()),
+    distributions: {
+      // One row per (era, century) pair. century is null for the late/modern
+      // eras — see the ERA_CENTURY note on by-category's century range params.
+      eras: eraDist.rows.map((r) => ({
+        era_id: r.era_id,
+        era_name: r.era_name,
+        century: r.century,
+        poem_count: r.poem_count,
+      })),
+      // 20 half-unit buckets over the 0-10 accessibility scale. bucket N covers
+      // [ (N-1)/2, N/2 ). Higher score = HARDER (1 = easy for Arabic learners,
+      // 5 = requires deep classical knowledge) — the column name reads the
+      // other way round, so don't invert it.
+      accessibility: accDist.rows.map((r) => ({
+        min: (r.bucket - 1) / 2,
+        max: r.bucket / 2,
+        poem_count: r.poem_count,
+      })),
+    },
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* /api/categories cache                                                       */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The unscoped taxonomy payload, cached in memory.
+ *
+ * WHY: this is the first thing a reader's browser asks for on /onboarding, and
+ * it is ~850ms of aggregate work before a single chip can render. The answer
+ * only changes when the offline categorization pipeline reruns — a manual job,
+ * not something a request can trigger — so recomputing it per request buys
+ * nothing.
+ *
+ * BOUNDING: exactly ONE entry, keyed by nothing. Scoped requests
+ * (?family=…&mood=…) reuse this same base and compute only their `scope` block
+ * on top, so the cascading-count key space — which is combinatorial and would
+ * be an unbounded leak on a 512MB free instance — never becomes a cache key.
+ * A scoped call still gets most of the win because the base was the expensive
+ * half.
+ *
+ * INVALIDATION: age-based, stale-while-revalidate. Inside TTL we serve the
+ * entry. Past TTL we serve the stale entry AND kick a background rebuild, so
+ * nobody ever waits on the aggregates once the process is warm. The staleness
+ * window is therefore TTL plus one rebuild (~1s): with the default 10 minutes,
+ * a reader can see counts up to ~10 minutes behind a pipeline rerun. That is
+ * fine — counts drift, chips don't. What would NOT be fine is serving a
+ * taxonomy whose values no longer exist, and this cannot do that: the whole
+ * payload is replaced atomically by one rebuild, never patched value-by-value,
+ * so a reader sees an entirely-old or an entirely-new taxonomy and nothing in
+ * between. A deploy or restart drops the cache outright.
+ */
+const CATEGORIES_TTL_MS = Number(process.env.CATEGORIES_CACHE_TTL_MS || 10 * 60 * 1000);
+let categoriesBase = null; // { payload, builtAt }
+let categoriesBaseInflight = null;
+
+async function rebuildCategoriesBase() {
+  // Single-flight: concurrent cold callers share one build instead of firing
+  // four aggregate queries each.
+  if (!categoriesBaseInflight) {
+    categoriesBaseInflight = buildCategoriesBase()
+      .then((payload) => {
+        categoriesBase = { payload, builtAt: Date.now() };
+        return categoriesBase;
+      })
+      .finally(() => {
+        categoriesBaseInflight = null;
+      });
+  }
+  return categoriesBaseInflight;
+}
+
+/**
+ * Scoped `scope` blocks, in a SMALL BOUNDED LRU.
+ *
+ * Cascading counts mean /api/categories?family=…&mood=…&century… has
+ * combinatorially many variants, so this is deliberately capped rather than
+ * keyed-and-forgotten: at 64 entries of ~1KB it cannot grow past ~64KB no
+ * matter what query strings arrive, which is the property that matters on a
+ * free instance. Eviction is plain insertion-order LRU over a Map (re-insert on
+ * hit moves the key to the end).
+ *
+ * The hit rate is lopsided in a useful way. The FIRST scoped step is
+ * `?family=X` — about eight distinct keys shared by every reader, so it hits
+ * almost always. Later steps are near-unique per reader and mostly miss, which
+ * is exactly why we cap instead of trying to hold them all.
+ *
+ * Same freshness story as the base payload: entries carry a timestamp and are
+ * dropped past CATEGORIES_TTL_MS. No stale-while-revalidate here — a miss costs
+ * ~280ms and never blocks the picker, which keeps its unscoped numbers while
+ * the count is in flight.
+ */
+const SCOPE_CACHE_MAX = 64;
+const scopeCache = new Map(); // normalized query string -> { scope, builtAt }
+
+function scopeCacheKey(query) {
+  // Sorted so ?family=love&mood=x and ?mood=x&family=love are one entry.
+  return JSON.stringify(
+    Object.keys(query)
+      .sort()
+      .map((k) => [k, query[k]])
+  );
+}
+
+function scopeCacheGet(key) {
+  const hit = scopeCache.get(key);
+  if (!hit) return undefined;
+  if (Date.now() - hit.builtAt >= CATEGORIES_TTL_MS) {
+    scopeCache.delete(key);
+    return undefined;
+  }
+  scopeCache.delete(key);
+  scopeCache.set(key, hit); // touch: most-recently-used moves to the end
+  return hit.scope;
+}
+
+function scopeCacheSet(key, scope) {
+  scopeCache.set(key, { scope, builtAt: Date.now() });
+  while (scopeCache.size > SCOPE_CACHE_MAX) {
+    scopeCache.delete(scopeCache.keys().next().value); // oldest first
+  }
+}
+
+/**
+ * Warm the taxonomy cache shortly after startup, so the first reader after a
+ * cold start doesn't eat the aggregates on the first screen of /onboarding.
+ * Render's free tier spins the instance down, which makes that the common case
+ * rather than an edge one.
+ *
+ * DELAYED on purpose, and retried. Fired inline it races the seven startup
+ * schema probes for connections on a pool still doing TLS handshakes to the
+ * pooler, and loses: measured, the aggregates queued past the 5s
+ * `query_timeout` and the warm-up died, leaving the first real request to pay
+ * 2.8s — worse than no warm-up. Even 1.5s of headroom was not reliably enough,
+ * so this backs off across a few attempts. Failing all of them is harmless: the
+ * first request rebuilds the cache, which is just the old behaviour.
+ */
+const WARM_UP_DELAYS_MS = [4000, 15000, 45000];
+
+function scheduleTaxonomyWarmUp(attempt = 0) {
+  const delay = WARM_UP_DELAYS_MS[attempt];
+  if (delay === undefined) return;
+  const t = setTimeout(() => {
+    rebuildCategoriesBase().catch((err) => {
+      log.error('Categories', `Taxonomy warm-up attempt ${attempt + 1} failed: ${err.message}`);
+      scheduleTaxonomyWarmUp(attempt + 1);
+    });
+  }, delay);
+  // Never hold the process open for a cache warm-up (tests import server.js).
+  t.unref?.();
+}
+
+async function getCategoriesBase() {
+  if (categoriesBase) {
+    if (Date.now() - categoriesBase.builtAt >= CATEGORIES_TTL_MS) {
+      // Stale — refresh behind the reader's back. Errors must not reject here
+      // or a transient DB blip becomes an unhandled rejection; we keep serving
+      // the stale entry and try again on the next request.
+      rebuildCategoriesBase().catch((err) =>
+        log.error('Categories', `Background taxonomy refresh failed: ${err.message}`)
+      );
+    }
+    return categoriesBase.payload;
+  }
+  return (await rebuildCategoriesBase()).payload;
+}
+
 // List the available categorization facets (dimensions + values, bilingual).
 // Powers filter UIs. Returns [] gracefully when the migration hasn't run.
 app.get('/api/categories', async (req, res) => {
   try {
-    // Graceful pre-migration payload — both arrays present, no DB touch.
-    if (!hasCategorization) return res.json({ dimensions: [], families: [] });
-    const result = await pool.query(`
-      SELECT d.key AS dimension, d.label_ar AS dimension_ar, d.label_en AS dimension_en,
-             d.cardinality, v.key AS value, v.label_ar, v.label_en,
-             COUNT(pc.poem_id) AS poem_count
-      FROM category_dimensions d
-      JOIN category_values v ON v.dimension_id = d.id
-      LEFT JOIN poem_categories pc ON pc.value_id = v.id
-      GROUP BY d.id, d.key, d.label_ar, d.label_en, d.cardinality,
-               v.id, v.key, v.label_ar, v.label_en, v.sort_order
-      ORDER BY d.sort_order, v.sort_order
-    `);
-    // Group values under their dimension
-    const byDim = new Map();
-    for (const row of result.rows) {
-      if (!byDim.has(row.dimension)) {
-        byDim.set(row.dimension, {
-          key: row.dimension,
-          label_ar: row.dimension_ar,
-          label_en: row.dimension_en,
-          cardinality: row.cardinality,
-          values: [],
-        });
-      }
-      byDim.get(row.dimension).values.push({
-        key: row.value,
-        label_ar: row.label_ar,
-        label_en: row.label_en,
-        poem_count: parseInt(row.poem_count, 10),
+    // Graceful pre-migration payload — every key present and empty, no DB touch,
+    // so clients can render an empty state without null-checking each branch.
+    // no-store, not the cached header below: this shape is a placeholder, and a
+    // browser that cached it would keep showing an empty picker for max-age
+    // after the migration finally ran.
+    if (!hasCategorization) {
+      res.set('Cache-Control', 'no-store');
+      return res.json({
+        dimensions: [],
+        families: [],
+        distributions: { eras: [], accessibility: [] },
       });
     }
 
-    // Families group related values ACROSS dimensions. Each row carries the
-    // family's cross-dimension poem_count (COUNT(DISTINCT poem_id) over any
-    // member value) via a correlated subquery — same for every row of a family,
-    // so we read it once when the family is first seen.
-    const famResult = await pool.query(`
-      SELECT f.key AS family, f.label_ar AS family_ar, f.label_en AS family_en,
-             f.sort_order AS family_sort,
-             d.key AS dim, v.key AS value, v.label_ar, v.label_en,
-             (SELECT COUNT(DISTINCT pc.poem_id)
-                FROM poem_categories pc
-                JOIN category_values v2 ON pc.value_id = v2.id
-               WHERE v2.family_id = f.id) AS poem_count
-      FROM category_families f
-      JOIN category_values v ON v.family_id = f.id
-      JOIN category_dimensions d ON v.dimension_id = d.id
-      ORDER BY f.sort_order, d.sort_order, v.sort_order
-    `);
-    const byFamily = new Map();
-    for (const row of famResult.rows) {
-      if (!byFamily.has(row.family)) {
-        byFamily.set(row.family, {
-          key: row.family,
-          label_ar: row.family_ar,
-          label_en: row.family_en,
-          sort_order: row.family_sort,
-          poem_count: parseInt(row.poem_count, 10),
-          values: [],
-        });
-      }
-      byFamily.get(row.family).values.push({
-        dim: row.dim,
-        key: row.value,
-        label_ar: row.label_ar,
-        label_en: row.label_en,
-      });
+    const base = await getCategoriesBase();
+
+    // Counts SCOPED by the answers already given. Computed only when the caller
+    // sent at least one filter param, so the unscoped payload — and every
+    // existing caller of it — is byte-for-byte what it was.
+    const key = scopeCacheKey(req.query);
+    let scope = scopeCacheGet(key);
+    if (scope === undefined) {
+      scope = await scopedCategoryCounts(req.query);
+      // scopedCategoryCounts returns null for a query with no filter params —
+      // cache that too, so the unscoped path skips even the probe.
+      scopeCacheSet(key, scope);
     }
 
+    // Let the browser skip the round trip on a revisit. max-age is deliberately
+    // shorter than the server TTL so a rerun of the pipeline reaches readers
+    // roughly a minute after it reaches the server, and stale-while-revalidate
+    // means even an expired copy paints instantly while the refresh runs.
+    // Express already emits a weak ETag over the body, so a revalidation that
+    // does reach us answers 304 off the cache with no DB work at all.
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=600');
     res.json({
-      dimensions: Array.from(byDim.values()),
-      families: Array.from(byFamily.values()),
+      dimensions: base.dimensions,
+      families: base.families,
+      ...(scope ? { scope } : {}),
+      distributions: base.distributions,
     });
   } catch (error) {
     Sentry.captureException(error);
@@ -801,7 +1548,15 @@ app.get('/api/categories', async (req, res) => {
 //   poet                — exact poet name or slug (mirrors /api/poems/by-poet).
 //   era                 — poets.era_id (integer) OR an era name (poets.era_id
 //                         resolved via eras.name).
-//   century             — poems.century (integer CE, era-derived).
+//   century             — poems.century (integer CE, era-derived), exact match.
+//   centuryFrom         — p.century >= N. Contiguous band lower bound.
+//   centuryTo           — p.century <= N. Contiguous band upper bound.
+//   includeUndated      — 1|true: NULL-century poems stay eligible alongside the
+//                         centuryFrom/centuryTo range (they are ~25% of the
+//                         corpus — late/modern eras with no representative
+//                         century, NOT missing data).
+//   undated             — 1|true: ONLY NULL-century poems. Expresses the
+//                         late/modern band itself. Overrides the range params.
 //   minIntensity        — emotional_intensity >= N (0-100)
 //   maxIntensity        — emotional_intensity <= N (0-100)
 //   minAccessibility    — accessibility_score >= N (0-10)
@@ -815,128 +1570,13 @@ app.get('/api/poems/by-category', async (req, res) => {
   try {
     if (!hasCategorization) return res.json([]);
 
-    const params = [];
-    const clauses = [];
     const qf = servingFilters();
-    if (qf) clauses.push(qf.replace(/^\s*AND\s+/i, '')); // qf begins with "AND ..."
-
-    // Dimension filters via EXISTS against the normalized join. The dimension
-    // set is READ FROM the DB (categorizationDimensions, populated at startup),
-    // so a new dimension row becomes filterable with no code change here.
-    for (const dim of categorizationDimensions) {
-      let raw = req.query[dim];
-      if (!raw) continue;
-      const values = (Array.isArray(raw) ? raw : [raw])
-        .flatMap((s) => String(s).split(','))
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .slice(0, 20);
-      if (values.length === 0) continue;
-      // Per-dimension combine mode: `${dim}Mode=and` requires the poem to carry
-      // ALL selected values (one EXISTS each); default `or` matches ANY.
-      const andMode = String(req.query[`${dim}Mode`] || 'or').toLowerCase() === 'and';
-      if (andMode) {
-        for (const v of values) {
-          params.push(dim);
-          const dimIdx = params.length;
-          params.push(v);
-          const valIdx = params.length;
-          clauses.push(`EXISTS (
-        SELECT 1 FROM poem_categories pc
-        JOIN category_values cv ON pc.value_id = cv.id
-        JOIN category_dimensions cd ON cv.dimension_id = cd.id
-        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = $${valIdx}
-      )`);
-        }
-      } else {
-        params.push(dim);
-        const dimIdx = params.length;
-        params.push(values);
-        const valIdx = params.length;
-        clauses.push(`EXISTS (
-        SELECT 1 FROM poem_categories pc
-        JOIN category_values cv ON pc.value_id = cv.id
-        JOIN category_dimensions cd ON cv.dimension_id = cd.id
-        WHERE pc.poem_id = p.id AND cd.key = $${dimIdx} AND cv.key = ANY($${valIdx})
-      )`);
-      }
-    }
-
-    // Family filter: match poems having ANY value that belongs to the family
-    // (cross-dimension OR), mirroring the EXISTS style above.
-    const familyRaw = req.query.family;
-    if (familyRaw) {
-      const family = String(familyRaw).trim();
-      if (family) {
-        params.push(family);
-        clauses.push(`EXISTS (
-        SELECT 1 FROM poem_categories pc
-        JOIN category_values cv ON pc.value_id = cv.id
-        JOIN category_families cf ON cv.family_id = cf.id
-        WHERE pc.poem_id = p.id AND cf.key = $${params.length}
-      )`);
-      }
-    }
-
-    // Poet passthrough: exact name or slug (mirrors /api/poems/by-poet, which
-    // matches po.name; poets also carry a UUID slug for deep links).
-    const poetRaw = req.query.poet;
-    if (poetRaw) {
-      const poet = String(poetRaw).trim();
-      if (poet && poet !== 'All') {
-        params.push(poet);
-        clauses.push(`(po.name = $${params.length} OR po.slug = $${params.length})`);
-      }
-    }
-
-    // Era passthrough: numeric era id filters po.era_id directly; a non-numeric
-    // value is resolved via eras.name (era is a poet-level facet — poems has no
-    // era column — and po is already joined below).
-    const eraRaw = req.query.era;
-    if (eraRaw != null && String(eraRaw).trim() !== '') {
-      const era = String(eraRaw).trim();
-      const eraId = parseInt(era, 10);
-      if (Number.isInteger(eraId) && String(eraId) === era) {
-        params.push(eraId);
-        clauses.push(`po.era_id = $${params.length}`);
-      } else {
-        params.push(era);
-        clauses.push(`po.era_id = (SELECT id FROM eras WHERE name = $${params.length})`);
-      }
-    }
-
-    // Century passthrough: poems.century is era-derived (integer CE).
-    const centuryRaw = req.query.century;
-    if (centuryRaw != null && String(centuryRaw).trim() !== '') {
-      const century = parseInt(centuryRaw, 10);
-      if (Number.isInteger(century)) {
-        params.push(century);
-        clauses.push(`p.century = $${params.length}`);
-      }
-    }
-
-    // Intensity range (0-100) and difficulty/accessibility range (0-10). Each
-    // bound is independent so the UI can express a min, a max, or both.
-    const minIntensity = parseInt(req.query.minIntensity, 10);
-    if (Number.isInteger(minIntensity)) {
-      params.push(Math.max(0, Math.min(100, minIntensity)));
-      clauses.push(`p.emotional_intensity >= $${params.length}`);
-    }
-    const maxIntensity = parseInt(req.query.maxIntensity, 10);
-    if (Number.isInteger(maxIntensity)) {
-      params.push(Math.max(0, Math.min(100, maxIntensity)));
-      clauses.push(`p.emotional_intensity <= $${params.length}`);
-    }
-    const minAccessibility = parseFloat(req.query.minAccessibility);
-    if (Number.isFinite(minAccessibility)) {
-      params.push(Math.max(0, Math.min(10, minAccessibility)));
-      clauses.push(`p.accessibility_score >= $${params.length}`);
-    }
-    const maxAccessibility = parseFloat(req.query.maxAccessibility);
-    if (Number.isFinite(maxAccessibility)) {
-      params.push(Math.max(0, Math.min(10, maxAccessibility)));
-      clauses.push(`p.accessibility_score <= $${params.length}`);
-    }
+    const seed = qf ? [qf.replace(/^\s*AND\s+/i, '')] : []; // qf begins with "AND ..."
+    // Filter parsing is shared with /api/categories' scoped counts so the two
+    // endpoints can never drift — see buildCategoryFilters.
+    const built = buildCategoryFilters(req.query);
+    const params = built.params;
+    const clauses = [...seed, ...built.clauses];
 
     // Explicit id set (e.g. a user's saved poems): return exactly those poems,
     // fully categorized and in the order given, bypassing the random pick + cap.
@@ -1014,18 +1654,10 @@ app.get('/api/poems/by-category', async (req, res) => {
     );
 
     const poems = result.rows.map((poem) => {
-      const formatted = formatPoem(poem);
-      formatted.moodPrimary = poem.mood_primary;
-      formatted.emotionalIntensity = poem.emotional_intensity;
-      formatted.accessibilityScore = poem.accessibility_score;
-      formatted.accessibilityFactors = poem.accessibility_factors;
       // Confidence summary: MAX per-label confidence across this poem's
       // category assignments (0-100), plus the raw categories JSONB (which
       // holds the per-value `confidences` object) when present.
-      if (poem.confidence != null) formatted.confidence = poem.confidence;
-      if (poem.categories_json) formatted.categories = poem.categories_json;
-      if (poem.era_id != null) formatted.eraId = poem.era_id;
-      if (poem.century != null) formatted.century = poem.century;
+      const formatted = attachCategorization(formatPoem(poem), poem);
       if (poem.cached_translation) formatted.cachedTranslation = poem.cached_translation;
       return formatted;
     });
@@ -1060,6 +1692,7 @@ app.get(
         ${poetNameEnExpr()}
         ${titleEnExpr()}
         ${translationSelectExpr()}
+        ${categorizationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -1074,7 +1707,7 @@ app.get(
 
       const poem = result.rows[0];
 
-      const formattedPoem = formatPoem(poem);
+      const formattedPoem = attachCategorization(formatPoem(poem), poem);
 
       if (poem.cached_translation) formattedPoem.cachedTranslation = poem.cached_translation;
       if (poem.cached_explanation) formattedPoem.cachedExplanation = poem.cached_explanation;
@@ -1146,6 +1779,158 @@ app.post(
     } catch (error) {
       Sentry.captureException(error);
       log.error('Translation', `Error saving translation: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
+// ── Classifier rationale, in English ──────────────────────────────────────
+//
+// `categories.rationale` is the classifier's own one-line justification, and it
+// is Arabic-only for every row tagged before prompt version distill-2. distill-2
+// asks the model for `categories.rationale_en` in the same call, so new rows
+// arrive bilingual; this route is how the ~9k rows already in the table catch
+// up. BOTH paths write the SAME field, so a poem can never carry two English
+// rationales that disagree, and this route goes quiet on its own as the corpus
+// is reclassified.
+//
+// Shape note: /api/poems/:id/translation has the client translate and then POST
+// the text back. This one translates server-side in a single hop instead. The
+// reason is not symmetry but ownership — the input is a sentence WE generated
+// and store, the key is already here, and a two-hop shape would mean accepting
+// arbitrary client prose as the canonical English for a field the whole corpus
+// reads. The property that mattered about the translation route is kept: the
+// result lands in Postgres, so exactly one reader ever pays for it.
+const rationaleTranslateLimit = rateLimit({
+  windowMs: 60_000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Kept deliberately tight. This is one sentence; a long output means the model
+// started explaining the poem rather than translating our sentence about it.
+const RATIONALE_EN_MAX = 600;
+
+app.post(
+  '/api/poems/:id/rationale-translation',
+  rationaleTranslateLimit,
+  [param('id').isInt({ min: 1 }).withMessage('Invalid poem ID'), validate],
+  async (req, res) => {
+    if (!hasCategorization) {
+      return res.status(503).json({ error: 'Categorization layer not available' });
+    }
+
+    try {
+      const { rows } = await pool.query(
+        `SELECT categories->>'rationale' AS rationale,
+                categories->>'rationale_en' AS rationale_en
+           FROM poems WHERE id = $1`,
+        [req.params.id]
+      );
+
+      if (rows.length === 0) return res.status(404).json({ error: 'Poem not found' });
+
+      const { rationale, rationale_en: existing } = rows[0];
+
+      // The second reader's request stops here — no model call, no write.
+      if (existing) return res.json({ rationaleEn: existing, status: 'cached' });
+
+      // Nothing to translate. Not an error: most of the corpus predates the
+      // rationale field entirely.
+      if (!rationale) return res.json({ rationaleEn: null, status: 'no_rationale' });
+
+      // Read at request time rather than off the module-level GEMINI_API_KEY
+      // const, so both branches are reachable in a test without reloading the
+      // module. Same value in production, where the env is fixed at boot.
+      const apiKey = process.env.GEMINI_API_KEY || '';
+
+      // No key is a normal deployment, not a fault. The client keeps showing
+      // the Arabic, which is the source of truth anyway.
+      if (!apiKey) {
+        return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
+      }
+
+      const response = await fetch(
+        `${GEMINI_BASE}/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text:
+                      'Translate this Arabic sentence into English. It is a literary ' +
+                      'classifier’s one-line justification for the categories it assigned ' +
+                      'to a poem. Return ONLY the English sentence — no quotes, no ' +
+                      'preamble, no notes. Do not add meaning that is not in the Arabic.\n\n' +
+                      rationale,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 400,
+              // 2.5 spends maxOutputTokens on thinking BEFORE it emits a token
+              // of the answer. Without this the sentence comes back chopped
+              // mid-clause, and this route persists its output — so a truncated
+              // reply would be the English rationale for that poem forever.
+              thinkingConfig: { thinkingBudget: 0 },
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        log.error('Rationale', `Upstream translate failed: ${response.status}`);
+        return res.status(502).json({ error: 'Translation failed' });
+      }
+
+      const data = await response.json();
+      const candidate = data?.candidates?.[0];
+
+      // Belt and braces alongside thinkingBudget: anything that did not finish
+      // cleanly is discarded rather than written. Persisting half a sentence is
+      // worse than showing none, because nothing would ever replace it.
+      if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+        log.error('Rationale', `Discarding ${candidate.finishReason} reply`);
+        return res.status(502).json({ error: 'Translation failed' });
+      }
+
+      const text = (candidate?.content?.parts || [])
+        .map((p) => p?.text || '')
+        .join('')
+        .trim()
+        // One sentence, one line. The model wraps at its own width and the
+        // panel renders this in a <p>, so a stray newline would survive into
+        // every copy-paste of a field we only ever write once.
+        .replace(/\s+/g, ' ')
+        // Models like to wrap a bare sentence in quotes despite being told not to.
+        .replace(/^["'“”]+|["'“”]+$/g, '')
+        .replace(/<[^>]*>/g, '')
+        .slice(0, RATIONALE_EN_MAX)
+        .trim();
+
+      if (!text) return res.status(502).json({ error: 'Translation failed' });
+
+      // Merged into the existing JSONB rather than replacing it, and guarded so
+      // a race between two first readers cannot overwrite a value that landed
+      // first (including one the classifier itself wrote under distill-2).
+      await pool.query(
+        `UPDATE poems
+            SET categories = jsonb_set(COALESCE(categories, '{}'::jsonb), '{rationale_en}', to_jsonb($1::text), true)
+          WHERE id = $2 AND (categories->>'rationale_en') IS NULL`,
+        [text, req.params.id]
+      );
+
+      log.info('Rationale', `Translated rationale for poem ${req.params.id}`);
+      res.json({ rationaleEn: text, status: 'translated' });
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('Rationale', `Error translating rationale: ${error.message}`, error.stack);
       res.status(500).json({ error: 'Internal server error' });
     }
   }
@@ -1770,11 +2555,9 @@ const requireCuration = async (req, res, next) => {
   try {
     const uid = await getCurationUid();
     if (!uid) {
-      return res
-        .status(404)
-        .json({
-          error: 'saved-poems curation disabled (set SAVED_CURATION_EMAIL in a local .env)',
-        });
+      return res.status(404).json({
+        error: 'saved-poems curation disabled (set SAVED_CURATION_EMAIL in a local .env)',
+      });
     }
     req.curationUid = uid;
     next();
@@ -2867,6 +3650,30 @@ export const __test = {
   setCategorizationState(enabled, dimensions = []) {
     hasCategorization = !!enabled;
     categorizationDimensions = Array.isArray(dimensions) ? dimensions : [];
+    // Every categorization test goes through here, so this is the seam where
+    // the taxonomy cache gets dropped. Without it the first test in a file
+    // warms the cache and every later one silently asserts against ITS payload
+    // instead of its own mock — a failure mode that looks like a broken query.
+    __test.resetCategoriesCache();
+  },
+  /** Drop the /api/categories caches (base payload + scoped LRU). */
+  resetCategoriesCache() {
+    categoriesBase = null;
+    categoriesBaseInflight = null;
+    scopeCache.clear();
+  },
+  /**
+   * The scoped LRU, for testing its bound directly. Driving eviction through
+   * HTTP would need 65 requests and trip the rate limiter, and boundedness is a
+   * property of this Map rather than of the route.
+   */
+  scopeCache: {
+    max: SCOPE_CACHE_MAX,
+    size: () => scopeCache.size,
+    keys: () => [...scopeCache.keys()],
+    set: scopeCacheSet,
+    get: scopeCacheGet,
+    key: scopeCacheKey,
   },
   getCategorizationState() {
     return { hasCategorization, categorizationDimensions: [...categorizationDimensions] };

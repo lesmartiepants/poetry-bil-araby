@@ -397,6 +397,33 @@ const DebugPanel = ({ controlBarRef }) => {
           <span className="text-[0.5625rem] font-mono opacity-40 ml-auto">/enjoyability ↗</span>
         </a>
 
+        {/*
+          Preference flow — deliberately NOT on the boot path (see
+          FEATURES.onboardingPrefs), so /onboarding is otherwise invisible: this
+          is a SPA, "/" answers 200 and quietly renders the reader, and nothing
+          hints the route exists. This row is the discovery surface. Full page
+          load rather than a wouter push, so the flow starts from a clean mount.
+        */}
+        {FEATURES.onboardingPrefs && (
+          <a
+            href="/onboarding"
+            title="Open the preference flow (mood / motif / era / difficulty pickers)"
+            className={`flex items-center gap-2 w-full px-4 py-1.5 border-t ${theme.border} flex-none text-left`}
+          >
+            <span className="text-amber-400 flex-shrink-0 text-[0.5625rem]">◆</span>
+            <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">
+              Preference Flow
+            </span>
+            <span className="text-[0.5625rem] font-mono opacity-40 ml-auto">/onboarding</span>
+          </a>
+        )}
+
+        {/*
+          The scored draw behind the current poem now has its own floating
+          surface (DiscoveryDrawInspector, mounted in app.jsx) — thirty rows of
+          monospace needed room to scroll, which this panel could not give it.
+        */}
+
         {/* Live API voice + temperature — only shown in Live mode */}
         {ttsModel === 'live' && (
           <div className={`flex flex-col gap-2 px-4 py-2 border-t ${theme.border} flex-none`}>

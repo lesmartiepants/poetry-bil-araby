@@ -36,6 +36,58 @@
       "gap": "server.test.js covers the enabled/disabled API paths with a mocked pool; no e2e yet for the Explore Poems UI (filter chips, in-place poem expand)."
     },
     {
+      "id": "onboarding-preferences",
+      "name": "Onboarding preference flow (5 steps)",
+      "tier": "nice",
+      "userFacing": "Full-screen five-step flow at /onboarding: family, mood, motif (optional), era, difficulty. Every option, bilingual label and poem count is read from the live categorization API; the era and difficulty bands are cut from the LIVE DISTRIBUTION (GET /api/categories -> distributions) rather than hardcoded. Counts CASCADE: each step's options are re-counted against the answers already given (GET /api/categories now scopes by prior answers), and a running total under the options shows how many poems match all the choices against how many match at least one. Both are labelled as matches, never as feed contents, because under scoring an intersection count is not a promise about the feed. Every count is measured behind the SERVING predicate, so the numbers describe the ~4,767 poems the feed can actually reach rather than the full 9,073. Answers save to localStorage.onboardingPrefs. PreferencesDrawer was built to re-edit them but is currently mounted nowhere, so there is no in-app way back to these answers yet. They bias the feed as a weight, never a filter (see feed-preference-weighting). Salvaged from PR #517's visual work and rebuilt against the shipped taxonomy. The route has no user-facing link by design (see FEATURES.onboardingPrefs); reach it from the debug panel. Mood (16 options) and motif (12) use a ring constellation only above 640px, since below that the ring is too small to hold the chips without them painting over each other; phones get the staggered rows instead. Signed in, they also mirror to user_settings.onboarding_preferences (versioned JSONB) so they follow the reader across devices; on sign-in the two sides are reconciled whole by most-recent completedAt, and a payload whose version this build does not recognise is left untouched on both sides.",
+      "entrypoints": [
+        "src/components/PreferencesDrawer.jsx",
+        "src/components/onboarding/MatchTally.jsx",
+        "src/components/onboarding/OnboardingFlow.jsx",
+        "src/components/onboarding/PreferenceStep.jsx",
+        "src/constants/eras.js",
+        "src/services/categoryBands.js",
+        "src/services/categoryTags.js",
+        "src/services/preferences.js",
+        "src/constants/eras.js",
+        "src/hooks/useOnboardingPrefs.js"
+      ],
+      "endpoints": ["GET /api/categories"],
+      "tests": {
+        "unit": [
+          "src/test/onboarding-preferences.test.jsx",
+          "src/test/categoryBands.test.js",
+          "src/test/onboarding-prefs-sync.test.jsx"
+        ],
+        "e2e": []
+      },
+      "deviceOnly": false,
+      "coverage": "behavioral",
+      "gap": "Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all five steps to completion, mood ordering, and the empty pre-migration state. Cross-device sync is unit-tested in both merge directions, plus write-through, read-back and version mismatch, against a stubbed Supabase client. No e2e yet for the rendered flow, and nothing exercises the JSONB column against a real Postgres row."
+    },
+    {
+      "id": "taxonomy-tag-ui",
+      "name": "Taxonomy tag UI (browse / filter / inspect)",
+      "tier": "nice",
+      "userFacing": "Tag surfaces salvaged from PR #517 and rewired onto the shipped categorization taxonomy: TagExplorer browses dimensions and values, TagFilterPanel/FacetedSearchPanel filter poems by them, TagBadge renders a value, and PoemTagEditor/TagAdminPanel inspect labels. Not yet mounted on a route - the two editor surfaces are read-only because the categorization API exposes no writes (see their TODO(write-api) blocks).",
+      "entrypoints": [
+        "src/components/tags/TagBadge.jsx",
+        "src/components/tags/TagExplorer.jsx",
+        "src/components/tags/TagFilterPanel.jsx",
+        "src/components/tags/FacetedSearchPanel.jsx",
+        "src/components/tags/PoemTagEditor.jsx",
+        "src/components/tags/TagAdminPanel.jsx"
+      ],
+      "endpoints": ["GET /api/categories", "GET /api/poems/by-category", "GET /api/poems/search"],
+      "tests": {
+        "unit": [],
+        "e2e": []
+      },
+      "deviceOnly": false,
+      "coverage": "none",
+      "gap": "No automated coverage. Components are ported but unmounted; add tests when a surface routes to them."
+    },
+    {
       "id": "poem-display",
       "name": "Poem display (Arabic + translation + transliteration)",
       "tier": "critical",
@@ -662,6 +714,36 @@
       "deviceOnly": false,
       "coverage": "none",
       "gap": "Dev tooling; no automated coverage by design. /enjoyability is gated by ENABLE_DEV_LAB (404 in prod); the Saved-curation endpoints are gated by SAVED_CURATION_EMAIL (unset in prod)."
+    },
+    {
+      "id": "feed-preference-weighting",
+      "name": "Preference-scored feed selection",
+      "tier": "nice",
+      "userFacing": "Onboarding answers bias which poem the feed serves next WITHOUT filtering the corpus. Every candidate is SCORED 0-5 on how much of the answer set it satisfies (family 0.8, mood 1.2, motif 1.0, era 1.0, difficulty 1.0), and one is sampled from that score by a softmax whose temperature loosens over 30 poems seen. Family is weighted below the dimensions it is built out of, and discounted further when the only value carrying the family match is one the reader already named as a mood or motif, so the two correlated answers cannot outvote the three independent ones. Multi-select steps give partial credit: matching two of three chosen moods beats one of three, without punishing a reader for picking more. Era and difficulty give graded credit to near misses (an adjacent century, an accessibility score just outside the band) rather than cutting at the band edge; undated (late/modern) poems stay eligible under a dated band at reduced credit, so picking one period over another visibly changes the feed. Candidates come from two pages: one ANCHORED on the reader's broadest single answer, and one wholly UNANCHORED, which is what keeps every poem in the library reachable on every draw. Replaces the earlier core/adjacent/wild pool mix, which had no gradation between matching five answers and matching one. On a strong match the reader sees a quiet 'chosen for <label>' line; on a weak one, deliberately nothing. The inspector's collapsed CLASSIFIER'S RATIONALE now reads bilingual like every chip above it: Arabic in Amiri, English under it in mono. Both languages come from one field, categories.rationale_en - written by the classifier under prompt version distill-2, or back-filled on demand for older rows by POST /api/poems/:id/rationale-translation, which translates server-side and PERSISTS into the poem row so only the first reader to expand it ever pays. It fires on expand only, never across the feed, and with no backend GEMINI_API_KEY (or offline, or on an upstream failure) it resolves to nothing and the Arabic stands alone - no spinner, no error line. The answers now shape the WHOLE feed, not just its first slide: completing the flow (or editing the answers, or signing in to an account whose answers win the merge) redraws the feed from slot 0, every slide is its own scored draw out of one shared candidate pool, and infinite scroll keeps drawing by score instead of falling back to random. Slides 0 and 1 are taken by RANK rather than sampled, so the two poems a reader sees immediately after answering are the best available match rather than a lucky one; temperature governs slide 2 onward, which is what keeps every poem reachable. The ranked opening is opt-in per draw rather than implied by starting near slot 0, so an ordinary mid-feed refill cannot re-run it, and the redraw claims the deferred auto-load so nothing fetches a replacement poem and moves the reader off slide 0.",
+      "entrypoints": [
+        "src/services/preferenceWeighting.js",
+        "src/services/preferences.js",
+        "src/services/lastDraw.js",
+        "src/stores/actions/fetchPoem.js",
+        "src/components/DiscoveryDrawInspector.jsx",
+        "src/services/rationaleTranslation.js"
+      ],
+      "endpoints": [
+        "GET /api/poems/by-category",
+        "GET /api/categories",
+        "POST /api/poems/:id/rationale-translation"
+      ],
+      "tests": {
+        "unit": [
+          "src/test/preferenceWeighting.test.js",
+          "src/test/discoveryFeedWiring.test.js",
+          "src/test/rationaleTranslation.test.js"
+        ],
+        "e2e": []
+      },
+      "deviceOnly": false,
+      "coverage": "behavioral",
+      "gap": "Unit tests pin the weighting and every partial-credit rule, the family/mood overlap discount in both directions, both halves of the no-lock-in guarantee (a zero-scoring candidate keeps a strictly positive softmax weight, AND the unanchored candidate page exists so it can be a candidate at all), the temperature calibration that carries the old wild 0.15 -> 0.25 mix forward, the batched multi-slide draw (ranked opening, sampled tail, no repeats, stable tie-break, load-more does not re-rank), the per-poem draw records the inspector reads, and the preference change notification that triggers the redraw. They also pin what the inspector RENDERS, so the panel cannot become a second implementation of the weighting: the per-term score decomposition sums to the score the scorer returned, and the per-dimension explanation resolves each facet to one of matched / present-but-unasked / asked-for-but-absent / partial, including the asked-for-but-absent case that the old truncating table had no way to express at all. The integration in fetchPoem.js (two-page candidate fetch, dedup, fallback to a plain fetch on an empty result) has no dedicated tests yet, and the inspector's LAYOUT (that nothing in the why block truncates at 375px) is verified in a browser rather than in CI; the end-to-end redraw is verified in a browser, not in CI. The browser check asserts a COUNT (exactly one scored draw fires) and that the reader rests on slot 0 ranked, because the regression it caught passed every non-zero check: the ranked opening was drawn correctly and then clobbered by a second fetch before the reader saw it. The rationale back-fill is unit-tested on both sides: the route is pinned on the cached path (no model call, no second write), the jsonb_set merge and its write-once guard, and the 503/502/no_rationale branches; the client service is pinned on POSTing to the persisting route, de-duplicating concurrent expands, and resolving null for every failure. The rendered bilingual block at 375px is verified in a browser, not in CI."
     }
   ]
 }

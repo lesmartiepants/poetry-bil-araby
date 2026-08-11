@@ -146,6 +146,15 @@ def import_rows(conn, df: pd.DataFrame, lookup: dict, batch_size: int) -> tuple[
             prompt_version = str(prompt_version) if pd.notna(prompt_version) else None
             rationale = row.get("rationale")
             rationale = str(rationale) if pd.notna(rationale) and str(rationale).strip() else None
+            # Absent from every parquet produced before distill-2; `.get` on a
+            # missing column returns None, which pd.notna rejects, so old runs
+            # import exactly as they did before.
+            rationale_en = row.get("rationale_en")
+            rationale_en = (
+                str(rationale_en)
+                if pd.notna(rationale_en) and str(rationale_en).strip()
+                else None
+            )
             mood_primary = row.get("mood_primary") or None
 
             raw_dim_lists = {
@@ -183,6 +192,10 @@ def import_rows(conn, df: pd.DataFrame, lookup: dict, batch_size: int) -> tuple[
                 categories_payload["prompt_version"] = prompt_version
             if rationale is not None:
                 categories_payload["rationale"] = rationale
+            # Same field the on-demand translator writes into, so a poem never
+            # ends up with two English rationales that can disagree.
+            if rationale_en is not None:
+                categories_payload["rationale_en"] = rationale_en
             categories_json = json.dumps(categories_payload, ensure_ascii=False)
 
             def _num(v):

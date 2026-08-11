@@ -209,6 +209,7 @@ def parse_categories(text: str, batch: list[dict]) -> list[dict]:
             mood_primary = moods[0] if moods else None
         confidences = _clean_confidences(item.get("confidences"), moods + topics + motifs)
         rationale = str(item.get("rationale", "")).strip() or None
+        rationale_en = str(item.get("rationale_en", "")).strip() or None
         results.append({
             "poem_id": str(poem["id"]),
             "moods": moods,
@@ -224,6 +225,10 @@ def parse_categories(text: str, batch: list[dict]) -> list[dict]:
             # Distillation (v3): the model's one-line justification of the poem's
             # core concept. Stored as provenance in the categories JSONB.
             "rationale": rationale,
+            # distill-2: the same sentence in English, asked for in the same
+            # call. Rows classified before distill-2 have no `rationale_en`
+            # here; they get one on demand from the API instead.
+            "rationale_en": rationale_en,
             # Provenance: which taxonomy + prompt build produced this row.
             "taxonomy_version": config.TAXONOMY_VERSION,
             "prompt_version": config.PROMPT_VERSION,

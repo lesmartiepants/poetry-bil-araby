@@ -31,7 +31,7 @@ export const TOUR_STEPS = [
     target: null,
     arabic: 'أهلا',
     title: 'Welcome to Poetry بالعربي',
-    body: 'A living diwan of 84,000+ Arabic poems. Take ten seconds — I’ll show you the core features, and you’ll try each one yourself.',
+    body: 'A living diwan of 9,073 curated Arabic poems. Take ten seconds — I’ll show you the core features, and you’ll try each one yourself.',
     note: 'Tap the highlighted action to move on to the next screen.',
     hint: null,
     side: 'center',

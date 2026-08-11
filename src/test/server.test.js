@@ -843,8 +843,15 @@ describe('Backend API Server', () => {
         .expect('Content-Type', /json/)
         .expect(200);
 
-      // Empty payload now carries both arrays (families added in v2); still no DB touch.
-      expect(response.body).toEqual({ dimensions: [], families: [] });
+      // Empty payload carries every key the populated one does (families added
+      // in v2, distributions for the derived era/difficulty bands) so clients
+      // can render an empty state without null-checking each branch. Still no
+      // DB touch.
+      expect(response.body).toEqual({
+        dimensions: [],
+        families: [],
+        distributions: { eras: [], accessibility: [] },
+      });
       expect(mockPool.query).not.toHaveBeenCalled();
     });
   });
@@ -932,6 +939,21 @@ describe('Backend API Server', () => {
             },
           ],
         });
+        // 3rd + 4th queries: the raw histograms the client cuts era and
+        // difficulty bands from. They run in parallel via Promise.all, so the
+        // order they resolve in is fixed by the array, not by mock order.
+        mockPool.query.mockResolvedValueOnce({
+          rows: [
+            { era_id: 5, era_name: 'جاهلي', century: 6, poem_count: 86 },
+            { era_id: 3, era_name: 'متأخر', century: null, poem_count: 409 },
+          ],
+        });
+        mockPool.query.mockResolvedValueOnce({
+          rows: [
+            { bucket: 3, poem_count: 197 },
+            { bucket: 9, poem_count: 78 },
+          ],
+        });
 
         const response = await request(app)
           .get('/api/categories')
@@ -977,6 +999,139 @@ describe('Backend API Server', () => {
         const familySql = mockPool.query.mock.calls[1][0];
         expect(familySql).toContain('COUNT(DISTINCT pc.poem_id)');
         expect(familySql).toContain('v.family_id = f.id');
+      });
+
+      it('publishes the raw era + accessibility histograms the bands are cut from', async () => {
+        __test.setCategorizationState(true, ['mood', 'topic', 'motif']);
+        // Routed by SQL rather than call order: the two histogram queries run
+        // inside a Promise.all, so a positional mock chain is brittle here.
+        mockPool.query.mockImplementation(async (sql) => {
+          if (sql.includes('p.century')) {
+            return {
+              rows: [
+                { era_id: 5, era_name: 'جاهلي', century: 6, poem_count: 86 },
+                { era_id: 2, era_name: 'عباسي', century: 9, poem_count: 649 },
+                { era_id: 3, era_name: 'متأخر', century: null, poem_count: 409 },
+              ],
+            };
+          }
+          if (sql.includes('width_bucket')) {
+            return {
+              rows: [
+                { bucket: 3, poem_count: 197 },
+                { bucket: 5, poem_count: 275 },
+              ],
+            };
+          }
+          return { rows: [] };
+        });
+
+        const response = await request(app).get('/api/categories').expect(200);
+
+        // Era rows pass through verbatim, INCLUDING the null century — those are
+        // the late/modern poems (~25% of the corpus), which get their own band
+        // rather than being dropped.
+        expect(response.body.distributions.eras).toEqual([
+          { era_id: 5, era_name: 'جاهلي', century: 6, poem_count: 86 },
+          { era_id: 2, era_name: 'عباسي', century: 9, poem_count: 649 },
+          { era_id: 3, era_name: 'متأخر', century: null, poem_count: 409 },
+        ]);
+
+        // width_bucket is 1-indexed over 20 half-unit buckets on a 0-10 scale,
+        // so bucket 3 is [1.0, 1.5).
+        expect(response.body.distributions.accessibility).toEqual([
+          { min: 1, max: 1.5, poem_count: 197 },
+          { min: 2, max: 2.5, poem_count: 275 },
+        ]);
+      });
+    });
+
+    // The unscoped taxonomy is ~850ms of aggregates and is the first thing a
+    // reader's browser asks for on /onboarding. These lock in that it is
+    // computed once, that a scoped request rides on the same cached base, and
+    // that the scoped cache cannot grow without bound.
+    describe('GET /api/categories caching', () => {
+      it('computes the unscoped payload once and serves later requests from cache', async () => {
+        __test.setCategorizationState(true, ['mood']);
+        mockPool.query.mockResolvedValue({ rows: [] });
+
+        const first = await request(app).get('/api/categories').expect(200);
+        const afterFirst = mockPool.query.mock.calls.length;
+        expect(afterFirst).toBeGreaterThan(0);
+
+        const second = await request(app).get('/api/categories').expect(200);
+
+        // Not one extra query, and byte-for-byte the same answer.
+        expect(mockPool.query.mock.calls.length).toBe(afterFirst);
+        expect(second.body).toEqual(first.body);
+      });
+
+      it('reuses the cached base for a scoped request, querying only the scope', async () => {
+        __test.setCategorizationState(true, ['mood']);
+        mockPool.query.mockResolvedValue({ rows: [] });
+
+        await request(app).get('/api/categories').expect(200);
+        const afterBase = mockPool.query.mock.calls.length;
+
+        await request(app).get('/api/categories?family=grief-loss').expect(200);
+        const scopedCost = mockPool.query.mock.calls.length - afterBase;
+
+        // Some queries for the scope block, but none of them the base
+        // aggregates — those are the ones that join category_dimensions.
+        expect(scopedCost).toBeGreaterThan(0);
+        const scopedSql = mockPool.query.mock.calls.slice(afterBase).map((c) => c[0]);
+        expect(scopedSql.some((s) => s.includes('FROM category_dimensions'))).toBe(false);
+      });
+
+      it('serves a repeated scoped request from the LRU without re-querying', async () => {
+        __test.setCategorizationState(true, ['mood']);
+        mockPool.query.mockResolvedValue({ rows: [] });
+
+        await request(app).get('/api/categories?family=grief-loss').expect(200);
+        const afterFirst = mockPool.query.mock.calls.length;
+        await request(app).get('/api/categories?family=grief-loss').expect(200);
+
+        expect(mockPool.query.mock.calls.length).toBe(afterFirst);
+      });
+
+      it('bounds the scoped cache, evicting least-recently-used first', () => {
+        // Cascading counts make the scoped key space combinatorial, so the cap
+        // is the property that keeps this from being a memory leak on a free
+        // instance. Driven directly rather than over HTTP: 65 requests would
+        // trip the rate limiter.
+        const lru = __test.scopeCache;
+        __test.resetCategoriesCache();
+
+        for (let i = 0; i < lru.max; i += 1) lru.set(`k${i}`, { total: i });
+        expect(lru.size()).toBe(lru.max);
+
+        lru.get('k0'); // touch the oldest — it should now survive
+        lru.set('overflow', { total: -1 });
+
+        expect(lru.size()).toBe(lru.max);
+        expect(lru.get('k0')).toEqual({ total: 0 });
+        expect(lru.get('k1')).toBeUndefined(); // evicted instead
+      });
+
+      it('keys the scoped cache on the answers, not their order', () => {
+        const lru = __test.scopeCache;
+        expect(lru.key({ family: 'grief-loss', mood: 'melancholy' })).toBe(
+          lru.key({ mood: 'melancholy', family: 'grief-loss' })
+        );
+      });
+
+      it('lets browsers revalidate rather than refetch, and never caches the pre-migration shape', async () => {
+        __test.setCategorizationState(true, ['mood']);
+        mockPool.query.mockResolvedValue({ rows: [] });
+        const enabled = await request(app).get('/api/categories').expect(200);
+        expect(enabled.headers['cache-control']).toContain('stale-while-revalidate');
+        expect(enabled.headers.etag).toBeTruthy();
+
+        // Pre-migration the payload is a placeholder. A browser that cached it
+        // would keep showing an empty picker after the migration finally ran.
+        __test.setCategorizationState(false, []);
+        const disabled = await request(app).get('/api/categories').expect(200);
+        expect(disabled.headers['cache-control']).toBe('no-store');
       });
     });
 
@@ -1024,6 +1179,73 @@ describe('Backend API Server', () => {
         expect(sql).toContain('cd.key = $1 AND cv.key = ANY($2)');
         expect(params[0]).toBe('form');
         expect(params[1]).toEqual(['qasida']);
+      });
+
+      describe('century bands', () => {
+        // An era answer in onboarding is a contiguous span of centuries, not one
+        // century, so by-category grew a range alongside the exact match.
+        it('filters a contiguous century range and, by default, excludes undated poems', async () => {
+          __test.setCategorizationState(true, ['mood']);
+          mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+          await request(app).get('/api/poems/by-category?centuryFrom=6&centuryTo=8').expect(200);
+
+          const [sql, params] = mockPool.query.mock.calls[0];
+          expect(sql).toContain('p.century >=');
+          expect(sql).toContain('p.century <=');
+          expect(sql).not.toContain('p.century IS NULL');
+          expect(params).toContain(6);
+          expect(params).toContain(8);
+        });
+
+        it('keeps undated poems eligible when asked', async () => {
+          // ~25% of the corpus has a NULL century by construction: the late and
+          // modern eras have no single representative century. Dropping them
+          // from every dated band would hide a quarter of the library.
+          __test.setCategorizationState(true, ['mood']);
+          mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+          await request(app)
+            .get('/api/poems/by-category?centuryFrom=6&centuryTo=8&includeUndated=1')
+            .expect(200);
+
+          const [sql] = mockPool.query.mock.calls[0];
+          expect(sql).toMatch(/OR p\.century IS NULL/);
+        });
+
+        it('selects only undated poems for the late/modern band', async () => {
+          __test.setCategorizationState(true, ['mood']);
+          mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+          await request(app).get('/api/poems/by-category?undated=1').expect(200);
+
+          const [sql] = mockPool.query.mock.calls[0];
+          expect(sql).toContain('p.century IS NULL');
+          expect(sql).not.toContain('p.century >=');
+        });
+
+        it('lets undated override a range rather than combining incoherently', async () => {
+          __test.setCategorizationState(true, ['mood']);
+          mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+          await request(app)
+            .get('/api/poems/by-category?undated=1&centuryFrom=6&centuryTo=8')
+            .expect(200);
+
+          const [sql] = mockPool.query.mock.calls[0];
+          expect(sql).toContain('p.century IS NULL');
+          expect(sql).not.toContain('p.century >=');
+        });
+
+        it('ignores a non-numeric range instead of erroring', async () => {
+          __test.setCategorizationState(true, ['mood']);
+          mockPool.query.mockResolvedValueOnce({ rows: [matchedRow] });
+
+          await request(app).get('/api/poems/by-category?centuryFrom=abc').expect(200);
+
+          const [sql] = mockPool.query.mock.calls[0];
+          expect(sql).not.toContain('p.century >=');
+        });
       });
 
       it('composes dimension + family + poet + era filters and returns confidence', async () => {
@@ -1087,6 +1309,127 @@ describe('Backend API Server', () => {
         expect(sql).toContain('po.era_id = (SELECT id FROM eras WHERE name = $1)');
         expect(params).toEqual(['عباسي', 10]); // era name, then default limit
       });
+    });
+  });
+  // ── POST /api/poems/:id/rationale-translation ──────────────────────────────
+  //
+  // The classifier's rationale is Arabic-only on every row tagged before prompt
+  // version distill-2. This route back-fills the English INTO THE POEM ROW, so
+  // the property worth pinning is not "it translates" but "it translates once".
+  describe('POST /api/poems/:id/rationale-translation', () => {
+    const savedKey = process.env.GEMINI_API_KEY;
+
+    beforeEach(() => {
+      __test.setCategorizationState(true, ['mood', 'topic', 'motif']);
+      delete process.env.GEMINI_API_KEY;
+      vi.unstubAllGlobals();
+    });
+
+    afterAll(() => {
+      if (savedKey === undefined) delete process.env.GEMINI_API_KEY;
+      else process.env.GEMINI_API_KEY = savedKey;
+      vi.unstubAllGlobals();
+    });
+
+    const okGemini = (text) =>
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ candidates: [{ content: { parts: [{ text }] } }] }),
+      });
+
+    it('serves an already-translated rationale without calling the model or writing', async () => {
+      // THE POINT OF THE FEATURE. Reader two hits a row that reader one paid
+      // for: no upstream call, and no second UPDATE.
+      process.env.GEMINI_API_KEY = 'test-key';
+      const fetchSpy = okGemini('should never be called');
+      vi.stubGlobal('fetch', fetchSpy);
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ rationale: 'جملة عربية', rationale_en: 'An English sentence.' }],
+      });
+
+      const res = await request(app).post('/api/poems/42/rationale-translation').expect(200);
+
+      expect(res.body).toEqual({ rationaleEn: 'An English sentence.', status: 'cached' });
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(mockPool.query).toHaveBeenCalledTimes(1); // the SELECT, and nothing else
+    });
+
+    it('translates once and persists into categories.rationale_en, guarded against a racing write', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      vi.stubGlobal('fetch', okGemini('  "Ascetic contemplation on death."  '));
+
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ rationale: 'التأمل الزهدي', rationale_en: null }] })
+        .mockResolvedValueOnce({ rowCount: 1 });
+
+      const res = await request(app).post('/api/poems/42/rationale-translation').expect(200);
+
+      // Surrounding quotes and whitespace stripped — models add them despite
+      // being told not to, and the panel renders this raw.
+      expect(res.body).toEqual({
+        rationaleEn: 'Ascetic contemplation on death.',
+        status: 'translated',
+      });
+
+      const [sql, params] = mockPool.query.mock.calls[1];
+      expect(sql).toContain('jsonb_set');
+      expect(sql).toContain("'{rationale_en}'");
+      // Merged into the existing JSONB, never replacing it.
+      expect(sql).toContain('COALESCE(categories');
+      // Whoever wrote first wins, including the classifier under distill-2.
+      expect(sql).toContain("(categories->>'rationale_en') IS NULL");
+      expect(params).toEqual(['Ascetic contemplation on death.', '42']);
+    });
+
+    it('503s without a GEMINI_API_KEY, and writes nothing', async () => {
+      // VITE_GEMINI_API_KEY does not enable this route; the backend key does.
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ rationale: 'جملة عربية', rationale_en: null }],
+      });
+
+      await request(app).post('/api/poems/42/rationale-translation').expect(503);
+
+      expect(mockPool.query).toHaveBeenCalledTimes(1);
+    });
+
+    it('502s on an upstream failure without persisting anything', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 429 }));
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ rationale: 'جملة عربية', rationale_en: null }],
+      });
+
+      await request(app).post('/api/poems/42/rationale-translation').expect(502);
+
+      // No half-written English. The Arabic stays the only rationale on the row.
+      expect(mockPool.query).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports no_rationale rather than erroring for a poem the classifier never explained', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      const fetchSpy = okGemini('nope');
+      vi.stubGlobal('fetch', fetchSpy);
+
+      mockPool.query.mockResolvedValueOnce({ rows: [{ rationale: null, rationale_en: null }] });
+
+      const res = await request(app).post('/api/poems/42/rationale-translation').expect(200);
+
+      expect(res.body).toEqual({ rationaleEn: null, status: 'no_rationale' });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('404s for an unknown poem', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      await request(app).post('/api/poems/999999/rationale-translation').expect(404);
+    });
+
+    it('503s when the categorization layer is absent', async () => {
+      __test.setCategorizationState(false, []);
+      await request(app).post('/api/poems/42/rationale-translation').expect(503);
+      expect(mockPool.query).not.toHaveBeenCalled();
     });
   });
 });

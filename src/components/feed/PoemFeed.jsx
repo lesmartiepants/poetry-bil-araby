@@ -219,6 +219,11 @@ const PoemFeed = forwardRef(function PoemFeed(
   const onPointerDown = (e) => {
     if (blockingRef.current) return; // a modal/drawer owns the screen
     if (e.target.closest?.('[data-scrub]')) return; // let the scrubber own its drag
+    // These listeners are bound on `window`, so a drag inside any floating panel
+    // still reaches the feed and swipes the poem out from under it. Overlays that
+    // scroll their own content mark themselves and opt out. CSS overscroll-behavior
+    // does not help here — this is a global pointer listener, not scroll chaining.
+    if (e.target.closest?.('[data-owns-gesture]')) return;
     const d = drag.current;
     d.down = true;
     d.sx = e.clientX;

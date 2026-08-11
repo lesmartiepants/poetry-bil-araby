@@ -41,7 +41,13 @@ TAXONOMY_VERSION = "3"
 
 # Prompt revision, stamped alongside TAXONOMY_VERSION so we can distinguish rows
 # produced by different prompt builds even within one taxonomy version.
-PROMPT_VERSION = "distill-1"
+#
+# distill-2: adds `rationale_en`, an English rendering of the same sentence,
+# asked for in the SAME call rather than a second pass — the model already has
+# the poem and its own Arabic sentence in context, so a separate pass would pay
+# for that context twice and could drift from the sentence it is translating.
+# The Arabic instruction is unchanged; English is downstream of it.
+PROMPT_VERSION = "distill-2"
 
 # -- Run defaults ----------------------------------------------------------
 DEFAULT_MODEL = DEFAULT_HAIKU_MODEL       # bulk classification is cheap on Haiku
@@ -497,6 +503,7 @@ def build_classification_prompt() -> str:
 كما تنتج الحقول التالية:
 - mood_primary: المزاج الأوحد الأكثر هيمنة (رمز واحد من قائمة المزاج، ويجب أن يكون ضمن moods).
 - rationale: جملة عربية قصيرة تسمّي المفهوم الجوهري للقصيدة وتبرّر اختيارك.
+- rationale_en: ترجمة إنجليزية أمينة للجملة السابقة نفسها، جملة واحدة. لا تُضف معنى ولا تشرح أكثر مما قلته بالعربية؛ العربية هي الأصل.
 - emotional_intensity: عدد من 0 إلى 100 يقيس شدة الشحنة العاطفية.
 - accessibility_level: عدد من 1 إلى 5 (1 = سهلة على متعلّم العربية، 5 = تتطلب معرفة كلاسيكية عميقة).
 - confidences: كائن يربط كل رمز اخترته (من أي بُعد) بدرجة ثقتك فيه من 0 إلى 100، مثل {{"amorous": 90, "love": 80}}.
@@ -509,7 +516,7 @@ def build_classification_prompt() -> str:
 - تمييزات دقيقة: شوق (yearning) حنينٌ نحو شخص، أما حنين (nostalgia) فحنينٌ نحو الوطن أو الديار؛ سخرية (satire) تعني الهجاء اللاذع لا الفكاهة اللطيفة؛ والروض والزهر (garden-flowers) غالباً روض المحبوب لا مجرّد وصف طبيعة.
 
 أجب بصيغة JSON فقط لكل قصيدة، بلا أي شرح خارج الكائن:
-{{"id": "...", "moods": ["..."], "mood_primary": "...", "topics": ["..."], "motifs": ["..."], "emotional_intensity": N, "accessibility_level": N, "confidences": {{"<key>": N}}, "rationale": "..."}}
+{{"id": "...", "moods": ["..."], "mood_primary": "...", "topics": ["..."], "motifs": ["..."], "emotional_intensity": N, "accessibility_level": N, "confidences": {{"<key>": N}}, "rationale": "...", "rationale_en": "..."}}
 
 إذا عُرضت عدة قصائد، أجب بمصفوفة JSON مرتبة بنفس ترتيب القصائد."""
 

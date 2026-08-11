@@ -1784,6 +1784,158 @@ app.post(
   }
 );
 
+// ── Classifier rationale, in English ──────────────────────────────────────
+//
+// `categories.rationale` is the classifier's own one-line justification, and it
+// is Arabic-only for every row tagged before prompt version distill-2. distill-2
+// asks the model for `categories.rationale_en` in the same call, so new rows
+// arrive bilingual; this route is how the ~9k rows already in the table catch
+// up. BOTH paths write the SAME field, so a poem can never carry two English
+// rationales that disagree, and this route goes quiet on its own as the corpus
+// is reclassified.
+//
+// Shape note: /api/poems/:id/translation has the client translate and then POST
+// the text back. This one translates server-side in a single hop instead. The
+// reason is not symmetry but ownership — the input is a sentence WE generated
+// and store, the key is already here, and a two-hop shape would mean accepting
+// arbitrary client prose as the canonical English for a field the whole corpus
+// reads. The property that mattered about the translation route is kept: the
+// result lands in Postgres, so exactly one reader ever pays for it.
+const rationaleTranslateLimit = rateLimit({
+  windowMs: 60_000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Kept deliberately tight. This is one sentence; a long output means the model
+// started explaining the poem rather than translating our sentence about it.
+const RATIONALE_EN_MAX = 600;
+
+app.post(
+  '/api/poems/:id/rationale-translation',
+  rationaleTranslateLimit,
+  [param('id').isInt({ min: 1 }).withMessage('Invalid poem ID'), validate],
+  async (req, res) => {
+    if (!hasCategorization) {
+      return res.status(503).json({ error: 'Categorization layer not available' });
+    }
+
+    try {
+      const { rows } = await pool.query(
+        `SELECT categories->>'rationale' AS rationale,
+                categories->>'rationale_en' AS rationale_en
+           FROM poems WHERE id = $1`,
+        [req.params.id]
+      );
+
+      if (rows.length === 0) return res.status(404).json({ error: 'Poem not found' });
+
+      const { rationale, rationale_en: existing } = rows[0];
+
+      // The second reader's request stops here — no model call, no write.
+      if (existing) return res.json({ rationaleEn: existing, status: 'cached' });
+
+      // Nothing to translate. Not an error: most of the corpus predates the
+      // rationale field entirely.
+      if (!rationale) return res.json({ rationaleEn: null, status: 'no_rationale' });
+
+      // Read at request time rather than off the module-level GEMINI_API_KEY
+      // const, so both branches are reachable in a test without reloading the
+      // module. Same value in production, where the env is fixed at boot.
+      const apiKey = process.env.GEMINI_API_KEY || '';
+
+      // No key is a normal deployment, not a fault. The client keeps showing
+      // the Arabic, which is the source of truth anyway.
+      if (!apiKey) {
+        return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
+      }
+
+      const response = await fetch(
+        `${GEMINI_BASE}/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  {
+                    text:
+                      'Translate this Arabic sentence into English. It is a literary ' +
+                      'classifier’s one-line justification for the categories it assigned ' +
+                      'to a poem. Return ONLY the English sentence — no quotes, no ' +
+                      'preamble, no notes. Do not add meaning that is not in the Arabic.\n\n' +
+                      rationale,
+                  },
+                ],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 400,
+              // 2.5 spends maxOutputTokens on thinking BEFORE it emits a token
+              // of the answer. Without this the sentence comes back chopped
+              // mid-clause, and this route persists its output — so a truncated
+              // reply would be the English rationale for that poem forever.
+              thinkingConfig: { thinkingBudget: 0 },
+            },
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        log.error('Rationale', `Upstream translate failed: ${response.status}`);
+        return res.status(502).json({ error: 'Translation failed' });
+      }
+
+      const data = await response.json();
+      const candidate = data?.candidates?.[0];
+
+      // Belt and braces alongside thinkingBudget: anything that did not finish
+      // cleanly is discarded rather than written. Persisting half a sentence is
+      // worse than showing none, because nothing would ever replace it.
+      if (candidate?.finishReason && candidate.finishReason !== 'STOP') {
+        log.error('Rationale', `Discarding ${candidate.finishReason} reply`);
+        return res.status(502).json({ error: 'Translation failed' });
+      }
+
+      const text = (candidate?.content?.parts || [])
+        .map((p) => p?.text || '')
+        .join('')
+        .trim()
+        // One sentence, one line. The model wraps at its own width and the
+        // panel renders this in a <p>, so a stray newline would survive into
+        // every copy-paste of a field we only ever write once.
+        .replace(/\s+/g, ' ')
+        // Models like to wrap a bare sentence in quotes despite being told not to.
+        .replace(/^["'“”]+|["'“”]+$/g, '')
+        .replace(/<[^>]*>/g, '')
+        .slice(0, RATIONALE_EN_MAX)
+        .trim();
+
+      if (!text) return res.status(502).json({ error: 'Translation failed' });
+
+      // Merged into the existing JSONB rather than replacing it, and guarded so
+      // a race between two first readers cannot overwrite a value that landed
+      // first (including one the classifier itself wrote under distill-2).
+      await pool.query(
+        `UPDATE poems
+            SET categories = jsonb_set(COALESCE(categories, '{}'::jsonb), '{rationale_en}', to_jsonb($1::text), true)
+          WHERE id = $2 AND (categories->>'rationale_en') IS NULL`,
+        [text, req.params.id]
+      );
+
+      log.info('Rationale', `Translated rationale for poem ${req.params.id}`);
+      res.json({ rationaleEn: text, status: 'translated' });
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('Rationale', `Error translating rationale: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
 // ═══════════════════════════════════════════════════════════════
 // POEM EVENTS (downvote + analytics)
 // ═══════════════════════════════════════════════════════════════

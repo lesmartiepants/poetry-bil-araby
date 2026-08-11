@@ -1311,4 +1311,125 @@ describe('Backend API Server', () => {
       });
     });
   });
+  // ── POST /api/poems/:id/rationale-translation ──────────────────────────────
+  //
+  // The classifier's rationale is Arabic-only on every row tagged before prompt
+  // version distill-2. This route back-fills the English INTO THE POEM ROW, so
+  // the property worth pinning is not "it translates" but "it translates once".
+  describe('POST /api/poems/:id/rationale-translation', () => {
+    const savedKey = process.env.GEMINI_API_KEY;
+
+    beforeEach(() => {
+      __test.setCategorizationState(true, ['mood', 'topic', 'motif']);
+      delete process.env.GEMINI_API_KEY;
+      vi.unstubAllGlobals();
+    });
+
+    afterAll(() => {
+      if (savedKey === undefined) delete process.env.GEMINI_API_KEY;
+      else process.env.GEMINI_API_KEY = savedKey;
+      vi.unstubAllGlobals();
+    });
+
+    const okGemini = (text) =>
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ candidates: [{ content: { parts: [{ text }] } }] }),
+      });
+
+    it('serves an already-translated rationale without calling the model or writing', async () => {
+      // THE POINT OF THE FEATURE. Reader two hits a row that reader one paid
+      // for: no upstream call, and no second UPDATE.
+      process.env.GEMINI_API_KEY = 'test-key';
+      const fetchSpy = okGemini('should never be called');
+      vi.stubGlobal('fetch', fetchSpy);
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ rationale: 'جملة عربية', rationale_en: 'An English sentence.' }],
+      });
+
+      const res = await request(app).post('/api/poems/42/rationale-translation').expect(200);
+
+      expect(res.body).toEqual({ rationaleEn: 'An English sentence.', status: 'cached' });
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(mockPool.query).toHaveBeenCalledTimes(1); // the SELECT, and nothing else
+    });
+
+    it('translates once and persists into categories.rationale_en, guarded against a racing write', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      vi.stubGlobal('fetch', okGemini('  "Ascetic contemplation on death."  '));
+
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [{ rationale: 'التأمل الزهدي', rationale_en: null }] })
+        .mockResolvedValueOnce({ rowCount: 1 });
+
+      const res = await request(app).post('/api/poems/42/rationale-translation').expect(200);
+
+      // Surrounding quotes and whitespace stripped — models add them despite
+      // being told not to, and the panel renders this raw.
+      expect(res.body).toEqual({
+        rationaleEn: 'Ascetic contemplation on death.',
+        status: 'translated',
+      });
+
+      const [sql, params] = mockPool.query.mock.calls[1];
+      expect(sql).toContain('jsonb_set');
+      expect(sql).toContain("'{rationale_en}'");
+      // Merged into the existing JSONB, never replacing it.
+      expect(sql).toContain('COALESCE(categories');
+      // Whoever wrote first wins, including the classifier under distill-2.
+      expect(sql).toContain("(categories->>'rationale_en') IS NULL");
+      expect(params).toEqual(['Ascetic contemplation on death.', '42']);
+    });
+
+    it('503s without a GEMINI_API_KEY, and writes nothing', async () => {
+      // VITE_GEMINI_API_KEY does not enable this route; the backend key does.
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ rationale: 'جملة عربية', rationale_en: null }],
+      });
+
+      await request(app).post('/api/poems/42/rationale-translation').expect(503);
+
+      expect(mockPool.query).toHaveBeenCalledTimes(1);
+    });
+
+    it('502s on an upstream failure without persisting anything', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 429 }));
+
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ rationale: 'جملة عربية', rationale_en: null }],
+      });
+
+      await request(app).post('/api/poems/42/rationale-translation').expect(502);
+
+      // No half-written English. The Arabic stays the only rationale on the row.
+      expect(mockPool.query).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports no_rationale rather than erroring for a poem the classifier never explained', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      const fetchSpy = okGemini('nope');
+      vi.stubGlobal('fetch', fetchSpy);
+
+      mockPool.query.mockResolvedValueOnce({ rows: [{ rationale: null, rationale_en: null }] });
+
+      const res = await request(app).post('/api/poems/42/rationale-translation').expect(200);
+
+      expect(res.body).toEqual({ rationaleEn: null, status: 'no_rationale' });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    });
+
+    it('404s for an unknown poem', async () => {
+      process.env.GEMINI_API_KEY = 'test-key';
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      await request(app).post('/api/poems/999999/rationale-translation').expect(404);
+    });
+
+    it('503s when the categorization layer is absent', async () => {
+      __test.setCategorizationState(false, []);
+      await request(app).post('/api/poems/42/rationale-translation').expect(503);
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
+  });
 });

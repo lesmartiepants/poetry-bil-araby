@@ -6,6 +6,7 @@ import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { usePoemStore } from '../stores/poemStore';
 import { getDrawFor, getFeedOrder, getLastDraw } from '../services/lastDraw.js';
+import { fetchRationaleEn } from '../services/rationaleTranslation.js';
 import {
   FAMILY_OVERLAP_DISCOUNT,
   MAX_SCORE,
@@ -172,9 +173,45 @@ const ViaRoute = ({ via }) => (
  * below the fold. It answers a different question from the rest of the block
  * ("why is this poem in these categories" rather than "why was it served to
  * you"), so it reads as a footnote and is shaped like one.
+ *
+ * BILINGUAL, LIKE EVERY OTHER ROW. Chips carry `label_ar` + `label_en`; this
+ * was the last Arabic-only element in the panel. The English arrives by one of
+ * two routes that both land in `categories.rationale_en`: the classifier writes
+ * it under prompt distill-2, or `fetchRationaleEn` back-fills it on demand for
+ * the rows tagged before that. One field, so the two cannot disagree.
+ *
+ * The fetch is here rather than at the panel level BECAUSE it is here that the
+ * English is first wanted. Hoisting it up would translate every poem the feed
+ * touches, which is ~9k sentences nobody asked to read.
+ *
+ * Arabic keeps Amiri. `font-brand-ar` is Reem Kufi — a geometric Kufi display
+ * face, right for the الميزان wordmark in the header and flat for running
+ * prose. The English sits in the panel's mono at a smaller size and lower
+ * opacity: present enough to read, quiet enough that the Arabic still leads.
  */
-const Rationale = ({ text, border }) => {
+const Rationale = ({ text, textEn, poemId, border }) => {
   const [expanded, setExpanded] = useState(false);
+  const [fetchedEn, setFetchedEn] = useState(null);
+
+  // Only once open, and only when the row didn't already ship with English.
+  useEffect(() => {
+    if (!expanded || textEn || !poemId) return;
+    let alive = true;
+    fetchRationaleEn(poemId).then((en) => {
+      if (alive && en) setFetchedEn(en);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [expanded, textEn, poemId]);
+
+  // A poem change while open must not leave the previous poem's English under
+  // the new poem's Arabic. The panel follows `carouselIndex`, so this happens
+  // on every swipe.
+  useEffect(() => setFetchedEn(null), [poemId]);
+
+  const english = textEn || fetchedEn;
+
   return (
     <div className={`mt-2 pt-2 border-t ${border}`}>
       <button
@@ -186,12 +223,26 @@ const Rationale = ({ text, border }) => {
         <Label>classifier&apos;s rationale</Label>
       </button>
       {expanded && (
-        <p
-          className="font-brand-ar text-[0.8125rem] leading-relaxed mt-1.5 opacity-80 break-words"
-          dir="rtl"
-        >
-          {text}
-        </p>
+        <>
+          <p
+            className="font-amiri text-[0.8125rem] leading-relaxed mt-1.5 opacity-80 break-words"
+            dir="rtl"
+          >
+            {text}
+          </p>
+          {/* Absent, not empty, when the English never arrives — no spinner and
+              no error line. The Arabic above is the source of truth and reads
+              complete on its own. */}
+          {english && (
+            <p
+              className="font-mono text-[0.625rem] leading-relaxed mt-1.5 opacity-50 break-words"
+              dir="ltr"
+              lang="en"
+            >
+              {english}
+            </p>
+          )}
+        </>
       )}
     </div>
   );
@@ -213,7 +264,7 @@ const Rationale = ({ text, border }) => {
  * category viewer as much as it is the draw explanation; `scored` only decides
  * which of those two it says it is.
  */
-const WhyBlock = ({ rows, border, scored, uncategorized, rationale }) => (
+const WhyBlock = ({ rows, border, scored, uncategorized, rationale, rationaleEn, poemId }) => (
   <div className={`px-4 py-2.5 border-b ${border} flex-none`}>
     {/* The heading names which of the panel's two jobs you are looking at.
         With a draw this block answers "why was this served to you"; without
@@ -290,7 +341,9 @@ const WhyBlock = ({ rows, border, scored, uncategorized, rationale }) => (
         </div>
       ))}
     </div>
-    {rationale && <Rationale text={rationale} border={border} />}
+    {rationale && (
+      <Rationale text={rationale} textEn={rationaleEn} poemId={poemId} border={border} />
+    )}
   </div>
 );
 
@@ -510,6 +563,9 @@ const DiscoveryDrawInspector = () => {
   const why = subject ? explainRows(subject, activePrefs, bands, pickedRow) : [];
   const categorized = subject ? isCategorized(subject) : false;
   const rationale = subject?.categories?.rationale || '';
+  // Present already on rows classified under distill-2; absent on everything
+  // older, which is what sends Rationale to the API for it.
+  const rationaleEn = subject?.categories?.rationale_en || '';
   const hasAnswers = hasPreferences(activePrefs);
 
   const surface = darkMode ? 'bg-black/80' : 'bg-white/90';
@@ -714,6 +770,8 @@ const DiscoveryDrawInspector = () => {
                 scored={!!draw}
                 uncategorized={!categorized}
                 rationale={rationale}
+                rationaleEn={rationaleEn}
+                poemId={subject?.id}
               />
 
               {/* Column labels live OUTSIDE the scroller rather than as a sticky

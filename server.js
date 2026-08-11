@@ -920,13 +920,16 @@ app.get(
   [
     query('poet').optional().trim().isLength({ max: 100 }).withMessage('Poet name too long'),
     query('exclude').optional().trim().isLength({ max: 2000 }).withMessage('Exclude list too long'),
-    query('curated').optional().trim().isLength({ max: 8 }).withMessage('Invalid curated flag'),
-    query('profile').optional().trim().isLength({ max: 40 }).withMessage('Profile name too long'),
+    query('curated')
+      .optional()
+      .trim()
+      .isIn(['0', '1', 'true', 'false'])
+      .withMessage('Invalid curated flag'),
     validate,
   ],
   async (req, res) => {
     try {
-      const { poet, exclude, curated, profile } = req.query;
+      const { poet, exclude, curated } = req.query;
 
       // Curated mode: bias the random serve by taste profile (favor/avoid tiers
       // across mood/topic/motif). Gated on the categorization layer being present;
@@ -934,7 +937,7 @@ app.get(
       // (the client already knows the user's downvotes and appends them).
       const curatedOn = hasCategorization && (curated === '1' || curated === 'true');
       const curation = curatedOn
-        ? curationSql(resolveProfile(null, profile))
+        ? curationSql(resolveProfile(null))
         : { joinSql: '', orderExpr: 'RANDOM()' };
 
       // Parse and validate exclude param (comma-separated integer IDs, max 200)
@@ -1018,6 +1021,7 @@ app.get(
         FROM poems p
         JOIN poets po ON p.poet_id = po.id
         JOIN themes t ON p.theme_id = t.id
+        ${curation.joinSql}
       `;
         const fallbackParams = [];
         if (poet && poet !== 'All') {
@@ -1027,7 +1031,7 @@ app.get(
           const qf = servingFilters();
           if (qf) fallbackQuery += ` WHERE 1=1 ${qf}`;
         }
-        fallbackQuery += ' ORDER BY RANDOM() LIMIT 1';
+        fallbackQuery += ` ORDER BY ${curation.orderExpr} LIMIT 1`;
         result = await pool.query(fallbackQuery, fallbackParams);
       }
 

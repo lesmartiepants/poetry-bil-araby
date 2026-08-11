@@ -22,8 +22,24 @@ let _config = null;
 
 export function loadCuration() {
   if (_config) return _config;
-  const file = join(__dirname, 'config', 'curation.json');
-  _config = JSON.parse(readFileSync(file, 'utf8'));
+  try {
+    const file = join(__dirname, 'config', 'curation.json');
+    _config = JSON.parse(readFileSync(file, 'utf8'));
+  } catch (err) {
+    // Missing or malformed config must never take the server down: fall back to
+    // an empty profile so curation degrades to plain random.
+    console.warn(
+      `[curation] config/curation.json unreadable, falling back to neutral: ${err.message}`
+    );
+    _config = {
+      version: 1,
+      dimensions: [],
+      tiers: { favor: 1.6, neutral: 1.0, avoid: 0.4 },
+      combine: 'mean',
+      profiles: { default: {} },
+      users: {},
+    };
+  }
   return _config;
 }
 

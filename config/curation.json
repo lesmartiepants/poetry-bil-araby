@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "dimensions": ["moods", "topics", "motifs"],
+  "tiers": { "favor": 1.6, "neutral": 1.0, "avoid": 0.4 },
+  "combine": "mean",
+  "profiles": {
+    "default": {
+      "label": "Curated",
+      "label_ar": "مختارة",
+      "source": "static",
+      "note": "Baseline taste profile derived from 114 saves + 11 downvotes. Lift = save-rate / corpus-rate. Cells with <4 saves parked at neutral; downvotes break ties toward avoid. Any value not listed defaults to neutral.",
+      "moods": {
+        "passion": "favor",
+        "contemplation": "favor",
+        "satire": "favor",
+        "despair": "neutral",
+        "defiance": "neutral",
+        "melancholy": "neutral",
+        "reverence": "neutral",
+        "amorous": "neutral",
+        "bittersweet": "neutral",
+        "joy": "neutral",
+        "yearning": "neutral",
+        "hope": "neutral",
+        "serenity": "neutral",
+        "nostalgia": "avoid",
+        "pride": "avoid",
+        "grief": "avoid"
+      },
+      "topics": {
+        "freedom": "favor",
+        "homeland": "favor",
+        "faith-spirit": "favor",
+        "friendship": "favor",
+        "time-mortality": "neutral",
+        "wisdom-ethics": "neutral",
+        "beauty": "neutral",
+        "love": "neutral",
+        "wine-pleasure": "neutral",
+        "justice-oppression": "neutral",
+        "exile-longing": "neutral",
+        "nature": "neutral",
+        "women-feminine": "neutral",
+        "war-conflict": "avoid",
+        "honor-pride": "avoid",
+        "loss-death": "avoid"
+      },
+      "motifs": {
+        "birds": "favor",
+        "fire-light": "favor",
+        "moon-stars": "neutral",
+        "garden-flowers": "neutral",
+        "sea-water": "neutral",
+        "wine-cup": "neutral",
+        "dawn": "neutral",
+        "tears": "avoid",
+        "sword-battle": "avoid",
+        "night": "avoid",
+        "journey": "avoid",
+        "desert-ruins": "avoid"
+      }
+    }
+  },
+  "users": {}
+}

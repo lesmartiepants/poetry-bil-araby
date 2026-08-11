@@ -1180,7 +1180,14 @@ export default function DiwanApp() {
   };
 
   const handleFetch = () =>
-    fetchPoemAction({ addLog, track, emitEvent, navigate: navigateReader, markPoemSeen });
+    fetchPoemAction({
+      addLog,
+      track,
+      emitEvent,
+      navigate: navigateReader,
+      markPoemSeen,
+      downvotedPoemIds,
+    });
 
   /**
    * Redraw the whole feed when the ANSWERS change.

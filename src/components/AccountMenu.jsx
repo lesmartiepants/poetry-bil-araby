@@ -10,6 +10,7 @@ import {
   Sun,
   SlidersHorizontal,
   Compass,
+  Sparkles,
 } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FEATURES } from '../constants/features.js';
@@ -27,6 +28,7 @@ import { voiceDisplayName, voiceGender } from '../constants/voices';
  */
 export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCycleVoice, ink }) {
   const darkMode = useUIStore((s) => s.darkMode);
+  const curated = useUIStore((s) => s.curated);
   const openDisplaySettings = useModalStore((s) => s.openDisplaySettings);
   const [, navigate] = useLocation();
   // Controlled so tapping "Display Settings" closes this menu as it opens the panel.
@@ -138,6 +140,40 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
                     height: 16,
                     top: 2,
                     left: darkMode ? 2 : 18,
+                    background: ink,
+                  }}
+                />
+              </span>
+            </button>
+
+            {/* Curated — biases discovery toward the reader's taste (mood/topic/motif) and hides downvotes. */}
+            <button
+              onClick={() => useUIStore.getState().toggleCurated()}
+              aria-label={curated ? 'Turn curated feed off' : 'Turn curated feed on'}
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+              style={{ color: ink }}
+            >
+              <span className="flex items-center gap-2">
+                <Sparkles size={16} style={{ color: curated ? '#c5a059' : ink }} />
+                <span>Curated</span>
+              </span>
+              <span
+                aria-hidden="true"
+                className="relative inline-flex flex-shrink-0 rounded-full transition-colors duration-200"
+                style={{
+                  width: 38,
+                  height: 22,
+                  background: curated ? 'rgba(197,160,89,0.55)' : 'rgba(120,120,140,0.30)',
+                  border: '1px solid rgba(197,160,89,0.45)',
+                }}
+              >
+                <span
+                  className="absolute rounded-full transition-all duration-200"
+                  style={{
+                    width: 16,
+                    height: 16,
+                    top: 2,
+                    left: curated ? 18 : 2,
                     background: ink,
                   }}
                 />

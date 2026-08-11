@@ -27,6 +27,7 @@ import { resolve } from 'path';
 import { readFileSync } from 'fs';
 import WebSocket from 'ws';
 import { buildLiveWordTimings } from './src/utils/liveWordTiming.js';
+import { resolveProfile, curationSql } from './curation.js';
 
 const { Pool } = pg;
 const app = express();
@@ -919,11 +920,22 @@ app.get(
   [
     query('poet').optional().trim().isLength({ max: 100 }).withMessage('Poet name too long'),
     query('exclude').optional().trim().isLength({ max: 2000 }).withMessage('Exclude list too long'),
+    query('curated').optional().trim().isLength({ max: 8 }).withMessage('Invalid curated flag'),
+    query('profile').optional().trim().isLength({ max: 40 }).withMessage('Profile name too long'),
     validate,
   ],
   async (req, res) => {
     try {
-      const { poet, exclude } = req.query;
+      const { poet, exclude, curated, profile } = req.query;
+
+      // Curated mode: bias the random serve by taste profile (favor/avoid tiers
+      // across mood/topic/motif). Gated on the categorization layer being present;
+      // degrades to plain random otherwise. Downvote exclusion rides on `exclude`
+      // (the client already knows the user's downvotes and appends them).
+      const curatedOn = hasCategorization && (curated === '1' || curated === 'true');
+      const curation = curatedOn
+        ? curationSql(resolveProfile(null, profile))
+        : { joinSql: '', orderExpr: 'RANDOM()' };
 
       // Parse and validate exclude param (comma-separated integer IDs, max 200)
       let excludeIds = [];
@@ -949,6 +961,7 @@ app.get(
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
+      ${curation.joinSql}
     `;
 
       const params = [];
@@ -981,7 +994,7 @@ app.get(
         paramIndex++;
       }
 
-      query += ' ORDER BY RANDOM() LIMIT 1';
+      query += ` ORDER BY ${curation.orderExpr} LIMIT 1`;
 
       let result = await pool.query(query, params);
 

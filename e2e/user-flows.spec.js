@@ -353,6 +353,41 @@ test.describe('User Flows', () => {
     const count = await page.locator('svg.lucide-thumbs-down').count();
     expect(count).toBe(1);
   });
+
+  // #16 — Curated feed toggle makes Discover send curated=1
+  // The Curated toggle (Account menu) biases the serve server-side. Flipping it on must
+  // make the random-poem fetch carry ?curated=1 — asserted against the intercepted URL.
+  test('curated feed toggle makes discover send curated=1', async ({ page }) => {
+    const randomRequests = [];
+    page.on('request', (req) => {
+      if (req.url().includes('/api/poems/random')) randomRequests.push(req.url());
+    });
+
+    // Turn on Curated in the account menu.
+    await page.locator('button[aria-label="Account menu"]').first().click();
+    const curatedToggle = page.locator('button[aria-label="Turn curated feed on"]').first();
+    await expect(curatedToggle).toBeVisible({ timeout: 3000 });
+    await curatedToggle.click();
+    // The toggle flips to the "off" label, confirming the state actually changed.
+    await expect(page.locator('button[aria-label="Turn curated feed off"]').first()).toBeVisible({
+      timeout: 3000,
+    });
+    // Close the popover so Discover is reachable (curated state is persisted, so the
+    // toggle survives the close).
+    await page.keyboard.press('Escape');
+
+    // Discover a poem.
+    await page.locator('button[aria-label="Open discover"]').first().click();
+    const discoverBtn = page.locator('button[aria-label="Discover new poem"]').first();
+    await expect(discoverBtn).toBeVisible({ timeout: 3000 });
+    await discoverBtn.click();
+    await expect(page.locator('button[aria-label="Open discover"]').first()).toBeEnabled({
+      timeout: 10000,
+    });
+
+    // The random serve must have carried curated=1.
+    expect(randomRequests.some((u) => new URL(u).searchParams.get('curated') === '1')).toBe(true);
+  });
 });
 
 // #16 / #17 — Mobile VerticalSidebar tests: REMOVED. The VerticalSidebar is gone (bottom nav is now

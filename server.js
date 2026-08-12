@@ -1910,7 +1910,14 @@ app.post(
         .replace(/\s+/g, ' ')
         // Models like to wrap a bare sentence in quotes despite being told not to.
         .replace(/^["'“”]+|["'“”]+$/g, '')
-        .replace(/<[^>]*>/g, '')
+        // Drop the ANGLE BRACKETS, not tag-shaped runs. `/<[^>]*>/g` needs a
+        // closing `>`, so an unterminated tag passes through whole:
+        //   "<img src=x onerror=alert(1)"  ->  unchanged
+        // Removing the characters themselves has no bypass — once every `<` is
+        // gone, nothing downstream can reassemble one. This is a sentence we
+        // generated from our own prompt and it has no business containing
+        // markup, so there is nothing legitimate to preserve here.
+        .replace(/[<>]/g, '')
         .slice(0, RATIONALE_EN_MAX)
         .trim();
 

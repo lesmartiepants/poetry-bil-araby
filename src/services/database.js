@@ -119,6 +119,33 @@ export const fetchPoemsByPoet = async (poetName, count = 5, excludeIds = []) => 
 };
 
 /**
+ * Fetch multiple curated poems for the scroll feed — taste-weighted draws across
+ * all poets (server-side `?curated=1`), deduped and excluding the passed IDs
+ * (recently seen + the reader's downvotes). Mirrors `fetchPoemsByPoet` but the
+ * draws are not poet-scoped; each is an independent curated random.
+ *
+ * @param {number} [count=4]      - Number of poems to fetch
+ * @param {Array}  [excludeIds=[]] - Poem IDs to exclude (seen + downvoted)
+ * @returns {Promise<Array>} Array of normalised poem objects (may be shorter on error)
+ */
+export const fetchCuratedPoems = async (count = 4, excludeIds = []) => {
+  const seenIds = new Set(excludeIds.map(String));
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    try {
+      const poem = await fetchRandomPoem({ excludeIds: [...seenIds], curated: true });
+      if (poem?.id && !seenIds.has(String(poem.id))) {
+        seenIds.add(String(poem.id));
+        results.push(poem);
+      }
+    } catch {
+      /* skip failed fetch */
+    }
+  }
+  return results;
+};
+
+/**
  * Fetch the emotional-categorization taxonomy: dimensions (each with its values
  * + counts) and the curated families. Data-driven — callers should render
  * whatever comes back rather than hardcoding dimension keys.

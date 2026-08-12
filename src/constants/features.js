@@ -13,6 +13,7 @@ export const FEATURES = {
   drawInspector: true, // الميزان — floating inspector for the last scored discovery draw. A verification tool, not a reader feature: it also requires showDebugLogs (seeded from FEATURES.debug), so turning debug off clears it with the rest of the dev surfaces. Set false to remove it outright.
   designReview: false, // Show design review shortcut icon (still accessible via /design-review URL)
   categoryExplorer: true, // Category Explorer — taxonomy browser + filter playground (Account menu "Explore Poems")
+  forceTour: false, // Dev-only: open the walkthrough at boot (mirrors forceOnboarding) so it stays testable without clearing storage
   tour: true, // Guided walkthrough — re-wired to the redesigned reader nav (ReaderActions Listen/Poem Insights + bottom-nav Save/Library/Discover); insights are inline so the 'explain' step is a plain spotlight (no drawer)
 
   verticalFeed: true, // Vertical swipe feed + tap-to-reveal stanza blooms (replaces horizontal carousel)

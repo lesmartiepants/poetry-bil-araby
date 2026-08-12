@@ -11,12 +11,14 @@ import {
   SlidersHorizontal,
   Compass,
   Sparkles,
+  Footprints,
 } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FEATURES } from '../constants/features.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
 import { voiceDisplayName, voiceGender } from '../constants/voices';
+import { tourEntryLabel } from '../utils/tourProgress.js';
 
 /**
  * AccountMenu — the rightmost bottom-nav item. A person icon that opens an expandable menu holding
@@ -30,9 +32,13 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
   const darkMode = useUIStore((s) => s.darkMode);
   const curated = useUIStore((s) => s.curated);
   const openDisplaySettings = useModalStore((s) => s.openDisplaySettings);
+  const openTour = useModalStore((s) => s.openTour);
   const [, navigate] = useLocation();
   // Controlled so tapping "Display Settings" closes this menu as it opens the panel.
   const [open, setOpen] = useState(false);
+  // Read on every open (the menu re-renders when `open` flips), so the label tracks
+  // progress the reader made since last time instead of going stale.
+  const tourLabel = tourEntryLabel();
   const theme = darkMode ? THEME.dark : THEME.light;
   const initial = (user?.email ?? user?.user_metadata?.full_name ?? 'U').charAt(0).toUpperCase();
   const voiceName = voiceDisplayName(liveVoice);
@@ -87,6 +93,23 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
               <Compass size={16} style={{ color: ink }} />
               <span>Explore Poems</span>
             </button>
+
+            {/* Guided walkthrough — the only entry point. It never opens itself, so a reader
+                who wants the tour comes and gets it. Label reflects saved progress. */}
+            {FEATURES.tour && (
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  openTour();
+                }}
+                aria-label={tourLabel}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+                style={{ color: ink }}
+              >
+                <Footprints size={16} style={{ color: ink }} />
+                <span>{tourLabel}</span>
+              </button>
+            )}
 
             <div className="my-1 h-px" style={{ background: 'rgba(197,160,89,0.18)' }} />
 

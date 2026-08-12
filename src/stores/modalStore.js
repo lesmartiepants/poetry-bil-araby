@@ -20,6 +20,19 @@ function computeSplash() {
   }
 }
 
+// The walkthrough never opens itself on landing — the reader asks for it from the
+// account menu. The only boot-time openers are an explicit `?tour=…` deep link and
+// the dev-only forceTour flag.
+function computeTour() {
+  if (!FEATURES.tour) return false;
+  if (FEATURES.forceTour) return true;
+  try {
+    return !!new URLSearchParams(window.location.search).get('tour');
+  } catch {
+    return false;
+  }
+}
+
 const initialState = {
   authModal: false,
   authMessage: '',
@@ -37,6 +50,7 @@ const initialState = {
   shareCard: false,
   displaySettings: false,
   onboarding: computeOnboarding(),
+  tour: computeTour(),
 };
 
 const TOAST_MAP = {
@@ -82,6 +96,12 @@ export const useModalStore = create((set) => ({
   closeDisplaySettings: () => set({ displaySettings: false }),
   setDisplaySettings: (open) => set({ displaySettings: open }),
 
+  // Guided walkthrough — opened from the account menu ("Take the tour" / "Resume tour"),
+  // restarted from the corner compass, never on its own.
+  openTour: () => set({ tour: true }),
+  closeTour: () => set({ tour: false }),
+  setTour: (open) => set({ tour: open }),
+
   showToast: (type) => set({ [TOAST_MAP[type]]: true }),
   hideToast: (type) => set({ [TOAST_MAP[type]]: false }),
   showToastTimed: (type, ms = 2000) => {
@@ -111,5 +131,11 @@ export const useModalStore = create((set) => ({
       displaySettings: false,
     }),
 
-  reset: () => set({ ...initialState, splash: computeSplash(), onboarding: computeOnboarding() }),
+  reset: () =>
+    set({
+      ...initialState,
+      splash: computeSplash(),
+      onboarding: computeOnboarding(),
+      tour: computeTour(),
+    }),
 }));

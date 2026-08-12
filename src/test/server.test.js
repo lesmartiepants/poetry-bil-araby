@@ -1311,6 +1311,66 @@ describe('Backend API Server', () => {
       });
     });
   });
+  // ── Curated feed on /api/poems/random ───────────────────────────────────────
+  // The curated serve biases the random draw by taste profile (config/curation.json)
+  // when ?curated=1 and the categorization layer is present, and degrades to plain
+  // random otherwise. Downvote exclusion rides on the existing `exclude` param.
+  describe('GET /api/poems/random (curated feed)', () => {
+    const mockPoem = {
+      id: 123,
+      title: 'قصيدة الحب',
+      arabic: 'بيت أول*بيت ثاني*بيت ثالث',
+      poet: 'نزار قباني',
+      theme: 'رومانسي',
+    };
+
+    afterEach(() => {
+      __test.setCategorizationState(false, []);
+      mockPool.query.mockReset();
+    });
+
+    it('rejects a non-boolean curated flag', async () => {
+      await request(app).get('/api/poems/random?curated=banana').expect(400);
+    });
+
+    it('degrades to plain random when curated is on but the categorization layer is absent', async () => {
+      // hasCategorization is false by default in this file.
+      mockPool.query.mockResolvedValueOnce({ rows: [mockPoem] });
+
+      await request(app).get('/api/poems/random?curated=1').expect(200);
+
+      const [sql] = mockPool.query.mock.calls[0];
+      expect(sql).toContain('ORDER BY RANDOM() LIMIT 1');
+      expect(sql).not.toContain('LEFT JOIN LATERAL');
+    });
+
+    it('applies the taste-profile weighting when curated is on and categorization is available', async () => {
+      __test.setCategorizationState(true, ['mood', 'topic', 'motif']);
+      mockPool.query.mockResolvedValueOnce({ rows: [mockPoem] });
+
+      await request(app).get('/api/poems/random?curated=1').expect(200);
+
+      const [sql] = mockPool.query.mock.calls[0];
+      expect(sql).toContain('LEFT JOIN LATERAL');
+      expect(sql).toContain('POWER(RANDOM(), 1.0 /');
+    });
+
+    it('keeps the weighting in the fallback query when every excluded poem is exhausted', async () => {
+      __test.setCategorizationState(true, ['mood', 'topic', 'motif']);
+      // First query (with the exclude clause) returns nothing; the fallback fires.
+      mockPool.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [mockPoem] });
+
+      await request(app).get('/api/poems/random?curated=1&exclude=1,2,3').expect(200);
+
+      // The fallback is the second DB call and must keep the curation join/order.
+      const [fallbackSql] = mockPool.query.mock.calls[1];
+      expect(fallbackSql).toContain('LEFT JOIN LATERAL');
+      expect(fallbackSql).toContain('POWER(RANDOM(), 1.0 /');
+    });
+  });
+
   // ── POST /api/poems/:id/rationale-translation ──────────────────────────────
   //
   // The classifier's rationale is Arabic-only on every row tagged before prompt

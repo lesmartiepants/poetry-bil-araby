@@ -153,6 +153,7 @@ async function fetchWeightedPoem({ prefs, poet, excludeIds, addLog }) {
   const [poem] = await fetchWeightedFeed({ prefs, poet, excludeIds, addLog, count: 1 });
   return poem || null;
 }
+import { useUIStore } from '../uiStore';
 
 /**
  * Fetch a new poem (DB mode or AI mode) and add it to the store.
@@ -164,7 +165,14 @@ async function fetchWeightedPoem({ prefs, poet, excludeIds, addLog }) {
  * @param {Function} options.navigate - Router navigation
  * @param {Function} options.markPoemSeen - Mark poem as seen for dedup
  */
-export async function fetchPoem({ addLog, track, emitEvent, navigate, markPoemSeen }) {
+export async function fetchPoem({
+  addLog,
+  track,
+  emitEvent,
+  navigate,
+  markPoemSeen,
+  downvotedPoemIds = [],
+}) {
   const store = usePoemStore.getState();
   const {
     selectedCategory,
@@ -201,6 +209,7 @@ export async function fetchPoem({ addLog, track, emitEvent, navigate, markPoemSe
         emitEvent,
         navigate,
         markPoemSeen,
+        downvotedPoemIds,
         setPoems,
         setCurrentIndex,
         setAutoExplain,
@@ -236,6 +245,7 @@ async function fetchFromDatabase({
   emitEvent,
   navigate,
   markPoemSeen,
+  downvotedPoemIds = [],
   setPoems,
   setCurrentIndex,
   setAutoExplain,
@@ -249,8 +259,18 @@ async function fetchFromDatabase({
   const poetName = categoryObj?.labelAr || selectedCategory;
   const poet = selectedCategory !== 'All' ? poetName : undefined;
 
-  if (seenIds.length > 0) {
-    addLog('Discovery DB', `Excluding ${seenIds.length} recently seen poems`, 'info');
+  // Curated feed: bias the serve by taste profile and drop the reader's downvotes.
+  const curated = useUIStore.getState().curated;
+  const excludeIds = curated
+    ? [...new Set([...seenIds, ...downvotedPoemIds.map(String)])]
+    : seenIds;
+
+  if (excludeIds.length > 0) {
+    addLog(
+      'Discovery DB',
+      `Excluding ${excludeIds.length} poems${curated ? ' (seen + downvoted)' : ' (recently seen)'}${curated ? ' · curated feed on' : ''}`,
+      'info'
+    );
   }
 
   // Bias the draw toward the reader's onboarding answers WITHOUT filtering the
@@ -264,11 +284,15 @@ async function fetchFromDatabase({
   // same microtask tick as before this code existed. Awaiting unconditionally
   // shifts the fetch by a tick, which is enough to reorder it against the other
   // requests the app fires on a poet switch.
+  //
+  // Curated mode takes precedence: when the reader has toggled it on, the serve
+  // is biased server-side by the taste profile (config/curation.json) and the
+  // reader's downvotes are excluded, so the onboarding draw is skipped.
   const prefs = readPrefs();
-  const weighted = hasPreferences(prefs)
+  const weighted = !curated && hasPreferences(prefs)
     ? await fetchWeightedPoem({ prefs, poet, excludeIds: seenIds, addLog }).catch(() => null)
     : null;
-  const newPoem = weighted || (await fetchRandomPoem({ poet, excludeIds: seenIds }));
+  const newPoem = weighted || (await fetchRandomPoem({ poet, excludeIds, curated }));
   const apiTime = performance.now() - apiStart;
 
   markPoemSeen(newPoem.id);

@@ -398,6 +398,24 @@ describeDb('API against a real PostgreSQL (seeded fixtures)', () => {
         .expect(200);
       expect(res.body.id).toBe(17);
     });
+
+    it('serves a valid poem in curated mode (taste-profile weighting runs against real Postgres)', async () => {
+      const res = await request(http).get('/api/poems/random?curated=1').expect(200);
+      expect(res.body.id).toBeGreaterThan(0);
+      expect(res.body.id).toBeLessThanOrEqual(24);
+      expect(stripTashkeel(res.body.arabic)).toContain('اختبار');
+      // The curation LATERAL join must not break the response shape.
+      expect(res.body.poet).toMatch(/^Test Poet /);
+    });
+
+    it('curated mode still honors the exclude list (downvote exclusion rides on exclude)', async () => {
+      const res = await request(http)
+        .get(
+          `/api/poems/random?curated=1&poet=${encodeURIComponent('شاعر الاختبار السابع')}&exclude=13`
+        )
+        .expect(200);
+      expect(res.body.id).toBe(17);
+    });
   });
 
   // --------------------------------------------------------------------------

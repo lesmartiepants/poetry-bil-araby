@@ -49,10 +49,11 @@ export const fetchPoemById = async (poemId) => {
  * @param {string[]} [options.excludeIds] - Poem IDs to exclude (dedup)
  * @returns {Promise<Object>} Resolved poem object (normalised)
  */
-export const fetchRandomPoem = async ({ poet, excludeIds = [] } = {}) => {
+export const fetchRandomPoem = async ({ poet, excludeIds = [], curated = false } = {}) => {
   const queryParams = new URLSearchParams();
   if (poet) queryParams.set('poet', poet);
   if (excludeIds.length > 0) queryParams.set('exclude', excludeIds.join(','));
+  if (curated) queryParams.set('curated', '1');
   const qs = queryParams.toString();
   const url = `${apiUrl}/api/poems/random${qs ? '?' + qs : ''}`;
   const res = await fetch(url);

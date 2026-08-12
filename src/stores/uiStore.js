@@ -41,6 +41,23 @@ const persistLiveVoice = (voice) => {
   } catch {}
 };
 
+// Curated feed: when on, the discovery serve is biased toward the reader's taste
+// profile (favor/avoid tiers across mood/topic/motif — see config/curation.json)
+// and their downvoted poems are excluded. Off by default so the full corpus is
+// always the baseline; remembered across reloads once opted in.
+const CURATED_KEY = 'curated-feed';
+const loadCurated = () => {
+  try {
+    return localStorage.getItem(CURATED_KEY) === '1';
+  } catch {}
+  return false;
+};
+const persistCurated = (on) => {
+  try {
+    localStorage.setItem(CURATED_KEY, on ? '1' : '0');
+  } catch {}
+};
+
 export const CATEGORY_MAP = {
   user: { color: '#00bcd4', prefix: 'USER' },
   request: { color: '#ff9800', prefix: '  →' },
@@ -60,6 +77,7 @@ const initialState = {
   ratchetMode: false, // Ratchet Mode: explains poems in Gen Z / gangster slang
   ttsMode: loadTtsMode(), // 'rest' | 'live' — defaults to 'live' (streaming)
   liveVoice: loadLiveVoice(), // selected speaking voice, persisted (default DEFAULT_VOICE)
+  curated: loadCurated(), // curated feed on/off, persisted (default off)
   liveTemperature: 0.35,
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
   actionWeight: 'bold', // reader action buttons: 'quiet' | 'balanced' | 'bold' (molten) — visual intensity
@@ -99,6 +117,15 @@ export const useUIStore = create((set, get) => ({
     persistLiveVoice(liveVoice);
     set({ liveVoice });
   },
+  setCurated: (curated) => {
+    persistCurated(curated);
+    set({ curated });
+  },
+  toggleCurated: () =>
+    set((s) => {
+      persistCurated(!s.curated);
+      return { curated: !s.curated };
+    }),
   setLiveTemperature: (liveTemperature) => set({ liveTemperature }),
   setHighlightStyle: (highlightStyle) => set({ highlightStyle }),
   setActionWeight: (actionWeight) => set({ actionWeight }),

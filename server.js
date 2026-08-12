@@ -1758,8 +1758,18 @@ app.post(
         return res.status(400).json({ error: 'Content exceeds maximum length' });
       }
 
-      // Strip HTML tags (XSS prevention)
-      const clean = (s) => s?.replace(/<[^>]*>/g, '') || null;
+      // Drop the ANGLE BRACKETS, not tag-shaped runs. The previous
+      // `/<[^>]*>/g` required a closing `>`, so an unterminated tag passed
+      // through whole:
+      //   "<img src=x onerror=alert(1)"  ->  unchanged
+      // This body is client-supplied, so that mattered more here than on the
+      // rationale route. Removing the characters has no bypass: once every `<`
+      // is gone nothing downstream can reassemble one.
+      //
+      // Stripping rather than escaping because the app renders these as React
+      // text children (no dangerouslySetInnerHTML reaches them), so `&lt;`
+      // would be shown to the reader literally.
+      const clean = (s) => s?.replace(/[<>]/g, '') || null;
 
       // Only write if not already translated (write-once guard)
       const result = await pool.query(
@@ -1910,7 +1920,14 @@ app.post(
         .replace(/\s+/g, ' ')
         // Models like to wrap a bare sentence in quotes despite being told not to.
         .replace(/^["'“”]+|["'“”]+$/g, '')
-        .replace(/<[^>]*>/g, '')
+        // Drop the ANGLE BRACKETS, not tag-shaped runs. `/<[^>]*>/g` needs a
+        // closing `>`, so an unterminated tag passes through whole:
+        //   "<img src=x onerror=alert(1)"  ->  unchanged
+        // Removing the characters themselves has no bypass — once every `<` is
+        // gone, nothing downstream can reassemble one. This is a sentence we
+        // generated from our own prompt and it has no business containing
+        // markup, so there is nothing legitimate to preserve here.
+        .replace(/[<>]/g, '')
         .slice(0, RATIONALE_EN_MAX)
         .trim();
 

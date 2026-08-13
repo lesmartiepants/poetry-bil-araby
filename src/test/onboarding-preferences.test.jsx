@@ -152,39 +152,60 @@ const FULL_TAXONOMY = {
 };
 
 describe('OnboardingFlow', () => {
-  it('shows an empty state pre-migration instead of hanging or inventing options', async () => {
+  /** Every step now sits behind the welcome screen, so tests start by opening it. */
+  const enterFlow = async () => {
     render(<OnboardingFlow />);
-    expect(await screen.findByTestId('onboarding-family-empty')).toBeTruthy();
+    fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
+    return screen.findByTestId('onboarding-mood');
+  };
+
+  it('shows an empty state pre-migration instead of hanging or inventing options', async () => {
+    await enterFlow();
+    expect(await screen.findByTestId('onboarding-mood-empty')).toBeTruthy();
     // Critically: no options are fabricated when the taxonomy is unavailable.
-    expect(screen.queryAllByTestId('onboarding-family-option')).toHaveLength(0);
+    expect(screen.queryAllByTestId('onboarding-mood-option')).toHaveLength(0);
   });
 
-  it('renders families from the live taxonomy, ordered by size and bilingual', async () => {
+  it('renders families from the live taxonomy, bilingual and WITHOUT counts', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
     render(<OnboardingFlow />);
-    await waitFor(() => expect(screen.getAllByTestId('onboarding-family-option')).toHaveLength(2));
+    fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
+    fireEvent.click(await screen.findByTestId('onboarding-mood-continue'));
+    fireEvent.click(await screen.findByTestId('onboarding-motif-continue'));
+    await screen.findByTestId('onboarding-family');
     const options = screen.getAllByTestId('onboarding-family-option');
-    expect(options[0]).toHaveAttribute('data-option-key', 'love-desire');
+    expect(options).toHaveLength(2);
     expect(options[0].textContent).toContain('الحب والهوى');
     expect(options[0].textContent).toContain('Love & Desire');
-    // Counts are surfaced so the reader can see how big each shelf is.
-    expect(options[0].textContent).toContain('4,554');
+    // The answers weight the feed rather than filtering it, so a poem count
+    // beside an option describes a narrowing that never happens. None of the
+    // fixture's counts may reach the screen.
+    for (const option of options) {
+      expect(option.textContent).not.toMatch(/[0-9]/);
+    }
   });
 
-  it('advances through all five steps, ending on difficulty', async () => {
+  it('advances through all six steps in order, ending on era', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
     const onComplete = vi.fn();
     render(<OnboardingFlow onComplete={onComplete} />);
 
-    await screen.findAllByTestId('onboarding-family-option');
-    fireEvent.click(screen.getAllByTestId('onboarding-family-option')[0]);
-    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
+    fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
 
     await screen.findByTestId('onboarding-mood');
+    fireEvent.click(screen.getAllByTestId('onboarding-mood-option')[0]);
     fireEvent.click(screen.getByTestId('onboarding-mood-continue'));
 
     await screen.findByTestId('onboarding-motif');
     fireEvent.click(screen.getByTestId('onboarding-motif-continue'));
+
+    await screen.findByTestId('onboarding-family');
+    fireEvent.click(screen.getAllByTestId('onboarding-family-option')[0]);
+    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
+
+    await screen.findByTestId('onboarding-difficulty');
+    fireEvent.click(screen.getAllByTestId('onboarding-difficulty-option')[0]);
+    fireEvent.click(screen.getByTestId('onboarding-difficulty-continue'));
 
     await screen.findByTestId('onboarding-era');
     const eras = screen.getAllByTestId('onboarding-era-option');
@@ -192,92 +213,77 @@ describe('OnboardingFlow', () => {
     fireEvent.click(eras[0]);
     fireEvent.click(screen.getByTestId('onboarding-era-continue'));
 
-    await screen.findByTestId('onboarding-difficulty');
-    fireEvent.click(screen.getAllByTestId('onboarding-difficulty-option')[0]);
-    fireEvent.click(screen.getByTestId('onboarding-difficulty-continue'));
-
     await waitFor(() => expect(onComplete).toHaveBeenCalled());
     const saved = onComplete.mock.calls[0][0];
     expect(saved.family).toBe('love-desire');
     expect(saved.difficulty).toBe('gentle');
+    expect(saved.moods).toHaveLength(1);
+    expect(saved.era).toBeTruthy();
     expect(saved.completedAt).toBeTruthy();
   });
 
-  it('orders moods by poem count so the long tail sits at the end', async () => {
+  it('leaves without recording an answer when the reader chooses to just read', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
-    render(<OnboardingFlow />);
-    await screen.findAllByTestId('onboarding-family-option');
-    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
-    await screen.findByTestId('onboarding-mood');
+    const onComplete = vi.fn();
+    render(<OnboardingFlow onComplete={onComplete} />);
+    fireEvent.click(await screen.findByTestId('onboarding-welcome-skip-all'));
+    await waitFor(() => expect(onComplete).toHaveBeenCalled());
+    // No completedAt: declining to answer is not a finished answer, and
+    // stamping one would make the feed treat an empty set as a choice.
+    expect(onComplete.mock.calls[0][0].completedAt).toBeFalsy();
+  });
+
+  it('orders moods by feeling rather than by corpus size', async () => {
+    fetchCategories.mockResolvedValue(FULL_TAXONOMY);
+    await enterFlow();
     const keys = screen
       .getAllByTestId('onboarding-mood-option')
       .map((el) => el.getAttribute('data-option-key'));
-    // 1983 -> 419 -> 82. Nothing is dropped: the rare mood is still selectable,
-    // because the answer is a weight and cannot strand the reader.
-    expect(keys).toEqual(['pride', 'joy', 'despair']);
+    // Fixture counts are pride 1983 > joy 419 > despair 82. The screen no
+    // longer shows counts, so count order would read as arbitrary; the field is
+    // grouped heavy -> bright -> upright instead.
+    expect(keys).toEqual(['despair', 'joy', 'pride']);
   });
 
   it('treats the motif step as optional', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
-    render(<OnboardingFlow />);
-    await screen.findAllByTestId('onboarding-family-option');
-    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
-    await screen.findByTestId('onboarding-mood');
+    await enterFlow();
     fireEvent.click(screen.getByTestId('onboarding-mood-continue'));
     const cta = await screen.findByTestId('onboarding-motif-continue');
-    // Nothing selected, but the step is skippable at full opacity.
+    // Nothing selected, so the advance offers to skip.
     expect(cta.textContent).toContain('تخطَّ');
   });
 
-  // The constellation cannot physically hold mood's 16 chips or motif's 12 at
-  // phone width: the outer ring's circumference is smaller than the chips laid
-  // end to end, and because the chips are opaque the overflow reads as one
-  // label painted over another rather than as crowding. Measured at 375px
-  // before the fallback: 17 overlapping pairs on mood, 16 on motif, with
-  // "Moon & Stars" sitting on top of "Tears". This pair of tests pins the
-  // switch, since the ring geometry has already regressed once.
-  const gotoMoodStep = async () => {
+  // A single-select step with no way to un-choose traps a reader who changed
+  // their mind: every step is skippable, but once a family was picked the only
+  // escape was reloading the flow. Re-tapping the chosen option clears it.
+  it('clears a single-select answer when the chosen option is tapped again', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
     render(<OnboardingFlow />);
-    await screen.findAllByTestId('onboarding-family-option');
-    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
-    await screen.findByTestId('onboarding-mood');
-    return screen.getAllByTestId('onboarding-mood-option');
-  };
+    fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
+    fireEvent.click(await screen.findByTestId('onboarding-mood-continue'));
+    fireEvent.click(await screen.findByTestId('onboarding-motif-continue'));
+    await screen.findByTestId('onboarding-family');
 
-  const stubMatchMedia = (matches) => {
-    const original = window.matchMedia;
-    window.matchMedia = () => ({
-      matches,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    });
-    return () => {
-      window.matchMedia = original;
-    };
-  };
+    const first = screen.getAllByTestId('onboarding-family-option')[0];
+    fireEvent.click(first);
+    expect(first).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('onboarding-family-continue').textContent).toContain('التالي');
 
-  it('keeps the constellation when there is room for it', async () => {
-    const restore = stubMatchMedia(false);
-    try {
-      const options = await gotoMoodStep();
-      // Constellation nodes are placed by absolute left/top percentages.
-      expect(options[0].style.position).toBe('absolute');
-    } finally {
-      restore();
-    }
+    fireEvent.click(first);
+    expect(first).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByTestId('onboarding-family-continue').textContent).toContain('تخطَّ');
   });
 
-  it('drops the constellation for rows at phone width', async () => {
-    const restore = stubMatchMedia(true);
-    try {
-      const options = await gotoMoodStep();
-      expect(options[0].style.position).not.toBe('absolute');
-      // Every option survives the swap; this is a re-layout, not a truncation.
-      expect(options).toHaveLength(3);
-    } finally {
-      restore();
-    }
+  it('gives every step its own component rather than one reskinned picker', async () => {
+    fetchCategories.mockResolvedValue(FULL_TAXONOMY);
+    await enterFlow();
+    // Mood is a field of coloured embers; imagery is a grid of drawings. If both
+    // ever render the same markup again, the redesign has been undone.
+    expect(screen.getAllByTestId('onboarding-mood-option')[0].querySelector('svg')).toBeNull();
+    fireEvent.click(screen.getByTestId('onboarding-mood-continue'));
+    await screen.findByTestId('onboarding-motif');
+    expect(screen.getAllByTestId('onboarding-motif-option')[0].querySelector('svg')).toBeTruthy();
   });
 });
 

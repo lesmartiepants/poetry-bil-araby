@@ -134,7 +134,9 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll }) => (
           display: 'flex',
           flexDirection: 'column',
           gap: '.55rem',
-          maxWidth: '23rem',
+          // 23rem broke the Arabic sentence one word early and left "يشبهك."
+          // alone on its own centred line.
+          maxWidth: '25rem',
           margin: 0,
         }}
       >

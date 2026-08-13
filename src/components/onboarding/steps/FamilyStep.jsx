@@ -99,9 +99,12 @@ const FamilyStep = ({
                 cursor: 'pointer',
                 textAlign: 'start',
                 border: `1px solid ${on ? o.color : 'transparent'}`,
-                // A filled field, not an outlined card. The tile IS the colour.
-                background: `linear-gradient(135deg, ${o.color}${on ? '55' : '30'}, ${o.color}${
-                  on ? '22' : '12'
+                // A filled field, not an outlined card. The tile IS the colour,
+                // so it has to actually be coloured: at 30/12 alpha the fields
+                // read as seven grey boxes and "the colour drains out of the
+                // others" had almost nothing to drain.
+                background: `linear-gradient(135deg, ${o.color}${on ? '7a' : '4a'}, ${o.color}${
+                  on ? '3a' : '1e'
                 })`,
                 // Draining the colour is the whole selected state, so it has to
                 // be a real change: greyscale plus a drop in brightness, not a

@@ -197,31 +197,34 @@ const ReadingStep = ({
                   flexWrap: 'wrap',
                 }}
               >
+                {/* English first, to match the reading order of the chrome. The
+                    two hints sat the other way round and the row read backwards
+                    to anyone coming to this through English. */}
+                {o.hint_en && (
+                  <span
+                    dir="ltr"
+                    style={{
+                      fontFamily: "'Forum', serif",
+                      fontSize: '.875rem',
+                      lineHeight: 1.5,
+                      color: on ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.44)',
+                    }}
+                  >
+                    {o.hint_en}
+                  </span>
+                )}
                 {o.hint_ar && (
                   <span
                     lang="ar"
                     dir="rtl"
                     style={{
                       fontFamily: "'Amiri', serif",
-                      fontSize: '.875rem',
+                      fontSize: '1rem',
                       lineHeight: 1.5,
                       color: on ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.44)',
                     }}
                   >
                     {o.hint_ar}
-                  </span>
-                )}
-                {o.hint_en && (
-                  <span
-                    dir="ltr"
-                    style={{
-                      fontFamily: "'Amiri', serif",
-                      fontSize: '.8125rem',
-                      lineHeight: 1.5,
-                      color: on ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.44)',
-                    }}
-                  >
-                    {o.hint_en}
                   </span>
                 )}
               </span>

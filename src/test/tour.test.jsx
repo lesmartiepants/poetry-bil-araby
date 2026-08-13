@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { forwardRef } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TOUR_STEPS, anchoredSteps } from '../constants/tourSteps.js';
+import { useModalStore } from '../stores/modalStore';
+import { tourEntryLabel, hasTourProgress } from '../utils/tourProgress.js';
 
 // framer-motion → plain elements so the portal/animation machinery doesn't
 // interfere with assertions. We only render the lightweight motion.div.
@@ -168,23 +170,72 @@ describe('SpotlightTour engine', () => {
 
 describe('TourLauncher', () => {
   beforeEach(() => {
-    try {
-      localStorage.clear();
-    } catch {
-      /* ignore */
-    }
+    // In-memory storage stub — this environment doesn't reliably provide one.
+    const store = new Map();
+    vi.stubGlobal('localStorage', {
+      getItem: (k) => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, String(v)),
+      removeItem: (k) => store.delete(k),
+      clear: () => store.clear(),
+    });
+    useModalStore.getState().closeTour();
   });
 
-  it('auto-opens the tour on landing (no chip while open)', async () => {
+  it('never opens itself on landing, and floats no chip over the reader', async () => {
     render(<TourLauncher />);
-    expect(await screen.findByText('Welcome to Poetry بالعربي')).toBeInTheDocument();
+    // Give the lazy SpotlightTour chunk a chance to appear — it must not.
+    await waitFor(() => expect(useModalStore.getState().tour).toBe(false));
+    expect(screen.queryByText('Welcome to Poetry بالعربي')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /tour/i })).not.toBeInTheDocument();
   });
 
-  it('shows a "Resume tour" chip after the tour is dismissed', async () => {
+  it('opens when the account menu asks for it, and closes back to nothing', async () => {
     render(<TourLauncher />);
-    await screen.findByText('Welcome to Poetry بالعربي');
+    act(() => useModalStore.getState().openTour());
+    expect(await screen.findByText('Welcome to Poetry بالعربي')).toBeInTheDocument();
+
     await userEvent.click(screen.getByRole('button', { name: 'Close walkthrough' }));
-    expect(await screen.findByRole('button', { name: 'Resume tour' })).toBeInTheDocument();
+    expect(screen.queryByText('Welcome to Poetry بالعربي')).not.toBeInTheDocument();
+    // No chip takes its place.
+    expect(screen.queryByRole('button', { name: /resume|take the tour/i })).not.toBeInTheDocument();
+  });
+
+  it('resumes at the persisted step when reopened', async () => {
+    localStorage.setItem('tourStep', '1');
+    render(<TourLauncher />);
+    act(() => useModalStore.getState().openTour());
+    expect(await screen.findByText('Listen to the poem')).toBeInTheDocument();
+  });
+});
+
+describe('tour entry label', () => {
+  // This environment doesn't always provide a real localStorage (see the guarded
+  // clear in src/test/setup.js), so drive the helper against an in-memory stub.
+  let store;
+  beforeEach(() => {
+    store = new Map();
+    vi.stubGlobal('localStorage', {
+      getItem: (k) => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, String(v)),
+      removeItem: (k) => store.delete(k),
+      clear: () => store.clear(),
+    });
+  });
+
+  it('reads "Take the tour" for a first-timer', () => {
+    expect(tourEntryLabel()).toBe('Take the tour');
+    expect(hasTourProgress()).toBe(false);
+  });
+
+  it('reads "Resume tour" once a step past the first is saved', () => {
+    localStorage.setItem('tourStep', '2');
+    expect(tourEntryLabel()).toBe('Resume tour');
+    expect(hasTourProgress()).toBe(true);
+  });
+
+  it('goes back to "Take the tour" once completed — a finished tour restarts', () => {
+    localStorage.setItem('tourStep', '4');
+    localStorage.setItem('tourCompleted', 'true');
+    expect(tourEntryLabel()).toBe('Take the tour');
   });
 });

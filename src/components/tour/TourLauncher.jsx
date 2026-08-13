@@ -2,18 +2,11 @@ import { Suspense, lazy, useCallback, useMemo, useState } from 'react';
 import { Compass } from 'lucide-react';
 import { THEME } from '../../constants/theme.js';
 import { useUIStore } from '../../stores/uiStore';
+import { useModalStore } from '../../stores/modalStore';
 import { TOUR_STEPS } from '../../constants/tourSteps.js';
+import { readTourProgress } from '../../utils/tourProgress.js';
 
 const SpotlightTour = lazy(() => import('./SpotlightTour.jsx'));
-
-// Deep-link launch: ?tour=1 | ?tour=spotlight
-const launchedFromURL = () => {
-  try {
-    return !!new URLSearchParams(window.location.search).get('tour');
-  } catch {
-    return false;
-  }
-};
 
 // Predicates for conditional steps. `hasLibrary` keeps the library step out of a
 // brand-new visitor's tour, but shows it to anyone signed in or with saved poems.
@@ -21,26 +14,17 @@ const WHEN = {
   hasLibrary: (ctx) => !!ctx.user || ctx.savedCount > 0,
 };
 
-function readPersisted() {
-  try {
-    return {
-      completed: localStorage.getItem('tourCompleted') === 'true',
-      step: parseInt(localStorage.getItem('tourStep') ?? '', 10),
-    };
-  } catch {
-    return { completed: false, step: NaN };
-  }
-}
-
 /**
- * TourLauncher — owns the walkthrough lifecycle:
- *  - Auto-opens on landing and resumes at the saved step, until the tour is
- *    completed. The reader can always dismiss it.
- *  - While dismissed (and not yet completed) a bottom-left "Resume tour" chip
- *    reopens it where they left off.
- *  - Once completed, the entry point becomes a small restart icon in the
- *    top-right (below the Aa text-settings pill); the final tour step highlights
- *    that icon so readers know where to find a refresher.
+ * TourLauncher — owns the walkthrough lifecycle, but never starts it.
+ *
+ * The reader asks for the tour from the account menu ("Take the tour" / "Resume
+ * tour"); modalStore.tour is the single open/closed flag, and it only starts
+ * true for an explicit `?tour=…` deep link or the dev-only FEATURES.forceTour.
+ * A first-time visitor gets a poem, not a seven-step modal over it.
+ *
+ * Resuming still works: the step index is persisted, so reopening picks up where
+ * they stopped. Once completed, a small restart icon appears in the top-right
+ * (below the Aa pill) — the final tour step spotlights that icon.
  */
 export default function TourLauncher({ user = null, savedCount = 0, onDemoRecite }) {
   const darkMode = useUIStore((s) => s.darkMode);
@@ -53,20 +37,19 @@ export default function TourLauncher({ user = null, savedCount = 0, onDemoRecite
     [user, savedCount]
   );
 
-  const [completed, setCompleted] = useState(() => readPersisted().completed);
-  const [started, setStarted] = useState(() => Number.isFinite(readPersisted().step));
+  const [completed, setCompleted] = useState(() => readTourProgress().completed);
   const [resumeStep, setResumeStep] = useState(() => {
-    const { step } = readPersisted();
-    return Number.isFinite(step) ? Math.max(0, step) : 0;
+    const { completed: done, step } = readTourProgress();
+    // A finished tour reopens from the top; an abandoned one resumes in place.
+    return !done && Number.isFinite(step) ? Math.max(0, step) : 0;
   });
-  // Shown on landing until completed; ?tour=… forces it open. (Under browser automation the whole
-  // launcher is suppressed by the guard below, so this state is moot there.)
-  const [open, setOpen] = useState(() => !readPersisted().completed || launchedFromURL());
+  const open = useModalStore((s) => s.tour);
+  const closeTour = useModalStore((s) => s.closeTour);
+  const openTour = useModalStore((s) => s.openTour);
   const [currentKey, setCurrentKey] = useState(null);
 
   const persistStep = useCallback(
     (i) => {
-      setStarted(true);
       setResumeStep(i);
       setCurrentKey(steps[i]?.key ?? null);
       try {
@@ -79,14 +62,14 @@ export default function TourLauncher({ user = null, savedCount = 0, onDemoRecite
   );
 
   const handleComplete = useCallback(() => {
-    setOpen(false);
+    closeTour();
     setCompleted(true);
     try {
       localStorage.setItem('tourCompleted', 'true');
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [closeTour]);
 
   // Reaching the finish step IS completion. If the reader closes the tour from
   // that step by ANY path (×, Esc, or a Done tap a lingering auth overlay might
@@ -97,24 +80,21 @@ export default function TourLauncher({ user = null, savedCount = 0, onDemoRecite
       handleComplete();
       return;
     }
-    setOpen(false);
-  }, [currentKey, handleComplete]);
+    closeTour();
+  }, [currentKey, handleComplete, closeTour]);
 
   const restart = useCallback(() => {
     setResumeStep(0);
-    setOpen(true);
-  }, []);
+    openTour();
+  }, [openTour]);
 
   const safeResume = Math.min(Math.max(0, resumeStep), Math.max(0, steps.length - 1));
   // The corner icon is permanent once completed; it also appears on the final
   // step (so that step can spotlight it) before completion.
   const showCornerIcon = completed || (open && currentKey === 'finish');
 
-  // Under browser automation (Playwright e2e), render nothing — no coachmark/tap-catcher, no
-  // "Take a tour" chip, no restart icon — so the walkthrough can never block a flow spec. The
-  // tour's own e2e opts back in explicitly via ?tour=1 (launchedFromURL).
-  if (typeof navigator !== 'undefined' && navigator.webdriver && !launchedFromURL()) return null;
-
+  // No automation guard is needed any more: nothing opens the tour on its own, so it
+  // cannot block an e2e flow. The tour's own spec still opts in with ?tour=1.
   return (
     <>
       {open && (
@@ -131,27 +111,8 @@ export default function TourLauncher({ user = null, savedCount = 0, onDemoRecite
         </Suspense>
       )}
 
-      {/* Top-left chip — only while the tour is closed and not yet completed. */}
-      {!open && !completed && (
-        <button
-          onClick={() => setOpen(true)}
-          aria-label={started ? 'Resume tour' : 'Take a tour'}
-          className="fixed top-4 left-4 z-[60] flex items-center gap-2 rounded-full pl-3 pr-4 py-2 border transition-transform hover:scale-105"
-          style={{
-            background: 'rgba(12,12,14,0.9)',
-            backdropFilter: 'blur(20px) saturate(150%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-            borderColor: 'rgba(197,160,89,0.35)',
-            color: 'var(--gold)',
-            fontFamily: "'Forum', serif",
-            fontSize: '0.85rem',
-            boxShadow: '0 8px 28px rgba(0,0,0,0.45)',
-          }}
-        >
-          <Compass size={15} />
-          {started ? 'Resume tour' : 'Take a tour'}
-        </button>
-      )}
+      {/* The floating "Resume tour" pill is gone — the entry point lives in the
+          account menu now, beside Explore Poems, instead of floating over the poem. */}
 
       {/* Top-right restart icon — below the Aa text-settings pill. Matches the
           theme toggle / text-settings button format exactly. */}

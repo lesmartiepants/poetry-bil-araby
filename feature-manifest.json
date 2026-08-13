@@ -679,16 +679,18 @@
       "id": "guided-tour",
       "name": "Guided walkthrough / spotlight tour",
       "tier": "important",
-      "userFacing": "Bespoke on-brand walkthrough that spotlights nav elements; launchable via ?tour=1; resumes and adapts to the redesigned reader.",
+      "userFacing": "Bespoke on-brand walkthrough that spotlights nav elements. Never opens itself: started from the account menu ('Take the tour' / 'Resume tour', label follows saved progress), from ?tour=1, or from the corner restart compass once completed.",
       "entrypoints": [
         "src/components/tour/SpotlightTour.jsx",
         "src/components/tour/TourLauncher.jsx",
+        "src/components/AccountMenu.jsx",
+        "src/utils/tourProgress.js",
         "src/constants/routes.js",
         "src/hooks/useIsFullScreenRoute.js"
       ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/fullscreen-route-gate.test.jsx"],
+        "unit": ["src/test/fullscreen-route-gate.test.jsx", "src/test/tour.test.jsx"],
         "e2e": ["e2e/tour.spec.js"]
       },
       "deviceOnly": false,

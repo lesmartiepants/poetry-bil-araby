@@ -33,12 +33,12 @@ import { useSelection, StepTitle, EmptyState, LoadingState } from '../stepParts.
  *
  * ## Layout
  *
- * Seven spines across 353px of usable width: 44px each with 6px gaps. 44px is
- * the floor for a comfortable target, and the spine is 260px tall, so the touch
- * area is generous even though it is narrow. The English gloss cannot be
- * repeated seven times up seven spines without turning the shelf into a wall of
- * Latin, so only the CHOSEN family names itself in English, on a line under the
- * shelf.
+ * Seven spines across 353px of usable width: about 44px each with 6px gaps at
+ * 393, capped at 52px so they do not sprawl on a desktop. That is narrow, but
+ * each is 320px tall, so the touch area is far larger than a 48px button even
+ * though one dimension is under it. The English gloss cannot be repeated seven
+ * times up seven spines without turning the shelf into a wall of Latin, so only
+ * the CHOSEN family names itself in English, on a line under the shelf.
  */
 
 const GOLD = '#c5a059';
@@ -73,93 +73,104 @@ const FamilyStep = ({
           gap: '.9rem',
         }}
       >
+        {/* Sized to the spines, not to the column. The spines are capped at 52px
+            each, so on a wide screen a full-width shelf floor stuck out well past
+            the books standing on it. */}
         <div
           style={{
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
-            gap: 6,
-            width: '100%',
-            // Room for the raised spine to travel into without the row growing.
-            paddingTop: 18,
+            width: 'fit-content',
+            maxWidth: '100%',
+            marginInline: 'auto',
           }}
         >
-          {options.map((o, i) => {
-            const on = selected[0] === o.key;
-            const dimmed = selected.length > 0 && !on;
-            return (
-              <button
-                key={o.key}
-                data-testid={`${testId}-option`}
-                data-option-key={o.key}
-                aria-pressed={on}
-                aria-label={`${o.label_ar} — ${o.label_en}`}
-                onClick={() => toggle(o.key)}
-                style={{
-                  position: 'relative',
-                  flex: '1 1 0',
-                  minWidth: 0,
-                  maxWidth: 52,
-                  height: 320,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  padding: 0,
-                  // Square on the floor, rounded at the head — a book seen edge on.
-                  borderRadius: '8px 8px 2px 2px',
-                  border: `1px solid ${on ? o.color : 'rgba(255,255,255,0.10)'}`,
-                  background: on
-                    ? `linear-gradient(180deg, ${o.color}3a, ${o.color}10)`
-                    : `linear-gradient(180deg, ${o.color}14, rgba(255,255,255,0.02))`,
-                  // Lifted forward and out of the row.
-                  transform: on ? 'translateY(-16px)' : 'none',
-                  opacity: dimmed ? 0.4 : LIT,
-                  boxShadow: on ? `0 10px 22px -12px ${o.color}` : 'none',
-                  transition:
-                    'transform .32s cubic-bezier(.2,.7,.3,1), opacity .3s ease, background .3s ease, border-color .3s ease',
-                  animation: `obShelf .5s ease ${0.05 * i}s both`,
-                }}
-              >
-                <span
-                  lang="ar"
-                  dir="rtl"
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              gap: 6,
+              // Room for the raised spine to travel into without the row growing.
+              paddingTop: 18,
+            }}
+          >
+            {options.map((o, i) => {
+              const on = selected[0] === o.key;
+              const dimmed = selected.length > 0 && !on;
+              return (
+                <button
+                  key={o.key}
+                  data-testid={`${testId}-option`}
+                  data-option-key={o.key}
+                  aria-pressed={on}
+                  aria-label={`${o.label_ar} — ${o.label_en}`}
+                  onClick={() => toggle(o.key)}
                   style={{
-                    fontFamily: "'Amiri', serif",
-                    fontSize: '1rem',
-                    lineHeight: 1,
-                    whiteSpace: 'nowrap',
-                    color: on ? '#fff' : 'rgba(255,255,255,0.74)',
-                    // Reads bottom-to-top, the way a spine is lettered.
-                    transform: 'rotate(-90deg)',
+                    position: 'relative',
+                    flex: '1 1 0',
+                    minWidth: 0,
+                    maxWidth: 52,
+                    height: 320,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    padding: 0,
+                    // Square on the floor, rounded at the head — a book seen edge on.
+                    borderRadius: '8px 8px 2px 2px',
+                    border: `1px solid ${on ? o.color : 'rgba(255,255,255,0.10)'}`,
+                    background: on
+                      ? `linear-gradient(180deg, ${o.color}3a, ${o.color}10)`
+                      : `linear-gradient(180deg, ${o.color}14, rgba(255,255,255,0.02))`,
+                    // Lifted forward and out of the row.
+                    transform: on ? 'translateY(-16px)' : 'none',
+                    opacity: dimmed ? 0.4 : LIT,
+                    boxShadow: on ? `0 10px 22px -12px ${o.color}` : 'none',
+                    transition:
+                      'transform .32s cubic-bezier(.2,.7,.3,1), opacity .3s ease, background .3s ease, border-color .3s ease',
+                    animation: `obShelf .5s ease ${0.05 * i}s both`,
                   }}
                 >
-                  {o.label_ar}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  <span
+                    lang="ar"
+                    dir="rtl"
+                    style={{
+                      fontFamily: "'Amiri', serif",
+                      fontSize: '1rem',
+                      lineHeight: 1,
+                      whiteSpace: 'nowrap',
+                      color: on ? '#fff' : 'rgba(255,255,255,0.74)',
+                      // Reads bottom-to-top, the way a spine is lettered.
+                      transform: 'rotate(-90deg)',
+                    }}
+                  >
+                    {o.label_ar}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
 
-        {/* The shelf itself. Without a floor the spines were just a misaligned
+          {/* The shelf itself. Without a floor the spines were just a misaligned
             row and "pulled out" had nothing to be pulled out of. */}
-        <div style={{ width: '100%', flex: '0 0 auto' }}>
-          <span
-            aria-hidden="true"
-            style={{
-              display: 'block',
-              height: 1,
-              background: 'linear-gradient(90deg, transparent, rgba(197,160,89,0.55), transparent)',
-            }}
-          />
-          <span
-            aria-hidden="true"
-            style={{
-              display: 'block',
-              height: 14,
-              background: 'linear-gradient(180deg, rgba(197,160,89,0.10), transparent)',
-            }}
-          />
+          <div style={{ width: '100%', flex: '0 0 auto' }} data-testid={`${testId}-shelf`}>
+            <span
+              aria-hidden="true"
+              style={{
+                display: 'block',
+                height: 1,
+                background:
+                  'linear-gradient(90deg, transparent, rgba(197,160,89,0.55), transparent)',
+              }}
+            />
+            <span
+              aria-hidden="true"
+              style={{
+                display: 'block',
+                height: 14,
+                background: 'linear-gradient(180deg, rgba(197,160,89,0.10), transparent)',
+              }}
+            />
+          </div>
         </div>
 
         {/* Only the chosen shelf names itself. Seven English glosses up seven

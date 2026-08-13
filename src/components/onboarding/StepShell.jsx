@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 
+import { BilingualLabel } from './stepParts.jsx';
+
 /**
  * The only thing the six onboarding steps share.
  *
@@ -57,7 +59,13 @@ const StepShell = ({
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
     transition={{ duration: 0.32, ease: 'easeOut' }}
-    dir="rtl"
+    // The CHROME is LTR. The flow used to set dir="rtl" on this frame, which
+    // made every directional thing in it run the other way: the progress rail
+    // filled right to left, "next" sat on the left, and the advance arrow
+    // pointed backwards to anyone reading the interface as English. Arabic verse
+    // is genuinely RTL and stays RTL — but that is CONTENT. Individual Arabic
+    // strings still carry their own dir="rtl"; the box they sit in does not.
+    dir="ltr"
     className="ob-frame"
     style={{
       position: 'fixed',
@@ -161,40 +169,14 @@ const StepShell = ({
           paddingTop: '.85rem',
         }}
       >
-        <button
-          data-testid={`${testId}-continue`}
-          onClick={() => onNext?.()}
-          style={{
-            flex: '1 1 auto',
-            maxWidth: 260,
-            display: 'inline-flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '10px',
-            padding: '14px 28px',
-            border: `1px solid ${accent}`,
-            borderRadius: '999px',
-            background: `${accent}14`,
-            color: accent,
-            fontFamily: "'Reem Kufi', sans-serif",
-            wordSpacing: '.16em',
-            fontSize: '1rem',
-            cursor: 'pointer',
-            minHeight: '52px',
-            transition: 'background .2s ease',
-          }}
-        >
-          <span>{ctaAr}</span>
-          <span style={{ fontSize: '.6875rem', opacity: 0.55, fontFamily: 'inherit' }}>
-            {ctaEn}
-          </span>
-          <ArrowLeft size={16} />
-        </button>
+        {/* Back on the LEFT, next on the RIGHT, and the arrows point the way an
+            English reader expects. Back is rendered first so the DOM order and
+            the visual order agree, which is also the tab order. */}
         {onBack && (
           <button
             data-testid={`${testId}-back`}
             onClick={onBack}
-            aria-label="رجوع — Back"
+            aria-label="Back — رجوع"
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -211,9 +193,32 @@ const StepShell = ({
               flex: '0 0 auto',
             }}
           >
-            <ArrowRight size={16} />
+            <ArrowLeft size={16} />
           </button>
         )}
+        <button
+          data-testid={`${testId}-continue`}
+          onClick={() => onNext?.()}
+          style={{
+            flex: '1 1 auto',
+            maxWidth: 280,
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '10px',
+            padding: '14px 24px',
+            border: `1px solid ${accent}`,
+            borderRadius: '999px',
+            background: `${accent}14`,
+            color: accent,
+            cursor: 'pointer',
+            minHeight: '52px',
+            transition: 'background .2s ease',
+          }}
+        >
+          <BilingualLabel en={ctaEn} ar={ctaAr} size="control" color={accent} />
+          <ArrowRight size={16} />
+        </button>
       </div>
     )}
   </motion.div>

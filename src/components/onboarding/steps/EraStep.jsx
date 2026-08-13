@@ -1,5 +1,11 @@
 import StepShell from '../StepShell.jsx';
-import { useSelection, StepTitle, EmptyState, LoadingState } from '../stepParts.jsx';
+import {
+  useSelection,
+  StepTitle,
+  EmptyState,
+  LoadingState,
+  BilingualLabel,
+} from '../stepParts.jsx';
 
 /**
  * Step 6 — Era.
@@ -8,7 +14,7 @@ import { useSelection, StepTitle, EmptyState, LoadingState } from '../stepParts.
  *
  * "Ancient to modern" is the only question in the flow with a real axis behind
  * it, so this step draws the axis and lets the DATES carry it. A rail runs down
- * the leading edge from the pre-Islamic period to the present; each band hangs
+ * the left edge from the pre-Islamic period to the present; each band hangs
  * off the rail on a leader line, headed by its century range set large in Amiri;
  * and choosing one runs gold down the rail to that node, so the reader can see
  * where in fourteen centuries they just landed and how much sits before it.
@@ -74,7 +80,8 @@ const EraStep = ({
           flexDirection: 'column',
         }}
       >
-        {/* The rail, on the leading (right, in RTL) edge. */}
+        {/* The rail, on the left: the chrome reads left to right, so "earlier"
+            is the left edge and the gold fills downward from it. */}
         <span
           aria-hidden="true"
           style={{
@@ -144,7 +151,7 @@ const EraStep = ({
                 data-testid={`${testId}-option`}
                 data-option-key={o.key}
                 aria-pressed={on}
-                aria-label={`${o.label_ar} — ${o.label_en}`}
+                aria-label={`${o.label_en} — ${o.label_ar}`}
                 onClick={() => toggle(o.key)}
                 style={{
                   flex: '1 1 auto',
@@ -180,30 +187,14 @@ const EraStep = ({
                 >
                   {headFor(o)}
                 </span>
-                <span style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
-                  <span
-                    lang="ar"
-                    dir="rtl"
-                    style={{
-                      fontFamily: "'Amiri', serif",
-                      fontSize: '1.15rem',
-                      lineHeight: 1.35,
-                      color: on ? '#fff' : 'rgba(255,255,255,0.8)',
-                    }}
-                  >
-                    {o.label_ar}
-                  </span>
-                  <span
-                    dir="ltr"
-                    style={{
-                      fontSize: '.6875rem',
-                      letterSpacing: '.02em',
-                      color: on ? `${GOLD}cc` : 'rgba(255,255,255,0.3)',
-                    }}
-                  >
-                    {o.label_en}
-                  </span>
-                </span>
+                <BilingualLabel
+                  en={o.label_en}
+                  ar={o.label_ar}
+                  size="option"
+                  align="start"
+                  color={on ? '#fff' : 'rgba(255,255,255,0.82)'}
+                  gap={1}
+                />
               </button>
             </div>
           );
@@ -226,7 +217,7 @@ const EraStep = ({
       ctaEn="Start reading"
     >
       <style>{`@keyframes obEra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}`}</style>
-      <StepTitle ar="من أيّ زمن؟" en="From which age" />
+      <StepTitle en="From which age?" ar="من أيّ زمن؟" />
       {body()}
     </StepShell>
   );

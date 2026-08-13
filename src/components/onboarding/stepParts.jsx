@@ -44,18 +44,90 @@ const GOLD = '#c5a059';
  */
 
 /**
- * The question.
+ * ## Bilingual parity
  *
- * Arabic is the question; English is a gloss under it, not a translation with
- * equal billing. Reem Kufi for the Arabic because it is a short display line —
- * a Kufi sentence reads flat and alien, so anything longer than a phrase goes
- * to Amiri instead (see the welcome and the hint lines).
+ * Both languages carry the label, and neither is a caption for the other.
  *
- * The English is NOT uppercased and carries almost no tracking. It was both,
- * and the result inverted the hierarchy the flow claims: "WHAT MOOD ARE YOU IN?"
- * at 12px measured physically wider than the 15px Arabic above it, because
- * uppercasing plus letterspacing inflates a Latin line's footprint. Sentence
- * case at .02em keeps it a gloss.
+ * Parity is OPTICAL, not numeric. Setting Amiri and a Latin face at the same
+ * point size does not make them weigh the same on screen: Arabic hangs most of
+ * its mass on a single connected baseline with short verticals, while a Latin
+ * face spends its em on cap-height and ascenders. At identical sizes the Latin
+ * line looks bigger and busier. This flow already made the mirror-image mistake
+ * in the other direction — uppercased, tracked English at 12px measured
+ * physically WIDER than the 15px Arabic above it, so the "caption" was
+ * out-shouting the heading it belonged to.
+ *
+ * The ratios below (Arabic ≈ 1.25x the Latin size) were set by eye against the
+ * real strings at 393px, not derived. Two rules do most of the work:
+ *
+ *   1. Same colour and same opacity for both lines. Nothing signals "one of
+ *      these is secondary" faster than dimming it, and nothing signals equality
+ *      faster than not dimming it. This is why the old English gloss at 32%
+ *      white could never have read as an equal no matter what size it was.
+ *   2. Latin gets a DISPLAY face (Forum, the app's Latin brand face), not the UI
+ *      sans. A sans-serif next to Amiri reads as an annotation on it; a display
+ *      serif reads as its counterpart.
+ *
+ * English is set first because the chrome reads left-to-right, and on a
+ * left-to-right screen the first line is where the eye lands. The Arabic is not
+ * demoted by sitting second — it is larger, and it is in the app's own voice.
+ */
+const PAIR = {
+  // [latin, arabic] — arabic runs ~1.2-1.25x for equal optical presence.
+  title: ['1.15rem', '1.5rem'],
+  option: ['.875rem', '1.05rem'],
+  control: ['.9375rem', '1.05rem'],
+  // Mood puts 16 of these in a wrapped field; at `option` size they no longer
+  // fit the body budget. The RATIO is what carries parity, so shrinking both
+  // together keeps the two languages equal at a smaller absolute size.
+  chip: ['.75rem', '.9375rem'],
+};
+
+export const BilingualLabel = ({
+  en,
+  ar,
+  size = 'option',
+  color = '#fff',
+  align = 'center',
+  arFace = "'Amiri', serif",
+  gap = 1,
+}) => {
+  const [enSize, arSize] = PAIR[size] || PAIR.option;
+  return (
+    <span
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap,
+        alignItems: align === 'center' ? 'center' : 'flex-start',
+        minWidth: 0,
+      }}
+    >
+      <span
+        dir="ltr"
+        style={{
+          fontFamily: "'Forum', serif",
+          fontSize: enSize,
+          lineHeight: 1.2,
+          letterSpacing: '.01em',
+          color,
+        }}
+      >
+        {en}
+      </span>
+      <span
+        lang="ar"
+        dir="rtl"
+        style={{ fontFamily: arFace, fontSize: arSize, lineHeight: 1.35, color }}
+      >
+        {ar}
+      </span>
+    </span>
+  );
+};
+
+/**
+ * The question, in both languages at equal weight.
  *
  * The block has a FIXED height so the question lands at the same y on all six
  * steps. Letting it size to its content moved the title between 158px and 240px
@@ -67,38 +139,17 @@ export const StepTitle = ({ ar, en, accent = GOLD, align = 'center' }) => (
     style={{
       textAlign: align,
       flex: '0 0 auto',
-      height: 78,
+      height: 92,
       display: 'flex',
       flexDirection: 'column',
+      alignItems: align === 'center' ? 'center' : 'flex-start',
       justifyContent: 'center',
-      marginBottom: '1.1rem',
+      marginBottom: '1rem',
     }}
   >
-    <h2
-      lang="ar"
-      dir="rtl"
-      className="ob-kufi"
-      style={{
-        fontSize: 'clamp(1.35rem, 5.4vw, 1.75rem)',
-        lineHeight: 1.3,
-        color: accent,
-        margin: 0,
-        fontWeight: 400,
-      }}
-    >
-      {ar}
+    <h2 style={{ margin: 0, fontWeight: 400 }}>
+      <BilingualLabel en={en} ar={ar} size="title" color={accent} align={align} gap={2} />
     </h2>
-    <p
-      dir="ltr"
-      style={{
-        fontSize: '.8125rem',
-        letterSpacing: '.02em',
-        color: 'rgba(255,255,255,0.32)',
-        margin: '.3rem 0 0',
-      }}
-    >
-      {en}
-    </p>
   </div>
 );
 

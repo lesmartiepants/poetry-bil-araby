@@ -47,10 +47,44 @@ const GOLD = '#c5a059';
  * generous or the marks collide with the line above — on this step above all,
  * since broken vocalisation on a screen ABOUT typography is self-refuting.
  */
+/**
+ * The ladder runs in BOTH scripts.
+ *
+ * Setting only the Arabic in a rising sequence of faces would have made the
+ * English a caption on a specimen it was not part of — and this is the one step
+ * where the type IS the content, so a reader who cannot read Arabic would have
+ * been shown the question without being shown the answer. So each rung pairs an
+ * Arabic face with a Latin face at the same point on the same journey: plain
+ * modern sans, to a working book serif, to a high-contrast historical face that
+ * asks something of you. Fustat/Alexandria are ordinary reading; Amiri/Playfair
+ * are what a printed page looks like; Katibeh/IM Fell English are older, denser
+ * and slower in either script.
+ *
+ * Sizes rise together, and the Latin stays at roughly 0.8x the Arabic, which is
+ * the same optical-parity ratio the rest of the flow uses.
+ */
 const SPECIMEN = [
-  { face: "'Fustat', sans-serif", size: '1.35rem', leading: 1.5 },
-  { face: "'Amiri', serif", size: '1.6rem', leading: 1.7 },
-  { face: "'Katibeh', serif", size: '1.95rem', leading: 1.9 },
+  {
+    face: "'Fustat', sans-serif",
+    enFace: "'Alexandria', sans-serif",
+    size: '1.35rem',
+    enSize: '1.05rem',
+    leading: 1.5,
+  },
+  {
+    face: "'Amiri', serif",
+    enFace: "'Playfair Display', serif",
+    size: '1.6rem',
+    enSize: '1.25rem',
+    leading: 1.7,
+  },
+  {
+    face: "'Katibeh', serif",
+    enFace: "'IM Fell English', serif",
+    size: '1.95rem',
+    enSize: '1.45rem',
+    leading: 1.9,
+  },
 ];
 
 /**
@@ -101,7 +135,7 @@ const ReadingStep = ({
               data-testid={`${testId}-option`}
               data-option-key={o.key}
               aria-pressed={on}
-              aria-label={`${o.label_ar} — ${o.label_en}`}
+              aria-label={`${o.label_en} — ${o.label_ar}`}
               onClick={() => toggle(o.key)}
               style={{
                 display: 'flex',
@@ -130,6 +164,18 @@ const ReadingStep = ({
                 animation: `obSpec .55s ease ${0.08 * i}s both`,
               }}
             >
+              <span
+                dir="ltr"
+                style={{
+                  fontFamily: spec.enFace,
+                  fontSize: spec.enSize,
+                  lineHeight: 1.25,
+                  color: on ? '#fff' : 'rgba(255,255,255,0.86)',
+                  transition: 'color .3s ease',
+                }}
+              >
+                {o.label_en}
+              </span>
               <span
                 lang="ar"
                 dir="rtl"
@@ -165,16 +211,19 @@ const ReadingStep = ({
                     {o.hint_ar}
                   </span>
                 )}
-                <span
-                  dir="ltr"
-                  style={{
-                    fontSize: '.6875rem',
-                    letterSpacing: '.02em',
-                    color: on ? GOLD : 'rgba(255,255,255,0.3)',
-                  }}
-                >
-                  {o.label_en}
-                </span>
+                {o.hint_en && (
+                  <span
+                    dir="ltr"
+                    style={{
+                      fontFamily: "'Amiri', serif",
+                      fontSize: '.8125rem',
+                      lineHeight: 1.5,
+                      color: on ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.44)',
+                    }}
+                  >
+                    {o.hint_en}
+                  </span>
+                )}
               </span>
             </button>
           );
@@ -198,7 +247,7 @@ const ReadingStep = ({
       {/* "تحدٍّ" carries a tanween AND a shadda on one tooth, and Reem Kufi at
           display size stacks them into each other — a broken mark in the title of
           the step that is about typography. "عسيرة" says the same thing unmarked. */}
-      <StepTitle ar="قراءة سهلة أم لغة عسيرة؟" en="Easy reading, or a challenge" />
+      <StepTitle en="Easy reading, or a challenge?" ar="قراءة سهلة أم لغة عسيرة؟" />
       {body()}
     </StepShell>
   );

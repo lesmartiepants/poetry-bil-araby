@@ -1,5 +1,11 @@
 import StepShell from '../StepShell.jsx';
-import { useSelection, StepTitle, EmptyState, LoadingState } from '../stepParts.jsx';
+import {
+  useSelection,
+  StepTitle,
+  EmptyState,
+  LoadingState,
+  BilingualLabel,
+} from '../stepParts.jsx';
 
 /**
  * Step 2 — Mood.
@@ -98,7 +104,7 @@ const MoodStep = ({
               data-testid={`${testId}-option`}
               data-option-key={o.key}
               aria-pressed={on}
-              aria-label={`${o.label_ar} — ${o.label_en}`}
+              aria-label={`${o.label_en} — ${o.label_ar}`}
               onClick={() => toggle(o.key)}
               style={{
                 display: 'inline-flex',
@@ -131,34 +137,14 @@ const MoodStep = ({
                   flex: '0 0 auto',
                 }}
               />
-              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <span
-                  lang="ar"
-                  dir="rtl"
-                  style={{
-                    fontFamily: "'Reem Kufi', sans-serif",
-                    wordSpacing: '.16em',
-                    fontSize: '.95rem',
-                    lineHeight: 1.25,
-                  }}
-                >
-                  {o.label_ar}
-                </span>
-                <span
-                  dir="ltr"
-                  style={{
-                    // Sentence case, almost no tracking: uppercased and tracked,
-                    // "MELANCHOLY" measured wider than the 15px حزن above it and
-                    // inverted the hierarchy the flow claims.
-                    fontSize: '.5625rem',
-                    letterSpacing: '.02em',
-                    opacity: on ? 0.7 : 0.4,
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {o.label_en}
-                </span>
-              </span>
+              <BilingualLabel
+                en={o.label_en}
+                ar={o.label_ar}
+                size="chip"
+                align="start"
+                color="inherit"
+                gap={0}
+              />
             </button>
           );
         })}
@@ -179,7 +165,7 @@ const MoodStep = ({
       ctaEn={selected.length ? 'Next' : 'Skip'}
     >
       <style>{`@keyframes obEmber{from{opacity:0;transform:translateY(6px)}to{opacity:1}}`}</style>
-      <StepTitle ar="ما مزاجك الآن؟" en="What mood are you in?" />
+      <StepTitle en="What mood are you in?" ar="ما مزاجك الآن؟" />
       {body()}
     </StepShell>
   );

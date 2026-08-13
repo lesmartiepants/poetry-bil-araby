@@ -1,6 +1,12 @@
 import StepShell from '../StepShell.jsx';
 import MotifGlyph from '../motifGlyphs.jsx';
-import { useSelection, StepTitle, EmptyState, LoadingState } from '../stepParts.jsx';
+import {
+  useSelection,
+  StepTitle,
+  EmptyState,
+  LoadingState,
+  BilingualLabel,
+} from '../stepParts.jsx';
 
 /**
  * Step 3 — Imagery (the motif dimension).
@@ -71,7 +77,7 @@ const ImageryStep = ({
               data-testid={`${testId}-option`}
               data-option-key={o.key}
               aria-pressed={on}
-              aria-label={`${o.label_ar} — ${o.label_en}`}
+              aria-label={`${o.label_en} — ${o.label_ar}`}
               onClick={() => toggle(o.key)}
               style={{
                 display: 'flex',
@@ -104,23 +110,18 @@ const ImageryStep = ({
               >
                 <MotifGlyph motifKey={o.key} size={34} />
               </span>
-              <span
-                lang="ar"
-                dir="rtl"
-                style={{
-                  // Amiri, not Reem Kufi. These are two-and-three word phrases
-                  // (الصحراء والطلل, الرحلة والراحلة), which is prose length, and
-                  // Kufi's flat teeth merge into a comb at label size. 12px was
-                  // also too small: Arabic needs ~1.2x Latin for parity.
-                  fontFamily: "'Amiri', serif",
-                  fontSize: '.8125rem',
-                  lineHeight: 1.4,
-                  color: on ? '#fff' : 'rgba(255,255,255,0.7)',
-                  textAlign: 'center',
-                }}
-              >
-                {o.label_ar}
-              </span>
+              {/* Both names, and both readable. The tile used to carry Arabic
+                  only, on the theory that the glyph did the explaining — but a
+                  reader who does not know that a goblet means الكأس والخمر is
+                  exactly the reader who needed the English. */}
+              <BilingualLabel
+                en={o.label_en}
+                ar={o.label_ar}
+                size="chip"
+                align="center"
+                color={on ? '#fff' : 'rgba(255,255,255,0.72)'}
+                gap={0}
+              />
             </button>
           );
         })}
@@ -140,7 +141,7 @@ const ImageryStep = ({
       ctaEn={selected.length ? 'Next' : 'Skip'}
     >
       <style>{`@keyframes obTile{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:none}}`}</style>
-      <StepTitle ar="أيّ الصور تسكنك؟" en="Which images stay with you?" />
+      <StepTitle en="Which images stay with you?" ar="أيّ الصور تسكنك؟" />
       {body()}
     </StepShell>
   );

@@ -149,7 +149,7 @@ const EraStep = ({
                 style={{
                   flex: '1 1 auto',
                   minWidth: 0,
-                  minHeight: 78,
+                  minHeight: 92,
                   display: 'flex',
                   alignItems: 'center',
                   gap: '.7rem',

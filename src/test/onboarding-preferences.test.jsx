@@ -176,12 +176,19 @@ describe('OnboardingFlow', () => {
     const options = screen.getAllByTestId('onboarding-family-option');
     expect(options).toHaveLength(2);
     expect(options[0].textContent).toContain('الحب والهوى');
-    expect(options[0].textContent).toContain('Love & Desire');
+    // The spines carry Arabic only — seven English glosses up seven spines would
+    // bury the Arabic under Latin — so the gloss reaches a sighted reader through
+    // the caption and a screen reader through the label.
+    expect(options[0].getAttribute('aria-label')).toContain('Love & Desire');
+    fireEvent.click(options[0]);
+    expect(screen.getByTestId('onboarding-family-caption').textContent).toBe('Love & Desire');
+
     // The answers weight the feed rather than filtering it, so a poem count
     // beside an option describes a narrowing that never happens. None of the
-    // fixture's counts may reach the screen.
+    // fixture's counts may reach the screen, in either language.
     for (const option of options) {
       expect(option.textContent).not.toMatch(/[0-9]/);
+      expect(option.getAttribute('aria-label')).not.toMatch(/[0-9]/);
     }
   });
 

@@ -10,7 +10,7 @@ import { useSelection, StepTitle, EmptyState, LoadingState } from '../stepParts.
  * read, and no label answers that as well as a sample of the thing itself. Each
  * band renders its own name in a face and a size that match its difficulty:
  * Fustat, plain and modern, small; Amiri, the naskh the app actually reads poems
- * in, larger; Aref Ruqaa, a classical calligraphic hand, largest. Down the three
+ * in, larger; Katibeh, a classical calligraphic hand, largest. Down the three
  * the letterforms get more written and less typed, and the reader picks the one
  * they want to be looking at.
  *
@@ -89,7 +89,7 @@ const ReadingStep = ({
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
-          gap: '.35rem',
+          gap: '1.15rem',
         }}
       >
         {options.map((o, i) => {
@@ -109,17 +109,23 @@ const ReadingStep = ({
                 alignItems: 'flex-start',
                 gap: '.1rem',
                 width: '100%',
-                minHeight: 84,
+                minHeight: 96,
                 padding: '.5rem 0 .6rem',
                 background: 'transparent',
                 border: 'none',
-                // The only rule on the screen: a hairline that grows on the
-                // chosen specimen. No box, so the type stays the subject.
-                borderInlineStartWidth: 0,
+                // The only rules on the screen. The baseline hairline separates
+                // the specimens; the leading edge marks the chosen one. With
+                // dimming alone the selection was almost invisible — three
+                // specimens at 1.0 / 0.34 / 0.34 still read as three specimens,
+                // because the eye takes the size difference as the subject and
+                // the opacity as lighting.
+                borderInlineStart: `2px solid ${on ? GOLD : 'transparent'}`,
+                // Constant, so selecting does not shift the type sideways.
+                paddingInlineStart: 12,
                 borderBottom: `1px solid ${on ? `${GOLD}55` : 'rgba(255,255,255,0.07)'}`,
                 cursor: 'pointer',
                 textAlign: 'start',
-                opacity: selected.length && !on ? 0.34 : 1,
+                opacity: selected.length && !on ? 0.3 : 1,
                 transition: 'opacity .3s ease, border-color .3s ease',
                 animation: `obSpec .55s ease ${0.08 * i}s both`,
               }}
@@ -189,7 +195,10 @@ const ReadingStep = ({
       ctaEn={selected.length ? 'Next' : 'Skip'}
     >
       <style>{`@keyframes obSpec{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}`}</style>
-      <StepTitle ar="قراءة سهلة أم تحدٍّ؟" en="Easy reading, or a challenge" />
+      {/* "تحدٍّ" carries a tanween AND a shadda on one tooth, and Reem Kufi at
+          display size stacks them into each other — a broken mark in the title of
+          the step that is about typography. "عسيرة" says the same thing unmarked. */}
+      <StepTitle ar="قراءة سهلة أم لغة عسيرة؟" en="Easy reading, or a challenge" />
       {body()}
     </StepShell>
   );

@@ -100,7 +100,7 @@ const FamilyStep = ({
                   flex: '1 1 0',
                   minWidth: 0,
                   maxWidth: 52,
-                  height: 258,
+                  height: 320,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

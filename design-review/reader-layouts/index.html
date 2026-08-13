@@ -185,14 +185,28 @@
         </tbody>
       </table>
 
+      <h2>Correction — the first numbers were Arabic-only</h2>
+      <p class="sub">
+        The reader is <strong>bilingual by default</strong> (<code>showTranslation = true</code>), and
+        <code>SparklerStage</code> sizes rows by the tallest unit — so a translated verse is a tall
+        row. The first cut of this folder measured Arabic-only rows and reported 8 verses for the
+        shipping reader. Corrected, <strong>it fits 4 bilingual verses of a 22-line qasida</strong>.
+        Only ~13% of the corpus carries a translation (the API's <code>english</code> is hardcoded
+        <code>''</code>; real ones arrive as <code>cachedTranslation</code>), which is how the error
+        stayed invisible. Add <code>?lang=ar</code> or <code>?lang=translit</code> to any option to
+        see the other two states.
+      </p>
+
       <h2>Options scored — 22-line qasida, fully revealed, 393×852</h2>
       <table>
         <thead>
           <tr>
             <th>Option</th>
-            <th>Verse rows on screen</th>
+            <th>ar only</th>
+            <th>+ EN (ships)</th>
+            <th>+ translit</th>
             <th>Reading area</th>
-            <th>Poem box width</th>
+            <th>Poem box</th>
             <th>What it costs</th>
           </tr>
         </thead>
@@ -200,6 +214,8 @@
           <tr>
             <td>Baseline (ships today)</td>
             <td class="n">8</td>
+            <td class="n"><strong>4</strong></td>
+            <td class="n">4</td>
             <td class="n">530px · 62%</td>
             <td class="n">305px</td>
             <td class="cost">—</td>
@@ -207,20 +223,26 @@
           <tr>
             <td>A · Recede</td>
             <td class="n">10</td>
+            <td class="n"><strong>5</strong></td>
+            <td class="n">5</td>
             <td class="n">642px · 75%</td>
             <td class="n">305px</td>
             <td class="cost">nav is modal; discoverability drops</td>
           </tr>
-          <tr>
-            <td>B · Flow</td>
+          <tr class="win">
+            <td><strong>B · Flow</strong></td>
             <td class="n">22 (all)</td>
+            <td class="n"><strong>7</strong></td>
+            <td class="n">6</td>
             <td class="n">852px · 100%</td>
             <td class="n">353px</td>
-            <td class="cost">fixed-frame reveal choreography; gesture conflict</td>
+            <td class="cost">fixed-frame reveal choreography; gesture arbitration</td>
           </tr>
           <tr>
-            <td>C · Focus</td>
+            <td>C · Focus <em>(Arabic-only by design)</em></td>
             <td class="n">9</td>
+            <td class="n"><strong>9</strong>*</td>
+            <td class="n">7</td>
             <td class="n">586px · 69%</td>
             <td class="n">373px</td>
             <td class="cost">English becomes opt-in; rail harder to grab</td>
@@ -228,19 +250,29 @@
           <tr>
             <td>D · Frame</td>
             <td class="n">9</td>
+            <td class="n"><strong>4</strong></td>
+            <td class="n">4</td>
             <td class="n">541px · 64%</td>
             <td class="n">305px</td>
             <td class="cost">window resizes as you read (motion)</td>
           </tr>
-          <tr class="win">
-            <td><strong>E · Composite (A+C+D)</strong></td>
+          <tr>
+            <td>E · Composite (A+C+D)</td>
             <td class="n">10</td>
+            <td class="n"><strong>5</strong></td>
+            <td class="n">5</td>
             <td class="n">642px · 75%</td>
             <td class="n">369px</td>
             <td class="cost">all three costs above, minus the scroll rewrite</td>
           </tr>
         </tbody>
       </table>
+      <p class="sub" style="margin-top: 10px">
+        * C hides English by default — that is its premise, not a better score. Toggle
+        <code>EN</code> and it falls to baseline (~4). B · Flow is the owner's chosen direction;
+        note its Arabic-only "all 22" does <strong>not</strong> survive translation — bilingual it
+        shows 7 before you scroll, so the claim is "reach the whole poem", not "see" it.
+      </p>
 
       <h2>Screens</h2>
       <div class="grid" id="grid"></div>

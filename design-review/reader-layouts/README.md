@@ -52,8 +52,8 @@ open for verses that have not been revealed yet. At 393×852 with a 10-line poem
 a **448px window containing 109px of ink: 339px of reserved, permanently blank rows**
 sitting in the middle of the screen.
 
-But raising capacity alone makes landing *worse*. `A · Recede` frees 112px of chrome and
-the blank goes from 555px to **674px**, because a taller empty window is still empty. So:
+But raising capacity alone makes landing *worse*. `A · Recede` frees 158px of chrome and
+the blank goes from 436px to **615px**, because a taller empty window is still empty. So:
 
 - **Capacity** (how many verse rows could be on screen) is what layout controls.
 - **Blank on landing** is owned by the reveal mechanic, which shows one verse at a time.
@@ -91,7 +91,7 @@ and returns on a bottom-edge touch or when the reveal rests.
 **Buys** +2 rows (8 → 10), the single biggest capacity win available without restructuring.
 **Trades** the nav stops being ambient. Save/Library/Discover become things you must know
 are there. On a discovery-driven app that is a real cost, and it makes the landing blank
-worse (555 → 674px) unless paired with D.
+worse (436 → 615px) unless paired with D.
 
 ### B · Flow — the poem is a column, not a window
 
@@ -128,7 +128,7 @@ The window is only as tall as the verses actually revealed, and grows as you adv
 the reveal passes what fits, it scrolls exactly like today. Bands trimmed 136/111 → 108/96.
 `dvh` instead of `vh`.
 
-**Buys** the reserved blank goes 555px → **18px**, and the poem sits in the optical centre
+**Buys** the reserved blank goes 436px → **18px**, and the poem sits in the optical centre
 from the first verse instead of clinging to the top of a tall void. Cheapest to ship: no
 new gesture, no chrome behaviour, no change to the reveal, scrubber or swipe. A sizing fix.
 **Trades** the window changes height as you read, which is motion the current design does

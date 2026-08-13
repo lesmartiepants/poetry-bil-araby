@@ -135,7 +135,7 @@ const ReadingStep = ({
                   transition: 'color .3s ease',
                 }}
               >
-                {o.label_ar}
+                {unvocalised(o.label_ar)}
               </span>
               <span
                 style={{

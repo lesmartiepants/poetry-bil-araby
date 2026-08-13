@@ -19,14 +19,18 @@ LAYOUTS="$(cd "$(dirname "$0")/.." && pwd)"
 OUT="$LAYOUTS/shots"
 mkdir -p "$OUT"
 
-Q="poem=$POEM&clean"
+#     $4 lang       bi (default, what ships) | ar (no translation) | translit (3 rows)
+LANG="${4:-bi}"
+Q="poem=$POEM&clean&lang=$LANG"
 [ "$REVEAL" = "all" ] && Q="$Q&reveal=all"
+SUFFIX=""
+[ "$LANG" != "bi" ] && SUFFIX="-$LANG"
 
 "$B" viewport "$SIZE" >/dev/null
 for f in baseline a-recede b-flow c-focus d-frame e-composite; do
   "$B" goto "$HOST/$f.html?$Q" >/dev/null
   sleep 4
-  "$B" screenshot "$OUT/$f-${SIZE}-${REVEAL}.png" --viewport >/dev/null
+  "$B" screenshot "$OUT/$f-${SIZE}-${REVEAL}${SUFFIX}.png" --viewport >/dev/null
   printf '%-12s ' "$f"
   "$B" js "JSON.stringify(window.__readerProbe())"
 done

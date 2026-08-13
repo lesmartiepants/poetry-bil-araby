@@ -17,7 +17,19 @@
  * The engine only reports geometry; it never hard-codes a look.
  */
 
-const GOLD = '#c5a059';
+import { transliterate } from './transliterate.js';
+
+/**
+ * Language mode. The shipping reader renders Arabic → transliteration → English per verse
+ * (SparklerStage), with `showTranslation = true` and `showTransliteration = false` as the
+ * defaults (PoemReader.jsx / uiStore.js). So the DEFAULT row is bilingual — Arabic plus
+ * English — and measuring on Arabic-only rows overstates how many verses fit.
+ *
+ *   ?lang=bi        Arabic + English   (default; what ships)
+ *   ?lang=ar        Arabic only        (what a database poem without a translation shows)
+ *   ?lang=translit  all three rows     (transliteration toggled on)
+ */
+const LANG_MODES = new Set(['ar', 'bi', 'translit']);
 
 export async function boot(opts = {}) {
   const {
@@ -35,10 +47,19 @@ export async function boot(opts = {}) {
     onRender = null,
   } = opts;
 
-  const poems = await fetch('./poems.json').then((r) => r.json());
   // ?poem=N pins a specific poem so the same verse is compared across every option.
   // ?reveal=all lands fully revealed, which is the steady state worth comparing.
   const qs = new URLSearchParams(location.search);
+  const lang = LANG_MODES.has(qs.get('lang')) ? qs.get('lang') : 'bi';
+  document.body.dataset.lang = lang;
+
+  // All three language modes read the SAME bilingual sample, so `?lang=ar` is a true
+  // control — the identical poem with the English row withheld, not a different poem that
+  // happens to lack a translation. Only ~13% of the corpus carries one (the API's
+  // `english` field is hardcoded ''; real translations arrive as `cachedTranslation`).
+  const poems = await fetch('./poems-bilingual.json')
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+    .catch(() => fetch('./poems.json').then((r) => r.json()));
   let poemIndex = Math.min(poems.length - 1, Math.max(0, +qs.get('poem') || 0));
   const startRevealed = qs.get('reveal') === 'all';
   let revealed = 0;
@@ -94,7 +115,17 @@ export async function boot(opts = {}) {
       });
       unit.appendChild(ar);
 
-      if (ln.en) {
+      // Row order matches SparklerStage: Arabic → transliteration → English, revealed
+      // together as one unit. Each extra row makes the unit taller, which is exactly why
+      // the language mode changes how many verses fit.
+      if (lang === 'translit') {
+        const tr = document.createElement('div');
+        tr.className = 'translit-line';
+        tr.dir = 'ltr';
+        tr.textContent = transliterate(ln.ar);
+        unit.appendChild(tr);
+      }
+      if (ln.en && lang !== 'ar') {
         const en = document.createElement('div');
         en.className = 'en-line';
         en.dir = 'ltr';
@@ -112,8 +143,10 @@ export async function boot(opts = {}) {
   // Shrink an overflowing Arabic line rather than wrapping it (ligature-safe), exactly like
   // SparklerStage's `--fit`. If this multiplier is < 1 the verse is being rendered SMALLER
   // than its design size purely to survive the box width — a width-budget smell.
+  // Arabic AND transliteration are both nowrap shrink-to-fit in SparklerStage; English
+  // wraps instead. Fit the same two.
   function fitLines() {
-    track.querySelectorAll('.ar-line').forEach((el) => {
+    track.querySelectorAll('.ar-line, .translit-line').forEach((el) => {
       el.style.setProperty('--fit', '1');
       const avail = el.clientWidth * 0.98;
       const need = el.scrollWidth;
@@ -175,7 +208,13 @@ export async function boot(opts = {}) {
     const cs = getComputedStyle(box);
     const avail =
       box.clientHeight - parseFloat(cs.paddingTop || 0) - parseFloat(cs.paddingBottom || 0);
-    const rowH = Math.max(...units.map((u) => u.getBoundingClientRect().height));
+    // Every unit is forced to the tallest unit's height, exactly as SparklerStage does
+    // (`runMax` applied as a fixed row height). Bilingual rows vary — an English line can
+    // wrap to two — and without this the window's translate drifts out of sync with the
+    // content it is scrolling.
+    units.forEach((u) => (u.style.height = ''));
+    const rowH = Math.ceil(Math.max(...units.map((u) => u.getBoundingClientRect().height)));
+    units.forEach((u) => (u.style.height = `${rowH}px`));
     const fit = rows === 'fit' ? Math.max(1, Math.floor(avail / rowH)) : rows;
     // `grow`: the window is only as tall as there is poem to put in it, so an unrevealed
     // line never reserves a blank row. Once the reveal passes what fits, it behaves

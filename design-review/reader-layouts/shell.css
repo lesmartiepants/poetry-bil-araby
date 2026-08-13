@@ -176,6 +176,19 @@ body {
   color: var(--ink);
   text-shadow: 0 0 22px rgba(197, 160, 89, 0.16);
 }
+/* Transliteration — the optional third row (off by default: uiStore `showTransliteration:
+   false`). Mirrors SparklerStage: italic, letter-spaced, shrink-to-fit like the Arabic. */
+.translit-line {
+  font-family: var(--font-brand-en);
+  font-style: italic;
+  font-size: calc(clamp(0.86rem, 3.2vw, 1.1rem) * var(--fit, 1));
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: rgba(197, 160, 89, 0.62);
+  opacity: 0;
+  transition: opacity 0.55s ease;
+}
 .en-line {
   font-family: var(--font-brand-en);
   font-style: italic;
@@ -185,6 +198,9 @@ body {
   max-width: 94%;
   opacity: 0;
   transition: opacity 0.55s ease;
+}
+.unit[data-revealed='true'] .translit-line {
+  opacity: 1;
 }
 /* word-by-word sparkler reveal */
 .ar-line .w {

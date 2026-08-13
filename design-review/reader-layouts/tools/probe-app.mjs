@@ -1,6 +1,7 @@
-// Measure how the reader viewport is actually spent. Run via: browse eval scripts/measure-reader.mjs
-// Returns a JSON budget: total viewport height vs. the band the poem's own glyphs occupy,
-// with every competing band itemised.
+// Geometry probe for the SHIPPING reader (src/components/feed/PoemReader.jsx), run in the
+// page via tools/measure-app.sh. Returns a JSON budget: total viewport vs. the band the
+// poem's own glyphs occupy, with every competing band itemised — plus the width budget,
+// because the Arabic is shrink-to-fit and a narrow box silently reduces the type size.
 (() => {
   const vh = window.innerHeight;
   const vw = window.innerWidth;
@@ -63,6 +64,25 @@
         readerActions: box(actions),
         bottomNav: box(nav),
       },
+      // Width budget. `--fit` < 1 means SparklerStage is rendering the verse SMALLER than
+      // its design size purely to survive the box width — so width loss costs type size,
+      // not just line length.
+      width: (() => {
+        const arLines = [...document.querySelectorAll('.ar-line')];
+        const fits = arLines.map(
+          (el) => parseFloat(getComputedStyle(el).getPropertyValue('--fit')) || 1
+        );
+        return {
+          poemBoxPx: stageR ? Math.round(stageR.width) : 0,
+          poemBoxPct: stageR ? +((stageR.width / vw) * 100).toFixed(1) : 0,
+          lostPx: stageR ? Math.round(vw - stageR.width) : 0,
+          fitMin: fits.length ? +Math.min(...fits).toFixed(3) : null,
+          shrunkLines: fits.filter((f) => f < 0.999).length,
+          renderedFontPx: arLines.length
+            ? +parseFloat(getComputedStyle(arLines[0]).fontSize).toFixed(1)
+            : null,
+        };
+      })(),
       // The two hard insets PoemReader reserves before any text can be placed.
       insets: (() => {
         const body = stage?.closest('.absolute.inset-0');

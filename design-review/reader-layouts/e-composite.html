@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>E · Composite — receding chrome + a window that grows</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./shell.css" />
+    <style>
+      /* ── E · COMPOSITE ─────────────────────────────────────────────────────
+         The measurement says the phone problem has two independent halves, and A/C/D each
+         fix only one:
+
+           1. CAPACITY — the reading area is 605px of 852 (71%); chrome holds the rest.
+              A · Recede is the biggest mover here (605 → 732px, 10 → 12 rows).
+           2. BLANK — on landing the window reserves rows for verses not yet revealed:
+              555px of the screen is held open and empty. D · Frame is the fix (555 → 18px).
+
+         Fixing capacity ALONE makes the landing worse, not better: A opens a taller empty
+         window, so its blank goes 555 → 674px. That's the trap, and it's why this option
+         exists — the two changes are only worth anything together.
+
+         E = A's receding chrome + D's growing window + C's rail-to-the-edge width reclaim.
+         The reveal, the scrubber, Next Verse and the swipe are all untouched. Sized in dvh
+         so the collapsed chrome sits above Safari's toolbar rather than under it. */
+      #shell {
+        height: 100dvh;
+      }
+
+      body[data-layout='e-composite'] {
+        --band-top: calc(env(safe-area-inset-top, 0px) + 62px);
+        --band-bottom: calc(env(safe-area-inset-bottom, 0px) + 58px);
+        --rail-lane: 0px;
+        --page-pad: 12px;
+      }
+
+      /* Header: one line — Arabic title · poet. */
+      #meta {
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: baseline;
+        justify-content: center;
+        top: calc(env(safe-area-inset-top, 0px) + 10px);
+      }
+      #title-ar {
+        font-size: clamp(1.05rem, 4.4vw, 1.35rem);
+      }
+      #title-en {
+        display: none;
+      }
+      #poet {
+        margin-top: 0;
+        font-size: clamp(0.78rem, 3.1vw, 0.95rem);
+        opacity: 0.78;
+      }
+      /* One line has to give something up. The Latin transcription of the poet's name is
+         the most redundant token in the header when the Arabic name is right beside it. */
+      #poet-en {
+        display: none;
+      }
+      #poet::before {
+        content: '·';
+        opacity: 0.5;
+        margin-inline-end: 0.35rem;
+      }
+
+      /* Window grows with the reveal instead of reserving blank rows. */
+      #stage {
+        transition: height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* Rail: hairline on the screen edge, 32px invisible hit area. Gives the 56px lane
+         back to the verse, which is what stops the Arabic being shrink-to-fit. */
+      /* 32px of hit area, but the visible hairline sits 7px in so the drag handle is never
+         clipped by the screen edge. */
+      #rail {
+        width: 32px;
+        right: 0;
+        justify-content: flex-end;
+        padding-right: 7px;
+        top: var(--band-top);
+        bottom: var(--band-bottom);
+      }
+      #rail-track {
+        width: 3px;
+      }
+      #rail-handle {
+        width: 13px;
+        height: 13px;
+        margin: -6px 0 0 -5px;
+      }
+
+      #actions {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 58px);
+        gap: 6px;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      #nav {
+        transition:
+          transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 0.3s ease;
+      }
+      body[data-read-state='reading'] #nav {
+        transform: translateY(calc(100% + env(safe-area-inset-bottom, 0px)));
+        opacity: 0;
+        pointer-events: none;
+      }
+      body[data-read-state='reading'] #actions {
+        transform: translateY(46px);
+      }
+      #nav-peek {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 28px;
+        z-index: 7;
+      }
+      body:has(#nav-peek:hover) #nav,
+      body.nav-forced #nav {
+        transform: none;
+        opacity: 1;
+        pointer-events: auto;
+      }
+      body:has(#nav-peek:hover) #actions,
+      body.nav-forced #actions {
+        transform: none;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { mountShell, startProbe } from './shell.js';
+      import { boot } from './engine.js';
+      mountShell({ layout: 'e-composite', note: 'receding chrome + growing window' });
+
+      const peek = document.createElement('div');
+      peek.id = 'nav-peek';
+      document.getElementById('shell').appendChild(peek);
+      const show = () => {
+        document.body.classList.add('nav-forced');
+        clearTimeout(show._t);
+        show._t = setTimeout(() => document.body.classList.remove('nav-forced'), 2600);
+      };
+      peek.addEventListener('pointerdown', show);
+      document.getElementById('nav')?.addEventListener('pointerdown', show);
+
+      await boot({ rows: 'fit', grow: true });
+      startProbe();
+    </script>
+  </body>
+</html>

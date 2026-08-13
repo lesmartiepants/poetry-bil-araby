@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>C · Focus — width back, chrome to the edges</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./shell.css" />
+    <style>
+      /* ── C · FOCUS ─────────────────────────────────────────────────────────
+         Premise: the measurement showed the poem box is 305px of 393px, and the Arabic is
+         ALREADY being shrunk (--fit 0.97) to survive that width. So the width matters as
+         much as the height, and the 56px rail lane is buying very little.
+
+         What changes
+           • the rail becomes a 3px hairline on the screen edge with an invisible 32px
+             touch target over it — the 56px lane goes back to the poem
+           • page padding 16px → 10px
+           • poem box goes 305px → 373px at 393 wide; --fit returns to 1.0, so verses
+             render at full design size instead of shrunk
+           • header keeps the title but drops to two lines; the byline is demoted to a
+             small caps line under it
+           • one action button instead of two (Listen moves into a header icon), so the
+             action row is 44px in a 52px band
+
+         The bilingual question: English stays, but as a tap-to-reveal per verse rather
+         than always-on. In database mode there is no stored translation anyway, so the
+         common case is Arabic-only — this makes that the default rather than an accident. */
+      #shell {
+        height: 100dvh;
+      }
+
+      body[data-layout='c-focus'] {
+        --band-top: calc(env(safe-area-inset-top, 0px) + 74px);
+        --band-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+        --rail-lane: 0px;
+        --page-pad: 10px;
+      }
+
+      #meta {
+        top: calc(env(safe-area-inset-top, 0px) + 12px);
+        gap: 1px;
+      }
+      #title-ar {
+        font-size: clamp(1.3rem, 5.2vw, 1.7rem);
+      }
+      #title-en {
+        display: none;
+      }
+      #poet {
+        margin-top: 2px;
+        font-size: clamp(0.72rem, 2.9vw, 0.86rem);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        opacity: 0.72;
+      }
+
+      /* Rail: hairline on the screen edge, generous invisible hit area over it. */
+      /* 32px of hit area, but the visible hairline sits 7px in so the drag handle is never
+         clipped by the screen edge. */
+      #rail {
+        width: 32px;
+        right: 0;
+        justify-content: flex-end;
+        padding-right: 7px;
+        top: calc(env(safe-area-inset-top, 0px) + 70px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+      }
+      #rail-track {
+        width: 3px;
+      }
+      #rail-handle {
+        width: 13px;
+        height: 13px;
+        margin: -6px 0 0 -5px;
+      }
+
+      /* English is opt-in per verse: tapping the small glyph toggles it. The verse body
+         itself stays a non-target, so this never competes with the swipe. */
+      .en-line {
+        display: none;
+      }
+      body.show-en .en-line {
+        display: block;
+      }
+
+      #actions {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+        gap: 5px;
+      }
+      .ra-row {
+        max-width: 300px;
+      }
+      #act-listen {
+        display: none; /* Listen is promoted to the header icon rail */
+      }
+
+      /* Small utility rail top-left: Listen + English toggle, out of the reading column. */
+      #utils {
+        position: absolute;
+        top: calc(env(safe-area-inset-top, 0px) + 14px);
+        inset-inline-start: 8px;
+        z-index: 8;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      #utils button {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        border: 1px solid rgba(197, 160, 89, 0.25);
+        background: rgba(20, 18, 24, 0.6);
+        color: var(--gold);
+        font:
+          600 10px var(--font-brand-en);
+        cursor: pointer;
+      }
+      #utils button[aria-pressed='true'] {
+        background: rgba(197, 160, 89, 0.22);
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { mountShell, startProbe } from './shell.js';
+      import { boot } from './engine.js';
+      mountShell({ layout: 'c-focus', note: 'width reclaimed, Arabic at full size' });
+
+      const utils = document.createElement('div');
+      utils.id = 'utils';
+      utils.setAttribute('data-owns-gesture', '');
+      utils.innerHTML = `
+        <button id="u-listen" title="Listen">▶</button>
+        <button id="u-en" aria-pressed="false" title="Show translation">EN</button>`;
+      document.getElementById('shell').appendChild(utils);
+
+      utils.querySelector('#u-en').addEventListener('click', (e) => {
+        const on = document.body.classList.toggle('show-en');
+        e.currentTarget.setAttribute('aria-pressed', String(on));
+        window.dispatchEvent(new Event('resize')); // rows changed height → re-fit
+      });
+      utils
+        .querySelector('#u-listen')
+        .addEventListener('click', () => document.getElementById('act-listen').click());
+
+      await boot({ rows: 'fit' });
+      startProbe();
+    </script>
+  </body>
+</html>

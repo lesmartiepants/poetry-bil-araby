@@ -11,6 +11,40 @@ These are **prototypes, not a branch of the app** — see [Why prototypes](#why-
 
 ---
 
+## 0. Correction — the first numbers were measured Arabic-only
+
+The first cut of this folder measured every layout on **Arabic-only rows**, and reported
+that the shipping reader fits 8 verses. That was wrong, and it flattered every option.
+
+The reader is **bilingual by default**: `showTranslation = true` (`PoemReader.jsx`), and
+`SparklerStage` renders Arabic → transliteration → English as one unit, sizing rows by the
+tallest unit. A translated verse is a **tall** row. Measuring on Arabic-only rows
+overstates how many verses fit, by roughly half.
+
+Corrected, on the same 22-line qasida at 393×852:
+
+| Mode | Baseline fits | |
+| --- | ---: | --- |
+| Arabic only | 8 verses | a database poem with no translation |
+| **Arabic + English** | **4 verses** | **the default — what ships** |
+| + transliteration | 4 verses | transliteration toggled on |
+
+**The shipping reader fits four bilingual verses of a twenty-two-line qasida.** That is the
+real statement of the problem, and it is twice as bad as the first version of this document
+claimed.
+
+Why the corpus hid it: the API's `english` field is hardcoded `''` (`server.js:319`). Real
+translations arrive in a separate `cachedTranslation` field, and only **~13% of sampled
+poems carry one** (`tools/probe-english.mjs`, 2/15). The original sample happened to draw
+four poems with no translation, so the prototypes rendered Arabic-only and the error was
+invisible. `poems-bilingual.json` now holds four real poems that do carry verse-aligned
+translations.
+
+All three modes read that same sample, so `?lang=ar` is a true control — the identical poem
+with the English row withheld, not a different poem that lacks a translation.
+
+---
+
 ## 1. The measurement
 
 Taken against the shipping reader (`src/components/feed/PoemReader.jsx`) on **iPhone 16,
@@ -73,14 +107,25 @@ the complaint lives**, and no option below regresses it.
 All six keep the full navigation contract (see §3). Scores are the 22-line qasida, fully
 revealed, at 393×852.
 
-| Option              | Verse rows |    Reading area | Poem box | What it buys with            |
-| ------------------- | ---------: | --------------: | -------: | ---------------------------- |
-| **Baseline**        |          8 |   530px · 62.2% |    305px | — (ships today)              |
-| **A · Recede**      |         10 |   642px · 75.4% |    305px | nav becomes modal            |
-| **B · Flow**        |  22 (all)  |   852px · 100%  |    353px | the fixed-frame reveal       |
-| **C · Focus**       |          9 |   586px · 68.8% |  **373px** | English becomes opt-in     |
-| **D · Frame**       |          9 |   541px · 63.5% |    305px | a resizing window (motion)   |
-| **E · Composite**   |     **10** |   642px · 75.4% |    369px | all of A + C, none of B      |
+Verse rows on screen, same qasida, all three language modes:
+
+| Option            | ar only |  **+ EN (ships)** | + translit |    Reading area |   Poem box |
+| ----------------- | ------: | ----------------: | ---------: | --------------: | ---------: |
+| **Baseline**      |       8 |             **4** |          4 |   530px · 62.2% |      305px |
+| **A · Recede**    |      10 |             **5** |          5 |   642px · 75.4% |      305px |
+| **B · Flow**      | 22 (all) |            **7** |          6 |   852px · 100%  |      353px |
+| **C · Focus**     |       9 |          **9** \* |          7 |   586px · 68.8% | **373px**  |
+| **D · Frame**     |       9 |             **4** |          4 |   541px · 63.5% |      305px |
+| **E · Composite** |      10 |             **5** |          5 |   642px · 75.4% |      369px |
+
+\* **C is Arabic-only by design.** Its 9 rows are the Arabic-only rows — that is the whole
+premise of the option (English is opt-in per verse). Toggle `EN` on and it falls to
+baseline, ~4. It is not getting more poem on screen than the others; it is showing less
+poem *content* per verse. Read its column as a different trade, not a better score.
+
+Transliteration is a third row and costs B one more verse (7 → 6). It is **off by default**
+(`uiStore.js: showTransliteration: false`), so it is an option state rather than the
+baseline, but it is the state where every layout is tightest.
 
 ### A · Recede — chrome gets out of the way
 
@@ -100,8 +145,22 @@ they enter view. Unrevealed verses stay dimmed rather than absent, so you can se
 poem there is from the first screen. Next Verse still works — it scrolls the next
 unrevealed verse into view.
 
-**Buys** everything. The only option that can show a whole qasida, and the only one where
-poem length stops being capped by screen height. Reading area 100%.
+**English rides interleaved, per verse** — Arabic then its translation, the pairing
+`SparklerStage` already uses. The two alternatives were grouping all the English after all
+the Arabic (cheaper in height, but it breaks verse correspondence, and for a reader
+following along that correspondence *is* the feature) and making English opt-in like C
+(which is C's option, not this one). Interleaving costs the most height and is still right:
+a flow layout's whole advantage is that height is no longer scarce.
+
+**Buys** the largest reading area of any option (100%, no bands at all) and the only one
+where poem length stops being capped by screen height — the rest of the qasida is a scroll
+away rather than behind a paging gesture.
+
+**Its headline did not survive English.** Arabic-only, B showed all 22 verses at once. With
+translations it shows **7 before you scroll** (6 with transliteration). So the claim is no
+longer "see the whole poem" — it is "reach the whole poem without leaving it". That is
+still the strongest offer here, and it is still 75% more than baseline's 4, but it is a
+different and smaller claim than the one I made first.
 **Trades** the sparkler's fixed-frame choreography, which is the app's signature. It also
 needs gesture arbitration: the inner column has to own the drag until it bottoms out
 before a swipe can page to the next poem. That is implemented here and it works, but it is

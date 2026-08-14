@@ -11,6 +11,33 @@ These are **prototypes, not a branch of the app** — see [Why prototypes](#why-
 
 ---
 
+## Decision: B · Flow
+
+Picked by the owner after the bilingual re-measurement (PR #707, which is the decision
+record). Once English is on, every fixed-window option converges to 4–5 verses, so one
+extra verse isn't worth a modal nav or a resizing window. B changes the constraint instead
+of negotiating with it.
+
+**Implementation is separate work.** The full handoff — what breaks when the fixed viewport
+goes away, how two scroll axes coexist, why `data-owns-gesture` inverts and forces a
+`PoemFeed` change, and what `e2e/sparkler-reader.spec.js` will need — is in the
+"What a real B implementation needs" section of **#707**. The four things most likely to
+bite:
+
+1. `visRows` and the controller's `rowIndex × rowH` positioning have no meaning without a
+   fixed window; that whole feedback path dies.
+2. Gesture ownership must be **latched at `pointerdown`**, not evaluated mid-drag, or a fast
+   flick pages the poem while someone is still reading it.
+3. The reading surface becomes a `data-owns-gesture` owner, which makes `PoemFeed.jsx:226`
+   return early for every in-poem gesture — poem paging has to move into the column's
+   end-of-scroll handler.
+4. The scrubber currently means "how far the reveal has got". In flow that stops being the
+   same thing as "where you are".
+
+Translation coverage (`server.js:319`, ~13% of poems) is deferred — tracked in **#713**.
+
+---
+
 ## 0. Correction — the first numbers were measured Arabic-only
 
 The first cut of this folder measured every layout on **Arabic-only rows**, and reported

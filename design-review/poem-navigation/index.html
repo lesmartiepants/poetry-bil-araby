@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Poem navigation — working previews</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="topbar"><span class="opt-name" id="optName"></span><span class="opt-name" id="poemName"></span></div>
+      <div class="stage" id="stage"></div>
+      <div class="scrub"><i></i><b></b></div>
+      <div class="readout" id="readout"></div>
+      <div class="bottom" id="bottom"></div>
+    </div>
+
+    <script type="module">
+      import { loadPoems, renderPoem, fitVerses, measure, closingLetter } from './engine.js';
+
+      const qs = new URLSearchParams(location.search);
+      const OPT = qs.get('opt') || 'n3';
+      const POEM = +(qs.get('poem') ?? 3);
+      const SCRUB = qs.get('scrub') === '1';
+      const DIR = qs.get('dir') || 'rtl'; // N1 only: which way is "next"
+      const app = document.getElementById('app');
+      const stage = document.getElementById('stage');
+      const bottom = document.getElementById('bottom');
+      const readout = document.getElementById('readout');
+
+      if (SCRUB) app.classList.add('scrub-on');
+      if (qs.get('readout') === '1') app.classList.add('show-readout');
+      if (qs.get('guards') === '1') app.classList.add('show-guards');
+
+      const NAMES = {
+        n1: 'N1 · Lateral',
+        n2: 'N2 · Rail',
+        n3: 'N3 · Threshold',
+        n4: 'N4 · Seal',
+        n5: 'N5 · Composite',
+      };
+      document.getElementById('optName').textContent = NAMES[OPT] || OPT;
+
+      const poems = await loadPoems();
+      let idx = Math.min(POEM, poems.length - 1);
+      const setPoemName = () =>
+        (document.getElementById('poemName').textContent =
+          `${poems[idx].arLines.length} lines · ${idx + 1}/${poems.length}`);
+
+      // ── shared chrome: reader actions + bottom nav. Present in EVERY option, because every
+      // option has to keep them. Options that add navigation controls have to pay for them here. ──
+      function chrome(extraRow) {
+        bottom.innerHTML = `
+          ${extraRow || ''}
+          <div class="actions">
+            <button>Listen</button><button>Read full poem</button>
+          </div>
+          <div class="nav">
+            <span><i>♡</i>Save</span><span><i>▤</i>Library</span><span><i>✦</i>Discover</span>
+            <span><i>◎</i>Account</span><span><i>⌂</i>Home</span>
+          </div>`;
+      }
+
+      // Dimmed-ahead → read, as the read position passes each verse. This is the property that
+      // shows the poem's SHAPE; every option must preserve it.
+      function wireReveal(scroller, units) {
+        const io = new IntersectionObserver(
+          (es) =>
+            es.forEach((e) => {
+              if (e.isIntersecting) {
+                e.target.classList.add('read');
+                e.target.classList.remove('ahead');
+              }
+            }),
+          { root: scroller, rootMargin: '0px 0px -42% 0px' }
+        );
+        units.forEach((u) => io.observe(u));
+        return io;
+      }
+
+      function updateScrub(scroller) {
+        if (!SCRUB) return;
+        const max = scroller.scrollHeight - scroller.clientHeight;
+        const f = max > 0 ? scroller.scrollTop / max : 0;
+        document.querySelector('.scrub i').style.height = (f * 100).toFixed(1) + '%';
+        document.querySelector('.scrub b').style.top = (f * 100).toFixed(1) + '%';
+      }
+
+      function report(host) {
+        const m = measure(host);
+        readout.textContent =
+          `box ${m.poemBoxWidth}px / ${m.viewport}  fit ${m.minFit}\n` +
+          `ar ${m.renderedArabicPx.toFixed(1)}px  headroom ×${m.typeHeadroom}\n` +
+          `verses ${m.verseCount}  scrubber ${SCRUB ? 'on' : 'off'}`;
+        window.__measure = () => ({ ...m, option: OPT, scrubber: SCRUB, poem: poems[idx].id });
+      }
+
+      // ── N1 · Lateral — swipe left/right for next/previous ────────────────────
+      function buildLateral() {
+        stage.innerHTML = `<div class="lat-track" id="track"></div>
+          <div class="edge-guard l"></div><div class="edge-guard r"></div>
+          <div class="lat-dots" id="dots"></div>`;
+        const track = document.getElementById('track');
+        // RTL: poem 2 sits to the LEFT of poem 1, so advancing drags content rightward.
+        // LTR: the familiar carousel. `?dir=` switches between them so both can be judged.
+        const order = DIR === 'rtl' ? [...poems].reverse() : poems;
+        const cellIndex = (i) => (DIR === 'rtl' ? poems.length - 1 - i : i);
+        order.forEach((p) => {
+          const cell = document.createElement('div');
+          cell.className = 'lat-cell';
+          const sc = document.createElement('div');
+          sc.className = 'scroller';
+          cell.appendChild(sc);
+          track.appendChild(cell);
+          const { units } = renderPoem(sc, p, { scrubber: SCRUB });
+          wireReveal(sc, units);
+        });
+        const cells = [...track.children];
+        const dots = document.getElementById('dots');
+        poems.forEach(() => dots.appendChild(document.createElement('i')));
+        const paint = () => {
+          [...dots.children].forEach((d, i) => d.classList.toggle('on', i === idx));
+          track.style.transform = `translate3d(${-cellIndex(idx) * 100}%,0,0)`;
+          setPoemName();
+          report(cells[cellIndex(idx)].firstChild);
+        };
+        track.style.transition = 'transform .42s cubic-bezier(.22,.9,.3,1)';
+        paint();
+
+        // Gesture: horizontal only, and only when it did NOT start in Safari's back-swipe band.
+        let sx = 0,
+          sy = 0,
+          axis = null,
+          live = false;
+        const EDGE = 20;
+        stage.addEventListener(
+          'pointerdown',
+          (e) => {
+            // The edge bands belong to the browser. Refusing them is the honest move: a page
+            // cannot reliably beat Safari's interactive back gesture, only avoid overlapping it.
+            if (e.clientX < EDGE || e.clientX > innerWidth - EDGE) return;
+            if (e.target.closest('[data-owns-gesture]')) return;
+            sx = e.clientX;
+            sy = e.clientY;
+            axis = null;
+            live = true;
+            track.style.transition = 'none';
+          },
+          { passive: true }
+        );
+        stage.addEventListener(
+          'pointermove',
+          (e) => {
+            if (!live) return;
+            const dx = e.clientX - sx,
+              dy = e.clientY - sy;
+            // Latch the axis ONCE, at the first significant movement, and hold it for the whole
+            // gesture (#707 handoff). Re-deciding mid-drag is what lets a fast flick cross a
+            // boundary the reader didn't intend.
+            if (axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8))
+              axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'h' : 'v';
+            if (axis !== 'h') return;
+            e.preventDefault?.();
+            track.style.transform = `translate3d(calc(${-cellIndex(idx) * 100}% + ${dx}px),0,0)`;
+          },
+          { passive: false }
+        );
+        const end = (e) => {
+          if (!live) return;
+          live = false;
+          track.style.transition = 'transform .42s cubic-bezier(.22,.9,.3,1)';
+          if (axis !== 'h') return paint();
+          const dx = e.clientX - sx;
+          if (Math.abs(dx) > innerWidth * 0.26) {
+            const forward = DIR === 'rtl' ? dx > 0 : dx < 0;
+            idx = Math.max(0, Math.min(poems.length - 1, idx + (forward ? 1 : -1)));
+          }
+          paint();
+        };
+        stage.addEventListener('pointerup', end);
+        stage.addEventListener('pointercancel', end);
+        chrome();
+        const hint = document.createElement('div');
+        hint.className = 'hint';
+        hint.style.bottom = 'calc(var(--safe-b) + 144px)';
+        hint.textContent =
+          DIR === 'rtl' ? 'swipe → for the next poem' : 'swipe ← for the next poem';
+        bottom.prepend(hint);
+      }
+
+      // ── N2 · Rail — explicit prev/next ───────────────────────────────────────
+      function buildRail() {
+        const sc = document.createElement('div');
+        sc.className = 'scroller';
+        stage.appendChild(sc);
+        const draw = () => {
+          const { units } = renderPoem(sc, poems[idx], { scrubber: SCRUB });
+          wireReveal(sc, units);
+          sc.scrollTop = 0;
+          setPoemName();
+          report(sc);
+          bottom.querySelector('#prev').disabled = idx === 0;
+          bottom.querySelector('#next').disabled = idx === poems.length - 1;
+        };
+        // The controls take the full width of the actions band, so Listen / Read full poem get
+        // squeezed onto their own row. That vertical cost is the honest price of this option.
+        chrome(`<div class="rail">
+            <button class="step" id="prev" aria-label="Previous poem">‹</button>
+            <button class="step" id="next" aria-label="Next poem" style="flex:1;border-radius:21px;width:auto">Next poem ›</button>
+          </div>`);
+        bottom.querySelector('#prev').onclick = () => {
+          idx = Math.max(0, idx - 1);
+          draw();
+        };
+        bottom.querySelector('#next').onclick = () => {
+          idx = Math.min(poems.length - 1, idx + 1);
+          draw();
+        };
+        sc.addEventListener('scroll', () => updateScrub(sc), { passive: true });
+        draw();
+      }
+
+      // ── N3 · Threshold — poems are continuous; the boundary is content ───────
+      function buildThreshold() {
+        const sc = document.createElement('div');
+        sc.className = 'scroller';
+        stage.appendChild(sc);
+        const all = [];
+        poems.forEach((p, i) => {
+          const host = document.createElement('div');
+          sc.appendChild(host);
+          const { units } = renderPoem(host, p, { scrubber: SCRUB });
+          all.push(...units);
+          if (i < poems.length - 1) {
+            const t = document.createElement('div');
+            t.className = 'threshold';
+            const nxt = poems[i + 1];
+            t.innerHTML = `<hr />
+              <div class="glyph">۞</div>
+              <div class="next-label">next · ${nxt.title} · ${nxt.arLines.length} lines</div>
+              <button class="skip">skip ahead</button>`;
+            t.querySelector('.skip').onclick = () => {
+              const after = t.nextElementSibling;
+              after?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            };
+            sc.appendChild(t);
+          }
+        });
+        wireReveal(sc, all);
+        chrome();
+        sc.addEventListener(
+          'scroll',
+          () => {
+            updateScrub(sc);
+            // Which poem am I in? Purely observational — nothing is being arbitrated.
+            const mid = sc.scrollTop + sc.clientHeight * 0.3;
+            let n = 0;
+            [...sc.children].forEach((ch) => {
+              if (ch.classList.contains('threshold') && ch.offsetTop < mid) n++;
+            });
+            if (n !== idx) {
+              idx = n;
+              setPoemName();
+            }
+          },
+          { passive: true }
+        );
+        setPoemName();
+        report(sc.firstChild);
+      }
+
+      // ── N4 · Seal — a deliberate act at the end of the poem ──────────────────
+      function sparkle(seal) {
+        const r = seal.getBoundingClientRect();
+        for (let i = 0; i < 18; i++) {
+          const s = document.createElement('div');
+          s.className = 'spark';
+          s.style.left = r.left + r.width / 2 + 'px';
+          s.style.top = r.top + r.height / 2 + 'px';
+          s.style.position = 'fixed';
+          document.body.appendChild(s);
+          const a = Math.random() * Math.PI * 2,
+            d = 40 + Math.random() * 70;
+          s.animate(
+            [
+              { transform: 'translate(0,0) scale(1)', opacity: 1 },
+              {
+                transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px) scale(0)`,
+                opacity: 0,
+              },
+            ],
+            { duration: 520 + Math.random() * 320, easing: 'cubic-bezier(.2,.7,.3,1)' }
+          ).onfinish = () => s.remove();
+        }
+      }
+
+      function attachSeal(container, onSummon) {
+        const letter = closingLetter(poems[idx]);
+        const wrap = document.createElement('div');
+        wrap.className = 'seal-wrap';
+        wrap.innerHTML = `
+          <div class="seal" id="seal" role="button" tabindex="0"
+               aria-label="Hold to draw the next poem">
+            <div class="ring"></div><div class="letter">${letter}</div>
+          </div>
+          <div class="seal-caption">hold to draw another poem<br />that closes on ${letter}</div>`;
+        container.appendChild(wrap);
+        const seal = wrap.querySelector('#seal');
+        let raf = null,
+          t0 = 0;
+        const HOLD = 620; // long enough to be deliberate, short enough not to be a chore
+        const stop = (fire) => {
+          cancelAnimationFrame(raf);
+          raf = null;
+          seal.classList.remove('charging');
+          seal.style.setProperty('--p', 0);
+          if (fire) {
+            sparkle(seal);
+            setTimeout(onSummon, 260);
+          }
+        };
+        const tick = () => {
+          const p = Math.min(1, (performance.now() - t0) / HOLD);
+          seal.style.setProperty('--p', p);
+          if (p >= 1) return stop(true);
+          raf = requestAnimationFrame(tick);
+        };
+        seal.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          seal.setPointerCapture?.(e.pointerId);
+          t0 = performance.now();
+          seal.classList.add('charging');
+          raf = requestAnimationFrame(tick);
+        });
+        const cancel = () => raf && stop(false);
+        seal.addEventListener('pointerup', cancel);
+        seal.addEventListener('pointercancel', cancel);
+        seal.addEventListener('pointerleave', cancel);
+        return wrap;
+      }
+
+      function buildSeal(withEscape) {
+        const sc = document.createElement('div');
+        sc.className = 'scroller';
+        stage.appendChild(sc);
+        const draw = () => {
+          const { col, units } = renderPoem(sc, poems[idx], { scrubber: SCRUB });
+          wireReveal(sc, units);
+          attachSeal(col, () => {
+            idx = (idx + 1) % poems.length;
+            draw();
+          });
+          sc.scrollTop = 0;
+          setPoemName();
+          report(sc);
+        };
+        chrome();
+        if (withEscape) {
+          const esc = document.createElement('button');
+          esc.className = 'escape';
+          esc.textContent = '⇥';
+          esc.setAttribute('aria-label', 'Skip to another poem');
+          esc.onclick = () => {
+            idx = (idx + 1) % poems.length;
+            draw();
+          };
+          app.appendChild(esc);
+        }
+        sc.addEventListener('scroll', () => updateScrub(sc), { passive: true });
+        draw();
+      }
+
+      // ── N5 · Composite — threshold flow, with the seal AT the threshold ──────
+      function buildComposite() {
+        const sc = document.createElement('div');
+        sc.className = 'scroller';
+        stage.appendChild(sc);
+        const host = document.createElement('div');
+        sc.appendChild(host);
+        const draw = () => {
+          host.innerHTML = '';
+          const inner = document.createElement('div');
+          host.appendChild(inner);
+          const { col, units } = renderPoem(inner, poems[idx], { scrubber: SCRUB });
+          wireReveal(sc, units);
+          // At the end: the seal for a deliberate draw, AND a plain continuation for a reader who
+          // just wants to keep scrolling. Neither owns an axis; both live in the content.
+          attachSeal(col, () => {
+            idx = (idx + 1) % poems.length;
+            draw();
+            sc.scrollTop = 0;
+          });
+          const t = document.createElement('div');
+          t.className = 'threshold';
+          const nxt = poems[(idx + 1) % poems.length];
+          t.innerHTML = `<hr /><div class="next-label">or keep scrolling · ${nxt.title} · ${nxt.arLines.length} lines</div>`;
+          col.appendChild(t);
+          setPoemName();
+          report(sc);
+        };
+        chrome();
+        const esc = document.createElement('button');
+        esc.className = 'escape';
+        esc.textContent = '⇥';
+        esc.setAttribute('aria-label', 'Skip to another poem');
+        esc.onclick = () => {
+          idx = (idx + 1) % poems.length;
+          draw();
+          sc.scrollTop = 0;
+        };
+        app.appendChild(esc);
+        sc.addEventListener('scroll', () => updateScrub(sc), { passive: true });
+        draw();
+      }
+
+      const BUILD = {
+        n1: buildLateral,
+        n2: buildRail,
+        n3: buildThreshold,
+        n4: () => buildSeal(false),
+        n5: buildComposite,
+      };
+      (BUILD[OPT] || buildThreshold)();
+
+      // Re-fit on resize / late font load — Amiri arriving changes every measurement.
+      const refit = () => document.querySelectorAll('.scroller, .lat-cell > .scroller').forEach(fitVerses);
+      addEventListener('resize', refit);
+      if (document.fonts?.ready) document.fonts.ready.then(() => {
+        refit();
+        const h = document.querySelector('.scroller');
+        if (h) report(h);
+      });
+      window.__ready = true;
+    </script>
+  </body>
+</html>

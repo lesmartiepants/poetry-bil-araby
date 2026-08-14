@@ -1,0 +1,224 @@
+/* Per-option chrome. Each option changes ONLY how you get from poem to poem. */
+
+/* ── N1 · Lateral ──────────────────────────────────────────────────────────── */
+.lat-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  will-change: transform;
+}
+.lat-cell {
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+}
+/* iOS Safari reserves ~20px at the screen edge for its interactive back-swipe. A horizontal
+   gesture starting inside this band is the browser's, not ours — we can't reliably win it, so we
+   don't try. Shown here as a visible band only to make the hazard legible in a screenshot. */
+.edge-guard {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  z-index: 8;
+  pointer-events: none;
+}
+.edge-guard.l {
+  left: 0;
+  background: linear-gradient(to right, rgba(220, 80, 80, 0.16), transparent);
+}
+.edge-guard.r {
+  right: 0;
+  background: linear-gradient(to left, rgba(220, 80, 80, 0.16), transparent);
+}
+#app:not(.show-guards) .edge-guard {
+  background: none;
+}
+
+.lat-dots {
+  position: absolute;
+  bottom: calc(var(--safe-b) + 124px);
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  z-index: 7;
+  pointer-events: none;
+}
+.lat-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(197, 160, 89, 0.3);
+}
+.lat-dots i.on {
+  background: var(--gold);
+  width: 16px;
+  border-radius: 3px;
+}
+
+/* ── N2 · Rail ─────────────────────────────────────────────────────────────── */
+.rail {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px 10px;
+}
+.rail button.step {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(197, 160, 89, 0.34);
+  background: rgba(197, 160, 89, 0.06);
+  color: var(--gold);
+  font-size: 1rem;
+}
+.rail button.step:disabled {
+  opacity: 0.28;
+}
+
+/* ── N3 · Threshold ────────────────────────────────────────────────────────── */
+/* The poem boundary is CONTENT, not a gesture. Scroll never changes meaning, so there is no
+   axis to arbitrate and no latched boundary to cross by accident. */
+.threshold {
+  margin: 26px 0 30px;
+  text-align: center;
+  position: relative;
+}
+.threshold hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(197, 160, 89, 0.4), transparent);
+  margin: 0 0 14px;
+}
+.threshold .glyph {
+  font-family: 'Reem Kufi', sans-serif;
+  color: var(--gold);
+  font-size: 1.1rem;
+  opacity: 0.85;
+  letter-spacing: 0.4em;
+}
+.threshold .next-label {
+  margin-top: 10px;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(236, 231, 221, 0.4);
+}
+.threshold .skip {
+  margin-top: 12px;
+  display: inline-block;
+  padding: 7px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(197, 160, 89, 0.28);
+  color: var(--gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  background: transparent;
+}
+
+/* ── N4 · The seal ─────────────────────────────────────────────────────────── */
+/* A press-and-hold target that exists ONLY at the end of the poem, where the reader has arrived
+   deliberately and where B's dimmed-ahead verses have already told them the end was coming. */
+.seal-wrap {
+  margin: 34px 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.seal {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  border: 1px solid rgba(197, 160, 89, 0.34);
+  background: radial-gradient(circle at 50% 45%, rgba(197, 160, 89, 0.11), transparent 68%);
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  user-select: none;
+}
+.seal .letter {
+  font-family: Amiri, serif;
+  font-size: 2.5rem;
+  color: var(--gold);
+  line-height: 1;
+  text-shadow: 0 0 0 rgba(212, 180, 99, 0);
+  transition: text-shadow 0.2s ease;
+}
+.seal.charging .letter {
+  text-shadow:
+    0 0 12px rgba(212, 180, 99, 0.9),
+    0 0 30px rgba(212, 180, 99, 0.5);
+}
+/* Charge ring — conic fill driven by --p (0→1) while held. */
+.seal .ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(var(--gold-bright) calc(var(--p, 0) * 360deg), transparent 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  pointer-events: none;
+}
+.seal-caption {
+  font-size: 0.68rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(236, 231, 221, 0.4);
+  text-align: center;
+  max-width: 240px;
+  line-height: 1.6;
+}
+/* Sparks — reuses the app's sparkler vocabulary: light escaping the letter on release. */
+.spark {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 6px var(--gold-bright);
+  pointer-events: none;
+}
+
+/* ── N5 · Composite escape control ─────────────────────────────────────────── */
+/* The "I don't want this poem" case, available mid-poem without owning an axis. */
+.escape {
+  position: absolute;
+  top: calc(var(--safe-t) + 6px);
+  right: 10px;
+  z-index: 9;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(197, 160, 89, 0.26);
+  background: rgba(10, 10, 15, 0.6);
+  color: var(--gold);
+  font-size: 0.85rem;
+  pointer-events: auto;
+}
+
+/* ── measurement overlay ───────────────────────────────────────────────────── */
+.readout {
+  position: absolute;
+  left: 8px;
+  bottom: calc(var(--safe-b) + 122px);
+  z-index: 9;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  line-height: 1.5;
+  color: rgba(236, 231, 221, 0.5);
+  background: rgba(10, 10, 15, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 5px;
+  padding: 5px 7px;
+  pointer-events: none;
+  display: none;
+}
+#app.show-readout .readout {
+  display: block;
+}

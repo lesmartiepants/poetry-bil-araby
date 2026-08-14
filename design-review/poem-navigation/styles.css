@@ -1,0 +1,268 @@
+/* Shared shell for the poem-navigation prototypes.
+   Tokens match the app: ground #0a0a0f, gold #c5a059, Amiri for poems, Reem Kufi for display. */
+
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;600&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+  --gold: #c5a059;
+  --gold-bright: #d4b463;
+  --bg: #0a0a0f;
+  --ink: #ece7dd;
+  --muted: rgba(236, 231, 221, 0.42);
+  --scrub-lane: 0px; /* 56px when the scrubber is on — the whole argument in one variable */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, system-ui, sans-serif;
+  overscroll-behavior: none;
+}
+
+/* The device frame. Uses dvh so Safari's shrinking visible height is respected rather than
+   assumed away — 852px of CSS vh is not what an iPhone 16 actually shows. */
+#app {
+  position: relative;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  direction: ltr; /* product chrome is LTR; only poem text is RTL */
+}
+
+/* ── the scrolling reading surface ─────────────────────────────────────────── */
+.stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.scroller {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain; /* don't chain to the page / pull-to-refresh */
+  scrollbar-width: none;
+  padding-top: calc(var(--safe-t) + 52px);
+  padding-bottom: calc(var(--safe-b) + 168px);
+}
+.scroller::-webkit-scrollbar {
+  display: none;
+}
+
+.poem-col {
+  width: calc(100% - 32px - var(--scrub-lane));
+  margin-inline: auto;
+  margin-right: calc(16px + var(--scrub-lane));
+  margin-left: 16px;
+  max-width: 760px;
+}
+
+.poem-head {
+  margin: 0 0 22px;
+  text-align: center;
+}
+.ttl-ar {
+  font-family: 'Reem Kufi', sans-serif;
+  font-size: 1.5rem;
+  color: var(--gold);
+  margin: 0 0 2px;
+  direction: rtl;
+}
+.ttl-en {
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+.byline {
+  font-size: 0.75rem;
+  color: rgba(197, 160, 89, 0.66);
+  margin: 0;
+}
+
+.verses {
+  direction: rtl;
+}
+.unit {
+  margin-bottom: 20px;
+  transition:
+    opacity 0.5s ease,
+    filter 0.5s ease;
+}
+/* Verses ahead of the read position are DIMMED, not absent. This is what puts the shape of the
+   whole poem on screen from the first frame — a 4-line epigram and a 22-line qasida look
+   different before you've committed to either. Navigation must not destroy this. */
+.unit.ahead {
+  opacity: 0.24;
+  filter: blur(0.3px);
+}
+.unit.read {
+  opacity: 1;
+  filter: none;
+}
+
+.ar {
+  font-family: Amiri, serif;
+  /* Same clamp as SparklerStage.jsx:148. At 393px, 5.7vw = 22.4px, BELOW the 1.52rem floor —
+     so the Arabic is already pinned to its floor before --fit shrinks it further. */
+  font-size: calc(clamp(1.52rem, 5.7vw, 2.13rem) * var(--fit, 1));
+  line-height: 1.85;
+  margin: 0;
+  white-space: nowrap; /* ligature-safe: shrink rather than wrap, as the app does */
+  color: var(--ink);
+}
+.en {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: rgba(236, 231, 221, 0.62);
+  margin: 4px 0 0;
+  direction: ltr;
+  text-align: left;
+}
+
+.poem-end {
+  height: 8px;
+}
+
+/* ── chrome ────────────────────────────────────────────────────────────────── */
+.topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--safe-t) + 44px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 0 12px 6px;
+  background: linear-gradient(to bottom, var(--bg) 55%, transparent);
+  z-index: 6;
+  pointer-events: none;
+}
+.topbar .opt-name {
+  font-family: 'Reem Kufi', sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(197, 160, 89, 0.7);
+}
+
+.bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 7;
+  padding-bottom: calc(var(--safe-b) + 8px);
+  background: linear-gradient(to top, var(--bg) 62%, transparent);
+  pointer-events: none;
+}
+.bottom > * {
+  pointer-events: auto;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding: 0 16px 10px;
+}
+.actions button {
+  flex: 1;
+  max-width: 176px;
+  height: 42px;
+  border-radius: 21px;
+  border: 1px solid rgba(197, 160, 89, 0.42);
+  background: rgba(197, 160, 89, 0.08);
+  color: var(--gold);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  height: 56px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.nav span {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.nav span i {
+  font-style: normal;
+  font-size: 0.95rem;
+  opacity: 0.8;
+}
+
+/* ── the scrubber lane (shown only to prove what it costs) ─────────────────── */
+.scrub {
+  position: absolute;
+  top: calc(var(--safe-t) + 60px);
+  bottom: calc(var(--safe-b) + 176px);
+  right: 14px;
+  width: 3px;
+  border-radius: 3px;
+  background: rgba(160, 160, 160, 0.3);
+  z-index: 5;
+  display: none;
+}
+#app.scrub-on .scrub {
+  display: block;
+}
+#app.scrub-on {
+  --scrub-lane: 56px;
+}
+.scrub i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-bright));
+}
+.scrub b {
+  position: absolute;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px rgba(212, 180, 99, 0.85);
+  transform: translate(-50%, -50%);
+}
+
+/* ── shared bits used by individual options ───────────────────────────────── */
+.hint {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.66rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(197, 160, 89, 0.55);
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}

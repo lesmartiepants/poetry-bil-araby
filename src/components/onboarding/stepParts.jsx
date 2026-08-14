@@ -48,40 +48,97 @@ const GOLD = '#c5a059';
  *
  * Both languages carry the label, and neither is a caption for the other.
  *
- * Parity is OPTICAL, not numeric. Setting Amiri and a Latin face at the same
- * point size does not make them weigh the same on screen: Arabic hangs most of
- * its mass on a single connected baseline with short verticals, while a Latin
- * face spends its em on cap-height and ascenders. At identical sizes the Latin
- * line looks bigger and busier. This flow already made the mirror-image mistake
- * in the other direction — uppercased, tracked English at 12px measured
- * physically WIDER than the 15px Arabic above it, so the "caption" was
- * out-shouting the heading it belonged to.
+ * ## The premise this file used to state, which is wrong
  *
- * The ratios below (Arabic ≈ 1.25x the Latin size) were set by eye against the
- * real strings at 393px, not derived. Two rules do most of the work:
+ * An earlier version of this comment read: "Arabic is the question; English is a
+ * gloss under it, not a translation with equal billing." That is rejected, and
+ * it is written down here because the behaviour was corrected once already and
+ * then rebuilt from the documentation. A large share of this audience comes to
+ * Arabic poetry THROUGH English — diaspora, learners, people who can sound out
+ * the script but not read a 9th-century qasida unaided. For that reader English
+ * is not a courtesy caption, it is the road in.
  *
- *   1. Same colour and same opacity for both lines. Nothing signals "one of
- *      these is secondary" faster than dimming it, and nothing signals equality
- *      faster than not dimming it. This is why the old English gloss at 32%
- *      white could never have read as an equal no matter what size it was.
+ * ## Two roles, two rules
+ *
+ * CONTENT (verse, poem title, poet's name): Arabic is the artifact and English
+ * is the access, so the Arabic leads visually. Not this file's job.
+ *
+ * CHROME (questions, buttons, nav, empty states): the two languages are two
+ * renderings of ONE instruction, so parity is the target and English leads in
+ * reading order. That is what `BilingualLabel` is for.
+ *
+ * ## Parity is optical, and it runs the opposite way to intuition
+ *
+ * Setting Amiri and a Latin face at the same point size does not make them weigh
+ * the same, and the correction is not to make the Arabic bigger — it is already
+ * heavier. Measured ink-box height at equal px: Amiri 1.32x Forum, Reem Kufi
+ * 1.31x, vocalized Arabic 1.78x. Horizontally it inverts, with the same content
+ * running 1.16-2.03x WIDER in Latin.
+ *
+ * So the Arabic is set at 0.85x the Latin px (see AR_TO_LATIN) and at 88% of its
+ * alpha, and chrome labels are stripped of tashkeel. Three other rules do the
+ * rest:
+ *
+ *   1. Never uppercase or letterspace the Latin in a bilingual pair. Caps
+ *      measure ~2.1x the width of the Arabic equivalent, so the hierarchy
+ *      inverts by width even when the size is right. This flow shipped that
+ *      mistake once: uppercased, tracked English at 12px measured physically
+ *      wider than the 15px Arabic heading above it.
  *   2. Latin gets a DISPLAY face (Forum, the app's Latin brand face), not the UI
- *      sans. A sans-serif next to Amiri reads as an annotation on it; a display
- *      serif reads as its counterpart.
+ *      sans. A sans beside Amiri reads as an annotation on it; a display serif
+ *      reads as its counterpart.
+ *   3. Equality is not duplication. Two co-equal lines cost twice the vertical,
+ *      which is worth it on a title, a CTA or a category name, and wasteful on
+ *      explanatory copy — mirroring every string just makes each reader skip
+ *      every other line. Bilingual on the things that carry the question;
+ *      single-language on body copy and hints.
  *
- * English is set first because the chrome reads left-to-right, and on a
- * left-to-right screen the first line is where the eye lands. The Arabic is not
- * demoted by sitting second — it is larger, and it is in the app's own voice.
+ * English is set first because the chrome reads left to right, and on an LTR
+ * screen the first line is where the eye lands.
  */
-const PAIR = {
-  // [latin, arabic] — arabic runs ~1.2-1.25x for equal optical presence.
-  title: ['1.15rem', '1.5rem'],
-  option: ['.875rem', '1.05rem'],
-  control: ['.9375rem', '1.05rem'],
+/**
+ * Arabic runs SMALLER than the Latin, not larger.
+ *
+ * This is the counter-intuitive part, and the first version of this table got it
+ * backwards. Measured ink-box height at equal px, on the faces actually in use:
+ * Amiri is 1.32x Forum, Reem Kufi is 1.31x, and a vocalized Arabic label is
+ * 1.78x. Arabic already carries more ink per point than a Latin display face, so
+ * setting it 1.30x larger again — which is what this table used to do — lands
+ * the Arabic at roughly 1.7x the optical weight of the English. That is how the
+ * English ended up first in reading order and second in perception.
+ *
+ * 0.85 is the correction. It targets a measured ink ratio of 1.00-1.15, which
+ * `stepParts.parity.test.jsx` asserts so this cannot quietly drift back the
+ * first time somebody nudges a size.
+ */
+const AR_TO_LATIN = 0.85;
+
+/** Latin px per role; the Arabic is derived, never authored separately. */
+const LATIN_PX = {
+  title: 22,
+  option: 17,
+  control: 17,
   // Mood puts 16 of these in a wrapped field; at `option` size they no longer
   // fit the body budget. The RATIO is what carries parity, so shrinking both
   // together keeps the two languages equal at a smaller absolute size.
-  chip: ['.75rem', '.9375rem'],
+  chip: 14.5,
 };
+
+export const pairSizes = (size) => {
+  const latin = LATIN_PX[size] ?? LATIN_PX.option;
+  return { latin, arabic: Math.round(latin * AR_TO_LATIN * 100) / 100 };
+};
+
+/**
+ * Chrome labels are set UNVOCALIZED.
+ *
+ * Tashkeel takes the Arabic-to-Latin ink ratio from 1.32 to 1.78 on its own, so
+ * a vocalized label cannot reach parity at any size that is also readable. It
+ * also buys nothing here: these are category names and button labels, not verse,
+ * and vocalization earns its space where pronunciation is the point. Poems keep
+ * their tashkeel.
+ */
+export const unvocalized = (s) => (s || '').replace(/[ً-ْٰـ]/g, '');
 
 export const BilingualLabel = ({
   en,
@@ -92,7 +149,7 @@ export const BilingualLabel = ({
   arFace = "'Amiri', serif",
   gap = 1,
 }) => {
-  const [enSize, arSize] = PAIR[size] || PAIR.option;
+  const { latin, arabic } = pairSizes(size);
   return (
     <span
       style={{
@@ -104,11 +161,15 @@ export const BilingualLabel = ({
       }}
     >
       <span
+        data-bilingual="en"
         dir="ltr"
         style={{
           fontFamily: "'Forum', serif",
-          fontSize: enSize,
+          fontSize: latin,
           lineHeight: 1.2,
+          // Never uppercase or letterspace the Latin in a bilingual pair: caps
+          // measure ~2.1x the width of the Arabic equivalent, so the hierarchy
+          // inverts by width even when the size is right.
           letterSpacing: '.01em',
           color,
         }}
@@ -116,11 +177,20 @@ export const BilingualLabel = ({
         {en}
       </span>
       <span
+        data-bilingual="ar"
         lang="ar"
         dir="rtl"
-        style={{ fontFamily: arFace, fontSize: arSize, lineHeight: 1.35, color }}
+        style={{
+          fontFamily: arFace,
+          fontSize: arabic,
+          lineHeight: 1.35,
+          color,
+          // Colour finishes what size starts: heavier ink at a matched size
+          // still shouts, so the Arabic sits at 88% of the Latin's alpha.
+          opacity: 0.88,
+        }}
       >
-        {ar}
+        {unvocalized(ar)}
       </span>
     </span>
   );

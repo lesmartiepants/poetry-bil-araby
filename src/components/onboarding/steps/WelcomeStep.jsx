@@ -33,10 +33,45 @@ import { BilingualLabel } from '../stepParts.jsx';
 
 const GOLD = '#c5a059';
 
-const LINE_EN = "Answer five short questions and we'll lean your reading toward what suits you.";
-const LINE_AR = 'أجب عن خمسة أسئلة قصيرة، فنميل بما تقرأ نحو ما يشبهك.';
-const LINE_EN_2 = 'Or walk straight in. Nothing is locked away either way.';
-const LINE_AR_2 = 'أو ادخل الآن، فالبابُ مفتوح والدّيوان كما هو.';
+/**
+ * The lede is SINGLE-LANGUAGE, deliberately.
+ *
+ * It used to run in both, each sentence written out twice in full, which meant
+ * an English-first reader skipped every other line to read their own and an
+ * Arabic reader did the same in the other direction. Equality is not
+ * duplication: it belongs on the things that carry the question — the heading,
+ * the two doors, the option names — and it is waste on explanatory copy, where
+ * it doubles the vertical and serves nobody. The heading above this is bilingual
+ * and both buttons below it are; the paragraph between them does not need to be.
+ */
+const LEDE = "Answer five short questions and we'll lean your reading toward what suits you.";
+const LEDE_2 = 'Or walk straight in. Nothing is locked away either way.';
+
+/**
+ * The second, quieter question.
+ *
+ * Welcome already asks curated-or-skip, and adding a second question to the
+ * first screen anyone sees is a real risk — so this one is built to read as a
+ * settings hint rather than a second interrogation: no heading of its own, a
+ * single row of three low-contrast options, sized well under the two doors above
+ * it, and skippable simply by not touching it.
+ *
+ * It is here rather than on a seventh step because it earns its place on every
+ * poem afterwards, and because the owner held the flow at six.
+ *
+ * The wording is doing real work. "I'm reading in English" has to be a
+ * comfortable thing to select rather than a confession, so nothing here is
+ * phrased as a deficiency ("can't read Arabic", "beginner") and the Arabic
+ * option is not flattered. It is also framed as PREFERENCE, not capability:
+ * translations are generated lazily and only a minority of poems have one
+ * cached, so promising a full English reading experience would be a promise the
+ * corpus keeps about an eighth of the time on a first load (see #713).
+ */
+const POSTURES = [
+  { key: 'arabic', en: 'In Arabic', hint: 'just the poem' },
+  { key: 'learning', en: "I'm learning", hint: 'sound it out' },
+  { key: 'english', en: 'In English', hint: 'with translation' },
+];
 
 // One continuous stagger across all four lines, so they read as one sentence
 // arriving rather than as four elements appearing. The offset is passed in
@@ -56,7 +91,7 @@ const Words = ({ text, offset = 0 }) =>
 
 const nWords = (s) => s.split(' ').length;
 
-const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll }) => (
+const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture, onPosture }) => (
   <StepShell
     testId={testId}
     stepIndex={stepIndex}
@@ -144,26 +179,13 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll }) => (
           dir="ltr"
           style={{
             fontFamily: "'Forum', serif",
-            fontSize: 'clamp(1rem, 4.2vw, 1.15rem)',
+            fontSize: 'clamp(1.05rem, 4.4vw, 1.2rem)',
             lineHeight: 1.55,
             color: 'rgba(255,255,255,0.82)',
             margin: 0,
           }}
         >
-          <Words text={LINE_EN} />
-        </p>
-        <p
-          lang="ar"
-          dir="rtl"
-          style={{
-            fontFamily: "'Amiri', serif",
-            fontSize: 'clamp(1.15rem, 5vw, 1.35rem)',
-            lineHeight: 1.85,
-            color: 'rgba(255,255,255,0.82)',
-            margin: 0,
-          }}
-        >
-          <Words text={LINE_AR} offset={nWords(LINE_EN)} />
+          <Words text={LEDE} />
         </p>
         <p
           dir="ltr"
@@ -175,20 +197,7 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll }) => (
             margin: '.15rem 0 0',
           }}
         >
-          <Words text={LINE_EN_2} offset={nWords(LINE_EN) + nWords(LINE_AR)} />
-        </p>
-        <p
-          lang="ar"
-          dir="rtl"
-          style={{
-            fontFamily: "'Amiri', serif",
-            fontSize: 'clamp(1.05rem, 4.4vw, 1.2rem)',
-            lineHeight: 1.8,
-            color: 'rgba(255,255,255,0.5)',
-            margin: 0,
-          }}
-        >
-          <Words text={LINE_AR_2} offset={nWords(LINE_EN) + nWords(LINE_AR) + nWords(LINE_EN_2)} />
+          <Words text={LEDE_2} offset={nWords(LEDE)} />
         </p>
       </div>
 
@@ -243,6 +252,69 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll }) => (
             color="rgba(255,255,255,0.66)"
           />
         </button>
+      </div>
+
+      {/* The quiet second question. Sized and coloured to sit clearly under the
+          two doors, so the screen still reads as one decision with a preference
+          attached rather than as two questions competing. */}
+      <div
+        data-testid={`${testId}-posture`}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '.45rem',
+          marginTop: '.4rem',
+          animation: 'obRise .8s ease 1.75s both',
+        }}
+      >
+        <span
+          dir="ltr"
+          style={{
+            fontFamily: "'Forum', serif",
+            fontSize: '.875rem',
+            color: 'rgba(255,255,255,0.38)',
+          }}
+        >
+          I read poems…
+        </span>
+        <div style={{ display: 'flex', gap: '.4rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+          {POSTURES.map((p) => {
+            const on = posture === p.key;
+            return (
+              <button
+                key={p.key}
+                data-testid={`${testId}-posture-option`}
+                data-posture={p.key}
+                aria-pressed={on}
+                // Re-tapping clears it, like every other single choice in the
+                // flow, so this cannot become the one answer you are stuck with.
+                onClick={() => onPosture?.(on ? null : p.key)}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 1,
+                  minHeight: 48,
+                  padding: '.4rem .7rem',
+                  borderRadius: 10,
+                  cursor: 'pointer',
+                  border: `1px solid ${on ? `${GOLD}88` : 'rgba(255,255,255,0.10)'}`,
+                  background: on ? `${GOLD}14` : 'transparent',
+                  color: on ? GOLD : 'rgba(255,255,255,0.55)',
+                  transition: 'all .22s ease',
+                }}
+              >
+                <span dir="ltr" style={{ fontFamily: "'Forum', serif", fontSize: '.9375rem' }}>
+                  {p.en}
+                </span>
+                <span dir="ltr" style={{ fontSize: '.625rem', opacity: 0.65 }}>
+                  {p.hint}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   </StepShell>

@@ -9,6 +9,7 @@ import FamilyStep from './steps/FamilyStep.jsx';
 import ReadingStep from './steps/ReadingStep.jsx';
 import EraStep from './steps/EraStep.jsx';
 import { fetchCategoryBands } from '../../services/categoryBands.js';
+import { useUIStore } from '../../stores/uiStore.js';
 import {
   readPrefs,
   writePrefs,
@@ -143,6 +144,8 @@ export default function OnboardingFlow({ onComplete }) {
   const [step, setStep] = useState(0);
   const [prefs, setPrefs] = useState(() => readPrefs());
   const [taxonomy, setTaxonomy] = useState(null);
+  const readingPosture = useUIStore((s) => s.readingPosture);
+  const setReadingPosture = useUIStore((s) => s.setReadingPosture);
 
   useEffect(() => {
     let cancelled = false;
@@ -222,6 +225,13 @@ export default function OnboardingFlow({ onComplete }) {
           stepIndex={0}
           onNext={() => setStep(1)}
           onSkipAll={leave}
+          // Reading posture lives in the UI store, not in onboardingPrefs: it
+          // sets what the READER shows (translation, transliteration) rather
+          // than what the feed serves, and the prefs payload is a taste profile
+          // the draw inspector reads by shape. Applied on tap rather than on
+          // completion, so a reader who takes the second door still keeps it.
+          posture={readingPosture}
+          onPosture={setReadingPosture}
           {...common}
         />
       )}

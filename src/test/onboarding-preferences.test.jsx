@@ -19,6 +19,7 @@ import {
   countPoemLabels,
 } from '../services/categoryTags.js';
 import { fetchCategories, fetchPoemsByCategory } from '../services/database.js';
+import { useUIStore } from '../stores/uiStore.js';
 
 const TAXONOMY = {
   dimensions: [
@@ -175,13 +176,11 @@ describe('OnboardingFlow', () => {
     await screen.findByTestId('onboarding-family');
     const options = screen.getAllByTestId('onboarding-family-option');
     expect(options).toHaveLength(2);
+    // Both languages on the tile, English first, and neither one a caption for
+    // the other.
     expect(options[0].textContent).toContain('الحب والهوى');
-    // The spines carry Arabic only — seven English glosses up seven spines would
-    // bury the Arabic under Latin — so the gloss reaches a sighted reader through
-    // the caption and a screen reader through the label.
+    expect(options[0].textContent).toContain('Love & Desire');
     expect(options[0].getAttribute('aria-label')).toContain('Love & Desire');
-    fireEvent.click(options[0]);
-    expect(screen.getByTestId('onboarding-family-caption').textContent).toBe('Love & Desire');
 
     // The answers weight the feed rather than filtering it, so a poem count
     // beside an option describes a narrowing that never happens. None of the
@@ -258,7 +257,7 @@ describe('OnboardingFlow', () => {
     fireEvent.click(screen.getByTestId('onboarding-mood-continue'));
     const cta = await screen.findByTestId('onboarding-motif-continue');
     // Nothing selected, so the advance offers to skip.
-    expect(cta.textContent).toContain('تخطَّ');
+    expect(cta.textContent).toContain('تخط');
   });
 
   // A single-select step with no way to un-choose traps a reader who changed
@@ -279,7 +278,72 @@ describe('OnboardingFlow', () => {
 
     fireEvent.click(first);
     expect(first).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByTestId('onboarding-family-continue').textContent).toContain('تخطَّ');
+    expect(screen.getByTestId('onboarding-family-continue').textContent).toContain('تخط');
+  });
+
+  // The language question rides on the welcome screen rather than a seventh
+  // step. It sets what the READER shows, so it is stored in the UI store and
+  // not in onboardingPrefs — the prefs payload is a taste profile that the feed
+  // and the draw inspector both read by shape.
+  describe('reading posture', () => {
+    beforeEach(() => {
+      useUIStore.getState().setReadingPosture(null);
+    });
+
+    it('sets the reading aids from the answer', async () => {
+      render(<OnboardingFlow />);
+      await screen.findByTestId('onboarding-welcome-posture');
+
+      const pick = (key) =>
+        fireEvent.click(
+          screen
+            .getAllByTestId('onboarding-welcome-posture-option')
+            .find((b) => b.getAttribute('data-posture') === key)
+        );
+
+      pick('english');
+      expect(useUIStore.getState().showTranslation).toBe(true);
+
+      // A reader working through the Arabic gets the phonetic row, which is the
+      // only bridge that works on every poem — translations are generated lazily
+      // and most poems do not have one cached yet.
+      pick('learning');
+      expect(useUIStore.getState().showTransliteration).toBe(true);
+
+      // Fluent: neither aid, just the poem.
+      pick('arabic');
+      expect(useUIStore.getState().showTranslation).toBe(false);
+      expect(useUIStore.getState().showTransliteration).toBe(false);
+    });
+
+    it('clears when the chosen posture is tapped again', async () => {
+      render(<OnboardingFlow />);
+      await screen.findByTestId('onboarding-welcome-posture');
+      const btn = screen
+        .getAllByTestId('onboarding-welcome-posture-option')
+        .find((b) => b.getAttribute('data-posture') === 'arabic');
+
+      fireEvent.click(btn);
+      expect(useUIStore.getState().readingPosture).toBe('arabic');
+      fireEvent.click(btn);
+      expect(useUIStore.getState().readingPosture).toBeNull();
+    });
+
+    it('survives leaving through the second door', async () => {
+      // Applied on tap, not on completion, so a reader who answers the language
+      // question and then chooses to just read still keeps it.
+      const onComplete = vi.fn();
+      render(<OnboardingFlow onComplete={onComplete} />);
+      await screen.findByTestId('onboarding-welcome-posture');
+      fireEvent.click(
+        screen
+          .getAllByTestId('onboarding-welcome-posture-option')
+          .find((b) => b.getAttribute('data-posture') === 'english')
+      );
+      fireEvent.click(screen.getByTestId('onboarding-welcome-skip-all'));
+      await waitFor(() => expect(onComplete).toHaveBeenCalled());
+      expect(useUIStore.getState().readingPosture).toBe('english');
+    });
   });
 
   it('gives every step its own component rather than one reskinned picker', async () => {

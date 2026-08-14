@@ -90,7 +90,13 @@ export function renderPoem(host, poem, opts = {}) {
     u.dataset.i = String(i);
     const a = document.createElement('p');
     a.className = 'ar';
-    a.textContent = ar;
+    // The text sits in an inline span so its NATURAL width is measurable even when it fits the
+    // box. A block element's scrollWidth clamps to clientWidth once the content is narrower, which
+    // silently reports "no headroom" — the exact number the scrubber argument turns on.
+    const t = document.createElement('span');
+    t.className = 't';
+    t.textContent = ar;
+    a.appendChild(t);
     u.appendChild(a);
     if (poem.enLines[i]) {
       const e = document.createElement('p');
@@ -119,13 +125,20 @@ export function renderPoem(host, poem, opts = {}) {
  * shrunk below its clamp() floor purely to survive the box width.
  */
 export function fitVerses(host) {
-  const arEls = host.querySelectorAll('.ar');
-  arEls.forEach((el) => {
+  host.querySelectorAll('.ar').forEach((el) => {
     el.style.setProperty('--fit', '1');
     const w = el.clientWidth;
-    const sw = el.scrollWidth;
+    const sw = naturalWidth(el);
     if (sw > w && w > 0) el.style.setProperty('--fit', (w / sw).toFixed(4));
   });
+}
+
+/** Natural rendered width of a verse's text, independent of whether it currently fits. */
+function naturalWidth(el) {
+  const span = el.querySelector('.t');
+  const fit = parseFloat(el.style.getPropertyValue('--fit') || '1') || 1;
+  const w = span ? span.getBoundingClientRect().width : el.scrollWidth;
+  return w / fit; // un-shrink, so this is the width it wants at the clamped size
 }
 
 /** Instrumentation for tools/measure.mjs — real numbers, not claims. */
@@ -134,14 +147,13 @@ export function measure(host) {
   const fits = arEls.map((el) => parseFloat(el.style.getPropertyValue('--fit') || '1'));
   const box = host.querySelector('.poem-col');
   const first = arEls[0];
-  // Headroom: how much bigger the type could be before the widest line needs a shrink again.
-  // scrollWidth scales linearly with font-size, so the ratio box/widest-natural-width is the
-  // multiplier available. This is the type-size prize, measured rather than asserted.
-  let headroom = 1;
+  // Headroom: how much bigger the type could be before the WIDEST line needs a shrink again.
+  // Text width scales linearly with font-size, so box / widest-natural-width is the multiplier
+  // available. This is the type-size prize, measured rather than asserted.
+  let headroom = Infinity;
   arEls.forEach((el) => {
-    const fit = parseFloat(el.style.getPropertyValue('--fit') || '1');
-    const natural = el.scrollWidth / fit; // width it wants at the clamped size
-    if (natural > 0) headroom = Math.min(headroom === 1 ? Infinity : headroom, el.clientWidth / natural);
+    const natural = naturalWidth(el);
+    if (natural > 0) headroom = Math.min(headroom, el.clientWidth / natural);
   });
   if (!isFinite(headroom)) headroom = 1;
   return {

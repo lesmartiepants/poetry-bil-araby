@@ -87,8 +87,11 @@
         document.querySelector('.scrub b').style.top = (f * 100).toFixed(1) + '%';
       }
 
+      let reportHost = null;
       function report(host) {
-        const m = measure(host);
+        if (host) reportHost = host;
+        if (!reportHost) return;
+        const m = measure(reportHost);
         readout.textContent =
           `box ${m.poemBoxWidth}px / ${m.viewport}  fit ${m.minFit}\n` +
           `ar ${m.renderedArabicPx.toFixed(1)}px  headroom ×${m.typeHeadroom}\n` +
@@ -227,9 +230,11 @@
         sc.className = 'scroller';
         stage.appendChild(sc);
         const all = [];
+        const hosts = [];
         poems.forEach((p, i) => {
           const host = document.createElement('div');
           sc.appendChild(host);
+          hosts.push(host);
           const { units } = renderPoem(host, p, { scrubber: SCRUB });
           all.push(...units);
           if (i < poems.length - 1) {
@@ -267,7 +272,7 @@
           { passive: true }
         );
         setPoemName();
-        report(sc.firstChild);
+        report(hosts[Math.min(POEM, hosts.length - 1)]);
       }
 
       // ── N4 · Seal — a deliberate act at the end of the poem ──────────────────
@@ -424,13 +429,13 @@
       (BUILD[OPT] || buildThreshold)();
 
       // Re-fit on resize / late font load — Amiri arriving changes every measurement.
-      const refit = () => document.querySelectorAll('.scroller, .lat-cell > .scroller').forEach(fitVerses);
+      const refit = () => document.querySelectorAll('.scroller').forEach(fitVerses);
       addEventListener('resize', refit);
-      if (document.fonts?.ready) document.fonts.ready.then(() => {
-        refit();
-        const h = document.querySelector('.scroller');
-        if (h) report(h);
-      });
+      if (document.fonts?.ready)
+        document.fonts.ready.then(() => {
+          refit();
+          report(null); // re-measure the SAME host, now that Amiri has actually loaded
+        });
       window.__ready = true;
     </script>
   </body>

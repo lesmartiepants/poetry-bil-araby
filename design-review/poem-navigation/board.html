@@ -111,6 +111,30 @@
       </figure>
     </div>
 
+    <h1 style="margin-top: 40px">Right-aligning everything — title, poet, Arabic, English</h1>
+    <p class="sub">
+      The Arabic is already flush right by being RTL. These three frames differ only in where the
+      Latin-script elements sit. Same poem, same scroll position. Switch any frame with
+      <code>&amp;align=classic|head|right</code>.
+    </p>
+    <div class="row">
+      <figure>
+        <figcaption>Classic<b>Centred head, left-set English. Three axes in one column.</b></figcaption>
+        <iframe src="./index.html?opt=n3&poem=3&align=classic" title="Classic alignment"></iframe>
+        <a class="openfull" href="./index.html?opt=n3&poem=3&align=classic" target="_blank" rel="noopener">Open full screen &rarr;</a>
+      </figure>
+      <figure>
+        <figcaption>Head only<b>Head joins the right edge, English keeps its left start.</b></figcaption>
+        <iframe src="./index.html?opt=n3&poem=3&align=head" title="Head-only alignment"></iframe>
+        <a class="openfull" href="./index.html?opt=n3&poem=3&align=head" target="_blank" rel="noopener">Open full screen &rarr;</a>
+      </figure>
+      <figure>
+        <figcaption>Everything right<b>One edge for the whole column. Wrapped English gets a ragged start.</b></figcaption>
+        <iframe src="./index.html?opt=n3&poem=3&align=right" title="Fully right-aligned"></iframe>
+        <a class="openfull" href="./index.html?opt=n3&poem=3&align=right" target="_blank" rel="noopener">Open full screen &rarr;</a>
+      </figure>
+    </div>
+
     <div class="note">
       <strong>What the scrubber lane costs.</strong> Side by side on the same 22-line qasida:
       <a style="color: #c5a059" href="./index.html?opt=n3&poem=3&scrub=1&readout=1">lane on</a>

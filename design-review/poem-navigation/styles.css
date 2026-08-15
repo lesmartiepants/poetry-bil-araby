@@ -73,6 +73,30 @@ body {
   margin: 0 0 22px;
   text-align: center;
 }
+
+/* ── one right edge for the whole column (?align=right, the default) ───────────
+   The Arabic is already flush right by being RTL. This pulls the Latin-script
+   elements — English title, byline, translation — onto that same axis so the
+   column reads as one object instead of an Arabic block with LTR furniture
+   floating beside it.
+
+   `direction` is untouched. The English is still LTR text; only its box
+   alignment moves. That distinction is the whole experiment: it buys a unified
+   right edge and it costs the English a ragged LEFT edge, which is the edge a
+   Latin reader's eye returns to on every line. ?align=classic keeps the old
+   centred head / left-set English for comparison. */
+#app.align-right .poem-head,
+#app.align-head .poem-head {
+  text-align: right;
+}
+#app.align-right .en {
+  text-align: right;
+}
+
+/* ?align=head — the middle setting. Head and byline join the right edge (they were
+   CENTRED, a third axis nobody argued for), but the English translation keeps its
+   left-set start. Buys most of the unification; pays none of the ragged-start cost.
+   Kept as a real option because the screenshots say it wins. */
 .ttl-ar {
   font-family: 'Reem Kufi', sans-serif;
   font-size: 1.5rem;

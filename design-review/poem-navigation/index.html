@@ -24,11 +24,14 @@
       const POEM = +(qs.get('poem') ?? 3);
       const SCRUB = qs.get('scrub') === '1';
       const DIR = qs.get('dir') || 'rtl'; // N1 only: which way is "next"
+      const ALIGN = qs.get('align') || 'right'; // 'right' = one shared right edge; 'classic' = before
       const app = document.getElementById('app');
       const stage = document.getElementById('stage');
       const bottom = document.getElementById('bottom');
       const readout = document.getElementById('readout');
 
+      if (ALIGN === 'right') app.classList.add('align-right');
+      if (ALIGN === 'head') app.classList.add('align-head');
       if (SCRUB) app.classList.add('scrub-on');
       if (qs.get('readout') === '1') app.classList.add('show-readout');
       if (qs.get('guards') === '1') app.classList.add('show-guards');

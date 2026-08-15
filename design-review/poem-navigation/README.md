@@ -188,6 +188,8 @@ That's also why the per-verse landing stagger from the previous pass is **gone**
 
 **Caveat, restated because it bites hardest here.** These prototypes use a CSS dim-to-reveal, not the real GSAP timeline. This shows the *idea* of the sparkle and how it divides labour with the reveal. It will **not** tell you how the sparkle feels. That judgement needs the real controller.
 
+**Long press is exactly the gesture that raises Safari's selection callout**, so on device the quill was being picked up as a selectable object mid-summon. `user-select` alone doesn't cover it: Safari needs the `-webkit-` prefix *and* `-webkit-touch-callout`, and it has to reach the SVG rather than stopping at the wrapper. The drawing now takes no pointer events at all — the `.seal` box is the only target — and `contextmenu` / `selectstart` / `dragstart` are refused. `-webkit-touch-callout` can't be verified from headless Chromium (it's Safari-only), so that one is confirmed on device or not at all.
+
 Two things the build forced:
 
 - *The bloom had to move behind the reading surface.* It was painted over everything, so at full charge the quill disappeared into the light it was making. The atmosphere (bloom, vignette) now sits under the poem and the flash layers (burst, sweep, motes) sit above it. The bloom also became a **halo** — dimmest at its own centre, where the quill is.
@@ -197,10 +199,12 @@ Measured over a full summon on the 22-verse poem: **388 frames, median 8.3ms, wo
 
 ### 3. N3 · Threshold — staged handoff, and the flaw is fixed
 
-1. **reading** — one poem, scrolling normally. Nothing on screen about what's next.
-2. **offered** — the reader reaches the bottom and settles; only then does *scroll for the next poem* appear, naming the next poem and its length.
-3. **pulling** — a second, distinct gesture past the stop fills the meter.
+1. **reading** — one poem, scrolling normally.
+2. **revealing** — across the last **170px** of the poem the handoff fades and rises, tied directly to scroll position. It is something the reader scrolls into view, not something that happens at them, and scrolling back up puts it away at the same rate. **No transition on it, deliberately:** the reveal *is* the scroll, so interpolating would put a lag between the finger and the thing it's uncovering.
+3. **pulling** — once fully revealed, a distinct gesture past the stop fills the meter.
 4. **locked** — the next poem arrives and locks to top.
+
+The only case that fades rather than tracking scroll is the poem shorter than the viewport, which has no scroll to ride.
 
 **This fixes the disqualifying flaw.** The ambiguous Save/Listen target came from two poems being on screen at a boundary. With arrival locked to top, **every resting state has exactly one current poem**. The only two-poem moment is the 260ms crossfade — a transition, not a state a reader can sit in and press a button. I looked for surviving ambiguity and did not find any: there is no scroll position that leaves two poems addressable.
 

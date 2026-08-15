@@ -144,8 +144,10 @@ export default function OnboardingFlow({ onComplete }) {
   const [step, setStep] = useState(0);
   const [prefs, setPrefs] = useState(() => readPrefs());
   const [taxonomy, setTaxonomy] = useState(null);
-  const readingPosture = useUIStore((s) => s.readingPosture);
   const setReadingPosture = useUIStore((s) => s.setReadingPosture);
+  // Session-only, deliberately not seeded from the store — see the comment on
+  // the WelcomeStep `posture` prop below.
+  const [posturePick, setPosturePick] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -230,8 +232,16 @@ export default function OnboardingFlow({ onComplete }) {
           // than what the feed serves, and the prefs payload is a taste profile
           // the draw inspector reads by shape. Applied on tap rather than on
           // completion, so a reader who takes the second door still keeps it.
-          posture={readingPosture}
-          onPosture={setReadingPosture}
+          // The welcome always lands UNANSWERED, even for a reader whose
+          // posture is already persisted from a previous visit. It is the
+          // screen's first question and it gates the two doors, so showing it
+          // pre-filled would hand a returning reader an unlocked door they
+          // never touched this time — and the answer would scroll past unread.
+          posture={posturePick}
+          onPosture={(next) => {
+            setPosturePick(next);
+            setReadingPosture(next);
+          }}
           {...common}
         />
       )}

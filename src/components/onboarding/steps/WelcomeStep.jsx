@@ -45,7 +45,7 @@ const GOLD = '#c5a059';
  * and both buttons below it are; the paragraph between them does not need to be.
  */
 const LEDE = "Answer five short questions and we'll lean your reading toward what suits you.";
-const LEDE_2 = 'Or walk straight in. Nothing is locked away either way.';
+const LEDE_2 = 'Or walk straight in. The dīwān is the same either way.';
 
 /**
  * The second, quieter question.
@@ -209,62 +209,9 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
         </p>
       </div>
 
-      {/* Both doors, inside the centred group. */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '.6rem',
-          width: '100%',
-          maxWidth: 340,
-          marginTop: '.7rem',
-          animation: 'obRise .8s ease 1.5s both',
-        }}
-      >
-        <button
-          data-testid={`${testId}-continue`}
-          onClick={onNext}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 60,
-            border: `1px solid ${GOLD}`,
-            borderRadius: 999,
-            background: `${GOLD}1f`,
-            color: GOLD,
-            cursor: 'pointer',
-          }}
-        >
-          <BilingualLabel en="Curate my reading" ar="اختر لي" size="control" color={GOLD} />
-        </button>
-        <button
-          data-testid={`${testId}-skip-all`}
-          onClick={onSkipAll}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 56,
-            border: '1px solid rgba(255,255,255,0.14)',
-            borderRadius: 999,
-            background: 'transparent',
-            color: 'rgba(255,255,255,0.66)',
-            cursor: 'pointer',
-          }}
-        >
-          <BilingualLabel
-            en="Just read"
-            ar="ادخل واقرأ"
-            size="control"
-            color="rgba(255,255,255,0.66)"
-          />
-        </button>
-      </div>
-
-      {/* The quiet second question. Sized and coloured to sit clearly under the
-          two doors, so the screen still reads as one decision with a preference
-          attached rather than as two questions competing. */}
+      {/* FIRST question: how they read. It gates the doors below, so it comes
+          first in reading order as well as in sequence — a locked control under
+          an unanswered question is only legible if the question is above it. */}
       <div
         data-testid={`${testId}-posture`}
         style={{
@@ -272,16 +219,16 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
           flexDirection: 'column',
           alignItems: 'center',
           gap: '.45rem',
-          marginTop: '.4rem',
-          animation: 'obRise .8s ease 1.75s both',
+          marginTop: '.7rem',
+          animation: 'obRise .8s ease 1.5s both',
         }}
       >
         <span
           dir="ltr"
           style={{
             fontFamily: "'Forum', serif",
-            fontSize: '.875rem',
-            color: 'rgba(255,255,255,0.38)',
+            fontSize: '.9375rem',
+            color: 'rgba(255,255,255,0.5)',
           }}
         >
           I read poems…
@@ -297,6 +244,7 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
                 aria-pressed={on}
                 // Re-tapping clears it, like every other single choice in the
                 // flow, so this cannot become the one answer you are stuck with.
+                // Clearing re-locks the doors, which is the honest consequence.
                 onClick={() => onPosture?.(on ? null : p.key)}
                 style={{
                   display: 'flex',
@@ -323,6 +271,74 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
             );
           })}
         </div>
+      </div>
+
+      {/* Both doors, inside the centred group. Dimmed and inert until the
+          question above is answered: no copy explaining the lock, because the
+          state change when it opens says it better than a sentence would. */}
+      <div
+        aria-hidden={!posture}
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '.6rem',
+          width: '100%',
+          maxWidth: 340,
+          marginTop: '.85rem',
+          opacity: posture ? 1 : 0.5,
+          pointerEvents: posture ? 'auto' : 'none',
+          transition: 'opacity .45s ease',
+          animation: 'obRise .8s ease 1.75s both',
+        }}
+      >
+        <button
+          data-testid={`${testId}-continue`}
+          onClick={onNext}
+          disabled={!posture}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 60,
+            border: `1px solid ${posture ? GOLD : 'rgba(255,255,255,0.12)'}`,
+            borderRadius: 999,
+            background: posture ? `${GOLD}1f` : 'transparent',
+            color: posture ? GOLD : 'rgba(255,255,255,0.3)',
+            transition: 'border-color .45s ease, background .45s ease, color .45s ease',
+            cursor: posture ? 'pointer' : 'default',
+          }}
+        >
+          <BilingualLabel
+            en="Curate my reading"
+            ar="اختر لي"
+            size="control"
+            color={posture ? GOLD : 'rgba(255,255,255,0.3)'}
+          />
+        </button>
+        <button
+          data-testid={`${testId}-skip-all`}
+          onClick={onSkipAll}
+          disabled={!posture}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 56,
+            border: `1px solid rgba(255,255,255,${posture ? 0.14 : 0.07})`,
+            borderRadius: 999,
+            background: 'transparent',
+            color: `rgba(255,255,255,${posture ? 0.66 : 0.3})`,
+            transition: 'border-color .45s ease, color .45s ease',
+            cursor: posture ? 'pointer' : 'default',
+          }}
+        >
+          <BilingualLabel
+            en="Just read"
+            ar="ادخل واقرأ"
+            size="control"
+            color={`rgba(255,255,255,${posture ? 0.66 : 0.3})`}
+          />
+        </button>
       </div>
     </div>
   </StepShell>

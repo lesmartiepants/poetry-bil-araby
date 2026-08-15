@@ -269,12 +269,11 @@
         sc.appendChild(host);
 
         const NEED = 110; // same over-pull budget #707 calibrated: past a hard stop, momentum decays
-        const DWELL = 260; // don't offer during flick momentum — offer when they've actually settled
-        // A poem shorter than the viewport has NO bottom to reach: it is at the end the instant it
-        // arrives, so the stage machine collapses and the offer appears over a poem nobody has read
-        // yet. Measured on the 4-line epigram — it fits with room to spare. A floor on time-since-
-        // arrival is what stands in for the scroll that never happens. Long poems have already
-        // spent far more than this getting to the bottom, so the floor never binds for them.
+        // A poem shorter than the viewport has NO scroll to ride: it is at the end the instant it
+        // arrives, so the progressive reveal has nothing to be a function of and the handoff would
+        // sit there over a poem nobody has read yet. Measured on the 4-line epigram — it fits with
+        // room to spare. A floor on time-since-arrival stands in for the scroll that never happens.
+        // Any poem long enough to scroll reveals by scrolling and never reaches this path.
         const FLOOR = 1400;
         let phase = 'reading';
         let arrivedAt = 0;
@@ -337,7 +336,9 @@
           offeredAt = 0;
           arrivedAt = performance.now();
           clearTimeout(dwellT);
-          dwellT = null;
+          // Only the non-scrollable poem needs a wake-up: with no scroll events coming, nothing
+          // else would ever re-evaluate the reveal.
+          dwellT = setTimeout(evaluate, FLOOR + 20);
           sc.scrollTop = 0; // LOCK TO TOP — the reader never lands mid-boundary
           if (arriving) {
             col.classList.add('arriving');
@@ -350,32 +351,43 @@
           requestAnimationFrame(evaluate); // a short poem may already be "at the bottom"
         };
 
-        function offer() {
-          dwellT = null;
-          if (phase !== 'reading' || !atEnd()) return;
-          phase = 'offered';
-          offeredAt = performance.now();
-          handoff.classList.add('on');
-        }
+        // The handoff is REVEALED BY SCROLLING, not animated in on arrival at the bottom.
+        //
+        // It fades and rises across the last REVEAL px of the poem, tied directly to scroll
+        // position, so it is a thing the reader scrolls into view rather than a thing that happens
+        // at them. Scrolling back up puts it away again at the same rate — the reveal is a
+        // function of where you are, with no state of its own and nothing to time.
+        const REVEAL = 170;
 
-        function retract() {
-          clearTimeout(dwellT);
-          dwellT = null;
-          if (phase === 'offered') {
-            phase = 'reading';
-            handoff.classList.remove('on');
+        function paintReveal() {
+          const max = sc.scrollHeight - sc.clientHeight;
+          let r;
+          if (max <= 4) {
+            // A poem shorter than the viewport has no scroll to ride, so there is no progressive
+            // reveal to give it. Time stands in, and only this case gets a fade.
+            r = performance.now() - arrivedAt >= FLOOR ? 1 : 0;
+            handoff.classList.add('timed');
+          } else {
+            handoff.classList.remove('timed');
+            r = Math.min(1, Math.max(0, 1 - (max - sc.scrollTop) / REVEAL));
           }
-          over = 0;
-          if (meter) meter.style.width = '0%';
+          handoff.style.setProperty('--r', r.toFixed(3));
+          handoff.classList.toggle('ready', r >= 1);
+          return r;
         }
 
         function evaluate() {
           if (phase === 'committing') return;
-          if (atEnd()) {
-            if (phase === 'reading' && !dwellT)
-              dwellT = setTimeout(offer, Math.max(DWELL, FLOOR - (performance.now() - arrivedAt)));
-          } else {
-            retract();
+          const r = paintReveal();
+          if (r >= 1 && atEnd()) {
+            if (phase === 'reading') {
+              phase = 'offered';
+              offeredAt = performance.now();
+            }
+          } else if (phase === 'offered') {
+            phase = 'reading';
+            over = 0;
+            if (meter) meter.style.width = '0%';
           }
         }
 
@@ -621,6 +633,11 @@
           if (p >= 1) return stop(true);
           raf = requestAnimationFrame(tick);
         };
+        // Safari raises the callout from the long-press itself, before any pointer handler can
+        // cancel it, so the context menu has to be refused outright as well.
+        seal.addEventListener('contextmenu', (e) => e.preventDefault());
+        seal.addEventListener('selectstart', (e) => e.preventDefault());
+        seal.addEventListener('dragstart', (e) => e.preventDefault());
         seal.addEventListener('pointerdown', (e) => {
           e.preventDefault();
           try {

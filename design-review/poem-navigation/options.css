@@ -118,18 +118,22 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  opacity: 0;
-  transform: translateY(10px);
-  transition:
-    opacity 0.34s ease,
-    transform 0.34s cubic-bezier(0.2, 0.8, 0.3, 1);
   pointer-events: none;
+  /* --r is scroll progress across the last 170px of the poem, written on every scroll frame. No
+     transition: the reveal IS the scroll, so interpolating it would put a lag between the finger
+     and the thing it is uncovering. */
+  opacity: var(--r, 0);
+  transform: translateY(calc((1 - var(--r, 0)) * 12px));
+  will-change: opacity, transform;
 }
-.handoff.on {
-  opacity: 1;
-  transform: none;
+/* The one case with no scroll to ride (poem shorter than the viewport) is also the only one that
+   gets a fade, because there is nothing else to carry it. */
+.handoff.timed {
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
 }
-.handoff.on .ho-chev {
+.handoff.ready .ho-chev {
   pointer-events: auto;
 }
 .ho-chev {
@@ -220,7 +224,25 @@
   display: grid;
   place-items: center;
   touch-action: none;
+}
+/* A press-and-hold control on iOS is exactly the gesture that raises the selection callout, so
+   the quill was getting picked up as a selectable object mid-summon. `user-select` alone is not
+   enough on Safari: it needs the -webkit- prefix AND -webkit-touch-callout, and it has to reach
+   the SVG rather than just the wrapper. The pointer targets are the .seal box itself — the
+   drawing inside it is decoration, so it takes no pointer events at all. */
+.seal-wrap,
+.seal-wrap * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
   user-select: none;
+}
+.q-stage,
+.q-stage *,
+.seal .ring {
+  pointer-events: none;
+}
+.q-pen {
+  -webkit-user-drag: none;
 }
 /* ── the quill ─────────────────────────────────────────────────────────────────
    Everything here is driven by --p (0→1) through the hold and is pure transform, on three small

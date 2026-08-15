@@ -143,13 +143,21 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
         >
           Read what resembles you
         </span>
+        {/* The hero is hand-set rather than a BilingualLabel because it needs
+            Reem Kufi and a viewport-scaled size, but it obeys the same rules:
+            0.85x the Latin (it was 1.19x, which is the old inverted ratio),
+            88% alpha, and no tashkeel. */}
         <span
           lang="ar"
           dir="rtl"
           className="ob-kufi"
-          style={{ fontSize: 'clamp(1.9rem, 8vw, 2.5rem)', lineHeight: 1.35 }}
+          style={{
+            fontSize: 'clamp(1.36rem, 5.6vw, 1.79rem)',
+            lineHeight: 1.35,
+            opacity: 0.88,
+          }}
         >
-          اقرأ ما يُشبهك
+          اقرأ ما يشبهك
         </span>
       </h1>
 

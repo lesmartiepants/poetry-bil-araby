@@ -153,12 +153,47 @@ const FULL_TAXONOMY = {
 };
 
 describe('OnboardingFlow', () => {
-  /** Every step now sits behind the welcome screen, so tests start by opening it. */
+  /**
+   * Every step sits behind the welcome screen, and both of the welcome's doors
+   * are locked until "I read poems…" is answered — so opening the flow is two
+   * taps, not one.
+   */
+  const openDoors = async () => {
+    const [posture] = await screen.findAllByTestId('onboarding-welcome-posture-option');
+    fireEvent.click(posture);
+  };
+
   const enterFlow = async () => {
     render(<OnboardingFlow />);
+    await openDoors();
     fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
     return screen.findByTestId('onboarding-mood');
   };
+
+  // The welcome asks how you read FIRST, and both doors stay shut until it is
+  // answered. Without this the language answer scrolled past unread, because a
+  // reader who has already decided to continue never looks below the CTA.
+  it('keeps both welcome doors locked until the reading posture is answered', async () => {
+    render(<OnboardingFlow />);
+    const curate = await screen.findByTestId('onboarding-welcome-continue');
+    const justRead = screen.getByTestId('onboarding-welcome-skip-all');
+    expect(curate.disabled).toBe(true);
+    expect(justRead.disabled).toBe(true);
+
+    await openDoors();
+    expect(screen.getByTestId('onboarding-welcome-continue').disabled).toBe(false);
+    expect(screen.getByTestId('onboarding-welcome-skip-all').disabled).toBe(false);
+  });
+
+  // The answer is persisted, so a returning reader has one. It still must not
+  // be pre-filled here: the doors would open for a question they never saw.
+  it('lands unanswered even when a posture is already stored', async () => {
+    useUIStore.getState().setReadingPosture('english');
+    render(<OnboardingFlow />);
+    const chips = await screen.findAllByTestId('onboarding-welcome-posture-option');
+    for (const chip of chips) expect(chip.getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByTestId('onboarding-welcome-continue').disabled).toBe(true);
+  });
 
   it('shows an empty state pre-migration instead of hanging or inventing options', async () => {
     await enterFlow();
@@ -170,6 +205,7 @@ describe('OnboardingFlow', () => {
   it('renders families from the live taxonomy, bilingual and WITHOUT counts', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
     render(<OnboardingFlow />);
+    await openDoors();
     fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
     fireEvent.click(await screen.findByTestId('onboarding-mood-continue'));
     fireEvent.click(await screen.findByTestId('onboarding-motif-continue'));
@@ -196,6 +232,7 @@ describe('OnboardingFlow', () => {
     const onComplete = vi.fn();
     render(<OnboardingFlow onComplete={onComplete} />);
 
+    await openDoors();
     fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
 
     await screen.findByTestId('onboarding-mood');
@@ -232,6 +269,7 @@ describe('OnboardingFlow', () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
     const onComplete = vi.fn();
     render(<OnboardingFlow onComplete={onComplete} />);
+    await openDoors();
     fireEvent.click(await screen.findByTestId('onboarding-welcome-skip-all'));
     await waitFor(() => expect(onComplete).toHaveBeenCalled());
     // No completedAt: declining to answer is not a finished answer, and
@@ -266,6 +304,7 @@ describe('OnboardingFlow', () => {
   it('clears a single-select answer when the chosen option is tapped again', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
     render(<OnboardingFlow />);
+    await openDoors();
     fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
     fireEvent.click(await screen.findByTestId('onboarding-mood-continue'));
     fireEvent.click(await screen.findByTestId('onboarding-motif-continue'));

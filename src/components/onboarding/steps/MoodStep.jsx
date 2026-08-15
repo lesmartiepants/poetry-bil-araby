@@ -1,11 +1,5 @@
 import StepShell from '../StepShell.jsx';
-import {
-  useSelection,
-  StepTitle,
-  EmptyState,
-  LoadingState,
-  BilingualLabel,
-} from '../stepParts.jsx';
+import { useSelection, StepTitle, EmptyState, LoadingState } from '../stepParts.jsx';
 
 /**
  * Step 2 — Mood.
@@ -14,27 +8,76 @@ import {
  *
  * Mood is the one axis in this taxonomy that is already colour. Every value has
  * an accent (grief is slate, joy is amber, melancholy is deep blue), so the
- * question can be answered in the medium it is asked in: each mood is an ember,
- * and as they are chosen the ground behind them warms toward the mix. Pick
- * grief and despair and the screen goes cold and low; pick joy and dawn-gold
- * light rises from the bottom edge. The reader can see their answer before they
- * read it back.
+ * question can be answered in the medium it is asked in: the cells light in
+ * their own colour, and as they are chosen the ground behind them warms toward
+ * the mix. Pick grief and despair and the screen goes cold and low; pick joy
+ * and dawn-gold light rises from the bottom edge. The reader can see their
+ * answer before they read it back.
  *
  * That mixing is why the wash is built from the SELECTED colours rather than
  * from a fixed palette: two picks make a third atmosphere neither has alone,
  * which is exactly what a multi-select on mood means downstream (the feed is
  * weighted by all of them at once).
  *
- * ## Why a wrapped field and not the old constellation
+ * ## The honeycomb
  *
- * The constellation put these on two rings and could not fit them: at 375px the
- * outer ring needed ~1,210px of arc and had 780px, so chips painted over each
- * other — 17 overlapping pairs, "Moon & Stars" sitting on "Tears". Mood labels
- * are short (حزن, فرح, شوق — one or two words), so a wrapped centre-justified
- * field holds all 16 in six rows at 393px with no measurement to get wrong and
- * no phone/desktop fork. Order is by feeling, warm through upright, so scanning
- * the field is scanning a spectrum.
+ * 16 moods, and 1+2+3+4+3+2+1 = 16 exactly, so the comb is a true diamond with
+ * no orphan cell and no padding row. That arithmetic is the whole reason the
+ * layout is hardcoded rather than wrapped: a flow layout would have to invent
+ * somewhere to put a 17th, whereas ROWS below is a shape, and if the taxonomy
+ * grows the extra cells fall into a remainder row underneath rather than
+ * silently breaking the diamond.
+ *
+ * Pointy-top cells, because rows of pointy-top hexes interlock horizontally —
+ * flat-top ones tile in columns and would need seven columns across a 393px
+ * screen. Cells touch: the "wall" is a 1.5px inset between an outer element
+ * carrying the wall colour and an inner one carrying the fill, since clip-path
+ * discards borders. Two touching cells therefore share a 3px wall, which is
+ * what makes it read as one comb rather than 16 badges.
+ *
+ * A previous version was a wrapped field of pills, and before that a two-ring
+ * constellation that could not fit (at 375px its outer ring needed ~1,210px of
+ * arc and had 780px, so 17 pairs of chips overlapped).
+ *
+ * ## What this costs, and why it is still worth it
+ *
+ * A hexagon's usable text box is much narrower than its bounding width — the
+ * corners are unusable — so labels sit at 10px Latin / 8.5px Arabic, the
+ * smallest type in the flow. "Contemplation" fits with about 6px to spare. The
+ * trade is deliberate: mood labels are one or two words and the colour does the
+ * identifying work at a glance, so the type is confirming a choice the eye has
+ * already made rather than carrying it.
  */
+
+// Cells per row, top to bottom. Sums to 16.
+const ROWS = [1, 2, 3, 4, 3, 2, 1];
+
+/** Pointy-top hexagon: height is 2/√3 of width, and rows overlap by a quarter. */
+const H_RATIO = 1.1547;
+const ROW_PITCH = 0.866;
+const WIDEST = Math.max(...ROWS);
+
+/** Row/column placement for the nth option, in units of one cell width. */
+const placements = (count) => {
+  const out = [];
+  let i = 0;
+  for (let r = 0; r < ROWS.length && i < count; r += 1) {
+    const n = Math.min(ROWS[r], count - i);
+    for (let c = 0; c < n; c += 1, i += 1) {
+      out.push({ row: r, x: (WIDEST - ROWS[r]) / 2 + c });
+    }
+  }
+  // A taxonomy longer than the diamond keeps rendering, in full rows beneath.
+  let row = ROWS.length;
+  while (i < count) {
+    const n = Math.min(WIDEST, count - i);
+    for (let c = 0; c < n; c += 1, i += 1) out.push({ row, x: (WIDEST - n) / 2 + c });
+    row += 1;
+  }
+  return out;
+};
+
+const HEX = 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)';
 
 const MoodStep = ({
   testId,
@@ -76,78 +119,126 @@ const MoodStep = ({
   const body = () => {
     if (loading) return <LoadingState testId={testId} />;
     if (!options.length) return <EmptyState testId={testId} />;
+
+    const spots = placements(options.length);
+    const rowCount = spots.length ? spots[spots.length - 1].row + 1 : 0;
+
     return (
       <div
         style={{
-          // 0 1 auto, not 1 1 auto: the options size to their content, so every
-          // step's question lands at the same y and the slack collects once, at
-          // the bottom, instead of opening a gap under each title.
           flex: '0 1 auto',
           minHeight: 0,
           overflowY: 'auto',
           display: 'flex',
-          flexWrap: 'wrap',
-          gap: '.5rem',
-          alignContent: 'flex-start',
-          // Flush to the start edge, not centred. Centre-wrapping gave rows of
-          // 3/3/4/4/3/3 with different indents on both sides, which reads as a
-          // tag cloud; Arabic wants a straight right edge to scan down.
-          justifyContent: 'flex-start',
-          paddingBottom: '.25rem',
+          justifyContent: 'center',
+          paddingTop: '.4rem',
         }}
       >
-        {options.map((o, i) => {
-          const on = selected.includes(o.key);
-          return (
-            <button
-              key={o.key}
-              data-testid={`${testId}-option`}
-              data-option-key={o.key}
-              aria-pressed={on}
-              aria-label={`${o.label_en} — ${o.label_ar}`}
-              onClick={() => toggle(o.key)}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '.45rem',
-                padding: '0 .9rem',
-                minHeight: 48,
-                borderRadius: 999,
-                cursor: 'pointer',
-                border: `1px solid ${on ? o.color : 'rgba(255,255,255,0.11)'}`,
-                background: on ? `${o.color}26` : 'rgba(255,255,255,0.02)',
-                color: on ? '#fff' : 'rgba(255,255,255,0.74)',
-                transition: 'background .25s ease, border-color .25s ease, transform .25s ease',
-                transform: on ? 'translateY(-1px)' : 'none',
-                animation: `obEmber .5s ease ${0.03 * i}s both`,
-              }}
-            >
-              {/* The ember. Dim and small until chosen, then lit with a halo —
-                  the chip's own colour doing the work of a checkmark. */}
-              <span
-                aria-hidden="true"
+        <div
+          style={{
+            position: 'relative',
+            // One cell width drives every other number, so the comb scales as a
+            // unit on narrow phones instead of the rows breaking apart.
+            '--hw': `min(86px, calc((100vw - 44px) / ${WIDEST}))`,
+            width: `calc(var(--hw) * ${WIDEST})`,
+            height: `calc(var(--hw) * (${ROW_PITCH} * ${rowCount - 1} + ${H_RATIO}))`,
+            flex: '0 0 auto',
+          }}
+        >
+          {options.map((o, i) => {
+            const on = selected.includes(o.key);
+            const { row, x } = spots[i];
+            return (
+              <button
+                key={o.key}
+                data-testid={`${testId}-option`}
+                data-option-key={o.key}
+                aria-pressed={on}
+                aria-label={`${o.label_en} — ${o.label_ar}`}
+                onClick={() => toggle(o.key)}
                 style={{
-                  width: on ? 9 : 6,
-                  height: on ? 9 : 6,
-                  borderRadius: '50%',
-                  background: o.color,
-                  opacity: on ? 1 : 0.5,
-                  boxShadow: on ? `0 0 10px 1px ${o.color}` : 'none',
-                  transition: 'all .25s ease',
-                  flex: '0 0 auto',
+                  position: 'absolute',
+                  left: `calc(var(--hw) * ${x})`,
+                  top: `calc(var(--hw) * ${ROW_PITCH * row})`,
+                  width: 'var(--hw)',
+                  height: `calc(var(--hw) * ${H_RATIO})`,
+                  padding: 0,
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  animation: `obEmber .5s ease ${0.03 * i}s both`,
                 }}
-              />
-              <BilingualLabel
-                en={o.label_en}
-                ar={o.label_ar}
-                size="chip"
-                align="start"
-                color="inherit"
-                gap={0}
-              />
-            </button>
-          );
-        })}
+              >
+                {/* Wall layer. clip-path discards borders, so the cell edge is
+                    this element showing through a 1.5px inset. */}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    clipPath: HEX,
+                    background: on ? o.color : 'rgba(255,255,255,0.15)',
+                    transition: 'background .25s ease',
+                  }}
+                />
+                {/* Fill layer. */}
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    inset: 1.5,
+                    clipPath: HEX,
+                    background: on ? `${o.color}59` : 'rgba(255,255,255,0.035)',
+                    transition: 'background .25s ease',
+                  }}
+                />
+                <span
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 1,
+                    // The corners are unusable, so the text box is inset well
+                    // inside the bounding width.
+                    padding: '0 14%',
+                    color: on ? '#fff' : 'rgba(255,255,255,0.72)',
+                    transition: 'color .25s ease',
+                  }}
+                >
+                  <span
+                    dir="ltr"
+                    style={{
+                      fontFamily: "'Forum', serif",
+                      fontSize: 10,
+                      lineHeight: 1.15,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {o.label_en}
+                  </span>
+                  {/* Same 0.85 ratio the rest of the flow uses. Unvocalised, at
+                      88% — see BilingualLabel; this one is hand-rolled because
+                      it has to centre inside a hexagon rather than a text run. */}
+                  <span
+                    dir="rtl"
+                    style={{
+                      fontFamily: "'Amiri', serif",
+                      fontSize: 8.5,
+                      lineHeight: 1.2,
+                      opacity: 0.88,
+                      textAlign: 'center',
+                    }}
+                  >
+                    {o.label_ar}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     );
   };

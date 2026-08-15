@@ -11,13 +11,20 @@
     <div id="app">
       <div class="topbar"><span class="opt-name" id="optName"></span><span class="opt-name" id="poemName"></span></div>
       <div class="stage" id="stage"></div>
-      <!-- The summon overlay. Four composited layers, none of which touch the poem's 22 verse
-           elements, so the whole effect stays off the main thread's layout/paint path. -->
-      <div class="summon" id="summon" aria-hidden="true">
-        <div class="s-vignette"></div>
-        <div class="s-bloom"></div>
+      <!-- Flash layers, above everything: these are things that HAPPEN, so they carry over the
+           poem and the chrome alike. -->
+      <div class="summon summon-fx" id="summonFx" aria-hidden="true">
         <div class="s-burst"></div>
         <div class="s-sweep"></div>
+        <div class="s-motes"></div>
+      </div>
+      <!-- The atmosphere sits BEHIND the reading surface, so the gold reads as light coming from
+           behind the quill rather than a wash laid over it. The quill is the actor; it must not
+           disappear into its own effect. Neither overlay contains text, so both stay composited
+           and neither touches the poem's 22 verse rows. -->
+      <div class="summon summon-bg" id="summon" aria-hidden="true">
+        <div class="s-vignette"></div>
+        <div class="s-bloom"></div>
       </div>
       <div class="scrub"><i></i><b></b></div>
       <div class="readout" id="readout"></div>
@@ -25,7 +32,7 @@
     </div>
 
     <script type="module">
-      import { loadPoems, renderPoem, fitVerses, measure, closingLetter } from './engine.js';
+      import { loadPoems, renderPoem, fitVerses, measure } from './engine.js';
 
       const qs = new URLSearchParams(location.search);
       const OPT = qs.get('opt') || 'n3';
@@ -450,8 +457,58 @@
       //           single translating element instead of 22 animated ones.
       //
       // Every layer animates transform and opacity only. Nothing here reads layout mid-flight.
-      const summon = document.getElementById('summon');
+      const summon = document.getElementById('summon'); // atmosphere, behind the poem
+      const summonFx = document.getElementById('summonFx'); // flashes, above everything
       const setP = (p) => summon.style.setProperty('--p', p);
+
+      // ── the arriving poem sparkles in ────────────────────────────────────────
+      //
+      // This deliberately does NOT light the poem verse by verse, and the reason is the whole
+      // design of it.
+      //
+      // The reader's sparkler reveal lights ONE verse at a time and LEAVES IT LIT. Its claim is
+      // "you are reading this now." A whole-poem sparkle that also persisted would claim "this poem
+      // is read" — the opposite — and would leave the reading reveal with nothing to do.
+      //
+      // So the two are separated by PERSISTENCE, not by speed. The arrival sparkle passes through
+      // and leaves nothing behind: the column rises out of black while motes catch light across the
+      // whole surface at once, and it settles into exactly the dimmed-ahead state B·Flow starts
+      // every poem in. Nothing is marked as read. The reading reveal still has the entire poem in
+      // front of it.
+      //
+      // That is also why the per-verse landing stagger from the previous pass is gone. "In
+      // sequence, verse by verse" is the reading reveal's sentence, and the arrival must not speak
+      // it — otherwise the two mechanics are saying the same thing twice and the reveal feels
+      // redundant when it arrives second.
+      function sparkleIn(col) {
+        col.classList.add('sparkling');
+        const sweep = summonFx.querySelector('.s-sweep');
+        sweep.classList.remove('go');
+        void sweep.offsetWidth;
+        sweep.classList.add('go');
+
+        // Motes are laid over the VIEWPORT, not the poem, so a 22-verse poem and a 4-line epigram
+        // get the same amount of light and nothing depends on measuring the column.
+        const field = summonFx.querySelector('.s-motes');
+        field.innerHTML = '';
+        const W = app.clientWidth,
+          H = app.clientHeight;
+        const frag = document.createDocumentFragment();
+        // 90, not 46. At 46 only ~20 were at peak in any given frame and it read as a few stray
+        // specks rather than the surface catching light. Delays are packed into 420ms so they
+        // overlap instead of trickling.
+        for (let i = 0; i < 90; i++) {
+          const m = document.createElement('i');
+          m.className = 'mote';
+          m.style.left = (12 + Math.random() * (W - 24)).toFixed(0) + 'px';
+          m.style.top = (70 + Math.random() * (H - 220)).toFixed(0) + 'px';
+          m.style.setProperty('--dl', (Math.random() * 420).toFixed(0) + 'ms');
+          m.style.setProperty('--sz', (1.8 + Math.random() * 2.8).toFixed(1) + 'px');
+          frag.appendChild(m);
+        }
+        field.appendChild(frag);
+        setTimeout(() => (field.innerHTML = ''), 1700);
+      }
 
       function sparkle(seal) {
         const r = seal.getBoundingClientRect();
@@ -477,20 +534,33 @@
         }
       }
 
-      // The letter in the seal is the letter THIS poem closes on — its own sign-off, not a promise
-      // about the next poem. An earlier version offered "another poem that closes on ${letter}";
-      // the corpus can't honour that (see closingLetter() in engine.js — the 22-line poem lands on
-      // ة, which ends a large share of Arabic feminine nouns, so the "kinship" would be noise). If
-      // a themed draw is wanted later, the categorisation facets (/api/categories: mood, topic,
-      // motif) are real data and would carry it; the rhyme letter is not.
+      // The control is a QUILL, not the poem's closing letter.
+      //
+      // The letter was a sign-off: it pointed backwards at the poem you had just finished. A quill
+      // points forwards — it writes the next poem into being — and that is what the gesture
+      // actually does. It also survives contact with the corpus, which the letter only barely did
+      // (see the note on closingLetter() in engine.js: the rhyme-kinship idea had to be abandoned
+      // because ة ends a large share of Arabic nouns, so the "kinship" would have been noise).
+      //
+      // The hold is the quill writing a stroke: it tilts from upright into a writing angle, travels
+      // left to right, ink gathers at the nib, and a gold line grows behind it. Release before the
+      // end and the stroke un-draws. Both are pure transforms on two small elements.
       function attachSeal(container, onSummon) {
-        const letter = closingLetter(poems[idx]);
         const wrap = document.createElement('div');
         wrap.className = 'seal-wrap';
         wrap.innerHTML = `
           <div class="seal" id="seal" role="button" tabindex="0"
                aria-label="Hold to draw the next poem">
-            <div class="ring"></div><div class="letter">${letter}</div>
+            <div class="ring"></div>
+            <div class="q-stage">
+              <div class="q-trail"></div>
+              <svg class="q-pen" viewBox="0 0 32 32" aria-hidden="true">
+                <path class="q-vane" d="M28 3c-10 0-18.5 7.5-20.5 16.5L6 25l5.5-1.5C20.5 21.5 28 13 28 3z"/>
+                <path class="q-shaft" d="M26.5 4.5 8.5 25"/>
+                <path class="q-nib" d="M8.5 25 5 29.5"/>
+              </svg>
+              <div class="q-ink"></div>
+            </div>
           </div>
           <div class="seal-caption">hold to draw<br />another poem</div>`;
         container.appendChild(wrap);
@@ -518,10 +588,11 @@
           if (fire) {
             setP(1);
             // Ring outward, sparks wider, and the spent poem lifts away instead of being cut.
-            const burst = summon.querySelector('.s-burst');
+            const burst = summonFx.querySelector('.s-burst');
             burst.classList.remove('go');
             void burst.offsetWidth; // restart the animation on a repeat summon
             burst.classList.add('go');
+            seal.classList.add('fired'); // the quill lifts off the page
             sparkle(seal);
             seal.closest('.poem-col')?.classList.add('dissolving');
             setTimeout(() => {
@@ -577,20 +648,7 @@
         const draw = (summoned) => {
           const { col, units } = renderPoem(sc, poems[idx], { scrubber: SCRUB });
           wireReveal(sc, units);
-          if (summoned) {
-            // Verses land in sequence. TRANSFORM only — opacity stays owned by the ahead/read
-            // classes, so the poem arrives dimmed-ahead exactly as it would otherwise and the
-            // sparkler reveal still has something to do. The stagger is capped so a 22-line poem
-            // doesn't take a second and a half to settle.
-            units.forEach((u, i) => {
-              u.style.setProperty('--d', Math.min(i * 38, 520) + 'ms');
-              u.classList.add('landing');
-            });
-            const sweep = summon.querySelector('.s-sweep');
-            sweep.classList.remove('go');
-            void sweep.offsetWidth;
-            sweep.classList.add('go');
-          }
+          if (summoned) sparkleIn(col);
           attachSeal(col, () => {
             idx = (idx + 1) % poems.length;
             draw(true);
@@ -634,6 +692,9 @@
             idx = (idx + 1) % poems.length;
             draw();
             sc.scrollTop = 0;
+            // Only the SEAL path sparkles. Reaching the next poem by simply continuing to scroll
+            // is not a summon, and dressing it as one would spend the effect on a non-event.
+            sparkleIn(host.querySelector('.poem-col'));
           });
           const t = document.createElement('div');
           t.className = 'threshold';

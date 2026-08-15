@@ -44,6 +44,7 @@ body {
   position: absolute;
   inset: 0;
   overflow: hidden;
+  z-index: 2; /* above the summon's atmosphere layer, below its flash layer */
 }
 
 .scroller {

@@ -222,18 +222,92 @@
   touch-action: none;
   user-select: none;
 }
-.seal .letter {
-  font-family: Amiri, serif;
-  font-size: 2.1rem;
-  color: var(--gold);
-  line-height: 1;
-  text-shadow: 0 0 0 rgba(212, 180, 99, 0);
-  transition: text-shadow 0.2s ease;
+/* ── the quill ─────────────────────────────────────────────────────────────────
+   Everything here is driven by --p (0→1) through the hold and is pure transform, on three small
+   elements. The quill tilts from upright into a writing angle and travels left to right; a gold
+   line grows behind it; ink gathers at the nib. Release early and the whole stroke un-draws,
+   because --p decays rather than snapping — an abandoned summon should look like a decision. */
+.q-stage {
+  position: relative;
+  width: 46px;
+  height: 40px;
 }
-.seal.charging .letter {
-  text-shadow:
-    0 0 12px rgba(212, 180, 99, 0.9),
-    0 0 30px rgba(212, 180, 99, 0.5);
+.q-pen {
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 30px;
+  height: 30px;
+  overflow: visible;
+  transform-origin: 22% 88%; /* the nib — the quill pivots on the point that touches the page */
+  transform: translate(calc(var(--p, 0) * 13px), calc(var(--p, 0) * 2px))
+    rotate(calc(-3deg + var(--p, 0) * -15deg));
+  will-change: transform;
+}
+.q-vane {
+  fill: rgba(197, 160, 89, 0.22);
+  stroke: var(--gold);
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+}
+.q-shaft,
+.q-nib {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+.q-nib {
+  stroke-width: 1.8;
+}
+.seal.charging .q-vane {
+  fill: rgba(212, 180, 99, calc(0.22 + var(--p, 0) * 0.4));
+}
+/* The stroke the quill is laying down. scaleX from the left, so it grows out from under the nib. */
+.q-trail {
+  position: absolute;
+  left: 9px;
+  bottom: 4px;
+  width: 17px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(212, 180, 99, 0.15), var(--gold-bright));
+  transform: scaleX(var(--p, 0));
+  transform-origin: left center;
+  will-change: transform;
+}
+/* Ink gathering at the nib. */
+.q-ink {
+  position: absolute;
+  left: 7px;
+  bottom: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px rgba(212, 180, 99, 0.9);
+  opacity: calc(var(--p, 0) * 0.95);
+  transform: translate(calc(var(--p, 0) * 13px), 0) scale(calc(0.3 + var(--p, 0) * 0.7));
+  will-change: transform, opacity;
+}
+/* Commit: the quill lifts off the page. */
+.seal.fired .q-pen {
+  animation: qLift 0.36s cubic-bezier(0.3, 0, 0.4, 1) forwards;
+}
+@keyframes qLift {
+  to {
+    transform: translate(15px, -13px) rotate(-30deg);
+    opacity: 0;
+  }
+}
+.seal.fired .q-trail,
+.seal.fired .q-ink {
+  animation: qFade 0.3s ease forwards;
+}
+@keyframes qFade {
+  to {
+    opacity: 0;
+  }
 }
 /* Charge ring — conic fill driven by --p (0→1) while held. */
 .seal .ring {
@@ -263,9 +337,17 @@
 .summon {
   position: absolute;
   inset: 0;
-  z-index: 8;
   pointer-events: none;
   overflow: hidden;
+}
+/* Below the reading surface (.stage is z-index 2): the bloom back-lights the quill instead of
+   washing over it, and the vignette darkens the ground the poem sits on. */
+.summon-bg {
+  z-index: 1;
+}
+/* Above everything, including the chrome: a burst, a sweep and motes are events, not scenery. */
+.summon-fx {
+  z-index: 8;
 }
 .s-vignette {
   position: absolute;
@@ -290,15 +372,19 @@
   will-change: transform, opacity;
 }
 /* Gold rising out of the seal and spreading into the page as the hold builds. */
+/* A halo, not a fill. The bloom is deliberately DIMMEST at its own centre, because the quill sits
+   there and the actor has to keep its contrast — an earlier version peaked at the middle and by
+   full charge the quill had disappeared into the light it was making. */
 .s-bloom {
   background: radial-gradient(
     circle,
-    rgba(212, 180, 99, 0.62) 0%,
-    rgba(197, 160, 89, 0.26) 34%,
-    transparent 70%
+    rgba(212, 180, 99, 0.16) 0%,
+    rgba(212, 180, 99, 0.42) 30%,
+    rgba(197, 160, 89, 0.16) 52%,
+    transparent 72%
   );
   transform: scale(calc(0.16 + var(--p, 0) * 1.45));
-  opacity: calc(var(--p, 0) * 0.9);
+  opacity: calc(var(--p, 0) * 0.72);
 }
 /* The commit: a ring leaving the seal. */
 .s-burst {
@@ -383,25 +469,64 @@
     transform: scale(0.92) translateY(-24px);
   }
 }
-/* Arriving verses land in sequence. Transform only — opacity belongs to .ahead/.read, so the
-   poem still arrives dimmed-ahead and the reveal still has work to do. */
-.unit.landing {
-  animation: sLand 0.5s cubic-bezier(0.2, 0.85, 0.3, 1) both;
-  animation-delay: var(--d, 0ms);
+/* ── the arriving poem sparkles in ─────────────────────────────────────────────
+   The WHOLE column at once, and it leaves nothing behind. The rise is one animation on one
+   element, so the per-verse .ahead/.read dimming sits inside it untouched — the poem settles into
+   exactly the dimmed-ahead state every poem starts in, with nothing marked as read. That is what
+   keeps this an ENTRANCE rather than a reading, and keeps it out of the sparkler reveal's way. */
+.poem-col.sparkling {
+  animation: colIn 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
-@keyframes sLand {
+@keyframes colIn {
   from {
-    transform: translateY(18px);
+    opacity: 0;
+    transform: translateY(12px);
   }
   to {
+    opacity: 1;
     transform: none;
+  }
+}
+.s-motes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* 46 motes, each one composited transform + opacity, alive for under a second and then removed
+   from the DOM. Laid over the viewport rather than the column so a 22-verse poem and a 4-line
+   epigram catch the same amount of light. */
+.mote {
+  position: absolute;
+  width: var(--sz, 3px);
+  height: var(--sz, 3px);
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 6px rgba(212, 180, 99, 0.85);
+  opacity: 0;
+  animation: moteIn 0.92s ease-out both;
+  animation-delay: var(--dl, 0ms);
+  will-change: transform, opacity;
+}
+@keyframes moteIn {
+  0% {
+    opacity: 0;
+    transform: translateY(7px) scale(0.35);
+  }
+  32% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-15px) scale(0.4);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .s-sweep,
   .s-burst,
-  .unit.landing {
+  .mote,
+  .poem-col.sparkling {
     animation: none;
   }
   .s-bloom,

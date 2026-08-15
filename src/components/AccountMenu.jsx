@@ -12,6 +12,7 @@ import {
   Compass,
   Sparkles,
   Footprints,
+  ListChecks,
 } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FEATURES } from '../constants/features.js';
@@ -19,6 +20,7 @@ import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
 import { voiceDisplayName, voiceGender } from '../constants/voices';
 import { tourEntryLabel } from '../utils/tourProgress.js';
+import { onboardingEntryLabel, onboardingEntryDescription } from '../utils/onboardingEntry.js';
 
 /**
  * AccountMenu — the rightmost bottom-nav item. A person icon that opens an expandable menu holding
@@ -39,6 +41,10 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
   // Read on every open (the menu re-renders when `open` flips), so the label tracks
   // progress the reader made since last time instead of going stale.
   const tourLabel = tourEntryLabel();
+  // Same deal for the preference flow: read on every open so the entry reflects
+  // whether there are saved answers to change or a feed still to set up.
+  const prefsLabel = onboardingEntryLabel();
+  const prefsDescription = onboardingEntryDescription();
   const theme = darkMode ? THEME.dark : THEME.light;
   const initial = (user?.email ?? user?.user_metadata?.full_name ?? 'U').charAt(0).toUpperCase();
   const voiceName = voiceDisplayName(liveVoice);
@@ -108,6 +114,27 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
               >
                 <Footprints size={16} style={{ color: ink }} />
                 <span>{tourLabel}</span>
+              </button>
+            )}
+
+            {/* Preference flow (/onboarding) — the only entry point outside the debug panel.
+                Label follows saved answers: an unanswered reader is invited to set the feed
+                up, a returning one is told this CHANGES it, because finishing the flow
+                overwrites `onboardingPrefs`. No confirm step: the flow seeds every picker
+                from the saved answers and writes nothing until the last one, so backing out
+                early leaves them untouched. */}
+            {FEATURES.onboardingPrefs && (
+              <button
+                onClick={() => {
+                  setOpen(false);
+                  navigate('/onboarding');
+                }}
+                aria-label={prefsDescription}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+                style={{ color: ink }}
+              >
+                <ListChecks size={16} style={{ color: ink }} />
+                <span>{prefsLabel}</span>
               </button>
             )}
 

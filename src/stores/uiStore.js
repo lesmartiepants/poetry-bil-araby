@@ -70,14 +70,19 @@ const persistCurated = (on) => {
  * 'arabic'   reads comfortably: neither aid, just the poem.
  * 'learning' working through it: both aids. Transliteration is the row that
  *            maps to SOUND, so it is the one that lets a learner follow the TTS.
- * 'english'  reading in English: meaning, without a third row of phonetics they
- *            are not using.
+ * 'english'  reading in English: both aids too, and the transliteration is not a
+ *            leftover. Translation exists for only ~13% of the corpus (#713 —
+ *            server.js hardcodes `english: ''`), transliteration for 100%, so
+ *            translation-only would leave an English-first reader with a blank
+ *            screen on 87% of poems. Phonetics they half-use still keep the poem
+ *            legible as sound and drive the TTS follow-along; noise beats blank.
+ *            Revisit if #713 ever backfills translations.
  */
 const POSTURE_KEY = 'reading-posture';
 export const POSTURES = {
   arabic: { showTranslation: false, showTransliteration: false },
   learning: { showTranslation: true, showTransliteration: true },
-  english: { showTranslation: true, showTransliteration: false },
+  english: { showTranslation: true, showTransliteration: true },
 };
 const loadPosture = () => {
   try {

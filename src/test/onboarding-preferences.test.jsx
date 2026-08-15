@@ -301,8 +301,12 @@ describe('OnboardingFlow', () => {
             .find((b) => b.getAttribute('data-posture') === key)
         );
 
+      // English-first gets BOTH rows, not translation alone. Translation is
+      // cached for ~13% of poems (#713); transliteration exists for all of them,
+      // so translation-only would show this reader nothing on most of the feed.
       pick('english');
       expect(useUIStore.getState().showTranslation).toBe(true);
+      expect(useUIStore.getState().showTransliteration).toBe(true);
 
       // A reader working through the Arabic gets the phonetic row, which is the
       // only bridge that works on every poem — translations are generated lazily

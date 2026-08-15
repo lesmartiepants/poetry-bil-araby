@@ -70,7 +70,7 @@ const LEDE_2 = 'Or walk straight in. Nothing is locked away either way.';
 const POSTURES = [
   { key: 'arabic', en: 'In Arabic', hint: 'just the poem' },
   { key: 'learning', en: "I'm learning", hint: 'sound it out' },
-  { key: 'english', en: 'In English', hint: 'with translation' },
+  { key: 'english', en: 'In English', hint: 'meaning and sound' },
 ];
 
 // One continuous stagger across all four lines, so they read as one sentence

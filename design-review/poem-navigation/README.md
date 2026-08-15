@@ -172,6 +172,29 @@ Measured over a full summon on the 22-verse poem: **350 frames, median 8.3ms, wo
 
 The real cost is **time**: from press to a settled new poem is ~1.6s (760 hold + 340 dissolve + ~520 stagger). Deliberate by design, but it is not a control you would want to use twenty times in a row.
 
+### 2b. The quill, and the poem sparkling in
+
+**The control is a quill, not the poem's closing letter.** The letter was a sign-off: it pointed backwards at the poem you had just finished. A quill points forwards — it writes the next poem into being — which is what the gesture actually does. It also survives contact with the corpus, which the letter only barely did.
+
+The hold is the stroke. The quill tilts from upright into a writing angle, travels left to right, ink gathers at the nib, and a gold line grows behind it. Release early and the stroke un-draws, because `--p` decays rather than snapping. All of it is transform on three small elements.
+
+**The arrival sparkle collides with the reading reveal, and here's how it's resolved.**
+
+The reader's sparkler lights **one verse at a time** and **leaves it lit**. Its claim is *"you are reading this now."* If the arrival sparkle also persisted, it would claim *"this poem is read"* — the opposite — and the reading reveal would arrive second with nothing left to do.
+
+So the two are separated by **persistence, not speed**. The arrival passes through and leaves nothing behind: the column rises out of black while 90 motes catch light across the whole surface, and it settles into exactly the dimmed-ahead state every poem starts in, with **nothing marked as read**. It's an entrance; the reveal is a reading. Same vocabulary, opposite persistence.
+
+That's also why the per-verse landing stagger from the previous pass is **gone**. "In sequence, verse by verse" is the reading reveal's sentence, and the entrance must not speak it — two mechanics saying the same thing would make the reveal feel redundant.
+
+**Caveat, restated because it bites hardest here.** These prototypes use a CSS dim-to-reveal, not the real GSAP timeline. This shows the *idea* of the sparkle and how it divides labour with the reveal. It will **not** tell you how the sparkle feels. That judgement needs the real controller.
+
+Two things the build forced:
+
+- *The bloom had to move behind the reading surface.* It was painted over everything, so at full charge the quill disappeared into the light it was making. The atmosphere (bloom, vignette) now sits under the poem and the flash layers (burst, sweep, motes) sit above it. The bloom also became a **halo** — dimmest at its own centre, where the quill is.
+- *46 motes read as stray specks.* Only ~20 were at peak in any frame. 90, with delays packed into 420ms so they overlap, reads as the surface catching light.
+
+Measured over a full summon on the 22-verse poem: **388 frames, median 8.3ms, worst 11.0ms, zero over 16.7ms.** The 90 motes cost about 1.3ms at the worst frame.
+
 ### 3. N3 · Threshold — staged handoff, and the flaw is fixed
 
 1. **reading** — one poem, scrolling normally. Nothing on screen about what's next.

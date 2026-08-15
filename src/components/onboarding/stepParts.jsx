@@ -118,6 +118,10 @@ const LATIN_PX = {
   title: 22,
   option: 17,
   control: 17,
+  // The advance row. Smaller than `control` on purpose: the nav is furniture,
+  // and at 17px a two-line bilingual label made the pill tall enough to compete
+  // with the question it sits under.
+  nav: 15,
   // Mood puts 16 of these in a wrapped field; at `option` size they no longer
   // fit the body budget. The RATIO is what carries parity, so shrinking both
   // together keeps the two languages equal at a smaller absolute size.

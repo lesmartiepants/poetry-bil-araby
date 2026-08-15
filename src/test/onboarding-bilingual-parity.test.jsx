@@ -30,7 +30,7 @@ const INK_PER_PX = { latin: 1.0, arabic: 1.32 };
 const MIN_RATIO = 1.0;
 const MAX_RATIO = 1.15;
 
-const ROLES = ['title', 'option', 'control', 'chip'];
+const ROLES = ['title', 'option', 'control', 'chip', 'nav'];
 
 describe('bilingual parity (chrome)', () => {
   it.each(ROLES)('keeps the projected ink ratio inside 1.00-1.15 for %s', (role) => {

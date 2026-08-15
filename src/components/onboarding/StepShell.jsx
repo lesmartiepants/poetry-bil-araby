@@ -98,6 +98,13 @@ const StepShell = ({
         }
       }
       .ob-frame button:focus-visible{outline:2px solid #c5a059;outline-offset:2px}
+      /* Advance row. The press state is a 1px settle rather than a colour flash:
+         at this size a background change reads as a flicker, a shift reads as a
+         button. */
+      .ob-nav{transition:background .18s ease,border-color .18s ease,transform .12s ease}
+      .ob-nav:active{transform:translateY(1px)}
+      .ob-nav-back:hover{border-color:rgba(197,160,89,.42);color:rgba(197,160,89,.95)}
+      .ob-nav-next:hover{background:linear-gradient(180deg,rgba(197,160,89,.20),rgba(197,160,89,.11))}
     `}</style>
     {backdrop}
 
@@ -174,6 +181,7 @@ const StepShell = ({
             the visual order agree, which is also the tab order. */}
         {onBack && (
           <button
+            className="ob-nav ob-nav-back"
             data-testid={`${testId}-back`}
             onClick={onBack}
             aria-label="Back — رجوع"
@@ -181,43 +189,49 @@ const StepShell = ({
               display: 'inline-flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 52,
-              height: 52,
+              width: 44,
+              height: 44,
               // At 0.12 border / 0.5 glyph this was the only control in the flow
               // with no colour at all and read as disabled.
-              border: '1px solid rgba(197,160,89,0.28)',
+              border: '1px solid rgba(197,160,89,0.26)',
               borderRadius: '999px',
               background: 'transparent',
-              color: 'rgba(197,160,89,0.75)',
+              color: 'rgba(197,160,89,0.7)',
               cursor: 'pointer',
               flex: '0 0 auto',
             }}
           >
-            <ArrowLeft size={16} />
+            <ArrowLeft size={15} strokeWidth={1.75} />
           </button>
         )}
         <button
+          className="ob-nav ob-nav-next"
           data-testid={`${testId}-continue`}
           onClick={() => onNext?.()}
           style={{
-            flex: '1 1 auto',
-            maxWidth: 280,
+            flex: '0 1 auto',
+            maxWidth: 232,
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '10px',
-            padding: '14px 24px',
-            border: `1px solid ${accent}`,
+            gap: '9px',
+            padding: '0 20px',
+            // Hairline rather than a full-strength rule, and the fill carries a
+            // slight top-down gradient with a 1px inner highlight: at this size
+            // that reads as a machined edge where a flat panel read as a
+            // placeholder. The border is what makes it crisp, so it stays 1px
+            // and never doubles up as a shadow.
+            border: '1px solid rgba(197,160,89,0.58)',
             borderRadius: '999px',
-            background: `${accent}14`,
+            background: 'linear-gradient(180deg,rgba(197,160,89,.15),rgba(197,160,89,.07))',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,.07)',
             color: accent,
             cursor: 'pointer',
-            minHeight: '52px',
-            transition: 'background .2s ease',
+            height: 46,
           }}
         >
-          <BilingualLabel en={ctaEn} ar={ctaAr} size="control" color={accent} />
-          <ArrowRight size={16} />
+          <BilingualLabel en={ctaEn} ar={ctaAr} size="nav" color={accent} />
+          <ArrowRight size={15} strokeWidth={1.75} style={{ opacity: 0.72 }} />
         </button>
       </div>
     )}

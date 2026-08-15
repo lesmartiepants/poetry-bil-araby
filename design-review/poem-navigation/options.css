@@ -254,6 +254,162 @@
   max-width: 240px;
   line-height: 1.6;
 }
+/* ── the summon ────────────────────────────────────────────────────────────────
+   Four layers over the reading surface. All of them animate transform/opacity only and none of
+   them contains text, so each is a single composited layer that never triggers layout or paint
+   on the poem itself. --p (0→1) is written once per frame onto .summon during the hold; it is
+   read by exactly two children, which bounds the per-frame style invalidation at four small
+   childless elements rather than the poem's ~22 verse rows. */
+.summon {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  overflow: hidden;
+}
+.s-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--sx, 50%) var(--sy, 62%),
+    transparent 8%,
+    rgba(3, 3, 7, 0.86) 76%
+  );
+  opacity: calc(var(--p, 0) * 0.92);
+  will-change: opacity;
+}
+.s-bloom,
+.s-burst {
+  position: absolute;
+  left: var(--sx, 50%);
+  top: var(--sy, 62%);
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border-radius: 50%;
+  will-change: transform, opacity;
+}
+/* Gold rising out of the seal and spreading into the page as the hold builds. */
+.s-bloom {
+  background: radial-gradient(
+    circle,
+    rgba(212, 180, 99, 0.62) 0%,
+    rgba(197, 160, 89, 0.26) 34%,
+    transparent 70%
+  );
+  transform: scale(calc(0.16 + var(--p, 0) * 1.45));
+  opacity: calc(var(--p, 0) * 0.9);
+}
+/* The commit: a ring leaving the seal. */
+.s-burst {
+  opacity: 0;
+  background: radial-gradient(
+    circle,
+    transparent 48%,
+    rgba(212, 180, 99, 0.8) 60%,
+    rgba(212, 180, 99, 0.12) 70%,
+    transparent 78%
+  );
+  transform: scale(0.2);
+}
+.s-burst.go {
+  animation: sBurst 0.66s cubic-bezier(0.14, 0.75, 0.3, 1) forwards;
+}
+@keyframes sBurst {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(4.8);
+  }
+}
+/* A band of light travelling down the arriving poem — the sparkler's "lit in sequence" idea at
+   poem scale, as ONE translating element rather than an animation on every verse. */
+.s-sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 44%;
+  opacity: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(212, 180, 99, 0.14) 46%,
+    rgba(212, 180, 99, 0.3) 56%,
+    transparent
+  );
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+.s-sweep.go {
+  animation: sSweep 0.8s cubic-bezier(0.3, 0.6, 0.4, 1) forwards;
+}
+@keyframes sSweep {
+  0% {
+    opacity: 0;
+    transform: translateY(-56%);
+  }
+  16% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(250%);
+  }
+}
+
+/* The held poem gives way. Started by a CLASS TOGGLE, not per-frame JS: one transition on one
+   element, so the 22 verse rows inside are carried by the compositor as a single layer. */
+#app.opt-n4 .poem-col,
+#app.opt-n5 .poem-col {
+  transform-origin: 50% 76%;
+  transition:
+    transform 760ms cubic-bezier(0.3, 0, 0.4, 1),
+    opacity 760ms ease;
+}
+#app.summoning .poem-col {
+  transform: scale(0.955);
+  opacity: 0.38;
+}
+.poem-col.dissolving {
+  animation: sOut 0.34s cubic-bezier(0.4, 0, 0.9, 0.4) forwards;
+}
+@keyframes sOut {
+  to {
+    opacity: 0;
+    transform: scale(0.92) translateY(-24px);
+  }
+}
+/* Arriving verses land in sequence. Transform only — opacity belongs to .ahead/.read, so the
+   poem still arrives dimmed-ahead and the reveal still has work to do. */
+.unit.landing {
+  animation: sLand 0.5s cubic-bezier(0.2, 0.85, 0.3, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes sLand {
+  from {
+    transform: translateY(18px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-sweep,
+  .s-burst,
+  .unit.landing {
+    animation: none;
+  }
+  .s-bloom,
+  .s-vignette {
+    opacity: 0;
+  }
+}
+
 /* Sparks — reuses the app's sparkler vocabulary: light escaping the letter on release. */
 .spark {
   position: absolute;

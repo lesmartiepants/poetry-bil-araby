@@ -11,6 +11,14 @@
     <div id="app">
       <div class="topbar"><span class="opt-name" id="optName"></span><span class="opt-name" id="poemName"></span></div>
       <div class="stage" id="stage"></div>
+      <!-- The summon overlay. Four composited layers, none of which touch the poem's 22 verse
+           elements, so the whole effect stays off the main thread's layout/paint path. -->
+      <div class="summon" id="summon" aria-hidden="true">
+        <div class="s-vignette"></div>
+        <div class="s-bloom"></div>
+        <div class="s-burst"></div>
+        <div class="s-sweep"></div>
+      </div>
       <div class="scrub"><i></i><b></b></div>
       <div class="readout" id="readout"></div>
       <div class="bottom" id="bottom"></div>
@@ -30,6 +38,7 @@
       const bottom = document.getElementById('bottom');
       const readout = document.getElementById('readout');
 
+      app.classList.add('opt-' + OPT); // lets per-option CSS exist without leaking across options
       if (ALIGN === 'right') app.classList.add('align-right');
       if (ALIGN === 'head') app.classList.add('align-head');
       if (SCRUB) app.classList.add('scrub-on');
@@ -425,9 +434,28 @@
       }
 
       // ── N4 · Seal — a deliberate act at the end of the poem ──────────────────
+      //
+      // The summon animates the SCREEN, not the glyph. The hold is treated as a build with three
+      // movements, and the whole thing is budgeted for a phone:
+      //
+      //   hold    the poem recedes and dims (ONE css transition on ONE element, started by a class
+      //           toggle — no per-frame JS touches the 22 verse elements), a gold bloom grows out
+      //           of the seal, and a vignette closes in around it. Bloom and vignette read `--p`
+      //           from the overlay root, which has three childless divs under it, so the per-frame
+      //           style invalidation is bounded at four small elements.
+      //   commit  a ring bursts outward from the seal, sparks throw wider than before, and the
+      //           spent poem lifts and dissolves rather than being cut away.
+      //   arrive  the new poem's verses land in sequence, and a band of gold light travels down
+      //           the column — the sparkler's "lit word by word" idea at poem scale, done with a
+      //           single translating element instead of 22 animated ones.
+      //
+      // Every layer animates transform and opacity only. Nothing here reads layout mid-flight.
+      const summon = document.getElementById('summon');
+      const setP = (p) => summon.style.setProperty('--p', p);
+
       function sparkle(seal) {
         const r = seal.getBoundingClientRect();
-        for (let i = 0; i < 18; i++) {
+        for (let i = 0; i < 26; i++) {
           const s = document.createElement('div');
           s.className = 'spark';
           s.style.left = r.left + r.width / 2 + 'px';
@@ -435,7 +463,7 @@
           s.style.position = 'fixed';
           document.body.appendChild(s);
           const a = Math.random() * Math.PI * 2,
-            d = 40 + Math.random() * 70;
+            d = 60 + Math.random() * 150;
           s.animate(
             [
               { transform: 'translate(0,0) scale(1)', opacity: 1 },
@@ -469,28 +497,70 @@
         const seal = wrap.querySelector('#seal');
         let raf = null,
           t0 = 0;
-        const HOLD = 620; // long enough to be deliberate, short enough not to be a chore
+        // 760ms, up from 620. The hold is now carrying a build rather than just a progress ring,
+        // and at 620 the bloom had not finished growing before it fired. The cost is 140ms more
+        // thumb time on every draw; the gain is that the build reads as a build.
+        const HOLD = 760;
+
+        // The overlay is positioned on the seal at pointerdown rather than per frame — the seal
+        // does not move during a hold, so one layout read is all it needs.
+        const anchor = () => {
+          const r = seal.getBoundingClientRect();
+          summon.style.setProperty('--sx', r.left + r.width / 2 + 'px');
+          summon.style.setProperty('--sy', r.top + r.height / 2 + 'px');
+        };
+
         const stop = (fire) => {
           cancelAnimationFrame(raf);
           raf = null;
           seal.classList.remove('charging');
-          seal.style.setProperty('--p', 0);
+          app.classList.remove('summoning');
           if (fire) {
+            setP(1);
+            // Ring outward, sparks wider, and the spent poem lifts away instead of being cut.
+            const burst = summon.querySelector('.s-burst');
+            burst.classList.remove('go');
+            void burst.offsetWidth; // restart the animation on a repeat summon
+            burst.classList.add('go');
             sparkle(seal);
-            setTimeout(onSummon, 260);
+            seal.closest('.poem-col')?.classList.add('dissolving');
+            setTimeout(() => {
+              setP(0);
+              onSummon();
+            }, 340);
+          } else {
+            // Released early: decay the build instead of snapping it off, so an abandoned summon
+            // looks like a decision rather than a glitch.
+            const from = +summon.style.getPropertyValue('--p') || 0;
+            const t = performance.now();
+            const ease = () => {
+              const k = Math.min(1, (performance.now() - t) / 220);
+              const v = (from * (1 - k)).toFixed(3);
+              setP(v);
+              seal.style.setProperty('--p', v);
+              if (k < 1) requestAnimationFrame(ease);
+            };
+            ease();
           }
         };
         const tick = () => {
           const p = Math.min(1, (performance.now() - t0) / HOLD);
           seal.style.setProperty('--p', p);
+          setP(p);
           if (p >= 1) return stop(true);
           raf = requestAnimationFrame(tick);
         };
         seal.addEventListener('pointerdown', (e) => {
           e.preventDefault();
-          seal.setPointerCapture?.(e.pointerId);
+          try {
+            seal.setPointerCapture?.(e.pointerId);
+          } catch {
+            /* synthetic/absent pointer — capture is an optimisation, not a requirement */
+          }
+          anchor();
           t0 = performance.now();
           seal.classList.add('charging');
+          app.classList.add('summoning'); // starts the poem's recede as ONE css transition
           raf = requestAnimationFrame(tick);
         });
         const cancel = () => raf && stop(false);
@@ -504,12 +574,26 @@
         const sc = document.createElement('div');
         sc.className = 'scroller';
         stage.appendChild(sc);
-        const draw = () => {
+        const draw = (summoned) => {
           const { col, units } = renderPoem(sc, poems[idx], { scrubber: SCRUB });
           wireReveal(sc, units);
+          if (summoned) {
+            // Verses land in sequence. TRANSFORM only — opacity stays owned by the ahead/read
+            // classes, so the poem arrives dimmed-ahead exactly as it would otherwise and the
+            // sparkler reveal still has something to do. The stagger is capped so a 22-line poem
+            // doesn't take a second and a half to settle.
+            units.forEach((u, i) => {
+              u.style.setProperty('--d', Math.min(i * 38, 520) + 'ms');
+              u.classList.add('landing');
+            });
+            const sweep = summon.querySelector('.s-sweep');
+            sweep.classList.remove('go');
+            void sweep.offsetWidth;
+            sweep.classList.add('go');
+          }
           attachSeal(col, () => {
             idx = (idx + 1) % poems.length;
-            draw();
+            draw(true);
           });
           sc.scrollTop = 0;
           setPoemName();

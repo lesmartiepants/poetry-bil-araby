@@ -16,7 +16,8 @@
  *
  * Two collisions also had to be designed out rather than drawn better. A plain
  * droplet is the same shape as a flame, so `tears` gets an eyelid over it and
- * `fire-light` became a lamp. And `night` and `moon-stars` were two crescents
+ * `fire-light` became a lamp, and then (owner's call) an actual flame drawn so
+ * that it cannot collapse back into a droplet. And `night` and `moon-stars` were two crescents
  * two tiles apart in one grid, distinguished only by four-point sparkles — the
  * "AI magic" mark. There is now exactly one crescent in the set.
  *
@@ -111,12 +112,17 @@ const G = {
   // A lamp, not a flame. A symmetric teardrop reads as a leaf, and any droplet
   // shape collides with `tears` two tiles away; a bowl with a lit spout says
   // both fire and light without either problem.
+  // النار والضوء: an actual flame. It was a lamp, which is an object that
+  // happens to hold fire rather than the thing the motif names. The left
+  // shoulder carries a notch and the tip leans, because a symmetric convex
+  // silhouette is a droplet — which is exactly what `tears` is.
   'fire-light': (
     <>
-      <path {...S} d="M4.5 14.5h11.2a4.6 4.6 0 0 1-4.6 4.6H9.1a4.6 4.6 0 0 1-4.6-4.6Z" />
-      <path {...S} d="M15.7 14.5 20 12.8" />
-      <path {...S} d="M20 12.8c1.1-1.3 1.4-2.5.9-3.6-1.5.7-2.3 1.9-2.3 3.6" opacity="0.9" />
-      <path {...S} d="M7.4 19.1 6.6 21M12.8 19.1l.8 1.9" opacity="0.5" />
+      <path
+        {...S}
+        d="M12 3.2c3.1 3.1 4.9 5.4 4.9 8.5a4.9 4.9 0 0 1-9.8 0c0-1.8.7-3.1 1.8-4.3.2 1 .8 1.7 1.6 2 .1-2.5.6-4.4 1.5-6.2Z"
+      />
+      <path {...S} d="M12 12.4c1.4 1.2 2 2 2 3a2 2 0 0 1-4 0c0-1 .6-1.8 2-3Z" opacity="0.75" />
     </>
   ),
   // An eyelid turns a droplet into a tear. Both drops fall on one diagonal so
@@ -137,12 +143,18 @@ const G = {
   ),
   // A caravan mark: three humps descending along a rule. An outline camel needs
   // ~48px and collapsed into a shoe at this size.
+  // الرحلة والراحلة: the mount, not the road. Three dunes and a track read as
+  // landscape, and landscape at 34px is indistinguishable from `desert-ruins`.
+  // A horse's head in profile is the one silhouette that survives this size —
+  // it is why the chess piece is drawn that way.
   journey: (
     <>
-      <path {...S} d="M3.4 13.6c1-2.6 2.6-2.6 3.6 0" />
-      <path {...S} d="M9.4 14.6c.9-2.2 2.3-2.2 3.2 0" opacity="0.85" />
-      <path {...S} d="M15.2 15.5c.8-1.9 2-1.9 2.8 0" opacity="0.7" />
-      <path {...S} d="M2.5 18.2c4.4-.9 8.2-1.3 11.4-1.3s5.5.2 7.6.6" />
+      <path
+        {...S}
+        d="M9.6 20.6c-.3-2.9.5-4.6 2-6 .9-.9 1.4-1.6 1.4-2.5 0-.7-.4-1.1-1-1.1-.7 0-1.2.5-1.7 1.3l-1.7-1c1-2.3 2.6-3.8 4.7-4.5l.7-2.4 1.6 2c2.3.8 3.6 2.9 3.6 5.9 0 2.7-.6 5.1-.8 8.3Z"
+      />
+      <path {...S} d="M14.6 7.7c1.3 1.2 2 2.9 2 5.1" opacity="0.5" />
+      <circle cx="13.5" cy="9.7" r="0.55" fill="currentColor" stroke="none" />
     </>
   ),
   dawn: (

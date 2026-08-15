@@ -132,6 +132,7 @@ the inline insight panels — is handled with GSAP and Framer Motion for a calm,
 
 - Optional Google and Apple sign-in (Supabase)
 - Save poems to a personal library with pinning, sorting, and in-library search
+- Preference flow (mood, era, topic) from the account menu that biases the discovery feed
 - Persistent settings (theme, font) that follow you across sessions
 - Flag low-quality poems to improve the corpus
 - Keyboard shortcuts everywhere — press `?` for the full list

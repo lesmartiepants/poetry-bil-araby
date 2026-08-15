@@ -135,6 +135,62 @@ If only one thing ships: **N3's threshold principle**, because it's the part tha
 
 ---
 
+## Owner tweaks, second pass
+
+### 1. Right-aligning everything — it depends on the scrubber decision
+
+`?align=classic|head|right` (default `right`). Content alignment only; `direction` is untouched and chrome stays LTR.
+
+Classic put **three axes in one column**: a centred head, right-set Arabic, left-set English. Nobody argued for the centred head — it is the odd one out, and moving it costs nothing.
+
+The English is the real question. Right-aligning LTR text leaves each line's **start** ragged, and the start is the edge a Latin reader's eye returns to. So the cost lands **only on English lines that wrap** — a one-line translation right-aligns for free.
+
+Measured across all 44 English lines of all four poems:
+
+| | Wrapped English lines |
+|---|---:|
+| Scrubber lane **on** | **20 of 44** (45%) |
+| Scrubber lane **off** | **8 of 44** (18%) |
+
+That is the same 56px the type-size argument turns on, showing up a third time. Removing the lane doesn't just buy Arabic size and fewer wrapped rows — it also **removes most of what right-alignment costs**.
+
+**Recommendation: ship `right`, conditional on the scrubber going.** If the lane stays, ship `head` — the head and byline join the right edge, the English keeps its left start, and you get most of the unification for none of the cost.
+
+### 2. N4 · Seal — the summon happens to the screen
+
+The hold is a build, not a wait:
+
+- **hold** — the poem recedes and dims, a gold bloom grows out of the seal, a vignette closes in around it, the ring charges, the letter takes the glow.
+- **commit** — a ring bursts outward, sparks throw wider, and the spent poem lifts and dissolves rather than being cut away.
+- **arrive** — the verses land in sequence while a band of gold light travels down the column: the sparkler's lit-in-sequence idea at poem scale.
+
+`HOLD` went 620ms → **760ms**, because at 620 the bloom had not finished growing before it fired.
+
+**What it costs, and why it holds.** Every layer animates transform and opacity only. The poem's recede is a class-toggled CSS transition, so no per-frame JS touches the 22 verse rows; `--p` is read by two childless overlay divs, which bounds per-frame style invalidation at four small elements. The verse stagger is **transform only** — opacity stays owned by `.ahead`/`.read`, so the poem still arrives dimmed-ahead and the sparkler reveal still has work to do. The light sweep is one translating element instead of an animation on every verse.
+
+Measured over a full summon on the 22-verse poem: **350 frames, median 8.3ms, worst 9.7ms, zero frames over 16.7ms.** That is desktop headless, not a phone — the architecture is what should carry it to device, and it still wants confirming there. `prefers-reduced-motion` drops the whole effect.
+
+The real cost is **time**: from press to a settled new poem is ~1.6s (760 hold + 340 dissolve + ~520 stagger). Deliberate by design, but it is not a control you would want to use twenty times in a row.
+
+### 3. N3 · Threshold — staged handoff, and the flaw is fixed
+
+1. **reading** — one poem, scrolling normally. Nothing on screen about what's next.
+2. **offered** — the reader reaches the bottom and settles; only then does *scroll for the next poem* appear, naming the next poem and its length.
+3. **pulling** — a second, distinct gesture past the stop fills the meter.
+4. **locked** — the next poem arrives and locks to top.
+
+**This fixes the disqualifying flaw.** The ambiguous Save/Listen target came from two poems being on screen at a boundary. With arrival locked to top, **every resting state has exactly one current poem**. The only two-poem moment is the 260ms crossfade — a transition, not a state a reader can sit in and press a button. I looked for surviving ambiguity and did not find any: there is no scroll position that leaves two poems addressable.
+
+**The gesture that arrives cannot also commit.** A pull only counts if its gesture *began* after the offer appeared. That is #707's pointerdown latch applied to a boundary instead of an axis — the flick that carries you to the bottom must not carry you past it. On wheel, gesture boundaries are inferred from a 140ms pause; a run already in flight when the offer lands stays spent until it stops.
+
+**Two things the build turned up.**
+
+*The affordance cannot grow.* If the handoff block expanded when it appeared it would add scroll height, the reader would stop being at the bottom, and the offer would retract the frame after it was made. It is a fixed 118px in the flow at all times; only its contents fade in.
+
+*A short poem has no bottom to reach.* The 4-line epigram fits the viewport with room to spare, so it is "at the end" the instant it arrives and the stage machine collapses — the offer appeared 260ms after arrival, over a poem nobody had read. A **1400ms floor** on time-since-arrival stands in for the scroll that never happens. Long poems have already spent far more than that getting to the bottom, so the floor never binds for them.
+
+Tap or keyboard on the chevron is an equal path to over-pulling.
+
 ## Verify it yourself
 
 ```bash

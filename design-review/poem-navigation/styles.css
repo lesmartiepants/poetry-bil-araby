@@ -302,4 +302,10 @@ body {
   color: rgba(197, 160, 89, 0.55);
   pointer-events: none;
   transition: opacity 0.4s ease;
+  /* The hint floats above the scrim's solid band, so on a long poem a verse scrolls right
+     through it. A ground shadow rather than a box: keeps it legible without adding chrome. */
+  text-shadow:
+    0 0 7px var(--bg),
+    0 0 14px var(--bg),
+    0 0 20px var(--bg);
 }

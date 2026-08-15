@@ -108,6 +108,83 @@
   text-transform: uppercase;
   color: rgba(236, 231, 221, 0.4);
 }
+/* The staged handoff. Fixed height ALWAYS — only the contents fade in. If this block grew when
+   the offer appeared it would add scroll height, the reader would stop being at the bottom, and
+   the offer would retract the frame after it was made. */
+.handoff {
+  height: 118px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    opacity 0.34s ease,
+    transform 0.34s cubic-bezier(0.2, 0.8, 0.3, 1);
+  pointer-events: none;
+}
+.handoff.on {
+  opacity: 1;
+  transform: none;
+}
+.handoff.on .ho-chev {
+  pointer-events: auto;
+}
+.ho-chev {
+  width: 44px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--gold);
+  animation: hoBob 1.9s ease-in-out infinite;
+}
+@keyframes hoBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+.ho-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(236, 231, 221, 0.55);
+}
+/* #707's property, kept: you see WHICH poem is next and HOW LONG it is before committing. */
+.ho-next {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: rgba(197, 160, 89, 0.62);
+}
+
+/* Departure and arrival. Transform + opacity only, one layer each, so the handoff stays on the
+   compositor. Arrival ends at translate 0 with scrollTop already 0 — the lock to top. */
+.poem-col.departing {
+  animation: hoOut 0.26s cubic-bezier(0.4, 0, 0.9, 0.4) forwards;
+}
+@keyframes hoOut {
+  to {
+    opacity: 0;
+    transform: translateY(-26px);
+  }
+}
+.poem-col.arriving {
+  animation: hoIn 0.38s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes hoIn {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+}
+
 .threshold .skip {
   margin-top: 12px;
   display: inline-block;

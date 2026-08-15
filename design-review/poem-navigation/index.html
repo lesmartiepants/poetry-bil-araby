@@ -227,55 +227,201 @@
         draw();
       }
 
-      // ── N3 · Threshold — poems are continuous; the boundary is content ───────
+      // ── N3 · Threshold — a STAGED handoff at the bottom of the poem ──────────
+      //
+      // The original N3 concatenated every poem into one stream. That gave it its best property
+      // (scroll never changes meaning, so there is no axis to arbitrate) and its disqualifying
+      // flaw: at a boundary TWO poems are on screen, and Save / Listen point at an ambiguous
+      // target.
+      //
+      // This version keeps the property and removes the flaw by staging the boundary:
+      //
+      //   1. reading   — one poem, scrolling normally. Nothing on screen about the next poem.
+      //   2. offered   — the reader reaches the bottom and dwells there; only THEN does the
+      //                  handoff appear, naming the next poem and its length.
+      //   3. pulling   — a SECOND, distinct gesture past the stop fills the meter.
+      //   4. locked    — the next poem arrives and locks to top.
+      //
+      // Exactly one poem is current in every resting state, so Save and Listen are never
+      // ambiguous. The only two-poem moment is the ~260ms crossfade, which is a transition, not
+      // somewhere a reader can sit and press a button.
       function buildThreshold() {
         const sc = document.createElement('div');
         sc.className = 'scroller';
         stage.appendChild(sc);
-        const all = [];
-        const hosts = [];
-        poems.forEach((p, i) => {
-          const host = document.createElement('div');
-          sc.appendChild(host);
-          hosts.push(host);
-          const { units } = renderPoem(host, p, { scrubber: SCRUB });
-          all.push(...units);
-          if (i < poems.length - 1) {
-            const t = document.createElement('div');
-            t.className = 'threshold';
-            const nxt = poems[i + 1];
-            t.innerHTML = `<hr />
-              <div class="glyph">۞</div>
-              <div class="next-label">next · ${nxt.title} · ${nxt.arLines.length} lines</div>
-              <button class="skip">skip ahead</button>`;
-            t.querySelector('.skip').onclick = () => {
-              const after = t.nextElementSibling;
-              after?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            };
-            sc.appendChild(t);
+        const host = document.createElement('div');
+        sc.appendChild(host);
+
+        const NEED = 110; // same over-pull budget #707 calibrated: past a hard stop, momentum decays
+        const DWELL = 260; // don't offer during flick momentum — offer when they've actually settled
+        // A poem shorter than the viewport has NO bottom to reach: it is at the end the instant it
+        // arrives, so the stage machine collapses and the offer appears over a poem nobody has read
+        // yet. Measured on the 4-line epigram — it fits with room to spare. A floor on time-since-
+        // arrival is what stands in for the scroll that never happens. Long poems have already
+        // spent far more than this getting to the bottom, so the floor never binds for them.
+        const FLOOR = 1400;
+        let phase = 'reading';
+        let arrivedAt = 0;
+        let offeredAt = 0;
+        let over = 0;
+        let dwellT = null;
+        let handoff = null;
+        let meter = null;
+
+        // The gesture latch, applied to a boundary instead of an axis.
+        //
+        // #707's finding was: decide who owns a gesture at pointerdown, never mid-drag, because a
+        // fast flick re-evaluated mid-flight crosses a boundary the reader didn't aim at. The same
+        // hazard lives here — the flick that carries you TO the bottom must not also carry you
+        // PAST it. So a pull only counts if its gesture STARTED after the handoff appeared. One
+        // gesture arrives; a second, deliberate one commits.
+        let gestureLive = false;
+        let gestureAt = 0;
+        let wheelIdle = null;
+        const beginGesture = () => {
+          gestureAt = performance.now();
+          gestureLive = true;
+        };
+        const endGesture = () => {
+          gestureLive = false;
+        };
+        sc.addEventListener('pointerdown', beginGesture, { passive: true });
+        sc.addEventListener('pointerup', endGesture, { passive: true });
+        sc.addEventListener('pointercancel', endGesture, { passive: true });
+
+        const atEnd = () => sc.scrollTop >= sc.scrollHeight - sc.clientHeight - 4;
+
+        const draw = (arriving) => {
+          host.innerHTML = '';
+          const { col, units } = renderPoem(host, poems[idx], { scrubber: SCRUB });
+          wireReveal(sc, units);
+
+          // The handoff block is ALWAYS in the flow at a fixed height, and only its contents fade
+          // in. If it grew when it appeared it would add scroll height, which would mean the
+          // reader is suddenly no longer at the bottom — the offer would retract the instant it
+          // was made. Reserving the space is what makes the stage transition stable.
+          handoff = document.createElement('div');
+          handoff.className = 'handoff';
+          const nxt = poems[(idx + 1) % poems.length];
+          handoff.innerHTML = `
+            <div class="ho-chev" role="button" tabindex="0" aria-label="Go to the next poem">⌄</div>
+            <div class="ho-label">scroll for the next poem</div>
+            <div class="ho-next">${nxt.title} · ${nxt.arLines.length} lines</div>
+            <div class="pull-meter"><i></i></div>`;
+          col.appendChild(handoff);
+          meter = handoff.querySelector('.pull-meter i');
+          // Tap / keyboard as an equal path. Over-pull is a gesture; this is the same commit for
+          // anyone not making one.
+          const chev = handoff.querySelector('.ho-chev');
+          chev.onclick = () => phase === 'offered' && commit();
+          chev.onkeydown = (e) => (e.key === 'Enter' || e.key === ' ') && commit();
+
+          phase = 'reading';
+          over = 0;
+          offeredAt = 0;
+          arrivedAt = performance.now();
+          clearTimeout(dwellT);
+          dwellT = null;
+          sc.scrollTop = 0; // LOCK TO TOP — the reader never lands mid-boundary
+          if (arriving) {
+            col.classList.add('arriving');
+            col.addEventListener('animationend', () => col.classList.remove('arriving'), {
+              once: true,
+            });
           }
-        });
-        wireReveal(sc, all);
-        chrome();
+          setPoemName();
+          report(sc);
+          requestAnimationFrame(evaluate); // a short poem may already be "at the bottom"
+        };
+
+        function offer() {
+          dwellT = null;
+          if (phase !== 'reading' || !atEnd()) return;
+          phase = 'offered';
+          offeredAt = performance.now();
+          handoff.classList.add('on');
+        }
+
+        function retract() {
+          clearTimeout(dwellT);
+          dwellT = null;
+          if (phase === 'offered') {
+            phase = 'reading';
+            handoff.classList.remove('on');
+          }
+          over = 0;
+          if (meter) meter.style.width = '0%';
+        }
+
+        function evaluate() {
+          if (phase === 'committing') return;
+          if (atEnd()) {
+            if (phase === 'reading' && !dwellT)
+              dwellT = setTimeout(offer, Math.max(DWELL, FLOOR - (performance.now() - arrivedAt)));
+          } else {
+            retract();
+          }
+        }
+
+        function pull(d) {
+          if (phase !== 'offered' || !atEnd() || d <= 0) return;
+          if (gestureAt <= offeredAt) return; // same gesture that arrived — refused
+          over += d;
+          if (meter) meter.style.width = Math.min(100, (over / NEED) * 100).toFixed(0) + '%';
+          if (over >= NEED) commit();
+        }
+
+        function commit() {
+          if (phase === 'committing') return;
+          phase = 'committing';
+          over = 0;
+          const col = host.querySelector('.poem-col');
+          col.classList.add('departing');
+          setTimeout(() => {
+            idx = (idx + 1) % poems.length;
+            draw(true);
+          }, 260);
+        }
+
         sc.addEventListener(
           'scroll',
           () => {
             updateScrub(sc);
-            // Which poem am I in? Purely observational — nothing is being arbitrated.
-            const mid = sc.scrollTop + sc.clientHeight * 0.3;
-            let n = 0;
-            [...sc.children].forEach((ch) => {
-              if (ch.classList.contains('threshold') && ch.offsetTop < mid) n++;
-            });
-            if (n !== idx) {
-              idx = n;
-              setPoemName();
-            }
+            evaluate();
           },
           { passive: true }
         );
-        setPoemName();
-        report(hosts[Math.min(POEM, hosts.length - 1)]);
+
+        // Touch: past a hard stop the scroller stops emitting scroll events, so the pull has to be
+        // read from the finger directly.
+        let ty = 0;
+        sc.addEventListener('touchstart', (e) => (ty = e.touches[0].clientY), { passive: true });
+        sc.addEventListener(
+          'touchmove',
+          (e) => {
+            const y = e.touches[0].clientY;
+            const dy = ty - y; // finger travelling up = asking for what's below
+            ty = y;
+            pull(dy);
+          },
+          { passive: true }
+        );
+
+        // Wheel / trackpad has no pointerdown, so gesture boundaries are inferred from a pause.
+        // A wheel run already in flight when the offer appears stays spent until it stops.
+        sc.addEventListener(
+          'wheel',
+          (e) => {
+            if (!gestureLive) beginGesture();
+            clearTimeout(wheelIdle);
+            wheelIdle = setTimeout(endGesture, 140);
+            pull(e.deltaY);
+          },
+          { passive: true }
+        );
+
+        chrome();
+        draw(false);
       }
 
       // ── N4 · Seal — a deliberate act at the end of the poem ──────────────────

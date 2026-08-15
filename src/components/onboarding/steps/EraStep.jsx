@@ -1,4 +1,5 @@
 import StepShell from '../StepShell.jsx';
+import { ordinal } from '../../../services/categoryBands.js';
 import {
   useSelection,
   StepTitle,
@@ -15,7 +16,7 @@ import {
  * "Ancient to modern" is the only question in the flow with a real axis behind
  * it, so this step draws the axis and lets the DATES carry it. A rail runs down
  * the left edge from the pre-Islamic period to the present; each band hangs off
- * the rail on a leader line, headed by its century range set large in Amiri;
+ * the rail on a leader line, headed by its century range set large;
  * and choosing one lights that band's own stretch of rail, so the reader can see
  * where in fourteen centuries they just landed.
  *
@@ -27,7 +28,7 @@ import {
  *
  * The numerals are the hero rather than an afterthought because they are the
  * only thing on the screen that is genuinely chronological — "الجاهلي" means
- * nothing to a reader who does not already know the periods, while "6–8" places
+ * nothing to a reader who does not already know the periods, while "6th–8th" places
  * it immediately.
  *
  * Like the difficulty step there are no cards, for the same reason — a boxed row
@@ -52,26 +53,34 @@ import {
  * `deriveEraBands` still reads the live histogram — only for the counts, and to
  * drop a band the corpus has nothing in.
  *
- * Bands arrive with `hint_ar` / `hint_en` already carrying the ordinal form of
- * the range ("6th–8th c. CE"), which is what the numerals on the rail are the
- * short form of. That is data about the CHOICE, not a poem count: it says what
- * you are picking, not how much of it there is.
+ * The rail heads are the ordinal form the owner asked for — "6th–8th",
+ * "15th–Today" — which is also what the bands carry in `hint_ar` / `hint_en`
+ * ("6th–8th c. CE"). The hints are not rendered on this screen, so the two do
+ * not read as a repetition; they exist for the surfaces that do show them. That
+ * is data about the CHOICE, not a poem count: it says what you are picking, not
+ * how much of it there is.
  */
 
 const GOLD = '#c5a059';
 
 /**
- * The rail head for a band: its century span. The last band runs to the present
- * and is headed "15–" rather than "15–21", because the closed number would
- * claim a precision the corpus does not have (it also carries the undated
- * poems) and because an open range is how a living period is written.
+ * The rail head for a band: "6th–8th", "9th–10th", "11th–14th", "15th–Today".
+ *
+ * These were bare numerals with an open dash on the last band — "15–" rather
+ * than "15–21", on the argument that the closed number claims a precision the
+ * corpus does not have, since that band also absorbs the undated poems. The
+ * owner was asked directly and chose their own phrasing instead: ordinals on
+ * both ends, and the word "Today" where the dash trailed off. Recorded rather
+ * than deleted because the precision worry was not wrong, it was outvoted — if
+ * anyone later wonders why the last band names a year-less endpoint while the
+ * others name numbers, this is why.
  */
 const headFor = (band) => {
   if (band.century_from == null) return '—';
-  if (band.includesUndated) return `${band.century_from}–`;
+  if (band.includesUndated) return `${ordinal(band.century_from)}–Today`;
   return band.century_from === band.century_to
-    ? String(band.century_from)
-    : `${band.century_from}–${band.century_to}`;
+    ? ordinal(band.century_from)
+    : `${ordinal(band.century_from)}–${ordinal(band.century_to)}`;
 };
 
 const EraStep = ({
@@ -202,14 +211,21 @@ const EraStep = ({
                 <span
                   dir="ltr"
                   style={{
-                    fontFamily: "'Amiri', serif",
-                    fontSize: '1.55rem',
+                    // Forum, not Amiri: the heads carry English ordinals and
+                    // the word "Today" now, and Latin set in a naskh face reads
+                    // as a fallback rather than a choice. All four heads share
+                    // one face and ONE SIZE — the size never encodes anything
+                    // here, same rule the difficulty step follows.
+                    fontFamily: "'Forum', serif",
+                    // Down a step from 1.55rem so "15th–Today" fits on one line
+                    // at 393px without the other three shrinking to match it.
+                    fontSize: '1.28rem',
                     lineHeight: 1.1,
                     letterSpacing: '.01em',
                     color: on ? GOLD : 'rgba(255,255,255,0.55)',
                     whiteSpace: 'nowrap',
                     flex: '0 0 auto',
-                    minWidth: '3.2em',
+                    minWidth: '5.4em',
                     transition: 'color .3s ease',
                   }}
                 >

@@ -74,26 +74,6 @@ const DIFFICULTY_BAND_META = [
   },
 ];
 
-/**
- * Real Arabic literary period names, keyed by the representative century the
- * pipeline assigns to each era. Only periods that actually correspond to a
- * century present in the data are named; anything unrecognised falls back to a
- * plain "Nth century" label rather than an invented period name.
- *
- * `null` is the late/modern bucket — see the NULL-century note above.
- */
-const PERIOD_BY_CENTURY = {
-  6: { label_ar: 'الجاهلي', label_en: 'Pre-Islamic' },
-  7: { label_ar: 'صدر الإسلام', label_en: 'Early Islamic' },
-  8: { label_ar: 'الأموي', label_en: 'Umayyad' },
-  9: { label_ar: 'العباسي', label_en: 'Abbasid' },
-  11: { label_ar: 'الأندلسي', label_en: 'Andalusian' },
-  13: { label_ar: 'الأيوبي', label_en: 'Ayyubid' },
-  14: { label_ar: 'المملوكي', label_en: 'Mamluk' },
-};
-
-const UNDATED_PERIOD = { label_ar: 'المتأخر والحديث', label_en: 'Late & Modern' };
-
 /** 1 -> "1st", 2 -> "2nd", 13 -> "13th" */
 export const ordinal = (n) => {
   const s = ['th', 'st', 'nd', 'rd'];
@@ -159,36 +139,66 @@ export const deriveDifficultyBands = (histogram, bandCount = DIFFICULTY_BAND_COU
 /* Era                                                                         */
 /* -------------------------------------------------------------------------- */
 
-const periodFor = (century) =>
-  century == null
-    ? UNDATED_PERIOD
-    : PERIOD_BY_CENTURY[century] || {
-        label_ar: `القرن ${century}`,
-        label_en: `${ordinal(century)} c.`,
-      };
-
 /**
- * Group the era histogram into contiguous century bands of roughly comparable
- * size, then label each band with the real literary period(s) it covers.
+ * The four era bands, fixed by the owner rather than derived.
  *
- * Why bands and not raw centuries: the 9th century alone is ~40% of the corpus
- * and the 7th is under 1%, so one option per century is unusable. Grouping
- * adjacent periods until each band carries a fair share gives the reader
- * choices that all actually lead somewhere.
+ * These used to be cut from the live histogram by equal frequency, so that no
+ * button was a dead end and none swallowed the library. That produced 6-8 /
+ * 9 / 11-14 / undated, and it had two problems the owner named: the 9th sat
+ * alone because it really is ~40% of the corpus, which reads as an arbitrary
+ * one-century button, and "undated" was surfaced to the reader as a period
+ * ("Late & Modern") when it is really a gap in the metadata.
  *
- * The undated (late/modern) poems are NOT folded into a neighbouring band —
- * they are their own band at the end, because they are a genuine period rather
- * than a gap in the data.
- *
- * @param {Array<{century:number|null, poem_count:number}>} histogram
- * @param {number} [targetBands] desired number of DATED bands (undated is extra)
- * @returns {Array<{key,label_ar,label_en,centuries,century_from,century_to,undated,poem_count}>}
+ * Fixed cuts trade balance for legibility, knowingly. The 9th-10th band is
+ * still by far the largest, and that is now a stated choice rather than
+ * something the algorithm was fighting. Undated poems ride with 15th-to-today,
+ * which is where an undated poem most likely belongs and, more importantly,
+ * stops them needing a button of their own.
  */
-export const deriveEraBands = (histogram, targetBands = 3) => {
+const FIXED_ERA_BANDS = [
+  {
+    key: 'c6-8',
+    from: 6,
+    to: 8,
+    label_ar: 'من الجاهلي إلى الأموي',
+    label_en: 'Pre-Islamic to Umayyad',
+    hint_ar: 'القرون 6–8 م',
+    hint_en: '6th–8th c. CE',
+  },
+  {
+    key: 'c9-10',
+    from: 9,
+    to: 10,
+    label_ar: 'العباسي',
+    label_en: 'Abbasid',
+    hint_ar: 'القرنان 9–10 م',
+    hint_en: '9th–10th c. CE',
+  },
+  {
+    key: 'c11-14',
+    from: 11,
+    to: 14,
+    label_ar: 'من الأندلسي إلى المملوكي',
+    label_en: 'Andalusian to Mamluk',
+    hint_ar: 'القرون 11–14 م',
+    hint_en: '11th–14th c. CE',
+  },
+  {
+    key: 'c15-today',
+    from: 15,
+    to: 21,
+    includesUndated: true,
+    label_ar: 'المتأخر والحديث',
+    label_en: 'Late & Modern',
+    hint_ar: 'من القرن 15 حتى اليوم',
+    hint_en: '15th c. to today',
+  },
+];
+
+export const deriveEraBands = (histogram) => {
   const rows = (histogram || []).filter((r) => r && r.poem_count > 0);
   if (!rows.length) return [];
 
-  // Collapse (era, century) rows to one row per century.
   const byCentury = new Map();
   let undatedCount = 0;
   for (const r of rows) {
@@ -199,97 +209,33 @@ export const deriveEraBands = (histogram, targetBands = 3) => {
     byCentury.set(r.century, (byCentury.get(r.century) || 0) + r.poem_count);
   }
 
-  const centuries = [...byCentury.entries()]
-    .map(([century, poem_count]) => ({ century, poem_count }))
-    .sort((a, b) => a.century - b.century);
-
-  const datedTotal = centuries.reduce((n, c) => n + c.poem_count, 0);
-  const bands = [];
-
-  if (datedTotal) {
-    // Equal-frequency grouping over discrete atoms. Walking the centuries in
-    // order, we cut wherever the running total lands CLOSEST to this band's
-    // share — comparing "cut before this century" against "include it". Cutting
-    // only once the share is exceeded would swallow a huge century into whatever
-    // came before it (the 9th, at ~40% of the corpus, would drag the 6th-8th in
-    // with it and produce one band holding most of the library).
-    //
-    // A century bigger than a whole share ends up alone in its own band, which
-    // is the honest outcome: the Abbasid century really is that much of the
-    // corpus, and no grouping can make it smaller. The picker shows counts so
-    // that is visible rather than hidden.
-    let current = [];
-    let currentCount = 0;
-    let cumulative = 0;
-    for (const entry of centuries) {
-      const remainingBands = targetBands - bands.length;
-      const target = (datedTotal * (bands.length + 1)) / targetBands;
-      const cutBefore = Math.abs(cumulative - target);
-      const cutAfter = Math.abs(cumulative + entry.poem_count - target);
-      if (current.length && remainingBands > 1 && cutBefore <= cutAfter) {
-        bands.push({ centuries: current, poem_count: currentCount });
-        current = [];
-        currentCount = 0;
-      }
-      current.push(entry);
-      currentCount += entry.poem_count;
-      cumulative += entry.poem_count;
+  const countIn = (from, to) => {
+    let n = 0;
+    for (const [century, poem_count] of byCentury) {
+      if (century >= from && century <= to) n += poem_count;
     }
-    if (current.length) bands.push({ centuries: current, poem_count: currentCount });
-  }
+    return n;
+  };
+  const centuriesIn = (from, to) =>
+    [...byCentury.keys()].filter((c) => c >= from && c <= to).sort((a, b) => a - b);
 
-  const dated = bands.map((b) => {
-    const list = b.centuries.map((c) => c.century);
-    const from = list[0];
-    const to = list.at(-1);
-    // Name the band by the periods at its ends. A band covering one period keeps
-    // that period's name; a band spanning several reads "الجاهلي والأموي".
-    const names = list.map((c) => periodFor(c));
-    const first = names[0];
-    const last = names.at(-1);
-    const label_ar =
-      first.label_ar === last.label_ar
-        ? first.label_ar
-        : `من ${first.label_ar} إلى ${last.label_ar}`;
-    const label_en =
-      first.label_en === last.label_en ? first.label_en : `${first.label_en} to ${last.label_en}`;
+  return FIXED_ERA_BANDS.map((spec) => {
+    const poem_count = countIn(spec.from, spec.to) + (spec.includesUndated ? undatedCount : 0);
     return {
-      key: `c${from}-${to}`,
-      label_ar,
-      label_en,
-      centuries: list,
-      century_from: from,
-      century_to: to,
+      key: spec.key,
+      label_ar: spec.label_ar,
+      label_en: spec.label_en,
+      centuries: centuriesIn(spec.from, spec.to),
+      century_from: spec.from,
+      century_to: spec.to,
+      // No band IS the undated rows any more — the last one INCLUDES them.
       undated: false,
-      poem_count: b.poem_count,
-      // Arabic marks "two" separately from "three or more": القرنان is dual, so a
-      // band spanning 3+ centuries needs the plural القرون.
-      hint_ar:
-        from === to
-          ? `القرن ${from} م`
-          : to - from === 1
-            ? `القرنان ${from}–${to} م`
-            : `القرون ${from}–${to} م`,
-      hint_en:
-        from === to ? `${ordinal(from)} century CE` : `${ordinal(from)}–${ordinal(to)} c. CE`,
+      includesUndated: !!spec.includesUndated,
+      poem_count,
+      hint_ar: spec.hint_ar,
+      hint_en: spec.hint_en,
     };
-  });
-
-  if (undatedCount > 0) {
-    dated.push({
-      key: 'undated',
-      ...UNDATED_PERIOD,
-      centuries: [],
-      century_from: null,
-      century_to: null,
-      undated: true,
-      poem_count: undatedCount,
-      hint_ar: 'ما بعد المماليك وحتى اليوم',
-      hint_en: 'Post-Mamluk through today',
-    });
-  }
-
-  return dated;
+  }).filter((b) => b.poem_count > 0);
 };
 
 /* -------------------------------------------------------------------------- */

@@ -97,6 +97,9 @@ const COLORS = {
 };
 const colorFor = (key) => COLORS[key] || '#c5a059';
 
+/** Reads both shapes of an answer: the array it is now, the string it was. */
+const asList = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+
 /**
  * Presentation order for the moods.
  *
@@ -293,9 +296,13 @@ export default function OnboardingFlow({ onComplete }) {
           testId="onboarding-difficulty"
           stepIndex={4}
           options={difficultyBands}
-          value={prefs.difficulty ? [prefs.difficulty] : []}
+          // Both of the last two answers became multi-select, so they are
+          // stored as arrays. `asList` reads a pre-existing single-string
+          // answer as a one-element list, so a payload written before the
+          // change still loads into the picker and still scores.
+          value={asList(prefs.difficulty)}
           onNext={(v) => {
-            patch({ difficulty: v[0] || null });
+            patch({ difficulty: v });
             setStep(5);
           }}
           {...common}
@@ -307,8 +314,8 @@ export default function OnboardingFlow({ onComplete }) {
           testId="onboarding-era"
           stepIndex={5}
           options={eraBands}
-          value={prefs.era ? [prefs.era] : []}
-          onNext={(v) => finish({ era: v[0] || null })}
+          value={asList(prefs.era)}
+          onNext={(v) => finish({ era: v })}
           {...common}
         />
       )}

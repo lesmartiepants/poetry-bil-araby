@@ -1,89 +1,69 @@
 import StepShell from '../StepShell.jsx';
-import { useSelection, StepTitle, EmptyState, LoadingState } from '../stepParts.jsx';
+import {
+  useSelection,
+  StepTitle,
+  EmptyState,
+  LoadingState,
+  BilingualLabel,
+} from '../stepParts.jsx';
 
 /**
  * Step 5 — Reading (the difficulty dimension).
  *
- * ## The design feature: the type is the specimen, set on the ground
+ * ## The design feature: one typeface, three golds
  *
- * "Easy reading or a challenge" is a question about how a line will FEEL to
- * read, and no label answers that as well as a sample of the thing itself. Each
- * band renders its own name in a face and a size that match its difficulty:
- * Fustat, plain and modern, small; Amiri, the naskh the app actually reads poems
- * in, larger; Katibeh, a classical calligraphic hand, largest. Down the three
- * the letterforms get more written and less typed, and the reader picks the one
- * they want to be looking at.
+ * This screen used to BE its answer: each band set in a face and size matching
+ * its difficulty, so "Demanding" arrived in a classical calligraphic hand at
+ * the largest size and "Gentle" in a plain modern one at the smallest. The
+ * ladder was legible and the owner rejected it — a specimen ladder makes the
+ * screen a font sampler, and three different faces at three different sizes is
+ * a lot of noise for what is one question about difficulty.
  *
- * There are no cards. That is the point: a type specimen inside a bordered box
- * becomes a list item, and a list item is what the other steps are made of. The
- * specimens sit directly on the ground, the chosen one at full contrast and the
- * others dropped back, so the only thing on screen is the type and the only
- * thing that changes is how legible it is. The rising size IS the ordinal cue,
- * which is why the earlier version's tick-marks are gone — at 5px inside the
- * card edge they read as a scrollbar, and the type was already saying it.
+ * So the type is now CONSTANT: one Latin face, one Arabic face, one size, one
+ * leading, for all three. Nothing about the letterforms says anything about
+ * difficulty. The whole ladder is carried by gold instead — the app's one
+ * accent, graded three ways:
  *
- * Amiri is deliberately the middle rung rather than a neutral choice: it is the
- * face the feed sets poems in, so the middle card is a literal preview.
+ *   Gentle     a thin gold at low strength; the mark is barely lit
+ *   Measured   the same gold at full strength; flat, solid
+ *   Demanding  molten gold — a gradient with a highlight and a dark foot, the
+ *              only place on the screen where the accent has depth
  *
- * ## Data
+ * That is intensity read as material rather than as size: the metal gets richer
+ * as the reading gets harder. It works because gold already means "this matters"
+ * everywhere else in the flow, so more gold is more of the same signal, and it
+ * survives at a glance without a legend.
  *
- * Bands come from `deriveDifficultyBands`, cut from the live accessibility
- * histogram rather than hardcoded, and their `share`/`poem_count` are not
- * rendered. Face and size assignment is by POSITION, so a re-cut that renames
- * the bands still runs plainest-to-most-classical in order.
- */
-
-const GOLD = '#c5a059';
-
-/**
- * Plain modern -> the app's reading naskh -> classical calligraphic hand.
+ * ## Selection is not intensity
  *
- * Alexandria was the first rung originally and was wrong: it is a geometric
- * Arabic sans, a near neighbour of the Reem Kufi in the title directly above it,
- * so rung 1 read as a restatement of the app's display voice instead of as
- * plain text. Fustat is humanist and unmistakably "ordinary reading".
- *
- * The specimens carry full tashkeel (سَهْلٌ مُيَسَّر), so the leading has to be
- * generous or the marks collide with the line above — on this step above all,
- * since broken vocalisation on a screen ABOUT typography is self-refuting.
+ * The step is multi-select — a reader who wants easy AND hard poems and nothing
+ * in the middle can now say so. That creates a real risk: if "chosen" were also
+ * expressed in gold, it would be indistinguishable from the intensity ladder.
+ * So the two signals are kept in different registers. Intensity is the gold and
+ * never changes. Chosen is a panel: a tinted ground and a hairline around the
+ * row, which is a shape appearing, not a colour deepening.
  */
 /**
- * The ladder runs in BOTH scripts.
- *
- * Setting only the Arabic in a rising sequence of faces would have made the
- * English a caption on a specimen it was not part of — and this is the one step
- * where the type IS the content, so a reader who cannot read Arabic would have
- * been shown the question without being shown the answer. So each rung pairs an
- * Arabic face with a Latin face at the same point on the same journey: plain
- * modern sans, to a working book serif, to a high-contrast historical face that
- * asks something of you. Fustat/Alexandria are ordinary reading; Amiri/Playfair
- * are what a printed page looks like; Katibeh/IM Fell English are older, denser
- * and slower in either script.
- *
- * Sizes rise together, and the Latin stays at roughly 0.8x the Arabic, which is
- * the same optical-parity ratio the rest of the flow uses.
+ * The three grades of gold, easiest first. Only the MARK changes; every row's
+ * type is identical. Index-aligned to the bands as they arrive (easy -> hard),
+ * and a fourth band would fall back to the last grade rather than run out.
  */
-const SPECIMEN = [
+const GRADES = [
   {
-    face: "'Fustat', sans-serif",
-    enFace: "'Alexandria', sans-serif",
-    size: '1.35rem',
-    enSize: '1.05rem',
-    leading: 1.5,
+    bar: 'rgba(197,160,89,0.34)',
+    text: 'rgba(233,216,182,0.74)',
+    hint: 'rgba(255,255,255,0.4)',
   },
   {
-    face: "'Amiri', serif",
-    enFace: "'Playfair Display', serif",
-    size: '1.6rem',
-    enSize: '1.25rem',
-    leading: 1.7,
+    bar: '#c5a059',
+    text: 'rgba(240,224,190,0.92)',
+    hint: 'rgba(255,255,255,0.5)',
   },
   {
-    face: "'Katibeh', serif",
-    enFace: "'IM Fell English', serif",
-    size: '1.95rem',
-    enSize: '1.45rem',
-    leading: 1.9,
+    bar: 'linear-gradient(180deg,#fbeeca 0%,#e3c483 22%,#c5a059 52%,#7d5c26 100%)',
+    glow: '0 0 12px rgba(197,160,89,.45)',
+    text: '#f6e6bd',
+    hint: 'rgba(255,255,255,0.62)',
   },
 ];
 
@@ -110,7 +90,8 @@ const ReadingStep = ({
   onBack,
   loading,
 }) => {
-  const [selected, toggle] = useSelection(value, false);
+  // Multi-select: easy AND hard, with nothing in between, is a real answer.
+  const [selected, toggle] = useSelection(value, true);
 
   const body = () => {
     if (loading) return <LoadingState testId={testId} />;
@@ -123,12 +104,12 @@ const ReadingStep = ({
           overflowY: 'auto',
           display: 'flex',
           flexDirection: 'column',
-          gap: '1.15rem',
+          gap: '.5rem',
         }}
       >
         {options.map((o, i) => {
-          const on = selected[0] === o.key;
-          const spec = SPECIMEN[i] || SPECIMEN[SPECIMEN.length - 1];
+          const on = selected.includes(o.key);
+          const g = GRADES[i] || GRADES[GRADES.length - 1];
           return (
             <button
               key={o.key}
@@ -139,94 +120,92 @@ const ReadingStep = ({
               onClick={() => toggle(o.key)}
               style={{
                 display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-start',
-                gap: '.1rem',
+                alignItems: 'stretch',
+                gap: 14,
                 width: '100%',
-                minHeight: 96,
-                padding: '.5rem 0 .6rem',
-                background: 'transparent',
-                border: 'none',
-                // The only rules on the screen. The baseline hairline separates
-                // the specimens; the leading edge marks the chosen one. With
-                // dimming alone the selection was almost invisible — three
-                // specimens at 1.0 / 0.34 / 0.34 still read as three specimens,
-                // because the eye takes the size difference as the subject and
-                // the opacity as lighting.
-                borderInlineStart: `2px solid ${on ? GOLD : 'transparent'}`,
-                // Constant, so selecting does not shift the type sideways.
-                paddingInlineStart: 12,
-                borderBottom: `1px solid ${on ? `${GOLD}55` : 'rgba(255,255,255,0.07)'}`,
-                cursor: 'pointer',
+                minHeight: 76,
+                padding: '.7rem .8rem',
                 textAlign: 'start',
-                opacity: selected.length && !on ? 0.3 : 1,
-                transition: 'opacity .3s ease, border-color .3s ease',
+                cursor: 'pointer',
+                borderRadius: 12,
+                // Chosen is a SHAPE appearing, not a richer gold — the gold is
+                // already spoken for by the intensity ladder.
+                border: `1px solid ${on ? 'rgba(197,160,89,0.5)' : 'transparent'}`,
+                background: on ? 'rgba(197,160,89,0.09)' : 'transparent',
+                transition: 'background .25s ease, border-color .25s ease',
                 animation: `obSpec .55s ease ${0.08 * i}s both`,
               }}
             >
+              {/* The grade. This is the only thing that differs between rows. */}
               <span
-                dir="ltr"
+                aria-hidden="true"
                 style={{
-                  fontFamily: spec.enFace,
-                  fontSize: spec.enSize,
-                  lineHeight: 1.25,
-                  color: on ? '#fff' : 'rgba(255,255,255,0.86)',
-                  transition: 'color .3s ease',
+                  flex: '0 0 auto',
+                  width: 6,
+                  alignSelf: 'stretch',
+                  borderRadius: 3,
+                  background: g.bar,
+                  // Only the molten grade gets a cast shadow. It is the one
+                  // rung that is meant to look like metal rather than paint.
+                  boxShadow: g.glow || 'none',
                 }}
-              >
-                {o.label_en}
-              </span>
-              <span
-                lang="ar"
-                dir="rtl"
-                style={{
-                  fontFamily: spec.face,
-                  fontSize: spec.size,
-                  lineHeight: spec.leading,
-                  color: on ? '#fff' : 'rgba(255,255,255,0.86)',
-                  transition: 'color .3s ease',
-                }}
-              >
-                {unvocalised(o.label_ar)}
-              </span>
+              />
               <span
                 style={{
                   display: 'flex',
-                  alignItems: 'baseline',
-                  gap: '.55rem',
-                  flexWrap: 'wrap',
+                  flexDirection: 'column',
+                  alignItems: 'flex-start',
+                  gap: '.25rem',
+                  minWidth: 0,
                 }}
               >
-                {/* English first, to match the reading order of the chrome. The
-                    two hints sat the other way round and the row read backwards
-                    to anyone coming to this through English. */}
-                {o.hint_en && (
-                  <span
-                    dir="ltr"
-                    style={{
-                      fontFamily: "'Forum', serif",
-                      fontSize: '.875rem',
-                      lineHeight: 1.5,
-                      color: on ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.44)',
-                    }}
-                  >
-                    {o.hint_en}
-                  </span>
-                )}
-                {o.hint_ar && (
-                  <span
-                    lang="ar"
-                    dir="rtl"
-                    style={{
-                      fontFamily: "'Amiri', serif",
-                      fontSize: '1rem',
-                      lineHeight: 1.5,
-                      color: on ? 'rgba(255,255,255,0.72)' : 'rgba(255,255,255,0.44)',
-                    }}
-                  >
-                    {o.hint_ar}
-                  </span>
-                )}
+                {/* Same face, same size, every row — BilingualLabel also holds
+                    the Arabic to 0.85x the Latin, so the parity rule survives a
+                    screen that is nominally about type. */}
+                <BilingualLabel
+                  en={o.label_en}
+                  ar={unvocalised(o.label_ar)}
+                  size="option"
+                  color={g.text}
+                  align="start"
+                />
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    gap: '.55rem',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {/* English first, to match the reading order of the chrome. */}
+                  {o.hint_en && (
+                    <span
+                      dir="ltr"
+                      style={{
+                        fontFamily: "'Forum', serif",
+                        fontSize: '.8125rem',
+                        lineHeight: 1.45,
+                        color: g.hint,
+                      }}
+                    >
+                      {o.hint_en}
+                    </span>
+                  )}
+                  {o.hint_ar && (
+                    <span
+                      lang="ar"
+                      dir="rtl"
+                      style={{
+                        fontFamily: "'Amiri', serif",
+                        fontSize: '.8125rem',
+                        lineHeight: 1.45,
+                        color: g.hint,
+                      }}
+                    >
+                      {unvocalised(o.hint_ar)}
+                    </span>
+                  )}
+                </span>
               </span>
             </button>
           );
@@ -240,7 +219,7 @@ const ReadingStep = ({
       testId={testId}
       stepIndex={stepIndex}
       stepCount={stepCount}
-      accent={GOLD}
+      accent="#c5a059"
       onBack={onBack}
       onNext={() => onNext?.(selected)}
       ctaAr={selected.length ? 'التالي' : 'تخطَّ'}

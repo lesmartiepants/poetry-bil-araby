@@ -221,20 +221,39 @@ export const temperatureFor = (poemsSeen) => {
 export const hasPreferences = (prefs) =>
   !!(
     prefs &&
-    (prefs.family || prefs.era || prefs.difficulty || prefs.moods?.length || prefs.motifs?.length)
+    // era and difficulty are arrays since they became multi-select, and an
+    // EMPTY array is truthy — testing them bare would report "has preferences"
+    // for a reader who skipped every step, which turns the whole feed scored.
+    (prefs.family ||
+      asArray(prefs.era).length ||
+      asArray(prefs.difficulty).length ||
+      prefs.moods?.length ||
+      prefs.motifs?.length)
   );
 
 const asArray = (v) => (Array.isArray(v) ? v.filter(Boolean) : v ? [v] : []);
 
-/** Resolve a stored era band KEY against the live bands. */
-const eraBandFor = (prefs, bands) =>
-  prefs?.era ? (bands?.eraBands || []).find((b) => b.key === prefs.era) || null : null;
+/**
+ * Resolve stored era band KEYS against the live bands.
+ *
+ * Era and difficulty became multi-select, so both are stored as arrays. A v2
+ * payload written before that holds a bare string, and `asArray` reads it as a
+ * one-element list — old answers keep scoring exactly as they did.
+ */
+const eraBandsFor = (prefs, bands) =>
+  asArray(prefs?.era)
+    .map((k) => (bands?.eraBands || []).find((b) => b.key === k))
+    .filter(Boolean);
 
-/** Resolve a stored difficulty band KEY against the live bands. */
-const difficultyBandFor = (prefs, bands) =>
-  prefs?.difficulty
-    ? (bands?.difficultyBands || []).find((b) => b.key === prefs.difficulty) || null
-    : null;
+/** Resolve stored difficulty band KEYS against the live bands. */
+const difficultyBandsFor = (prefs, bands) =>
+  asArray(prefs?.difficulty)
+    .map((k) => (bands?.difficultyBands || []).find((b) => b.key === k))
+    .filter(Boolean);
+
+/** First chosen band. For display surfaces that name a single band. */
+const eraBandFor = (prefs, bands) => eraBandsFor(prefs, bands)[0] || null;
+const difficultyBandFor = (prefs, bands) => difficultyBandsFor(prefs, bands)[0] || null;
 
 /**
  * The member value keys of the reader's chosen family, as `dim:key` pairs.
@@ -271,11 +290,20 @@ export const scopeFiltersFor = (prefs, bands = {}, only = null) => {
     filters.motif = asArray(prefs.motifs).join(',');
 
   if (want('era')) {
-    const band = eraBandFor(prefs, bands);
-    if (band) {
-      if (band.undated) {
-        filters.undated = 1;
-      } else if (Number.isFinite(band.century_from)) {
+    // Multi-select: the scope is the UNION of the chosen bands. It is a
+    // superset when the picks are not adjacent (6-8 plus 15-today also spans
+    // 9-14), which is acceptable here and only here — this builds a counting
+    // and anchoring query, and the scorer below judges each band separately.
+    const chosenEra = eraBandsFor(prefs, bands);
+    const dated = chosenEra.filter((b) => Number.isFinite(b.century_from));
+    if (chosenEra.length && !dated.length) {
+      filters.undated = 1;
+    } else if (dated.length) {
+      const band = {
+        century_from: Math.min(...dated.map((b) => b.century_from)),
+        century_to: Math.max(...dated.map((b) => b.century_to)),
+      };
+      {
         filters.centuryFrom = band.century_from;
         filters.centuryTo = band.century_to;
         // Undated poems are ~25% of the corpus and stay ELIGIBLE under a dated
@@ -286,10 +314,12 @@ export const scopeFiltersFor = (prefs, bands = {}, only = null) => {
   }
 
   if (want('difficulty')) {
-    const band = difficultyBandFor(prefs, bands);
-    if (band) {
-      filters.minAccessibility = band.min;
-      filters.maxAccessibility = band.max;
+    const chosenDiff = difficultyBandsFor(prefs, bands).filter(
+      (b) => Number.isFinite(b.min) && Number.isFinite(b.max)
+    );
+    if (chosenDiff.length) {
+      filters.minAccessibility = Math.min(...chosenDiff.map((b) => b.min));
+      filters.maxAccessibility = Math.max(...chosenDiff.map((b) => b.max));
     }
   }
   return filters;
@@ -375,8 +405,8 @@ export const scorePoem = (poem, prefs, bands = {}) => {
   const f = facetsOf(poem);
   const moods = asArray(prefs?.moods);
   const motifs = asArray(prefs?.motifs);
-  const eraBand = eraBandFor(prefs, bands);
-  const diffBand = difficultyBandFor(prefs, bands);
+  const eraBands = eraBandsFor(prefs, bands);
+  const diffBands = difficultyBandsFor(prefs, bands);
 
   let score = 0;
   let max = 0;
@@ -485,79 +515,85 @@ export const scorePoem = (poem, prefs, bands = {}) => {
   }
 
   /* -- era: ordinal, with adjacency and an undated allowance --------------- */
-  if (eraBand) {
+  // Multi-select: each chosen band is judged on its own and the BEST credit
+  // wins. Merging the picks into one span instead would credit the gap between
+  // two non-adjacent bands as if the reader had asked for it.
+  if (eraBands.length) {
     max += WEIGHTS.era;
-    if (eraBand.undated) {
-      // The late/modern band IS the undated rows. A dated poem is simply not it.
+    const judge = (band) => {
+      if (band.undated) {
+        return f.century == null
+          ? { credit: 1, kind: 'full', why: 'undated, as asked', matched: 'undated' }
+          : { credit: 0, kind: 'none', why: `dated (c${f.century})` };
+      }
       if (f.century == null) {
-        score += WEIGHTS.era;
-        matched.era = 'undated';
-        term('era', WEIGHTS.era, WEIGHTS.era, 'full', 'undated, as asked');
-      } else {
-        term('era', WEIGHTS.era, 0, 'none', `dated (c${f.century})`);
+        // The 15th-to-today band absorbs the undated rows (see FIXED_ERA_BANDS),
+        // so for that band an undated poem is exactly what was asked for. Under
+        // any other band it is a partial credit: undated is ~25% of the corpus
+        // and excluding it outright would starve every dated answer.
+        return band.includesUndated
+          ? { credit: 1, kind: 'full', why: 'undated, in band', matched: 'in-band' }
+          : {
+              credit: UNDATED_ERA_CREDIT,
+              kind: 'partial',
+              why: 'undated',
+              matched: 'undated-under-dated',
+            };
       }
-    } else if (f.century == null) {
-      score += WEIGHTS.era * UNDATED_ERA_CREDIT;
-      matched.era = 'undated-under-dated';
-      term('era', WEIGHTS.era, WEIGHTS.era * UNDATED_ERA_CREDIT, 'partial', 'undated');
-    } else {
-      const from = eraBand.century_from;
-      const to = eraBand.century_to;
-      if (Number.isFinite(from) && Number.isFinite(to)) {
-        if (f.century >= from && f.century <= to) {
-          score += WEIGHTS.era;
-          matched.era = 'in-band';
-          term('era', WEIGHTS.era, WEIGHTS.era, 'full', 'in band');
-        } else {
-          const gap = f.century < from ? from - f.century : f.century - to;
-          if (gap <= ADJACENT_CENTURIES) {
-            score += WEIGHTS.era * ADJACENT_ERA_CREDIT;
-            matched.era = 'adjacent';
-            term(
-              'era',
-              WEIGHTS.era,
-              WEIGHTS.era * ADJACENT_ERA_CREDIT,
-              'partial',
-              `${gap} c. outside`
-            );
-          } else {
-            term('era', WEIGHTS.era, 0, 'none', `${gap} c. outside`);
+      const from = band.century_from;
+      const to = band.century_to;
+      if (!Number.isFinite(from) || !Number.isFinite(to)) {
+        return { credit: 0, kind: 'none', why: 'band has no century range' };
+      }
+      if (f.century >= from && f.century <= to) {
+        return { credit: 1, kind: 'full', why: 'in band', matched: 'in-band' };
+      }
+      const gap = f.century < from ? from - f.century : f.century - to;
+      return gap <= ADJACENT_CENTURIES
+        ? {
+            credit: ADJACENT_ERA_CREDIT,
+            kind: 'partial',
+            why: `${gap} c. outside`,
+            matched: 'adjacent',
           }
-        }
-      } else {
-        term('era', WEIGHTS.era, 0, 'none', 'band has no century range');
-      }
-    }
+        : { credit: 0, kind: 'none', why: `${gap} c. outside` };
+    };
+
+    const best = eraBands
+      .map(judge)
+      .reduce((a, b) => (b.credit > a.credit ? b : a), { credit: -1, kind: 'none', why: '' });
+    score += WEIGHTS.era * best.credit;
+    if (best.matched) matched.era = best.matched;
+    term('era', WEIGHTS.era, WEIGHTS.era * best.credit, best.kind, best.why);
   }
 
   /* -- difficulty: continuous, linear falloff outside the band ------------- */
-  if (diffBand) {
+  // Same rule as era: best of the chosen bands, not their union.
+  if (diffBands.length) {
     max += WEIGHTS.difficulty;
     const a = f.accessibility;
-    if (a != null && Number.isFinite(diffBand.min) && Number.isFinite(diffBand.max)) {
-      if (a >= diffBand.min && a <= diffBand.max) {
-        score += WEIGHTS.difficulty;
-        matched.difficulty = 'in-band';
-        term('difficulty', WEIGHTS.difficulty, WEIGHTS.difficulty, 'full', 'in band');
-      } else {
-        const gap = a < diffBand.min ? diffBand.min - a : a - diffBand.max;
-        const near = Math.max(0, 1 - gap / DIFFICULTY_FALLOFF) * DIFFICULTY_NEAR_CREDIT;
-        if (near > 0) {
-          score += WEIGHTS.difficulty * near;
-          matched.difficulty = 'near';
-          term(
-            'difficulty',
-            WEIGHTS.difficulty,
-            WEIGHTS.difficulty * near,
-            'partial',
-            `${gap.toFixed(1)} outside`
-          );
-        } else {
-          term('difficulty', WEIGHTS.difficulty, 0, 'none', `${gap.toFixed(1)} outside`);
-        }
-      }
-    } else {
+    if (a == null) {
       term('difficulty', WEIGHTS.difficulty, 0, 'none', 'poem has no score');
+    } else {
+      const judge = (band) => {
+        if (!Number.isFinite(band.min) || !Number.isFinite(band.max)) {
+          return { credit: 0, kind: 'none', why: 'band has no range' };
+        }
+        if (a >= band.min && a <= band.max) {
+          return { credit: 1, kind: 'full', why: 'in band', matched: 'in-band' };
+        }
+        const gap = a < band.min ? band.min - a : a - band.max;
+        const near = Math.max(0, 1 - gap / DIFFICULTY_FALLOFF) * DIFFICULTY_NEAR_CREDIT;
+        return near > 0
+          ? { credit: near, kind: 'partial', why: `${gap.toFixed(1)} outside`, matched: 'near' }
+          : { credit: 0, kind: 'none', why: `${gap.toFixed(1)} outside` };
+      };
+      const best = diffBands
+        .map(judge)
+        .reduce((x, y) => (y.credit > x.credit ? y : x), { credit: -1, kind: 'none', why: '' });
+      score += WEIGHTS.difficulty * best.credit;
+      if (best.matched) matched.difficulty = best.matched;
+      term('difficulty', WEIGHTS.difficulty, WEIGHTS.difficulty * best.credit, best.kind, best.why);
     }
   }
 

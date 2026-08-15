@@ -41,9 +41,15 @@ import {
 const GOLD = '#c5a059';
 
 /** The rail head for a band: its century span, or the modern end. */
+/**
+ * The rail head for a band: its century span. The last band runs to the present
+ * and is headed "15–" rather than "15–21", because the closed number would
+ * claim a precision the corpus does not have (it also carries the undated
+ * poems) and because an open range is how a living period is written.
+ */
 const headFor = (band) => {
-  if (band.undated) return 'اليوم';
   if (band.century_from == null) return '—';
+  if (band.includesUndated) return `${band.century_from}–`;
   return band.century_from === band.century_to
     ? String(band.century_from)
     : `${band.century_from}–${band.century_to}`;
@@ -59,15 +65,13 @@ const EraStep = ({
   onBack,
   loading,
 }) => {
-  const [selected, toggle] = useSelection(value, false);
-  const chosenIndex = options.findIndex((o) => o.key === selected[0]);
+  // Multi-select: a reader who wants the Jahiliyya AND the moderns should not
+  // have to pick a winner.
+  const [selected, toggle] = useSelection(value, true);
 
   const body = () => {
     if (loading) return <LoadingState testId={testId} />;
     if (!options.length) return <EmptyState testId={testId} />;
-
-    // How far down the rail the gold runs: to the centre of the chosen node.
-    const fill = chosenIndex < 0 ? 0 : ((chosenIndex + 0.5) / options.length) * 100;
 
     return (
       <div
@@ -93,25 +97,30 @@ const EraStep = ({
             background: 'rgba(255,255,255,0.14)',
           }}
         />
-        <span
-          aria-hidden="true"
-          data-testid={`${testId}-axis-fill`}
-          style={{
-            position: 'absolute',
-            insetInlineStart: 15,
-            top: 6,
-            height: `calc(${fill}% - 6px)`,
-            width: 1,
-            background: `linear-gradient(180deg, ${GOLD}, ${GOLD}55)`,
-            transition: 'height .45s cubic-bezier(.2,.7,.3,1)',
-          }}
-        />
-
         {options.map((o, i) => {
-          const on = selected[0] === o.key;
-          const passed = chosenIndex >= 0 && i < chosenIndex;
+          const on = selected.includes(o.key);
           return (
-            <div key={o.key} style={{ display: 'flex', alignItems: 'stretch' }}>
+            <div
+              key={o.key}
+              style={{ display: 'flex', alignItems: 'stretch', position: 'relative' }}
+            >
+              {/* Each band owns its stretch of rail and lights only that. The
+                  rail used to fill from the top down to the single chosen node,
+                  which cannot express two picks — worse, it would imply
+                  everything above the lower one had been chosen too. */}
+              <span
+                aria-hidden="true"
+                data-testid={on ? `${testId}-axis-lit` : undefined}
+                style={{
+                  position: 'absolute',
+                  insetInlineStart: 15,
+                  top: 0,
+                  bottom: 0,
+                  width: 1,
+                  background: on ? `linear-gradient(180deg, ${GOLD}, ${GOLD}88)` : 'transparent',
+                  transition: 'background .35s ease',
+                }}
+              />
               {/* Node gutter, 31px wide so the dot's centre lands on the rail. */}
               <span
                 aria-hidden="true"
@@ -120,6 +129,7 @@ const EraStep = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  position: 'relative',
                 }}
               >
                 <span
@@ -128,7 +138,7 @@ const EraStep = ({
                     height: on ? 10 : 7,
                     borderRadius: '50%',
                     background: on ? GOLD : '#0a0a0f',
-                    border: `1.5px solid ${on || passed ? GOLD : 'rgba(255,255,255,0.3)'}`,
+                    border: `1.5px solid ${on ? GOLD : 'rgba(255,255,255,0.3)'}`,
                     transition: 'all .3s ease',
                   }}
                 />
@@ -171,11 +181,10 @@ const EraStep = ({
                 }}
               >
                 <span
-                  lang={o.undated ? 'ar' : undefined}
-                  dir={o.undated ? 'rtl' : 'ltr'}
+                  dir="ltr"
                   style={{
                     fontFamily: "'Amiri', serif",
-                    fontSize: o.undated ? '1.1rem' : '1.55rem',
+                    fontSize: '1.55rem',
                     lineHeight: 1.1,
                     letterSpacing: '.01em',
                     color: on ? GOLD : 'rgba(255,255,255,0.55)',

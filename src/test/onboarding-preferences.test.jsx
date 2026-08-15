@@ -259,9 +259,10 @@ describe('OnboardingFlow', () => {
     await waitFor(() => expect(onComplete).toHaveBeenCalled());
     const saved = onComplete.mock.calls[0][0];
     expect(saved.family).toBe('love-desire');
-    expect(saved.difficulty).toBe('gentle');
+    // Difficulty and era are multi-select, so both store arrays.
+    expect(saved.difficulty).toEqual(['gentle']);
     expect(saved.moods).toHaveLength(1);
-    expect(saved.era).toBeTruthy();
+    expect(saved.era.length).toBeGreaterThan(0);
     expect(saved.completedAt).toBeTruthy();
   });
 

@@ -16,8 +16,8 @@
  *
  * Two collisions also had to be designed out rather than drawn better. A plain
  * droplet is the same shape as a flame, so `tears` gets an eyelid over it and
- * `fire-light` became a lamp, and then (owner's call) an actual flame drawn so
- * that it cannot collapse back into a droplet. And `night` and `moon-stars` were two crescents
+ * `fire-light` is a flame with a notched shoulder and a leaning tip. And
+ * `night` and `moon-stars` were two crescents
  * two tiles apart in one grid, distinguished only by four-point sparkles — the
  * "AI magic" mark. There is now exactly one crescent in the set.
  *
@@ -109,9 +109,6 @@ const G = {
       <path {...S} d="M14.6 15q1.7 2.8 3.2.4 1.5 2.4 3.2-.4" opacity="0.65" />
     </>
   ),
-  // A lamp, not a flame. A symmetric teardrop reads as a leaf, and any droplet
-  // shape collides with `tears` two tiles away; a bowl with a lit spout says
-  // both fire and light without either problem.
   // النار والضوء: an actual flame. It was a lamp, which is an object that
   // happens to hold fire rather than the thing the motif names. The left
   // shoulder carries a notch and the tip leans, because a symmetric convex
@@ -141,12 +138,11 @@ const G = {
       />
     </>
   ),
-  // A caravan mark: three humps descending along a rule. An outline camel needs
-  // ~48px and collapsed into a shoe at this size.
-  // الرحلة والراحلة: the mount, not the road. Three dunes and a track read as
-  // landscape, and landscape at 34px is indistinguishable from `desert-ruins`.
-  // A horse's head in profile is the one silhouette that survives this size —
-  // it is why the chess piece is drawn that way.
+  // الرحلة والراحلة names the MOUNT, not the road. An outline camel needs ~48px
+  // and collapsed into a shoe, so this was three dunes on a rule — but landscape
+  // at 34px is indistinguishable from `desert-ruins` two rows up. A horse's head
+  // in profile is the one silhouette that survives this size, which is why the
+  // chess piece is drawn that way.
   journey: (
     <>
       <path

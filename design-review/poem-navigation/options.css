@@ -99,7 +99,7 @@
 .threshold .glyph {
   font-family: 'Reem Kufi', sans-serif;
   color: var(--gold);
-  font-size: 1.1rem;
+  font-size: 1.6rem;
   opacity: 0.85;
   letter-spacing: 0.4em;
 }
@@ -192,6 +192,11 @@
 
 /* ── N5 · Composite escape control ─────────────────────────────────────────── */
 /* The "I don't want this poem" case, available mid-poem without owning an axis. */
+/* When the escape control is present it occupies the top-right corner, so the counter has to
+   move out of its way rather than sit underneath it. */
+#app:has(.escape) .topbar {
+  padding-right: 52px;
+}
 .escape {
   position: absolute;
   top: calc(var(--safe-t) + 6px);
@@ -211,11 +216,13 @@
 .readout {
   position: absolute;
   left: 8px;
-  bottom: calc(var(--safe-b) + 122px);
+  bottom: calc(var(--safe-b) + 126px);
+  width: 178px;
+  white-space: pre;
   z-index: 9;
   font-family: ui-monospace, monospace;
   font-size: 9px;
-  line-height: 1.5;
+  line-height: 1.55;
   color: rgba(236, 231, 221, 0.5);
   background: rgba(10, 10, 15, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.07);

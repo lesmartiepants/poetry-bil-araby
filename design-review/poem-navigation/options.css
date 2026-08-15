@@ -119,12 +119,12 @@
   justify-content: center;
   gap: 7px;
   pointer-events: none;
-  /* --r is scroll progress across the last 170px of the poem, written on every scroll frame. No
-     transition: the reveal IS the scroll, so interpolating it would put a lag between the finger
-     and the thing it is uncovering. */
+  /* --r is scroll progress across the last 170px of the poem, written on every scroll frame.
+     A FADE AND NOTHING ELSE: no movement, no transition. The label and the next poem's name sit
+     exactly where they will end up and simply become visible as the reader arrives. Sliding them
+     into place was still an entrance animation, which is the thing that was wrong with it. */
   opacity: var(--r, 0);
-  transform: translateY(calc((1 - var(--r, 0)) * 12px));
-  will-change: opacity, transform;
+  will-change: opacity;
 }
 /* The one case with no scroll to ride (poem shorter than the viewport) is also the only one that
    gets a fade, because there is nothing else to carry it. */

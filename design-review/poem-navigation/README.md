@@ -200,7 +200,7 @@ Measured over a full summon on the 22-verse poem: **388 frames, median 8.3ms, wo
 ### 3. N3 · Threshold — staged handoff, and the flaw is fixed
 
 1. **reading** — one poem, scrolling normally.
-2. **revealing** — across the last **170px** of the poem the handoff fades and rises, tied directly to scroll position. It is something the reader scrolls into view, not something that happens at them, and scrolling back up puts it away at the same rate. **No transition on it, deliberately:** the reveal *is* the scroll, so interpolating would put a lag between the finger and the thing it's uncovering.
+2. **revealing** — across the last **170px** of the poem the handoff **fades in**, tied directly to scroll position. Opacity and nothing else: it sits exactly where it will end up and simply becomes visible as the reader arrives. Scrolling back up puts it away at the same rate. **No transition and no movement, deliberately** — the reveal *is* the scroll, so interpolating would lag the finger, and sliding it into place would make it an entrance animation again, which was the thing that was wrong with it.
 3. **pulling** — once fully revealed, a distinct gesture past the stop fills the meter.
 4. **locked** — the next poem arrives and locks to top.
 

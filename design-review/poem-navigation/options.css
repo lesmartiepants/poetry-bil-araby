@@ -25,11 +25,13 @@
 }
 .edge-guard.l {
   left: 0;
-  background: linear-gradient(to right, rgba(220, 80, 80, 0.16), transparent);
+  background: linear-gradient(to right, rgba(226, 84, 84, 0.42), rgba(226, 84, 84, 0));
+  border-left: 1px solid rgba(226, 84, 84, 0.55);
 }
 .edge-guard.r {
   right: 0;
-  background: linear-gradient(to left, rgba(220, 80, 80, 0.16), transparent);
+  background: linear-gradient(to left, rgba(226, 84, 84, 0.42), rgba(226, 84, 84, 0));
+  border-right: 1px solid rgba(226, 84, 84, 0.55);
 }
 #app:not(.show-guards) .edge-guard {
   background: none;
@@ -37,13 +39,13 @@
 
 .lat-dots {
   position: absolute;
-  bottom: calc(var(--safe-b) + 124px);
+  bottom: calc(var(--safe-b) + 126px);
   left: 0;
   right: 0;
   display: flex;
   gap: 6px;
   justify-content: center;
-  z-index: 7;
+  z-index: 8; /* above the bottom scrim, or the position indicator is invisible */
   pointer-events: none;
 }
 .lat-dots i {
@@ -124,16 +126,19 @@
 /* A press-and-hold target that exists ONLY at the end of the poem, where the reader has arrived
    deliberately and where B's dimmed-ahead verses have already told them the end was coming. */
 .seal-wrap {
-  margin: 34px 0 8px;
+  margin: 26px 0 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
+/* 76px, not 92px. Comfortably above the 44px touch minimum, and small enough that a 4-line
+   bilingual poem (four TALL rows — the baseline capacity #707 measured) doesn't have to scroll
+   far to reach it. */
 .seal {
   position: relative;
-  width: 92px;
-  height: 92px;
+  width: 76px;
+  height: 76px;
   border-radius: 50%;
   border: 1px solid rgba(197, 160, 89, 0.34);
   background: radial-gradient(circle at 50% 45%, rgba(197, 160, 89, 0.11), transparent 68%);
@@ -144,7 +149,7 @@
 }
 .seal .letter {
   font-family: Amiri, serif;
-  font-size: 2.5rem;
+  font-size: 2.1rem;
   color: var(--gold);
   line-height: 1;
   text-shadow: 0 0 0 rgba(212, 180, 99, 0);
@@ -169,7 +174,7 @@
   font-size: 0.68rem;
   letter-spacing: 0.13em;
   text-transform: uppercase;
-  color: rgba(236, 231, 221, 0.4);
+  color: rgba(236, 231, 221, 0.58);
   text-align: center;
   max-width: 240px;
   line-height: 1.6;

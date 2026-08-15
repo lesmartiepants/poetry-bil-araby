@@ -80,6 +80,7 @@ import {
   fetchPoets,
   fetchRandomPoem,
   fetchPoemsByPoet,
+  fetchCuratedPoems,
   saveTranslation,
   pingHealth,
 } from './services/database.js';
@@ -251,6 +252,7 @@ export default function DiwanApp() {
   // ── UI store (Zustand) ──
   const darkMode = useUIStore((s) => s.darkMode);
   const setDarkMode = useUIStore((s) => s.setDarkMode);
+  const curated = useUIStore((s) => s.curated);
   const currentFont = useUIStore((s) => s.font);
   const setCurrentFont = useUIStore((s) => s.setFont);
   const ratchetMode = useUIStore((s) => s.ratchetMode);
@@ -466,9 +468,13 @@ export default function DiwanApp() {
 
     // A scored feed doesn't need a poet — that is the point of it — so only the
     // poet-run path is gated on having one.
+    // The Curated toggle (explicit, per-session) wins over the passive
+    // onboarding-prefs scored feed: when it's on in "All" mode, the whole scroll
+    // is taste-weighted draws across every poet, not a poet run or a prefs feed.
+    const curatedOn = curated && selectedCategory === 'All';
     const prefsForFeed = FEATURES.onboardingPrefs ? readPrefs() : null;
-    const wantScoredFeed = selectedCategory === 'All' && hasPreferences(prefsForFeed);
-    if ((!targetPoet && !wantScoredFeed) || !current?.id) return;
+    const wantScoredFeed = !curatedOn && selectedCategory === 'All' && hasPreferences(prefsForFeed);
+    if ((!targetPoet && !wantScoredFeed && !curatedOn) || !current?.id) return;
 
     // A preference redraw is building the whole feed, or has just built it.
     // Either way this effect has nothing to add and everything to clobber.
@@ -516,24 +522,29 @@ export default function DiwanApp() {
     const prefs = prefsForFeed;
     const scoredFeed = wantScoredFeed;
 
-    const populate = scoredFeed
-      ? // startSlot 1 because slot 0 is `current`, already drawn and already on
-        // screen. Everything here SAMPLES: this is an ordinary refill around a
-        // poem the reader arrived at some other way, not a feed drawn from
-        // answers they just gave. Ranking slide 1 here would put the single
-        // best-scoring candidate of the page in front of the reader on every
-        // poem they ever land on, which converges the feed and — worse — would
-        // overwrite the real ranked opening moments after a redraw produced it.
-        fetchWeightedFeed({
-          prefs,
-          excludeIds: [current.id],
-          addLog,
-          count: FEED_SIZE - 1,
-          startSlot: 1,
-          replaceFeed: false,
-        })
-      : // Fetch 4 additional poems (excluding the current main poem) to fill slots 1-4.
-        fetchPoemsByPoet(targetPoet, 4, [current.id]);
+    const populate = curatedOn
+      ? // Curated feed: taste-weighted draws across all poets, excluding the
+        // current poem and the reader's downvotes. Slot 0 stays `current` so the
+        // view never jumps when the toggle flips mid-read.
+        fetchCuratedPoems(FEED_SIZE - 1, [current.id, ...downvotedPoemIds])
+      : scoredFeed
+        ? // startSlot 1 because slot 0 is `current`, already drawn and already on
+          // screen. Everything here SAMPLES: this is an ordinary refill around a
+          // poem the reader arrived at some other way, not a feed drawn from
+          // answers they just gave. Ranking slide 1 here would put the single
+          // best-scoring candidate of the page in front of the reader on every
+          // poem they ever land on, which converges the feed and — worse — would
+          // overwrite the real ranked opening moments after a redraw produced it.
+          fetchWeightedFeed({
+            prefs,
+            excludeIds: [current.id],
+            addLog,
+            count: FEED_SIZE - 1,
+            startSlot: 1,
+            replaceFeed: false,
+          })
+        : // Fetch 4 additional poems (excluding the current main poem) to fill slots 1-4.
+          fetchPoemsByPoet(targetPoet, 4, [current.id]);
 
     populate
       .then((others) => {
@@ -544,9 +555,11 @@ export default function DiwanApp() {
         if (FEATURES.logging)
           addLog(
             'Carousel',
-            scoredFeed
-              ? `Populated ${carouselList.length} poems by score (main poem first)`
-              : `Populated ${carouselList.length} poems for ${targetPoet} (main poem first)`,
+            curatedOn
+              ? `Populated ${carouselList.length} curated poems (main poem first)`
+              : scoredFeed
+                ? `Populated ${carouselList.length} poems by score (main poem first)`
+                : `Populated ${carouselList.length} poems for ${targetPoet} (main poem first)`,
             'info'
           );
         // Auto-explain is handled by the autoExplainPending path — no direct analyzePoemAction here.
@@ -557,7 +570,7 @@ export default function DiwanApp() {
     return () => {
       cancelled = true;
     };
-  }, [selectedCategory, useDatabase, current?.poetArabic, current?.id, isFullScreenRoute]);
+  }, [selectedCategory, useDatabase, current?.poetArabic, current?.id, isFullScreenRoute, curated]);
 
   // When interpretation arrives from an analysis triggered by a carousel poem, patch that
   // poem's english field so PoemCarousel (which reads poem.english) can render the translation.

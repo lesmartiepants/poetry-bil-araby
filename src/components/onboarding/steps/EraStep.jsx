@@ -14,33 +14,52 @@ import {
  *
  * "Ancient to modern" is the only question in the flow with a real axis behind
  * it, so this step draws the axis and lets the DATES carry it. A rail runs down
- * the left edge from the pre-Islamic period to the present; each band hangs
- * off the rail on a leader line, headed by its century range set large in Amiri;
- * and choosing one runs gold down the rail to that node, so the reader can see
- * where in fourteen centuries they just landed and how much sits before it.
+ * the left edge from the pre-Islamic period to the present; each band hangs off
+ * the rail on a leader line, headed by its century range set large in Amiri;
+ * and choosing one lights that band's own stretch of rail, so the reader can see
+ * where in fourteen centuries they just landed.
+ *
+ * The step is multi-select, and that is what decided how the rail behaves. It
+ * used to fill from the top down to the single chosen node, which cannot express
+ * two picks at all, and worse would imply that everything above the lower pick
+ * had been chosen too. Each band owning its own segment says exactly what was
+ * asked for and nothing more.
  *
  * The numerals are the hero rather than an afterthought because they are the
  * only thing on the screen that is genuinely chronological — "الجاهلي" means
  * nothing to a reader who does not already know the periods, while "6–8" places
- * it immediately. Every band already carries the range from the banding service
- * (`hint_ar` / `hint_en`). That is data about the CHOICE, not a poem count: it
- * says what you are picking, not how much of it there is.
+ * it immediately.
  *
  * Like the difficulty step there are no cards, for the same reason — a boxed row
  * with a mark on its edge is what the flow had six of. Here the rail, the
  * leaders and the big numerals are the structure.
  *
- * ## Bands are derived, so the count varies
+ * ## The bands are fixed
  *
- * `deriveEraBands` cuts roughly equal-weight bands from the live century
- * histogram and appends an undated band for the late/modern poems whose century
- * is deliberately NULL — that is a real period, not missing data, so it gets the
- * present-day end of the rail and is headed "اليوم" instead of a number.
+ * Four of them, always, from `FIXED_ERA_BANDS` in services/categoryBands.js:
+ * 6th–8th, 9th–10th, 11th–14th, and 15th to today. They were previously CUT
+ * from the live century histogram by equal frequency, so that no band was a
+ * dead end and none swallowed the library; that produced 6–8 / 9 / 11–14 /
+ * undated, and the owner named both of its problems. The 9th stood alone
+ * because it really is ~40% of the corpus, which reads as an arbitrary
+ * one-century button. And "undated" was surfaced to the reader as a period,
+ * with a literary-sounding name, when it is a gap in the metadata.
+ *
+ * Fixed cuts trade balance for legibility knowingly: 9th–10th is still much the
+ * largest band, and that is now a stated choice rather than something the
+ * algorithm was fighting. The undated poems ride with 15th-to-today, which
+ * needs no button of its own and is where an undated poem most likely belongs.
+ * `deriveEraBands` still reads the live histogram — only for the counts, and to
+ * drop a band the corpus has nothing in.
+ *
+ * Bands arrive with `hint_ar` / `hint_en` already carrying the ordinal form of
+ * the range ("6th–8th c. CE"), which is what the numerals on the rail are the
+ * short form of. That is data about the CHOICE, not a poem count: it says what
+ * you are picking, not how much of it there is.
  */
 
 const GOLD = '#c5a059';
 
-/** The rail head for a band: its century span, or the modern end. */
 /**
  * The rail head for a band: its century span. The last band runs to the present
  * and is headed "15–" rather than "15–21", because the closed number would

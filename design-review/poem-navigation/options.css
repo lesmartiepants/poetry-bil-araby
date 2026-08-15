@@ -25,13 +25,11 @@
 }
 .edge-guard.l {
   left: 0;
-  background: linear-gradient(to right, rgba(226, 84, 84, 0.42), rgba(226, 84, 84, 0));
-  border-left: 1px solid rgba(226, 84, 84, 0.55);
+  background: linear-gradient(to right, rgba(226, 84, 84, 0.26), rgba(226, 84, 84, 0));
 }
 .edge-guard.r {
   right: 0;
-  background: linear-gradient(to left, rgba(226, 84, 84, 0.42), rgba(226, 84, 84, 0));
-  border-right: 1px solid rgba(226, 84, 84, 0.55);
+  background: linear-gradient(to left, rgba(226, 84, 84, 0.26), rgba(226, 84, 84, 0));
 }
 #app:not(.show-guards) .edge-guard {
   background: none;
@@ -188,6 +186,24 @@
   background: var(--gold-bright);
   box-shadow: 0 0 6px var(--gold-bright);
   pointer-events: none;
+}
+
+/* Fills as the reader over-scrolls past the end, so the commit to the next poem is visible
+   before it happens rather than after. */
+.pull-meter {
+  margin: 12px auto 0;
+  width: 84px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(197, 160, 89, 0.16);
+  overflow: hidden;
+}
+.pull-meter i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--gold-bright);
+  transition: width 0.08s linear;
 }
 
 /* ── N5 · Composite escape control ─────────────────────────────────────────── */

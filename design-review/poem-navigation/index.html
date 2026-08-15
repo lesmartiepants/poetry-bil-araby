@@ -405,11 +405,54 @@
           const t = document.createElement('div');
           t.className = 'threshold';
           const nxt = poems[(idx + 1) % poems.length];
-          t.innerHTML = `<hr /><div class="next-label">or keep scrolling · ${nxt.title} · ${nxt.arLines.length} lines</div>`;
+          t.innerHTML = `<hr /><div class="next-label">or keep scrolling · ${nxt.title} · ${nxt.arLines.length} lines</div>
+            <div class="pull-meter"><i></i></div>`;
           col.appendChild(t);
           setPoemName();
           report(sc);
         };
+
+        // "Keep scrolling" has to actually do something, or the threshold is decoration.
+        //
+        // This is the ONE place N5 reintroduces an end-of-scroll boundary — the thing the #707
+        // handoff warns about. Three things make it survivable here, and they're the same three
+        // that make an end-of-poem invitation viable at all:
+        //   1. it exists only at the very end, where B's dimmed-ahead verses have already shown
+        //      the reader the poem's whole shape, so arriving is anticipated, not a surprise;
+        //   2. it needs deliberate OVER-scroll past a hard stop, accumulated across events —
+        //      momentum from a fast flick decays at the stop instead of carrying through;
+        //   3. it's visible. The meter fills as you pull, so the reader can see the commit
+        //      coming and can stop.
+        let over = 0;
+        const NEED = 110;
+        sc.addEventListener(
+          'scroll',
+          () => {
+            if (sc.scrollTop < sc.scrollHeight - sc.clientHeight - 2) {
+              over = 0;
+              const m = sc.querySelector('.pull-meter i');
+              if (m) m.style.width = '0%';
+            }
+          },
+          { passive: true }
+        );
+        sc.addEventListener(
+          'wheel',
+          (e) => {
+            const atEnd = sc.scrollTop >= sc.scrollHeight - sc.clientHeight - 2;
+            if (!atEnd || e.deltaY <= 0) return;
+            over += e.deltaY;
+            const m = sc.querySelector('.pull-meter i');
+            if (m) m.style.width = Math.min(100, (over / NEED) * 100).toFixed(0) + '%';
+            if (over >= NEED) {
+              over = 0;
+              idx = (idx + 1) % poems.length;
+              draw();
+              sc.scrollTop = 0;
+            }
+          },
+          { passive: true }
+        );
         chrome();
         const esc = document.createElement('button');
         esc.className = 'escape';

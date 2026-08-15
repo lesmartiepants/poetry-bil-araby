@@ -229,8 +229,8 @@ export const StepTitle = ({ ar, en, accent = GOLD, align = 'center' }) => (
  */
 export const EmptyState = ({
   testId,
-  ar = 'لم تُحمَّل التصنيفات بعد',
   en = 'Categories are not available yet',
+  ar = 'لم تحمل التصنيفات بعد',
 }) => (
   <div
     data-testid={`${testId}-empty`}
@@ -244,14 +244,10 @@ export const EmptyState = ({
       textAlign: 'center',
     }}
   >
-    <p
-      lang="ar"
-      dir="rtl"
-      style={{ fontFamily: "'Amiri', serif", color: 'rgba(255,255,255,0.5)', margin: 0 }}
-    >
-      {ar}
-    </p>
-    <p style={{ fontSize: '.75rem', color: 'rgba(255,255,255,0.28)', margin: 0 }}>{en}</p>
+    {/* English first, matching the titles above it. This block was the last
+        Arabic-first thing in the chrome: it sat under an English-led question
+        and then answered in the other order. */}
+    <BilingualLabel en={en} ar={ar} size="option" color="rgba(255,255,255,0.5)" gap={3} />
   </div>
 );
 

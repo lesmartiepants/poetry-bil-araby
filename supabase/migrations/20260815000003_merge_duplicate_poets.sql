@@ -12,6 +12,97 @@
 --
 -- The full list is in docs/data/poet-duplicates.csv. Nothing here is silent:
 -- every merge is one named pair below.
+--
+-- poems.poet_id is the ONLY foreign key into poets (poems_poet_id_fkey), so
+-- once a variant's poems are repointed the variant row has no dependents and
+-- deleting it is safe.
+--
+-- Explicit transaction. Without it these 49 pairs are 98 independent
+-- statements, and an abort at pair 30 leaves 1-29 merged and 31-49 not, with no
+-- clean way back. Do not rely on the migration runner to wrap it.
+
+BEGIN;
+
+-- Preflight: resolve every name BEFORE touching a row.
+--
+-- Each merge reads its target as a scalar subquery. If a name is absent — or
+-- differs by so much as a trailing space, which this corpus genuinely does
+-- (see 'قيس بن الملوح (مجنون ليلى )') — that subquery yields NULL. poems.poet_id
+-- is NOT NULL so the UPDATE aborts rather than orphaning poems, which is the
+-- right outcome but arrives as a bare constraint violation naming none of the
+-- 49 pairs. This block fails first and says which name.
+DO $preflight$
+DECLARE
+  pair record;
+BEGIN
+  FOR pair IN
+    SELECT * FROM (VALUES
+      ('قيس بن الملوح (مجنون ليلى )', 'قيس بن الملوح'),
+      ('ابن عبد ربه الاندلسي', 'ابن عبد ربه'),
+      ('الامام علي بن ابي طالب', 'علي بن أبي طالب'),
+      ('قيس بن الملوح (مجنون ليلى)', 'قيس بن الملوح'),
+      ('ابو حيان النحوي الاندلسي', 'أبو حيان الأندلسي'),
+      ('محي الدين بن عربي', 'محيي الدين بن عربي'),
+      ('امية الداني ( الحكم بن ابي الصلت )', 'الحكم بن ابي الصلت'),
+      ('الشافعي', 'الإمام الشافعي'),
+      ('الصنوبري', 'ابو بكر الصنوبري'),
+      ('ابن معصوم الحسني الحسيني', 'ابن معصوم المدني'),
+      ('ابو الفضل بن الاحنف', 'العباس بن الأحنف'),
+      ('عبد الجبار بن حمديس', 'ابن حمديس'),
+      ('عمر ابن ابي ربيعة', 'عمر بن أبي ربيعة'),
+      ('جميل بن معمر', 'جميل بثينة'),
+      ('ابن معصوم', 'ابن معصوم المدني'),
+      ('قيس لبنى', 'قيس بن ذريح'),
+      ('ابن رشيق القيرواني الازدي', 'ابن رشيق القيرواني'),
+      ('مجنون ليلى', 'قيس بن الملوح'),
+      ('ابن دريد', 'ابن دريد الأزدي'),
+      ('عماد الدين الاصفهاني', 'العماد الأصبهاني'),
+      ('حيدر بن سليمان الحلي', 'حيدر الحلي'),
+      ('علي بن محمد التهامي', 'التهامي'),
+      ('لبيد بن ربيعة العامري', 'لبيد بن ربيعة'),
+      ('ابراهيم بن هلال بن زهرون', 'ابو اسحاق الصابي'),
+      ('ابو منصور الثعالبي', 'الثعالبي'),
+      ('عمرو بن معدي كرب', 'عمرو بن معد يكرب'),
+      ('ليلى الاخيلية', 'ليلى الأخليلية'),
+      ('امية بن عبد العزيز الداني', 'الحكم بن ابي الصلت'),
+      ('ابن سارة الاندلسي', 'ابن سارة ( صارة ) الشنتريني'),
+      ('لسان الدين الخطيب', 'لسان الدين بن الخطيب'),
+      ('عماد الدين الاصبهاني', 'العماد الأصبهاني'),
+      ('مرسي شاكر الطنطاوي', 'مرسي شاكر طنطاوي'),
+      ('أبو الحسين النوري', 'ابو الحسن النوري'),
+      ('أبو بكر الخالدي', 'ابو بكر الخالدي ( الخالديان )'),
+      ('ابن الابار القضاعي البنلسي', 'ابن الابار الاشبيلي'),
+      ('ابن الزقاق', 'ابن الزقاق البلنسي'),
+      ('ابن باجه', 'ابن باجة الاندلسي'),
+      ('ابن حديدة', 'ابن حديدة اللخمي القيرواني'),
+      ('ابن هذيل', 'ابن هذيل القرطبي'),
+      ('ابن وهيب الحميري', 'محمد بن وهيب الحميري'),
+      ('ابو الشيص محمد', 'أبو الشيص الخزاعي'),
+      ('الحسين بن علي', 'الحسين بن علي بن ابي طالب'),
+      ('الكميت بن زيد', 'الكميت بن زيد الاسدي'),
+      ('الميكالي', 'ابو الفضل الميكالي'),
+      ('شرف الدين البوصيري', 'البوصيري'),
+      ('شهاب الدين الالوسي', 'ابوالثناء شهاب الدين محمود الالوسي'),
+      ('عبد المحسن الصوري بن غلبون', 'عبد المحسن الصوري'),
+      ('عرقلة الكلبي الدمشقي', 'عرقلة الدمشقي'),
+      ('تماضر بنت الشريد', 'الخنساء')
+    ) AS t(variant, canonical)
+  LOOP
+    IF NOT EXISTS (SELECT 1 FROM public.poets WHERE name = pair.canonical) THEN
+      RAISE EXCEPTION 'merge preflight: canonical % not found (variant %)',
+        pair.canonical, pair.variant;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM public.poets WHERE name = pair.variant) THEN
+      RAISE EXCEPTION 'merge preflight: variant % not found (canonical %)',
+        pair.variant, pair.canonical;
+    END IF;
+    IF (SELECT count(*) FROM public.poets WHERE name = pair.canonical) > 1 THEN
+      RAISE EXCEPTION 'merge preflight: canonical % is ambiguous, % rows share that name',
+        pair.canonical, (SELECT count(*) FROM public.poets WHERE name = pair.canonical);
+    END IF;
+  END LOOP;
+END
+$preflight$;
 
 -- قيس بن الملوح (مجنون ليلى ) -> قيس بن الملوح  (48 served poems; Duplicate spelling (trailing space) of Qays ibn al-Mulawwah)
 UPDATE public.poems SET poet_id = (SELECT id FROM public.poets WHERE name = 'قيس بن الملوح')
@@ -258,3 +349,4 @@ UPDATE public.poems SET poet_id = (SELECT id FROM public.poets WHERE name = 'ا�
   WHERE poet_id = (SELECT id FROM public.poets WHERE name = 'تماضر بنت الشريد');
 DELETE FROM public.poets WHERE name = 'تماضر بنت الشريد';
 
+COMMIT;

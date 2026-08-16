@@ -18,6 +18,12 @@
 --
 -- The full move list, with the century and the reason for each, is in
 -- docs/data/poet-era-moves.csv.
+--
+-- Explicit transaction: this is a long run of independent UPDATEs, so without
+-- one an abort partway leaves some poets moved and some not, with no clean way
+-- back. Do not rely on the migration runner to wrap it.
+
+BEGIN;
 
 -- -> era 1 (إسلامي / Early Islamic): 18 poets, 20 served poems
 UPDATE public.poets SET era_id = 1 WHERE name IN (
@@ -253,3 +259,4 @@ UPDATE public.poets SET era_id = 10 WHERE name IN (
   'عامرية الكثيب'
 );
 
+COMMIT;

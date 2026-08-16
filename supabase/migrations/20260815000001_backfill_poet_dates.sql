@@ -25,6 +25,12 @@
 -- (Antara, al-Nabigha, Zuhayr, al-Tufayl, Qays ibn al-Khatim, Aws ibn Hajr all
 -- died c.600-620 — ordinally the 7th century, literarily the Jahiliyya).
 
+-- Explicit transaction: the poets UPDATE and the poems.century recompute below
+-- are one change. Aborting between them would leave poets dated and
+-- poems.century still carrying the old era stamps. Do not rely on the migration
+-- runner to wrap it.
+BEGIN;
+
 WITH b (name, death_year, birth_year, active_year, date_confidence) AS (
   VALUES
   ('أبو العلاء المعري'::text, 1057::smallint, 973::smallint, NULL::smallint, 'exact'::public.poet_date_confidence),
@@ -747,3 +753,5 @@ SET century = public.poet_century(po.death_year, po.active_year, po.birth_year)
 FROM public.poets po
 WHERE p.poet_id = po.id
   AND p.century IS DISTINCT FROM public.poet_century(po.death_year, po.active_year, po.birth_year);
+
+COMMIT;

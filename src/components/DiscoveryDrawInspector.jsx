@@ -745,8 +745,12 @@ const DiscoveryDrawInspector = () => {
                   <div className="break-words">
                     answers: {draw.prefs?.family || '—'} /{' '}
                     {(draw.prefs?.moods || []).join('+') || '—'} /{' '}
-                    {(draw.prefs?.motifs || []).join('+') || '—'} / {draw.prefs?.era || '—'} /{' '}
-                    {draw.prefs?.difficulty || '—'}
+                    {(draw.prefs?.motifs || []).join('+') || '—'} /{' '}
+                    {/* era and difficulty are arrays since they went
+                        multi-select. React renders an array by concatenating
+                        it, so ['c6-8','c9-10'] printed as "c6-8c9-10". */}
+                    {[].concat(draw.prefs?.era || []).join('+') || '—'} /{' '}
+                    {[].concat(draw.prefs?.difficulty || []).join('+') || '—'}
                   </div>
                   <div className="break-words mt-0.5">
                     pages:{' '}

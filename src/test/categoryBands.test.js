@@ -101,13 +101,30 @@ describe('deriveEraBands', () => {
     expect(deriveEraBands(undefined)).toEqual([]);
   });
 
-  it('gives the undated (late/modern) poems their own band instead of dropping them', () => {
+  // Undated poems used to be their own button, labelled "Late & Modern" — a
+  // gap in the metadata presented to the reader as a literary period. They now
+  // ride with the 15th-to-today band, which is both where an undated poem most
+  // likely belongs and one fewer thing to explain.
+  it('folds the undated poems into the last band rather than giving them a button', () => {
     const bands = deriveEraBands(REAL_ERA_HISTOGRAM);
-    const undated = bands.filter((b) => b.undated);
-    expect(undated).toHaveLength(1);
-    expect(undated[0].poem_count).toBe(409);
-    expect(undated[0].century_from).toBeNull();
-    expect(undated[0].label_ar).toMatch(/[؀-ۿ]/);
+    expect(bands.some((b) => b.undated)).toBe(false);
+    const last = bands.at(-1);
+    expect(last.key).toBe('c15-today');
+    expect(last.includesUndated).toBe(true);
+    expect(last.poem_count).toBeGreaterThanOrEqual(409);
+    expect(last.label_ar).toMatch(/[؀-ۿ]/);
+  });
+
+  // The four cuts are the owner's, not the histogram's.
+  it('always cuts at 6-8 / 9-10 / 11-14 / 15-today', () => {
+    const bands = deriveEraBands(REAL_ERA_HISTOGRAM);
+    expect(bands.map((b) => b.key)).toEqual(['c6-8', 'c9-10', 'c11-14', 'c15-today']);
+    expect(bands.map((b) => [b.century_from, b.century_to])).toEqual([
+      [6, 8],
+      [9, 10],
+      [11, 14],
+      [15, 21],
+    ]);
   });
 
   it('accounts for every poem exactly once', () => {
@@ -125,14 +142,14 @@ describe('deriveEraBands', () => {
     }
   });
 
-  it('breaks up the 9th-century pile-up instead of leaving one giant option', () => {
+  // The bands were once cut by equal frequency so no button could dominate or
+  // dead-end. Fixed cuts give that up on purpose: the 9th century really is
+  // ~40% of the corpus, and a band holding it will be the biggest by far. What
+  // still has to hold is that no band is EMPTY — an option that leads nowhere
+  // is worse than an unbalanced one.
+  it('leaves no band empty', () => {
     const bands = deriveEraBands(REAL_ERA_HISTOGRAM);
-    const total = REAL_ERA_HISTOGRAM.reduce((n, r) => n + r.poem_count, 0);
-    // Raw centuries would give the 9th ~40% of the corpus in a single button.
-    // No band should dominate that badly after grouping.
-    for (const b of bands) expect(b.poem_count / total).toBeLessThan(0.45);
-    // And no band should be a dead end.
-    for (const b of bands) expect(b.poem_count / total).toBeGreaterThan(0.03);
+    for (const b of bands) expect(b.poem_count).toBeGreaterThan(0);
   });
 
   it('uses real Arabic period names where a century maps to one', () => {
@@ -147,21 +164,23 @@ describe('deriveEraBands', () => {
     }
   });
 
-  it('falls back to a plain century label for an unrecognised century', () => {
-    const bands = deriveEraBands(
-      [
-        { century: 21, poem_count: 50 },
-        { century: 22, poem_count: 50 },
-      ],
-      2
-    );
-    expect(bands.map((b) => b.label_en)).toEqual(['21st c.', '22nd c.']);
+  // Centuries outside 6-21 are not in any band and simply do not appear. That
+  // is deliberate: the bands are a fixed reading of Arabic literary history,
+  // not a partition of whatever the data happens to contain.
+  it('drops centuries that fall outside the fixed bands', () => {
+    const bands = deriveEraBands([
+      { century: 21, poem_count: 50 },
+      { century: 40, poem_count: 50 },
+    ]);
+    expect(bands.map((b) => b.key)).toEqual(['c15-today']);
+    expect(bands[0].poem_count).toBe(50);
   });
 
   it('handles a corpus that is entirely undated', () => {
     const bands = deriveEraBands([{ century: null, poem_count: 100 }]);
     expect(bands).toHaveLength(1);
-    expect(bands[0].undated).toBe(true);
+    expect(bands[0].key).toBe('c15-today');
+    expect(bands[0].poem_count).toBe(100);
   });
 });
 

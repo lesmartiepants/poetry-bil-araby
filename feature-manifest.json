@@ -26,9 +26,15 @@
         "src/components/category/PoemResultsGrid.jsx",
         "src/services/database.js"
       ],
-      "endpoints": ["GET /api/categories", "GET /api/poems/by-category"],
+      "endpoints": [
+        "GET /api/categories",
+        "GET /api/poems/by-category"
+      ],
       "tests": {
-        "unit": ["src/test/server.test.js", "src/test/server.db.test.js"],
+        "unit": [
+          "src/test/server.test.js",
+          "src/test/server.db.test.js"
+        ],
         "e2e": []
       },
       "deviceOnly": false,
@@ -37,28 +43,38 @@
     },
     {
       "id": "onboarding-preferences",
-      "name": "Onboarding preference flow (5 steps)",
+      "name": "Onboarding preference flow (6 steps)",
       "tier": "nice",
-      "userFacing": "Full-screen five-step flow at /onboarding: family, mood, motif (optional), era, difficulty. Every option, bilingual label and poem count is read from the live categorization API; the era and difficulty bands are cut from the LIVE DISTRIBUTION (GET /api/categories -> distributions) rather than hardcoded. Counts CASCADE: each step's options are re-counted against the answers already given (GET /api/categories now scopes by prior answers), and a running total under the options shows how many poems match all the choices against how many match at least one. Both are labelled as matches, never as feed contents, because under scoring an intersection count is not a promise about the feed. Every count is measured behind the SERVING predicate, so the numbers describe the ~4,767 poems the feed can actually reach rather than the full 9,073. Answers save to localStorage.onboardingPrefs. The account menu is the way back in: an entry that reads 'Set up your feed' with no saved answers and 'Change your feed' once there are some, because finishing the flow REPLACES them. No confirm step — the flow seeds every picker from the saved answers and writes nothing until the last one, so backing out early leaves them intact. PreferencesDrawer was built to re-edit them but is still mounted nowhere. They bias the feed as a weight, never a filter (see feed-preference-weighting). Salvaged from PR #517's visual work and rebuilt against the shipped taxonomy. The route has no user-facing link by design (see FEATURES.onboardingPrefs); reach it from the debug panel. Mood (16 options) and motif (12) use a ring constellation only above 640px, since below that the ring is too small to hold the chips without them painting over each other; phones get the staggered rows instead. Signed in, they also mirror to user_settings.onboarding_preferences (versioned JSONB) so they follow the reader across devices; on sign-in the two sides are reconciled whole by most-recent completedAt, and a payload whose version this build does not recognise is left untouched on both sides.",
+      "userFacing": "Full-screen six-step flow at /onboarding: a welcome that offers a curated feed or a way straight into the reading, then mood, imagery (motif, optional), family, reading difficulty and era. Every option and bilingual label is read from the live categorization API, and the era and difficulty bands are cut from the LIVE DISTRIBUTION (GET /api/categories -> distributions) rather than hardcoded. NO poem counts are shown anywhere: the answers are a weight on the feed and never a filter (see feed-preference-weighting), so a number beside an option describes a narrowing that does not happen, and printing one on all six steps turned six different questions into six readings of the same table. Dropping them also removed the per-step cascading scope refetch, so the flow no longer issues a request per answer; the counts still exist on the API and the draw inspector still reports them after a draw, where they mean something. Each step is its own component with its own design feature rather than one data-driven picker reskinned six times: mood is a field of coloured embers that washes the background with the mix of what you pick; imagery is a grid of line-art glyphs, because the question is about images; family is a shelf of vertical spines you pull one volume out of; reading difficulty is a type specimen, each band set in a progressively more classical face (Fustat, Amiri, Katibeh) so the letterforms demonstrate the answer; era hangs its bands off a timeline rail headed by their real century ranges. Every step is skippable and single-select steps toggle off when the chosen option is tapped again. Leaving from the welcome screen writes no completedAt, so declining is not recorded as a finished answer. Answers save to localStorage.onboardingPrefs (shape unchanged: family, moods, motifs, era, difficulty). The account menu is the way back in: an entry that reads 'Set up your feed' with no saved answers and 'Change your feed' once there are some, because finishing the flow REPLACES them. No confirm step \u2014 the flow seeds every picker from the saved answers and writes nothing until the last one, so backing out early leaves them intact. PreferencesDrawer was built to re-edit them and still uses the older generic PreferenceStep, and is mounted nowhere. Signed in, the answers also mirror to user_settings.onboarding_preferences (versioned JSONB) so they follow the reader across devices; on sign-in the two sides are reconciled whole by most-recent completedAt, and a payload whose version this build does not recognise is left untouched on both sides.",
       "entrypoints": [
         "src/components/AccountMenu.jsx",
         "src/components/PreferencesDrawer.jsx",
         "src/utils/onboardingEntry.js",
-        "src/components/onboarding/MatchTally.jsx",
         "src/components/onboarding/OnboardingFlow.jsx",
         "src/components/onboarding/PreferenceStep.jsx",
+        "src/components/onboarding/StepShell.jsx",
+        "src/components/onboarding/motifGlyphs.jsx",
+        "src/components/onboarding/stepParts.jsx",
+        "src/components/onboarding/steps/EraStep.jsx",
+        "src/components/onboarding/steps/FamilyStep.jsx",
+        "src/components/onboarding/steps/ImageryStep.jsx",
+        "src/components/onboarding/steps/MoodStep.jsx",
+        "src/components/onboarding/steps/ReadingStep.jsx",
+        "src/components/onboarding/steps/WelcomeStep.jsx",
         "src/constants/eras.js",
+        "src/hooks/useOnboardingPrefs.js",
         "src/services/categoryBands.js",
         "src/services/categoryTags.js",
-        "src/services/preferences.js",
-        "src/constants/eras.js",
-        "src/hooks/useOnboardingPrefs.js"
+        "src/services/preferences.js"
       ],
-      "endpoints": ["GET /api/categories"],
+      "endpoints": [
+        "GET /api/categories"
+      ],
       "tests": {
         "unit": [
-          "src/test/onboarding-preferences.test.jsx",
           "src/test/categoryBands.test.js",
+          "src/test/onboarding-bilingual-parity.test.jsx",
+          "src/test/onboarding-preferences.test.jsx",
           "src/test/onboarding-prefs-sync.test.jsx",
           "src/test/onboarding-entry.test.js"
         ],
@@ -66,7 +82,7 @@
       },
       "deviceOnly": false,
       "coverage": "behavioral",
-      "gap": "Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all five steps to completion, mood ordering, and the empty pre-migration state. Cross-device sync is unit-tested in both merge directions, plus write-through, read-back and version mismatch, against a stubbed Supabase client. No e2e yet for the rendered flow, and nothing exercises the JSONB column against a real Postgres row."
+      "gap": "Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all six steps to completion in order, the welcome exit writing no completedAt, mood ordering by feeling rather than corpus size, the optional motif step, single-select clearing on a second tap, the absence of any digit on an option or its aria-label, and the empty pre-migration state. Cross-device sync is unit-tested in both merge directions, plus write-through, read-back and version mismatch, against a stubbed Supabase client. No e2e yet for the rendered flow, nothing exercises the JSONB column against a real Postgres row, and nothing automated checks the layout at phone width -- the six steps were verified by hand at 393x852 and 375x812."
     },
     {
       "id": "taxonomy-tag-ui",
@@ -81,7 +97,11 @@
         "src/components/tags/PoemTagEditor.jsx",
         "src/components/tags/TagAdminPanel.jsx"
       ],
-      "endpoints": ["GET /api/categories", "GET /api/poems/by-category", "GET /api/poems/search"],
+      "endpoints": [
+        "GET /api/categories",
+        "GET /api/poems/by-category",
+        "GET /api/poems/search"
+      ],
       "tests": {
         "unit": [],
         "e2e": []
@@ -102,8 +122,12 @@
       ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/utils.test.jsx"],
-        "e2e": ["e2e/user-flows.spec.js"]
+        "unit": [
+          "src/test/utils.test.jsx"
+        ],
+        "e2e": [
+          "e2e/user-flows.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "behavioral",
@@ -114,11 +138,22 @@
       "name": "Discover / random poem",
       "tier": "critical",
       "userFacing": "Tap the fire icon, press right arrow, or Surprise Me to load a new poem.",
-      "entrypoints": ["src/components/DiscoverDrawer.jsx", "src/stores/actions/fetchPoem.js"],
-      "endpoints": ["GET /api/poems/random"],
+      "entrypoints": [
+        "src/components/DiscoverDrawer.jsx",
+        "src/stores/actions/fetchPoem.js"
+      ],
+      "endpoints": [
+        "GET /api/poems/random"
+      ],
       "tests": {
-        "unit": ["src/test/fetchPoem.test.js", "src/test/utils-extracted.test.js"],
-        "e2e": ["e2e/user-flows.spec.js", "e2e/carousel.spec.js"]
+        "unit": [
+          "src/test/fetchPoem.test.js",
+          "src/test/utils-extracted.test.js"
+        ],
+        "e2e": [
+          "e2e/user-flows.spec.js",
+          "e2e/carousel.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -129,11 +164,18 @@
       "name": "Same-poet carousel (swipe between poems)",
       "tier": "critical",
       "userFacing": "Swipe left/right to move between poems by the same poet; dots indicate position.",
-      "entrypoints": ["src/components/PoemCarousel.jsx", "src/app.jsx"],
-      "endpoints": ["GET /api/poems/by-poet/:poet"],
+      "entrypoints": [
+        "src/components/PoemCarousel.jsx",
+        "src/app.jsx"
+      ],
+      "endpoints": [
+        "GET /api/poems/by-poet/:poet"
+      ],
       "tests": {
         "unit": [],
-        "e2e": ["e2e/carousel.spec.js"]
+        "e2e": [
+          "e2e/carousel.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -144,11 +186,23 @@
       "name": "Listen / TTS playback (play, pause, resume)",
       "tier": "critical",
       "userFacing": "Press Listen to hear the poem recited; pause/resume; space bar toggles.",
-      "entrypoints": ["src/stores/actions/togglePlay.js", "src/utils/liveAudioStream.js"],
-      "endpoints": ["POST /api/ai/live-tts", "POST /api/ai/:model/:action"],
+      "entrypoints": [
+        "src/stores/actions/togglePlay.js",
+        "src/utils/liveAudioStream.js"
+      ],
+      "endpoints": [
+        "POST /api/ai/live-tts",
+        "POST /api/ai/:model/:action"
+      ],
       "tests": {
-        "unit": ["src/test/liveAudioStream.test.js", "src/test/makeover-tone.test.js"],
-        "e2e": ["e2e/audio.spec.js", "e2e/tts-highlight.spec.js"]
+        "unit": [
+          "src/test/liveAudioStream.test.js",
+          "src/test/makeover-tone.test.js"
+        ],
+        "e2e": [
+          "e2e/audio.spec.js",
+          "e2e/tts-highlight.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "source-only",
@@ -159,10 +213,16 @@
       "name": "Stop audio on poem swipe (no background audio)",
       "tier": "critical",
       "userFacing": "Swiping to another poem stops any playing recitation.",
-      "entrypoints": ["src/app.jsx", "src/stores/actions/togglePlay.js"],
+      "entrypoints": [
+        "src/app.jsx",
+        "src/stores/actions/togglePlay.js"
+      ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/liveAudioStream.test.js", "src/test/stores.test.js"],
+        "unit": [
+          "src/test/liveAudioStream.test.js",
+          "src/test/stores.test.js"
+        ],
         "e2e": []
       },
       "deviceOnly": false,
@@ -174,10 +234,16 @@
       "name": "Voice cycle pill (change reciter voice)",
       "tier": "important",
       "userFacing": "Tap the mic pill to cycle through 30 voices; restarts playback in the new voice if active.",
-      "entrypoints": ["src/constants/voices.js", "src/stores/uiStore.js", "src/app.jsx"],
+      "entrypoints": [
+        "src/constants/voices.js",
+        "src/stores/uiStore.js",
+        "src/app.jsx"
+      ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/voices.test.js"],
+        "unit": [
+          "src/test/voices.test.js"
+        ],
         "e2e": []
       },
       "deviceOnly": false,
@@ -196,7 +262,9 @@
       ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/stores.test.js"],
+        "unit": [
+          "src/test/stores.test.js"
+        ],
         "e2e": []
       },
       "deviceOnly": false,
@@ -220,7 +288,9 @@
           "src/test/audioWordTiming.test.js",
           "src/test/wordTiming.test.js"
         ],
-        "e2e": ["e2e/tts-highlight.spec.js"]
+        "e2e": [
+          "e2e/tts-highlight.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "behavioral",
@@ -231,10 +301,14 @@
       "name": "Seek to previous/next verse",
       "tier": "nice",
       "userFacing": "Skip controls jump playback to the start of the prev/next verse.",
-      "entrypoints": ["src/components/PlayControlsStrip.jsx"],
+      "entrypoints": [
+        "src/components/PlayControlsStrip.jsx"
+      ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/PlayControlsStrip.test.jsx"],
+        "unit": [
+          "src/test/PlayControlsStrip.test.jsx"
+        ],
         "e2e": []
       },
       "deviceOnly": false,
@@ -246,7 +320,9 @@
       "name": "iOS playback through hardware silent switch",
       "tier": "important",
       "userFacing": "On iPhone, recitation plays even when the physical mute switch is on.",
-      "entrypoints": ["src/stores/actions/togglePlay.js"],
+      "entrypoints": [
+        "src/stores/actions/togglePlay.js"
+      ],
       "endpoints": [],
       "tests": {
         "unit": [],
@@ -261,11 +337,18 @@
       "name": "Audio prefetch + IndexedDB cache",
       "tier": "nice",
       "userFacing": "Adjacent poems' audio is pre-generated so Listen is instant on cache hit.",
-      "entrypoints": ["src/services/prefetch.js", "src/services/cache.js"],
+      "entrypoints": [
+        "src/services/prefetch.js",
+        "src/services/cache.js"
+      ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/cache.test.js"],
-        "e2e": ["e2e/translation-cache.spec.js"]
+        "unit": [
+          "src/test/cache.test.js"
+        ],
+        "e2e": [
+          "e2e/translation-cache.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -281,10 +364,19 @@
         "src/components/InsightsDrawer.jsx",
         "src/stores/actions/analyzePoem.js"
       ],
-      "endpoints": ["POST /api/ai/:model/:action", "POST /api/poems/:id/translation"],
+      "endpoints": [
+        "POST /api/ai/:model/:action",
+        "POST /api/poems/:id/translation"
+      ],
       "tests": {
-        "unit": ["src/test/insight-parsing.test.js", "src/test/json-repair.test.js"],
-        "e2e": ["e2e/insight-overlay.spec.js", "e2e/translation-cache.spec.js"]
+        "unit": [
+          "src/test/insight-parsing.test.js",
+          "src/test/json-repair.test.js"
+        ],
+        "e2e": [
+          "e2e/insight-overlay.spec.js",
+          "e2e/translation-cache.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -302,8 +394,12 @@
       ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/auth.test.jsx"],
-        "e2e": ["e2e/user-flows.spec.js"]
+        "unit": [
+          "src/test/auth.test.jsx"
+        ],
+        "e2e": [
+          "e2e/user-flows.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -322,8 +418,13 @@
       ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/auth.test.jsx", "src/test/account-submenu.test.jsx"],
-        "e2e": ["e2e/user-flows.spec.js"]
+        "unit": [
+          "src/test/auth.test.jsx",
+          "src/test/account-submenu.test.jsx"
+        ],
+        "e2e": [
+          "e2e/user-flows.spec.js"
+        ]
       },
       "deviceOnly": true,
       "coverage": "mocked",
@@ -334,10 +435,17 @@
       "name": "Settings persistence (theme, font, voice)",
       "tier": "nice",
       "userFacing": "Theme + font sync to your account when signed in; voice/TTS mode persist in localStorage.",
-      "entrypoints": ["src/hooks/useAuth.js", "src/stores/uiStore.js", "src/app.jsx"],
+      "entrypoints": [
+        "src/hooks/useAuth.js",
+        "src/stores/uiStore.js",
+        "src/app.jsx"
+      ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/auth.test.jsx", "src/test/stores.test.js"],
+        "unit": [
+          "src/test/auth.test.jsx",
+          "src/test/stores.test.js"
+        ],
         "e2e": []
       },
       "deviceOnly": false,
@@ -349,7 +457,10 @@
       "name": "Text settings (font, size, highlight, background, parallax, sparkles)",
       "tier": "important",
       "userFacing": "The Aa pill opens a popover to control typography, highlight style, background pattern, line color, parallax, gold sparkles.",
-      "entrypoints": ["src/components/TextSettingsPill.jsx", "src/stores/uiStore.js"],
+      "entrypoints": [
+        "src/components/TextSettingsPill.jsx",
+        "src/stores/uiStore.js"
+      ],
       "endpoints": [],
       "tests": {
         "unit": [
@@ -357,7 +468,9 @@
           "src/test/stores.test.js",
           "src/test/makeover-rem.test.js"
         ],
-        "e2e": ["e2e/user-flows.spec.js"]
+        "e2e": [
+          "e2e/user-flows.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "behavioral",
@@ -368,11 +481,17 @@
       "name": "Dark / light theme",
       "tier": "important",
       "userFacing": "Sun/Moon toggles theme; resets to dark on reload unless signed in.",
-      "entrypoints": ["src/app.jsx"],
+      "entrypoints": [
+        "src/app.jsx"
+      ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/stores.test.js"],
-        "e2e": ["e2e/user-flows.spec.js"]
+        "unit": [
+          "src/test/stores.test.js"
+        ],
+        "e2e": [
+          "e2e/user-flows.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "behavioral",
@@ -383,10 +502,17 @@
       "name": "Share card (image generation, download, web share)",
       "tier": "nice",
       "userFacing": "Generate a poem image card in 5 designs; download or native-share it.",
-      "entrypoints": ["src/components/ShareCardModal.jsx", "src/utils/shareCardDesigns.js"],
-      "endpoints": ["GET /api/poems/:id/og-image"],
+      "entrypoints": [
+        "src/components/ShareCardModal.jsx",
+        "src/utils/shareCardDesigns.js"
+      ],
+      "endpoints": [
+        "GET /api/poems/:id/og-image"
+      ],
       "tests": {
-        "unit": ["src/test/share-card.test.jsx"],
+        "unit": [
+          "src/test/share-card.test.jsx"
+        ],
         "e2e": []
       },
       "deviceOnly": false,
@@ -398,11 +524,21 @@
       "name": "Deep link to a poem (/poem/:id) + OG meta",
       "tier": "important",
       "userFacing": "Opening /poem/:id loads that specific poem; social previews show the poem card.",
-      "entrypoints": ["src/app.jsx", "src/hooks/useQueryParams.js", "src/utils/ogMetaTags.js"],
-      "endpoints": ["GET /api/poems/:id"],
+      "entrypoints": [
+        "src/app.jsx",
+        "src/hooks/useQueryParams.js",
+        "src/utils/ogMetaTags.js"
+      ],
+      "endpoints": [
+        "GET /api/poems/:id"
+      ],
       "tests": {
-        "unit": ["src/test/makeover-wouter.test.js"],
-        "e2e": ["e2e/carousel.spec.js"]
+        "unit": [
+          "src/test/makeover-wouter.test.js"
+        ],
+        "e2e": [
+          "e2e/carousel.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -413,11 +549,16 @@
       "name": "Copy poem to clipboard",
       "tier": "nice",
       "userFacing": "Copy button puts Arabic + English text on the clipboard.",
-      "entrypoints": ["src/components/VerticalSidebar.jsx"],
+      "entrypoints": [
+        "src/components/VerticalSidebar.jsx"
+      ],
       "endpoints": [],
       "tests": {
         "unit": [],
-        "e2e": ["e2e/user-flows.spec.js", "e2e/carousel.spec.js"]
+        "e2e": [
+          "e2e/user-flows.spec.js",
+          "e2e/carousel.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -428,15 +569,22 @@
       "name": "Flag / downvote poem",
       "tier": "nice",
       "userFacing": "Thumbs-down flags a poem and auto-advances; toggles off on re-tap.",
-      "entrypoints": ["src/components/auth/DownvoteButton.jsx", "src/hooks/useAuth.js"],
+      "entrypoints": [
+        "src/components/auth/DownvoteButton.jsx",
+        "src/hooks/useAuth.js"
+      ],
       "endpoints": [
         "POST /api/poems/:id/downvote",
         "DELETE /api/poems/:id/downvote",
         "POST /api/poems/:id/event"
       ],
       "tests": {
-        "unit": ["src/test/downvote.test.jsx"],
-        "e2e": ["e2e/user-flows.spec.js"]
+        "unit": [
+          "src/test/downvote.test.jsx"
+        ],
+        "e2e": [
+          "e2e/user-flows.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -447,11 +595,21 @@
       "name": "Poet filter / picker",
       "tier": "important",
       "userFacing": "Pick a poet (featured or searched) to read only their poems.",
-      "entrypoints": ["src/components/PoetPicker.jsx", "src/components/DiscoverDrawer.jsx"],
-      "endpoints": ["GET /api/poets", "GET /api/poems/search"],
+      "entrypoints": [
+        "src/components/PoetPicker.jsx",
+        "src/components/DiscoverDrawer.jsx"
+      ],
+      "endpoints": [
+        "GET /api/poets",
+        "GET /api/poems/search"
+      ],
       "tests": {
-        "unit": ["src/test/utils-extracted.test.js"],
-        "e2e": ["e2e/user-flows.spec.js"]
+        "unit": [
+          "src/test/utils-extracted.test.js"
+        ],
+        "e2e": [
+          "e2e/user-flows.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -462,10 +620,14 @@
       "name": "Splash / kinetic onboarding",
       "tier": "nice",
       "userFacing": "First visit shows a desert splash and a 3-phase kinetic walkthrough.",
-      "entrypoints": ["src/components/SplashScreen.jsx"],
+      "entrypoints": [
+        "src/components/SplashScreen.jsx"
+      ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/makeover-sonner.test.js"],
+        "unit": [
+          "src/test/makeover-sonner.test.js"
+        ],
         "e2e": []
       },
       "deviceOnly": false,
@@ -477,7 +639,10 @@
       "name": "Zen idle mode",
       "tier": "nice",
       "userFacing": "After 2s of inactivity the chrome fades, leaving poem + Aa + theme + floating Listen.",
-      "entrypoints": ["src/hooks/useIdleTimer.js", "src/app.jsx"],
+      "entrypoints": [
+        "src/hooks/useIdleTimer.js",
+        "src/app.jsx"
+      ],
       "endpoints": [],
       "tests": {
         "unit": [],
@@ -492,7 +657,10 @@
       "name": "Ratchet mode (Gen-Z slang insights)",
       "tier": "nice",
       "userFacing": "Long-press Discover or type 'yalla' to toggle slang-style insights + orange glow.",
-      "entrypoints": ["src/app.jsx", "src/stores/uiStore.js"],
+      "entrypoints": [
+        "src/app.jsx",
+        "src/stores/uiStore.js"
+      ],
       "endpoints": [],
       "tests": {
         "unit": [],
@@ -507,11 +675,16 @@
       "name": "Keyboard shortcuts",
       "tier": "nice",
       "userFacing": "Space/arrows/E/T/R/Esc/? drive playback, discover, translation, help.",
-      "entrypoints": ["src/hooks/useKeyboardShortcuts.js", "src/components/ShortcutHelp.jsx"],
+      "entrypoints": [
+        "src/hooks/useKeyboardShortcuts.js",
+        "src/components/ShortcutHelp.jsx"
+      ],
       "endpoints": [],
       "tests": {
         "unit": [],
-        "e2e": ["e2e/user-flows.spec.js"]
+        "e2e": [
+          "e2e/user-flows.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -522,8 +695,12 @@
       "name": "In-app bug report",
       "tier": "nice",
       "userFacing": "Debug panel submits a bug report that opens a GitHub issue.",
-      "entrypoints": ["src/components/DebugPanel.jsx"],
-      "endpoints": ["POST /api/bug-reports"],
+      "entrypoints": [
+        "src/components/DebugPanel.jsx"
+      ],
+      "endpoints": [
+        "POST /api/bug-reports"
+      ],
       "tests": {
         "unit": [],
         "e2e": []
@@ -537,11 +714,17 @@
       "name": "PWA install + offline caching",
       "tier": "important",
       "userFacing": "Installable to home screen; works offline from cached assets and poems.",
-      "entrypoints": ["src/main.jsx", "vite.config.js", "public/manifest.json"],
+      "entrypoints": [
+        "src/main.jsx",
+        "vite.config.js",
+        "public/manifest.json"
+      ],
       "endpoints": [],
       "tests": {
         "unit": [],
-        "e2e": ["e2e/pwa-service-worker.spec.js"]
+        "e2e": [
+          "e2e/pwa-service-worker.spec.js"
+        ]
       },
       "deviceOnly": true,
       "coverage": "device-only",
@@ -552,11 +735,16 @@
       "name": "New-release detection + stale-cache clear",
       "tier": "critical",
       "userFacing": "On a new deploy the app detects the version change, clears stale precache, and reloads.",
-      "entrypoints": ["src/main.jsx", "vite.config.js"],
+      "entrypoints": [
+        "src/main.jsx",
+        "vite.config.js"
+      ],
       "endpoints": [],
       "tests": {
         "unit": [],
-        "e2e": ["e2e/pwa-service-worker.spec.js"]
+        "e2e": [
+          "e2e/pwa-service-worker.spec.js"
+        ]
       },
       "deviceOnly": true,
       "coverage": "device-only",
@@ -567,10 +755,18 @@
       "name": "Backend keep-alive (anti cold-start)",
       "tier": "internal",
       "userFacing": "Invisible: server self-pings to avoid Render cold starts.",
-      "entrypoints": ["server.js", "src/app.jsx"],
-      "endpoints": ["GET /api/health", "GET /api/health/full"],
+      "entrypoints": [
+        "server.js",
+        "src/app.jsx"
+      ],
+      "endpoints": [
+        "GET /api/health",
+        "GET /api/health/full"
+      ],
       "tests": {
-        "unit": ["src/test/server.test.js"],
+        "unit": [
+          "src/test/server.test.js"
+        ],
         "e2e": []
       },
       "deviceOnly": false,
@@ -582,11 +778,22 @@
       "name": "AI mode (Gemini poem generation)",
       "tier": "nice",
       "userFacing": "Alternate source: poems generated by Gemini instead of the database.",
-      "entrypoints": ["src/stores/actions/fetchPoem.js", "src/services/gemini.js"],
-      "endpoints": ["GET /api/ai/models", "POST /api/ai/:model/:action"],
+      "entrypoints": [
+        "src/stores/actions/fetchPoem.js",
+        "src/services/gemini.js"
+      ],
+      "endpoints": [
+        "GET /api/ai/models",
+        "POST /api/ai/:model/:action"
+      ],
       "tests": {
-        "unit": ["src/test/gemini-thinking.test.js", "src/test/server.test.js"],
-        "e2e": ["e2e/user-flows.spec.js"]
+        "unit": [
+          "src/test/gemini-thinking.test.js",
+          "src/test/server.test.js"
+        ],
+        "e2e": [
+          "e2e/user-flows.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -597,7 +804,10 @@
       "name": "Design-review tooling API",
       "tier": "internal",
       "userFacing": "Not user-facing. Backs the design-review agent workflow.",
-      "entrypoints": ["server.js", "design-review/"],
+      "entrypoints": [
+        "server.js",
+        "design-review/"
+      ],
       "endpoints": [
         "GET /api/design-review/ping",
         "GET /api/design-review/items",
@@ -615,8 +825,13 @@
         "PATCH /api/design-review/feedback-actions/:id"
       ],
       "tests": {
-        "unit": ["src/test/design-review-api.test.js", "src/test/design-review-initapi.test.js"],
-        "e2e": ["e2e/insight-overlay.spec.js"]
+        "unit": [
+          "src/test/design-review-api.test.js",
+          "src/test/design-review-initapi.test.js"
+        ],
+        "e2e": [
+          "e2e/insight-overlay.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "behavioral",
@@ -645,8 +860,12 @@
       "name": "TTS lab (dev experiment page)",
       "tier": "internal",
       "userFacing": "Not user-facing. /tts-lab dev page for TTS experiments.",
-      "entrypoints": ["server.js"],
-      "endpoints": ["GET /tts-lab"],
+      "entrypoints": [
+        "server.js"
+      ],
+      "endpoints": [
+        "GET /tts-lab"
+      ],
       "tests": {
         "unit": [],
         "e2e": []
@@ -671,8 +890,12 @@
       ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/reader-work-suppression.test.jsx"],
-        "e2e": ["e2e/sparkler-reader.spec.js"]
+        "unit": [
+          "src/test/reader-work-suppression.test.jsx"
+        ],
+        "e2e": [
+          "e2e/sparkler-reader.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -693,8 +916,13 @@
       ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/fullscreen-route-gate.test.jsx", "src/test/tour.test.jsx"],
-        "e2e": ["e2e/tour.spec.js"]
+        "unit": [
+          "src/test/fullscreen-route-gate.test.jsx",
+          "src/test/tour.test.jsx"
+        ],
+        "e2e": [
+          "e2e/tour.spec.js"
+        ]
       },
       "deviceOnly": false,
       "coverage": "mocked",
@@ -705,7 +933,10 @@
       "name": "Enjoyability Lab (dev tooling)",
       "tier": "internal",
       "userFacing": "Dev-only research page at /enjoyability (gated by ENABLE_DEV_LAB, linked from the Debug panel): ranks poems by an enjoyability rubric with persona/diagnostics/ablation tabs and a Saved-poems curation view. Not part of the user-facing product.",
-      "entrypoints": ["enjoyability-lab.html", "tts-lab.html"],
+      "entrypoints": [
+        "enjoyability-lab.html",
+        "tts-lab.html"
+      ],
       "endpoints": [
         "GET /enjoyability",
         "GET /api/lab/saved",

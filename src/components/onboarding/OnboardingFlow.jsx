@@ -2,11 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { useLocation } from 'wouter';
 
-import PreferenceStep from './PreferenceStep.jsx';
-import MatchTally from './MatchTally.jsx';
+import WelcomeStep from './steps/WelcomeStep.jsx';
+import MoodStep from './steps/MoodStep.jsx';
+import ImageryStep from './steps/ImageryStep.jsx';
+import FamilyStep from './steps/FamilyStep.jsx';
+import ReadingStep from './steps/ReadingStep.jsx';
+import EraStep from './steps/EraStep.jsx';
 import { fetchCategoryBands } from '../../services/categoryBands.js';
-import { fetchCategories } from '../../services/database.js';
-import { scopeFiltersFor, STEP_KEYS } from '../../services/preferenceWeighting.js';
+import { useUIStore } from '../../stores/uiStore.js';
 import {
   readPrefs,
   writePrefs,
@@ -18,26 +21,37 @@ import {
 export { readPrefs, writePrefs, PREFS_STORAGE_KEY, PREFS_VERSION };
 
 /**
- * OnboardingFlow — five full-screen questions that seed a reader's first feed.
+ * OnboardingFlow — six screens that seed a reader's first feed.
  *
  * Steps, in order:
- *   1. family      7 values   — the broad shelf of the library (single choice)
- *   2. mood        16 values  — how they want to feel (multi)
- *   3. motif       12 values  — recurring images (multi, OPTIONAL: taxonomy v3
+ *   0. welcome     — the offer, and the door out of it
+ *   1. mood        16 values  — how they want to feel (multi)
+ *   2. motif       12 values  — recurring images (multi, OPTIONAL: taxonomy v3
  *                              sets min_labels 0 for this dimension, so a poem
  *                              may legitimately carry no motif and a reader may
  *                              legitimately skip)
- *   4. era         derived    — century bands cut from the live distribution
- *   5. difficulty  derived    — accessibility bands cut from the live distribution
+ *   3. family      7 values   — the broad shelf of the library (single)
+ *   4. difficulty  derived    — accessibility bands cut from the live distribution
+ *   5. era         derived    — century bands cut from the live distribution
  *
- * Every option, label and count comes from the live categorization API. There
- * are no hardcoded taxonomy keys in this flow — PR #517's key lists were written
- * against a schema that never shipped and were wrong in almost every entry
- * (`anger`, `wonder`, `sea`, `praise` don't exist; `longing` is really
- * `exile-longing`, `grief` is `loss-death`, and so on). Colours are the one
- * exception: presentation-only, keyed by real value keys, gold fallback.
+ * Every option and bilingual label still comes from the live categorization
+ * API; there are no hardcoded taxonomy keys here. What changed in the redesign
+ * is presentation only: each step now renders its OWN component instead of
+ * sharing one generic picker, and no step shows a poem count.
  *
- * The answers are a WEIGHT, not a filter — see src/services/preferenceWeighting.js.
+ * ## Why the counts are gone
+ *
+ * They were honest and they were still wrong to show. The answers are a WEIGHT,
+ * not a filter (src/services/preferenceWeighting.js), so a number next to an
+ * option answers a question nobody asked and implies a narrowing that does not
+ * happen. Worse, showing them turned six different questions into six readings
+ * of the same table. The counts still exist on the API and the draw inspector
+ * (الميزان) still reports them where they mean something — after a draw.
+ *
+ * Dropping them also removed the cascading scope refetch that used to run on
+ * every step, so the flow no longer issues a request per answer.
+ *
+ * The stored shape is unchanged: {family, moods, motifs, era, difficulty}.
  */
 
 /** Presentation-only accents, keyed by REAL taxonomy value keys. Gold fallback. */
@@ -83,12 +97,48 @@ const COLORS = {
 };
 const colorFor = (key) => COLORS[key] || '#c5a059';
 
+/** Reads both shapes of an answer: the array it is now, the string it was. */
+const asList = (v) => (Array.isArray(v) ? v : v ? [v] : []);
+
+/**
+ * Presentation order for the moods.
+ *
+ * The old flow sorted them by poem_count so the chip sizes could encode the
+ * shape of the corpus. Nothing encodes that any more, and count order reads as
+ * arbitrary once the numbers are gone. Grouping by feeling instead means the
+ * reader scans a spectrum — warm, then heavy, then bright, then upright — and
+ * neighbouring chips are actually related. Keys not listed keep their API order
+ * at the end, so a new mood appearing in the taxonomy still renders.
+ */
+const MOOD_ORDER = [
+  'amorous',
+  'passion',
+  'yearning',
+  'nostalgia',
+  'bittersweet',
+  'melancholy',
+  'grief',
+  'despair',
+  'joy',
+  'hope',
+  'serenity',
+  'contemplation',
+  'reverence',
+  'pride',
+  'defiance',
+  'satire',
+];
+
+const orderBy = (list, order) => {
+  const rank = new Map(order.map((k, i) => [k, i]));
+  return list.slice().sort((a, b) => (rank.get(a.key) ?? 999) - (rank.get(b.key) ?? 999));
+};
+
 const toOptions = (values = []) =>
   values.map((v) => ({
     key: v.key,
     label_ar: v.label_ar,
     label_en: v.label_en,
-    poem_count: v.poem_count,
     color: colorFor(v.key),
   }));
 
@@ -97,6 +147,10 @@ export default function OnboardingFlow({ onComplete }) {
   const [step, setStep] = useState(0);
   const [prefs, setPrefs] = useState(() => readPrefs());
   const [taxonomy, setTaxonomy] = useState(null);
+  const setReadingPosture = useUIStore((s) => s.setReadingPosture);
+  // Session-only, deliberately not seeded from the store — see the comment on
+  // the WelcomeStep `posture` prop below.
+  const [posturePick, setPosturePick] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,136 +166,34 @@ export default function OnboardingFlow({ onComplete }) {
 
   const loading = taxonomy == null;
 
-  /**
-   * Counts narrowed to the answers given SO FAR, refetched as the reader moves
-   * through the flow.
-   *
-   * Scoped to the steps STRICTLY BEFORE the current one. A step's own answer
-   * must not scope its own options, or picking the first mood would drop every
-   * other mood on the same screen to 0 — they mostly do not co-occur. This is
-   * the client half of the faceted-count rule; the server does the same thing
-   * per facet (see scopedCategoryCounts).
-   *
-   * Era and difficulty are cascaded too. They are orthogonal to the taxonomy,
-   * but "9th-century poems within the family you chose" is still a real and
-   * useful narrowing to show.
-   */
-  const [scope, setScope] = useState(null);
-  const [scopeLoading, setScopeLoading] = useState(false);
-  const priorKeys = useMemo(() => STEP_KEYS.slice(0, step), [step]);
-  const scopeQuery = useMemo(
-    () => (taxonomy ? scopeFiltersFor(prefs, taxonomy, priorKeys) : {}),
-    [prefs, taxonomy, priorKeys]
-  );
-  const scopeKey = JSON.stringify(scopeQuery);
-
-  useEffect(() => {
-    if (!taxonomy) return undefined;
-    const query = JSON.parse(scopeKey);
-    if (!Object.keys(query).length) {
-      setScope(null);
-      return undefined;
-    }
-    let cancelled = false;
-    setScopeLoading(true);
-    fetchCategories(query)
-      .then((d) => {
-        if (!cancelled) setScope(d.scope || null);
-      })
-      // A failed count must never block the flow. The picker keeps its
-      // whole-corpus numbers and the tally simply does not render.
-      .catch(() => {
-        if (!cancelled) setScope(null);
-      })
-      .finally(() => {
-        if (!cancelled) setScopeLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [scopeKey, taxonomy]);
-
-  /**
-   * Overlay scoped counts onto a step's options.
-   *
-   * Falls back to the unscoped `poem_count` per option rather than to 0: a value
-   * absent from the scoped map has no poems under the current answers, but a
-   * MISSING scope (first step, or a server without the counts) means we simply
-   * do not know, and showing 0 there would be a lie.
-   */
-  const withCounts = (options, scoped) =>
-    scoped ? options.map((o) => ({ ...o, poem_count: scoped[o.key] ?? 0 })) : options;
-
   const families = useMemo(
     () =>
       (taxonomy?.families || [])
         .slice()
-        .sort((a, b) => (b.poem_count || 0) - (a.poem_count || 0))
+        .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
         .map((f) => ({
           key: f.key,
           label_ar: f.label_ar,
           label_en: f.label_en,
-          poem_count: f.poem_count,
           color: colorFor(f.key),
         })),
     [taxonomy]
   );
 
-  // Mood's long tail (82 -> 1,983, a 24x spread) is ORDERED BY COUNT and shown
-  // in full rather than truncated. Hiding the rare moods would be right if the
-  // answer were a filter — picking يأس would strand a reader on 82 poems. It
-  // isn't: the answer is a weight, so a rare pick biases the feed without
-  // limiting it, and truncating would only remove expressiveness. The count on
-  // each chip, and the chip's size, make the imbalance visible instead of
-  // pretending the 16 options are equal.
   const moods = useMemo(() => {
     const dim = (taxonomy?.dimensions || []).find((d) => d.key === 'mood');
-    return toOptions(dim?.values).sort((a, b) => b.poem_count - a.poem_count);
+    return orderBy(toOptions(dim?.values), MOOD_ORDER);
   }, [taxonomy]);
 
   const motifs = useMemo(() => {
     const dim = (taxonomy?.dimensions || []).find((d) => d.key === 'motif');
-    return toOptions(dim?.values).sort((a, b) => b.poem_count - a.poem_count);
+    return toOptions(dim?.values);
   }, [taxonomy]);
 
-  /*
-   * Era and difficulty bands keep the CUTS derived from the whole servable
-   * corpus and only re-count inside them. Re-deriving the cuts from the scoped
-   * histogram would move the band boundaries as the reader answers — the
-   * "Abbasid" option would silently become a different span of centuries
-   * between two screens — so the identity of the choice stays fixed and only
-   * the number attached to it moves.
-   */
-  const eraBands = useMemo(() => {
-    const bands = taxonomy?.eraBands || [];
-    if (!scope?.eras) return bands;
-    return bands.map((b) => ({
-      ...b,
-      poem_count: scope.eras
-        .filter((r) =>
-          b.undated
-            ? r.century == null
-            : r.century != null && r.century >= b.century_from && r.century <= b.century_to
-        )
-        .reduce((n, r) => n + r.poem_count, 0),
-      // A scoped count is measured, so it supersedes any sampled share.
-      share: undefined,
-    }));
-  }, [taxonomy, scope]);
-
-  const difficultyBands = useMemo(() => {
-    const bands = taxonomy?.difficultyBands || [];
-    if (!scope?.accessibility) return bands;
-    return bands.map((b) => ({
-      ...b,
-      poem_count: scope.accessibility
-        .filter((r) => r.min >= b.min && r.max <= b.max)
-        .reduce((n, r) => n + r.poem_count, 0),
-      share: undefined,
-    }));
-  }, [taxonomy, scope]);
-
-  const tally = <MatchTally scope={scope} loading={scopeLoading} />;
+  // Bands keep the cuts the service derived from the live distribution. Only
+  // the counts and shares that used to be printed on them are dropped.
+  const eraBands = taxonomy?.eraBands || [];
+  const difficultyBands = taxonomy?.difficultyBands || [];
 
   const patch = (delta) => setPrefs((p) => ({ ...p, ...delta }));
 
@@ -258,38 +210,50 @@ export default function OnboardingFlow({ onComplete }) {
     else navigate('/');
   };
 
+  // Leaving from the welcome screen writes nothing: a reader who chose to just
+  // read has not expressed a preference, and stamping completedAt on an empty
+  // set would make the feed treat "no answer" as a finished answer.
+  const leave = () => {
+    if (onComplete) onComplete(prefs);
+    else navigate('/');
+  };
+
   const back = step > 0 ? () => setStep((s) => s - 1) : undefined;
-  const common = { stepCount: 5, loading, onBack: back, footer: tally };
+  const common = { stepCount: 6, loading, onBack: back };
 
   return (
     <AnimatePresence mode="wait">
       {step === 0 && (
-        <PreferenceStep
-          key="family"
-          testId="onboarding-family"
+        <WelcomeStep
+          key="welcome"
+          testId="onboarding-welcome"
           stepIndex={0}
-          titleAr="ما الذي يستهويك؟"
-          titleEn="What draws you in?"
-          options={withCounts(families, scope?.families)}
-          layout="rows"
-          multi={false}
-          value={prefs.family ? [prefs.family] : []}
-          onNext={(v) => {
-            patch({ family: v[0] || null });
-            setStep(1);
+          onNext={() => setStep(1)}
+          onSkipAll={leave}
+          // Reading posture lives in the UI store, not in onboardingPrefs: it
+          // sets what the READER shows (translation, transliteration) rather
+          // than what the feed serves, and the prefs payload is a taste profile
+          // the draw inspector reads by shape. Applied on tap rather than on
+          // completion, so a reader who takes the second door still keeps it.
+          // The welcome always lands UNANSWERED, even for a reader whose
+          // posture is already persisted from a previous visit. It is the
+          // screen's first question and it gates the two doors, so showing it
+          // pre-filled would hand a returning reader an unlocked door they
+          // never touched this time — and the answer would scroll past unread.
+          posture={posturePick}
+          onPosture={(next) => {
+            setPosturePick(next);
+            setReadingPosture(next);
           }}
           {...common}
         />
       )}
       {step === 1 && (
-        <PreferenceStep
+        <MoodStep
           key="mood"
           testId="onboarding-mood"
           stepIndex={1}
-          titleAr="كيف تشعر الآن؟"
-          titleEn="How are you feeling?"
-          options={withCounts(moods, scope?.dimensions?.mood)}
-          layout="constellation"
+          options={moods}
           value={prefs.moods}
           onNext={(v) => {
             patch({ moods: v });
@@ -299,15 +263,11 @@ export default function OnboardingFlow({ onComplete }) {
         />
       )}
       {step === 2 && (
-        <PreferenceStep
+        <ImageryStep
           key="motif"
           testId="onboarding-motif"
           stepIndex={2}
-          titleAr="أيّ الصور تسكنك؟"
-          titleEn="Which images stay with you?"
-          options={withCounts(motifs, scope?.dimensions?.motif)}
-          layout="constellation"
-          optional
+          options={motifs}
           value={prefs.motifs}
           onNext={(v) => {
             patch({ motifs: v });
@@ -317,35 +277,45 @@ export default function OnboardingFlow({ onComplete }) {
         />
       )}
       {step === 3 && (
-        <PreferenceStep
-          key="era"
-          testId="onboarding-era"
+        <FamilyStep
+          key="family"
+          testId="onboarding-family"
           stepIndex={3}
-          titleAr="من أيّ زمن؟"
-          titleEn="From which age?"
-          options={eraBands}
-          layout="stack"
-          multi={false}
-          value={prefs.era ? [prefs.era] : []}
+          options={families}
+          value={prefs.family ? [prefs.family] : []}
           onNext={(v) => {
-            patch({ era: v[0] || null });
+            patch({ family: v[0] || null });
             setStep(4);
           }}
           {...common}
         />
       )}
       {step === 4 && (
-        <PreferenceStep
+        <ReadingStep
           key="difficulty"
           testId="onboarding-difficulty"
           stepIndex={4}
-          titleAr="ما مدى عمق اللغة التي تريد؟"
-          titleEn="How deep should the language go?"
           options={difficultyBands}
-          layout="stack"
-          multi={false}
-          value={prefs.difficulty ? [prefs.difficulty] : []}
-          onNext={(v) => finish({ difficulty: v[0] || null })}
+          // Both of the last two answers became multi-select, so they are
+          // stored as arrays. `asList` reads a pre-existing single-string
+          // answer as a one-element list, so a payload written before the
+          // change still loads into the picker and still scores.
+          value={asList(prefs.difficulty)}
+          onNext={(v) => {
+            patch({ difficulty: v });
+            setStep(5);
+          }}
+          {...common}
+        />
+      )}
+      {step === 5 && (
+        <EraStep
+          key="era"
+          testId="onboarding-era"
+          stepIndex={5}
+          options={eraBands}
+          value={asList(prefs.era)}
+          onNext={(v) => finish({ era: v })}
           {...common}
         />
       )}

@@ -19,6 +19,7 @@ import {
   countPoemLabels,
 } from '../services/categoryTags.js';
 import { fetchCategories, fetchPoemsByCategory } from '../services/database.js';
+import { useUIStore } from '../stores/uiStore.js';
 
 const TAXONOMY = {
   dimensions: [
@@ -152,39 +153,102 @@ const FULL_TAXONOMY = {
 };
 
 describe('OnboardingFlow', () => {
-  it('shows an empty state pre-migration instead of hanging or inventing options', async () => {
+  /**
+   * Every step sits behind the welcome screen, and both of the welcome's doors
+   * are locked until "I read poems…" is answered — so opening the flow is two
+   * taps, not one.
+   */
+  const openDoors = async () => {
+    const [posture] = await screen.findAllByTestId('onboarding-welcome-posture-option');
+    fireEvent.click(posture);
+  };
+
+  const enterFlow = async () => {
     render(<OnboardingFlow />);
-    expect(await screen.findByTestId('onboarding-family-empty')).toBeTruthy();
-    // Critically: no options are fabricated when the taxonomy is unavailable.
-    expect(screen.queryAllByTestId('onboarding-family-option')).toHaveLength(0);
+    await openDoors();
+    fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
+    return screen.findByTestId('onboarding-mood');
+  };
+
+  // The welcome asks how you read FIRST, and both doors stay shut until it is
+  // answered. Without this the language answer scrolled past unread, because a
+  // reader who has already decided to continue never looks below the CTA.
+  it('keeps both welcome doors locked until the reading posture is answered', async () => {
+    render(<OnboardingFlow />);
+    const curate = await screen.findByTestId('onboarding-welcome-continue');
+    const justRead = screen.getByTestId('onboarding-welcome-skip-all');
+    expect(curate.disabled).toBe(true);
+    expect(justRead.disabled).toBe(true);
+
+    await openDoors();
+    expect(screen.getByTestId('onboarding-welcome-continue').disabled).toBe(false);
+    expect(screen.getByTestId('onboarding-welcome-skip-all').disabled).toBe(false);
   });
 
-  it('renders families from the live taxonomy, ordered by size and bilingual', async () => {
+  // The answer is persisted, so a returning reader has one. It still must not
+  // be pre-filled here: the doors would open for a question they never saw.
+  it('lands unanswered even when a posture is already stored', async () => {
+    useUIStore.getState().setReadingPosture('english');
+    render(<OnboardingFlow />);
+    const chips = await screen.findAllByTestId('onboarding-welcome-posture-option');
+    for (const chip of chips) expect(chip.getAttribute('aria-pressed')).toBe('false');
+    expect(screen.getByTestId('onboarding-welcome-continue').disabled).toBe(true);
+  });
+
+  it('shows an empty state pre-migration instead of hanging or inventing options', async () => {
+    await enterFlow();
+    expect(await screen.findByTestId('onboarding-mood-empty')).toBeTruthy();
+    // Critically: no options are fabricated when the taxonomy is unavailable.
+    expect(screen.queryAllByTestId('onboarding-mood-option')).toHaveLength(0);
+  });
+
+  it('renders families from the live taxonomy, bilingual and WITHOUT counts', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
     render(<OnboardingFlow />);
-    await waitFor(() => expect(screen.getAllByTestId('onboarding-family-option')).toHaveLength(2));
+    await openDoors();
+    fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
+    fireEvent.click(await screen.findByTestId('onboarding-mood-continue'));
+    fireEvent.click(await screen.findByTestId('onboarding-motif-continue'));
+    await screen.findByTestId('onboarding-family');
     const options = screen.getAllByTestId('onboarding-family-option');
-    expect(options[0]).toHaveAttribute('data-option-key', 'love-desire');
+    expect(options).toHaveLength(2);
+    // Both languages on the tile, English first, and neither one a caption for
+    // the other.
     expect(options[0].textContent).toContain('الحب والهوى');
     expect(options[0].textContent).toContain('Love & Desire');
-    // Counts are surfaced so the reader can see how big each shelf is.
-    expect(options[0].textContent).toContain('4,554');
+    expect(options[0].getAttribute('aria-label')).toContain('Love & Desire');
+
+    // The answers weight the feed rather than filtering it, so a poem count
+    // beside an option describes a narrowing that never happens. None of the
+    // fixture's counts may reach the screen, in either language.
+    for (const option of options) {
+      expect(option.textContent).not.toMatch(/[0-9]/);
+      expect(option.getAttribute('aria-label')).not.toMatch(/[0-9]/);
+    }
   });
 
-  it('advances through all five steps, ending on difficulty', async () => {
+  it('advances through all six steps in order, ending on era', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
     const onComplete = vi.fn();
     render(<OnboardingFlow onComplete={onComplete} />);
 
-    await screen.findAllByTestId('onboarding-family-option');
-    fireEvent.click(screen.getAllByTestId('onboarding-family-option')[0]);
-    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
+    await openDoors();
+    fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
 
     await screen.findByTestId('onboarding-mood');
+    fireEvent.click(screen.getAllByTestId('onboarding-mood-option')[0]);
     fireEvent.click(screen.getByTestId('onboarding-mood-continue'));
 
     await screen.findByTestId('onboarding-motif');
     fireEvent.click(screen.getByTestId('onboarding-motif-continue'));
+
+    await screen.findByTestId('onboarding-family');
+    fireEvent.click(screen.getAllByTestId('onboarding-family-option')[0]);
+    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
+
+    await screen.findByTestId('onboarding-difficulty');
+    fireEvent.click(screen.getAllByTestId('onboarding-difficulty-option')[0]);
+    fireEvent.click(screen.getByTestId('onboarding-difficulty-continue'));
 
     await screen.findByTestId('onboarding-era');
     const eras = screen.getAllByTestId('onboarding-era-option');
@@ -192,92 +256,149 @@ describe('OnboardingFlow', () => {
     fireEvent.click(eras[0]);
     fireEvent.click(screen.getByTestId('onboarding-era-continue'));
 
-    await screen.findByTestId('onboarding-difficulty');
-    fireEvent.click(screen.getAllByTestId('onboarding-difficulty-option')[0]);
-    fireEvent.click(screen.getByTestId('onboarding-difficulty-continue'));
-
     await waitFor(() => expect(onComplete).toHaveBeenCalled());
     const saved = onComplete.mock.calls[0][0];
     expect(saved.family).toBe('love-desire');
-    expect(saved.difficulty).toBe('gentle');
+    // Difficulty and era are multi-select, so both store arrays.
+    expect(saved.difficulty).toEqual(['gentle']);
+    expect(saved.moods).toHaveLength(1);
+    expect(saved.era.length).toBeGreaterThan(0);
     expect(saved.completedAt).toBeTruthy();
   });
 
-  it('orders moods by poem count so the long tail sits at the end', async () => {
+  it('leaves without recording an answer when the reader chooses to just read', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
-    render(<OnboardingFlow />);
-    await screen.findAllByTestId('onboarding-family-option');
-    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
-    await screen.findByTestId('onboarding-mood');
+    const onComplete = vi.fn();
+    render(<OnboardingFlow onComplete={onComplete} />);
+    await openDoors();
+    fireEvent.click(await screen.findByTestId('onboarding-welcome-skip-all'));
+    await waitFor(() => expect(onComplete).toHaveBeenCalled());
+    // No completedAt: declining to answer is not a finished answer, and
+    // stamping one would make the feed treat an empty set as a choice.
+    expect(onComplete.mock.calls[0][0].completedAt).toBeFalsy();
+  });
+
+  it('orders moods by feeling rather than by corpus size', async () => {
+    fetchCategories.mockResolvedValue(FULL_TAXONOMY);
+    await enterFlow();
     const keys = screen
       .getAllByTestId('onboarding-mood-option')
       .map((el) => el.getAttribute('data-option-key'));
-    // 1983 -> 419 -> 82. Nothing is dropped: the rare mood is still selectable,
-    // because the answer is a weight and cannot strand the reader.
-    expect(keys).toEqual(['pride', 'joy', 'despair']);
+    // Fixture counts are pride 1983 > joy 419 > despair 82. The screen no
+    // longer shows counts, so count order would read as arbitrary; the field is
+    // grouped heavy -> bright -> upright instead.
+    expect(keys).toEqual(['despair', 'joy', 'pride']);
   });
 
   it('treats the motif step as optional', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
-    render(<OnboardingFlow />);
-    await screen.findAllByTestId('onboarding-family-option');
-    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
-    await screen.findByTestId('onboarding-mood');
+    await enterFlow();
     fireEvent.click(screen.getByTestId('onboarding-mood-continue'));
     const cta = await screen.findByTestId('onboarding-motif-continue');
-    // Nothing selected, but the step is skippable at full opacity.
-    expect(cta.textContent).toContain('تخطَّ');
+    // Nothing selected, so the advance offers to skip.
+    expect(cta.textContent).toContain('تخط');
   });
 
-  // The constellation cannot physically hold mood's 16 chips or motif's 12 at
-  // phone width: the outer ring's circumference is smaller than the chips laid
-  // end to end, and because the chips are opaque the overflow reads as one
-  // label painted over another rather than as crowding. Measured at 375px
-  // before the fallback: 17 overlapping pairs on mood, 16 on motif, with
-  // "Moon & Stars" sitting on top of "Tears". This pair of tests pins the
-  // switch, since the ring geometry has already regressed once.
-  const gotoMoodStep = async () => {
+  // A single-select step with no way to un-choose traps a reader who changed
+  // their mind: every step is skippable, but once a family was picked the only
+  // escape was reloading the flow. Re-tapping the chosen option clears it.
+  it('clears a single-select answer when the chosen option is tapped again', async () => {
     fetchCategories.mockResolvedValue(FULL_TAXONOMY);
     render(<OnboardingFlow />);
-    await screen.findAllByTestId('onboarding-family-option');
-    fireEvent.click(screen.getByTestId('onboarding-family-continue'));
-    await screen.findByTestId('onboarding-mood');
-    return screen.getAllByTestId('onboarding-mood-option');
-  };
+    await openDoors();
+    fireEvent.click(await screen.findByTestId('onboarding-welcome-continue'));
+    fireEvent.click(await screen.findByTestId('onboarding-mood-continue'));
+    fireEvent.click(await screen.findByTestId('onboarding-motif-continue'));
+    await screen.findByTestId('onboarding-family');
 
-  const stubMatchMedia = (matches) => {
-    const original = window.matchMedia;
-    window.matchMedia = () => ({
-      matches,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    });
-    return () => {
-      window.matchMedia = original;
-    };
-  };
+    const first = screen.getAllByTestId('onboarding-family-option')[0];
+    fireEvent.click(first);
+    expect(first).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('onboarding-family-continue').textContent).toContain('التالي');
 
-  it('keeps the constellation when there is room for it', async () => {
-    const restore = stubMatchMedia(false);
-    try {
-      const options = await gotoMoodStep();
-      // Constellation nodes are placed by absolute left/top percentages.
-      expect(options[0].style.position).toBe('absolute');
-    } finally {
-      restore();
-    }
+    fireEvent.click(first);
+    expect(first).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByTestId('onboarding-family-continue').textContent).toContain('تخط');
   });
 
-  it('drops the constellation for rows at phone width', async () => {
-    const restore = stubMatchMedia(true);
-    try {
-      const options = await gotoMoodStep();
-      expect(options[0].style.position).not.toBe('absolute');
-      // Every option survives the swap; this is a re-layout, not a truncation.
-      expect(options).toHaveLength(3);
-    } finally {
-      restore();
-    }
+  // The language question rides on the welcome screen rather than a seventh
+  // step. It sets what the READER shows, so it is stored in the UI store and
+  // not in onboardingPrefs — the prefs payload is a taste profile that the feed
+  // and the draw inspector both read by shape.
+  describe('reading posture', () => {
+    beforeEach(() => {
+      useUIStore.getState().setReadingPosture(null);
+    });
+
+    it('sets the reading aids from the answer', async () => {
+      render(<OnboardingFlow />);
+      await screen.findByTestId('onboarding-welcome-posture');
+
+      const pick = (key) =>
+        fireEvent.click(
+          screen
+            .getAllByTestId('onboarding-welcome-posture-option')
+            .find((b) => b.getAttribute('data-posture') === key)
+        );
+
+      // English-first gets BOTH rows, not translation alone. Translation is
+      // cached for ~13% of poems (#713); transliteration exists for all of them,
+      // so translation-only would show this reader nothing on most of the feed.
+      pick('english');
+      expect(useUIStore.getState().showTranslation).toBe(true);
+      expect(useUIStore.getState().showTransliteration).toBe(true);
+
+      // A reader working through the Arabic gets the phonetic row, which is the
+      // only bridge that works on every poem — translations are generated lazily
+      // and most poems do not have one cached yet.
+      pick('learning');
+      expect(useUIStore.getState().showTransliteration).toBe(true);
+
+      // Fluent: neither aid, just the poem.
+      pick('arabic');
+      expect(useUIStore.getState().showTranslation).toBe(false);
+      expect(useUIStore.getState().showTransliteration).toBe(false);
+    });
+
+    it('clears when the chosen posture is tapped again', async () => {
+      render(<OnboardingFlow />);
+      await screen.findByTestId('onboarding-welcome-posture');
+      const btn = screen
+        .getAllByTestId('onboarding-welcome-posture-option')
+        .find((b) => b.getAttribute('data-posture') === 'arabic');
+
+      fireEvent.click(btn);
+      expect(useUIStore.getState().readingPosture).toBe('arabic');
+      fireEvent.click(btn);
+      expect(useUIStore.getState().readingPosture).toBeNull();
+    });
+
+    it('survives leaving through the second door', async () => {
+      // Applied on tap, not on completion, so a reader who answers the language
+      // question and then chooses to just read still keeps it.
+      const onComplete = vi.fn();
+      render(<OnboardingFlow onComplete={onComplete} />);
+      await screen.findByTestId('onboarding-welcome-posture');
+      fireEvent.click(
+        screen
+          .getAllByTestId('onboarding-welcome-posture-option')
+          .find((b) => b.getAttribute('data-posture') === 'english')
+      );
+      fireEvent.click(screen.getByTestId('onboarding-welcome-skip-all'));
+      await waitFor(() => expect(onComplete).toHaveBeenCalled());
+      expect(useUIStore.getState().readingPosture).toBe('english');
+    });
+  });
+
+  it('gives every step its own component rather than one reskinned picker', async () => {
+    fetchCategories.mockResolvedValue(FULL_TAXONOMY);
+    await enterFlow();
+    // Mood is a field of coloured embers; imagery is a grid of drawings. If both
+    // ever render the same markup again, the redesign has been undone.
+    expect(screen.getAllByTestId('onboarding-mood-option')[0].querySelector('svg')).toBeNull();
+    fireEvent.click(screen.getByTestId('onboarding-mood-continue'));
+    await screen.findByTestId('onboarding-motif');
+    expect(screen.getAllByTestId('onboarding-motif-option')[0].querySelector('svg')).toBeTruthy();
   });
 });
 

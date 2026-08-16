@@ -31,6 +31,13 @@ BEGIN;
 -- is NOT NULL so the UPDATE aborts rather than orphaning poems, which is the
 -- right outcome but arrives as a bare constraint violation naming none of the
 -- 49 pairs. This block fails first and says which name.
+--
+-- A pair whose VARIANT is absent is skipped, not raised. That covers three
+-- legitimate cases: a schema-only database with no poets at all (CI rebuilds
+-- from empty), a fixture database with a different cast, and a re-run after this
+-- migration already merged the pair. Only "the variant is here but its canonical
+-- is not" is a genuine problem, because that is the shape that would repoint
+-- poems at NULL.
 DO $preflight$
 DECLARE
   pair record;
@@ -88,13 +95,12 @@ BEGIN
       ('تماضر بنت الشريد', 'الخنساء')
     ) AS t(variant, canonical)
   LOOP
+    -- Nothing to merge: already done, or this database does not carry the row.
+    CONTINUE WHEN NOT EXISTS (SELECT 1 FROM public.poets WHERE name = pair.variant);
+
     IF NOT EXISTS (SELECT 1 FROM public.poets WHERE name = pair.canonical) THEN
-      RAISE EXCEPTION 'merge preflight: canonical % not found (variant %)',
+      RAISE EXCEPTION 'merge preflight: canonical % not found, but variant % IS present — merging would repoint its poems at NULL',
         pair.canonical, pair.variant;
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM public.poets WHERE name = pair.variant) THEN
-      RAISE EXCEPTION 'merge preflight: variant % not found (canonical %)',
-        pair.variant, pair.canonical;
     END IF;
     IF (SELECT count(*) FROM public.poets WHERE name = pair.canonical) > 1 THEN
       RAISE EXCEPTION 'merge preflight: canonical % is ambiguous, % rows share that name',

@@ -8,13 +8,28 @@ import { thinkingConfigFor } from '../services/gemini.js';
  * The field name differs by family, so a wrong field would 400 the request.
  */
 describe('thinkingConfigFor', () => {
-  it('uses thinkingLevel:minimal for Gemini 3.x models', () => {
+  // 'low', not 'minimal': gemini-3.7-flash rejects minimal outright ("Thinking
+  // level MINIMAL is not supported for this model"), so every request paid a
+  // 400 and a retry. Measured on one poem, 2026-08-17: default spent 1,329
+  // thinking tokens in 6.0s, 'low' spent 0 in 2.2s with identical output
+  // quality. Anything above 'low' silently reintroduces the latency this
+  // function exists to remove.
+  it('uses thinkingLevel:low for Gemini 3.x models', () => {
     expect(thinkingConfigFor('gemini-3.5-flash')).toEqual({
-      thinkingConfig: { thinkingLevel: 'minimal' },
+      thinkingConfig: { thinkingLevel: 'low' },
     });
     expect(thinkingConfigFor('gemini-3-flash-preview')).toEqual({
-      thinkingConfig: { thinkingLevel: 'minimal' },
+      thinkingConfig: { thinkingLevel: 'low' },
     });
+    expect(thinkingConfigFor('gemini-3.7-flash')).toEqual({
+      thinkingConfig: { thinkingLevel: 'low' },
+    });
+  });
+
+  it('never sends minimal, which Gemini 3.7 rejects', () => {
+    for (const m of ['gemini-3-flash-preview', 'gemini-3.5-flash', 'gemini-3.7-flash']) {
+      expect(thinkingConfigFor(m).thinkingConfig.thinkingLevel).not.toBe('minimal');
+    }
   });
 
   it('uses thinkingBudget:0 for Gemini 2.5 models', () => {

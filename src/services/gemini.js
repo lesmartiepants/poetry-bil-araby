@@ -179,13 +179,19 @@ export const discoverTextModels = async (addLog) => {
  * in ~2s. Minimizing thinking drops first-token latency to ~1s with no
  * meaningful quality loss for translation/analysis.
  *
- * Gemini 3.x uses `thinkingLevel` ('minimal' = lowest latency); 2.5 uses
- * `thinkingBudget` (0 disables). Older families don't support thinking and
- * 400 on the field, so they get nothing. Returns a spreadable fragment so the
- * caller merges it into an existing generationConfig.
+ * Gemini 3.x uses `thinkingLevel`; 2.5 uses `thinkingBudget` (0 disables).
+ * Older families don't support thinking and 400 on the field, so they get
+ * nothing. Returns a spreadable fragment so the caller merges it into an
+ * existing generationConfig.
+ *
+ * 'low' rather than 'minimal': gemini-3.7-flash 400s on minimal ("Thinking
+ * level MINIMAL is not supported for this model") and every request paid a
+ * rejected round trip. Measured on one poem, 2026-08-17: default emitted 1,329
+ * thinking tokens in 6.0s; 'low' emitted 0 in 2.2s, with the line contract and
+ * translation quality unchanged.
  */
 export const thinkingConfigFor = (model = '') => {
-  if (/gemini-3/.test(model)) return { thinkingConfig: { thinkingLevel: 'minimal' } };
+  if (/gemini-3/.test(model)) return { thinkingConfig: { thinkingLevel: 'low' } };
   if (/gemini-2\.5/.test(model)) return { thinkingConfig: { thinkingBudget: 0 } };
   return {};
 };

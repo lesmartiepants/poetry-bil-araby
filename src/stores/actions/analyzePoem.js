@@ -5,6 +5,7 @@ import { useUIStore } from '../uiStore';
 import { useModalStore } from '../modalStore';
 import { INSIGHTS_SYSTEM_PROMPT, RATCHET_SYSTEM_PROMPT } from '../../prompts';
 import { parseInsight } from '../../utils/insightParser';
+import { buildInsightPrompt } from '../../utils/insightPrompt';
 import { geminiTextFetch, thinkingConfigFor } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
 import { saveTranslation } from '../../services/database.js';
@@ -151,9 +152,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
 
   try {
     if (FEATURES.streaming) {
-      const poetInfo = current?.poet ? ` by ${current.poet}` : '';
       const arabicLineCount = (current?.arabic || '').split('\n').filter((l) => l.trim()).length;
-      const promptText = `Deep Analysis of${poetInfo}:\n\n${current?.arabic}\n\n[CRITICAL: This poem has exactly ${arabicLineCount} Arabic lines. You MUST produce exactly ${arabicLineCount} English lines in the POEM section. One line per Arabic line, no exceptions.]`;
+      const promptText = buildInsightPrompt({ arabic: current?.arabic, poet: current?.poet });
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
       ]).size;

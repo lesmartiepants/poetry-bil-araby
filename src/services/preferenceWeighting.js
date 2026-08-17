@@ -741,15 +741,70 @@ export const drawFrom = (candidates, prefs, poemsSeen, bands = {}, rng = Math.ra
 export const DETERMINISTIC_OPENING = 2;
 
 /**
- * Rank comparator: score first, poem id as a stable tie-break.
+ * The reader's dimensions in priority order, most protected first.
  *
- * The tie-break matters more than it looks. A reader who answered only the
- * family step produces a lot of exact ties (every poem in the family scores a
- * flat 5.00), and without a deterministic second key the "top-ranked" pick would
- * be decided by the API's row order, which is randomised — i.e. sampling by
- * another name, in the two slots that exist to not be sampled.
+ * When a poem cannot satisfy everything, the answers are given up from the
+ * RIGHT of this list. Imagery is the last thing surrendered; era is the first.
+ *
+ * Era sits last on the evidence, not by accident: it is the coarsest facet the
+ * flow asks about (four bands over the whole corpus), so it separates the least
+ * and is the cheapest to concede. Family sits third but rarely does work — it is
+ * a bundle of the other dimensions (`love-desire` is satisfied by the same poems
+ * that carry `amorous`), so the tiers either side of it are often the same set.
+ * See FAMILY_OVERLAP_DISCOUNT.
+ */
+export const PRIORITY_ORDER = Object.freeze(['motif', 'mood', 'family', 'difficulty', 'era']);
+
+/**
+ * A poem's position in the strict priority ladder, as a place-value address.
+ *
+ * Each dimension is one bit, weighted by its place in PRIORITY_ORDER, so a
+ * higher-priority match outranks EVERY combination of lower ones — matching
+ * imagery alone (16) beats mood + family + difficulty + era together (15). That
+ * is the whole point of a priority list, and it is why this cannot be expressed
+ * by adding WEIGHTS: additive weights let three small matches outvote one big
+ * one, which is precisely the behaviour the ladder exists to prevent.
+ *
+ * A dimension counts as satisfied on ANY credit, not full credit. Full credit is
+ * unreachable on a multi-select axis — a poem carries one primary mood, so
+ * asking for three moods caps that term below its weight forever, and a
+ * "fully matched" ladder would have an empty top rung for every reader who
+ * multi-selected.
+ *
+ * Unanswered steps score no bit in either direction: they are absent from
+ * `terms` entirely, so a reader who skipped a step is ranked on what they did
+ * answer rather than penalised for the rest.
+ */
+export const priorityAddress = (terms) => {
+  const t = terms || [];
+  let address = 0;
+  PRIORITY_ORDER.forEach((key, i) => {
+    const bit = 1 << (PRIORITY_ORDER.length - 1 - i);
+    const term = t.find((x) => x && x.key === key);
+    if (term && term.earned > 0) address += bit;
+  });
+  return address;
+};
+
+/**
+ * Rank comparator: priority ladder first, weighted score inside a rung, poem id
+ * as a stable tie-break.
+ *
+ * The three keys do different jobs and the order matters:
+ *
+ *   1. ADDRESS enforces the reader's priority. Nothing below can outvote it.
+ *   2. SCALED orders poems that are tied on all five answers — and it is the
+ *      only place the continuous credits survive. The ladder is binary, so a
+ *      poem 0.1 outside the chosen difficulty band and one 3.0 outside land in
+ *      the same rung; the score is what still separates them.
+ *   3. ID keeps it deterministic. A reader who answered only the family step
+ *      produces a lot of exact ties, and without a stable third key the pick
+ *      would fall through to the API's row order, which is randomised — i.e.
+ *      sampling by another name, in the slots that exist to not be sampled.
  */
 const byRank = (a, b) => {
+  const addr = priorityAddress(b?.terms) - priorityAddress(a?.terms);
+  if (addr !== 0) return addr;
   const d = (b?.scaled || 0) - (a?.scaled || 0);
   if (d !== 0) return d;
   const ai = String(a?.poem?.id ?? '');
@@ -801,9 +856,20 @@ export const drawManyFrom = (
   prefs,
   poemsSeen,
   bands = {},
-  { count = 1, startSlot = 0, deterministic = 0, rng = Math.random } = {}
+  { count = 1, startSlot = 0, deterministic = 0, rng = Math.random, seen = null } = {}
 ) => {
-  const list = candidates || [];
+  const all = candidates || [];
+  // Already-read poems are dropped BEFORE ranking, which is what makes a tier
+  // exhaust rather than replay. Without it, strict ranking is actively worse
+  // than sampling: the top rung is small (~15 poems for a narrow answer set) and
+  // deterministic, so every session would open on the same poem.
+  //
+  // Dropped only when something is left. A reader who has exhausted the pool
+  // gets it back rather than an empty feed — repeating a poem beats a blank
+  // screen, and the alternative is a dead end the reader cannot escape without
+  // clearing storage.
+  const unseen = seen ? all.filter((p) => !seen.has?.(p?.id) && !seen.includes?.(p?.id)) : all;
+  const list = unseen.length ? unseen : all;
   const temperature = temperatureFor(poemsSeen);
   const scored = list.map((p) => ({ poem: p, ...scorePoem(p, prefs, bands) }));
 

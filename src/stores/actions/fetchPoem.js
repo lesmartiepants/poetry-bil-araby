@@ -17,6 +17,7 @@ import {
   MAX_SCORE,
 } from '../../services/preferenceWeighting.js';
 import { recordFeedDraw } from '../../services/lastDraw.js';
+import { readSeen, markSeen } from '../../services/seenPoems.js';
 
 /**
  * Band definitions are needed to turn a stored era/difficulty band KEY back into
@@ -89,21 +90,37 @@ export async function fetchWeightedFeed({
   });
   const all = [...byId.values()];
 
-  // Prefer poems the reader has not seen, but fall back rather than starve — a
-  // reader deep into a narrow corner can have seen every candidate on the page.
-  const fresh = all.filter((p) => !excludeIds?.includes(p.id));
-  const candidates = fresh.length ? fresh : all;
-  if (!candidates.length) {
+  if (!all.length) {
     addLog('Discovery Bias', 'No candidates returned — widening to a plain draw', 'info');
     return [];
   }
 
-  const { picks, scored, temperature } = drawManyFrom(candidates, prefs, poemsSeen, bands, {
+  // What the reader has already been offered: this session's exclusions plus
+  // everything persisted from previous ones.
+  //
+  // The persisted half is what makes the priority ladder work rather than
+  // backfire. Ranking is strict and therefore deterministic — same pool, same
+  // answers, same poem — so without a durable record the reader would reopen the
+  // app and be handed the same top-rung poem indefinitely. Session-only
+  // exclusion hid this during development, where nobody closes the tab.
+  //
+  // drawManyFrom falls back to the full pool when everything is excluded, so a
+  // reader deep in a narrow corner gets a repeat rather than an empty feed.
+  const seen = new Set([...(excludeIds || []), ...readSeen()]);
+
+  const { picks, scored, temperature } = drawManyFrom(all, prefs, poemsSeen, bands, {
     count,
     startSlot,
     deterministic,
+    seen,
   });
   if (!picks.length) return [];
+
+  // Persist immediately, at the point of being drawn rather than of being read.
+  // The ladder descends by exhaustion, so a poem that was offered and scrolled
+  // past has to count — otherwise a reader who skims the top rung is handed it
+  // again next session and the rung never empties.
+  markSeen(picks.map((p) => p.poem?.id).filter((id) => id != null));
 
   picks.forEach((pick) => {
     // Ride the score on the poem itself so the reader-facing line survives
@@ -137,7 +154,7 @@ export async function fetchWeightedFeed({
     'Discovery Bias',
     `Scored draw | ${picks.length} slide${picks.length === 1 ? '' : 's'} ${startSlot}-${startSlot + picks.length - 1} | ` +
       picks.map((p) => `${p.scaled.toFixed(2)}${p.deterministic ? '*' : ''}`).join(' ') +
-      ` /${MAX_SCORE} | ${candidates.length} candidates | T=${temperature.toFixed(2)} | seen: ${poemsSeen}` +
+      ` /${MAX_SCORE} | ${all.length} candidates (${seen.size} already shown) | T=${temperature.toFixed(2)} | seen: ${poemsSeen}` +
       (picks.some((p) => p.deterministic) ? ' | * = ranked, not sampled' : ''),
     'info'
   );
@@ -289,9 +306,10 @@ async function fetchFromDatabase({
   // is biased server-side by the taste profile (config/curation.json) and the
   // reader's downvotes are excluded, so the onboarding draw is skipped.
   const prefs = readPrefs();
-  const weighted = !curated && hasPreferences(prefs)
-    ? await fetchWeightedPoem({ prefs, poet, excludeIds: seenIds, addLog }).catch(() => null)
-    : null;
+  const weighted =
+    !curated && hasPreferences(prefs)
+      ? await fetchWeightedPoem({ prefs, poet, excludeIds: seenIds, addLog }).catch(() => null)
+      : null;
   const newPoem = weighted || (await fetchRandomPoem({ poet, excludeIds, curated }));
   const apiTime = performance.now() - apiStart;
 

@@ -210,11 +210,40 @@ export const geminiTextFetch = async (endpoint, bodyOrBuilder, label, addLog) =>
     const model = models[i];
     if (i > 0) log('Model Fallback', `Trying fallback: ${model}`, 'warning');
     const body = typeof bodyOrBuilder === 'function' ? bodyOrBuilder(model) : bodyOrBuilder;
-    const res = await fetch(`${apiUrl}/api/ai/${model}/${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
+    const post = (b) =>
+      fetch(`${apiUrl}/api/ai/${model}/${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: b,
+      });
+    let res = await post(body);
+
+    // Thinking config is an optimisation, never a requirement — so a model that
+    // rejects it should cost latency, not the whole request. `thinkingLevel:
+    // minimal` is accepted by some Gemini 3.x models and 400s on others
+    // ("Thinking level MINIMAL is not supported for this model"), and which is
+    // which changes as models ship. Rather than track that in a version regex
+    // that goes stale, drop the field and retry once.
+    if (res.status === 400) {
+      const peek = await res
+        .clone()
+        .json()
+        .catch(() => ({}));
+      const msg = peek.error?.message || '';
+      if (/thinking/i.test(msg) && /\bthinkingConfig\b/.test(body)) {
+        const stripped = JSON.stringify(
+          (() => {
+            const parsed = JSON.parse(body);
+            if (parsed?.generationConfig) delete parsed.generationConfig.thinkingConfig;
+            delete parsed.thinkingConfig;
+            return parsed;
+          })()
+        );
+        log('Model Fallback', `${model} rejected thinking config, retrying without it`, 'warning');
+        res = await post(stripped);
+      }
+    }
+
     if (res.ok) {
       if (i > 0) log('Model Fallback', `✓ Using fallback model: ${model}`, 'success');
       return res;

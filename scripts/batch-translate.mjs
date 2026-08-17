@@ -59,6 +59,29 @@ function die(msg) {
   process.exit(1);
 }
 
+/**
+ * fetch with retry on transport failures.
+ *
+ * The request payload runs to tens of megabytes and the poll loop can span
+ * hours, so a single ECONNRESET should cost a few seconds rather than the
+ * whole run. Only transport errors are retried — an HTTP error response is
+ * returned to the caller, which knows whether it is fatal.
+ */
+async function fetchRetry(url, init, attempts = 4) {
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fetch(url, init);
+    } catch (e) {
+      lastErr = e;
+      const wait = 2000 * 2 ** i;
+      console.log(`  network error (${e.cause?.code || e.message}), retrying in ${wait / 1000}s`);
+      await new Promise((r) => setTimeout(r, wait));
+    }
+  }
+  throw lastErr;
+}
+
 // ── prompt ─────────────────────────────────────────────────────────────────
 // Read the live prompt rather than a copy, so a batch backfill and an
 // in-app translation can never drift apart.
@@ -84,10 +107,29 @@ const parseInsight = (text) => {
 };
 
 // ── db ─────────────────────────────────────────────────────────────────────
-const db = new pg.Client({
+// Timeouts are not optional here. Without a query timeout, a dropped pooler
+// connection leaves the client waiting forever on the next write, process
+// alive at 0% CPU — indistinguishable from slow progress.
+const dbOptions = {
   connectionString: DATABASE_URL,
   ssl: { rejectUnauthorized: false },
-});
+  keepAlive: true,
+  statement_timeout: 120_000,
+  query_timeout: 120_000,
+  connectionTimeoutMillis: 30_000,
+};
+
+let db = new pg.Client(dbOptions);
+
+async function reconnect() {
+  try {
+    await db.end();
+  } catch {
+    /* already closed */
+  }
+  db = new pg.Client(dbOptions);
+  await db.connect();
+}
 
 // Mirrors SERVING in server.js. Poems outside it are never returned to a
 // reader, so translating them buys nothing until the filter changes.
@@ -130,7 +172,7 @@ async function submit(poems) {
   console.log(`  request file: ${(bytes / 1024 / 1024).toFixed(1)} MB`);
 
   // Resumable uploads use the /upload/ host prefix, not the plain API base.
-  const start = await fetch(`https://generativelanguage.googleapis.com/upload/v1beta/files?key=${KEY}`, {
+  const start = await fetchRetry(`https://generativelanguage.googleapis.com/upload/v1beta/files?key=${KEY}`, {
     method: 'POST',
     headers: {
       'X-Goog-Upload-Protocol': 'resumable',
@@ -148,7 +190,7 @@ async function submit(poems) {
     die(`file upload did not start (HTTP ${start.status}): ${(await start.text()).slice(0, 300)}`);
   }
 
-  const up = await fetch(uploadUrl, {
+  const up = await fetchRetry(uploadUrl, {
     method: 'POST',
     headers: {
       'Content-Length': String(bytes),
@@ -162,7 +204,7 @@ async function submit(poems) {
   if (!uploaded.file?.name) die(`upload failed: ${JSON.stringify(uploaded).slice(0, 300)}`);
   console.log(`  uploaded as ${uploaded.file.name}`);
 
-  const create = await fetch(`${BASE}/models/${MODEL}:batchGenerateContent?key=${KEY}`, {
+  const create = await fetchRetry(`${BASE}/models/${MODEL}:batchGenerateContent?key=${KEY}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -180,7 +222,7 @@ async function submit(poems) {
 async function waitFor(jobName) {
   console.log(`\nPolling ${jobName} every ${POLL_SECONDS}s (Ctrl-C is safe; resume with --resume)`);
   for (;;) {
-    const r = await fetch(`${BASE}/${jobName}?key=${KEY}`);
+    const r = await fetchRetry(`${BASE}/${jobName}?key=${KEY}`);
     const j = await r.json();
     const state = j.metadata?.state || j.state;
     const done = j.metadata?.completedRequestCount ?? j.metadata?.succeededRequestCount;
@@ -197,7 +239,7 @@ async function collect(job) {
   const out = [];
   const fileName = job.response?.responsesFile;
   if (fileName) {
-    const dl = await fetch(`${BASE}/${fileName}:download?alt=media&key=${KEY}`);
+    const dl = await fetchRetry(`${BASE}/${fileName}:download?alt=media&key=${KEY}`);
     const text = await dl.text();
     for (const line of text.split('\n')) {
       if (!line.trim()) continue;
@@ -216,6 +258,7 @@ async function collect(job) {
 // ── write back ─────────────────────────────────────────────────────────────
 async function writeBack(results, poemsById) {
   const stats = { written: 0, shortLines: 0, noPoem: 0, apiError: 0 };
+  const pending = [];
 
   for (const r of results) {
     const id = r.key ?? r.metadata?.key;
@@ -243,29 +286,44 @@ async function writeBack(results, poemsById) {
       continue;
     }
 
-    if (DRY_RUN) {
-      stats.written++;
-      continue;
-    }
-
     // Newlines are stored as '*', matching the corpus convention and the
     // app's own saveTranslation().
-    await db.query(
-      `UPDATE poems
-          SET cached_translation = $2,
-              cached_explanation = $3,
-              cached_author_bio  = $4,
-              translated_at      = now()
-        WHERE id = $1 AND cached_translation IS NULL`,
-      [
-        poem.id,
-        parts.poeticTranslation.replace(/\n/g, '*'),
-        parts.depth || null,
-        parts.author || null,
-      ]
-    );
-    stats.written++;
+    pending.push([
+      poem.id,
+      parts.poeticTranslation.replace(/\n/g, '*'),
+      parts.depth || null,
+      parts.author || null,
+    ]);
   }
+
+  if (DRY_RUN) {
+    stats.written = pending.length;
+    return stats;
+  }
+
+  // One round trip per chunk rather than per poem. Against the Supabase pooler
+  // a single-row UPDATE costs ~700ms, so row-at-a-time writes took 45 minutes
+  // for a serving-set backfill that the database itself handles in seconds.
+  const CHUNK = 250;
+  for (let i = 0; i < pending.length; i += CHUNK) {
+    const chunk = pending.slice(i, i + CHUNK);
+    const values = chunk
+      .map((_, j) => `($${j * 4 + 1}::int, $${j * 4 + 2}, $${j * 4 + 3}, $${j * 4 + 4})`)
+      .join(',');
+    await db.query(
+      `UPDATE poems p
+          SET cached_translation = v.translation,
+              cached_explanation = v.explanation,
+              cached_author_bio  = v.bio,
+              translated_at      = now()
+         FROM (VALUES ${values}) AS v(id, translation, explanation, bio)
+        WHERE p.id = v.id AND p.cached_translation IS NULL`,
+      chunk.flat()
+    );
+    stats.written += chunk.length;
+    process.stdout.write(`\r  writing ${stats.written}/${pending.length}`);
+  }
+  if (pending.length) process.stdout.write('\n');
   return stats;
 }
 
@@ -292,10 +350,15 @@ const poemsById = new Map(poems.map((p) => [String(p.id), p]));
 const jobName = RESUME || (await submit(poems));
 if (!RESUME) console.log(`  job:     ${jobName}`);
 
+// Release the connection across the poll — it can run for hours, and an idle
+// pooler connection is a connection the pooler is entitled to close.
+await db.end();
+
 const job = await waitFor(jobName);
 const results = await collect(job);
 console.log(`\nCollected ${results.length} responses`);
 
+await reconnect();
 const stats = await writeBack(results, poemsById);
 console.log('\n' + '-'.repeat(64));
 console.log(`  written:            ${stats.written}`);

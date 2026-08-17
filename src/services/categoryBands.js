@@ -149,11 +149,22 @@ export const deriveDifficultyBands = (histogram, bandCount = DIFFICULTY_BAND_COU
  * one-century button, and "undated" was surfaced to the reader as a period
  * ("Late & Modern") when it is really a gap in the metadata.
  *
- * Fixed cuts trade balance for legibility, knowingly. The 9th-10th band is
- * still by far the largest, and that is now a stated choice rather than
- * something the algorithm was fighting. Undated poems ride with 15th-to-today,
- * which is where an undated poem most likely belongs and, more importantly,
- * stops them needing a button of their own.
+ * Fixed cuts trade balance for legibility, knowingly. Undated poems ride with
+ * the last band rather than getting a button of their own.
+ *
+ * That trade turned out cheaper than expected. Those notes were written when
+ * `poems.century` was derived from `era_id`, so the 9th "really is ~40% of the
+ * corpus" and 1173 poems were undated. Both were artefacts: every Abbasid poem
+ * carried century 9 whether the poet died in 814 or 1057, and three whole eras
+ * carried no century at all (#721).
+ *
+ * Measured against real centuries, the fixed cuts are close to even —
+ * 6-8 ~20%, 9-10 ~27%, 11-14 ~34%, 15-21 ~14%, undated ~5%. So the bounds are
+ * left exactly as the owner chose them; there is nothing to rebalance.
+ *
+ * The absorb rule also stopped being load-bearing: it now carries a few hundred
+ * poems rather than a quarter of the library. Worth remembering if anyone is
+ * tempted to build on it — it is a remainder now, not a category.
  */
 const FIXED_ERA_BANDS = [
   {
@@ -190,8 +201,8 @@ const FIXED_ERA_BANDS = [
     includesUndated: true,
     label_ar: 'المتأخر والحديث',
     label_en: 'Late & Modern',
-    hint_ar: 'من القرن 15 حتى اليوم',
-    hint_en: '15th c. to today',
+    hint_ar: 'القرون 15–21 م',
+    hint_en: '15th–21st c. CE',
   },
 ];
 

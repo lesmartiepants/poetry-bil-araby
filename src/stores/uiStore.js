@@ -115,7 +115,9 @@ export const CATEGORY_MAP = {
   request: { color: '#ff9800', prefix: '  →' },
   success: { color: '#4caf50', prefix: '  ←' },
   error: { color: '#ef4444', prefix: '← FAIL' },
-  warning: { color: '#ef4444', prefix: '← FAIL' },
+  // Distinct from error: a warning is something to look at, not something that
+  // broke. Sharing the red FAIL prefix made recoverable states read as outages.
+  warning: { color: '#f59e0b', prefix: '⚠ WARN' },
   info: { color: '#78909c', prefix: ' SYS' },
 };
 

@@ -190,6 +190,21 @@ export const thinkingConfigFor = (model = '') => {
   return {};
 };
 
+/** Models observed to 400 on thinking config, so we stop sending it to them. */
+const THINKING_REJECTED = new Set();
+
+/** Remove thinking config from a serialised request body. */
+const stripThinkingConfig = (body) => {
+  try {
+    const parsed = JSON.parse(body);
+    if (parsed?.generationConfig) delete parsed.generationConfig.thinkingConfig;
+    delete parsed.thinkingConfig;
+    return JSON.stringify(parsed);
+  } catch {
+    return body;
+  }
+};
+
 /**
  * Fetch from a Gemini text endpoint with automatic model fallback.
  * Uses the dynamically discovered model list (ranked newest/cheapest first).
@@ -209,7 +224,10 @@ export const geminiTextFetch = async (endpoint, bodyOrBuilder, label, addLog) =>
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
     if (i > 0) log('Model Fallback', `Trying fallback: ${model}`, 'warning');
-    const body = typeof bodyOrBuilder === 'function' ? bodyOrBuilder(model) : bodyOrBuilder;
+    const built = typeof bodyOrBuilder === 'function' ? bodyOrBuilder(model) : bodyOrBuilder;
+    // Once a model has told us it won't take thinking config, stop paying a
+    // rejected round trip for it on every subsequent request this session.
+    const body = THINKING_REJECTED.has(model) ? stripThinkingConfig(built) : built;
     const post = (b) =>
       fetch(`${apiUrl}/api/ai/${model}/${endpoint}`, {
         method: 'POST',
@@ -231,16 +249,9 @@ export const geminiTextFetch = async (endpoint, bodyOrBuilder, label, addLog) =>
         .catch(() => ({}));
       const msg = peek.error?.message || '';
       if (/thinking/i.test(msg) && /\bthinkingConfig\b/.test(body)) {
-        const stripped = JSON.stringify(
-          (() => {
-            const parsed = JSON.parse(body);
-            if (parsed?.generationConfig) delete parsed.generationConfig.thinkingConfig;
-            delete parsed.thinkingConfig;
-            return parsed;
-          })()
-        );
+        THINKING_REJECTED.add(model);
         log('Model Fallback', `${model} rejected thinking config, retrying without it`, 'warning');
-        res = await post(stripped);
+        res = await post(stripThinkingConfig(body));
       }
     }
 

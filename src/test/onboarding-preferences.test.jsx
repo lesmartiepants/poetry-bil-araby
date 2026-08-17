@@ -341,12 +341,20 @@ describe('OnboardingFlow', () => {
             .find((b) => b.getAttribute('data-posture') === key)
         );
 
-      // English-first gets BOTH rows, not translation alone. Translation is
-      // cached for ~13% of poems (#713); transliteration exists for all of them,
-      // so translation-only would show this reader nothing on most of the feed.
+      // Each posture adds exactly one layer, so the middle choice decides
+      // something. `english` and `learning` were previously identical — both
+      // turned on translation AND transliteration — which left a reader who
+      // wanted the English without a romanisation under every line no way to
+      // ask for it.
+      //
+      // The old bundling had a reason: translation is cached for only ~13% of
+      // poems (#713) while transliteration exists for all of them, so the pair
+      // guaranteed this reader always saw SOMETHING. Translation-only now leans
+      // on lazy generation instead, which fills the gap but costs a wait on a
+      // cold poem. That is the trade the owner chose.
       pick('english');
       expect(useUIStore.getState().showTranslation).toBe(true);
-      expect(useUIStore.getState().showTransliteration).toBe(true);
+      expect(useUIStore.getState().showTransliteration).toBe(false);
 
       // A reader working through the Arabic gets the phonetic row, which is the
       // only bridge that works on every poem — translations are generated lazily

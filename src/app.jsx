@@ -165,7 +165,21 @@ export default function DiwanApp() {
   // The reader owns the URL (it writes /poem/:id as you move through the feed).
   // Suppress those writes while a full-screen route is active so the feed doesn't
   // clobber the URL out from under it.
-  const navigateReader = (to, opts) => (isFullScreenRoute ? undefined : navigate(to, opts));
+  //
+  // Read through a ref, NOT the closed-over value. Most callers are async: the
+  // boot-time load and the preference draw both navigate after an await. Closing
+  // over `isFullScreenRoute` captures what the route was when the call was
+  // scheduled, so a reader who opened /onboarding while the first poem was still
+  // in flight had it replaced out from under them the moment the fetch landed —
+  // and with `{replace: true}`, without even a back button to escape with.
+  //
+  // It only bit on a cold load, because that is the only time a fetch is still
+  // running when the menu is reachable; a second attempt found the poem cached
+  // and nothing to race. That made it look intermittent rather than wrong.
+  const fullScreenRouteRef = useRef(isFullScreenRoute);
+  fullScreenRouteRef.current = isFullScreenRoute;
+  const navigateReader = (to, opts) =>
+    fullScreenRouteRef.current ? undefined : navigate(to, opts);
   const [queryParams, setQueryParams] = useQueryParams();
 
   const mainScrollRef = useRef(null);

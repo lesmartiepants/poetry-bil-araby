@@ -741,15 +741,95 @@ export const drawFrom = (candidates, prefs, poemsSeen, bands = {}, rng = Math.ra
 export const DETERMINISTIC_OPENING = 2;
 
 /**
- * Rank comparator: score first, poem id as a stable tie-break.
+ * The reader's dimensions in priority order, most protected first.
  *
- * The tie-break matters more than it looks. A reader who answered only the
- * family step produces a lot of exact ties (every poem in the family scores a
- * flat 5.00), and without a deterministic second key the "top-ranked" pick would
- * be decided by the API's row order, which is randomised — i.e. sampling by
- * another name, in the two slots that exist to not be sampled.
+ * When a poem cannot satisfy everything, the answers are given up from the
+ * RIGHT of this list. Imagery is the last thing surrendered; era is the first.
+ *
+ * Era sits last on the evidence, not by accident: it is the coarsest facet the
+ * flow asks about (four bands over the whole corpus), so it separates the least
+ * and is the cheapest to concede. Family sits third but rarely does work — it is
+ * a bundle of the other dimensions (`love-desire` is satisfied by the same poems
+ * that carry `amorous`), so the tiers either side of it are often the same set.
+ * See FAMILY_OVERLAP_DISCOUNT.
+ */
+export const PRIORITY_ORDER = Object.freeze(['motif', 'mood', 'family', 'difficulty', 'era']);
+
+/**
+ * A poem's position in the priority order, as a place-value address.
+ *
+ * Each dimension is one bit, weighted by its place in PRIORITY_ORDER, so within
+ * this number alone a higher-priority match outranks every combination of lower
+ * ones — imagery alone is 16, mood + family + difficulty + era together is 15.
+ *
+ * That property is deliberate but it is NOT the top-level sort. `byRank` sorts
+ * on match COUNT first and uses this only to break ties between poems matching
+ * the same number of dimensions. Used as the primary key it surfaced poems
+ * matching one thing ahead of poems matching four, which is what a priority
+ * list literally asks for and not what a reader wants.
+ *
+ * A dimension counts as satisfied on ANY credit, not full credit. Full credit is
+ * unreachable on a multi-select axis — a poem carries one primary mood, so
+ * asking for three moods caps that term below its weight forever, and a
+ * "fully matched" ladder would have an empty top rung for every reader who
+ * multi-selected.
+ *
+ * Unanswered steps score no bit in either direction: they are absent from
+ * `terms` entirely, so a reader who skipped a step is ranked on what they did
+ * answer rather than penalised for the rest.
+ */
+export const priorityAddress = (terms) => {
+  const t = terms || [];
+  let address = 0;
+  PRIORITY_ORDER.forEach((key, i) => {
+    const bit = 1 << (PRIORITY_ORDER.length - 1 - i);
+    const term = t.find((x) => x && x.key === key);
+    if (term && term.earned > 0) address += bit;
+  });
+  return address;
+};
+
+/** How many of the reader's answered dimensions this poem satisfies at all. */
+export const matchCount = (terms) => (terms || []).filter((t) => t && t.earned > 0).length;
+
+/**
+ * Rank comparator: how much matched, then the reader's priority order, then the
+ * weighted score, then poem id.
+ *
+ * The four keys do different jobs and the order between the first two is the
+ * whole design:
+ *
+ *   1. COUNT. Matching more of the reader's answers always wins. A poem
+ *      satisfying mood + family + reading + era beats one satisfying imagery
+ *      alone, because four of five is a better answer to "what do you like"
+ *      than one of five, whatever that one is.
+ *
+ *      This was briefly the other way round. A pure place-value address made
+ *      imagery (16) outrank everything below it combined (15), which is what a
+ *      priority list literally asks for — and in practice it surfaced poems
+ *      matching one dimension ahead of poems matching four. Correct to the
+ *      specification, wrong for the reader.
+ *
+ *   2. ADDRESS breaks ties between poems matching the SAME number of
+ *      dimensions. This is where the priority order lives now: among poems that
+ *      match two things, the one holding imagery + mood beats the one holding
+ *      reading + era. Ordering without overriding.
+ *
+ *   3. SCALED orders poems tied on both — and it is the only place the
+ *      continuous credits survive. Count and address are both binary, so a poem
+ *      0.1 outside the chosen difficulty band and one 3.0 outside are otherwise
+ *      identical; the score is what still separates them.
+ *
+ *   4. ID keeps it deterministic. A reader who answered only the family step
+ *      produces a lot of exact ties, and without a stable last key the pick
+ *      would fall through to the API's row order, which is randomised — i.e.
+ *      sampling by another name, in the slots that exist to not be sampled.
  */
 const byRank = (a, b) => {
+  const n = matchCount(b?.terms) - matchCount(a?.terms);
+  if (n !== 0) return n;
+  const addr = priorityAddress(b?.terms) - priorityAddress(a?.terms);
+  if (addr !== 0) return addr;
   const d = (b?.scaled || 0) - (a?.scaled || 0);
   if (d !== 0) return d;
   const ai = String(a?.poem?.id ?? '');
@@ -801,9 +881,20 @@ export const drawManyFrom = (
   prefs,
   poemsSeen,
   bands = {},
-  { count = 1, startSlot = 0, deterministic = 0, rng = Math.random } = {}
+  { count = 1, startSlot = 0, deterministic = 0, rng = Math.random, seen = null } = {}
 ) => {
-  const list = candidates || [];
+  const all = candidates || [];
+  // Already-read poems are dropped BEFORE ranking, which is what makes a tier
+  // exhaust rather than replay. Without it, strict ranking is actively worse
+  // than sampling: the top rung is small (~15 poems for a narrow answer set) and
+  // deterministic, so every session would open on the same poem.
+  //
+  // Dropped only when something is left. A reader who has exhausted the pool
+  // gets it back rather than an empty feed — repeating a poem beats a blank
+  // screen, and the alternative is a dead end the reader cannot escape without
+  // clearing storage.
+  const unseen = seen ? all.filter((p) => !seen.has?.(p?.id) && !seen.includes?.(p?.id)) : all;
+  const list = unseen.length ? unseen : all;
   const temperature = temperatureFor(poemsSeen);
   const scored = list.map((p) => ({ poem: p, ...scorePoem(p, prefs, bands) }));
 

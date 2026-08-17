@@ -8,6 +8,7 @@ import ImageryStep from './steps/ImageryStep.jsx';
 import FamilyStep from './steps/FamilyStep.jsx';
 import ReadingStep from './steps/ReadingStep.jsx';
 import EraStep from './steps/EraStep.jsx';
+import { INK } from './StepShell.jsx';
 import { fetchCategoryBands } from '../../services/categoryBands.js';
 import { useUIStore } from '../../stores/uiStore.js';
 import {
@@ -222,103 +223,133 @@ export default function OnboardingFlow({ onComplete }) {
   const common = { stepCount: 6, loading, onBack: back };
 
   return (
-    <AnimatePresence mode="wait">
-      {step === 0 && (
-        <WelcomeStep
-          key="welcome"
-          testId="onboarding-welcome"
-          stepIndex={0}
-          onNext={() => setStep(1)}
-          onSkipAll={leave}
-          // Reading posture lives in the UI store, not in onboardingPrefs: it
-          // sets what the READER shows (translation, transliteration) rather
-          // than what the feed serves, and the prefs payload is a taste profile
-          // the draw inspector reads by shape. Applied on tap rather than on
-          // completion, so a reader who takes the second door still keeps it.
-          // The welcome always lands UNANSWERED, even for a reader whose
-          // posture is already persisted from a previous visit. It is the
-          // screen's first question and it gates the two doors, so showing it
-          // pre-filled would hand a returning reader an unlocked door they
-          // never touched this time — and the answer would scroll past unread.
-          posture={posturePick}
-          onPosture={(next) => {
-            setPosturePick(next);
-            setReadingPosture(next);
-          }}
-          {...common}
-        />
-      )}
-      {step === 1 && (
-        <MoodStep
-          key="mood"
-          testId="onboarding-mood"
-          stepIndex={1}
-          options={moods}
-          value={prefs.moods}
-          onNext={(v) => {
-            patch({ moods: v });
-            setStep(2);
-          }}
-          {...common}
-        />
-      )}
-      {step === 2 && (
-        <ImageryStep
-          key="motif"
-          testId="onboarding-motif"
-          stepIndex={2}
-          options={motifs}
-          value={prefs.motifs}
-          onNext={(v) => {
-            patch({ motifs: v });
-            setStep(3);
-          }}
-          {...common}
-        />
-      )}
-      {step === 3 && (
-        <FamilyStep
-          key="family"
-          testId="onboarding-family"
-          stepIndex={3}
-          options={families}
-          value={prefs.family ? [prefs.family] : []}
-          onNext={(v) => {
-            patch({ family: v[0] || null });
-            setStep(4);
-          }}
-          {...common}
-        />
-      )}
-      {step === 4 && (
-        <ReadingStep
-          key="difficulty"
-          testId="onboarding-difficulty"
-          stepIndex={4}
-          options={difficultyBands}
-          // Both of the last two answers became multi-select, so they are
-          // stored as arrays. `asList` reads a pre-existing single-string
-          // answer as a one-element list, so a payload written before the
-          // change still loads into the picker and still scores.
-          value={asList(prefs.difficulty)}
-          onNext={(v) => {
-            patch({ difficulty: v });
-            setStep(5);
-          }}
-          {...common}
-        />
-      )}
-      {step === 5 && (
-        <EraStep
-          key="era"
-          testId="onboarding-era"
-          stepIndex={5}
-          options={eraBands}
-          value={asList(prefs.era)}
-          onNext={(v) => finish({ era: v })}
-          {...common}
-        />
-      )}
-    </AnimatePresence>
+    <>
+      {/*
+        The opaque ground, held at ROUTE level rather than per step.
+
+        Each StepShell paints its own `position: fixed; inset: 0` ink, which is
+        enough while a step is on screen and not enough between two. The reader
+        is still mounted underneath this route — nothing unmounts it — and
+        `AnimatePresence mode="wait"` tears the outgoing step down before it
+        builds the incoming one. For that gap there was no backdrop at all, so
+        the poem flashed through between steps.
+
+        A backdrop that outlives every step closes the gap. It sits behind them
+        (the steps paint their own ink over it) so nothing else has to change,
+        and it is inert — no pointer events of its own.
+      */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: INK,
+          pointerEvents: 'none',
+          // Between the reader and the steps. StepShell sits at 60, so every
+          // step still paints over this; anything below 60 — the whole reader —
+          // is covered. At z 0 it would share a stacking context with the feed
+          // and let it show through, which is the bug it exists to fix.
+          zIndex: 59,
+        }}
+      />
+      <AnimatePresence mode="wait">
+        {step === 0 && (
+          <WelcomeStep
+            key="welcome"
+            testId="onboarding-welcome"
+            stepIndex={0}
+            onNext={() => setStep(1)}
+            onSkipAll={leave}
+            // Reading posture lives in the UI store, not in onboardingPrefs: it
+            // sets what the READER shows (translation, transliteration) rather
+            // than what the feed serves, and the prefs payload is a taste profile
+            // the draw inspector reads by shape. Applied on tap rather than on
+            // completion, so a reader who takes the second door still keeps it.
+            // The welcome always lands UNANSWERED, even for a reader whose
+            // posture is already persisted from a previous visit. It is the
+            // screen's first question and it gates the two doors, so showing it
+            // pre-filled would hand a returning reader an unlocked door they
+            // never touched this time — and the answer would scroll past unread.
+            posture={posturePick}
+            onPosture={(next) => {
+              setPosturePick(next);
+              setReadingPosture(next);
+            }}
+            {...common}
+          />
+        )}
+        {step === 1 && (
+          <MoodStep
+            key="mood"
+            testId="onboarding-mood"
+            stepIndex={1}
+            options={moods}
+            value={prefs.moods}
+            onNext={(v) => {
+              patch({ moods: v });
+              setStep(2);
+            }}
+            {...common}
+          />
+        )}
+        {step === 2 && (
+          <ImageryStep
+            key="motif"
+            testId="onboarding-motif"
+            stepIndex={2}
+            options={motifs}
+            value={prefs.motifs}
+            onNext={(v) => {
+              patch({ motifs: v });
+              setStep(3);
+            }}
+            {...common}
+          />
+        )}
+        {step === 3 && (
+          <FamilyStep
+            key="family"
+            testId="onboarding-family"
+            stepIndex={3}
+            options={families}
+            value={prefs.family ? [prefs.family] : []}
+            onNext={(v) => {
+              patch({ family: v[0] || null });
+              setStep(4);
+            }}
+            {...common}
+          />
+        )}
+        {step === 4 && (
+          <ReadingStep
+            key="difficulty"
+            testId="onboarding-difficulty"
+            stepIndex={4}
+            options={difficultyBands}
+            // Both of the last two answers became multi-select, so they are
+            // stored as arrays. `asList` reads a pre-existing single-string
+            // answer as a one-element list, so a payload written before the
+            // change still loads into the picker and still scores.
+            value={asList(prefs.difficulty)}
+            onNext={(v) => {
+              patch({ difficulty: v });
+              setStep(5);
+            }}
+            {...common}
+          />
+        )}
+        {step === 5 && (
+          <EraStep
+            key="era"
+            testId="onboarding-era"
+            stepIndex={5}
+            options={eraBands}
+            value={asList(prefs.era)}
+            onNext={(v) => finish({ era: v })}
+            {...common}
+          />
+        )}
+      </AnimatePresence>
+    </>
   );
 }

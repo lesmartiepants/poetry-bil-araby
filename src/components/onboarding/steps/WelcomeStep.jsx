@@ -67,10 +67,22 @@ const LEDE_2 = 'Or walk straight in. The dīwān is the same either way.';
  * cached, so promising a full English reading experience would be a promise the
  * corpus keeps about an eighth of the time on a first load (see #713).
  */
+/**
+ * Three postures, each adding one layer to what is on screen:
+ *
+ *   arabic    the poem alone
+ *   english   + the English
+ *   learning  + the transliteration
+ *
+ * They used to be a preference with no consequence: `learning` and `english`
+ * both mapped to translation AND transliteration, so two of the three choices
+ * were the same screen. Each rung now turns on exactly one more thing than the
+ * one above it (see POSTURES in uiStore).
+ */
 const POSTURES = [
   { key: 'arabic', en: 'In Arabic', hint: 'just the poem' },
-  { key: 'learning', en: "I'm learning", hint: 'sound it out' },
-  { key: 'english', en: 'In English', hint: 'meaning and sound' },
+  { key: 'english', en: 'With English', hint: 'poem and translation' },
+  { key: 'learning', en: "I'm learning", hint: 'and how it sounds' },
 ];
 
 // One continuous stagger across all four lines, so they read as one sentence
@@ -300,11 +312,23 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: 60,
-            border: `1px solid ${posture ? GOLD : 'rgba(255,255,255,0.12)'}`,
+            // TWO DOORS, NOT A DEFAULT AND AN ESCAPE.
+            //
+            // This was a filled gold button beside a dim ghost one, which read
+            // as "curate is already selected" — a reader who had answered only
+            // how they read appeared to have been handed an answer to the second
+            // question too. Nothing was actually selected: no aria-pressed, no
+            // focus, neither disabled. It was entirely the styling.
+            //
+            // Both doors now carry the same weight, because the flow genuinely
+            // does not have a preference between them: curating and walking
+            // straight in are equally good answers, and the dīwān is the same
+            // either way. Neither is filled; fill is reserved for hover/press,
+            // which is the only thing that should ever say "chosen".
+            border: `1px solid rgba(255,255,255,${posture ? 0.22 : 0.07})`,
             borderRadius: 999,
-            background: posture ? `${GOLD}1f` : 'transparent',
-            color: posture ? GOLD : 'rgba(255,255,255,0.3)',
-            transition: 'border-color .45s ease, background .45s ease, color .45s ease',
+            background: 'transparent',
+            transition: 'border-color .45s ease, color .45s ease',
             cursor: posture ? 'pointer' : 'default',
           }}
         >
@@ -312,7 +336,7 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
             en="Curate my reading"
             ar="اختر لي"
             size="control"
-            color={posture ? GOLD : 'rgba(255,255,255,0.3)'}
+            color={`rgba(255,255,255,${posture ? 0.82 : 0.3})`}
           />
         </button>
         <button
@@ -323,11 +347,14 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 56,
-            border: `1px solid rgba(255,255,255,${posture ? 0.14 : 0.07})`,
+            // Matched to the door above, deliberately: same height, same border,
+            // same text weight. Any asymmetry here reads as a recommendation,
+            // and this pair is a genuine choice.
+            minHeight: 60,
+            border: `1px solid rgba(255,255,255,${posture ? 0.22 : 0.07})`,
             borderRadius: 999,
             background: 'transparent',
-            color: `rgba(255,255,255,${posture ? 0.66 : 0.3})`,
+            color: `rgba(255,255,255,${posture ? 0.82 : 0.3})`,
             transition: 'border-color .45s ease, color .45s ease',
             cursor: posture ? 'pointer' : 'default',
           }}
@@ -336,7 +363,7 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
             en="Just read"
             ar="ادخل واقرأ"
             size="control"
-            color={`rgba(255,255,255,${posture ? 0.66 : 0.3})`}
+            color={`rgba(255,255,255,${posture ? 0.82 : 0.3})`}
           />
         </button>
       </div>

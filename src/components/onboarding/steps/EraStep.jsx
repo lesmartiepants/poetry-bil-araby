@@ -64,20 +64,22 @@ import {
 const GOLD = '#c5a059';
 
 /**
- * The rail head for a band: "6th–8th", "9th–10th", "11th–14th", "15th–Today".
+ * The rail head for a band: "6th–8th", "9th–10th", "11th–14th", "15th–21st".
  *
- * These were bare numerals with an open dash on the last band — "15–" rather
- * than "15–21", on the argument that the closed number claims a precision the
- * corpus does not have, since that band also absorbs the undated poems. The
- * owner was asked directly and chose their own phrasing instead: ordinals on
- * both ends, and the word "Today" where the dash trailed off. Recorded rather
- * than deleted because the precision worry was not wrong, it was outvoted — if
- * anyone later wonders why the last band names a year-less endpoint while the
- * others name numbers, this is why.
+ * The last band used to read "15th–Today", and before that a bare "15–". Both
+ * were working around the same hole: `poems.century` was derived from `era_id`,
+ * so no poem carried a century past the 14th and naming the 21st would have
+ * claimed data that did not exist. "Today" was the honest way to say "and
+ * onward" without asserting a number.
+ *
+ * That hole is closed (#721). Centuries now come from poet life dates, and the
+ * last band really does hold 15th- through 21st-century poems — Darwish (d.
+ * 2008), Qabbani (d. 1998), Ahmad Matar (b. 1954) among them. So the head names
+ * the number, like every other band, and the row of heads finally reads as one
+ * consistent scale rather than three numbers and a word.
  */
 const headFor = (band) => {
   if (band.century_from == null) return '—';
-  if (band.includesUndated) return `${ordinal(band.century_from)}–Today`;
   return band.century_from === band.century_to
     ? ordinal(band.century_from)
     : `${ordinal(band.century_from)}–${ordinal(band.century_to)}`;
@@ -211,14 +213,18 @@ const EraStep = ({
                 <span
                   dir="ltr"
                   style={{
-                    // Forum, not Amiri: the heads carry English ordinals and
-                    // the word "Today" now, and Latin set in a naskh face reads
-                    // as a fallback rather than a choice. All four heads share
-                    // one face and ONE SIZE — the size never encodes anything
-                    // here, same rule the difficulty step follows.
+                    // Forum, not Amiri: the heads carry English ordinals, and
+                    // Latin set in a naskh face reads as a fallback rather than
+                    // a choice. All four heads share one face and ONE SIZE —
+                    // the size never encodes anything here, same rule the
+                    // difficulty step follows.
                     fontFamily: "'Forum', serif",
-                    // Down a step from 1.55rem so "15th–Today" fits on one line
-                    // at 393px without the other three shrinking to match it.
+                    // Down a step from 1.55rem so the longest head fits on one
+                    // line at 393px without the other three shrinking to match.
+                    // "15th–21st" is a character shorter than the "15th–Today"
+                    // this was originally sized for, and ties "11th–14th" as the
+                    // longest, so there may be room to go back up — measure at
+                    // 393px before changing it rather than assuming.
                     fontSize: '1.28rem',
                     lineHeight: 1.1,
                     letterSpacing: '.01em',

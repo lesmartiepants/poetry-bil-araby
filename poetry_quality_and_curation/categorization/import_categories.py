@@ -92,36 +92,70 @@ def _as_conf_dict(val) -> dict:
 
 
 def backfill_century(conn, dry_run: bool = False) -> int:
-    """Set poems.century deterministically from the poet's era.
+    """Set poems.century from the POET's dates, not from the poet's era.
 
-    Century is not model-produced; it is a coarse, honest value derived from
-    era via config.ERA_CENTURY. era_ids mapped to None (too broad to pin) are
-    skipped, leaving century NULL. Idempotent: re-running writes the same value.
+    Century is not model-produced. It is ceil(coalesce(death_year, active_year,
+    birth_year) / 100), computed by the poet_century() SQL function so there is
+    exactly one definition shared with the migrations.
+
+    Stamping it from era is what #721 fixed: era is one value for hundreds of
+    poets, so it carried zero per-poet information and got two eras outright
+    wrong. config.ERA_CENTURY survives only as a fallback for poets with no
+    dates at all, and only for eras narrow enough to stand in for one.
+
+    Idempotent: re-running writes the same value.
 
     Returns the number of poem rows affected (or that would be, in dry-run).
     """
     cur = conn.cursor()
     total = 0
+    dated_sql = (
+        "FROM poems p JOIN poets po ON p.poet_id = po.id "
+        "WHERE COALESCE(po.death_year, po.active_year, po.birth_year) IS NOT NULL "
+        "AND p.century IS DISTINCT FROM "
+        "poet_century(po.death_year, po.active_year, po.birth_year)"
+    )
     try:
+        if dry_run:
+            cur.execute("SELECT count(*) " + dated_sql)
+            n = cur.fetchone()[0]
+            print(f"  poet dates -> century: {n} poems (dry-run)")
+        else:
+            cur.execute(
+                "UPDATE poems p SET century = "
+                "poet_century(po.death_year, po.active_year, po.birth_year) "
+                "FROM poets po WHERE p.poet_id = po.id "
+                "AND COALESCE(po.death_year, po.active_year, po.birth_year) IS NOT NULL "
+                "AND p.century IS DISTINCT FROM "
+                "poet_century(po.death_year, po.active_year, po.birth_year)"
+            )
+            n = cur.rowcount
+            print(f"  poet dates -> century: {n} poems")
+        total += n
+
+        # Undated poets only. A poet WITH dates is never overwritten by an era
+        # stamp — that would undo the per-poet century all over again.
         for era_id, century in sorted(config.ERA_CENTURY.items()):
             if century is None:
-                continue  # era too broad -> leave century NULL on purpose
+                continue  # too broad or geographic -> leave century NULL on purpose
+            where = (
+                "FROM poems p JOIN poets po ON p.poet_id = po.id "
+                "WHERE po.era_id = %s AND p.century IS NULL "
+                "AND COALESCE(po.death_year, po.active_year, po.birth_year) IS NULL"
+            )
             if dry_run:
-                cur.execute(
-                    "SELECT count(*) FROM poems p JOIN poets po ON p.poet_id = po.id "
-                    "WHERE po.era_id = %s",
-                    (era_id,),
-                )
+                cur.execute("SELECT count(*) " + where, (era_id,))
                 n = cur.fetchone()[0]
-                print(f"  era {era_id} -> century {century}: {n} poems (dry-run)")
+                print(f"  undated era {era_id} -> century {century}: {n} poems (dry-run)")
             else:
                 cur.execute(
                     "UPDATE poems p SET century = %s FROM poets po "
-                    "WHERE p.poet_id = po.id AND po.era_id = %s",
+                    "WHERE p.poet_id = po.id AND po.era_id = %s AND p.century IS NULL "
+                    "AND COALESCE(po.death_year, po.active_year, po.birth_year) IS NULL",
                     (century, era_id),
                 )
                 n = cur.rowcount
-                print(f"  era {era_id} -> century {century}: {n} poems")
+                print(f"  undated era {era_id} -> century {century}: {n} poems")
             total += n
         if not dry_run:
             conn.commit()

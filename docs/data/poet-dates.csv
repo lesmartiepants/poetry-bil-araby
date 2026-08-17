@@ -1,0 +1,712 @@
+name_ar,name_en,poems_served,poems_total,era_id,era_name,century_now,death_year,birth_year,active_year,century_new,date_confidence,source_note
+أبو العلاء المعري,Abu al-Ala al-Ma'arri,214,,2,عباسي,9,1057,973,,11,exact,"Blind Syrian philosopher-poet, d. 449 AH at Ma'arrat al-Nu'man"
+ابن الرومي,Ibn al-Rumi,174,,2,عباسي,9,896,836,,9,exact,"Baghdad, d. 283 AH"
+المتنبي,Al-Mutanabbi,151,,2,عباسي,9,965,915,,10,exact,"Killed near Dayr al-Aqul, 354 AH"
+أبو نواس,Abu Nuwas,125,,2,عباسي,9,814,756,,9,approx,d. 198 AH; birth reported 747-762
+الإمام الشافعي,Imam al-Shafi'i,96,,2,عباسي,9,820,767,,9,exact,"Founder of the Shafi'i madhhab, d. 204 AH"
+العباس بن الأحنف,al-Abbas ibn al-Ahnaf,95,,2,عباسي,9,808,750,,9,approx,"Abbasid ghazal poet, d. c. 192 AH"
+ابن المعتز,Ibn al-Mu'tazz,82,,2,عباسي,9,908,861,,10,exact,"Caliph for one day, d. 296 AH"
+الخنساء,al-Khansa,73,,5,جاهلي,6,645,575,,7,approx,Mukhadram elegist; death commonly given c. 24 AH
+صفي الدين الحلي,Ṣafī al-Dīn al-Ḥillī,73,,8,مملوكي,14,1349,1278,,14,exact,"Iraq, Mamluk-era"
+أبو فراس الحمداني,Abu Firas al-Hamdani,71,,2,عباسي,9,968,932,,10,exact,Hamdanid prince of Aleppo
+أسامة بن منقذ,Usāma ibn Munqidh,70,179,10,أيوبي,,1188,1095,,12,exact,"Shayzar amir, memoirist of the Crusades"
+ابن خفاجة,Ibn Khafāja,70,,7,أندلسي,11,1139,1058,,12,exact,"Alzira, al-Andalus; the garden poet"
+أبو تمام,Abu Tammam,69,,2,عباسي,9,845,805,,9,approx,Compiler of the Hamasa; d. c. 231 AH
+علي بن أبي طالب,ʿAlī ibn Abī Ṭālib,69,,6,مخضرم,13,661,601,,7,exact,Fourth caliph; diwan attributed
+الحلاج,al-Hallaj,66,,2,عباسي,9,922,858,,10,exact,"Executed in Baghdad, 309 AH"
+لسان الدين بن الخطيب,Lisān al-Dīn ibn al-Khaṭīb,63,,8,مملوكي,14,1374,1313,,14,exact,Vizier and polymath of Nasrid Granada
+أحمد شوقي,Ahmad Shawqi,61,161,3,متأخر,,1932,1868,,20,exact,"Amir al-Shu'ara, Egypt"
+ابن حمديس,Ibn Ḥamdīs,61,,7,أندلسي,11,1133,1055,,12,exact,Sicilian-Andalusian
+محيي الدين بن عربي,Muḥyī al-Dīn ibn ʿArabī,58,130,10,أيوبي,,1240,1165,,13,exact,"Al-Shaykh al-Akbar, b. Murcia, d. Damascus"
+محمود سامي البارودي,Mahmoud Sami al-Baroudi,55,133,3,متأخر,,1904,1839,,20,exact,"Egypt, leader of the neoclassical revival"
+الشريف الرضي,al-Sharif al-Radi,54,,2,عباسي,9,1015,970,,11,exact,"Baghdad, compiler of Nahj al-Balagha"
+أبو العتاهية,Abu al-Atahiya,53,,2,عباسي,9,826,748,,9,exact,"Zuhd poet, d. 211 AH"
+قيس بن الملوح,Qays ibn al-Mulawwaḥ,53,,4,أموي,8,688,,,7,approx,"Majnun Layla; Umayyad, death c. 68 AH"
+ابن زيدون,Ibn Zaydūn,52,,7,أندلسي,11,1071,1003,,11,exact,Cordoba
+مجهول,Majhul,50,129,3,متأخر,,,,,,,Anonymous corpus entry - see spot-check note; not datable
+المعتمد بن عباد,Al-Muʿtamid ibn ʿAbbād,50,,7,أندلسي,11,1095,1040,,11,exact,"Abbadid king of Seville, d. in exile at Aghmat"
+قيس بن الملوح (مجنون ليلى ),Qays ibn al-Mulawwah (Majnun Layla),48,,2,عباسي,9,688,,,7,approx,Duplicate spelling (trailing space) of Qays ibn al-Mulawwah
+البحتري,Al-Buhturi,45,,2,عباسي,9,897,821,,9,exact,d. 284 AH
+كشاجم,Kashajam,43,,2,عباسي,9,971,,,10,approx,"Mahmud ibn al-Husayn, d. c. 360 AH"
+الطغرائي,Al-Ṭughrāʾī,41,,8,مملوكي,14,1121,1061,,12,exact,Author of Lamiyyat al-Ajam
+الفرزدق,al-Farazdaq,41,,4,أموي,8,728,641,,8,approx,Umayyad naqa'id poet
+الوأواء الدمشقي,al-Wa'wa' al-Dimashqi,40,,2,عباسي,9,995,,,10,approx,"Damascus, d. c. 385 AH"
+عمر بن أبي ربيعة,ʿUmar ibn Abī Rabīʿah,40,,4,أموي,8,712,644,,8,approx,"Meccan ghazal, d. c. 93 AH"
+عنترة بن شداد,'Antarah ibn Shaddad,40,,5,جاهلي,6,600,,,6,approx,"Pre-Islamic mu'allaqa poet; d. c.600-608, pulled to 600 so the century stays with the Jahili era"
+ابن عبد ربه,Ibn Abd Rabbih,37,,2,عباسي,9,940,860,,10,exact,"Cordoba, author of al-Iqd al-Farid"
+الشريف المرتضى,Al-Sharīf al-Murtaḍā,36,,8,مملوكي,14,1044,966,,11,exact,Baghdad
+ابن الفارض,Ibn al-Fāriḍ,34,81,10,أيوبي,,1235,1181,,13,exact,"Sultan al-Ashiqin, Cairo"
+بشار بن برد,Bishr ibn Burd,33,,2,عباسي,9,784,714,,8,exact,"Blind, flogged to death 167 AH"
+ابن عبد ربه الاندلسي,Ibn Abd Rabbih al-Andalusi,29,,8,مملوكي,14,940,860,,10,exact,Duplicate of Ibn Abd Rabbih
+النابغة الذبياني,al-Nabighah al-Dhubyani,29,,5,جاهلي,6,600,,,6,approx,"Pre-Islamic, court of al-Nu'man; d. c.604, pulled to 600 so the century stays with the Jahili era"
+ديك الجن,Dic al-Jinn,29,,2,عباسي,9,849,777,,9,approx,"Homs, d. c. 235 AH"
+محمود درويش,Mahmoud Darwish,28,68,3,متأخر,,2008,1941,,21,exact,Palestine
+ذو الرمة,Dhū al-Rummah,28,,4,أموي,8,735,696,,8,exact,"Last of the great bedouin poets, d. 117 AH"
+قيس بن ذريح,Qays ibn Dhurayḥ,26,,4,أموي,8,688,,,7,approx,Qays Lubna; Umayyad udhri poet
+كثير عزة,Kathīr ʿAzzah,26,,4,أموي,8,723,,,8,exact,"Umayyad, d. 105 AH"
+الامام علي بن ابي طالب,Al-Imam Ali ibn Abi Talib,24,,7,أندلسي,11,661,601,,7,exact,Duplicate spelling of Ali ibn Abi Talib
+ابن نباتة المصري,Ibn Nabatah al-Misri,23,43,3,متأخر,,1366,1287,,14,exact,Mamluk Cairo/Damascus
+بهاء الدين زهير,Bahāʾ al-Dīn Zuhayr,23,,8,مملوكي,14,1258,1186,,13,exact,Ayyubid Egypt
+إيليا أبو ماضي,Iliya Abu Madi,22,53,3,متأخر,,1957,1889,,20,exact,Mahjar
+أبو الفتح البستي,Abu al-Fath al-Busti,21,,2,عباسي,9,1010,,,11,approx,"Bust (Sijistan), d. c. 400 AH"
+الأبيوردي,Al-Abīwardī,21,,7,أندلسي,11,1113,,,12,exact,"Muhammad ibn Ahmad, d. 507 AH"
+جبران خليل جبران,Gibran Khalil Gibran,20,56,3,متأخر,,1931,1883,,20,exact,"Mahjar, New York"
+دعبل الخزاعي,Du'bal al-Khaza'i,20,,2,عباسي,9,860,765,,9,exact,"Shia partisan poet, d. 246 AH"
+عباس محمود العقاد,ʿAbbās Mahmoud al-ʿAqqād,19,49,3,متأخر,,1964,1889,,20,exact,Egypt
+ابن حزم الأندلسي,Ibn Ḥazm al-Andalusī,19,,7,أندلسي,11,1064,994,,11,exact,"Cordoba, Tawq al-Hamama"
+ابن سهل الأندلسي,Ibn Sahl al-Andalusi,19,,8,مملوكي,14,1251,1212,,13,exact,"Seville, drowned"
+خليل مطران,Khalil Mutran,18,54,3,متأخر,,1949,1872,,20,exact,Lebanon/Egypt
+قيس بن الملوح (مجنون ليلى),Qays ibn al-Mulawwah (Majnun Layla),18,49,3,متأخر,,688,,,7,approx,Duplicate spelling of Qays ibn al-Mulawwah
+ابراهيم ناجي,Ibrahim Naji,18,,4,أموي,8,1953,1898,,20,exact,"Egypt, Apollo group"
+احمد الصافي النجفي,Ahmad al-Safi al-Najafi,18,,6,مخضرم,13,1977,1897,,20,exact,Iraq
+امرؤ القيس,Imru' al-Qays,18,,5,جاهلي,6,540,,,6,approx,"Pre-Islamic, the wandering king"
+نزار قباني,Nizar Qabbani,17,37,3,متأخر,,1998,1923,,20,exact,Damascus/London
+ابن رشيق القيرواني,Ibn Rashiq al-Qayrawani,17,,8,مملوكي,14,1063,1000,,11,approx,"Kairouan, author of al-Umda"
+جرير,Jarīr,17,,4,أموي,8,728,653,,8,approx,Umayyad naqa'id poet
+حسان بن ثابت,Ḥassān ibn Thābit,17,,6,مخضرم,13,674,,,7,approx,"Poet of the Prophet, d. c. 54 AH"
+لبيد بن ربيعة,Labīd ibn Rabīʿah,17,,6,مخضرم,13,661,,,7,approx,Mukhadram mu'allaqa poet
+ابو القاسم الشابي,Abu al-Qasim al-Shabbi,16,36,3,متأخر,,1934,1909,,20,exact,Tunisia
+مصطفى صادق الرافعي,Mustafa Sadiq al-Rafi'i,15,34,3,متأخر,,1937,1880,,20,exact,Egypt
+ابن الزقاق البلنسي,Ibn al-Zuqaaq al-Balansi,14,38,3,متأخر,,1134,1096,,12,approx,Valencia; nephew of Ibn Khafaja
+ابو بكر الصنوبري,Abu Bakr al-Sanawbari,14,,7,أندلسي,11,945,,,10,exact,"Aleppo, d. 334 AH"
+ابن سناء الملك,Ibn Sanāʾ al-Mulk,13,29,10,أيوبي,,1211,1155,,13,exact,"Cairo, Ayyubid; theorist of the muwashshah"
+حافظ ابراهيم,Hafez Ibrahim,13,,7,أندلسي,11,1932,1872,,20,exact,"Egypt, Poet of the Nile"
+عبد الله بن المبارك,Abdullah ibn al-Mubarak,13,,2,عباسي,9,797,726,,8,exact,"Ascetic-scholar, d. 181 AH"
+أبو حيان الأندلسي,Abū Ḥayyān al-Andalusī,12,,7,أندلسي,11,1344,1256,,14,exact,"Grammarian, Granada then Cairo"
+جميل بثينة,Jamīl Buṭaynah,12,,4,أموي,8,701,,,8,exact,"Jamil ibn Ma'mar, d. 82 AH"
+طرفة بن العبد,Tarfa ibn al-'Abd,12,,5,جاهلي,6,564,,,6,approx,"Pre-Islamic mu'allaqa poet, killed young"
+احمد مطر,Ahmad Matar,11,29,3,متأخر,,,1954,1990,20,exact,"Iraqi satirist, living; floruit taken mid-career"
+ابن الساعاتي,Ibn al-Sāʿātī,11,24,10,أيوبي,,1207,1153,,13,exact,"Ali ibn Rustam, Ayyubid Cairo"
+أبو الحسن الجرجاني,Abu al-Hasan al-Jurjani,11,,2,عباسي,9,1001,,,11,exact,"Al-Qadi al-Jurjani, d. 392 AH"
+ابن الوردي,Ibn al-Wardī,11,,8,مملوكي,14,1349,1292,,14,exact,"Aleppo, d. of plague"
+ابو حيان النحوي الاندلسي,Abu Hayyan al-Nahwi al-Andalusi,11,,8,مملوكي,14,1344,1256,,14,exact,Duplicate of Abu Hayyan al-Andalusi
+ادونيس,Adonis,10,30,3,متأخر,,,1930,1975,20,exact,"Ali Ahmad Said Esber; living, floruit taken mid-career"
+ابن معصوم المدني,Ibn Ma'sum al-Madani,10,28,3,متأخر,,1707,1642,,18,exact,"Ali Khan al-Madani, author of Sulafat al-Asr"
+محي الدين بن عربي,Muhyi al-Din ibn Arabi,10,28,3,متأخر,,1240,1165,,13,exact,Duplicate spelling of Muhyi al-Din ibn Arabi
+الرصافي البلنسي,Al-Ruṣāfī al-Balansī,10,27,10,أيوبي,,1177,,,12,approx,"Valencia, d. c. 572 AH"
+ابن الدمينة,Ibn al-Dammīnah,10,,4,أموي,8,747,,,8,approx,Umayyad udhri poet
+ابن خاتمة الأندلسي,Ibn Khātima al-Andalusī,10,,7,أندلسي,11,1369,,,14,exact,"Almeria, d. 770 AH"
+ابن دريد الأزدي,Ibn Durayd al-Azdi,10,,2,عباسي,9,933,837,,10,exact,"Author of al-Jamhara, d. 321 AH"
+ابن سعيد المغربي,Ibn Said al-Maghribi,10,,8,مملوكي,14,1286,1213,,13,exact,"Granada, author of al-Mughrib"
+العفيف التلمساني,Al-ʿAfīf al-Tilimsānī,10,,7,أندلسي,11,1291,1213,,13,exact,"Sufi poet, Damascus"
+زهير بن أبي سلمى,Zuhayr ibn Abī Sulmā,10,,5,جاهلي,6,600,,,6,approx,"Pre-Islamic mu'allaqa poet; d. c.609, pulled to 600 so the century stays with the Jahili era"
+عبد الغني النابلسي,Abd al-Ghani al-Nabulsi,9,54,9,عثماني,,1731,1641,,18,exact,"Damascus Sufi, Ottoman era"
+الحكم بن ابي الصلت,Al-Hakam ibn Abi al-Salt,9,15,3,متأخر,,1134,,,12,exact,Umayya ibn Abd al-Aziz ibn Abi al-Salt al-Dani
+السري الرفاء,al-Sirri al-Raffa',9,,2,عباسي,9,973,,,10,approx,"Mosul, d. c. 362 AH"
+السيد الحميري,al-Sayyid al-Himyari,9,,2,عباسي,9,789,723,,8,approx,"Shia partisan poet, d. c. 173 AH"
+امية الداني ( الحكم بن ابي الصلت ),Umaya al-Dani (Al-Hakam ibn Abi al-Salt),9,,8,مملوكي,14,1134,,,12,exact,Duplicate of Umayya ibn Abd al-Aziz al-Dani
+عبد الله بن رواحة,ʿAbd Allāh ibn Rawāḥah,9,,6,مخضرم,13,629,,,7,exact,"Companion, killed at Mu'ta 8 AH"
+عمرو بن كلثوم,'Amr ibn Kulthum,9,,5,جاهلي,6,584,,,6,approx,Pre-Islamic mu'allaqa poet
+ابن عنين,Ibn ʿInān,8,21,10,أيوبي,,1233,1154,,13,exact,"Damascus, Ayyubid court satirist"
+الشافعي,Al-Shafi'i,8,20,3,متأخر,,820,767,,9,exact,Duplicate of Imam al-Shafi'i
+محمد مهدي الجواهري,Muhammad Mahdi al-Jawahiri,8,20,3,متأخر,,1997,1899,,20,exact,Iraq
+يحيى الحمادي,Yahya al-Hammadi,8,19,3,متأخر,,,,,,,No reliable dates found
+أبو الأسود الدؤلي,Abū al-Aswad al-Duʾalī,8,,4,أموي,8,688,603,,7,exact,"Basra, d. 69 AH"
+أبو هلال العسكري,Abu Hilal al-Askari,8,,2,عباسي,9,1005,,,11,approx,"Author of al-Sina'atayn, d. after 395 AH"
+الحطيئة,al-Ḥuṭayʾah,8,,6,مخضرم,13,670,,,7,approx,Mukhadram hija' poet
+الصنوبري,al-Sanawbari,8,,2,عباسي,9,945,,,10,exact,Duplicate of Abu Bakr al-Sanawbari
+علي الحصري القيرواني,Ali al-Husri al-Qayrawani,8,,8,مملوكي,14,1095,1029,,11,exact,Kairouan then al-Andalus
+علية بنت المهدي,Ulayya bint al-Mahdi,8,,2,عباسي,9,825,777,,9,exact,Abbasid princess
+ابن زاكور,Ibn Zakur,7,42,9,عثماني,,1731,1665,,18,exact,"Fes, Morocco; Ottoman-era Maghrib"
+ابن معصوم الحسني الحسيني,Ibn Ma'sum al-Hasani al-Husayni,7,22,3,متأخر,,1707,1642,,18,exact,Duplicate of Ibn Ma'sum al-Madani
+ابو الفضل بن الاحنف,Abu al-Fadl ibn al-Ahnaf,7,19,3,متأخر,,808,750,,9,approx,Duplicate (kunya) of al-Abbas ibn al-Ahnaf
+ابو الربيع سليمان الموحدي,Abu al-Rabi' Sulayman al-Muwahidi,7,15,3,متأخر,,,,1200,12,approx,Almohad-era; floruit estimate
+محمود المشهداني,Mahmoud al-Mashhadani,7,11,3,متأخر,,,,2010,21,approx,Contemporary Iraqi; floruit estimate
+إبراهيم بن هرمة,Ibrahim ibn Hurma,7,,2,عباسي,9,792,709,,8,approx,Last of the Hijazi Umayyad-Abbasid transitional poets
+ابن دراج القسطلي,Ibn Darraj al-Qastalli,7,,2,عباسي,9,1030,958,,11,exact,"Al-Andalus, Amirid court"
+ابن شهيد,Ibn Shuhayd,7,,7,أندلسي,11,1035,992,,11,exact,Cordoba
+ابن طباطبا العلوي,Ibn Tabataba al-Alawi,7,,2,عباسي,9,934,,,10,exact,"Isfahan, d. 322 AH"
+ابن هانئ الأصغر,Ibn Hāniʾ al-Aṣghar,7,,7,أندلسي,11,1179,,,12,approx,"Andalusian, later namesake of Ibn Hani"
+الأحوص الأنصاري,al-Aḥwaṣ al-Anṣārī,7,,4,أموي,8,723,,,8,approx,Umayyad Medina ghazal poet
+الراعي النميري,al-Rāʿī al-Numayrī,7,,4,أموي,8,708,,,8,approx,"Umayyad, rival of Jarir"
+الصاحب بن عباد,al-Sahib ibn Abbad,7,,2,عباسي,9,995,938,,10,exact,Buyid vizier and patron
+تأبط شرا,Ta'abbata Sharran,7,,5,جاهلي,6,530,,,6,approx,Pre-Islamic su'luk
+حاتم الطائي,Hatim al-Ta'i,7,,5,جاهلي,6,578,,,6,approx,Pre-Islamic byword for generosity
+عدي بن الرقاع,ʿAdī ibn al-Riqāʿ,7,,4,أموي,8,714,,,8,approx,"Umayyad, Damascus court"
+عدي بن زيد,ʿAdī ibn Zayd,7,,5,جاهلي,6,600,,,6,approx,Pre-Islamic Christian of al-Hira
+محمود الوراق,Mahmud al-Warraq,7,,2,عباسي,9,845,,,9,approx,"Abbasid zuhd poet, d. c. 230 AH"
+ولادة بنت المستكفي,Wallāda bint al-Mustakfī,7,,7,أندلسي,11,1091,1001,,11,exact,Umayyad princess of Cordoba
+علي محمود طه,Ali Mahmud Taha,6,19,3,متأخر,,1949,1901,,20,exact,"Egypt, Apollo group"
+ابراهيم طوقان,Ibrahim Tuqan,6,18,3,متأخر,,1941,1905,,20,exact,Palestine
+أبو مدين التلمساني,Abū Madīn al-Tilimsānī,6,15,10,أيوبي,,1198,1126,,12,exact,Sufi of Tlemcen/Bijaya
+معروف الرصافي,Ma'ruf al-Rusafi,6,14,3,متأخر,,1945,1875,,20,exact,Iraq
+عبد الجبار بن حمديس,Abd al-Jabbar ibn Hamdis,6,11,3,متأخر,,1133,1055,,12,exact,Duplicate (full name) of Ibn Hamdis
+عمر ابن ابي ربيعة,Umar ibn Abi Rabi'ah,6,8,3,متأخر,,712,644,,8,approx,Duplicate spelling of Umar ibn Abi Rabi'a
+ابن الحداد الأندلسي,Ibn al-Ḥaddād al-Andalusī,6,,7,أندلسي,11,1087,,,11,approx,"Almeria, d. c. 480 AH"
+ابن نباتة السعدي,Ibn Nabata al-Sa'di,6,,2,عباسي,9,1015,938,,11,exact,"Baghdad, distinct from Ibn Nubata al-Misri"
+ابن هانئ الأندلسي,Ibn Hani' al-Andalusi,6,,2,عباسي,9,973,934,,10,exact,"Fatimid panegyrist, killed young"
+ابو بكر الخالدي ( الخالديان ),Abu Bakr al-Khalidi (al-Khalidiyan),6,,8,مملوكي,14,990,,,10,approx,"One of the two Khalidi brothers, Mosul"
+الخبز أرزي,al-Khubz Arzi,6,,2,عباسي,9,938,,,10,approx,"Basra, the rice-bread baker poet"
+خالد الكاتب,Khalid al-Katib,6,,2,عباسي,9,876,,,9,approx,"Abbasid ghazal, d. c. 262 AH"
+محمد بن حازم الباهلي,Muhammad ibn Hazim al-Bahili,6,,2,عباسي,9,874,,,9,approx,"Abbasid, Baghdad"
+الأمير الصنعاني,Amir al-San'ani,5,30,9,عثماني,,1768,1688,,18,exact,"Muhammad ibn Isma'il al-San'ani, Yemen"
+جميل صدقي الزهاوي,Jamil Sidqi al-Zahawi,5,30,9,عثماني,,1936,1863,,20,exact,Baghdad
+ريم سليمان الخش,Reem Sulayman al-Khash,5,17,3,متأخر,,,,2010,21,approx,Contemporary Syrian poet; floruit estimate
+صالح طه ( ظميان غدير ),Salih Taha (Dhimyan Ghadeer),5,16,3,متأخر,,,,2010,21,approx,Contemporary poet; floruit estimate
+غيداء الايوبي,Ghayda' al-Ayyubi,5,16,3,متأخر,,,,2010,21,approx,Contemporary poet; floruit estimate
+القاضي الفاضل,Al-Qāḍī al-Fāḍil,5,12,10,أيوبي,,1200,1135,,12,exact,Saladin's chancellor
+أبو الحسن الششتري,Abū al-Ḥasan al-Shushtarī,5,,7,أندلسي,11,1269,1212,,13,exact,"Andalusian Sufi, muwashshah of the zajal type"
+أبو بكر الشبلي,Abu Bakr al-Shibli,5,,2,عباسي,9,946,861,,10,exact,Baghdad Sufi
+أبو دهبل الجمحي,Abū Dahbal al-Jumḥī,5,,4,أموي,8,715,,,8,approx,Umayyad Meccan
+ابن القيسراني,Ibn al-Qaysarani,5,,8,مملوكي,14,1154,1085,,12,exact,"Aleppo, Zangid court"
+ابن سارة ( صارة ) الشنتريني,Ibn Sarah al-Shantarin,5,,8,مملوكي,14,1123,,,12,exact,"Santarem, al-Andalus, d. 517 AH"
+ابن سنان الخفاجي,Ibn Sinan al-Khafaji,5,,8,مملوكي,14,1073,1032,,11,exact,"Aleppo, rhetorician"
+ابن وكيع التنيسي,Ibn Waki' al-Tinnisi,5,,7,أندلسي,11,1003,,,11,exact,"Tinnis, Egypt, d. 393 AH"
+جميل بن معمر,Jamil bin Mu'ammar,5,,7,أندلسي,11,701,,,8,exact,Duplicate (full name) of Jamil Buthayna
+شهاب الدين التلعفري,Shihab al-Din al-Ta'laffari,5,,8,مملوكي,14,1277,1194,,13,exact,Tal Afar then Syria
+عدي بن ربيعة المهلهل ( الزير ),Adi bin Rabi'a al-Muhalhil (al-Zir),5,,5,جاهلي,6,531,,,6,approx,"Pre-Islamic, the Basus war"
+علي بن الجهم,Ali ibn al-Jahm,5,,2,عباسي,9,863,804,,9,exact,"Abbasid, d. 249 AH"
+عمارة اليمني,ʿImāra al-Yamanī,5,,7,أندلسي,11,1174,1121,,12,exact,Executed by Saladin
+مالك بن الريب,Mālik ibn al-Rayb,5,,4,أموي,8,680,,,7,approx,"Umayyad, famous self-elegy"
+مهيار الديلمي,Muhayyar al-Daylami,5,,2,عباسي,9,1037,,,11,exact,"Baghdad, pupil of al-Sharif al-Radi"
+نصيب بن رباح,Naṣīb ibn Rabāḥ,5,,4,أموي,8,726,,,8,approx,"Umayyad, freedman poet"
+أبو بحر الخطي,Abu Bahr al-Khatti,4,24,9,عثماني,,1618,1554,,17,approx,"Bahrain/al-Qatif, d. c. 1028 AH"
+ابن معصوم,Ibn Ma'sum,4,24,9,عثماني,,1707,1642,,18,exact,Duplicate of Ibn Ma'sum al-Madani
+محمد العيد ال خليفة,Muhammad al-Eid al-Khalifa,4,19,3,متأخر,,1979,1904,,20,exact,Algeria
+شهاب الدين ابن دمرداش,Shihab al-Din Ibn Damardash,4,15,3,متأخر,,,,,,,No reliable dates found
+غازي القصيبي,Ghazi al-Qusaibi,4,14,3,متأخر,,2010,1940,,21,exact,Saudi Arabia
+أبو زيد الفازازي,Abū Zayd al-Fazzāzī,4,11,10,أيوبي,,1230,,,13,exact,"Marrakesh/Fes, d. 627 AH"
+ابو الفضل الوليد,Abu al-Fadl al-Walid,4,10,3,متأخر,,1941,1886,,20,exact,"Lebanon, Ilyas Tabet"
+قيس لبنى,Qays Lubna,4,9,3,متأخر,,688,,,7,approx,Duplicate byname of Qays ibn Dhurayh
+وصف المطر والسحاب,Wasf al-Matar wa al-Sahab,4,8,3,متأخر,,,,,,,"NOT A POET - theme label (""description of rain and clouds"") misfiled as a poet row"
+ابن رشيق القيرواني الازدي,Ibn Rashiq al-Qayrawani al-Azdi,4,5,3,متأخر,,1063,1000,,11,approx,Duplicate of Ibn Rashiq al-Qayrawani
+أبو ذؤيب الهذلي,Abū Dhūʾayb al-Hudhaliyy,4,,6,مخضرم,13,649,,,7,approx,Mukhadram Hudhali elegist
+أبو طالب,Abū Ṭālib,4,,6,مخضرم,13,619,539,,7,approx,Uncle of the Prophet
+ابن الهبارية,Ibn al-Hibbariyya,4,,2,عباسي,9,1115,1023,,12,exact,Baghdad satirist
+ابن داود الظاهري,Ibn Dawud al-Zahiri,4,,2,عباسي,9,910,868,,10,exact,Author of Kitab al-Zahra
+ابن ميادة,Ibn Mayyada,4,,2,عباسي,9,764,,,8,approx,Umayyad-Abbasid transitional
+اسحاق الموصلي,Ishaq al-Mawsili,4,,7,أندلسي,11,850,767,,9,exact,Musician-poet of the Abbasid court
+الأحنف العكبري,al-Ahnaf al-Ukbari,4,,2,عباسي,9,1015,,,11,approx,"Baghdad, poet of beggars"
+الباخرزي,Al-Bākharzī,4,,8,مملوكي,14,1075,,,11,exact,"Author of Dumyat al-Qasr, d. 467 AH"
+الثعالبي,al-Tha'alibi,4,,2,عباسي,9,1038,961,,11,exact,"Nishapur, author of Yatimat al-Dahr"
+المتلمس الضبعي,al-Mutalammis al-Dhub'i,4,,5,جاهلي,6,580,,,6,approx,"Pre-Islamic, uncle of Tarafa"
+صاعد البغدادي,Sa'id al-Baghdadi,4,,2,عباسي,9,1026,,,11,approx,Andalusian-Baghdadi philologist
+صلاح الدين الصفدي,Salah al-Din al-Safadi,4,,8,مملوكي,14,1363,1296,,14,exact,Mamluk polymath and biographer
+عامر بن الطفيل,ʿĀmir ibn al-Ṭufayl,4,,6,مخضرم,13,630,,,7,approx,Pre-Islamic/mukhadram knight of Amir
+كعب بن زهير,Kaʿb ibn Zuhayr,4,,6,مخضرم,13,645,,,7,approx,"Mukhadram, Banat Su'ad"
+وجيه الدولة الحمداني,Wajih al-Dawla al-Hamdani,4,,2,عباسي,9,1000,,,10,approx,Hamdanid; floruit estimate
+يوسف بن هارون الرمادي,Yūsuf ibn Hārūn al-Ramādī,4,,7,أندلسي,11,1013,,,11,exact,"Cordoba, d. 403 AH"
+مجنون ليلى,Majnun Layla,3,13,3,متأخر,,688,,,7,approx,Duplicate of Qays ibn al-Mulawwah
+ابن دريد,Ibn Durayd,3,10,3,متأخر,,933,837,,10,exact,Duplicate of Ibn Durayd al-Azdi
+زيد بن عمرو بن نفيل,Zayd ibn Amr ibn Nufayl,3,10,3,متأخر,,605,,,7,approx,"Hanif of Mecca, d. before the mission"
+عبدالله البردوني,Abdullah al-Baraduni,3,10,3,متأخر,,1999,1929,,20,exact,Yemen
+ابن مقبل,Ibn Muqbil,3,9,3,متأخر,,670,,,7,approx,"Mukhadram, Tamim"
+السهروردي المقتول,Al-Suhrawardī al-Maqtūl,3,9,10,أيوبي,,1191,1154,,12,exact,"Executed at Aleppo, founder of Ishraqi philosophy"
+الحيص بيص,Al-Ḥayṣ Bayṣ,3,8,10,أيوبي,,1179,1096,,12,exact,"Sa'd ibn Muhammad, Baghdad"
+الفروسية,Al-Furusiyyah,3,8,3,متأخر,,,,,,,"NOT A POET - theme label (""chivalry"") misfiled as a poet row"
+عدنان الصايغ,Adnan al-Sa'igh,3,8,3,متأخر,,,1955,1995,20,exact,"Iraqi, living; floruit taken mid-career"
+يعقوب بن علي ال ابراهيم,Ya'qub ibn Ali al Ibrahim,3,8,3,متأخر,,,,1950,20,approx,Gulf poet; floruit estimate
+ابن لبال الشريشي,Ibn Labāb al-Sharīshī,3,7,10,أيوبي,,1187,1116,,12,exact,"Jerez, al-Andalus"
+ابو اسحاق الصابي,Abu Ishaq al-Sabi,3,7,3,متأخر,,994,925,,10,exact,Baghdad chancery stylist
+المفتي فتح الله,al-Muftī Fatḥ Allāh,3,7,3,متأخر,,,,1600,16,approx,Ottoman-era mufti-poet; floruit estimate
+امل دنقل,Amal Dunqul,3,7,3,متأخر,,1983,1940,,20,exact,Egypt
+علي الجارم,Ali al-Jaram,3,7,3,متأخر,,1949,1881,,20,exact,Egypt
+ابو الفضل بن العميد,Abu al-Fadl ibn al-Amid,3,6,3,متأخر,,970,,,10,exact,"Buyid vizier, d. 360 AH"
+حيدر الحلي,Haydar al-Hilli,3,6,3,متأخر,,1886,1831,,19,exact,"Iraq, Shia elegist"
+سبط ابن التعاويذي,Sibṭ ibn al-Ta'awidhi,3,6,3,متأخر,,1188,1126,,12,exact,Baghdad
+ماء العينين,Ma' al-Aynayn,3,6,3,متأخر,,1910,1830,,20,exact,Saharan Moroccan Sufi and resistance leader
+ابن عطية الاندلسي,Ibn Attiyah al-Andalusi,3,5,3,متأخر,,1147,1088,,12,exact,"Granada, Qur'an exegete"
+أبو إسحاق الإلبيري,Abu Ishaq al-Ilbiri,3,,8,مملوكي,14,1067,,,11,exact,"Elvira, al-Andalus, d. 459 AH"
+أبو البقاء الرندي,Abū al-Baqāʾ al-Rundī,3,,8,مملوكي,14,1285,1204,,13,exact,Ronda; the elegy for al-Andalus
+ابن الجياب الغرناطي,Ibn al-Jayyāb al-Ghirnāṭī,3,,8,مملوكي,14,1349,1274,,14,exact,"Nasrid Granada, teacher of Ibn al-Khatib"
+ابن الحاج النميري,Ibn al-Hajj al-Numayri,3,,8,مملوكي,14,1383,1315,,14,approx,"Granada, chancery secretary"
+ابن السيد البطليوسي,Ibn al-Sīd al-Baṭalyawsī,3,,7,أندلسي,11,1127,1052,,12,exact,"Badajoz, philologist"
+ابن حديدة اللخمي القيرواني,Ibn Hadidat al-Lakhmi al-Qayrawani,3,,8,مملوكي,14,,,1100,11,approx,Kairouan; floruit estimate
+ابن شرف القيرواني,Ibn Sharaf al-Qayrawani,3,,8,مملوكي,14,1068,1000,,11,exact,"Kairouan, rival of Ibn Rashiq"
+ابن هذيل القرطبي,Ibn Hudhayl al-Qurṭubī,3,,7,أندلسي,11,,,1200,12,approx,Cordoba; floruit estimate
+ابو جعفر بن سعيد الاندلسي,Abu Ja'far ibn Said al-Andalusi,3,,8,مملوكي,14,1163,,,12,approx,"Alcala la Real, of the Banu Sa'id"
+ابو عثمان الخالدي ( الخالديان ),Abū ʿUthmān al-Khālidī (al-Khālidiyān),3,,7,أندلسي,11,980,,,10,approx,"The other Khalidi brother, Mosul"
+الاخيطل الاحوازي,Al-Akhtal al-Ahwazi,3,,2,عباسي,9,,,900,9,approx,Ambiguous nisba; floruit estimate
+التهامي,al-Tahami,3,,2,عباسي,9,1025,,,11,exact,"Ali ibn Muhammad, killed in Cairo 416 AH"
+الحارث بن حلزة,al-Harith ibn Hillizah,3,,5,جاهلي,6,570,,,6,approx,Pre-Islamic mu'allaqa poet
+الشاب الظريف,Al-Shābb al-Ẓarīf,3,,8,مملوكي,14,1289,1263,,13,exact,"Muhammad ibn Sulayman, Damascus, died young"
+القاضي التنوخي,al-Qadi al-Tanukhi,3,,2,عباسي,9,994,940,,10,exact,Author of al-Faraj ba'd al-Shidda
+القاضي عبد الوهاب المالكي,Al-Qadi Abd al-Wahhab al-Maliki,3,,7,أندلسي,11,1031,973,,11,exact,"Maliki jurist, Baghdad then Cairo"
+جحظة البرمكي,Jahzat al-Baramaki,3,,2,عباسي,9,938,839,,10,exact,Abbasid musician-poet
+ذو النون المصري,Dhu al-Nun al-Misri,3,,2,عباسي,9,861,796,,9,exact,Egyptian Sufi
+عبد الرحمن الداخل,Abd al-Rahman al-Dakhil,3,,8,مملوكي,14,788,731,,8,exact,"Umayyad amir of Cordoba, Saqr Quraysh"
+عبيد الله بن الرقيات,ʿUbayd Allāh ibn al-Ruqayyāt,3,,4,أموي,8,704,,,8,approx,Umayyad Zubayrid partisan
+عرقلة الدمشقي,Urqula al-Dimashqi,3,,2,عباسي,9,1171,1106,,12,exact,"Damascus, Ayyubid"
+عروة بن الورد,ʿUrwah ibn al-Ward,3,,5,جاهلي,6,594,,,6,approx,Pre-Islamic su'luk
+عماد الدين الاصفهاني,Imad al-Din al-Isfahani,3,,7,أندلسي,11,1201,1125,,13,exact,Duplicate of al-Imad al-Isbahani
+عمار بن ياسر,ʿAmmār ibn Yāsir,3,,6,مخضرم,13,657,566,,7,approx,"Companion, killed at Siffin"
+عمرو بن معد يكرب,ʿAmr ibn Maʿdī Karib,3,,6,مخضرم,13,642,,,7,approx,Mukhadram knight of Zubayd
+يزيد بن معاوية,Yazīd ibn Muʿāwiyah,3,,4,أموي,8,683,647,,7,exact,Umayyad caliph
+ابن الجزري,Ibn al-Jazari,2,12,9,عثماني,,1429,1350,,15,exact,"Qira'at scholar, Shiraz"
+ابن النقيب,Ibn al-Naqib,2,12,9,عثماني,,,,,,,Ambiguous nisba; no reliable dates
+ابن معتوق,Ibn Ma'tuq,2,12,9,عثماني,,1676,1616,,17,exact,"Basra, Ottoman era"
+حسن حسني الطويراني,Hasan Husni al-Tuwayrani,2,12,9,عثماني,,1897,1850,,19,exact,"Ottoman Egypt, journalist-poet"
+ابن هتيمل,Ibn Hatim,2,8,3,متأخر,,1350,,,14,approx,"Yemeni, d. c. 750 AH"
+احسان البني,Ihsan al-Banni,2,8,3,متأخر,,,,1980,20,approx,Syrian; floruit estimate
+توفيق زياد,Tawfiq Zayyad,2,8,3,متأخر,,1994,1929,,20,exact,"Palestine, Nazareth"
+ابن زهر الحفيد,Ibn Zuhr al-Ḥafīd,2,7,10,أيوبي,,1198,1113,,12,exact,"Seville, physician-poet"
+ابن نما الحلي,Ibn Nama al-Hilli,2,7,3,متأخر,,1287,1222,,13,exact,"Hilla, Shia scholar"
+العماد الأصبهاني,Al-ʿImād al-Iṣbahānī,2,7,10,أيوبي,,1201,1125,,13,exact,"Saladin's secretary, historian"
+ابراهيم اليازجي,Ibrahim al-Yaziji,2,6,3,متأخر,,1906,1847,,20,exact,"Lebanon, Nahda philologist"
+ابن النبيه,Ibn al-Nabih,2,6,3,متأخر,,1222,,,13,exact,"Ayyubid Egypt, d. 619 AH"
+المكزون السنجاري,Al-Makhzūn al-Sinjārī,2,6,10,أيوبي,,1240,1188,,13,exact,Alawite Sufi leader
+بلبل الغرام الحاجري,Bulbul al-Gharām al-Ḥājirī,2,6,10,أيوبي,,1235,1185,,13,approx,"Husayn ibn Muhammad al-Hajiri, Irbil"
+سليم عنحوري,Salim Anhoury,2,6,3,متأخر,,1933,1856,,20,exact,"Damascus, Nahda journalist-poet"
+مهدي حجي,Mahdi Haji,2,6,3,متأخر,,,,1950,20,approx,Iraqi; floruit estimate
+وردة اليازجي,Warda al-Yaziji,2,6,3,متأخر,,1924,1838,,20,exact,"Lebanon, one of the first modern Arab women poets"
+ابن باجة الاندلسي,Ibn Bajjah al-Andalusi,2,5,3,متأخر,,1138,1085,,12,exact,Avempace; philosopher-poet
+ابو الهدى الصيادي,Abu al-Huda al-Sayyadi,2,5,3,متأخر,,1909,1850,,20,exact,"Aleppo, Ottoman court shaykh"
+صالح الشرنوبي,Salih al-Sharnubi,2,5,3,متأخر,,1951,1924,,20,exact,Egypt
+عمر الانسي,ʿUmar al-Ansī,2,5,3,متأخر,,1876,1822,,19,exact,Beirut
+غادة السمان,Ghada al-Samman,2,5,3,متأخر,,,1942,1980,20,exact,"Syrian novelist-poet, living"
+فدوى طوقان,Fadwa Tuqan,2,5,3,متأخر,,2003,1917,,21,exact,Palestine
+قاسم حداد,Qasim Haddad,2,5,3,متأخر,,,1948,1990,20,exact,"Bahrain, living"
+ابن لولو,Ibn Lulu,2,4,3,متأخر,,1350,,,14,approx,Mamluk-era; floruit estimate
+اسماعيل صبري,Ismail Sabri,2,4,3,متأخر,,1923,1854,,20,exact,Egypt
+المنازي,Al-Manazi,2,4,3,متأخر,,1050,,,11,approx,"Ahmad ibn Yusuf, Diyar Bakr, d. c. 437 AH"
+امين ناصر الدين,Amin Nassir al-Din,2,4,3,متأخر,,1953,1884,,20,approx,Lebanon
+انس الحجار,Anas al-Hajjar,2,4,3,متأخر,,,,2010,21,approx,Contemporary; floruit estimate
+حيدر بن سليمان الحلي,Haydar bin Sulayman al-Hilli,2,4,3,متأخر,,1886,1831,,19,exact,Duplicate (full name) of Haydar al-Hilli
+خشان خشان,Khishan Khishan,2,4,3,متأخر,,,,2000,20,approx,Contemporary prosodist-poet; floruit estimate
+سليمان الصولة,Sulayman al-Sawla,2,4,3,متأخر,,,,1900,19,approx,No reliable dates; floruit estimate
+عبد الحميد السنوسي,Abd al-Hamid al-Sanusi,2,4,3,متأخر,,,,1950,20,approx,Libyan; floruit estimate
+معين بسيسو,Mu'in Bseiso,2,4,3,متأخر,,1984,1926,,20,exact,Palestine
+ولي الدين يكن,Wali al-Din Yakan,2,4,3,متأخر,,1921,1873,,20,exact,Egypt/Turkey
+أبو اليمن الكندي,Abū al-Yaman al-Kindī,2,3,10,أيوبي,,1217,1132,,13,exact,Damascus philologist
+بدر شاكر السياب,Badr Shakir al-Sayyab,2,3,3,متأخر,,1964,1926,,20,exact,"Iraq, founder of free verse"
+عبد الباقي العمري الفاروقي,Abd al-Baqi al-'Umari al-Farouqi,2,3,3,متأخر,,1861,1790,,19,exact,Mosul
+عبد القادر الجزايري,Abd al-Qadir al-Jaza'iri,2,3,3,متأخر,,1883,1808,,19,exact,"Algerian resistance leader, d. Damascus"
+علي بن محمد التهامي,Ali bin Muhammad al-Tahami,2,3,3,متأخر,,1025,,,11,exact,Duplicate of al-Tihami
+لبيد بن ربيعة العامري,Labid bin Rabi'ah al-Amiri,2,3,3,متأخر,,661,,,7,approx,Duplicate (full name) of Labid ibn Rabi'a
+ابراهيم بن هلال بن زهرون,Ibrahim ibn Hilal ibn Zahrun,2,2,3,متأخر,,994,925,,10,exact,Duplicate of Abu Ishaq al-Sabi
+ابن طفيل,Ibn Ṭufayl,2,2,10,أيوبي,,1185,1105,,12,exact,Author of Hayy ibn Yaqzan
+الشاعر التونسي,Al-Sha'ir Al-Tunisi,2,2,3,متأخر,,,,1900,19,approx,Byname only; floruit estimate
+عبدالرحيم بدر,Abd al-Rahim Badr,2,2,3,متأخر,,,,2000,20,approx,Contemporary; floruit estimate
+ابن قضيب البان الحلبي,Ibn Qaḍīb al-Bān al-Ḥalabī,2,1,3,متأخر,,1687,1620,,17,exact,"Aleppo Sufi, Ottoman era"
+أبو الحسن السلامي,Abu al-Hasan al-Salami,2,,2,عباسي,9,1002,948,,11,exact,"Baghdad, d. 393 AH"
+أبو بكر الصديق,Abū Bakr al-Ṣiddīq,2,,6,مخضرم,13,634,573,,7,exact,First caliph
+أبو بكر العنبري,Abu Bakr al-'Anbari,2,,8,مملوكي,14,,,900,9,approx,No reliable dates; floruit estimate
+أبو جعفر الملاحي,Abū Jaʿfar al-Mallāḥī,2,,10,أيوبي,,,,1200,12,approx,Andalusian; floruit estimate
+أبو صخر الهذلي,Abū Ṣakhr al-Hudhaliyy,2,,4,أموي,8,700,,,7,approx,Umayyad Hudhali
+إبراهيم بن المهدي,Ibrahim ibn al-Mahdi,2,,2,عباسي,9,839,779,,9,exact,"Abbasid prince, singer-poet"
+ابراهيم بن العباس الصولي,Ibrahim bin al-'Abbas al-Suli,2,,7,أندلسي,11,857,792,,9,exact,Abbasid chancery poet
+ابن أبي الخصال,Ibn Abī al-Khiṣāl,2,,7,أندلسي,11,1146,1073,,12,exact,"Almoravid chancery, al-Andalus"
+ابن الخياط,Ibn al-Khayyat,2,,8,مملوكي,14,1123,1058,,12,exact,Damascus
+ابن الزيات,Ibn al-Zayyat,2,,2,عباسي,9,847,790,,9,exact,"Abbasid vizier, d. under torture"
+ابن العديم,Ibn al-'Adim,2,,8,مملوكي,14,1262,1192,,13,exact,Aleppo historian
+ابن اللبانة الداني,Ibn al-Labbanah al-Dani,2,,8,مملوكي,14,1113,,,12,exact,"Denia, poet of the fall of Seville"
+ابن المُقري,Ibn al-Muqrī,2,,8,مملوكي,14,1433,1354,,15,exact,"Yemen, Isma'il ibn Abi Bakr"
+ابن بقي القرطبي,Ibn Baqī al-Qurṭubī,2,,7,أندلسي,11,1145,,,12,exact,"Cordoba, muwashshah master"
+ابن جبير,Ibn Jubayr,2,,8,مملوكي,14,1217,1145,,13,exact,Valencian traveller
+ابن زمرك,Ibn Zumruk,2,,8,مملوكي,14,1393,1333,,14,exact,Nasrid vizier; verses on the Alhambra walls
+ابن سينا,Ibn Sina,2,,2,عباسي,9,1037,980,,11,exact,Avicenna
+ابن هندو,Ibn Hindu,2,,2,عباسي,9,1019,,,11,approx,"Rayy, physician-philosopher"
+ابو الحسن النوري,Abu al-Hasan al-Nuri,2,,7,أندلسي,11,907,,,10,exact,"Baghdad Sufi, d. 295 AH"
+ابو منصور الثعالبي,Abu Mansur al-Tha'alibi,2,,7,أندلسي,11,1038,961,,11,exact,Duplicate of al-Tha'alibi
+اروى بنت عبد المطلب,Arwā bint ʿAbd al-Muṭṭalib,2,,4,أموي,8,630,,,7,approx,Aunt of the Prophet
+اشجع السلمي,Ashja' al-Sulaymi,2,,7,أندلسي,11,809,,,9,approx,Abbasid panegyrist of Harun al-Rashid
+الاعمى التطيلي,Al-A'ma al-Tutili,2,,8,مملوكي,14,1126,,,12,exact,"Tudela, muwashshah master, d. 525 AH"
+البوصيري,Al-Būṣīrī,2,,8,مملوكي,14,1295,1213,,13,exact,Author of al-Burda
+الحاج غلوج,al-Ḥājj Ghulūj,2,,7,أندلسي,11,,,1800,18,approx,Maghribi; floruit estimate
+الخرنق بنت بدر,al-Khirniq bint Badr,2,,5,جاهلي,6,600,,,6,approx,"Pre-Islamic, sister of Tarafa"
+الزبرقان بن بدر,al-Zibriqān ibn Badr,2,,6,مخضرم,13,660,,,7,approx,Mukhadram chief of Tamim
+الشنفرى,al-Shanfara,2,,5,جاهلي,6,525,,,6,approx,"Pre-Islamic su'luk, Lamiyyat al-Arab"
+العباس بن مرداس,al-ʿAbbās ibn Mardās,2,,6,مخضرم,13,639,,,7,approx,"Companion, mukhadram"
+العرجي,al-ʿArjī,2,,4,أموي,8,738,,,8,approx,"Umayyad Meccan, Umayyad prince"
+الكميت بن زيد الاسدي,al-Kumait bin Zayd al-Asadi,2,,2,عباسي,9,744,679,,8,exact,Umayyad Shia partisan
+تميم الفاطمي,Tamīm al-Fāṭimī,2,,8,مملوكي,14,984,948,,10,exact,"Fatimid prince, son of al-Mu'izz"
+جبيهاء الأشجعي,Jubayha' al-Ashja'i,2,,1,إسلامي,7,,,700,7,approx,Umayyad tribal; floruit estimate
+جليلة بنت مرة الشيبانية,Jalīla bint Murra al-Shaybāniyya,2,,5,جاهلي,6,,,520,6,approx,"Pre-Islamic, the Basus war cycle"
+حازم القرطاجني,Hazim al-Qartajanni,2,,8,مملوكي,14,1285,1211,,13,exact,"Cartagena then Tunis, author of the Minhaj"
+خالد بن الوليد,Khalid ibn al-Walid,2,,1,إسلامي,7,642,585,,7,exact,Companion and commander
+دريد بن الصمة,Durayd ibn al-Ṣimmah,2,,5,جاهلي,6,630,,,7,approx,"Mukhadram, killed at Hunayn"
+رابعة العدوية,Rabi'ah al-Adawiyah,2,,7,أندلسي,11,801,717,,9,approx,Basran Sufi ascetic
+ربيعة الرقي,Rabi'a al-Ruqi,2,,2,عباسي,9,814,,,9,approx,"Abbasid, Raqqa"
+زيادة بن زيد العذري,Ziyādah ibn Zayd al-ʿAdhrī,2,,4,أموي,8,,,700,7,approx,Udhri; floruit estimate
+سمنون المحب,Samnun al-Muhibb,2,,2,عباسي,9,910,,,10,approx,Baghdad Sufi
+صالح بن عبد القدوس,Salih ibn Abd al-Qudus,2,,2,عباسي,9,783,,,8,exact,"Executed for zandaqa, 167 AH"
+صردر,Sardar,2,,2,عباسي,9,1072,1000,,11,approx,"Baghdad, d. c. 465 AH"
+صريع الغواني,Sari' al-Ghawani,2,,2,عباسي,9,815,,,9,approx,"Muslim ibn al-Walid, d. 208 AH"
+صفوان التجيبي,Ṣafwān al-Tujībī,2,,7,أندلسي,11,,,1200,12,approx,Andalusian; floruit estimate
+عاتكة بنت زيد,Atika bint Zayd,2,,1,إسلامي,7,660,,,7,approx,"Companion poetess, elegist of husbands"
+عبد الله بن الزبير الأسدي,ʿAbd Allāh ibn al-Zubayr al-Asadī,2,,4,أموي,8,693,,,7,approx,Umayyad-era Kufan
+عبد المحسن الصوري,Abd al-Muhsin al-Suri,2,,2,عباسي,9,1030,951,,11,exact,"Tyre, d. 419 AH"
+عبيد الله بن عبدالله بن طاهر,Ubayd Allah ibn Abd Allah ibn Tahir,2,,7,أندلسي,11,913,837,,10,exact,Tahirid prince of Baghdad
+عبيد بن الأبرص,ʿUbayd ibn al-Abraṣ,2,,5,جاهلي,6,555,,,6,approx,"Pre-Islamic, killed by al-Nu'man"
+عز الدين ابن معقل المهلبي,Izz al-Din Ibn Ma'qil al-Mahlabi,2,,5,جاهلي,6,1288,1207,,13,approx,"Hama, Ayyubid-Mamluk"
+علقمة الفحل,'Alqamah al-Fahl,2,,5,جاهلي,6,590,,,6,approx,Pre-Islamic
+عمرو بن الأهتم,ʿAmr ibn al-Ahtam,2,,6,مخضرم,13,641,,,7,approx,Mukhadram of Tamim
+عمرو بن معدي كرب,Amr ibn Ma'di Karib,2,,4,أموي,8,642,,,7,approx,Duplicate spelling of Amr ibn Ma'di Karib
+فاطمة الزهراء,Fatima al-Zahra,2,,1,إسلامي,7,632,605,,7,approx,Daughter of the Prophet
+فاطمة بنت الاحجم الخزاعية,Fāṭima bint al-Aḥjam al-Khuzāʿiyya,2,,4,أموي,8,,,650,7,approx,Early Islamic poetess; floruit estimate
+قس بن ساعدة,Qass ibn Ṣāʿidah,2,,5,جاهلي,6,600,,,6,approx,Pre-Islamic Christian orator of Iyad
+قيس بن الخطيم,Qays ibn al-Khaṭīm,2,,6,مخضرم,13,600,,,6,approx,"Pre-Islamic Medinan; d. c.620 pre-hijra, pulled to 600 to stay with the Jahili era"
+كعب بن مالك الأنصاري,Kaʿb ibn Mālik al-Anṣārī,2,,6,مخضرم,13,673,,,7,approx,"Companion, poet of the Ansar"
+ليلى الأخليلية,Laylā al-Akhlīliyyah,2,,4,أموي,8,704,,,8,approx,Umayyad poetess
+ليلى الاخيلية,Laylā al-Akhīliyya,2,,2,عباسي,9,704,,,8,approx,Duplicate spelling of Layla al-Akhyaliyya
+محمد بن حمير الهمداني,Muḥammad ibn Ḥumayr al-Hamadānī,2,,8,مملوكي,14,,,1100,11,approx,Yemeni; floruit estimate
+نزهون بنت القلاعي الغرناطية,Nuzhun bint al-Qala'i al-Gharnatiyah,2,,8,مملوكي,14,1155,,,12,approx,"Granada, 6th c. AH"
+نهشل بن حري,Nahshal ibn Ḥurrī,2,,6,مخضرم,13,,,660,7,approx,Mukhadram of Tamim; floruit estimate
+هند بنت عتبة,Hind bint ʿUtbah,2,,6,مخضرم,13,636,,,7,approx,Mother of Mu'awiya
+يوسف الثالث,Yusuf al-Thalith,2,,8,مملوكي,14,1417,1376,,15,exact,Nasrid sultan of Granada
+الباجي المسعودي,Al-Baji al-Mas'udi,1,7,3,متأخر,,1880,1810,,19,approx,"Tunisian, Ottoman era"
+علي قوادري,Ali Qawadri,1,7,3,متأخر,,,,2010,21,approx,Contemporary Algerian; floruit estimate
+محيي الدين ابن الشهرزوري,Muhyi al-Din ibn al-Shahrzuri,1,7,3,متأخر,,1193,1116,,12,approx,Ayyubid qadi of Damascus
+ابن الطيب الشرقي,Ibn al-Tayyib al-Sharqi,1,6,9,عثماني,,1757,1698,,18,exact,"Fes, Morocco"
+ابن جزي الكلبي,Ibn Juzayy al-Kalbi,1,6,3,متأخر,,1340,1294,,14,exact,"Granada, d. at the Battle of Rio Salado"
+ابن ماكولا,Ibn Makula,1,6,3,متأخر,,1082,1030,,11,exact,"Baghdad, author of al-Ikmal"
+المحبي,al-Muhibbi,1,6,9,عثماني,,1699,1651,,17,exact,"Damascus, author of Khulasat al-Athar"
+الهبل,al-Habl,1,6,9,عثماني,,1668,1613,,17,exact,"Yemen, al-Hasan ibn Ali"
+الورغي,al-Warghi,1,6,9,عثماني,,1776,,,18,approx,"Tunisian, Ottoman era"
+الياس ابو شبكة,Elias Abu Shabaka,1,6,3,متأخر,,1947,1903,,20,exact,Lebanon
+امين الجندي الحمصي,Amīn al-Jundī al-Ḥimṣī,1,6,3,متأخر,,1841,1766,,19,exact,"Homs, Ottoman era"
+بهاء الدين العاملي,Baha' al-Din al-'Amili,1,6,9,عثماني,,1621,1547,,17,exact,"Safavid Isfahan, polymath"
+ختام حمودة,Khitam Hammudah,1,6,3,متأخر,,,,2010,21,approx,Contemporary poet; floruit estimate
+رايطة بنت شيظم النميرية,Raytah bint Shidham al-Numayriyyah,1,6,3,متأخر,,,,650,7,approx,Early Islamic tribal poetess; floruit estimate
+عباد بن شداد اليربوعي,'Abbad bin Shaddad al-Yarbu'i,1,6,3,متأخر,,,,700,7,approx,Umayyad tribal poet; floruit estimate
+محمد الاسمر,Muhammad al-Asmar,1,6,3,متأخر,,1956,1900,,20,exact,Egypt
+محمد الخلخالي,Muhammad al-Khalkhali,1,6,3,متأخر,,,,1900,19,approx,No reliable dates; floruit estimate
+ياسر الاطرش,Yaser al-Attrash,1,6,3,متأخر,,,,2010,21,approx,Contemporary Syrian; floruit estimate
+يوسف بن أبي الفتح,Yusuf ibn Abi al-Fath,1,6,9,عثماني,,,,1650,17,approx,Ottoman-era; floruit estimate
+احلام بناوي,Ahlam Banawi,1,5,3,متأخر,,,,2010,21,approx,Contemporary; floruit estimate
+الحسن بن عمرو الاباضي,Al-Hasan bin 'Amr al-Ibadi,1,5,3,متأخر,,,,1100,11,approx,Ibadi (Oman/Maghrib); floruit estimate
+الشماخ بن ضرار الذبياني,Al-Shammakh ibn Dirar al-Dhubyani,1,5,3,متأخر,,656,,,7,approx,Mukhadram
+امية بن عبد العزيز الداني,Umayya ibn Abd al-Aziz al-Dani,1,5,3,متأخر,,1134,,,12,exact,Duplicate of Umayya ibn Abd al-Aziz al-Dani
+حسن قفطان,Hasan Qaftan,1,5,3,متأخر,,1861,1795,,19,approx,"Iraqi, Ottoman era"
+طانيوس عبده,Ṭānyūs ʿAbduh,1,5,3,متأخر,,1926,1869,,20,exact,"Lebanon/Egypt, translator-poet"
+ظهير الدين الروذراوري,Ẓahīr al-Dīn al-Rūdhrawarī,1,5,3,متأخر,,1113,1045,,12,exact,Seljuk vizier and historian
+عامر بن الظرب العدواني,'Amir bin al-Dharb al-'Adwani,1,5,3,متأخر,,570,,,6,approx,Pre-Islamic sage of Adwan
+علاء سالم,Alaa Salem,1,5,3,متأخر,,,,2010,21,approx,Contemporary; floruit estimate
+عمر الرافعي,Umar al-Rafi'i,1,5,3,متأخر,,,,1900,19,approx,No reliable dates; floruit estimate
+مطيع بن اياس,Muti' ibn Iyas,1,5,3,متأخر,,787,,,8,approx,"Abbasid, Kufa/Baghdad"
+موفق الدين بن ابي الحديد,Muwaffaq al-Din ibn Abi al-Hadid,1,5,3,متأخر,,1231,,,13,approx,"Brother of Ibn Abi al-Hadid, Baghdad"
+نبوية موسى,Nabawiyya Musa,1,5,3,متأخر,,1951,1886,,20,exact,Egyptian educator and writer
+ابن سارة الاندلسي,Ibn Sara al-Andalusi,1,4,3,متأخر,,1123,,,12,exact,Duplicate of Ibn Sarah al-Shantarini
+ابو الحسن السنجاني,Abū al-Ḥasan al-Sinjānī,1,4,3,متأخر,,,,1100,11,approx,No reliable dates; floruit estimate
+ابو غالب الواسطي,Abu Ghalib al-Wasiti,1,4,3,متأخر,,,,1050,11,approx,No reliable dates; floruit estimate
+ابو نصر القشيري,Abu Nasr al-Qushayri,1,4,3,متأخر,,1120,1058,,12,approx,"Son of al-Qushayri, Nishapur"
+احمد القوصي,Ahmad al-Qawsi,1,4,3,متأخر,,,,1300,13,approx,"Upper-Egyptian, Mamluk era; floruit estimate"
+احمد فارس الشدياق,Ahmad Faris al-Shidyaq,1,4,3,متأخر,,1887,1805,,19,exact,"Nahda polymath, Lebanon/Istanbul"
+العيزار بن الاخنس الطايي,Al-Aizar bin al-Akhnas al-Ta'i,1,4,3,متأخر,,,,650,7,approx,Early Islamic tribal; floruit estimate
+القاسم صدر الافاضل,Al-Qasim Sadr al-Fadhil,1,4,3,متأخر,,1218,,,13,approx,Khwarazmian chancery poet
+المفتي عبد اللطيف فتح الله,Al-Mufti Abd al-Latif Fathallah,1,4,3,متأخر,,1844,1775,,19,approx,"Beirut/Damascus, Ottoman era"
+المفدي زكريا,Al-Mufdi Zakariya,1,4,3,متأخر,,1977,1908,,20,exact,"Algeria, poet of the revolution"
+المنفتل,Al-Munfathil,1,4,3,متأخر,,,,1100,11,approx,No reliable dates; floruit estimate
+النصيبي القوصي,Al-Nusaybi al-Qusi,1,4,3,متأخر,,,,1300,13,approx,Mamluk-era Upper Egypt; floruit estimate
+باقر العطار,Baqir al-Attar,1,4,3,متأخر,,1813,1751,,19,approx,Baghdad
+حيدر التميمي,Haydar al-Tamimi,1,4,3,متأخر,,,,1900,19,approx,No reliable dates; floruit estimate
+خليل مردم بك,Khalil Mardam Bek,1,4,3,متأخر,,1959,1895,,20,exact,Damascus
+ذبية بنت بيشة الفهمية,Dhubayba bint Bayisha al-Fahmiyya,1,4,3,متأخر,,,,650,7,approx,Early Islamic poetess; floruit estimate
+سيف الدين المشد,Sayf al-Din al-Mashad,1,4,3,متأخر,,1257,1200,,13,approx,Ayyubid Egypt
+شاعر الحمراء,Sha'ir al-Hamra,1,4,3,متأخر,,,,1400,14,approx,Nasrid Granada byname; floruit estimate
+طاهر زمخشري,Tahir Zamakhshari,1,4,3,متأخر,,1987,1914,,20,exact,Saudi Arabia
+طه حسين,Taha Husayn,1,4,3,متأخر,,1973,1889,,20,exact,"Egypt, Dean of Arabic Letters"
+عايشة التيمورية,Aisha al-Taymuriyya,1,4,3,متأخر,,1902,1840,,20,exact,"Egypt, pioneer woman poet"
+عبد الله بلفقيه,Abd Allah Belfqih,1,4,3,متأخر,,,,1950,20,approx,Hadhrami; floruit estimate
+عبد المجيد قاسم الطرشاني,Abd al-Majid Qasim al-Tarshani,1,4,3,متأخر,,,,2000,20,approx,Contemporary; floruit estimate
+عبد المنعم الجلياني,ʿAbd al-Munʿim al-Jilyānī,1,4,10,أيوبي,,1207,1122,,13,exact,Andalusian-Damascene Sufi physician
+عبد الوهاب البياتي,Abd al-Wahhab al-Bayati,1,4,3,متأخر,,1999,1926,,20,exact,Iraq
+عمر ابو ريشة,Umar Abu Risha,1,4,3,متأخر,,1990,1910,,20,exact,Syria
+عيينة بن عبد الرحمن ابو المنهال,Uyayna ibn Abd al-Rahman Abu al-Minhal,1,4,3,متأخر,,,,750,8,approx,Umayyad-Abbasid; floruit estimate
+قسطاكي الحمصي,Qusṭākī al-Ḥimṣī,1,4,3,متأخر,,1941,1858,,20,exact,"Aleppo, Nahda critic"
+مثنى ابراهيم دهام,Muthanna Ibrahim Daham,1,4,3,متأخر,,,,2010,21,approx,Contemporary Iraqi; floruit estimate
+محمد بن علي بن ابي مروان,Muhammad bin Ali bin Abi Marwan,1,4,3,متأخر,,,,1100,11,approx,No reliable dates; floruit estimate
+مكي بن هبيرة,Makki ibn Hubayra,1,4,3,متأخر,,,,1100,11,approx,No reliable dates; floruit estimate
+نسيب النكدي,Naseeb al-Nakdi,1,4,3,متأخر,,,,1900,19,approx,Lebanese Druze family of writers; floruit estimate
+يحيى ابن البحتري,Yaḥyā Ibn al-Buḥturī,1,4,3,متأخر,,900,,,9,approx,Son of al-Buhturi; floruit estimate
+يحيى قصادي,Yahya Qassadi,1,4,3,متأخر,,,,2000,20,approx,Contemporary Yemeni; floruit estimate
+أبو الحسن بن خروف,Abū al-Ḥasan ibn Kharūf,1,3,10,أيوبي,,1212,1150,,13,approx,Andalusian grammarian
+ابتسام البرغوثي,Ibtisam al-Barghuthi,1,3,3,متأخر,,,,2000,20,approx,Contemporary Palestinian; floruit estimate
+ابراهيم الاحدب,Ibrāhīm al-Aḥdab,1,3,3,متأخر,,1891,1826,,19,exact,"Tripoli/Beirut, Ottoman era"
+ابن ابي الاصبع,Ibn Abi al-Usbu',1,3,3,متأخر,,1256,1197,,13,exact,Egyptian rhetorician
+ابن الافرنجية,Ibn al-Ifranjiyya,1,3,3,متأخر,,,,1200,12,approx,No reliable dates; floruit estimate
+ابن الصيقل الجزري,Ibn al-Sa'iqal al-Jazari,1,3,3,متأخر,,1225,,,13,approx,"Jazira, Ayyubid era maqama author"
+ابن رشيد البغدادي,Ibn Rashīd al-Baghdādī,1,3,3,متأخر,,,,1200,12,approx,No reliable dates; floruit estimate
+ابن زيلاق,Ibn Zilaq,1,3,3,متأخر,,,,1000,10,approx,No reliable dates; floruit estimate
+ابن صاحب الصلاة ( ابن المناصف ),Ibn Sahib al-Salat (Ibn al-Manasif),1,3,3,متأخر,,1223,1170,,13,approx,Andalusian qadi
+ابن فضال الحلواني,Ibn Faddal al-Halwani,1,3,3,متأخر,,,,1100,11,approx,No reliable dates; floruit estimate
+ابن قرناص,Ibn Qarnass,1,3,3,متأخر,,1331,1258,,14,approx,"Hama, Mamluk era"
+ابن مالك,Ibn Mālik,1,3,3,متأخر,,1274,1203,,13,exact,"Author of the Alfiyya, Damascus"
+ابو الجوايز الواسطي,Abū al-Jawāyiz al-Wāsiṭī,1,3,3,متأخر,,1099,,,11,approx,"Wasit, Baghdad"
+ابو العباس المرسي,Abu al-Abbas al-Mursi,1,3,3,متأخر,,1287,1219,,13,exact,"Shadhili Sufi, Alexandria"
+ابو الهيثم المعري اخو ابي العلاء,Abū al-Haytham al-Maʿarrī Akhū Abī al-ʿAlāʾ,1,3,3,متأخر,,1050,,,11,approx,Brother of al-Ma'arri; floruit estimate
+ابو سعيد الحجري,Abu Sa'id al-Hajari,1,3,3,متأخر,,,,1100,11,approx,No reliable dates; floruit estimate
+ابو علي ابن فورجه,Abū ʿAlī Ibn Fūrja,1,3,3,متأخر,,1060,,,11,approx,Critic of al-Mutanabbi
+احمد الكاشف,Ahmad al-Kashif,1,3,3,متأخر,,1948,1878,,20,exact,Egypt
+الاخطل الصغير بشارة الخوري,al-Akhtal al-Saghir Bishara al-Khuri,1,3,3,متأخر,,1968,1885,,20,exact,Lebanon
+الحسين بن علي بن ابي طالب,Al-Husayn ibn Ali ibn Abi Talib,1,3,3,متأخر,,680,626,,7,exact,Killed at Karbala
+المطران جرمانوس,Al-Mutran Germanos,1,3,3,متأخر,,1897,1810,,19,approx,Germanos Farhat lineage; Maronite bishop-poet
+الوتار,Al-Wattar,1,3,3,متأخر,,,,1900,19,approx,No reliable dates; floruit estimate
+الوزير ابو حفص بن برد الاصغر,al-Wazir Abu Hafs bin Burd al-Asghar,1,3,3,متأخر,,1053,,,11,approx,Cordoba chancery
+انس ابراهيم الدغيم,Anas Ibrāhīm al-Dughaym,1,3,3,متأخر,,,,2010,21,approx,Contemporary; floruit estimate
+ايمان المحمداوي,Iman al-Muhammadi,1,3,3,متأخر,,,,2010,21,approx,Contemporary Iraqi; floruit estimate
+تركي المعيني,Turki al-Mu'ayni,1,3,3,متأخر,,,,2000,20,approx,Contemporary Saudi; floruit estimate
+ثابت بن سنان الصابي,Thabit bin Sinan al-Sabi,1,3,3,متأخر,,976,,,10,exact,Sabian physician-historian of Baghdad
+ثابت قطنة,Thabit Qutnah,1,3,3,متأخر,,728,,,8,approx,"Umayyad, Khurasan"
+جعفر الحلي,Ja'far al-Hilli,1,3,3,متأخر,,1897,1861,,19,exact,Iraq
+حبيش بن عبد الله الهمداني,Habish bin Abdullah al-Hamdani,1,3,3,متأخر,,,,900,9,approx,No reliable dates; floruit estimate
+داود بن عيسى الايوبي,Dāwūd ibn ʿĪsā al-Ayyūbī,1,3,10,أيوبي,,1227,1178,,13,approx,Ayyubid prince of Damascus
+ذو اللسانين النطنزي,Dhu al-Lisanayn al-Natanzi,1,3,3,متأخر,,1108,,,12,approx,"Bilingual Arabic-Persian poet, Isfahan"
+رمضان عبد الحميد زيدان,Ramadan Abd al-Hamid Zaydan,1,3,3,متأخر,,,,2000,20,approx,Contemporary; floruit estimate
+زينب فواز,Zaynab Fawwāz,1,3,3,متأخر,,1914,1860,,20,exact,"Lebanon/Egypt, pioneer woman writer"
+شعراء مجهولون,Shu'ara' Majhulun,1,3,3,متأخر,,,,,,,Anonymous corpus entry - see spot-check note; not datable
+عبد الرحيم احمد الصغير(الماسخ),Abd al-Rahim Ahmad al-Saghir (al-Masikh),1,3,3,متأخر,,,,1900,19,approx,No reliable dates; floruit estimate
+عبد العزيز الجاسر,Abd al-Aziz al-Jaser,1,3,3,متأخر,,,,1980,20,approx,Contemporary Saudi; floruit estimate
+عبد الله بن علي الخليلي,Abdullah bin Ali al-Khalili,1,3,3,متأخر,,1968,1880,,20,approx,Oman
+عبدالحسين الجواهري,ʿAbd al-Ḥusayn al-Jawāhirī,1,3,3,متأخر,,1915,1850,,20,approx,"Najaf, of the Jawahiri family"
+علاء الدين الوداعي,Ala' al-Din al-Wada'i,1,3,3,متأخر,,1310,1252,,14,approx,Mamluk Damascus
+عمر تقي الدين الرافعي,ʿUmar Taqi al-Dīn al-Rāfiʿī,1,3,3,متأخر,,,,1900,19,approx,Tripoli (Lebanon) family; floruit estimate
+فاروق جويدة,Farouq Juwayda,1,3,3,متأخر,,,1946,1990,20,exact,"Egypt, living"
+فتيان الشاغوري,Fityān al-Shāghūrī,1,3,10,أيوبي,,1220,1143,,13,exact,"Damascus, Ayyubid era"
+محسن الجواهري,Muhsin al-Jawahiri,1,3,3,متأخر,,,,1900,19,approx,Najaf family; floruit estimate
+محمد المقرن,Muhammad al-Muqrin,1,3,3,متأخر,,,,2000,20,approx,Contemporary Saudi; floruit estimate
+محمد توفيق علي,Muḥammad Tawfīq ʿAlī,1,3,3,متأخر,,,,1950,20,approx,No reliable dates; floruit estimate
+محمد تيمور,Muhammad Timour,1,3,3,متأخر,,1921,1892,,20,exact,"Egypt, pioneer of drama"
+محمد كمال,Muhammad Kamal,1,3,3,متأخر,,,,1950,20,approx,No reliable dates; floruit estimate
+مرة بن محكان السعدي,Murrah bin Mahkan al-Sa'di,1,3,3,متأخر,,,,650,7,approx,Early Islamic tribal; floruit estimate
+مهدي الطالقاني,Mahdi al-Talaqani,1,3,3,متأخر,,,,1850,19,approx,Iraqi/Persian; floruit estimate
+مهند مشعل عبد العزيز,Muhannad Mishʿal ʿAbd al-ʿAzīz,1,3,3,متأخر,,,,2010,21,approx,Contemporary; floruit estimate
+موسى شرارة,Musa Sharara,1,3,3,متأخر,,1904,1852,,20,approx,"Jabal Amil, Lebanon"
+نوري سراج الوايلي,Nuri Siraj al-Wayli,1,3,3,متأخر,,,,2000,20,approx,Contemporary Iraqi; floruit estimate
+هند جارية الشاطبي,Hind Jariyat al-Shatibi,1,3,3,متأخر,,,,1200,12,approx,Andalusian singing-girl poet; floruit estimate
+أبو المحاسن الشواء,Abū al-Maḥāsin al-Shuwwāʾ,1,2,10,أيوبي,,1240,1179,,13,exact,"Aleppo, Ayyubid era"
+ابراهيم بن سيار النظام,Ibrahim bin Sayyar al-Nazzam,1,2,3,متأخر,,845,775,,9,approx,Mu'tazilite theologian of Basra
+ابن السكون الكاتب الحلي,Ibn al-Sakun al-Katib al-Hilli,1,2,3,متأخر,,1210,,,13,approx,"Hilla, philologist"
+ابن الظهير الاربلي,Ibn al-Ẓahīr al-Arbalī,1,2,3,متأخر,,1276,1213,,13,exact,Irbil then Mosul
+ابنة حذاق الحنفي,Ibnat Hudhaq al-Hanafi,1,2,3,متأخر,,,,650,7,approx,Early Islamic poetess; floruit estimate
+ابو عبدة الوزير,Abu 'Abdah al-Wazir,1,2,3,متأخر,,,,1000,10,approx,No reliable dates; floruit estimate
+ابو محمد عبد الله العسال,Abu Muhammad Abdullah al-Assal,1,2,3,متأخر,,,,1000,10,approx,No reliable dates; floruit estimate
+احمد تقي الدين,Ahmad Taqi al-Din,1,2,3,متأخر,,,,1950,20,approx,No reliable dates; floruit estimate
+اسعد طراد,Asʿad Ṭarrād,1,2,3,متأخر,,,,1950,20,approx,Lebanese; floruit estimate
+الاسود بن يعفر النهشلي,Al-Aswad ibn Ya'fur al-Nahshali,1,2,3,متأخر,,600,,,6,approx,Pre-Islamic of Tamim
+الامام الشوكاني,al-Imām al-Shawkānī,1,2,3,متأخر,,1834,1760,,19,exact,"Yemen, mujtahid"
+البديع الدمشقي,Al-Badi' al-Dimashqi,1,2,3,متأخر,,,,1600,16,approx,Ottoman Damascus; floruit estimate
+الحداد القيسي,Al-Haddad al-Qaisi,1,2,3,متأخر,,,,1200,12,approx,No reliable dates; floruit estimate
+الفروخي ابو نصر الاواني,Al-Farrukhi Abu Nasr al-Awani,1,2,3,متأخر,,,,1100,11,approx,No reliable dates; floruit estimate
+جاسم الصحيح,Jasim al-Sahih,1,2,3,متأخر,,,1964,2000,20,exact,"Saudi (al-Ahsa), living"
+خليل ناصيف اليازجي,Khalīl Nāṣīf al-Yāzijī,1,2,3,متأخر,,1889,1856,,19,exact,"Lebanon, son of Nasif al-Yaziji"
+رشيد ايوب,Rashid Ayyub,1,2,3,متأخر,,1941,1871,,20,exact,"Mahjar, New York"
+زفر بن الحارث الكلابي,Zufr bin al-Harith al-Kilabi,1,2,3,متأخر,,692,,,7,approx,Umayyad-era Qaysi chief
+زكي الصبيحاوي,Zaki al-Subayhiwi,1,2,3,متأخر,,,,1950,20,approx,Iraqi; floruit estimate
+زكي مبارك,Zakī Mubārak,1,2,3,متأخر,,1952,1892,,20,exact,Egypt
+شيرين شيحه,Shīrīn Shīḥa,1,2,3,متأخر,,,,2010,21,approx,Contemporary; floruit estimate
+ضمد كاظم الوسمي,Damad Kazim al-Wasmi,1,2,3,متأخر,,,,2000,20,approx,Contemporary Iraqi; floruit estimate
+عامر بن مالك الفزاري,Amir ibn Malik al-Fazari,1,2,3,متأخر,,,,600,6,approx,Pre-Islamic tribal; floruit estimate
+عايشة الباعونية,Aisha al-Ba'uniyya,1,2,3,متأخر,,1517,1456,,16,exact,"Damascus/Cairo, Sufi woman scholar-poet"
+عبد الحكيم بن عامر الحجري,Abd al-Hakim bin 'Amir al-Hajari,1,2,3,متأخر,,,,1900,19,approx,Yemeni; floruit estimate
+عبد العزيز بن زرارة الكلابي,Abd al-Aziz bin Zurara al-Kilabi,1,2,3,متأخر,,,,660,7,approx,Umayyad-era tribal; floruit estimate
+عبد اللطيف الصيرفى,ʿAbd al-Laṭīf al-Ṣayrafī,1,2,3,متأخر,,,,1700,17,approx,Ottoman-era; floruit estimate
+عبدالله النديم,Abdullah al-Nadim,1,2,3,متأخر,,1896,1843,,19,exact,"Egypt, orator of the Urabi revolt"
+عدي بن حاتم الطايي,'Uday bin Hatim al-Ta'i,1,2,3,متأخر,,687,587,,7,approx,"Son of Hatim al-Ta'i, Companion"
+عمارة بن صالح عبد المالك,Imara bin Salih Abd al-Malik,1,2,3,متأخر,,,,800,8,approx,Abbasid-era; floruit estimate
+عمر اليافي,Umar al-Yafi,1,2,3,متأخر,,1818,1747,,19,approx,Damascus Sufi
+فروة بن نوفل الاشجعي,Farwa ibn Nawfal al-Ashja'i,1,2,3,متأخر,,661,,,7,approx,"Kharijite leader, killed under Ali"
+كفا خضر,Kafa Khidr,1,2,3,متأخر,,,,2010,21,approx,Contemporary; floruit estimate
+كنعان الموسوي,Kinan al-Mawsili,1,2,3,متأخر,,,,2000,20,approx,Contemporary; floruit estimate
+لسان الدين الخطيب,Lisan al-Din al-Khatib,1,2,3,متأخر,,1374,1313,,14,exact,Duplicate spelling of Lisan al-Din ibn al-Khatib
+محمد احمد المجالي,Muhammad Ahmad al-Majali,1,2,3,متأخر,,,,2000,20,approx,Contemporary Jordanian; floruit estimate
+محمد الفايز القيرواني,Muhammad al-Fa'iz al-Qayrawani,1,2,3,متأخر,,,,1100,11,approx,Kairouan; floruit estimate
+محمد الماغوط,Muhammad al-Maghut,1,2,3,متأخر,,2006,1934,,21,exact,"Syria, prose poem pioneer"
+محمد خضير,Muhammad Khudir,1,2,3,متأخر,,,,2000,20,approx,Contemporary Iraqi; floruit estimate
+محمود مفلح,Mahmud Muflih,1,2,3,متأخر,,,1943,1990,20,exact,"Palestinian, living"
+مرسي شاكر طنطاوي,Mursi Shaker Tantawi,1,2,3,متأخر,,,,1950,20,approx,Egyptian; floruit estimate
+مريم يمق ( زاهية بنت البحر ),Maryam Yamq (Zāhiya bint al-Baḥr),1,2,3,متأخر,,1965,1900,,20,approx,"Lebanon, pen name Zahiya bint al-Bahr"
+منصور بن اسماعيل الفقيه,Mansur ibn Ismail al-Faqih,1,2,3,متأخر,,918,,,10,exact,"Egyptian Shafi'i faqih-poet, d. 306 AH"
+موسى الطالقاني,Musa al-Talaqani,1,2,3,متأخر,,,,1850,19,approx,Iraqi/Persian; floruit estimate
+ميخاييل خير الله ويردي,Mikhayil Khayr Allah Wirdi,1,2,3,متأخر,,,,1950,20,approx,Lebanese; floruit estimate
+نافع محمد النافع,Nafi Muhammad al-Nafi,1,2,3,متأخر,,,,2000,20,approx,Contemporary; floruit estimate
+ناهدة الحلبي,Nahida al-Halabi,1,2,3,متأخر,,,,2000,20,approx,Contemporary; floruit estimate
+إبراهيم عبد القادر المازني,Ibrahim Abd al-Qadir al-Mazini,1,1,3,متأخر,,1949,1889,,20,exact,"Egypt, Diwan group"
+ابراهيم طلحة,Ibrāhīm Ṭalḥa,1,1,3,متأخر,,,,1900,19,approx,No reliable dates; floruit estimate
+ابن الدهان,Ibn al-Dahhān,1,1,10,أيوبي,,1258,1194,,13,approx,Baghdad/Mosul
+ابن سيد الناس,Ibn Sayyid al-Nas,1,1,3,متأخر,,1334,1273,,14,exact,Cairo hadith scholar
+ابو الحسن ابن النرسي,Abu al-Hasan Ibn al-Narsi,1,1,3,متأخر,,,,1100,11,approx,Baghdad; floruit estimate
+ابو القاسم الزاهي,Abū al-Qāsim al-Zāhī,1,1,3,متأخر,,962,928,,10,approx,Baghdad
+ابو اليسر المعري,Abū al-Yusr al-Maʿrī,1,1,3,متأخر,,,,1050,11,approx,Ma'arra family; floruit estimate
+ابو عبد الله البغوي,Abu Abd Allah al-Baghawi,1,1,3,متأخر,,929,,,10,approx,Baghdad hadith scholar
+ابو علي المنطقي,Abu Ali al-Mantiqi,1,1,3,متأخر,,,,1000,10,approx,No reliable dates; floruit estimate
+احمد الصابوني,Ahmad al-Sabuni,1,1,3,متأخر,,,,1900,19,approx,Syrian; floruit estimate
+احمد محرم,Ahmad Muharram,1,1,3,متأخر,,1945,1877,,20,exact,"Egypt, author of the Iliad of Islam"
+اسلام عكرية,Islam Akriya,1,1,3,متأخر,,,,2010,21,approx,Contemporary; floruit estimate
+اسماعيل سري الدهشان,Ismāʿīl Sirrī al-Dahshān,1,1,3,متأخر,,,,1900,19,approx,Egyptian; floruit estimate
+ام خالد النميرية,Umm Khalid al-Numayriyah,1,1,3,متأخر,,,,650,7,approx,Early Islamic poetess; floruit estimate
+تميم البرغوثي,Tamim Barghouti,1,1,3,متأخر,,,1977,2010,21,exact,"Palestinian-Egyptian, living"
+ثورات التغيير العربية,Thawrat al-Taghyir al-'Arabiyyah,1,1,3,متأخر,,,,,,,"NOT A POET - theme label (""Arab uprisings"") misfiled as a poet row"
+راشد حسين,Rashid Hussein,1,1,3,متأخر,,1977,1936,,20,exact,Palestine
+رياض منصور,Riyad Mansour,1,1,3,متأخر,,,,2000,20,approx,Contemporary; floruit estimate
+زين العابدين الضبيبي,Zayn al-'Abidin al-Dhubaybi,1,1,3,متأخر,,,,1900,19,approx,Yemeni; floruit estimate
+ستيرة العصيبية,Sutayrah al-Usaybiyah,1,1,3,متأخر,,,,650,7,approx,Early Islamic poetess; floruit estimate
+سعيد عقل,Sa'id Aql,1,1,3,متأخر,,2014,1911,,21,exact,Lebanon
+سميح القاسم,Samih al-Qasim,1,1,3,متأخر,,2014,1939,,21,exact,Palestine
+عبد القادر بدران,Abd al-Qadir Badran,1,1,3,متأخر,,1927,1846,,20,exact,Damascus scholar
+عبد الناصر عليوي العبيدي,Abd al-Nasir 'Aliwi al-'Ubaydi,1,1,3,متأخر,,,,2010,21,approx,Contemporary Iraqi; floruit estimate
+عبدالحسين الحلي,Abd al-Husayn al-Hilli,1,1,3,متأخر,,1955,1875,,20,approx,Najaf
+عبدالله الخضري,Abdullah al-Khudari,1,1,3,متأخر,,,,2000,20,approx,Contemporary; floruit estimate
+عبدة بن الطبيب,Abda ibn al-Tabib,1,1,3,متأخر,,630,,,7,approx,Mukhadram of Tamim
+عبده فايز الزبيدي,Abduh Fayiz al-Zubaidi,1,1,3,متأخر,,,,2010,21,approx,Contemporary Saudi; floruit estimate
+علاء خلف,Ala' Khalaf,1,1,3,متأخر,,,,2010,21,approx,Contemporary; floruit estimate
+عماد الدين الاصبهاني,Imad al-Din al-Isfahani,1,1,3,متأخر,,1201,1125,,13,exact,Duplicate spelling of al-Imad al-Isbahani
+قتيلة بنت النضر,Qutila bint al-Nadr,1,1,3,متأخر,,624,,,7,approx,Elegy for her father after Badr
+كريم النعمان,Karim al-Nu'man,1,1,3,متأخر,,,,2000,20,approx,Contemporary; floruit estimate
+محمد حسين ال ياسين,Muhammad Husayn Al Yasin,1,1,3,متأخر,,,,1950,20,approx,Iraqi; floruit estimate
+محمد حمدي غانم,Muhammad Hamdi Ghanem,1,1,3,متأخر,,,,2000,20,approx,Contemporary Egyptian; floruit estimate
+مرسي شاكر الطنطاوي,Mursī Shākir al-Ṭanṭāwī,1,1,3,متأخر,,,,1950,20,approx,Duplicate spelling of Mursi Shakir Tantawi
+مير علي ابو طبيخ,Mir Ali Abu Tabikh,1,1,3,متأخر,,,,1900,19,approx,Iraqi (Najaf) family; floruit estimate
+ناجية بن محمد الكاتب,Najiya bint Muhammad al-Katib,1,1,3,متأخر,,,,1000,10,approx,No reliable dates; floruit estimate
+ناصيف اليازجي,Nāṣīf al-Yāzijī,1,1,3,متأخر,,1871,1800,,19,exact,"Lebanon, Nahda philologist"
+آمنة بنت عتيبة,Aminah bint 'Utaybah,1,,5,جاهلي,6,,,650,7,approx,Early Islamic poetess; floruit estimate
+أبو الحسن بن حريق,Abū al-Ḥasan ibn Ḥarīq,1,,10,أيوبي,,1223,1150,,13,approx,Valencia
+أبو الحسين الجزار,Abū al-Ḥusayn al-Jazzār,1,,8,مملوكي,14,1281,1204,,13,exact,"Cairo, the butcher-poet"
+أبو الحسين النوري,Abu al-Husayn al-Nuri,1,,2,عباسي,9,907,,,10,exact,"Duplicate of Abu al-Hasan al-Nuri, Baghdad Sufi"
+أبو الشيص الخزاعي,Abu al-Shays al-Khaza'i,1,,2,عباسي,9,811,,,9,approx,"Abbasid, cousin of Di'bil"
+أبو الطمحان القيني,Abu al-Tammāḥ al-Qaynī,1,,6,مخضرم,13,650,,,7,approx,Mukhadram
+أبو العيناء,Abu al-Ayna,1,,2,عباسي,9,896,808,,9,exact,"Blind Abbasid wit, d. 283 AH"
+أبو الوليد الحميري,Abū al-Walīd al-Ḥimyarī,1,,7,أندلسي,11,,,1000,10,approx,Andalusian; floruit estimate
+أبو بكر الخالدي,Abu Bakr al-Khalidi,1,,2,عباسي,9,990,,,10,approx,Duplicate of Abu Bakr al-Khalidi (al-Khalidiyan)
+أبو بكر بن القوطية,Abū Bakr ibn al-Quṭiyya,1,,7,أندلسي,11,977,,,10,exact,"Cordoba historian-philologist, d. 367 AH"
+أبو زبيد الطائي,Abū Zubayd al-Ṭāʾī,1,,4,أموي,8,681,,,7,approx,Mukhadram Christian of Tayy
+أبو محجن الثقفي,Abū Maḥjan al-Thaqafī,1,,6,مخضرم,13,637,,,7,approx,"Companion, the wine poet"
+أبو هفان المهزمي,Abu Hafan al-Muhazzami,1,,2,عباسي,9,871,,,9,approx,Abbasid Basran
+أبو وجزة السعدي,Abū Wajzah al-Saʿdī,1,,4,أموي,8,747,,,8,approx,Umayyad Medinan
+أحمد بن أبي فنن,Ahmad ibn Abi Finnan,1,,2,عباسي,9,874,,,9,approx,"Abbasid, Baghdad"
+أمية بن أبي الصلت,Umaiyyah ibn Abī al-Ṣalt,1,,6,مخضرم,13,626,,,7,approx,Pre-Islamic hanif of Ta'if
+أوس بن حجر,Aws ibn Hajar,1,,5,جاهلي,6,600,,,6,approx,"Pre-Islamic of Tamim; d. c.620 pre-hijra, pulled to 600 to stay with the Jahili era"
+إبراهيم الصولي,Ibrahim al-Suli,1,,2,عباسي,9,,,900,9,approx,Of the Suli family of Baghdad; floruit estimate
+ابراهيم الحصري,Ibrāhīm al-Ḥuṣrī,1,,8,مملوكي,14,1061,,,11,approx,"Kairouan, author of Zahr al-Adab"
+ابن أبي البشر,Ibn Abī al-Bashar,1,,7,أندلسي,11,,,1100,11,approx,No reliable dates; floruit estimate
+ابن اسد الفارقي,Ibn Asad al-Fāriqī,1,,7,أندلسي,11,,,1150,12,approx,Mayyafariqin; floruit estimate
+ابن الابار الاشبيلي,Ibn al-Abbar al-Ishbili,1,,8,مملوكي,14,1260,1199,,13,exact,"Ibn al-Abbar, Valencia, executed at Tunis"
+ابن الابار القضاعي البنلسي,Ibn al-Abbar al-Quda'i al-Balansi,1,,8,مملوكي,14,1260,1199,,13,exact,Duplicate spelling of Ibn al-Abbar
+ابن التلميذ,Ibn al-Tilmidh,1,,7,أندلسي,11,1165,1073,,12,exact,Baghdad Christian physician-poet
+ابن الحاج البلفيقي,Ibn al-Hajj al-Balfiqi,1,,8,مملوكي,14,1372,1290,,14,approx,Almeria/Granada
+ابن الحناط,Ibn al-Ḥannāṭ,1,,7,أندلسي,11,1046,,,11,approx,"Cordoba, blind poet"
+ابن الرعلاء,Ibn al-Ru'ala',1,,5,جاهلي,6,,,600,6,approx,Pre-Islamic; floruit estimate
+ابن الزقاق,Ibn al-Zuqāq,1,,8,مملوكي,14,1134,1096,,12,approx,Duplicate of Ibn al-Zuqaq al-Balansi
+ابن الصباغ الجذامي,Ibn al-Sabbagh al-Judhami,1,,8,مملوكي,14,,,1200,12,approx,Andalusian; floruit estimate
+ابن بابك,Ibn Babak,1,,2,عباسي,9,1019,,,11,approx,"Baghdad, d. c. 410 AH"
+ابن باجه,Ibn Bajjah,1,,8,مملوكي,14,1138,1085,,12,exact,Duplicate spelling of Ibn Bajja (Avempace)
+ابن حجاج,Ibn Hajjaj,1,,2,عباسي,9,1001,941,,11,exact,"Ibn al-Hajjaj, Baghdad, obscene-comic poet"
+ابن حديدة,Ibn Ḥadīda,1,,7,أندلسي,11,,,1100,11,approx,Duplicate/short form of Ibn Hadida al-Lakhmi
+ابن خلكان,Ibn Khallikān,1,,8,مملوكي,14,1282,1211,,13,exact,Author of Wafayat al-A'yan
+ابن سعد الخير البلنسي,Ibn Sa'd al-Khayr al-Balansi,1,,8,مملوكي,14,,,1150,12,approx,Valencia; floruit estimate
+ابن قسيم الحموي,Ibn Qusim al-Hamawi,1,,8,مملوكي,14,,,1300,13,approx,Hama; floruit estimate
+ابن مكنسة الاسكندراني,Ibn Maknasa al-Iskandarānī,1,,7,أندلسي,11,1105,,,12,approx,"Alexandria, Fatimid era"
+ابن هذيل,Ibn Hudhayl,1,,8,مملوكي,14,,,1200,12,approx,Duplicate/short form of Ibn Hudhayl al-Qurtubi
+ابن همام,Ibn Hammam,1,,2,عباسي,9,,,1000,10,approx,No reliable dates; floruit estimate
+ابن وهيب الحميري,Ibn Wahb al-Himyari,1,,2,عباسي,9,839,,,9,approx,Duplicate of Muhammad ibn Wuhayb al-Himyari
+ابنة عقيل بن ابي طالب,Ibnat ʿAqīl ibn Abī Ṭālib,1,,2,عباسي,9,,,660,7,approx,Early Islamic poetess; floruit estimate
+ابو الحسن الجوهري,Abū al-Ḥasan al-Jawharī,1,,7,أندلسي,11,,,1000,10,approx,No reliable dates; floruit estimate
+ابو الحسن النعيمي,Abū al-Ḥasan al-Nuʿaymī,1,,7,أندلسي,11,1000,,,10,approx,Baghdad philologist; floruit estimate
+ابو الشغب العبسي,Abū al-Shaghab al-ʿAbsī,1,,7,أندلسي,11,,,700,7,approx,Umayyad tribal; floruit estimate
+ابو الشيص محمد,Abū al-Shīṣ Muḥammad,1,,7,أندلسي,11,811,,,9,approx,Duplicate of Abu al-Shis al-Khuza'i
+ابو الفضل الميكالي,Abū al-Faḍl al-Mīkālī,1,,7,أندلسي,11,1044,,,11,exact,"Nishapur patron-poet, d. 436 AH"
+ابو عدي المعري,Abu Adi al-Ma'arri,1,,3,متأخر,,,,1050,11,approx,Ma'arra family; floruit estimate
+ابو علي الخواري البيهقي,Abu Ali al-Khawari al-Bayhaqi,1,,7,أندلسي,11,,,1100,11,approx,Bayhaq; floruit estimate
+ابوالثناء شهاب الدين محمود الالوسي,Abu al-Thana' Shihab al-Din Mahmud al-Alusi,1,,3,متأخر,,1854,1802,,19,exact,"Baghdad, author of Ruh al-Ma'ani"
+احمد زكي ابو شادي,Aḥmad Zakī Abū Shādī,1,,3,متأخر,,1955,1892,,20,exact,"Egypt, founder of the Apollo group"
+احمد فتحي,Ahmad Fathi,1,,5,جاهلي,6,,,1950,20,approx,No reliable dates; floruit estimate
+اسماء بنت ابي بكر,Asmāʾ bint Abī Bakr,1,,4,أموي,8,692,595,,7,approx,"Companion, daughter of Abu Bakr"
+الأخطل,al-Aghtal,1,,4,أموي,8,710,640,,8,approx,Umayyad Christian naqa'id poet
+الأرجاني,Al-Arjānī,1,,7,أندلسي,11,1149,1068,,12,exact,"Nasih al-Din, qadi of Tustar"
+الأسود التغلبي,al-Aswad al-Taghlibi,1,,5,جاهلي,6,,,600,6,approx,Pre-Islamic; floruit estimate
+الأعشى,al-Aʿshā,1,,6,مخضرم,13,629,570,,7,approx,"Pre-Islamic, Maymun ibn Qays"
+الأقرع بن معاذ,Al-Aqra' ibn Mu'adh,1,,1,إسلامي,7,,,620,7,approx,Pre-Islamic; floruit estimate
+الاصبغ القرشي,Al-Asbagh al-Qurashi,1,,7,أندلسي,11,,,700,7,approx,Umayyad-era; floruit estimate
+الجيداء بنت زاهر الزبيدية,al-Jayda' bint Zahir al-Zubaydiyyah,1,,5,جاهلي,6,,,600,6,approx,Pre-Islamic poetess; floruit estimate
+الحارث الجرمي,al-Harith al-Jarmi,1,,5,جاهلي,6,,,650,7,approx,Mukhadram; floruit estimate
+الحسين بن اسد العامري,al-Ḥusayn ibn Asad al-ʿĀmirī,1,,7,أندلسي,11,,,1000,10,approx,No reliable dates; floruit estimate
+الحسين بن الضحاك,al-Husayn ibn al-Dahhak,1,,2,عباسي,9,864,778,,9,exact,"Abbasid, the wine poet of al-Amin's court"
+الحسين بن علي,al-Ḥusayn ibn ʿAlī,1,,4,أموي,8,680,626,,7,exact,Duplicate of al-Husayn ibn Ali ibn Abi Talib
+الحصين بن حمام الفزاري,al-Husayn ibn Hammam al-Fazari,1,,5,جاهلي,6,,,600,6,approx,Pre-Islamic of Murra; floruit estimate
+الخريمي,al-Khuraymi,1,,2,عباسي,9,821,,,9,approx,"Abbasid, Baghdad"
+الخنساء بنت التيجان,al-Khansa bint al-Tijan,1,,5,جاهلي,6,,,600,6,approx,Distinct from al-Khansa; no reliable dates
+الخيبري الخارجي,al-Khaybarī al-Khārijī,1,,2,عباسي,9,,,700,7,approx,Kharijite; floruit estimate
+الراضي ابن المعتمد بن عباد,Al-Radi ibn al-Mu'tamid ibn Abbad,1,,2,عباسي,9,1091,,,11,approx,"Son of al-Mu'tamid, killed at Ronda"
+الراضي بالله,al-Radi bi-Allah,1,,2,عباسي,9,940,909,,10,exact,Abbasid caliph
+السراج الوراق,Al-Sirāj al-Warrāq,1,,8,مملوكي,14,1296,1218,,13,exact,"Cairo, Mamluk era"
+السموأل,al-Samaw'al,1,,5,جاهلي,6,560,,,6,approx,Pre-Islamic Jewish poet of Tayma
+الشريف العقيلي,Al-Sharīf al-ʿUqaylī,1,,8,مملوكي,14,,,1100,11,approx,No reliable dates; floruit estimate
+الشريف الغرناطي,Al-Sharif al-Gharnati,1,,8,مملوكي,14,1359,1312,,14,approx,Granada
+الشيخ الرييس ابو نصر القايني,al-Shaykh al-Rāʾīs Abū Naṣr al-Qāʾīnī,1,,6,مخضرم,13,,,1050,11,approx,Quhistan; floruit estimate
+الصمة القشيري,al-Ṣimmah al-Qushayrī,1,,4,أموي,8,707,,,8,approx,Umayyad udhri
+الطرماح,al-Ṭirmāḥ,1,,4,أموي,8,743,,,8,approx,"Umayyad, Kufa"
+الطفيل الغنوي,al-Tufayl al-Ghannawi,1,,5,جاهلي,6,600,,,6,approx,"Pre-Islamic, the horse poet; d. c.610, pulled to 600 to stay with the Jahili era"
+العجاج,al-ʿAjjāj,1,,6,مخضرم,13,715,,,8,approx,Umayyad rajaz master
+العيوق بنت مسعود,Al-'Ayyuq bint Mas'ud,1,,1,إسلامي,7,,,650,7,approx,Early Islamic poetess; floruit estimate
+القتال الكلابي,al-Qattāl al-Kilābī,1,,4,أموي,8,705,,,8,approx,Umayyad
+الكميت بن زيد,al-Kumayt ibn Zayd,1,,4,أموي,8,744,679,,8,exact,Duplicate of al-Kumayt ibn Zayd al-Asadi
+المأمون,al-Ma'mun,1,,2,عباسي,9,833,786,,9,exact,Abbasid caliph
+المتوكل الليثي,al-Mutawakkil al-Laythī,1,,4,أموي,8,695,,,7,approx,"Umayyad, Kufa"
+المثقب العبدي,al-Muthqab al-'Abdi,1,,5,جاهلي,6,587,,,6,approx,Pre-Islamic of Abd al-Qays
+المدايح النبوية,Al-Mada'ih al-Nabawiyya,1,,7,أندلسي,11,,,,,,"NOT A POET - theme label (""prophetic panegyric"") misfiled as a poet row"
+المعتضد بن عباد,al-Mu'tadid ibn 'Abbad,1,,8,مملوكي,14,1069,1015,,11,exact,"Abbadid king of Seville, father of al-Mu'tamid"
+المقنع الكندي,al-Muqannaʿ al-Kindī,1,,4,أموي,8,,,680,7,approx,Umayyad Yemeni; floruit estimate
+الملك المعز محيي الدين الايوبي,al-Malik al-Muʿizz Muḥyī al-Dīn al-Ayyūbī,1,,8,مملوكي,14,1249,,,13,approx,Ayyubid prince
+المهذب بن الزبير,al-Muhadhdhab ibn al-Zubayr,1,,8,مملوكي,14,1170,1112,,12,approx,"Egypt, Fatimid-Ayyubid"
+الميكالي,al-Mikali,1,,7,أندلسي,11,1044,,,11,exact,Duplicate of Abu al-Fadl al-Mikali
+الناشئ الأكبر,al-Nash' al-Akbar,1,,2,عباسي,9,906,,,10,exact,"Abd Allah ibn Muhammad, Mu'tazilite, d. 293 AH"
+النَهشَلي,al-Nahshalī,1,,4,أموي,8,,,1000,10,approx,Kairouan (Abd al-Karim al-Nahshali); floruit estimate
+الوزير المهلبي,al-Wazir al-Mahlabi,1,,2,عباسي,9,963,903,,10,exact,Buyid vizier of Baghdad
+ام ابي الحسن السلامي,Umm Abī al-Ḥasan al-Salāmī,1,,8,مملوكي,14,,,1000,10,approx,Mother of al-Salami; floruit estimate
+ام صريع الكندية,Umm Sari' al-Kindiyya,1,,5,جاهلي,6,,,650,7,approx,Early Islamic poetess; floruit estimate
+تماضر بنت الشريد,Tamador bint al-Sharid,1,,5,جاهلي,6,645,575,,7,approx,Given name of al-Khansa; duplicate entry
+توبة بن الحمير الخفاجي,Tawba bin al-Humayr al-Khufaji,1,,2,عباسي,9,704,,,8,approx,"Umayyad, Layla al-Akhyaliyya cycle"
+جورج جريس فرح,George Jiries Farah,1,,7,أندلسي,11,,,1980,20,approx,Contemporary Lebanese; floruit estimate
+حاجب الفيل,Hajib al-Fil,1,,7,أندلسي,11,,,900,9,approx,Abbasid-era byname; floruit estimate
+ذو المفاخر الهمذاني النيرماني,Dhu al-Mafakhir al-Hamdani al-Nayrmani,1,,7,أندلسي,11,,,1100,11,approx,Hamadhan; floruit estimate
+ريطة بنت عاصم الهوازنية,Rayta bint Asim al-Hawazaniyya,1,,5,جاهلي,6,,,620,7,approx,Pre-Islamic poetess; floruit estimate
+سديد الدولة ابن الانباري,Sadid al-Dawla Ibn al-Anbari,1,,7,أندلسي,11,1200,1130,,12,approx,Baghdad chancery
+سليمى بنت المهلهل,Salima bint al-Muhalhil,1,,5,جاهلي,6,,,530,6,approx,"Pre-Islamic, of the Basus cycle"
+سهل الغرناطي,Sahl al-Gharnati,1,,8,مملوكي,14,,,1300,13,approx,Granada; floruit estimate
+سيف الرحبي,Saif al-Rahbi,1,,3,متأخر,,,1956,2000,20,exact,"Oman, living"
+شرف الدين البوصيري,Sharaf al-Din al-Busiri,1,,7,أندلسي,11,1295,1213,,13,exact,Duplicate (full name) of al-Busiri
+شهاب الدين الالوسي,Shihab al-Din al-Alusi,1,,5,جاهلي,6,1854,1802,,19,exact,Duplicate of Mahmud al-Alusi
+شهاب الدين الخلوف,Shibāb al-Dīn al-Khulūf,1,,8,مملوكي,14,1479,1425,,15,approx,"Maghribi, Mamluk-era madih poet"
+ضرار الفهري,Ḍirār al-Fihrī,1,,6,مخضرم,13,,,700,7,approx,Umayyad-era; floruit estimate
+طريح بن إسماعيل الثقفي,Ṭuraiḥ ibn Ismāʿīl al-Thaqafī,1,,4,أموي,8,782,,,8,approx,"Umayyad-Abbasid, Ta'if"
+ظافر الحداد,Ẓāfir al-Ḥaddād,1,,7,أندلسي,11,1134,,,12,exact,"Alexandria, Fatimid era, d. 529 AH"
+عامرية الكثيب,Ameriyya al-Kathib,1,,1,إسلامي,7,,,1200,12,approx,Byname only; no reliable dates
+عايشة بنت احمد القرطبية,Aisha bint Ahmad al-Qurtubiyya,1,,8,مملوكي,14,1010,,,11,exact,"Cordoba, d. 400 AH"
+عبد العزيز المقالح,Abd al-Aziz al-Maqaleh,1,,2,عباسي,9,2022,1937,,21,exact,Yemen
+عبد الغفار الأخرس,ʿAbd al-Ghaffār al-Akhras,1,,7,أندلسي,11,1873,1804,,19,exact,Mosul/Baghdad
+عبد المحسن الصوري بن غلبون,ʿAbd al-Muḥsin al-Ṣūrī ibn Ghalbūn,1,,7,أندلسي,11,1030,951,,11,exact,Duplicate (full name) of Abd al-Muhsin al-Suri
+عبد الملك الحارثي,Abd al-Malik al-Harithi,1,,2,عباسي,9,,,1000,10,approx,No reliable dates; floruit estimate
+عبد المهيمن الحضرمي,Abd al-Muhaymin al-Hadrami,1,,8,مملوكي,14,1414,1327,,15,approx,Ceuta/Granada
+عبدالله جدي,Abdullah Jadi,1,,3,متأخر,,,,2000,20,approx,Contemporary; floruit estimate
+عبيد الله الجَعفي,ʿUbayd Allāh al-Jaʿfī,1,,4,أموي,8,,,700,7,approx,Kufan; floruit estimate
+عبيد الله بن مسعود الهذلي,Ubayd Allah bin Mas'ud al-Hudhali,1,,2,عباسي,9,,,700,7,approx,Hudhali; floruit estimate
+عبيدة اليشكري,ʿUbaydah al-Yashkurī,1,,4,أموي,8,,,600,6,approx,Pre-Islamic; floruit estimate
+عرقلة الكلبي الدمشقي,Urqula al-Kalbi al-Dimashqi,1,,7,أندلسي,11,1171,1106,,12,exact,Duplicate (full name) of Urqula al-Dimashqi
+عروة بن ادية,'Urwah bin Adiyyah,1,,2,عباسي,9,697,,,7,approx,Kharijite of Tamim
+عروة بن حزام,Urwa ibn Hizam,1,,1,إسلامي,7,650,,,7,approx,Udhri lover-poet of Afra
+علي بن الحسين,Ali ibn al-Husayn,1,,1,إسلامي,7,713,659,,8,approx,Zayn al-Abidin
+علي بن فضال المجاشعي,ʿAlī ibn Faḍḍāl al-Mijāshʿī,1,,4,أموي,8,1086,,,11,approx,"Philologist, Baghdad"
+عمرة بنت رواحة الانصارية,'Umrah bint Rawahah al-Ansariyyah,1,,3,متأخر,,,,630,7,approx,Companion poetess; floruit estimate
+عمرو الباهلي,ʿAmr al-Bāhilī,1,,6,مخضرم,13,,,700,7,approx,Umayyad-era; floruit estimate
+عمرو بن قميئة,ʿAmr ibn Qamīʾah,1,,5,جاهلي,6,540,,,6,approx,"Pre-Islamic, companion of Imru' al-Qays"
+فخر الدين ابن هبيرة,Fakhr al-Din ibn Hubayra,1,,3,متأخر,,1165,1105,,12,approx,Baghdad vizier family
+قطري بن الفجاءة,Qaṭrī ibn al-Fajāʾah,1,,4,أموي,8,699,,,7,exact,"Kharijite commander, killed 78 AH"
+قيس بن عاصم المنقري,Qays bin 'Asim al-Munqari,1,,4,أموي,8,640,,,7,approx,Companion of Tamim
+كاظم الخضري,Kadhim al-Khidri,1,,3,متأخر,,,,1900,19,approx,Iraqi; floruit estimate
+لقيط بن زرارة الدارمي,Laqīṭ ibn Zurāra al-Dārimī,1,,5,جاهلي,6,,,590,6,approx,Pre-Islamic of Tamim
+ليلى العفيفة,Laylā al-ʿAfīfa,1,,5,جاهلي,6,,,600,6,approx,Pre-Islamic; floruit estimate
+ليلى بنت سلمى,Laylā bint Salmā,1,,5,جاهلي,6,,,600,6,approx,Pre-Islamic; floruit estimate
+مالك الأشتر,Mālik al-Ashtar,1,,6,مخضرم,13,658,,,7,approx,"Companion of Ali, d. on the way to Egypt"
+ماني الموسوس,Mani al-Mawsus,1,,2,عباسي,9,862,,,9,approx,"Abbasid, Baghdad"
+متمم اليربوعي,Mutammim al-Yarbūʿī,1,,6,مخضرم,13,650,,,7,approx,"Mukhadram, elegist of his brother Malik"
+محسن الامين,Muhsin al-Amin,1,,8,مملوكي,14,1952,1867,,20,exact,Jabal Amil then Damascus
+محمد بن بشير الخارجي,Muḥammad ibn Bashīr al-Khārijī,1,,4,أموي,8,,,750,8,approx,Umayyad-Abbasid Hijazi; floruit estimate
+محمد بن وهيب الحميري,Muhammad bin Wahib al-Himayri,1,,7,أندلسي,11,839,,,9,approx,"Abbasid, court of al-Ma'mun"
+محمود حسن اسماعيل,Mahmud Hasan Ismail,1,,8,مملوكي,14,1977,1910,,20,exact,Egypt
+مرج الكحل,Marj al-Kuḥl,1,,7,أندلسي,11,1236,,,13,exact,"Andalusian, d. 634 AH"
+مروان الطليق,Marwān al-Ṭalīq,1,,7,أندلسي,11,,,1050,11,approx,Andalusian (Marwan al-Taliq); floruit estimate
+مروان بن أبي حفصة,Marwan ibn Abi Hafsa,1,,1,إسلامي,7,797,723,,8,exact,Abbasid panegyrist
+مسكين الدارمي,Miskīn al-Dārimī,1,,4,أموي,8,708,,,8,approx,Umayyad of Tamim
+معاوية بن أبي سفيان,Muʿāwiyah ibn Abī Sufyān,1,,4,أموي,8,680,602,,7,exact,First Umayyad caliph
+مهدي البغدادي,Mahdi al-Baghdadi,1,,3,متأخر,,,,1900,19,approx,Iraqi; floruit estimate
+نازك الملايكة,Nazik al-Mala'ika,1,,1,إسلامي,7,2007,1923,,21,exact,"Iraq, co-founder of free verse"
+نافع بن الأسود,Nāfiʿ ibn al-Aswad,1,,6,مخضرم,13,,,650,7,approx,Early Islamic tribal; floruit estimate
+هارون الرشيد,Harun al-Rashid,1,,2,عباسي,9,809,763,,9,exact,Abbasid caliph
+هدبة بن الخشرم,Hudbah ibn al-Khuṣram,1,,4,أموي,8,670,,,7,approx,"Umayyad, executed for blood-vengeance"
+هزيلة الجديسية,Hazilah al-Judaysiyyah,1,,5,جاهلي,6,,,520,6,approx,"Pre-Islamic, the Tasm and Jadis legend"
+هند الضبابية,Hind al-Dababiyyah,1,,5,جاهلي,6,,,650,7,approx,Early Islamic poetess; floruit estimate
+هند بنت النعمان,Hind bint al-Nuʿmān,1,,4,أموي,8,,,620,7,approx,Daughter of al-Nu'man ibn al-Mundhir
+ورقاء بن زهير,Warqa' ibn Zuhayr,1,,5,جاهلي,6,,,580,6,approx,"Pre-Islamic, the Dahis war cycle"
+وضاح اليمن,Waḍḍāḥ al-Yaman,1,,4,أموي,8,708,,,8,approx,"Umayyad, killed under al-Walid"
+يحيى بن زياد الحارثي,Yahya ibn Ziyad al-Harithi,1,,2,عباسي,9,,,780,8,approx,"Abbasid, Kufa; floruit estimate"
+يزيد المهلبي,Yazid al-Mahlabi,1,,2,عباسي,9,,,850,9,approx,"Abbasid, of the Muhallabids; floruit estimate"

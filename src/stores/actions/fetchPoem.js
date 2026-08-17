@@ -17,7 +17,6 @@ import {
   MAX_SCORE,
 } from '../../services/preferenceWeighting.js';
 import { recordFeedDraw } from '../../services/lastDraw.js';
-import { readSeen, markSeen } from '../../services/seenPoems.js';
 
 /**
  * Band definitions are needed to turn a stored era/difficulty band KEY back into
@@ -95,18 +94,14 @@ export async function fetchWeightedFeed({
     return [];
   }
 
-  // What the reader has already been offered: this session's exclusions plus
-  // everything persisted from previous ones.
-  //
-  // The persisted half is what makes the priority ladder work rather than
-  // backfire. Ranking is strict and therefore deterministic — same pool, same
-  // answers, same poem — so without a durable record the reader would reopen the
-  // app and be handed the same top-rung poem indefinitely. Session-only
-  // exclusion hid this during development, where nobody closes the tab.
+  // What the reader has already been offered. `excludeIds` is fed from
+  // getRecentSeenIds() (src/utils/seenPoems.js), which is persisted, so this
+  // survives a reload — which is what keeps a deterministic ranking from
+  // handing back the same top-rung poem every session.
   //
   // drawManyFrom falls back to the full pool when everything is excluded, so a
   // reader deep in a narrow corner gets a repeat rather than an empty feed.
-  const seen = new Set([...(excludeIds || []), ...readSeen()]);
+  const seen = new Set(excludeIds || []);
 
   const { picks, scored, temperature } = drawManyFrom(all, prefs, poemsSeen, bands, {
     count,
@@ -115,12 +110,6 @@ export async function fetchWeightedFeed({
     seen,
   });
   if (!picks.length) return [];
-
-  // Persist immediately, at the point of being drawn rather than of being read.
-  // The ladder descends by exhaustion, so a poem that was offered and scrolled
-  // past has to count — otherwise a reader who skims the top rung is handed it
-  // again next session and the rung never empties.
-  markSeen(picks.map((p) => p.poem?.id).filter((id) => id != null));
 
   picks.forEach((pick) => {
     // Ride the score on the poem itself so the reader-facing line survives

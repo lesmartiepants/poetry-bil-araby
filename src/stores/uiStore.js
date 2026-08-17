@@ -79,10 +79,22 @@ const persistCurated = (on) => {
  *            Revisit if #713 ever backfills translations.
  */
 const POSTURE_KEY = 'reading-posture';
+/**
+ * What each reading posture puts on screen. One layer added per rung:
+ *
+ *   arabic    the poem alone
+ *   english   + the translation
+ *   learning  + the transliteration
+ *
+ * `learning` and `english` were previously identical — both turned on
+ * translation and transliteration — so the middle choice in the flow decided
+ * nothing. A reader who wants the English without a romanisation running under
+ * every line had no way to ask for it.
+ */
 export const POSTURES = {
   arabic: { showTranslation: false, showTransliteration: false },
+  english: { showTranslation: true, showTransliteration: false },
   learning: { showTranslation: true, showTransliteration: true },
-  english: { showTranslation: true, showTransliteration: true },
 };
 const loadPosture = () => {
   try {

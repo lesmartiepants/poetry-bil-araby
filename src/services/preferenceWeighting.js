@@ -756,14 +756,17 @@ export const DETERMINISTIC_OPENING = 2;
 export const PRIORITY_ORDER = Object.freeze(['motif', 'mood', 'family', 'difficulty', 'era']);
 
 /**
- * A poem's position in the strict priority ladder, as a place-value address.
+ * A poem's position in the priority order, as a place-value address.
  *
- * Each dimension is one bit, weighted by its place in PRIORITY_ORDER, so a
- * higher-priority match outranks EVERY combination of lower ones — matching
- * imagery alone (16) beats mood + family + difficulty + era together (15). That
- * is the whole point of a priority list, and it is why this cannot be expressed
- * by adding WEIGHTS: additive weights let three small matches outvote one big
- * one, which is precisely the behaviour the ladder exists to prevent.
+ * Each dimension is one bit, weighted by its place in PRIORITY_ORDER, so within
+ * this number alone a higher-priority match outranks every combination of lower
+ * ones — imagery alone is 16, mood + family + difficulty + era together is 15.
+ *
+ * That property is deliberate but it is NOT the top-level sort. `byRank` sorts
+ * on match COUNT first and uses this only to break ties between poems matching
+ * the same number of dimensions. Used as the primary key it surfaced poems
+ * matching one thing ahead of poems matching four, which is what a priority
+ * list literally asks for and not what a reader wants.
  *
  * A dimension counts as satisfied on ANY credit, not full credit. Full credit is
  * unreachable on a multi-select axis — a poem carries one primary mood, so
@@ -786,23 +789,45 @@ export const priorityAddress = (terms) => {
   return address;
 };
 
+/** How many of the reader's answered dimensions this poem satisfies at all. */
+export const matchCount = (terms) => (terms || []).filter((t) => t && t.earned > 0).length;
+
 /**
- * Rank comparator: priority ladder first, weighted score inside a rung, poem id
- * as a stable tie-break.
+ * Rank comparator: how much matched, then the reader's priority order, then the
+ * weighted score, then poem id.
  *
- * The three keys do different jobs and the order matters:
+ * The four keys do different jobs and the order between the first two is the
+ * whole design:
  *
- *   1. ADDRESS enforces the reader's priority. Nothing below can outvote it.
- *   2. SCALED orders poems that are tied on all five answers — and it is the
- *      only place the continuous credits survive. The ladder is binary, so a
- *      poem 0.1 outside the chosen difficulty band and one 3.0 outside land in
- *      the same rung; the score is what still separates them.
- *   3. ID keeps it deterministic. A reader who answered only the family step
- *      produces a lot of exact ties, and without a stable third key the pick
+ *   1. COUNT. Matching more of the reader's answers always wins. A poem
+ *      satisfying mood + family + reading + era beats one satisfying imagery
+ *      alone, because four of five is a better answer to "what do you like"
+ *      than one of five, whatever that one is.
+ *
+ *      This was briefly the other way round. A pure place-value address made
+ *      imagery (16) outrank everything below it combined (15), which is what a
+ *      priority list literally asks for — and in practice it surfaced poems
+ *      matching one dimension ahead of poems matching four. Correct to the
+ *      specification, wrong for the reader.
+ *
+ *   2. ADDRESS breaks ties between poems matching the SAME number of
+ *      dimensions. This is where the priority order lives now: among poems that
+ *      match two things, the one holding imagery + mood beats the one holding
+ *      reading + era. Ordering without overriding.
+ *
+ *   3. SCALED orders poems tied on both — and it is the only place the
+ *      continuous credits survive. Count and address are both binary, so a poem
+ *      0.1 outside the chosen difficulty band and one 3.0 outside are otherwise
+ *      identical; the score is what still separates them.
+ *
+ *   4. ID keeps it deterministic. A reader who answered only the family step
+ *      produces a lot of exact ties, and without a stable last key the pick
  *      would fall through to the API's row order, which is randomised — i.e.
  *      sampling by another name, in the slots that exist to not be sampled.
  */
 const byRank = (a, b) => {
+  const n = matchCount(b?.terms) - matchCount(a?.terms);
+  if (n !== 0) return n;
   const addr = priorityAddress(b?.terms) - priorityAddress(a?.terms);
   if (addr !== 0) return addr;
   const d = (b?.scaled || 0) - (a?.scaled || 0);

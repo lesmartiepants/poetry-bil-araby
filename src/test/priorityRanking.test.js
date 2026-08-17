@@ -1,6 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { priorityAddress, PRIORITY_ORDER, drawManyFrom } from '../services/preferenceWeighting.js';
-import { markSeen, readSeen, clearSeen, seenSet, MAX_REMEMBERED } from '../services/seenPoems.js';
 
 const BANDS = {
   eraBands: [
@@ -33,9 +32,11 @@ describe('priorityAddress', () => {
     expect(PRIORITY_ORDER).toEqual(['motif', 'mood', 'family', 'difficulty', 'era']);
   });
 
-  it('makes one high-priority match outrank EVERY lower one combined', () => {
-    // This is the property that separates a priority ladder from weighting.
-    // If it ever fails, the ladder has silently become additive.
+  it('orders strictly WITHIN the address, so it can break ties cleanly', () => {
+    // Place value, so the address alone ranks a higher-priority match above any
+    // combination of lower ones. Note this is a property of the address, not of
+    // the feed: byRank sorts on match COUNT first, so a poem carrying only
+    // imagery does NOT beat one carrying the other four. See the ranking tests.
     const imageryOnly = priorityAddress(terms('motif'));
     const everythingElse = priorityAddress(terms('mood', 'family', 'difficulty', 'era'));
     expect(imageryOnly).toBe(16);
@@ -59,19 +60,35 @@ describe('priorityAddress', () => {
 });
 
 describe('the ladder, on poems', () => {
-  it('ranks imagery+mood above family+difficulty+era — 2 matches beating 3', () => {
-    // The worked example the owner approved: X carries the two protected
-    // dimensions, Y carries the three cheap ones and more of them.
-    const X = poem('X', { motifs: ['night'], moods: ['amorous'], century: 20, acc: 5 });
+  it('ranks more matches above fewer, whatever the priority order says', () => {
+    // Y matches era + difficulty (2). X matches imagery only (1). Imagery
+    // outranks both of those in PRIORITY_ORDER, and Y still wins: count is the
+    // primary key. Ranking address-first surfaced one-dimension poems ahead of
+    // four-dimension ones, which is why this is the way round it is.
+    const X = poem('X', { motifs: ['night'], moods: [], century: 20, acc: 5 });
     const Y = poem('Y', { motifs: [], moods: [], century: 9, acc: 2 });
 
-    const { picks } = drawManyFrom([Y, X], PREFS, 0, BANDS, {
+    const { picks } = drawManyFrom([X, Y], PREFS, 0, BANDS, {
       count: 2,
       deterministic: 2,
     });
 
-    expect(picks[0].poem.id).toBe('X');
-    expect(picks[1].poem.id).toBe('Y');
+    expect(picks[0].poem.id).toBe('Y');
+    expect(picks[1].poem.id).toBe('X');
+  });
+
+  it('uses the priority order to break ties between equal match counts', () => {
+    // Both match exactly two dimensions. HIGH holds imagery + mood, LOW holds
+    // difficulty + era. Same count, so the priority order decides.
+    const HIGH = poem('HIGH', { motifs: ['night'], moods: ['amorous'], century: 20, acc: 5 });
+    const LOW = poem('LOW', { motifs: [], moods: [], century: 9, acc: 2 });
+
+    const { picks } = drawManyFrom([LOW, HIGH], PREFS, 0, BANDS, {
+      count: 2,
+      deterministic: 2,
+    });
+
+    expect(picks[0].poem.id).toBe('HIGH');
   });
 
   it('falls back to the weighted score inside a rung', () => {
@@ -135,53 +152,5 @@ describe('exhaustion', () => {
       seen: new Set(['only']),
     });
     expect(picks[0].poem.id).toBe('only');
-  });
-});
-
-describe('seenPoems storage', () => {
-  // Node exposes a `localStorage` global that throws unless the process was
-  // started with --localstorage-file, and it shadows the one happy-dom installs.
-  // That is the same cause as the long-standing failures in
-  // utils-extracted.test.js; fixing it there is a separate job, so this suite
-  // installs a plain in-memory store rather than depending on the environment.
-  beforeEach(() => {
-    let store = {};
-    Object.defineProperty(globalThis, 'localStorage', {
-      configurable: true,
-      value: {
-        getItem: (k) => (k in store ? store[k] : null),
-        setItem: (k, v) => {
-          store[k] = String(v);
-        },
-        removeItem: (k) => {
-          delete store[k];
-        },
-        clear: () => {
-          store = {};
-        },
-      },
-    });
-    clearSeen();
-  });
-
-  it('records and reads back', () => {
-    markSeen([1, 2]);
-    markSeen(3);
-    expect(readSeen()).toEqual([1, 2, 3]);
-    expect(seenSet().has(2)).toBe(true);
-  });
-
-  it('does not re-date an id it already holds', () => {
-    markSeen([1, 2, 3]);
-    markSeen(1);
-    expect(readSeen()).toEqual([1, 2, 3]);
-  });
-
-  it('trims the oldest first when it hits the cap', () => {
-    markSeen(Array.from({ length: MAX_REMEMBERED + 10 }, (_, i) => i));
-    const kept = readSeen();
-    expect(kept).toHaveLength(MAX_REMEMBERED);
-    expect(kept[kept.length - 1]).toBe(MAX_REMEMBERED + 9);
-    expect(kept[0]).toBe(10);
   });
 });

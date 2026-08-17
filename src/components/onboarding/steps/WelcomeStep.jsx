@@ -67,10 +67,22 @@ const LEDE_2 = 'Or walk straight in. The dīwān is the same either way.';
  * cached, so promising a full English reading experience would be a promise the
  * corpus keeps about an eighth of the time on a first load (see #713).
  */
+/**
+ * Three postures, each adding one layer to what is on screen:
+ *
+ *   arabic    the poem alone
+ *   english   + the English
+ *   learning  + the transliteration
+ *
+ * They used to be a preference with no consequence: `learning` and `english`
+ * both mapped to translation AND transliteration, so two of the three choices
+ * were the same screen. Each rung now turns on exactly one more thing than the
+ * one above it (see POSTURES in uiStore).
+ */
 const POSTURES = [
   { key: 'arabic', en: 'In Arabic', hint: 'just the poem' },
-  { key: 'learning', en: "I'm learning", hint: 'sound it out' },
-  { key: 'english', en: 'In English', hint: 'meaning and sound' },
+  { key: 'english', en: 'With English', hint: 'poem and translation' },
+  { key: 'learning', en: "I'm learning", hint: 'and how it sounds' },
 ];
 
 // One continuous stagger across all four lines, so they read as one sentence
@@ -300,9 +312,15 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: 60,
-            border: `1px solid ${posture ? GOLD : 'rgba(255,255,255,0.12)'}`,
+            // Unlocking a door must not look like choosing it. A filled gold
+            // ground here read as "already selected", so a reader who had only
+            // answered how they read appeared to have been given an answer to
+            // the second question too. Enabled state is carried by the outline
+            // and the text; the fill is left for hover/press, which is the only
+            // thing that should say "chosen".
+            border: `1px solid ${posture ? `${GOLD}99` : 'rgba(255,255,255,0.12)'}`,
             borderRadius: 999,
-            background: posture ? `${GOLD}1f` : 'transparent',
+            background: 'transparent',
             color: posture ? GOLD : 'rgba(255,255,255,0.3)',
             transition: 'border-color .45s ease, background .45s ease, color .45s ease',
             cursor: posture ? 'pointer' : 'default',

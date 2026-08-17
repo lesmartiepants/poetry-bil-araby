@@ -312,17 +312,23 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: 60,
-            // Unlocking a door must not look like choosing it. A filled gold
-            // ground here read as "already selected", so a reader who had only
-            // answered how they read appeared to have been given an answer to
-            // the second question too. Enabled state is carried by the outline
-            // and the text; the fill is left for hover/press, which is the only
-            // thing that should say "chosen".
-            border: `1px solid ${posture ? `${GOLD}99` : 'rgba(255,255,255,0.12)'}`,
+            // TWO DOORS, NOT A DEFAULT AND AN ESCAPE.
+            //
+            // This was a filled gold button beside a dim ghost one, which read
+            // as "curate is already selected" — a reader who had answered only
+            // how they read appeared to have been handed an answer to the second
+            // question too. Nothing was actually selected: no aria-pressed, no
+            // focus, neither disabled. It was entirely the styling.
+            //
+            // Both doors now carry the same weight, because the flow genuinely
+            // does not have a preference between them: curating and walking
+            // straight in are equally good answers, and the dīwān is the same
+            // either way. Neither is filled; fill is reserved for hover/press,
+            // which is the only thing that should ever say "chosen".
+            border: `1px solid rgba(255,255,255,${posture ? 0.22 : 0.07})`,
             borderRadius: 999,
             background: 'transparent',
-            color: posture ? GOLD : 'rgba(255,255,255,0.3)',
-            transition: 'border-color .45s ease, background .45s ease, color .45s ease',
+            transition: 'border-color .45s ease, color .45s ease',
             cursor: posture ? 'pointer' : 'default',
           }}
         >
@@ -330,7 +336,7 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
             en="Curate my reading"
             ar="اختر لي"
             size="control"
-            color={posture ? GOLD : 'rgba(255,255,255,0.3)'}
+            color={`rgba(255,255,255,${posture ? 0.82 : 0.3})`}
           />
         </button>
         <button
@@ -341,11 +347,14 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 56,
-            border: `1px solid rgba(255,255,255,${posture ? 0.14 : 0.07})`,
+            // Matched to the door above, deliberately: same height, same border,
+            // same text weight. Any asymmetry here reads as a recommendation,
+            // and this pair is a genuine choice.
+            minHeight: 60,
+            border: `1px solid rgba(255,255,255,${posture ? 0.22 : 0.07})`,
             borderRadius: 999,
             background: 'transparent',
-            color: `rgba(255,255,255,${posture ? 0.66 : 0.3})`,
+            color: `rgba(255,255,255,${posture ? 0.82 : 0.3})`,
             transition: 'border-color .45s ease, color .45s ease',
             cursor: posture ? 'pointer' : 'default',
           }}
@@ -354,7 +363,7 @@ const WelcomeStep = ({ testId, stepIndex, stepCount, onNext, onSkipAll, posture,
             en="Just read"
             ar="ادخل واقرأ"
             size="control"
-            color={`rgba(255,255,255,${posture ? 0.66 : 0.3})`}
+            color={`rgba(255,255,255,${posture ? 0.82 : 0.3})`}
           />
         </button>
       </div>

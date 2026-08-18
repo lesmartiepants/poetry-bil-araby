@@ -116,6 +116,9 @@ const results = [];
 let done = 0;
 
 async function one(r) {
+  // --ids may name a poem that has no translation yet. Nothing to score, and
+  // it is not an error worth a stack trace mid-sweep.
+  if (!r.ct) return;
   const ar = r.body.split('*').map((s) => s.trim()).filter(Boolean);
   const en = r.ct.split('*').map((s) => s.trim()).filter(Boolean);
   if (ar.length < MIN_LINES || en.length < MIN_LINES) return;

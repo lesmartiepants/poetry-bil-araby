@@ -257,7 +257,7 @@ async function collect(job) {
 
 // ── write back ─────────────────────────────────────────────────────────────
 async function writeBack(results, poemsById) {
-  const stats = { written: 0, shortLines: 0, noPoem: 0, apiError: 0 };
+  const stats = { written: 0, shortLines: 0, extraLines: 0, noPoem: 0, apiError: 0 };
   const pending = [];
 
   for (const r of results) {
@@ -276,23 +276,34 @@ async function writeBack(results, poemsById) {
       continue;
     }
 
-    // Same guard the app applies before caching: a translation with fewer
-    // lines than the original is truncated, and caching it would freeze the
-    // truncation in place for every future reader.
+    // The line counts must match exactly, not merely reach the original's.
+    //
+    // Too few lines means a truncated translation, and caching it freezes the
+    // truncation in place for every future reader. Too many is the more
+    // surprising failure: the model recognises a classical poem and continues
+    // it past the corpus excerpt from memory. Poem 79376 came back with 40
+    // English lines for 20 Arabic — the first 20 correct, the rest verse with
+    // no source. The reader zips to max(ar, en), so those extra lines render
+    // beside empty Arabic.
     const arabicLines = toLines(poem.body).split('\n').filter((l) => l.trim()).length;
     const englishLines = parts.poeticTranslation.split('\n').filter((l) => l.trim()).length;
-    if (englishLines < arabicLines) {
-      stats.shortLines++;
+    if (englishLines !== arabicLines) {
+      if (englishLines < arabicLines) stats.shortLines++;
+      else stats.extraLines++;
       continue;
     }
 
     // Newlines are stored as '*', matching the corpus convention and the
     // app's own saveTranslation().
+    // Drop any literal '*' before encoding: it is the verse separator, so a
+    // markdown italic in the model's output ("*Saqt al-Zand*") would split one
+    // verse into three and shift the poem out of step with the Arabic.
+    const strip = (s) => (s ? s.replace(/\*/g, '') : null);
     pending.push([
       poem.id,
-      parts.poeticTranslation.replace(/\n/g, '*'),
-      parts.depth || null,
-      parts.author || null,
+      strip(parts.poeticTranslation).replace(/\n/g, '*'),
+      strip(parts.depth),
+      strip(parts.author),
     ]);
   }
 
@@ -363,6 +374,7 @@ const stats = await writeBack(results, poemsById);
 console.log('\n' + '-'.repeat(64));
 console.log(`  written:            ${stats.written}`);
 console.log(`  skipped (short):    ${stats.shortLines}`);
+console.log(`  skipped (overrun):  ${stats.extraLines}`);
 console.log(`  skipped (no POEM):  ${stats.noPoem}`);
 console.log(`  skipped (api err):  ${stats.apiError}`);
 console.log('-'.repeat(64));

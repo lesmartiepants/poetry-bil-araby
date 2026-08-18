@@ -71,4 +71,15 @@ export default [
       },
     },
   },
+
+  // Maintenance scripts run under Node, not in the browser. Without this they
+  // inherit the browser globals above and every console/process/fs reference
+  // reads as an undefined variable.
+  {
+    files: ['scripts/**/*.{js,mjs,cjs}'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: { ...globals.node },
+    },
+  },
 ];

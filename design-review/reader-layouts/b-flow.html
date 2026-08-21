@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>B · Flow — the poem is a column, not a window</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./shell.css" />
+    <style>
+      /* ── B · FLOW ──────────────────────────────────────────────────────────
+         Premise: the fixed viewport is the thing capping how much poem you can see. A
+         22-line qasida will never fit a phone screen, so stop pretending and let the
+         poem be a scrollable column.
+
+         What changes
+           • no teleprompter window and no reserved rows — the poem renders in full and
+             you scroll it; a long poem is long, which is honest
+           • verses reveal as they enter the viewport (IntersectionObserver), so the
+             sparkler still animates, just triggered by scroll position instead of taps
+           • Next Verse still works — it scrolls to and reveals the next unrevealed verse,
+             so the button contract survives for readers who prefer tapping
+           • the header scrolls away with the poem instead of holding a fixed 136px band
+
+         Gesture arbitration: the inner column owns the wheel/drag until it hits an end,
+         and only then does the gesture page to the next poem. That is the delicate part
+         and the honest cost of this option. */
+      #shell {
+        height: 100dvh;
+      }
+
+      body[data-layout='b-flow'] #body {
+        position: absolute;
+        inset: 0;
+        display: block;
+        padding: 0;
+        overflow: hidden;
+      }
+
+      .flow-scroll {
+        height: 100%;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding: 0 20px calc(env(safe-area-inset-bottom, 0px) + 150px);
+      }
+      .flow-scroll::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* The header is part of the scrolled column: it costs its height ONCE, at the top,
+         instead of holding a band open on every screen of the poem. */
+      #meta {
+        position: static;
+        transform: none;
+        width: 100%;
+        padding: calc(env(safe-area-inset-top, 0px) + 40px) 0 26px;
+        gap: 3px;
+      }
+
+      #stage {
+        position: static;
+        height: auto !important;
+        overflow: visible;
+        max-width: 680px;
+        margin: 0 auto;
+      }
+      #track {
+        position: static;
+        transform: none !important;
+      }
+      .unit {
+        padding: 0.5rem 0;
+      }
+
+      /* Verses that haven't scrolled in yet stay dim rather than absent, so the shape of
+         the whole poem is visible from the first screen — you can see how much there is. */
+      .unit[data-revealed='false'] .ar-line .w {
+        opacity: 0.14;
+        filter: blur(2.5px);
+        transform: none;
+      }
+
+      /* A scrolling column runs verses underneath the controls, so the bottom chrome needs a
+         real scrim, not a hint of one: fully opaque behind the buttons, fading out above
+         them. Sits above the column (z 4) and below actions (5) and nav (6). */
+      .flow-fade {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 250px;
+        z-index: 4;
+        pointer-events: none;
+        background: linear-gradient(
+          to top,
+          var(--ground) 0%,
+          var(--ground) 62%,
+          rgba(10, 10, 15, 0.82) 78%,
+          transparent 100%
+        );
+      }
+      /* Same at the top, so a verse scrolling past the title block doesn't collide with it. */
+      .flow-fade-top {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 40px;
+        z-index: 4;
+        pointer-events: none;
+        background: linear-gradient(to bottom, var(--ground), transparent);
+      }
+      #actions {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 88px);
+      }
+
+      /* Rail reflects scroll position through the whole poem, not a 4-row window. */
+      #rail {
+        top: calc(env(safe-area-inset-top, 0px) + 12px);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 150px);
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { mountShell, startProbe } from './shell.js';
+      import { boot } from './engine.js';
+      mountShell({ layout: 'b-flow', note: 'continuous scroll column' });
+
+      // Re-parent header + stage into one scrollable column.
+      const body = document.getElementById('body');
+      const scroll = document.createElement('div');
+      scroll.className = 'flow-scroll';
+      scroll.setAttribute('data-owns-gesture', ''); // the column owns its own drag
+      scroll.appendChild(document.getElementById('meta'));
+      scroll.appendChild(document.getElementById('stage'));
+      body.appendChild(scroll);
+
+      const shell = document.getElementById('shell');
+      for (const cls of ['flow-fade', 'flow-fade-top']) {
+        const f = document.createElement('div');
+        f.className = cls;
+        shell.appendChild(f);
+      }
+
+      const api = await boot({ flow: true });
+
+      // Reveal verses as they enter the reading zone — the sparkler still runs, driven by
+      // scroll position rather than a tap.
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) e.target.setAttribute('data-revealed', 'true');
+          }
+        },
+        { root: scroll, rootMargin: '-12% 0px -32% 0px' }
+      );
+      const observe = () => document.querySelectorAll('.unit').forEach((u) => io.observe(u));
+      observe();
+      new MutationObserver(observe).observe(document.getElementById('track'), { childList: true });
+
+      // Next Verse still advances: scroll the first not-yet-revealed verse into view.
+      document.getElementById('act-next').addEventListener('click', () => {
+        const next = [...document.querySelectorAll('.unit')].find(
+          (u) => u.dataset.revealed !== 'true'
+        );
+        if (next) next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        else scroll.scrollTo({ top: scroll.scrollHeight, behavior: 'smooth' });
+      });
+
+      // Rail tracks scroll through the WHOLE poem.
+      const fill = document.getElementById('rail-fill');
+      const handle = document.getElementById('rail-handle');
+      scroll.addEventListener('scroll', () => {
+        const f = scroll.scrollTop / Math.max(1, scroll.scrollHeight - scroll.clientHeight);
+        const pct = (Math.min(1, Math.max(0, f)) * 100).toFixed(1);
+        fill.style.height = pct + '%';
+        handle.style.top = pct + '%';
+      });
+
+      startProbe();
+    </script>
+  </body>
+</html>

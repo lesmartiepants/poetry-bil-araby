@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>D · Frame — stop reserving rows that have nothing in them</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./shell.css" />
+    <style>
+      /* ── D · FRAME ─────────────────────────────────────────────────────────
+         Premise: the measurement found that most of the "empty" screen on landing is not
+         chrome at all. The stage holds `visRows` open from the first frame, so at 393x852
+         a 10-line poem showed 2 verses (109px of ink) inside a 448px window — 339px of
+         reserved, permanently blank rows sitting in the middle of the screen.
+
+         What changes — deliberately almost nothing:
+           • the stage is only as tall as the verses actually revealed, and grows as you
+             advance; once the reveal passes what fits it scrolls exactly like today
+           • because the body box centres its content, the poem now sits in the OPTICAL
+             centre from the first verse instead of clinging to the top of a tall void
+           • bands trimmed 136/111 → 108/96, which is the conservative part of the win
+           • dvh instead of vh, so Safari's toolbar doesn't eat the bottom band
+
+         This is the cheapest option to ship: no new gesture, no chrome behaviour, no
+         change to the reveal, the scrubber or the swipe. It is a sizing fix. */
+      #shell {
+        height: 100dvh;
+      }
+
+      body[data-layout='d-frame'] {
+        --band-top: calc(env(safe-area-inset-top, 0px) + 108px);
+        --band-bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+      }
+
+      /* The window changes height as verses land, so ease it rather than jumping. */
+      #stage {
+        transition: height 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      #meta {
+        gap: 1px;
+      }
+      #title-en {
+        font-size: clamp(0.95rem, 3.7vw, 1.2rem);
+      }
+      #poet {
+        margin-top: 3px;
+        font-size: clamp(0.86rem, 3.4vw, 1.05rem);
+      }
+
+      #actions {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+      }
+      #rail {
+        top: var(--band-top);
+        bottom: var(--band-bottom);
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { mountShell, startProbe } from './shell.js';
+      import { boot } from './engine.js';
+      mountShell({ layout: 'd-frame', note: 'stage grows with the reveal' });
+      await boot({ rows: 'fit', grow: true });
+      startProbe();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Baseline — shipping reader geometry</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./shell.css" />
+    <style>
+      /* CONTROL — reproduces the shipping reader's bands exactly, so every option is
+         measured against the thing being complained about rather than an idealised one.
+           top band     clamp(116px, 16vh, 148px)   → 136px at 393x852
+           bottom band  clamp(96px, 13vh, 120px)    → 111px
+           rail lane    56px off the poem's width
+         Sizing here is `vh`, matching what ships — which is exactly the mobile-Safari
+         trap: 100vh is the URL-bar-hidden height, so the real reading area is smaller
+         still. Every option below moves to dvh. */
+      #shell {
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { mountShell, startProbe } from './shell.js';
+      import { boot } from './engine.js';
+      mountShell({ layout: 'baseline', note: 'shipping geometry' });
+      await boot({ rows: 'fit' });
+      startProbe();
+    </script>
+  </body>
+</html>

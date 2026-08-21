@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>A · Recede — chrome gets out of the way</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./shell.css" />
+    <style>
+      /* ── A · RECEDE ────────────────────────────────────────────────────────
+         Premise: the chrome is only needed at the moments you reach for it. While you
+         are reading it can shrink to almost nothing and come back on demand.
+
+         What changes
+           • the header collapses after the intro: title + poet become ONE 30px line
+             (from a 73px three-line block), and the English title moves out of the way
+           • the bottom nav slides out while a verse is being read and returns the moment
+             the reveal rests, you tap, or you touch the bottom edge
+           • bands go from 136/111 to 62/58
+
+         Everything else is untouched: fixed viewport, sparkler reveal, Next Verse,
+         scrubber, swipe-between-poems. Sized in dvh so the collapsed chrome sits above
+         Safari's toolbar rather than under it. */
+      #shell {
+        height: 100dvh;
+      }
+
+      body[data-layout='a-recede'] {
+        --band-top: calc(env(safe-area-inset-top, 0px) + 62px);
+        --band-bottom: calc(env(safe-area-inset-bottom, 0px) + 58px);
+      }
+
+      /* Header collapses to a single line: Arabic title · poet, one baseline. */
+      #meta {
+        flex-direction: row;
+        gap: 0.5rem;
+        align-items: baseline;
+        justify-content: center;
+        top: calc(env(safe-area-inset-top, 0px) + 10px);
+        transition: opacity 0.35s ease;
+      }
+      #title-ar {
+        font-size: clamp(1.05rem, 4.4vw, 1.35rem);
+      }
+      #title-en {
+        display: none; /* the English title is the least-load-bearing line in the block */
+      }
+      #poet {
+        margin-top: 0;
+        font-size: clamp(0.78rem, 3.1vw, 0.95rem);
+        opacity: 0.78;
+      }
+      /* One line has to give something up. The Latin transcription of the poet's name is
+         the most redundant token in the header when the Arabic name is right beside it. */
+      #poet-en {
+        display: none;
+      }
+      #poet::before {
+        content: '·';
+        opacity: 0.5;
+        margin-inline-end: 0.35rem;
+      }
+
+      /* Actions sit directly above the (hideable) nav. */
+      #actions {
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 58px);
+        gap: 6px;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      /* Nav recedes while a verse is being read. `data-readState` is set by the engine.
+         It never hides under the home indicator: the pill keeps its safe-area padding and
+         translates by its own height plus that inset. */
+      #nav {
+        transition: transform 0.42s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+      }
+      body[data-read-state='reading'] #nav {
+        transform: translateY(calc(100% + env(safe-area-inset-bottom, 0px)));
+        opacity: 0;
+        pointer-events: none;
+      }
+      body[data-read-state='reading'] #actions {
+        transform: translateY(46px);
+      }
+      /* Bottom-edge hover/touch target that brings the nav back without a tap on the poem. */
+      #nav-peek {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 28px;
+        z-index: 7;
+      }
+      body:has(#nav-peek:hover) #nav,
+      body.nav-forced #nav {
+        transform: none;
+        opacity: 1;
+        pointer-events: auto;
+      }
+      body:has(#nav-peek:hover) #actions,
+      body.nav-forced #actions {
+        transform: none;
+      }
+
+      #rail {
+        top: var(--band-top);
+        bottom: var(--band-bottom);
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { mountShell, startProbe } from './shell.js';
+      import { boot } from './engine.js';
+      mountShell({ layout: 'a-recede', note: 'chrome recedes while reading' });
+
+      // Bottom-edge peek target: reveals the nav without making the poem a tap target.
+      const peek = document.createElement('div');
+      peek.id = 'nav-peek';
+      document.getElementById('shell').appendChild(peek);
+      const show = () => {
+        document.body.classList.add('nav-forced');
+        clearTimeout(show._t);
+        show._t = setTimeout(() => document.body.classList.remove('nav-forced'), 2600);
+      };
+      peek.addEventListener('pointerdown', show);
+      document.getElementById('nav')?.addEventListener('pointerdown', show);
+
+      await boot({ rows: 'fit' });
+      startProbe();
+    </script>
+  </body>
+</html>

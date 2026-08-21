@@ -1,0 +1,414 @@
+/* Shared reader shell. Every option starts from these tokens and this DOM, then overrides
+   only the LAYOUT bands, so a comparison isolates layout rather than styling.
+
+   Design ground truth (see CLAUDE.md / DESIGN-SYSTEM-SPEC.md):
+     ground  #0a0a0f      gold #c5a059
+     Reem Kufi  = display / brand only        (--font-brand-ar)
+     Amiri      = naskh body, i.e. the poem   (--font-amiri)
+   Using the display face for running verse is a visible mistake; the poem is always Amiri. */
+
+:root {
+  --ground: #0a0a0f;
+  --gold: #c5a059;
+  --gold-soft: rgba(212, 180, 99, 0.72);
+  --ink: rgba(236, 232, 224, 0.94);
+  --ink-dim: rgba(236, 232, 224, 0.62);
+  --font-amiri: 'Amiri', serif;
+  --font-brand-ar: 'Reem Kufi', sans-serif;
+  --font-brand-en: 'Cormorant Garamond', serif;
+
+  /* Bands an option can retune. These defaults mirror the SHIPPING reader so
+     "before" and "after" are measured on the same axis. */
+  --band-top: calc(env(safe-area-inset-top, 0px) + clamp(116px, 16vh, 148px));
+  --band-bottom: calc(env(safe-area-inset-bottom, 0px) + clamp(96px, 13vh, 120px));
+  --rail-lane: 56px; /* SCRUBBER_CLEARANCE — width taken off the poem box for the rail */
+  --page-pad: 16px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--ground);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Mobile Safari: 100vh is the URL-bar-HIDDEN height, so a vh-sized shell puts its own
+   bottom chrome underneath the toolbar. Every option sizes on dvh (with a vh fallback for
+   engines that lack it) so the shell is the height the reader can actually see. */
+#shell {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  width: 100%;
+  overflow: hidden;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+#shell.poem-out {
+  opacity: 0;
+  transform: translateY(-18px);
+}
+#shell.poem-in {
+  animation: poemIn 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes poemIn {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ── header band ─────────────────────────────────────────────────────────── */
+#meta {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(env(safe-area-inset-top, 0px) + 18px);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+  pointer-events: none;
+  text-align: center;
+  width: 100%;
+  padding: 0 12px;
+  min-width: 0;
+}
+/* Single-line header variants put title and byline on one row. Both children must be
+   allowed to shrink (a nowrap flex item won't go below its content width without this),
+   and the title yields first so the byline stays whole. */
+#meta > * {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#poet {
+  flex: 0 0 auto;
+}
+#title-ar {
+  font-family: var(--font-brand-ar);
+  font-weight: 700;
+  font-size: clamp(1.6rem, 6.6vw, 2.25rem);
+  color: var(--gold);
+  direction: rtl;
+  /* Real titles run long. Never let one push the byline off the screen edge —
+     it truncates instead, which is what a one-line header has to accept. */
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#title-en {
+  font-family: var(--font-brand-en);
+  font-style: italic;
+  font-size: clamp(1.1rem, 4.4vw, 1.5rem);
+  color: rgba(212, 180, 99, 0.9);
+}
+#poet {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  font-family: var(--font-brand-en);
+  font-weight: 700;
+  font-size: clamp(0.98rem, 3.9vw, 1.22rem);
+  color: var(--gold);
+  margin-top: 5px;
+}
+#poet-ar {
+  font-family: var(--font-brand-ar);
+  font-weight: 600;
+}
+
+/* ── body band ───────────────────────────────────────────────────────────── */
+#body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--band-top) calc(var(--page-pad) + var(--rail-lane)) var(--band-bottom)
+    var(--page-pad);
+}
+#stage {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  overflow: hidden;
+}
+#track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  /* 9px top+bottom = the 18px of breathing room SparklerStage adds to every row so full
+     tashkeel never clips. Matching it keeps the prototype's row rhythm (≈64px at 393px
+     wide) identical to the shipping reader, which is what makes these numbers comparable. */
+  padding: 9px 0;
+}
+.ar-line {
+  font-family: var(--font-amiri);
+  font-size: calc(clamp(1.52rem, 5.7vw, 2.13rem) * var(--fit, 1));
+  line-height: 1.75;
+  white-space: nowrap;
+  color: var(--ink);
+  text-shadow: 0 0 22px rgba(197, 160, 89, 0.16);
+}
+/* Transliteration — the optional third row (off by default: uiStore `showTransliteration:
+   false`). Mirrors SparklerStage: italic, letter-spaced, shrink-to-fit like the Arabic. */
+.translit-line {
+  font-family: var(--font-brand-en);
+  font-style: italic;
+  font-size: calc(clamp(0.86rem, 3.2vw, 1.1rem) * var(--fit, 1));
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  color: rgba(197, 160, 89, 0.62);
+  opacity: 0;
+  transition: opacity 0.55s ease;
+}
+.en-line {
+  font-family: var(--font-brand-en);
+  font-style: italic;
+  font-size: clamp(1.2rem, 4.7vw, 1.68rem);
+  line-height: 1.3;
+  color: var(--ink-dim);
+  max-width: 94%;
+  opacity: 0;
+  transition: opacity 0.55s ease;
+}
+.unit[data-revealed='true'] .translit-line {
+  opacity: 1;
+}
+/* word-by-word sparkler reveal */
+.ar-line .w {
+  display: inline-block;
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(4px);
+  transition:
+    opacity 0.42s ease,
+    filter 0.42s ease,
+    transform 0.42s ease;
+}
+.unit[data-revealed='true'] .ar-line .w {
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+.unit[data-revealed='true'] .en-line {
+  opacity: 1;
+}
+
+/* ── scrub rail ──────────────────────────────────────────────────────────── */
+#rail {
+  position: absolute;
+  z-index: 6;
+  width: 44px;
+  display: flex;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+  right: 4px;
+  top: var(--band-top);
+  bottom: var(--band-bottom);
+}
+#rail-track {
+  position: relative;
+  width: 2px;
+  height: 100%;
+  background: rgba(197, 160, 89, 0.18);
+  border-radius: 2px;
+}
+#rail-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+}
+#rail-handle {
+  position: absolute;
+  left: 50%;
+  width: 11px;
+  height: 11px;
+  margin: -5px 0 0 -5px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 10px rgba(197, 160, 89, 0.7);
+}
+
+/* ── reader actions + cue ────────────────────────────────────────────────── */
+#actions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 92px);
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+}
+.ra-row {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 420px;
+}
+.ra-btn {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 160, 89, 0.45);
+  background: rgba(197, 160, 89, 0.06);
+  color: var(--gold);
+  font-family: var(--font-brand-en);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+.ra-btn.primary {
+  background: linear-gradient(180deg, #e0c07a, #c5a059);
+  color: #1a1408;
+  border-color: transparent;
+}
+.ra-btn:disabled {
+  opacity: 0.5;
+}
+.ra-readfull {
+  background: none;
+  border: none;
+  color: var(--gold);
+  font-family: var(--font-brand-en);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+#cue {
+  font-family: var(--font-brand-en);
+  font-style: italic;
+  color: var(--gold);
+  font-size: clamp(0.85rem, 3.6vw, 1rem);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  min-height: 20px;
+}
+
+/* ── bottom nav ──────────────────────────────────────────────────────────── */
+#nav {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 6;
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px calc(env(safe-area-inset-bottom, 0px) + 6px);
+}
+.nav-pill {
+  display: flex;
+  gap: 6px;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 160, 89, 0.22);
+  background: rgba(20, 18, 24, 0.72);
+  backdrop-filter: blur(12px);
+}
+.nav-item {
+  min-width: 52px;
+  min-height: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: none;
+  border: none;
+  color: var(--gold-soft);
+  font-family: var(--font-brand-en);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.nav-item svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.6;
+}
+.nav-item[aria-current='true'] {
+  color: var(--gold);
+}
+
+/* ── prototype-only affordances (never part of the design) ───────────────── */
+/* Sits low-left, clear of the title block, so it never distorts the layout it reports on.
+   Add ?clean to any option's URL to drop it for a pure design read. */
+#probe {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  z-index: 40;
+  font:
+    10px/1.5 ui-monospace,
+    monospace;
+  color: rgba(255, 255, 255, 0.72);
+  background: rgba(0, 0, 0, 0.66);
+  padding: 4px 7px;
+  border-bottom-right-radius: 6px;
+  pointer-events: none;
+  white-space: pre;
+}
+#picker {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 40;
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+}
+#picker button {
+  font:
+    10px ui-monospace,
+    monospace;
+  background: rgba(0, 0, 0, 0.6);
+  color: var(--gold);
+  border: 1px solid rgba(197, 160, 89, 0.3);
+  border-radius: 4px;
+  padding: 3px 6px;
+  cursor: pointer;
+}
+body.hide-probe #probe,
+body.hide-probe #picker {
+  display: none;
+}

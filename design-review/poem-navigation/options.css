@@ -1,0 +1,632 @@
+/* Per-option chrome. Each option changes ONLY how you get from poem to poem. */
+
+/* ── N1 · Lateral ──────────────────────────────────────────────────────────── */
+.lat-track {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  will-change: transform;
+}
+.lat-cell {
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+}
+/* iOS Safari reserves ~20px at the screen edge for its interactive back-swipe. A horizontal
+   gesture starting inside this band is the browser's, not ours — we can't reliably win it, so we
+   don't try. Shown here as a visible band only to make the hazard legible in a screenshot. */
+.edge-guard {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  z-index: 8;
+  pointer-events: none;
+}
+.edge-guard.l {
+  left: 0;
+  background: linear-gradient(to right, rgba(226, 84, 84, 0.26), rgba(226, 84, 84, 0));
+}
+.edge-guard.r {
+  right: 0;
+  background: linear-gradient(to left, rgba(226, 84, 84, 0.26), rgba(226, 84, 84, 0));
+}
+#app:not(.show-guards) .edge-guard {
+  background: none;
+}
+
+.lat-dots {
+  position: absolute;
+  bottom: calc(var(--safe-b) + 126px);
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  z-index: 8; /* above the bottom scrim, or the position indicator is invisible */
+  pointer-events: none;
+}
+.lat-dots i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(197, 160, 89, 0.3);
+}
+.lat-dots i.on {
+  background: var(--gold);
+  width: 16px;
+  border-radius: 3px;
+}
+
+/* ── N2 · Rail ─────────────────────────────────────────────────────────────── */
+.rail {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  padding: 0 16px 10px;
+}
+.rail button.step {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(197, 160, 89, 0.34);
+  background: rgba(197, 160, 89, 0.06);
+  color: var(--gold);
+  font-size: 1rem;
+}
+.rail button.step:disabled {
+  opacity: 0.28;
+}
+
+/* ── N3 · Threshold ────────────────────────────────────────────────────────── */
+/* The poem boundary is CONTENT, not a gesture. Scroll never changes meaning, so there is no
+   axis to arbitrate and no latched boundary to cross by accident. */
+.threshold {
+  margin: 26px 0 30px;
+  text-align: center;
+  position: relative;
+}
+.threshold hr {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(to right, transparent, rgba(197, 160, 89, 0.4), transparent);
+  margin: 0 0 14px;
+}
+.threshold .glyph {
+  font-family: 'Reem Kufi', sans-serif;
+  color: var(--gold);
+  font-size: 1.6rem;
+  opacity: 0.85;
+  letter-spacing: 0.4em;
+}
+.threshold .next-label {
+  margin-top: 10px;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(236, 231, 221, 0.4);
+}
+/* The staged handoff. Fixed height ALWAYS — only the contents fade in. If this block grew when
+   the offer appeared it would add scroll height, the reader would stop being at the bottom, and
+   the offer would retract the frame after it was made. */
+.handoff {
+  height: 118px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  pointer-events: none;
+  /* --r is scroll progress across the last 170px of the poem, written on every scroll frame.
+     A FADE AND NOTHING ELSE: no movement, no transition. The label and the next poem's name sit
+     exactly where they will end up and simply become visible as the reader arrives. Sliding them
+     into place was still an entrance animation, which is the thing that was wrong with it. */
+  opacity: var(--r, 0);
+  will-change: opacity;
+}
+/* The one case with no scroll to ride (poem shorter than the viewport) is also the only one that
+   gets a fade, because there is nothing else to carry it. */
+.handoff.timed {
+  transition:
+    opacity 0.32s ease,
+    transform 0.32s ease;
+}
+.handoff.ready .ho-chev {
+  pointer-events: auto;
+}
+.ho-chev {
+  width: 44px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--gold);
+  animation: hoBob 1.9s ease-in-out infinite;
+}
+@keyframes hoBob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+.ho-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(236, 231, 221, 0.55);
+}
+/* #707's property, kept: you see WHICH poem is next and HOW LONG it is before committing. */
+.ho-next {
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: rgba(197, 160, 89, 0.62);
+}
+
+/* Departure and arrival. Transform + opacity only, one layer each, so the handoff stays on the
+   compositor. Arrival ends at translate 0 with scrollTop already 0 — the lock to top. */
+.poem-col.departing {
+  animation: hoOut 0.26s cubic-bezier(0.4, 0, 0.9, 0.4) forwards;
+}
+@keyframes hoOut {
+  to {
+    opacity: 0;
+    transform: translateY(-26px);
+  }
+}
+.poem-col.arriving {
+  animation: hoIn 0.38s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes hoIn {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+}
+
+.threshold .skip {
+  margin-top: 12px;
+  display: inline-block;
+  padding: 7px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(197, 160, 89, 0.28);
+  color: var(--gold);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  background: transparent;
+}
+
+/* ── N4 · The seal ─────────────────────────────────────────────────────────── */
+/* A press-and-hold target that exists ONLY at the end of the poem, where the reader has arrived
+   deliberately and where B's dimmed-ahead verses have already told them the end was coming. */
+.seal-wrap {
+  margin: 26px 0 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+/* 76px, not 92px. Comfortably above the 44px touch minimum, and small enough that a 4-line
+   bilingual poem (four TALL rows — the baseline capacity #707 measured) doesn't have to scroll
+   far to reach it. */
+.seal {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 1px solid rgba(197, 160, 89, 0.34);
+  background: radial-gradient(circle at 50% 45%, rgba(197, 160, 89, 0.11), transparent 68%);
+  display: grid;
+  place-items: center;
+  touch-action: none;
+}
+/* A press-and-hold control on iOS is exactly the gesture that raises the selection callout, so
+   the quill was getting picked up as a selectable object mid-summon. `user-select` alone is not
+   enough on Safari: it needs the -webkit- prefix AND -webkit-touch-callout, and it has to reach
+   the SVG rather than just the wrapper. The pointer targets are the .seal box itself — the
+   drawing inside it is decoration, so it takes no pointer events at all. */
+.seal-wrap,
+.seal-wrap * {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.q-stage,
+.q-stage *,
+.seal .ring {
+  pointer-events: none;
+}
+.q-pen {
+  -webkit-user-drag: none;
+}
+/* ── the quill ─────────────────────────────────────────────────────────────────
+   Everything here is driven by --p (0→1) through the hold and is pure transform, on three small
+   elements. The quill tilts from upright into a writing angle and travels left to right; a gold
+   line grows behind it; ink gathers at the nib. Release early and the whole stroke un-draws,
+   because --p decays rather than snapping — an abandoned summon should look like a decision. */
+.q-stage {
+  position: relative;
+  width: 46px;
+  height: 40px;
+}
+.q-pen {
+  position: absolute;
+  left: 3px;
+  top: 1px;
+  width: 30px;
+  height: 30px;
+  overflow: visible;
+  transform-origin: 22% 88%; /* the nib — the quill pivots on the point that touches the page */
+  transform: translate(calc(var(--p, 0) * 13px), calc(var(--p, 0) * 2px))
+    rotate(calc(-3deg + var(--p, 0) * -15deg));
+  will-change: transform;
+}
+.q-vane {
+  fill: rgba(197, 160, 89, 0.22);
+  stroke: var(--gold);
+  stroke-width: 1.3;
+  stroke-linejoin: round;
+}
+.q-shaft,
+.q-nib {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.3;
+  stroke-linecap: round;
+}
+.q-nib {
+  stroke-width: 1.8;
+}
+.seal.charging .q-vane {
+  fill: rgba(212, 180, 99, calc(0.22 + var(--p, 0) * 0.4));
+}
+/* The stroke the quill is laying down. scaleX from the left, so it grows out from under the nib. */
+.q-trail {
+  position: absolute;
+  left: 9px;
+  bottom: 4px;
+  width: 17px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(212, 180, 99, 0.15), var(--gold-bright));
+  transform: scaleX(var(--p, 0));
+  transform-origin: left center;
+  will-change: transform;
+}
+/* Ink gathering at the nib. */
+.q-ink {
+  position: absolute;
+  left: 7px;
+  bottom: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px rgba(212, 180, 99, 0.9);
+  opacity: calc(var(--p, 0) * 0.95);
+  transform: translate(calc(var(--p, 0) * 13px), 0) scale(calc(0.3 + var(--p, 0) * 0.7));
+  will-change: transform, opacity;
+}
+/* Commit: the quill lifts off the page. */
+.seal.fired .q-pen {
+  animation: qLift 0.36s cubic-bezier(0.3, 0, 0.4, 1) forwards;
+}
+@keyframes qLift {
+  to {
+    transform: translate(15px, -13px) rotate(-30deg);
+    opacity: 0;
+  }
+}
+.seal.fired .q-trail,
+.seal.fired .q-ink {
+  animation: qFade 0.3s ease forwards;
+}
+@keyframes qFade {
+  to {
+    opacity: 0;
+  }
+}
+/* Charge ring — conic fill driven by --p (0→1) while held. */
+.seal .ring {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: conic-gradient(var(--gold-bright) calc(var(--p, 0) * 360deg), transparent 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  pointer-events: none;
+}
+.seal-caption {
+  font-size: 0.68rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: rgba(236, 231, 221, 0.58);
+  text-align: center;
+  max-width: 240px;
+  line-height: 1.6;
+}
+/* ── the summon ────────────────────────────────────────────────────────────────
+   Four layers over the reading surface. All of them animate transform/opacity only and none of
+   them contains text, so each is a single composited layer that never triggers layout or paint
+   on the poem itself. --p (0→1) is written once per frame onto .summon during the hold; it is
+   read by exactly two children, which bounds the per-frame style invalidation at four small
+   childless elements rather than the poem's ~22 verse rows. */
+.summon {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* Below the reading surface (.stage is z-index 2): the bloom back-lights the quill instead of
+   washing over it, and the vignette darkens the ground the poem sits on. */
+.summon-bg {
+  z-index: 1;
+}
+/* Above everything, including the chrome: a burst, a sweep and motes are events, not scenery. */
+.summon-fx {
+  z-index: 8;
+}
+.s-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at var(--sx, 50%) var(--sy, 62%),
+    transparent 8%,
+    rgba(3, 3, 7, 0.86) 76%
+  );
+  opacity: calc(var(--p, 0) * 0.92);
+  will-change: opacity;
+}
+.s-bloom,
+.s-burst {
+  position: absolute;
+  left: var(--sx, 50%);
+  top: var(--sy, 62%);
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border-radius: 50%;
+  will-change: transform, opacity;
+}
+/* Gold rising out of the seal and spreading into the page as the hold builds. */
+/* A halo, not a fill. The bloom is deliberately DIMMEST at its own centre, because the quill sits
+   there and the actor has to keep its contrast — an earlier version peaked at the middle and by
+   full charge the quill had disappeared into the light it was making. */
+.s-bloom {
+  background: radial-gradient(
+    circle,
+    rgba(212, 180, 99, 0.16) 0%,
+    rgba(212, 180, 99, 0.42) 30%,
+    rgba(197, 160, 89, 0.16) 52%,
+    transparent 72%
+  );
+  transform: scale(calc(0.16 + var(--p, 0) * 1.45));
+  opacity: calc(var(--p, 0) * 0.72);
+}
+/* The commit: a ring leaving the seal. */
+.s-burst {
+  opacity: 0;
+  background: radial-gradient(
+    circle,
+    transparent 48%,
+    rgba(212, 180, 99, 0.8) 60%,
+    rgba(212, 180, 99, 0.12) 70%,
+    transparent 78%
+  );
+  transform: scale(0.2);
+}
+.s-burst.go {
+  animation: sBurst 0.66s cubic-bezier(0.14, 0.75, 0.3, 1) forwards;
+}
+@keyframes sBurst {
+  0% {
+    opacity: 0.95;
+    transform: scale(0.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(4.8);
+  }
+}
+/* A band of light travelling down the arriving poem — the sparkler's "lit in sequence" idea at
+   poem scale, as ONE translating element rather than an animation on every verse. */
+.s-sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 44%;
+  opacity: 0;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(212, 180, 99, 0.14) 46%,
+    rgba(212, 180, 99, 0.3) 56%,
+    transparent
+  );
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+}
+.s-sweep.go {
+  animation: sSweep 0.8s cubic-bezier(0.3, 0.6, 0.4, 1) forwards;
+}
+@keyframes sSweep {
+  0% {
+    opacity: 0;
+    transform: translateY(-56%);
+  }
+  16% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(250%);
+  }
+}
+
+/* The held poem gives way. Started by a CLASS TOGGLE, not per-frame JS: one transition on one
+   element, so the 22 verse rows inside are carried by the compositor as a single layer. */
+#app.opt-n4 .poem-col,
+#app.opt-n5 .poem-col {
+  transform-origin: 50% 76%;
+  transition:
+    transform 760ms cubic-bezier(0.3, 0, 0.4, 1),
+    opacity 760ms ease;
+}
+#app.summoning .poem-col {
+  transform: scale(0.955);
+  opacity: 0.38;
+}
+.poem-col.dissolving {
+  animation: sOut 0.34s cubic-bezier(0.4, 0, 0.9, 0.4) forwards;
+}
+@keyframes sOut {
+  to {
+    opacity: 0;
+    transform: scale(0.92) translateY(-24px);
+  }
+}
+/* ── the arriving poem sparkles in ─────────────────────────────────────────────
+   The WHOLE column at once, and it leaves nothing behind. The rise is one animation on one
+   element, so the per-verse .ahead/.read dimming sits inside it untouched — the poem settles into
+   exactly the dimmed-ahead state every poem starts in, with nothing marked as read. That is what
+   keeps this an ENTRANCE rather than a reading, and keeps it out of the sparkler reveal's way. */
+.poem-col.sparkling {
+  animation: colIn 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+@keyframes colIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.s-motes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+/* 46 motes, each one composited transform + opacity, alive for under a second and then removed
+   from the DOM. Laid over the viewport rather than the column so a 22-verse poem and a 4-line
+   epigram catch the same amount of light. */
+.mote {
+  position: absolute;
+  width: var(--sz, 3px);
+  height: var(--sz, 3px);
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 6px rgba(212, 180, 99, 0.85);
+  opacity: 0;
+  animation: moteIn 0.92s ease-out both;
+  animation-delay: var(--dl, 0ms);
+  will-change: transform, opacity;
+}
+@keyframes moteIn {
+  0% {
+    opacity: 0;
+    transform: translateY(7px) scale(0.35);
+  }
+  32% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-15px) scale(0.4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s-sweep,
+  .s-burst,
+  .mote,
+  .poem-col.sparkling {
+    animation: none;
+  }
+  .s-bloom,
+  .s-vignette {
+    opacity: 0;
+  }
+}
+
+/* Sparks — reuses the app's sparkler vocabulary: light escaping the letter on release. */
+.spark {
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--gold-bright);
+  box-shadow: 0 0 6px var(--gold-bright);
+  pointer-events: none;
+}
+
+/* Fills as the reader over-scrolls past the end, so the commit to the next poem is visible
+   before it happens rather than after. */
+.pull-meter {
+  margin: 12px auto 0;
+  width: 84px;
+  height: 2px;
+  border-radius: 2px;
+  background: rgba(197, 160, 89, 0.16);
+  overflow: hidden;
+}
+.pull-meter i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--gold-bright);
+  transition: width 0.08s linear;
+}
+
+/* ── N5 · Composite escape control ─────────────────────────────────────────── */
+/* The "I don't want this poem" case, available mid-poem without owning an axis. */
+/* When the escape control is present it occupies the top-right corner, so the counter has to
+   move out of its way rather than sit underneath it. */
+#app:has(.escape) .topbar {
+  padding-right: 52px;
+}
+.escape {
+  position: absolute;
+  top: calc(var(--safe-t) + 6px);
+  right: 10px;
+  z-index: 9;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid rgba(197, 160, 89, 0.26);
+  background: rgba(10, 10, 15, 0.6);
+  color: var(--gold);
+  font-size: 0.85rem;
+  pointer-events: auto;
+}
+
+/* ── measurement overlay ───────────────────────────────────────────────────── */
+.readout {
+  position: absolute;
+  left: 8px;
+  bottom: calc(var(--safe-b) + 126px);
+  width: 178px;
+  white-space: pre;
+  z-index: 9;
+  font-family: ui-monospace, monospace;
+  font-size: 9px;
+  line-height: 1.55;
+  color: rgba(236, 231, 221, 0.5);
+  background: rgba(10, 10, 15, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 5px;
+  padding: 5px 7px;
+  pointer-events: none;
+  display: none;
+}
+#app.show-readout .readout {
+  display: block;
+}

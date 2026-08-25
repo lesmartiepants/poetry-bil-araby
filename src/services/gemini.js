@@ -179,15 +179,36 @@ export const discoverTextModels = async (addLog) => {
  * in ~2s. Minimizing thinking drops first-token latency to ~1s with no
  * meaningful quality loss for translation/analysis.
  *
- * Gemini 3.x uses `thinkingLevel` ('minimal' = lowest latency); 2.5 uses
- * `thinkingBudget` (0 disables). Older families don't support thinking and
- * 400 on the field, so they get nothing. Returns a spreadable fragment so the
- * caller merges it into an existing generationConfig.
+ * Gemini 3.x uses `thinkingLevel`; 2.5 uses `thinkingBudget` (0 disables).
+ * Older families don't support thinking and 400 on the field, so they get
+ * nothing. Returns a spreadable fragment so the caller merges it into an
+ * existing generationConfig.
+ *
+ * 'low' rather than 'minimal': gemini-3.7-flash 400s on minimal ("Thinking
+ * level MINIMAL is not supported for this model") and every request paid a
+ * rejected round trip. Measured on one poem, 2026-08-17: default emitted 1,329
+ * thinking tokens in 6.0s; 'low' emitted 0 in 2.2s, with the line contract and
+ * translation quality unchanged.
  */
 export const thinkingConfigFor = (model = '') => {
-  if (/gemini-3/.test(model)) return { thinkingConfig: { thinkingLevel: 'minimal' } };
+  if (/gemini-3/.test(model)) return { thinkingConfig: { thinkingLevel: 'low' } };
   if (/gemini-2\.5/.test(model)) return { thinkingConfig: { thinkingBudget: 0 } };
   return {};
+};
+
+/** Models observed to 400 on thinking config, so we stop sending it to them. */
+const THINKING_REJECTED = new Set();
+
+/** Remove thinking config from a serialised request body. */
+const stripThinkingConfig = (body) => {
+  try {
+    const parsed = JSON.parse(body);
+    if (parsed?.generationConfig) delete parsed.generationConfig.thinkingConfig;
+    delete parsed.thinkingConfig;
+    return JSON.stringify(parsed);
+  } catch {
+    return body;
+  }
 };
 
 /**
@@ -209,7 +230,10 @@ export const geminiTextFetch = async (endpoint, bodyOrBuilder, label, addLog) =>
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
     if (i > 0) log('Model Fallback', `Trying fallback: ${model}`, 'warning');
-    const body = typeof bodyOrBuilder === 'function' ? bodyOrBuilder(model) : bodyOrBuilder;
+    const built = typeof bodyOrBuilder === 'function' ? bodyOrBuilder(model) : bodyOrBuilder;
+    // Once a model has told us it won't take thinking config, stop paying a
+    // rejected round trip for it on every subsequent request this session.
+    const body = THINKING_REJECTED.has(model) ? stripThinkingConfig(built) : built;
     const post = (b) =>
       fetch(`${apiUrl}/api/ai/${model}/${endpoint}`, {
         method: 'POST',
@@ -231,16 +255,9 @@ export const geminiTextFetch = async (endpoint, bodyOrBuilder, label, addLog) =>
         .catch(() => ({}));
       const msg = peek.error?.message || '';
       if (/thinking/i.test(msg) && /\bthinkingConfig\b/.test(body)) {
-        const stripped = JSON.stringify(
-          (() => {
-            const parsed = JSON.parse(body);
-            if (parsed?.generationConfig) delete parsed.generationConfig.thinkingConfig;
-            delete parsed.thinkingConfig;
-            return parsed;
-          })()
-        );
+        THINKING_REJECTED.add(model);
         log('Model Fallback', `${model} rejected thinking config, retrying without it`, 'warning');
-        res = await post(stripped);
+        res = await post(stripThinkingConfig(body));
       }
     }
 

@@ -66,6 +66,9 @@ const PoemColumn = forwardRef(function PoemColumn(
   const translitColor = darkMode ? 'rgba(212,180,99,0.7)' : 'rgba(139,100,48,0.7)';
   const goldColor = darkMode ? '#c5a059' : '#8B6430';
   const mutedColor = darkMode ? 'rgba(236,231,221,0.42)' : 'rgba(28,25,23,0.45)';
+  // The English title sits between a 28px Arabic title and the byline; at mutedColor's 0.42 alpha
+  // it read as disabled furniture rather than as the poem's name.
+  const enTitleColor = darkMode ? 'rgba(255,253,247,0.88)' : 'rgba(28,25,23,0.8)';
 
   const translits = useMemo(
     () => (showTransliteration ? lines.map((l) => transliterate(l.ar)) : []),
@@ -275,7 +278,7 @@ const PoemColumn = forwardRef(function PoemColumn(
               {poem?.titleArabic || poem?.title}
             </div>
             {poem?.title && poem.title !== poem?.titleArabic && (
-              <div className="pc-ttl-en" dir="ltr" style={{ color: mutedColor }}>
+              <div className="pc-ttl-en" dir="ltr" style={{ color: enTitleColor }}>
                 {poem.title}
               </div>
             )}
@@ -328,11 +331,10 @@ const PoemColumn = forwardRef(function PoemColumn(
                     dir="ltr"
                     className="pc-en font-brand-en"
                     style={{
-                      // The teleprompter's clamp floored at 19.2px, which is 33% above the 0.9rem
-                      // the N4 design used and made every unit ~25% taller than the approved shots.
-                      // Kept as a clamp rather than a flat rem so the text-size control still moves
-                      // it, but floored at the design's size instead of well above it.
-                      fontSize: `calc(clamp(0.9rem, 3.7vw, 1.25rem) * ${textScale})`,
+                      // Raised from the N4 design's 0.9rem floor at the owner's request: 14.4px
+                      // italic read small against the 24.3px Arabic it translates. Still a clamp
+                      // so the text-size control keeps working, but floored at 1.05rem.
+                      fontSize: `calc(clamp(1.05rem, 4.2vw, 1.45rem) * ${textScale})`,
                       color: enColor,
                     }}
                   >

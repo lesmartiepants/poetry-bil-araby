@@ -1813,7 +1813,8 @@ export default function DiwanApp() {
         />
       )}
 
-      {/* Corner wordmark — top-right, fades out on scroll and when idle */}
+      {/* Corner wordmark — top-left (the top-right corner belongs to the poem's own title),
+          fades out on scroll and when idle */}
       <motion.header
         animate={{
           opacity: effectivelyIdle ? 0 : BRAND_HEADER.containerOpacity * (1 - headerOpacity),
@@ -1827,7 +1828,7 @@ export default function DiwanApp() {
         style={{
           position: 'fixed',
           top: 0,
-          right: 0,
+          left: 0,
           zIndex: 40,
           pointerEvents: 'none',
           padding: '0.6rem 0.8rem',

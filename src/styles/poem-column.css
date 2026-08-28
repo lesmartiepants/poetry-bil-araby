@@ -28,7 +28,10 @@
      JS and fed into the summon charge, so the browser must not consume it first. */
   overscroll-behavior-y: contain;
   scrollbar-width: none;
-  padding-top: calc(env(safe-area-inset-top, 0px) + 52px);
+  /* 24px: the brand wordmark moved to the top-left, so the poem's title owns the top-right and
+     no longer needs to clear a same-corner overlay. Still below the safe-area inset on
+     notched phones. */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 24px);
   padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 150px);
 }
 

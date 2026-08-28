@@ -282,7 +282,7 @@ const PoemColumn = forwardRef(function PoemColumn(
                 {poem.title}
               </div>
             )}
-            <div className="pc-byline" dir="ltr" style={{ color: 'rgba(197,160,89,0.66)' }}>
+            <div className="pc-byline" dir="ltr" style={{ color: 'rgba(212,180,99,0.95)' }}>
               <span lang="ar" style={{ fontFamily: "'Reem Kufi', sans-serif" }}>
                 {poem?.poetArabic || poem?.poet}
               </span>

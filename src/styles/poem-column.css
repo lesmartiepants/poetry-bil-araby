@@ -105,11 +105,17 @@
   direction: rtl;
 }
 
+/* Both Latin rows use the same conditional alignment (see .pc-en): a single-line box hugs its
+   content and pins right, so nothing moves; a wrapped box spans the column and its lines share
+   a left edge, so the eye finds every line's start. */
 .pc-ttl-en {
   font-size: 0.82rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  margin: 0 0 4px;
+  text-align: left;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 0 4px auto;
 }
 
 .pc-byline {
@@ -166,14 +172,20 @@
 }
 
 /* English wraps instead of shrinking. Shrinking Latin text to avoid a wrap buys nothing: there are
-   no ligatures to protect and a second line is cheaper than an unreadable first one. */
+   no ligatures to protect and a second line is cheaper than an unreadable first one.
+   Conditional alignment, per owner feedback: flush right cost wrapped lines a ragged LEFT edge,
+   which is exactly the edge a Latin reader's eye returns to. `width: fit-content` +
+   `margin-left: auto` decides per verse: one line hugs its content and pins right (the shared
+   right edge survives), multiple lines span the column and share the first line's left edge. */
 .pc-en {
-  text-align: right;
+  text-align: left;
   direction: ltr;
   white-space: normal;
   font-style: italic;
   line-height: 1.3;
-  margin: 4px 0 0;
+  width: fit-content;
+  max-width: 100%;
+  margin: 4px 0 0 auto;
   transition: opacity 0.5s ease;
 }
 

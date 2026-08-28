@@ -283,7 +283,10 @@ const PoemColumn = forwardRef(function PoemColumn(
               </div>
             )}
             <div className="pc-byline" dir="ltr" style={{ color: 'rgba(212,180,99,0.95)' }}>
-              <span lang="ar" style={{ fontFamily: "'Reem Kufi', sans-serif" }}>
+              <span
+                lang="ar"
+                style={{ fontFamily: "'Reem Kufi', sans-serif", fontSize: '1.0625rem' }}
+              >
                 {poem?.poetArabic || poem?.poet}
               </span>
               {poem?.poet && poem?.poetArabic && poem.poet !== poem.poetArabic && (

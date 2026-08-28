@@ -167,7 +167,10 @@ const PoemColumn = forwardRef(function PoemColumn(
           // Monotonic: a verse that has been read never returns to ahead.
           if (e.isIntersecting) e.target.setAttribute('data-read', 'true');
         }),
-      { root: sc, rootMargin: '0px 0px -42% 0px' }
+      // Read = clear of the action buttons. Everything fully on screen above the bottom bar is
+      // legible from landing; only verses that overlap the buttons stay dimmed (the scrim fades
+      // them the rest of the way). The 132px matches .pc-scrim's height so the two edges agree.
+      { root: sc, rootMargin: '0px 0px -132px 0px' }
     );
     unitRefs.current.forEach((el) => el && io.observe(el));
     return () => io.disconnect();

@@ -662,6 +662,7 @@
         "src/components/feed/PoemReader.jsx",
         "src/components/feed/PoemColumn.jsx",
         "src/components/feed/PoemSeal.jsx",
+        "src/components/feed/ScrollHairline.jsx",
         "src/components/feed/RevealText.jsx",
         "src/components/feed/ReaderActions.jsx",
         "src/components/feed/InlineInsights.jsx"
@@ -673,7 +674,7 @@
       },
       "deviceOnly": false,
       "coverage": "mocked",
-      "gap": "#714 N4 port. e2e drives the column with mocked poems. Not behaviorally asserted: the 760ms hold and its cancel decay, over-pull charging, TTS follow inside the scroller, and the reduced-motion path where the dissolve animation never fires. iOS long-press suppression and the 90-mote arrival cost are device-only."
+      "gap": "#714 N4 port. e2e drives the column with mocked poems: full-column render, monotonic reveal, inactive columns staying unread, the quill hold summoning (with reduced-motion completion) and early release no-oping, and scrubber absence. Not behaviorally asserted: sustained bottom-pull charging, TTS follow inside the scroller, and the hairline's insight branch. iOS long-press suppression and the 90-mote arrival cost are device-only."
     },
     {
       "id": "guided-tour",

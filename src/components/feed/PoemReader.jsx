@@ -3,6 +3,7 @@ import PoemColumn from './PoemColumn.jsx';
 import PoemSeal, { useSummon } from './PoemSeal.jsx';
 import InlineInsights from './InlineInsights.jsx';
 import ReaderActions from './ReaderActions.jsx';
+import ScrollHairline from './ScrollHairline.jsx';
 import '../../styles/reader-actions.css';
 import { useAudioStore } from '../../stores/audioStore';
 
@@ -73,7 +74,6 @@ const PoemReader = memo(function PoemReader({
 
   const columnRef = useRef(null);
   const insightWrapRef = useRef(null);
-  const revealRef = useRef(null);
   // Set when the reader taps "Back to Poem" so the column returns to the top once it is visible.
   const cameFromInsightsRef = useRef(false);
 
@@ -137,6 +137,14 @@ const PoemReader = memo(function PoemReader({
     [summon, isActive]
   );
 
+  // The progress hairline reads whichever scroller is live (D9): the poem column while reading,
+  // the inline insight's viewport while a section is open. Identity changes with endStage and
+  // activation so ScrollHairline re-attaches at the right moments.
+  const getHairlineScroller = useCallback(() => {
+    if (endStage === 'idle') return columnRef.current?.getScroller?.() || null;
+    return insightWrapRef.current?.querySelector('[data-insight-scroll]') || null;
+  }, [endStage, isActive]);
+
   return (
     <div className="relative w-full h-full select-none" data-testid="poem-reader">
       {/* Body — the scrolling poem, or the inline insight at the end. */}
@@ -198,7 +206,6 @@ const PoemReader = memo(function PoemReader({
               insightParts={insightParts}
               interpretation={interpretation}
               animate={!seenStages[endStage]}
-              revealRef={revealRef}
               onProgress={onInsightProgress}
             />
           </div>
@@ -234,6 +241,12 @@ const PoemReader = memo(function PoemReader({
           </div>
         )}
       </div>
+
+      {/* Progress hairline (D7/D9) — 2px right-edge line over the live scroller. Only on the
+          active column so the stacked-but-hidden readers don't all hold listeners. */}
+      {isActive && (
+        <ScrollHairline getScroller={getHairlineScroller} source={`${poemId}:${endStage}`} />
+      )}
     </div>
   );
 });

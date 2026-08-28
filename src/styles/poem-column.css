@@ -46,6 +46,27 @@
   z-index: 3;
 }
 
+/* ── progress hairline (D7/D9) ──
+   2px line on the right edge filling top-down with scroll progress. Lives at the reader root
+   (PoemReader), above the scrim and below the action buttons, and reads whichever scroller is
+   live: the poem column while reading, the inline insight's viewport while a section is open.
+   Non-interactive; invisible until the tracked content overflows. */
+.pc-hairline {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 2px;
+  pointer-events: none;
+  z-index: 4;
+}
+.pc-hairline-fill {
+  height: 100%;
+  transform-origin: top;
+  transform: scaleY(0);
+  background: linear-gradient(to bottom, rgba(197, 160, 89, 0.25), var(--gold-bright, #d4b463));
+}
+
 .pc-scroller::-webkit-scrollbar {
   display: none;
 }

@@ -58,6 +58,14 @@ const PoemFeed = forwardRef(function PoemFeed(
     curRef.current = currentIndex;
   }, [currentIndex]);
 
+  // A summon that asked for a poem the feed doesn't have yet (a single short poem on a tall
+  // screen: nothing scrolled, so nothing stocked ahead). goCard's clamp would silently no-op it,
+  // leaving the quill dead, so the request is parked and replayed once the batch lands. Stocking
+  // at mount was tried and rejected: loadMorePoems fires without a poet, and the extra fetch at
+  // boot broke the poet-filtering assertions. goCard re-asks whenever the reader lands within 2
+  // of the end, which covers the normal path.
+  const pendingIdxRef = useRef(null);
+
   // The single funnel for a poem change. Everything that must happen when the poem changes lives
   // in onSlideChange (audio stop and abort, TTS clock reset, .tts-active cleanup, insight
   // dismissal, route change, OG tags), so nothing may set the index around it.
@@ -74,7 +82,30 @@ const PoemFeed = forwardRef(function PoemFeed(
     [poems.length, onSlideChange, onLoadMore]
   );
 
-  useImperativeHandle(ref, () => ({ scrollTo: (idx) => goCard(idx) }), [goCard]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      scrollTo: (idx) => {
+        if (idx < poems.length) {
+          goCard(idx);
+          return;
+        }
+        // Out of range: request the batch and park the destination. If the batch never grows
+        // past it, the parked index simply waits — nothing clamps it to a fake no-op slide.
+        onLoadMore?.();
+        pendingIdxRef.current = idx;
+      },
+    }),
+    [goCard, poems.length, onLoadMore]
+  );
+
+  useEffect(() => {
+    const wanted = pendingIdxRef.current;
+    if (wanted != null && poems.length > wanted) {
+      pendingIdxRef.current = null;
+      goCard(wanted);
+    }
+  }, [poems.length, goCard]);
 
   return (
     <div className="w-full relative" data-testid="poem-feed">

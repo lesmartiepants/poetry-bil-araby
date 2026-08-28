@@ -654,26 +654,26 @@
     },
     {
       "id": "reader-feed",
-      "name": "Sparkler reveal reader (vertical feed)",
+      "name": "Flow reader (scrolling column + quill summon)",
       "tier": "critical",
-      "userFacing": "The main reading surface: vertical feed, word-by-word sparkler reveal, progress scrubber, inline end-of-poem insight, reader action bar.",
+      "userFacing": "The main reading surface: the whole poem in one scrolling column with verses ahead dimmed until read, a quill you hold to summon the next poem, inline end-of-poem insight, and the reader action bar.",
       "entrypoints": [
         "src/components/feed/PoemFeed.jsx",
         "src/components/feed/PoemReader.jsx",
+        "src/components/feed/PoemColumn.jsx",
+        "src/components/feed/PoemSeal.jsx",
         "src/components/feed/RevealText.jsx",
-        "src/components/feed/SparklerStage.jsx",
-        "src/components/feed/ProgressScrubber.jsx",
         "src/components/feed/ReaderActions.jsx",
         "src/components/feed/InlineInsights.jsx"
       ],
       "endpoints": [],
       "tests": {
         "unit": ["src/test/reader-work-suppression.test.jsx"],
-        "e2e": ["e2e/sparkler-reader.spec.js"]
+        "e2e": ["e2e/flow-reader.spec.js"]
       },
       "deviceOnly": false,
       "coverage": "mocked",
-      "gap": "#580 redesign. e2e drives the feed with mocked poems; word-reveal timing + scrubber drag + reduced-motion branches not behaviorally asserted. Unit test covers work-suppression on full-screen routes only."
+      "gap": "#714 N4 port. e2e drives the column with mocked poems. Not behaviorally asserted: the 760ms hold and its cancel decay, over-pull charging, TTS follow inside the scroller, and the reduced-motion path where the dissolve animation never fires. iOS long-press suppression and the 90-mote arrival cost are device-only."
     },
     {
       "id": "guided-tour",

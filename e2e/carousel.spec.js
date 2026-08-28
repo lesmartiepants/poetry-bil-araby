@@ -156,10 +156,10 @@ async function discoverAndWaitForCarousel(page) {
   await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
 
   // Wait for the reader to populate. The vertical feed has no carousel dots (the horizontal
-  // carousel was removed), so wait for the sparkler stage OR the legacy dots; tests that
+  // carousel was removed), so wait for the active poem column OR the legacy dots; tests that
   // require >=2 dots skip themselves when none are present.
   await page
-    .locator('[data-testid="sparkler-stage"], button[aria-label^="Go to poem"]')
+    .locator('[data-testid="poem-column"][data-active="true"], button[aria-label^="Go to poem"]')
     .first()
     .waitFor({ state: 'visible', timeout: 8000 });
   return page.locator('button[aria-label^="Go to poem"]');
@@ -177,7 +177,7 @@ test.describe('Poem Carousel', () => {
   });
 
   // #1 — Carousel dots (LEGACY horizontal carousel only). The vertical feed has no dots;
-  // feed coverage lives in e2e/sparkler-reader.spec.js.
+  // feed coverage lives in e2e/flow-reader.spec.js.
   test.skip('carousel dots appear after Discover', async ({ page }) => {
     const dots = await discoverAndWaitForCarousel(page);
     const count = await dots.count();
@@ -371,7 +371,7 @@ test.describe('Poem Carousel', () => {
 
   // #11 / #12 — Carousel slide navigation + swipe-through: REMOVED. The horizontal carousel (dot
   // navigation between same-poet poems) was replaced by the vertical Embla feed; feed navigation
-  // is covered in e2e/sparkler-reader.spec.js, so these carousel-only tests were deleted.
+  // is covered in e2e/flow-reader.spec.js, so these carousel-only tests were deleted.
 
   // #13 — Copy action: REMOVED. Copy-to-clipboard is retired (FEATURES.copy=false).
 

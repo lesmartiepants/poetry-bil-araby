@@ -178,7 +178,7 @@ test.describe('Translation Cache — Instant Load', () => {
   });
 
   // SKIP: asserts the seed poem's Arabic title is visible within 3s before the API responds. In
-  // the vertical-feed reader that title fades in via the intro/sparkler animation, so a fixed 3s
+  // the vertical-feed reader that title fades in via the arrival animation, so a fixed 3s
   // visibility window is unreliable (also fails on main). Needs a reveal-aware rewrite.
   test.skip('poem text is visible before any API response arrives', async ({ page }) => {
     // Set up routes that delay responses significantly

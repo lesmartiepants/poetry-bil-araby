@@ -38,14 +38,14 @@ export default {
   },
 };
 
-export const SparklerDark = {
-  name: 'Sparkler — Dark',
+export const FlowDark = {
+  name: 'Flow reader — Dark',
   args: { darkMode: true },
   parameters: { backgrounds: { default: 'dark' } },
 };
 
-export const SparklerLight = {
-  name: 'Sparkler — Light',
+export const FlowLight = {
+  name: 'Flow reader — Light',
   args: { darkMode: false },
   parameters: { backgrounds: { default: 'light' } },
 };

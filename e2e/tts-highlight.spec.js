@@ -5,7 +5,7 @@ import { test, expect } from '@playwright/test';
  *
  * The redesign moved things around: the highlight "Read Along" style picker lives in the
  * TextSettingsPill popover (aria "Text and background settings"); the active tts-style class is
- * applied to the reader's sparkler stage ([data-testid="sparkler-stage"]) rather than a separate
+ * applied to the reader's poem column ([data-testid="poem-column"]) rather than a separate
  * poem-container; the standalone PlayControlsStrip is no longer rendered (it returns null when
  * highlightStyle==='none' and isn't mounted in the app); and playback is driven by the reader's
  * Listen action (aria "Start recitation") which morphs into a transport (Play/Pause). Audio is
@@ -98,9 +98,9 @@ async function setupMocks(page) {
 async function loadApp(page) {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
-  // Reader boots directly (no splash). Wait for the sparkler stage.
+  // Reader boots directly (no splash). Wait for the active poem column.
   await page
-    .locator('[data-testid="sparkler-stage"]')
+    .locator('[data-testid="poem-column"][data-active="true"]')
     .first()
     .waitFor({ state: 'visible', timeout: 10000 });
 }
@@ -119,7 +119,9 @@ async function selectHighlightStyle(page, style) {
   await btn.click();
 }
 
-const activeStage = (page) => page.locator('[data-testid="sparkler-stage"]').first();
+// The feed keeps every poem mounted, so the selector must scope to the active column.
+const activeStage = (page) =>
+  page.locator('[data-testid="poem-column"][data-active="true"]').first();
 
 test.describe('TTS Word-Highlight Reader', () => {
   test.beforeEach(async ({ page }) => {
@@ -144,8 +146,8 @@ test.describe('TTS Word-Highlight Reader', () => {
     await page.keyboard.press('Escape');
   });
 
-  // Flow 2: The active sparkler stage gets the tts-style-glow class after selecting Glow.
-  test('sparkler stage has tts-style-glow class when Glow is selected', async ({ page }) => {
+  // Flow 2: The active poem column gets the tts-style-glow class after selecting Glow.
+  test('poem column has tts-style-glow class when Glow is selected', async ({ page }) => {
     await openTextSettings(page);
     await selectHighlightStyle(page, 'glow');
     await page.keyboard.press('Escape');

@@ -609,10 +609,6 @@ const DiscoveryDrawInspector = () => {
         role="dialog"
         aria-label="Discovery draw inspector"
         aria-hidden={!open}
-        // PoemFeed binds its pointer listeners on `window`, so without this a drag
-        // inside the panel swipes the poem out from under you while you are reading
-        // why that poem was picked. See the matching guard in PoemFeed.jsx.
-        data-owns-gesture=""
         className={`fixed z-[200] left-2 right-2 md:left-auto md:w-[560px] flex flex-col rounded-2xl border ${theme.border} ${surface} backdrop-blur-xl transition-all duration-200 ${
           open ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
         }`}

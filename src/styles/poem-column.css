@@ -1,0 +1,238 @@
+/* poem-column.css — the flow reading surface.
+ *
+ * Replaces the fixed 4-row teleprompter window (SparklerStage) with a scroller showing the whole
+ * poem. Ported from design-review/poem-navigation/styles.css (PR #714's N4 option).
+ *
+ * Two responsibilities here that are easy to break:
+ *   1. The Arabic line never wraps. Wrapping breaks Amiri's naskh ligatures, so an overlong line
+ *      shrinks via --fit instead. JS measures; CSS only consumes the ratio.
+ *   2. Verses ahead of the read position are DIMMED, not absent. That is what puts the shape of
+ *      the whole poem on screen from the first frame: a 4-line epigram and a 22-line qasida look
+ *      different before you have committed to either.
+ */
+
+/* Fills the body box PoemReader gives it. The scroller inside is absolutely positioned against
+   this, so the column's height is the container's height and not its own content's. */
+.pc-root {
+  position: absolute;
+  inset: 0;
+}
+
+.pc-scroller {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  /* Do not chain to the page or trigger pull-to-refresh. The over-pull at the bottom is read by
+     JS and fed into the summon charge, so the browser must not consume it first. */
+  overscroll-behavior-y: contain;
+  scrollbar-width: none;
+  padding-top: calc(env(safe-area-inset-top, 0px) + 52px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 150px);
+}
+
+/* Verses passing behind the action buttons are hidden by a scrim the reader draws over this
+   scroller, NOT by a mask on the scroller itself. A mask fades the scroller's own last 120px,
+   which is exactly where the quill comes to rest at the end of a short poem: the caption that
+   teaches the hold gesture would fade out precisely when the reader arrives to use it. */
+.pc-scrim {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 132px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.pc-scroller::-webkit-scrollbar {
+  display: none;
+}
+
+/* No scrubber lane term. Deleting that 56px rail is the measured win this port was built on: the
+   poem box goes 305px to 361px at 393px wide, and English lines that wrap drop from 20/44 to 8/44. */
+.pc-col {
+  width: calc(100% - 32px);
+  margin-inline: 16px;
+  max-width: 760px;
+  transform-origin: 50% 76%;
+  transition:
+    transform 760ms cubic-bezier(0.3, 0, 0.4, 1),
+    opacity 760ms ease;
+}
+
+/* One right edge for the whole column.
+   The Arabic is already flush right by being RTL. This pulls the Latin-script elements onto the
+   same axis so the column reads as one object rather than an Arabic block with LTR furniture
+   floating beside it.
+
+   `direction` is untouched. The English and transliteration are still LTR text; only their box
+   alignment moves. That distinction is the whole trade: it buys a unified right edge and costs
+   the Latin rows a ragged LEFT edge, which is the edge a Latin reader's eye returns to. */
+.pc-head {
+  margin: 0 0 22px;
+  text-align: right;
+}
+
+.pc-ttl-ar {
+  font-family: 'Reem Kufi', sans-serif;
+  margin: 0 0 2px;
+  direction: rtl;
+}
+
+.pc-ttl-en {
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin: 0 0 4px;
+}
+
+.pc-byline {
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+.pc-verses {
+  direction: rtl;
+}
+
+.pc-unit {
+  margin-bottom: 20px;
+  transition:
+    opacity 0.5s ease,
+    filter 0.5s ease;
+}
+
+.pc-unit[data-read='false'] {
+  opacity: 0.24;
+  filter: blur(0.3px);
+}
+
+.pc-unit[data-read='true'] {
+  opacity: 1;
+  filter: none;
+}
+
+/* Arabic. Same clamp the teleprompter used, deliberately unchanged (decision D11): at 393px
+   5.7vw is 22.4px, below the 1.52rem floor, so the Arabic already sits at its floor. The width
+   reclaimed from the scrub lane buys MORE VERSES on screen, not bigger type. */
+.pc-ar {
+  line-height: 1.85;
+  margin: 0;
+  white-space: nowrap;
+}
+
+/* Transliteration. Shrinks like the Arabic (nowrap + --fit) because it tracks the Arabic line.
+   ALIGNMENT IS ISOLATED HERE ON PURPOSE.
+   This row is the untested half of the flush-right decision: the prototype that justified it had
+   no transliteration row at all. It is a pronunciation crib read left to right, so its start is
+   the edge that matters, and flush-right gives every line a different start AND a different font
+   size once --fit kicks in. If reading aloud stumbles at line starts, change `right` to `left`
+   here and nowhere else. */
+.pc-translit {
+  text-align: right;
+  white-space: nowrap;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  margin: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* English wraps instead of shrinking. Shrinking Latin text to avoid a wrap buys nothing: there are
+   no ligatures to protect and a second line is cheaper than an unreadable first one. */
+.pc-en {
+  text-align: right;
+  direction: ltr;
+  white-space: normal;
+  font-style: italic;
+  line-height: 1.3;
+  margin: 4px 0 0;
+  transition: opacity 0.5s ease;
+}
+
+/* The unit dims as ONE block: Arabic, transliteration and translation together. The teleprompter
+   hid unread lines outright (opacity 0), which is why they needed separate rules. Hiding them here
+   would defeat the point of dimming rather than hiding, which is to show the poem's whole shape
+   before you commit to it, and it would leave a ragged gap where each translation belongs. */
+
+.pc-end {
+  height: 8px;
+}
+
+/* The feed keeps every poem mounted and hides the inactive ones. `visibility` inherits, so one
+   stray `visibility: visible` on a descendant would leak a hidden poem back onto the screen.
+   This pins it shut regardless of what any child declares. */
+.pc-root[data-active='false'],
+.pc-root[data-active='false'] * {
+  visibility: hidden !important;
+}
+
+/* Arrival. The whole column moves as ONE element. It must not stagger per verse: sequencing verse
+   by verse is the reading reveal's sentence, and if the arrival says it too the reveal stops
+   meaning anything. */
+.pc-col.pc-arriving {
+  animation: pcColIn 0.9s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@keyframes pcColIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Recede while the summon charges. One CSS transition on the column, driven by the `summoning`
+   class an ancestor toggles. Never per-frame JS on the verse rows. */
+.summoning .pc-col {
+  transform: scale(0.955);
+  opacity: 0.38;
+}
+
+/* Dissolve on commit. Driven by a class the summon provider toggles on ITS OWN root, so the seal
+   never writes classes onto an element it does not own. Same reason `summoning` is a descendant
+   selector rather than something reached into the column. */
+.summoning-out .pc-col {
+  animation: pcOut 0.34s cubic-bezier(0.4, 0, 0.9, 0.4) forwards;
+}
+
+@keyframes pcOut {
+  to {
+    opacity: 0;
+    transform: scale(0.92) translateY(-24px);
+  }
+}
+
+/* Unrevealed verses used to be invisible (clip-path), and invisible text carries no contrast
+   requirement. Dimmed text does, and 0.24 fails it badly. A reader who asked for reduced motion
+   or more contrast is not asking for 24%-opacity body text, and the reveal is a flourish rather
+   than information, so nothing is lost by skipping it for them. */
+@media (prefers-reduced-motion: reduce) {
+  .pc-unit,
+  .pc-translit,
+  .pc-en,
+  .pc-col {
+    transition: none;
+  }
+
+  .pc-unit[data-read='false'] {
+    opacity: 1;
+    filter: none;
+  }
+
+  .pc-col.pc-arriving,
+  .summoning-out .pc-col {
+    animation: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .pc-unit[data-read='false'] {
+    opacity: 1;
+    filter: none;
+  }
+}

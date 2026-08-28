@@ -5,7 +5,6 @@
 .ra-stack {
   position: relative;
   width: 100%;
-  padding-bottom: 28px;
 }
 
 .reader-actions {
@@ -370,53 +369,6 @@
   }
 }
 
-/* ── "Read full poem" — subtle reveal affordance under the reading-mode row ──
-   Reveals the whole poem as static text (decoupled from Listen). Quiet by design: a low-emphasis
-   gold text button with a hairline underline, so it reads as secondary to Next Verse. */
-.ra-readfull-row {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  min-height: 22px;
-}
-.ra-readfull {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid rgba(197, 160, 89, 0.32);
-  border-radius: 0;
-  cursor: pointer;
-  font-family: 'Reem Kufi', system-ui, sans-serif;
-  font-size: clamp(0.62rem, 1.7vw, 0.7rem);
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  /* Dark mode: hard gold (matches --ra-gold-light); the light-mode block below swaps to dark ink. */
-  color: #d4b463;
-  opacity: 0.75;
-  padding: 3px 4px 4px;
-  white-space: nowrap;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-  transition:
-    opacity 0.18s cubic-bezier(0.25, 1, 0.5, 1),
-    color 0.18s cubic-bezier(0.25, 1, 0.5, 1),
-    border-color 0.18s cubic-bezier(0.25, 1, 0.5, 1);
-}
-.ra-readfull:hover {
-  opacity: 1;
-  color: #e8cc7a;
-  border-bottom-color: rgba(197, 160, 89, 0.6);
-}
-.ra-readfull:disabled {
-  cursor: default;
-  opacity: 0.4;
-}
-
 /* ── light-mode foreground pattern ──
    Gold text/icons read poorly on the pale light background, so use the dark ink (the same warm
    near-black as the bold molten label) for the Listen (secondary) button, the quieter primary
@@ -430,18 +382,3 @@
 .light .reader-actions .ra-disc-ghost {
   color: #1a1200;
 }
-
-/* Reveal buttons on the pale light background: the hard gold (#d4b463) fails contrast on cream, so
-   use the warm dark ink for the "Read full poem" affordance (mirrors the pattern above). The
-   underline is darkened to match. Dark mode is untouched. */
-.light .ra-readfull {
-  color: #1a1200;
-  opacity: 0.8;
-  border-bottom-color: rgba(26, 18, 0, 0.32);
-}
-.light .ra-readfull:hover {
-  color: #000;
-  opacity: 1;
-  border-bottom-color: rgba(26, 18, 0, 0.6);
-}
-

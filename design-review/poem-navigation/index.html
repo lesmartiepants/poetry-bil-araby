@@ -1,0 +1,802 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Poem navigation — working previews</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="topbar"><span class="opt-name" id="optName"></span><span class="opt-name" id="poemName"></span></div>
+      <div class="stage" id="stage"></div>
+      <!-- Flash layers, above everything: these are things that HAPPEN, so they carry over the
+           poem and the chrome alike. -->
+      <div class="summon summon-fx" id="summonFx" aria-hidden="true">
+        <div class="s-burst"></div>
+        <div class="s-sweep"></div>
+        <div class="s-motes"></div>
+      </div>
+      <!-- The atmosphere sits BEHIND the reading surface, so the gold reads as light coming from
+           behind the quill rather than a wash laid over it. The quill is the actor; it must not
+           disappear into its own effect. Neither overlay contains text, so both stay composited
+           and neither touches the poem's 22 verse rows. -->
+      <div class="summon summon-bg" id="summon" aria-hidden="true">
+        <div class="s-vignette"></div>
+        <div class="s-bloom"></div>
+      </div>
+      <div class="scrub"><i></i><b></b></div>
+      <div class="readout" id="readout"></div>
+      <div class="bottom" id="bottom"></div>
+    </div>
+
+    <script type="module">
+      import { loadPoems, renderPoem, fitVerses, measure } from './engine.js';
+
+      const qs = new URLSearchParams(location.search);
+      const OPT = qs.get('opt') || 'n3';
+      const POEM = +(qs.get('poem') ?? 3);
+      const SCRUB = qs.get('scrub') === '1';
+      const DIR = qs.get('dir') || 'rtl'; // N1 only: which way is "next"
+      const ALIGN = qs.get('align') || 'right'; // 'right' = one shared right edge; 'classic' = before
+      const app = document.getElementById('app');
+      const stage = document.getElementById('stage');
+      const bottom = document.getElementById('bottom');
+      const readout = document.getElementById('readout');
+
+      app.classList.add('opt-' + OPT); // lets per-option CSS exist without leaking across options
+      if (ALIGN === 'right') app.classList.add('align-right');
+      if (ALIGN === 'head') app.classList.add('align-head');
+      if (SCRUB) app.classList.add('scrub-on');
+      if (qs.get('readout') === '1') app.classList.add('show-readout');
+      if (qs.get('guards') === '1') app.classList.add('show-guards');
+
+      const NAMES = {
+        n1: 'N1 · Lateral',
+        n2: 'N2 · Rail',
+        n3: 'N3 · Threshold',
+        n4: 'N4 · Seal',
+        n5: 'N5 · Composite',
+      };
+      document.getElementById('optName').textContent = NAMES[OPT] || OPT;
+
+      const poems = await loadPoems();
+      let idx = Math.min(POEM, poems.length - 1);
+      const setPoemName = () =>
+        (document.getElementById('poemName').textContent =
+          `${poems[idx].arLines.length} lines · ${idx + 1}/${poems.length}`);
+
+      // ── shared chrome: reader actions + bottom nav. Present in EVERY option, because every
+      // option has to keep them. Options that add navigation controls have to pay for them here. ──
+      function chrome(extraRow) {
+        bottom.innerHTML = `
+          ${extraRow || ''}
+          <div class="actions">
+            <button>Listen</button><button>Read full poem</button>
+          </div>
+          <div class="nav">
+            <span><i>♡</i>Save</span><span><i>▤</i>Library</span><span><i>✦</i>Discover</span>
+            <span><i>◎</i>Account</span><span><i>⌂</i>Home</span>
+          </div>`;
+      }
+
+      // Dimmed-ahead → read, as the read position passes each verse. This is the property that
+      // shows the poem's SHAPE; every option must preserve it.
+      function wireReveal(scroller, units) {
+        const io = new IntersectionObserver(
+          (es) =>
+            es.forEach((e) => {
+              if (e.isIntersecting) {
+                e.target.classList.add('read');
+                e.target.classList.remove('ahead');
+              }
+            }),
+          { root: scroller, rootMargin: '0px 0px -42% 0px' }
+        );
+        units.forEach((u) => io.observe(u));
+        return io;
+      }
+
+      function updateScrub(scroller) {
+        if (!SCRUB) return;
+        const max = scroller.scrollHeight - scroller.clientHeight;
+        const f = max > 0 ? scroller.scrollTop / max : 0;
+        document.querySelector('.scrub i').style.height = (f * 100).toFixed(1) + '%';
+        document.querySelector('.scrub b').style.top = (f * 100).toFixed(1) + '%';
+      }
+
+      let reportHost = null;
+      function report(host) {
+        if (host) reportHost = host;
+        if (!reportHost) return;
+        const m = measure(reportHost);
+        readout.textContent =
+          `box ${m.poemBoxWidth}px / ${m.viewport}  fit ${m.minFit}\n` +
+          `ar ${m.renderedArabicPx.toFixed(1)}px  headroom ×${m.typeHeadroom}\n` +
+          `verses ${m.verseCount}  scrubber ${SCRUB ? 'on' : 'off'}`;
+        window.__measure = () => ({ ...m, option: OPT, scrubber: SCRUB, poem: poems[idx].id });
+      }
+
+      // ── N1 · Lateral — swipe left/right for next/previous ────────────────────
+      function buildLateral() {
+        stage.innerHTML = `<div class="lat-track" id="track"></div>
+          <div class="edge-guard l"></div><div class="edge-guard r"></div>
+          <div class="lat-dots" id="dots"></div>`;
+        const track = document.getElementById('track');
+        // RTL: poem 2 sits to the LEFT of poem 1, so advancing drags content rightward.
+        // LTR: the familiar carousel. `?dir=` switches between them so both can be judged.
+        const order = DIR === 'rtl' ? [...poems].reverse() : poems;
+        const cellIndex = (i) => (DIR === 'rtl' ? poems.length - 1 - i : i);
+        order.forEach((p) => {
+          const cell = document.createElement('div');
+          cell.className = 'lat-cell';
+          const sc = document.createElement('div');
+          sc.className = 'scroller';
+          cell.appendChild(sc);
+          track.appendChild(cell);
+          const { units } = renderPoem(sc, p, { scrubber: SCRUB });
+          wireReveal(sc, units);
+        });
+        const cells = [...track.children];
+        const dots = document.getElementById('dots');
+        poems.forEach(() => dots.appendChild(document.createElement('i')));
+        const paint = () => {
+          [...dots.children].forEach((d, i) => d.classList.toggle('on', i === idx));
+          track.style.transform = `translate3d(${-cellIndex(idx) * 100}%,0,0)`;
+          setPoemName();
+          report(cells[cellIndex(idx)].firstChild);
+        };
+        track.style.transition = 'transform .42s cubic-bezier(.22,.9,.3,1)';
+        paint();
+
+        // Gesture: horizontal only, and only when it did NOT start in Safari's back-swipe band.
+        let sx = 0,
+          sy = 0,
+          axis = null,
+          live = false;
+        const EDGE = 20;
+        stage.addEventListener(
+          'pointerdown',
+          (e) => {
+            // The edge bands belong to the browser. Refusing them is the honest move: a page
+            // cannot reliably beat Safari's interactive back gesture, only avoid overlapping it.
+            if (e.clientX < EDGE || e.clientX > innerWidth - EDGE) return;
+            if (e.target.closest('[data-owns-gesture]')) return;
+            sx = e.clientX;
+            sy = e.clientY;
+            axis = null;
+            live = true;
+            track.style.transition = 'none';
+          },
+          { passive: true }
+        );
+        stage.addEventListener(
+          'pointermove',
+          (e) => {
+            if (!live) return;
+            const dx = e.clientX - sx,
+              dy = e.clientY - sy;
+            // Latch the axis ONCE, at the first significant movement, and hold it for the whole
+            // gesture (#707 handoff). Re-deciding mid-drag is what lets a fast flick cross a
+            // boundary the reader didn't intend.
+            if (axis === null && (Math.abs(dx) > 8 || Math.abs(dy) > 8))
+              axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'h' : 'v';
+            if (axis !== 'h') return;
+            e.preventDefault?.();
+            track.style.transform = `translate3d(calc(${-cellIndex(idx) * 100}% + ${dx}px),0,0)`;
+          },
+          { passive: false }
+        );
+        const end = (e) => {
+          if (!live) return;
+          live = false;
+          track.style.transition = 'transform .42s cubic-bezier(.22,.9,.3,1)';
+          if (axis !== 'h') return paint();
+          const dx = e.clientX - sx;
+          if (Math.abs(dx) > innerWidth * 0.26) {
+            const forward = DIR === 'rtl' ? dx > 0 : dx < 0;
+            idx = Math.max(0, Math.min(poems.length - 1, idx + (forward ? 1 : -1)));
+          }
+          paint();
+        };
+        stage.addEventListener('pointerup', end);
+        stage.addEventListener('pointercancel', end);
+        chrome();
+        const hint = document.createElement('div');
+        hint.className = 'hint';
+        hint.style.bottom = 'calc(var(--safe-b) + 140px)';
+        hint.textContent =
+          DIR === 'rtl' ? 'swipe → for the next poem' : 'swipe ← for the next poem';
+        bottom.prepend(hint);
+      }
+
+      // ── N2 · Rail — explicit prev/next ───────────────────────────────────────
+      function buildRail() {
+        const sc = document.createElement('div');
+        sc.className = 'scroller';
+        stage.appendChild(sc);
+        const draw = () => {
+          const { units } = renderPoem(sc, poems[idx], { scrubber: SCRUB });
+          wireReveal(sc, units);
+          sc.scrollTop = 0;
+          setPoemName();
+          report(sc);
+        };
+        // The controls take the full width of the actions band, so Listen / Read full poem get
+        // squeezed onto their own row. That vertical cost is the honest price of this option.
+        chrome(`<div class="rail">
+            <button class="step" id="prev" aria-label="Previous poem">‹</button>
+            <button class="step" id="next" aria-label="Next poem" style="flex:1;border-radius:21px;width:auto">Next poem ›</button>
+          </div>`);
+        // Wrap rather than disable: the real feed is endless (onLoadMore), so a greyed-out
+        // "Next poem" would be an artefact of the four-poem sample, not of this option.
+        bottom.querySelector('#prev').onclick = () => {
+          idx = (idx - 1 + poems.length) % poems.length;
+          draw();
+        };
+        bottom.querySelector('#next').onclick = () => {
+          idx = (idx + 1) % poems.length;
+          draw();
+        };
+        sc.addEventListener('scroll', () => updateScrub(sc), { passive: true });
+        draw();
+      }
+
+      // ── N3 · Threshold — a STAGED handoff at the bottom of the poem ──────────
+      //
+      // The original N3 concatenated every poem into one stream. That gave it its best property
+      // (scroll never changes meaning, so there is no axis to arbitrate) and its disqualifying
+      // flaw: at a boundary TWO poems are on screen, and Save / Listen point at an ambiguous
+      // target.
+      //
+      // This version keeps the property and removes the flaw by staging the boundary:
+      //
+      //   1. reading   — one poem, scrolling normally. Nothing on screen about the next poem.
+      //   2. offered   — the reader reaches the bottom and dwells there; only THEN does the
+      //                  handoff appear, naming the next poem and its length.
+      //   3. pulling   — a SECOND, distinct gesture past the stop fills the meter.
+      //   4. locked    — the next poem arrives and locks to top.
+      //
+      // Exactly one poem is current in every resting state, so Save and Listen are never
+      // ambiguous. The only two-poem moment is the ~260ms crossfade, which is a transition, not
+      // somewhere a reader can sit and press a button.
+      function buildThreshold() {
+        const sc = document.createElement('div');
+        sc.className = 'scroller';
+        stage.appendChild(sc);
+        const host = document.createElement('div');
+        sc.appendChild(host);
+
+        const NEED = 110; // same over-pull budget #707 calibrated: past a hard stop, momentum decays
+        // A poem shorter than the viewport has NO scroll to ride: it is at the end the instant it
+        // arrives, so the progressive reveal has nothing to be a function of and the handoff would
+        // sit there over a poem nobody has read yet. Measured on the 4-line epigram — it fits with
+        // room to spare. A floor on time-since-arrival stands in for the scroll that never happens.
+        // Any poem long enough to scroll reveals by scrolling and never reaches this path.
+        const FLOOR = 1400;
+        let phase = 'reading';
+        let arrivedAt = 0;
+        let offeredAt = 0;
+        let over = 0;
+        let dwellT = null;
+        let handoff = null;
+        let meter = null;
+
+        // The gesture latch, applied to a boundary instead of an axis.
+        //
+        // #707's finding was: decide who owns a gesture at pointerdown, never mid-drag, because a
+        // fast flick re-evaluated mid-flight crosses a boundary the reader didn't aim at. The same
+        // hazard lives here — the flick that carries you TO the bottom must not also carry you
+        // PAST it. So a pull only counts if its gesture STARTED after the handoff appeared. One
+        // gesture arrives; a second, deliberate one commits.
+        let gestureLive = false;
+        let gestureAt = 0;
+        let wheelIdle = null;
+        const beginGesture = () => {
+          gestureAt = performance.now();
+          gestureLive = true;
+        };
+        const endGesture = () => {
+          gestureLive = false;
+        };
+        sc.addEventListener('pointerdown', beginGesture, { passive: true });
+        sc.addEventListener('pointerup', endGesture, { passive: true });
+        sc.addEventListener('pointercancel', endGesture, { passive: true });
+
+        const atEnd = () => sc.scrollTop >= sc.scrollHeight - sc.clientHeight - 4;
+
+        const draw = (arriving) => {
+          host.innerHTML = '';
+          const { col, units } = renderPoem(host, poems[idx], { scrubber: SCRUB });
+          wireReveal(sc, units);
+
+          // The handoff block is ALWAYS in the flow at a fixed height, and only its contents fade
+          // in. If it grew when it appeared it would add scroll height, which would mean the
+          // reader is suddenly no longer at the bottom — the offer would retract the instant it
+          // was made. Reserving the space is what makes the stage transition stable.
+          handoff = document.createElement('div');
+          handoff.className = 'handoff';
+          const nxt = poems[(idx + 1) % poems.length];
+          handoff.innerHTML = `
+            <div class="ho-chev" role="button" tabindex="0" aria-label="Go to the next poem">⌄</div>
+            <div class="ho-label">scroll for the next poem</div>
+            <div class="ho-next">${nxt.title} · ${nxt.arLines.length} lines</div>
+            <div class="pull-meter"><i></i></div>`;
+          col.appendChild(handoff);
+          meter = handoff.querySelector('.pull-meter i');
+          // Tap / keyboard as an equal path. Over-pull is a gesture; this is the same commit for
+          // anyone not making one.
+          const chev = handoff.querySelector('.ho-chev');
+          chev.onclick = () => phase === 'offered' && commit();
+          chev.onkeydown = (e) => (e.key === 'Enter' || e.key === ' ') && commit();
+
+          phase = 'reading';
+          over = 0;
+          offeredAt = 0;
+          arrivedAt = performance.now();
+          clearTimeout(dwellT);
+          // Only the non-scrollable poem needs a wake-up: with no scroll events coming, nothing
+          // else would ever re-evaluate the reveal.
+          dwellT = setTimeout(evaluate, FLOOR + 20);
+          sc.scrollTop = 0; // LOCK TO TOP — the reader never lands mid-boundary
+          if (arriving) {
+            col.classList.add('arriving');
+            col.addEventListener('animationend', () => col.classList.remove('arriving'), {
+              once: true,
+            });
+          }
+          setPoemName();
+          report(sc);
+          requestAnimationFrame(evaluate); // a short poem may already be "at the bottom"
+        };
+
+        // The handoff is REVEALED BY SCROLLING, not animated in on arrival at the bottom.
+        //
+        // It fades and rises across the last REVEAL px of the poem, tied directly to scroll
+        // position, so it is a thing the reader scrolls into view rather than a thing that happens
+        // at them. Scrolling back up puts it away again at the same rate — the reveal is a
+        // function of where you are, with no state of its own and nothing to time.
+        const REVEAL = 170;
+
+        function paintReveal() {
+          const max = sc.scrollHeight - sc.clientHeight;
+          let r;
+          if (max <= 4) {
+            // A poem shorter than the viewport has no scroll to ride, so there is no progressive
+            // reveal to give it. Time stands in, and only this case gets a fade.
+            r = performance.now() - arrivedAt >= FLOOR ? 1 : 0;
+            handoff.classList.add('timed');
+          } else {
+            handoff.classList.remove('timed');
+            r = Math.min(1, Math.max(0, 1 - (max - sc.scrollTop) / REVEAL));
+          }
+          handoff.style.setProperty('--r', r.toFixed(3));
+          handoff.classList.toggle('ready', r >= 1);
+          return r;
+        }
+
+        function evaluate() {
+          if (phase === 'committing') return;
+          const r = paintReveal();
+          if (r >= 1 && atEnd()) {
+            if (phase === 'reading') {
+              phase = 'offered';
+              offeredAt = performance.now();
+            }
+          } else if (phase === 'offered') {
+            phase = 'reading';
+            over = 0;
+            if (meter) meter.style.width = '0%';
+          }
+        }
+
+        function pull(d) {
+          if (phase !== 'offered' || !atEnd() || d <= 0) return;
+          if (gestureAt <= offeredAt) return; // same gesture that arrived — refused
+          over += d;
+          if (meter) meter.style.width = Math.min(100, (over / NEED) * 100).toFixed(0) + '%';
+          if (over >= NEED) commit();
+        }
+
+        function commit() {
+          if (phase === 'committing') return;
+          phase = 'committing';
+          over = 0;
+          const col = host.querySelector('.poem-col');
+          col.classList.add('departing');
+          setTimeout(() => {
+            idx = (idx + 1) % poems.length;
+            draw(true);
+          }, 260);
+        }
+
+        sc.addEventListener(
+          'scroll',
+          () => {
+            updateScrub(sc);
+            evaluate();
+          },
+          { passive: true }
+        );
+
+        // Touch: past a hard stop the scroller stops emitting scroll events, so the pull has to be
+        // read from the finger directly.
+        let ty = 0;
+        sc.addEventListener('touchstart', (e) => (ty = e.touches[0].clientY), { passive: true });
+        sc.addEventListener(
+          'touchmove',
+          (e) => {
+            const y = e.touches[0].clientY;
+            const dy = ty - y; // finger travelling up = asking for what's below
+            ty = y;
+            pull(dy);
+          },
+          { passive: true }
+        );
+
+        // Wheel / trackpad has no pointerdown, so gesture boundaries are inferred from a pause.
+        // A wheel run already in flight when the offer appears stays spent until it stops.
+        sc.addEventListener(
+          'wheel',
+          (e) => {
+            if (!gestureLive) beginGesture();
+            clearTimeout(wheelIdle);
+            wheelIdle = setTimeout(endGesture, 140);
+            pull(e.deltaY);
+          },
+          { passive: true }
+        );
+
+        chrome();
+        draw(false);
+      }
+
+      // ── N4 · Seal — a deliberate act at the end of the poem ──────────────────
+      //
+      // The summon animates the SCREEN, not the glyph. The hold is treated as a build with three
+      // movements, and the whole thing is budgeted for a phone:
+      //
+      //   hold    the poem recedes and dims (ONE css transition on ONE element, started by a class
+      //           toggle — no per-frame JS touches the 22 verse elements), a gold bloom grows out
+      //           of the seal, and a vignette closes in around it. Bloom and vignette read `--p`
+      //           from the overlay root, which has three childless divs under it, so the per-frame
+      //           style invalidation is bounded at four small elements.
+      //   commit  a ring bursts outward from the seal, sparks throw wider than before, and the
+      //           spent poem lifts and dissolves rather than being cut away.
+      //   arrive  the new poem's verses land in sequence, and a band of gold light travels down
+      //           the column — the sparkler's "lit word by word" idea at poem scale, done with a
+      //           single translating element instead of 22 animated ones.
+      //
+      // Every layer animates transform and opacity only. Nothing here reads layout mid-flight.
+      const summon = document.getElementById('summon'); // atmosphere, behind the poem
+      const summonFx = document.getElementById('summonFx'); // flashes, above everything
+      const setP = (p) => summon.style.setProperty('--p', p);
+
+      // ── the arriving poem sparkles in ────────────────────────────────────────
+      //
+      // This deliberately does NOT light the poem verse by verse, and the reason is the whole
+      // design of it.
+      //
+      // The reader's sparkler reveal lights ONE verse at a time and LEAVES IT LIT. Its claim is
+      // "you are reading this now." A whole-poem sparkle that also persisted would claim "this poem
+      // is read" — the opposite — and would leave the reading reveal with nothing to do.
+      //
+      // So the two are separated by PERSISTENCE, not by speed. The arrival sparkle passes through
+      // and leaves nothing behind: the column rises out of black while motes catch light across the
+      // whole surface at once, and it settles into exactly the dimmed-ahead state B·Flow starts
+      // every poem in. Nothing is marked as read. The reading reveal still has the entire poem in
+      // front of it.
+      //
+      // That is also why the per-verse landing stagger from the previous pass is gone. "In
+      // sequence, verse by verse" is the reading reveal's sentence, and the arrival must not speak
+      // it — otherwise the two mechanics are saying the same thing twice and the reveal feels
+      // redundant when it arrives second.
+      function sparkleIn(col) {
+        col.classList.add('sparkling');
+        const sweep = summonFx.querySelector('.s-sweep');
+        sweep.classList.remove('go');
+        void sweep.offsetWidth;
+        sweep.classList.add('go');
+
+        // Motes are laid over the VIEWPORT, not the poem, so a 22-verse poem and a 4-line epigram
+        // get the same amount of light and nothing depends on measuring the column.
+        const field = summonFx.querySelector('.s-motes');
+        field.innerHTML = '';
+        const W = app.clientWidth,
+          H = app.clientHeight;
+        const frag = document.createDocumentFragment();
+        // 90, not 46. At 46 only ~20 were at peak in any given frame and it read as a few stray
+        // specks rather than the surface catching light. Delays are packed into 420ms so they
+        // overlap instead of trickling.
+        for (let i = 0; i < 90; i++) {
+          const m = document.createElement('i');
+          m.className = 'mote';
+          m.style.left = (12 + Math.random() * (W - 24)).toFixed(0) + 'px';
+          m.style.top = (70 + Math.random() * (H - 220)).toFixed(0) + 'px';
+          m.style.setProperty('--dl', (Math.random() * 420).toFixed(0) + 'ms');
+          m.style.setProperty('--sz', (1.8 + Math.random() * 2.8).toFixed(1) + 'px');
+          frag.appendChild(m);
+        }
+        field.appendChild(frag);
+        setTimeout(() => (field.innerHTML = ''), 1700);
+      }
+
+      function sparkle(seal) {
+        const r = seal.getBoundingClientRect();
+        for (let i = 0; i < 26; i++) {
+          const s = document.createElement('div');
+          s.className = 'spark';
+          s.style.left = r.left + r.width / 2 + 'px';
+          s.style.top = r.top + r.height / 2 + 'px';
+          s.style.position = 'fixed';
+          document.body.appendChild(s);
+          const a = Math.random() * Math.PI * 2,
+            d = 60 + Math.random() * 150;
+          s.animate(
+            [
+              { transform: 'translate(0,0) scale(1)', opacity: 1 },
+              {
+                transform: `translate(${Math.cos(a) * d}px, ${Math.sin(a) * d}px) scale(0)`,
+                opacity: 0,
+              },
+            ],
+            { duration: 520 + Math.random() * 320, easing: 'cubic-bezier(.2,.7,.3,1)' }
+          ).onfinish = () => s.remove();
+        }
+      }
+
+      // The control is a QUILL, not the poem's closing letter.
+      //
+      // The letter was a sign-off: it pointed backwards at the poem you had just finished. A quill
+      // points forwards — it writes the next poem into being — and that is what the gesture
+      // actually does. It also survives contact with the corpus, which the letter only barely did
+      // (see the note on closingLetter() in engine.js: the rhyme-kinship idea had to be abandoned
+      // because ة ends a large share of Arabic nouns, so the "kinship" would have been noise).
+      //
+      // The hold is the quill writing a stroke: it tilts from upright into a writing angle, travels
+      // left to right, ink gathers at the nib, and a gold line grows behind it. Release before the
+      // end and the stroke un-draws. Both are pure transforms on two small elements.
+      function attachSeal(container, onSummon) {
+        const wrap = document.createElement('div');
+        wrap.className = 'seal-wrap';
+        wrap.innerHTML = `
+          <div class="seal" id="seal" role="button" tabindex="0"
+               aria-label="Hold to draw the next poem">
+            <div class="ring"></div>
+            <div class="q-stage">
+              <div class="q-trail"></div>
+              <svg class="q-pen" viewBox="0 0 32 32" aria-hidden="true">
+                <path class="q-vane" d="M28 3c-10 0-18.5 7.5-20.5 16.5L6 25l5.5-1.5C20.5 21.5 28 13 28 3z"/>
+                <path class="q-shaft" d="M26.5 4.5 8.5 25"/>
+                <path class="q-nib" d="M8.5 25 5 29.5"/>
+              </svg>
+              <div class="q-ink"></div>
+            </div>
+          </div>
+          <div class="seal-caption">hold to draw<br />another poem</div>`;
+        container.appendChild(wrap);
+        const seal = wrap.querySelector('#seal');
+        let raf = null,
+          t0 = 0;
+        // 760ms, up from 620. The hold is now carrying a build rather than just a progress ring,
+        // and at 620 the bloom had not finished growing before it fired. The cost is 140ms more
+        // thumb time on every draw; the gain is that the build reads as a build.
+        const HOLD = 760;
+
+        // The overlay is positioned on the seal at pointerdown rather than per frame — the seal
+        // does not move during a hold, so one layout read is all it needs.
+        const anchor = () => {
+          const r = seal.getBoundingClientRect();
+          summon.style.setProperty('--sx', r.left + r.width / 2 + 'px');
+          summon.style.setProperty('--sy', r.top + r.height / 2 + 'px');
+        };
+
+        const stop = (fire) => {
+          cancelAnimationFrame(raf);
+          raf = null;
+          seal.classList.remove('charging');
+          app.classList.remove('summoning');
+          if (fire) {
+            setP(1);
+            // Ring outward, sparks wider, and the spent poem lifts away instead of being cut.
+            const burst = summonFx.querySelector('.s-burst');
+            burst.classList.remove('go');
+            void burst.offsetWidth; // restart the animation on a repeat summon
+            burst.classList.add('go');
+            seal.classList.add('fired'); // the quill lifts off the page
+            sparkle(seal);
+            seal.closest('.poem-col')?.classList.add('dissolving');
+            setTimeout(() => {
+              setP(0);
+              onSummon();
+            }, 340);
+          } else {
+            // Released early: decay the build instead of snapping it off, so an abandoned summon
+            // looks like a decision rather than a glitch.
+            const from = +summon.style.getPropertyValue('--p') || 0;
+            const t = performance.now();
+            const ease = () => {
+              const k = Math.min(1, (performance.now() - t) / 220);
+              const v = (from * (1 - k)).toFixed(3);
+              setP(v);
+              seal.style.setProperty('--p', v);
+              if (k < 1) requestAnimationFrame(ease);
+            };
+            ease();
+          }
+        };
+        const tick = () => {
+          const p = Math.min(1, (performance.now() - t0) / HOLD);
+          seal.style.setProperty('--p', p);
+          setP(p);
+          if (p >= 1) return stop(true);
+          raf = requestAnimationFrame(tick);
+        };
+        // Safari raises the callout from the long-press itself, before any pointer handler can
+        // cancel it, so the context menu has to be refused outright as well.
+        seal.addEventListener('contextmenu', (e) => e.preventDefault());
+        seal.addEventListener('selectstart', (e) => e.preventDefault());
+        seal.addEventListener('dragstart', (e) => e.preventDefault());
+        seal.addEventListener('pointerdown', (e) => {
+          e.preventDefault();
+          try {
+            seal.setPointerCapture?.(e.pointerId);
+          } catch {
+            /* synthetic/absent pointer — capture is an optimisation, not a requirement */
+          }
+          anchor();
+          t0 = performance.now();
+          seal.classList.add('charging');
+          app.classList.add('summoning'); // starts the poem's recede as ONE css transition
+          raf = requestAnimationFrame(tick);
+        });
+        const cancel = () => raf && stop(false);
+        seal.addEventListener('pointerup', cancel);
+        seal.addEventListener('pointercancel', cancel);
+        seal.addEventListener('pointerleave', cancel);
+        return wrap;
+      }
+
+      function buildSeal(withEscape) {
+        const sc = document.createElement('div');
+        sc.className = 'scroller';
+        stage.appendChild(sc);
+        const draw = (summoned) => {
+          const { col, units } = renderPoem(sc, poems[idx], { scrubber: SCRUB });
+          wireReveal(sc, units);
+          if (summoned) sparkleIn(col);
+          attachSeal(col, () => {
+            idx = (idx + 1) % poems.length;
+            draw(true);
+          });
+          sc.scrollTop = 0;
+          setPoemName();
+          report(sc);
+        };
+        chrome();
+        if (withEscape) {
+          const esc = document.createElement('button');
+          esc.className = 'escape';
+          esc.textContent = '⇥';
+          esc.setAttribute('aria-label', 'Skip to another poem');
+          esc.onclick = () => {
+            idx = (idx + 1) % poems.length;
+            draw();
+          };
+          app.appendChild(esc);
+        }
+        sc.addEventListener('scroll', () => updateScrub(sc), { passive: true });
+        draw();
+      }
+
+      // ── N5 · Composite — threshold flow, with the seal AT the threshold ──────
+      function buildComposite() {
+        const sc = document.createElement('div');
+        sc.className = 'scroller';
+        stage.appendChild(sc);
+        const host = document.createElement('div');
+        sc.appendChild(host);
+        const draw = () => {
+          host.innerHTML = '';
+          const inner = document.createElement('div');
+          host.appendChild(inner);
+          const { col, units } = renderPoem(inner, poems[idx], { scrubber: SCRUB });
+          wireReveal(sc, units);
+          // At the end: the seal for a deliberate draw, AND a plain continuation for a reader who
+          // just wants to keep scrolling. Neither owns an axis; both live in the content.
+          attachSeal(col, () => {
+            idx = (idx + 1) % poems.length;
+            draw();
+            sc.scrollTop = 0;
+            // Only the SEAL path sparkles. Reaching the next poem by simply continuing to scroll
+            // is not a summon, and dressing it as one would spend the effect on a non-event.
+            sparkleIn(host.querySelector('.poem-col'));
+          });
+          const t = document.createElement('div');
+          t.className = 'threshold';
+          const nxt = poems[(idx + 1) % poems.length];
+          t.innerHTML = `<hr /><div class="next-label">or keep scrolling · ${nxt.title} · ${nxt.arLines.length} lines</div>
+            <div class="pull-meter"><i></i></div>`;
+          col.appendChild(t);
+          setPoemName();
+          report(sc);
+        };
+
+        // "Keep scrolling" has to actually do something, or the threshold is decoration.
+        //
+        // This is the ONE place N5 reintroduces an end-of-scroll boundary — the thing the #707
+        // handoff warns about. Three things make it survivable here, and they're the same three
+        // that make an end-of-poem invitation viable at all:
+        //   1. it exists only at the very end, where B's dimmed-ahead verses have already shown
+        //      the reader the poem's whole shape, so arriving is anticipated, not a surprise;
+        //   2. it needs deliberate OVER-scroll past a hard stop, accumulated across events —
+        //      momentum from a fast flick decays at the stop instead of carrying through;
+        //   3. it's visible. The meter fills as you pull, so the reader can see the commit
+        //      coming and can stop.
+        let over = 0;
+        const NEED = 110;
+        sc.addEventListener(
+          'scroll',
+          () => {
+            if (sc.scrollTop < sc.scrollHeight - sc.clientHeight - 2) {
+              over = 0;
+              const m = sc.querySelector('.pull-meter i');
+              if (m) m.style.width = '0%';
+            }
+          },
+          { passive: true }
+        );
+        sc.addEventListener(
+          'wheel',
+          (e) => {
+            const atEnd = sc.scrollTop >= sc.scrollHeight - sc.clientHeight - 2;
+            if (!atEnd || e.deltaY <= 0) return;
+            over += e.deltaY;
+            const m = sc.querySelector('.pull-meter i');
+            if (m) m.style.width = Math.min(100, (over / NEED) * 100).toFixed(0) + '%';
+            if (over >= NEED) {
+              over = 0;
+              idx = (idx + 1) % poems.length;
+              draw();
+              sc.scrollTop = 0;
+            }
+          },
+          { passive: true }
+        );
+        chrome();
+        const esc = document.createElement('button');
+        esc.className = 'escape';
+        esc.textContent = '⇥';
+        esc.setAttribute('aria-label', 'Skip to another poem');
+        esc.onclick = () => {
+          idx = (idx + 1) % poems.length;
+          draw();
+          sc.scrollTop = 0;
+        };
+        app.appendChild(esc);
+        sc.addEventListener('scroll', () => updateScrub(sc), { passive: true });
+        draw();
+      }
+
+      const BUILD = {
+        n1: buildLateral,
+        n2: buildRail,
+        n3: buildThreshold,
+        n4: () => buildSeal(false),
+        n5: buildComposite,
+      };
+      (BUILD[OPT] || buildThreshold)();
+
+      // Re-fit on resize / late font load — Amiri arriving changes every measurement.
+      const refit = () => document.querySelectorAll('.scroller').forEach(fitVerses);
+      addEventListener('resize', refit);
+      if (document.fonts?.ready)
+        document.fonts.ready.then(() => {
+          refit();
+          report(null); // re-measure the SAME host, now that Amiri has actually loaded
+        });
+      window.__ready = true;
+    </script>
+  </body>
+</html>

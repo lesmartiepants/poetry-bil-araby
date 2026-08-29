@@ -744,6 +744,44 @@ const CATALOG = [
         feedback: {}
       }
     ]
+  },
+  // ═══════════════════════════════════════════════════════════════
+  // POEM NAVIGATION — how you get from poem to poem once B·Flow owns the
+  // vertical axis. Every option renders the SAME reading surface on the SAME
+  // real bilingual poems, so what differs between them is only the interaction
+  // model. Driven by ?opt= on one engine, which is why these share a file.
+  // ═══════════════════════════════════════════════════════════════
+  {
+    component: 'Poem Navigation',
+    id: 'poemnav',
+    categories: [
+      { id: 'nav-models', name: 'Navigation Models', source: 'PR #714',
+        description: 'B·Flow took the vertical axis, so poem-to-poem navigation needed rethinking. Seal is the kept direction; the others stay for comparison.',
+        options: [
+          { id: 'nav-n4-seal', name: '✓ KEPT — N4 · Seal (quill)', philosophy: 'Press and hold a quill at the end of the poem — summoning is an act, not an accident', file: 'poem-navigation/index.html?opt=n4&poem=3', desc: 'Press-and-hold quill that draws a stroke through the 760ms hold: poem recedes, gold bloom rises behind the nib, vignette closes. On commit a ring bursts and the spent poem dissolves; the next poem sparkles in across the whole surface and settles dimmed-ahead. Long-press selection suppressed for iOS.', generation: 9, iteration: 4, source_branch: 'design/poem-navigation', source_pr: '#714' },
+          { id: 'nav-n3-threshold', name: 'N3 · Threshold', philosophy: 'The boundary is content, not gesture — there is no axis to arbitrate', file: 'poem-navigation/index.html?opt=n3&poem=3', desc: 'Staged handoff: the affordance fades in across the last 170px of scroll (opacity only, tied to scroll position), naming the next poem and its length. A second distinct gesture pulls it in and it locks to top, so exactly one poem is addressable in every resting state.', generation: 9, iteration: 4, source_branch: 'design/poem-navigation', source_pr: '#714' },
+          { id: 'nav-n1-lateral', name: 'N1 · Lateral', philosophy: 'Swipe sideways — familiar, one clean axis, but still a directional gesture', file: 'poem-navigation/index.html?opt=n1&poem=3&guards=1', desc: 'Horizontal carousel with the axis latched at pointerdown. Red bands mark iOS Safari’s ~20px back-swipe zone, which in RTL collides with the direction that means "next" — gestures starting there are refused rather than fought.', generation: 9, iteration: 2, source_branch: 'design/poem-navigation', source_pr: '#714' }
+        ],
+        feedback: {}
+      },
+      { id: 'nav-alignment', name: 'Column Alignment', source: 'PR #714',
+        description: 'Where the Latin-script elements sit. The Arabic is already flush right by being RTL; these differ only in the title, poet and English. Cost lands only on English lines that WRAP, and removing the scrubber lane takes wrapping from 20 of 44 lines to 8.',
+        options: [
+          { id: 'nav-align-right', name: 'Everything Right', philosophy: 'One edge for the whole column — each verse pair anchored together', file: 'poem-navigation/index.html?opt=n3&poem=3&align=right', desc: 'Title, poet, Arabic and English all share the right edge. Pure gain where the English fits one line; where it wraps, the orphan tail swings to the far right, away from where the eye returns.', generation: 9, iteration: 1, source_branch: 'design/poem-navigation', source_pr: '#714' },
+          { id: 'nav-align-head', name: 'Head Only', philosophy: 'The head joins the right edge, the English keeps its left start', file: 'poem-navigation/index.html?opt=n3&poem=3&align=head', desc: 'The middle setting. Fixes the centred head (a third axis nobody argued for) and pays none of the ragged-start cost. The recommendation if the scrubber lane stays.', generation: 9, iteration: 1, source_branch: 'design/poem-navigation', source_pr: '#714' },
+          { id: 'nav-align-classic', name: 'Classic', philosophy: 'Centred head, right Arabic, left English — three axes in one column', file: 'poem-navigation/index.html?opt=n3&poem=3&align=classic', desc: 'The before state, kept for comparison.', generation: 9, iteration: 1, source_branch: 'design/poem-navigation', source_pr: '#714' }
+        ],
+        feedback: {}
+      },
+      { id: 'nav-archive', name: 'Archive — dropped', source: 'PR #714',
+        description: 'Reviewed and dropped, kept reachable rather than deleted',
+        options: [
+          { id: 'nav-n2-rail', name: 'N2 · Rail', philosophy: 'Explicit controls — unambiguous, accessible, and expensive', file: 'poem-navigation/index.html?opt=n2&poem=3', desc: 'Prev/next buttons. Removes the gesture problem honestly, but bills 52px of height on the screen where 56px of width was worth an argument.', generation: 9, iteration: 1, source_branch: 'design/poem-navigation', source_pr: '#714' },
+          { id: 'nav-n5-composite', name: 'N5 · Composite', philosophy: 'Seal plus over-scroll continuation plus a mid-poem escape', file: 'poem-navigation/index.html?opt=n5&poem=3', desc: 'Seal for a deliberate draw, over-scroll to just keep going, top-right escape to bail out mid-poem. Reintroduces one guarded end-of-scroll boundary.', generation: 9, iteration: 1, source_branch: 'design/poem-navigation', source_pr: '#714' }
+        ],
+        feedback: {}
+      }
+    ]
   }
 ];
 
@@ -772,7 +810,8 @@ const SECTION_FILTERS = [
   { id: 'vc', label: 'Vertical Controls', short: 'VC' },
   { id: 'auth', label: 'Auth', short: 'Auth' },
   { id: 'branding', label: 'Branding', short: 'Brand' },
-  { id: 'awwwards', label: 'Awwwards', short: 'Aww' }
+  { id: 'awwwards', label: 'Awwwards', short: 'Aww' },
+  { id: 'poemnav', label: 'Poem Nav', short: 'Nav' }
 ];
 try { const sf = localStorage.getItem('design-review-section-filter'); if (sf && SECTION_FILTERS.some(f => f.id === sf)) sectionFilter = sf; } catch {}
 
@@ -951,6 +990,7 @@ function buildFlatList() {
     if (sectionFilter === 'auth' && comp.id !== 'auth') return;
     if (sectionFilter === 'branding' && comp.id !== 'branding') return;
     if (sectionFilter === 'awwwards' && comp.id !== 'awwwards') return;
+    if (sectionFilter === 'poemnav' && comp.id !== 'poemnav') return;
     if (sectionFilter === 'vc' && comp.id !== 'e2e') return;
     if ((sectionFilter === 'e2e' || sectionFilter === 'onboarding' || sectionFilter === 'main-app') && comp.id !== 'e2e') return;
     comp.categories.forEach((cat, cati) =>

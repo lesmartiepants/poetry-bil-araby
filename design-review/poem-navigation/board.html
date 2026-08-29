@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Poem navigation — comparison board</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+      body {
+        margin: 0;
+        padding: 28px 20px 60px;
+        background: #08080c;
+        color: #ece7dd;
+        font-family: Inter, system-ui, sans-serif;
+      }
+      h1 {
+        font-size: 1.1rem;
+        letter-spacing: 0.04em;
+        margin: 0 0 4px;
+      }
+      p.sub {
+        color: rgba(236, 231, 221, 0.5);
+        font-size: 0.82rem;
+        margin: 0 0 24px;
+        max-width: 760px;
+        line-height: 1.6;
+      }
+      .row {
+        display: flex;
+        gap: 18px;
+        overflow-x: auto;
+        padding-bottom: 12px;
+      }
+      figure {
+        margin: 0;
+        flex: 0 0 auto;
+      }
+      figcaption {
+        font-size: 0.72rem;
+        color: rgba(197, 160, 89, 0.85);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin: 0 0 8px;
+      }
+      figcaption b {
+        display: block;
+        color: rgba(236, 231, 221, 0.45);
+        text-transform: none;
+        letter-spacing: 0;
+        font-weight: 400;
+        margin-top: 3px;
+        max-width: 393px;
+      }
+      .openfull {
+        display: block;
+        margin-top: 0.5rem;
+        font-size: 0.8125rem;
+        letter-spacing: 0.02em;
+        color: #c5a059;
+        text-decoration: none;
+        border: 1px solid rgba(197, 160, 89, 0.35);
+        border-radius: 4px;
+        padding: 0.4rem 0.6rem;
+        text-align: center;
+      }
+      .openfull:hover { border-color: #c5a059; }
+      iframe {
+        width: 393px;
+        height: 852px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 14px;
+        background: #0a0a0f;
+      }
+      .note {
+        margin-top: 34px;
+        font-size: 0.8rem;
+        line-height: 1.7;
+        color: rgba(236, 231, 221, 0.6);
+        max-width: 760px;
+      }
+      code {
+        color: #c5a059;
+        font-size: 0.92em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Poem-to-poem navigation, once B·Flow owns the vertical axis</h1>
+    <p class="sub">
+      Same reading surface, same real bilingual poems, five navigation models. Each frame is a live
+      iPhone 16 viewport (393×852) — scroll and interact inside them. Append
+      <code>&amp;scrub=1</code> to any frame's URL to put the 56px scrubber lane back and watch the
+      poem box drop from 361px to 305px.
+    </p>
+
+    <div class="row">
+      <figure>
+        <figcaption>N1 · Lateral<b>Swipe sideways. Edge bands mark Safari's back-swipe.</b></figcaption>
+        <iframe src="./index.html?opt=n1&poem=3&guards=1" title="N1 Lateral"></iframe>
+        <a class="openfull" href="./index.html?opt=n1&poem=3&guards=1" target="_blank" rel="noopener">Open full screen &rarr;</a>
+      </figure>
+      <figure>
+        <figcaption>N3 · Threshold<b>The boundary is content. No gesture at all.</b></figcaption>
+        <iframe src="./index.html?opt=n3&poem=0" title="N3 Threshold"></iframe>
+        <a class="openfull" href="./index.html?opt=n3&poem=0" target="_blank" rel="noopener">Open full screen &rarr;</a>
+      </figure>
+      <figure>
+        <figcaption>N4 · Seal<b>Press and hold the poem's closing letter.</b></figcaption>
+        <iframe src="./index.html?opt=n4&poem=3" title="N4 Seal"></iframe>
+        <a class="openfull" href="./index.html?opt=n4&poem=3" target="_blank" rel="noopener">Open full screen &rarr;</a>
+      </figure>
+    </div>
+
+    <h1 style="margin-top: 40px">Right-aligning everything — title, poet, Arabic, English</h1>
+    <p class="sub">
+      The Arabic is already flush right by being RTL. These three frames differ only in where the
+      Latin-script elements sit. Same poem, same scroll position. Switch any frame with
+      <code>&amp;align=classic|head|right</code>.
+    </p>
+    <div class="row">
+      <figure>
+        <figcaption>Classic<b>Centred head, left-set English. Three axes in one column.</b></figcaption>
+        <iframe src="./index.html?opt=n3&poem=3&align=classic" title="Classic alignment"></iframe>
+        <a class="openfull" href="./index.html?opt=n3&poem=3&align=classic" target="_blank" rel="noopener">Open full screen &rarr;</a>
+      </figure>
+      <figure>
+        <figcaption>Head only<b>Head joins the right edge, English keeps its left start.</b></figcaption>
+        <iframe src="./index.html?opt=n3&poem=3&align=head" title="Head-only alignment"></iframe>
+        <a class="openfull" href="./index.html?opt=n3&poem=3&align=head" target="_blank" rel="noopener">Open full screen &rarr;</a>
+      </figure>
+      <figure>
+        <figcaption>Everything right<b>One edge for the whole column. Wrapped English gets a ragged start.</b></figcaption>
+        <iframe src="./index.html?opt=n3&poem=3&align=right" title="Fully right-aligned"></iframe>
+        <a class="openfull" href="./index.html?opt=n3&poem=3&align=right" target="_blank" rel="noopener">Open full screen &rarr;</a>
+      </figure>
+    </div>
+
+    <div class="note">
+      <strong>What the scrubber lane costs.</strong> Side by side on the same 22-line qasida:
+      <a style="color: #c5a059" href="./index.html?opt=n3&poem=3&scrub=1&readout=1">lane on</a>
+      (poem box 305px, type headroom ×1.007) versus
+      <a style="color: #c5a059" href="./index.html?opt=n3&poem=3&scrub=0&readout=1">lane off</a>
+      (361px, ×1.191). Headroom is how much larger the Arabic could be before the widest line needs
+      a shrink to survive the box — measured across all 44 verses of all four poems, not asserted.
+    </div>
+  </body>
+</html>

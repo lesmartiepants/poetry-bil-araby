@@ -13,6 +13,7 @@ prepends an entry below (newest first) describing **why** it changed and a conci
 **Why:** The preference flow at `/onboarding` was previously reachable only from the debug panel, so the README's Personalization list correctly omitted it as a hidden/dev-only surface. This commit adds a real account-menu entry ("Set up your feed" / "Change your feed"), making it a discoverable, user-facing feature that biases the discovery feed by mood/era/topic.
 
 **README changes:**
+
 - Features > Personalization: added a bullet for the account-menu preference flow that biases the discovery feed.
 
 _Full diff: see the accompanying PR._
@@ -22,6 +23,7 @@ _Full diff: see the accompanying PR._
 **Why:** The commit adds Aref Ruqaa to `src/constants/fonts.js`, `src/styles/app.css`, and the Google Fonts link in `index.html`, bringing the total number of selectable Arabic typefaces from nine to ten. The README's Features section listed the old count and omitted the new font.
 
 **README changes:**
+
 - Features > Reading: "Nine Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh, Scheherazade New)" -> "Ten Arabic typefaces (Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh, Scheherazade New, Aref Ruqaa)"
 
 _Full diff: see the accompanying PR._

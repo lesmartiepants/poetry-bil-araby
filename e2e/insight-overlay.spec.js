@@ -87,11 +87,11 @@ test.describe('Inline Insights', () => {
     await expect(backBtn).toBeVisible({ timeout: 5000 });
     await backBtn.click();
 
-    // The inline insight is dismissed and the verse stage is shown again.
+    // The inline insight is dismissed and the poem column is shown again.
     await expect(page.locator('[data-insight-ui]')).toHaveCount(0);
-    await expect(page.locator('[data-testid="sparkler-stage"]').first()).toBeVisible({
-      timeout: 5000,
-    });
+    await expect(
+      page.locator('[data-testid="poem-column"][data-active="true"]').first()
+    ).toBeVisible({ timeout: 5000 });
   });
 
   test('the inline insight is not the old vaul drawer', async ({ page }) => {

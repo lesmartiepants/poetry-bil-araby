@@ -5,12 +5,11 @@ import RevealText from './RevealText.jsx';
  *
  * The tap rhythm lives in the parent: tap "for meaning" → 'meaning' (The Meaning / depth), tap
  * "for the poet" → 'author' (About the Author / bio). One section shows at a time; its paragraph
- * reveals word-by-word via RevealText. The section label is pinned above the (non-scrolling)
- * RevealText viewport — scrolling happens only through the parent's scrub bar. The poet's name is
- * NOT repeated here; it already lives in the page header.
+ * reveals word-by-word via RevealText. The section label is pinned above the RevealText viewport,
+ * which scrolls natively (the scrub bar it used to depend on is gone). The poet's name is NOT
+ * repeated here; it already lives in the page header.
  *
- * `revealRef` + onProgress/onScrollMeta are forwarded to the active RevealText so the parent's
- * persistent scrubber can show load progress + drive scrolling.
+ * onProgress is forwarded to the active RevealText so the parent can mark the section seen.
  */
 export default function InlineInsights({
   stage = 'meaning',
@@ -19,9 +18,7 @@ export default function InlineInsights({
   insightParts = null,
   interpretation = null,
   animate = true,
-  revealRef,
   onProgress,
-  onScrollMeta,
 }) {
   const gold = darkMode ? '#d4b463' : '#8B6430';
   const textLight = darkMode ? 'rgba(236,232,224,0.9)' : 'rgba(28,25,23,0.88)';
@@ -61,7 +58,7 @@ export default function InlineInsights({
 
   return (
     <div className="flex flex-col h-full w-full">
-      {/* Pinned section label — stays fixed; only the paragraph below is scrolled (via the scrubber). */}
+      {/* Pinned section label — stays fixed; the paragraph below scrolls natively. */}
       <div
         className="shrink-0 text-[9px] uppercase tracking-[0.18em] mb-2 text-center"
         style={{ color: gold, opacity: 0.8 }}
@@ -70,14 +67,12 @@ export default function InlineInsights({
       </div>
       <div className="flex-1 min-h-0">
         <RevealText
-          ref={revealRef}
           key={stage}
           text={text}
           active
           animate={animate}
           color={isAuthor ? textDim : textLight}
           onProgress={onProgress}
-          onScrollMeta={onScrollMeta}
         />
       </div>
     </div>

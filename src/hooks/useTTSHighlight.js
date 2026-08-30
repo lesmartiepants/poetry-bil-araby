@@ -62,9 +62,11 @@ if (ttsDebugEnabled()) {
   window.__ttsGetLag = getHighlightLag;
   window.__ttsAudioStore = useAudioStore;
   // uiStore holds liveVoice; lazy import keeps it out of the prod path.
-  import('../stores/uiStore.js').then((m) => {
-    window.__ttsUIStore = m.useUIStore;
-  }).catch(() => {});
+  import('../stores/uiStore.js')
+    .then((m) => {
+      window.__ttsUIStore = m.useUIStore;
+    })
+    .catch(() => {});
 }
 
 /**
@@ -82,9 +84,9 @@ export const isSeeking = { value: false };
 export const lastStopWasPause = { value: false };
 
 /**
- * The sparkler reader owns its own fixed-line scrolling. Disable the generic
- * word-follow scroll while that reader is active so the two mechanisms do not
- * fight each other.
+ * The flow reader owns its own scrolling (PoemColumn follows the spoken verse).
+ * Disable the generic word-follow scroll while that reader is active so the
+ * two mechanisms do not fight each other.
  */
 export const windowedReveal = { value: false };
 export function setWindowedReveal(value) {
@@ -199,7 +201,7 @@ export function applyHighlightsOnce(
       }
     }
 
-    // The sparkler reader owns its own fixed-line scrolling.
+    // The flow reader owns its own scrolling (PoemColumn follows the verse).
     const activeEl = wordRefs[newIndex]?.current;
     if (activeEl && !windowedReveal.value) {
       activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -309,7 +311,7 @@ export function useTTSHighlight({
       if (newIndex !== activeIndexRef.current) {
         if (typeof window !== 'undefined' && window.__ttsHighlightLog) {
           window.__ttsHighlightLog.push({
-            t: Math.round((globalThis.performance?.now?.() ?? 0)),
+            t: Math.round(globalThis.performance?.now?.() ?? 0),
             prevIdx: activeIndexRef.current,
             idx: newIndex,
             elapsed: Number(elapsed.toFixed(3)),
@@ -328,7 +330,7 @@ export function useTTSHighlight({
           }
         }
 
-        // The sparkler reader owns its own fixed-line scrolling.
+        // The flow reader owns its own scrolling (PoemColumn follows the verse).
         if (newIndex >= 0 && !windowedReveal.value) {
           const activeEl = wordRefs[newIndex]?.current;
           if (activeEl) {

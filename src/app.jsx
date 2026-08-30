@@ -116,6 +116,7 @@ import CategoryExplorer from './components/CategoryExplorer.jsx';
 const OnboardingFlow = lazy(() => import('./components/onboarding/OnboardingFlow.jsx'));
 import PoemCarousel from './components/PoemCarousel.jsx';
 import PoemFeed from './components/feed/PoemFeed.jsx';
+import { SummonProvider } from './components/feed/PoemSeal.jsx';
 import AccountMenu from './components/AccountMenu.jsx';
 import TourLauncher from './components/tour/TourLauncher.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
@@ -297,7 +298,7 @@ export default function DiwanApp() {
   const highlightStyle = useUIStore((s) => s.highlightStyle);
   const insightsMode = useUIStore((s) => s.insightsMode);
   const setInsightsMode = useUIStore((s) => s.setInsightsMode);
-  // Sparkler reader: tell useTTSHighlight to skip page-scroll (the 4-line window scrolls itself);
+  // Flow reader: tell useTTSHighlight to skip page-scroll (PoemColumn follows the verse itself);
   // allow ?insightsMode=inline|drawer to flip the end-state insight surface for A/B testing.
   useEffect(() => {
     setWindowedReveal(FEATURES.verticalFeed);
@@ -1839,7 +1840,8 @@ export default function DiwanApp() {
         />
       )}
 
-      {/* Corner wordmark — top-right, fades out on scroll and when idle */}
+      {/* Corner wordmark — top-left (the top-right corner belongs to the poem's own title),
+          fades out on scroll and when idle */}
       <motion.header
         animate={{
           opacity: effectivelyIdle ? 0 : BRAND_HEADER.containerOpacity * (1 - headerOpacity),
@@ -1853,7 +1855,7 @@ export default function DiwanApp() {
         style={{
           position: 'fixed',
           top: 0,
-          right: 0,
+          left: 0,
           zIndex: 40,
           pointerEvents: 'none',
           padding: '0.6rem 0.8rem',
@@ -2028,92 +2030,109 @@ export default function DiwanApp() {
                   {carouselPoems.length > 0 && (
                     <>
                       {FEATURES.verticalFeed ? (
-                        <PoemFeed
-                          ref={carouselRef}
-                          poems={carouselPoems}
-                          currentIndex={carouselIndex}
-                          onSlideChange={(idx, direction) => {
-                            setCarouselIndex(idx);
-                            const { player: activePlayer, resetAudio } = useAudioStore.getState();
-                            if (activePlayer) {
-                              try {
-                                activePlayer.stop();
-                              } catch {
-                                /* already stopped */
-                              }
-                            }
-                            if (audioUrl) URL.revokeObjectURL(audioUrl);
-                            abortPlay();
-                            resetAudio();
-                            isTogglingPlay.current = false;
-                            pauseOffset.value = 0;
-                            playbackStartTime.value = 0;
-                            document
-                              .querySelectorAll('.tts-active, .tts-past')
-                              .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
-                            dismissTTSProgress();
-                            cancelAnalysis();
-                            setInterpretation(null);
-                            if (
-                              carouselExplainTargetId.current &&
-                              usePoemStore.getState().isInterpreting
-                            ) {
-                              explainedPoemIds.current.delete(carouselExplainTargetId.current);
-                            }
-                            carouselExplainTargetId.current = null;
-                            setShowTranslation(true);
-                            const newPoem = usePoemStore.getState().carouselPoems[idx];
-                            if (FEATURES.logging && newPoem) {
-                              const fromPoem = carouselPoems[carouselIndex];
-                              addLog(
-                                'Carousel',
-                                `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
-                                'user'
-                              );
-                            }
-                            if (newPoem?.id) {
-                              navigateReader('/poem/' + newPoem.id + window.location.search, {
-                                replace: true,
-                              });
-                              updateOGMetaTags(newPoem);
-                            }
-                            if (newPoem && !newPoem.english) {
-                              explainedPoemIds.current.delete(newPoem.id);
-                              setAutoExplainPending(true);
-                            }
+                        /* SummonProvider renders its own two fixed layers: the bloom and vignette
+                           BEHIND the reader at z-index 1, the burst and sparks ABOVE it at
+                           z-index 8. It has to sit here rather than inside PoemReader because the
+                           recede rule is an ancestor selector (`.summoning .pc-col`) and because
+                           the scroller and each slide both clip. `.summon-root` is display:contents,
+                           so it adds no box of its own; the z-index 2 wrapper below is what puts
+                           the reader between the two layers. */
+                        <SummonProvider
+                          onSummon={() => {
+                            const { carouselIndex: i } = usePoemStore.getState();
+                            carouselRef.current?.scrollTo(i + 1);
                           }}
-                          darkMode={darkMode}
-                          showTranslation={showTranslation}
-                          showTransliteration={showTransliteration}
-                          textScale={textScale}
-                          currentFontClass={currentFontClass}
-                          POEM_META={POEM_META}
-                          DESIGN={DESIGN}
-                          onLoadMore={loadMorePoems}
-                          highlightStyle={highlightStyle}
-                          currentVerseIndex={currentVerseIndex}
-                          wordRefs={wordRefs}
-                          wordOffsets={wordOffsets}
-                          isInterpreting={isInterpreting}
-                          insightParts={insightParts}
-                          interpretation={interpretation}
-                          onSeeInsight={() => handleAnalyze()}
-                          isGeneratingAudio={isGeneratingAudio}
-                          onTogglePlay={togglePlay}
-                          onPrevVerse={handlePrevVerse}
-                          onNextVerse={handleNextVerse}
-                          onStopAudio={() => {
-                            const { player, resetAudio } = useAudioStore.getState();
-                            try {
-                              player?.stop?.();
-                            } catch {
-                              /* already stopped */
-                            }
-                            abortPlay();
-                            resetAudio();
-                          }}
-                          onShare={handleShare}
-                        />
+                        >
+                          <div style={{ position: 'relative', zIndex: 2 }}>
+                            <PoemFeed
+                              ref={carouselRef}
+                              poems={carouselPoems}
+                              currentIndex={carouselIndex}
+                              onSlideChange={(idx, direction) => {
+                                setCarouselIndex(idx);
+                                const { player: activePlayer, resetAudio } =
+                                  useAudioStore.getState();
+                                if (activePlayer) {
+                                  try {
+                                    activePlayer.stop();
+                                  } catch {
+                                    /* already stopped */
+                                  }
+                                }
+                                if (audioUrl) URL.revokeObjectURL(audioUrl);
+                                abortPlay();
+                                resetAudio();
+                                isTogglingPlay.current = false;
+                                pauseOffset.value = 0;
+                                playbackStartTime.value = 0;
+                                document
+                                  .querySelectorAll('.tts-active, .tts-past')
+                                  .forEach((el) => el.classList.remove('tts-active', 'tts-past'));
+                                dismissTTSProgress();
+                                cancelAnalysis();
+                                setInterpretation(null);
+                                if (
+                                  carouselExplainTargetId.current &&
+                                  usePoemStore.getState().isInterpreting
+                                ) {
+                                  explainedPoemIds.current.delete(carouselExplainTargetId.current);
+                                }
+                                carouselExplainTargetId.current = null;
+                                setShowTranslation(true);
+                                const newPoem = usePoemStore.getState().carouselPoems[idx];
+                                if (FEATURES.logging && newPoem) {
+                                  const fromPoem = carouselPoems[carouselIndex];
+                                  addLog(
+                                    'Carousel',
+                                    `Swipe ${direction || '?'} | ${fromPoem?.poetArabic || fromPoem?.poet || '?'} → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ${carouselIndex}→${idx}`,
+                                    'user'
+                                  );
+                                }
+                                if (newPoem?.id) {
+                                  navigateReader('/poem/' + newPoem.id + window.location.search, {
+                                    replace: true,
+                                  });
+                                  updateOGMetaTags(newPoem);
+                                }
+                                if (newPoem && !newPoem.english) {
+                                  explainedPoemIds.current.delete(newPoem.id);
+                                  setAutoExplainPending(true);
+                                }
+                              }}
+                              darkMode={darkMode}
+                              showTranslation={showTranslation}
+                              showTransliteration={showTransliteration}
+                              textScale={textScale}
+                              currentFontClass={currentFontClass}
+                              POEM_META={POEM_META}
+                              DESIGN={DESIGN}
+                              onLoadMore={loadMorePoems}
+                              highlightStyle={highlightStyle}
+                              currentVerseIndex={currentVerseIndex}
+                              wordRefs={wordRefs}
+                              wordOffsets={wordOffsets}
+                              isInterpreting={isInterpreting}
+                              insightParts={insightParts}
+                              interpretation={interpretation}
+                              onSeeInsight={() => handleAnalyze()}
+                              isGeneratingAudio={isGeneratingAudio}
+                              onTogglePlay={togglePlay}
+                              onPrevVerse={handlePrevVerse}
+                              onNextVerse={handleNextVerse}
+                              onStopAudio={() => {
+                                const { player, resetAudio } = useAudioStore.getState();
+                                try {
+                                  player?.stop?.();
+                                } catch {
+                                  /* already stopped */
+                                }
+                                abortPlay();
+                                resetAudio();
+                              }}
+                              onShare={handleShare}
+                            />
+                          </div>
+                        </SummonProvider>
                       ) : (
                         <PoemCarousel
                           ref={carouselRef}

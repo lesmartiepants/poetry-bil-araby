@@ -8,6 +8,18 @@ prepends an entry below (newest first) describing **why** it changed and a conci
 
 <!-- New entries are inserted directly below this line, newest first. -->
 
+## 2026-08-30 — 1e8642f feat(reader): flow column + quill summon (N4 port from #714) (#737)
+
+**Why:** This commit removed the sparkler-reveal reader (`SparklerStage.jsx`, `useSparklerReveal.js`, `ProgressScrubber.jsx`, `e2e/sparkler-reader.spec.js`) and replaced it with a scrolling-column reader (`PoemColumn.jsx`, `PoemSeal.jsx`, `e2e/flow-reader.spec.js`): the whole poem now renders in one scrolling column with verses ahead dimmed until read, and poem-to-poem movement is a quill you press and hold to summon the next poem — the vertical swipe between poems is gone (`feature-manifest.json`'s `reader-feed` entry was renamed from "Sparkler reveal reader (vertical feed)" to "Flow reader (scrolling column + quill summon)"). The README's Philosophy, Islamic Art and Geometry, and Features sections still described the old tap-to-reveal sparkler and vertical swipe feed.
+
+**README changes:**
+- Philosophy (Pleasurable principle): "tap-to-reveal reading experience — where each verse blooms into view in time with the recitation" -> "scrolling reading column — where verses ahead stay dimmed until read"
+- Islamic Art and Geometry: "the sparkler-style verse reveal, the feed transitions" -> "the scrolling verse reveal, the quill you hold to summon the next poem"
+- Features > Reading: "A vertical swipe feed where each poem unfolds through a sparkler reveal — verse by verse ... uncovered in time with the recitation" -> "The whole poem in one scrolling column ... with verses ahead dimmed until read; press and hold the quill to summon the next poem"
+- Features > Discovery: "Poet filtering and a vertical feed you swipe through, poem to poem" -> "Poet filtering, and a swipeable carousel of poems by the same poet" (the vertical swipe-between-poems gesture no longer exists; the same-poet carousel is a separate, unaffected feature)
+
+_Full diff: see the accompanying PR._
+
 ## 2026-08-15 — 713390c feat(onboarding): reach the preference flow from the account menu (#712)
 
 **Why:** The preference flow at `/onboarding` was previously reachable only from the debug panel, so the README's Personalization list correctly omitted it as a hidden/dev-only surface. This commit adds a real account-menu entry ("Set up your feed" / "Change your feed"), making it a discoverable, user-facing feature that biases the discovery feed by mood/era/topic.

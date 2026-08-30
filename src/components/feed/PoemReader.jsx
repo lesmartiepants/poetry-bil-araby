@@ -74,6 +74,9 @@ const PoemReader = memo(function PoemReader({
 
   const columnRef = useRef(null);
   const insightWrapRef = useRef(null);
+  // The quill element, so the pull-at-bottom summon can anchor its FX to it. PoemSeal renders
+  // the element; it accepts this ref and writes it on mount.
+  const sealRef = useRef(null);
   // Set when the reader taps "Back to Poem" so the column returns to the top once it is visible.
   const cameFromInsightsRef = useRef(false);
 
@@ -120,7 +123,10 @@ const PoemReader = memo(function PoemReader({
   }, [endStage]);
 
   const onInsightProgress = (done) => {
-    if (done && endStage !== 'idle') {
+    // RevealText reports a fraction (0..1) on every tween tick, not a boolean. Anything below 1
+    // is mid-reveal; treating 0.02 as done marked the section seen on the first frame, which
+    // flipped animate to false and cancelled the word-by-word reveal it was still playing.
+    if (done >= 1 && endStage !== 'idle') {
       setSeenStages((s) => (s[endStage] ? s : { ...s, [endStage]: true }));
     }
   };
@@ -131,8 +137,12 @@ const PoemReader = memo(function PoemReader({
   const handleOverPull = useCallback(
     ({ distance, phase }) => {
       if (!summon || !isActive) return;
-      if (phase === 'move') summon.setCharge(distance / PULL_NEED);
-      else summon.endCharge();
+      // Route through pull(), not setCharge/endCharge. pull() anchors --sx/--sy to the quill on
+      // the first movement and hands commit the seal element, so the burst, sparks and quill lift
+      // all fire at the control the reader is pulling past. Calling setCharge directly left the
+      // FX on CSS defaults (50%/62%), or on coordinates left over from the previous quill hold,
+      // and committed with no seal element, which skips the spark burst entirely.
+      summon.pull({ distance, phase }, sealRef.current);
     },
     [summon, isActive]
   );
@@ -172,7 +182,7 @@ const PoemReader = memo(function PoemReader({
           >
             {/* The quill lives inside the column so it scrolls with the poem: it exists only at
                 the end, where the reader has arrived deliberately. */}
-            {isActive && <PoemSeal />}
+            {isActive && <PoemSeal sealRef={sealRef} />}
           </PoemColumn>
         )}
 

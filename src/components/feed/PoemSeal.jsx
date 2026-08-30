@@ -312,9 +312,12 @@ export function useSummon() {
  * PoemSeal — the 76px quill itself. Rendered inside the poem column so it scrolls with the poem;
  * it only exists at the end, where the reader has arrived deliberately.
  */
-export default function PoemSeal({ disabled = false }) {
+export default function PoemSeal({ disabled = false, sealRef: externalSealRef }) {
   const summon = useSummon();
-  const sealRef = useRef(null);
+  const innerSealRef = useRef(null);
+  // PoemReader passes a ref so the pull-at-bottom summon can hand this same element to
+  // summon.pull(): one anchor point for the hold path and the pull path alike.
+  const sealRef = externalSealRef ?? innerSealRef;
   const [keyHeld, setKeyHeld] = useState(false);
 
   const start = () => {

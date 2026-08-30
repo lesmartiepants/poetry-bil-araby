@@ -33,8 +33,8 @@ Three principles guide every feature:
   Translations follow a strict rule borrowed from the app's own prompt: _every word choice
   must sound like it belongs in a living poem_ — no archaic English, no invented imagery.
 - **Pleasurable.** A lapis-and-gold visual language drawn from Islamic illumination, generative
-  geometric backgrounds, and a tap-to-reveal reading experience — where each verse blooms into
-  view in time with the recitation — make reading feel like an occasion rather than a lookup.
+  geometric backgrounds, and a scrolling reading column — where verses ahead stay dimmed until
+  read — make reading feel like an occasion rather than a lookup.
 
 ## The Library
 
@@ -105,15 +105,16 @@ illuminated manuscripts the poems come from.
 The animated backgrounds are not stock textures: `SquoctogonBackground.jsx` generates true
 Islamic geometric tessellations — eightfold girih stars and octagon-and-square grids — as
 live SVG, the same construction reused in this README's header banner. The app opens directly
-onto a poem, and motion throughout — the sparkler-style verse reveal, the feed transitions, and
-the inline insight panels — is handled with GSAP and Framer Motion for a calm, considered feel.
+onto a poem, and motion throughout — the scrolling verse reveal, the quill you hold to summon
+the next poem, and the inline insight panels — is handled with GSAP and Framer Motion for a
+calm, considered feel.
 
 ## Features
 
 **Reading**
 
-- A vertical swipe feed where each poem unfolds through a sparkler reveal — verse by verse
-  (Arabic, transliteration, and translation together), uncovered in time with the recitation
+- The whole poem in one scrolling column (Arabic, transliteration, and translation together),
+  with verses ahead dimmed until read; press and hold the quill to summon the next poem
 - Full diacritics (harakat) for accurate pronunciation and meter
 - Faithful English translation (cached, or generated on demand)
 - Latin transliteration toggle
@@ -125,7 +126,7 @@ the inline insight panels — is handled with GSAP and Framer Motion for a calm,
 **Discovery**
 
 - A single tap surfaces a new poem from the curated library
-- Poet filtering and a vertical feed you swipe through, poem to poem
+- Poet filtering, and a swipeable carousel of poems by the same poet
 - Deep-linkable poems and shareable cards with Open Graph previews
 
 **Personalization**

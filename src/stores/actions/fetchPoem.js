@@ -89,19 +89,25 @@ export async function fetchWeightedFeed({
   });
   const all = [...byId.values()];
 
-  // Prefer poems the reader has not seen, but fall back rather than starve — a
-  // reader deep into a narrow corner can have seen every candidate on the page.
-  const fresh = all.filter((p) => !excludeIds?.includes(p.id));
-  const candidates = fresh.length ? fresh : all;
-  if (!candidates.length) {
+  if (!all.length) {
     addLog('Discovery Bias', 'No candidates returned — widening to a plain draw', 'info');
     return [];
   }
 
-  const { picks, scored, temperature } = drawManyFrom(candidates, prefs, poemsSeen, bands, {
+  // What the reader has already been offered. `excludeIds` is fed from
+  // getRecentSeenIds() (src/utils/seenPoems.js), which is persisted, so this
+  // survives a reload — which is what keeps a deterministic ranking from
+  // handing back the same top-rung poem every session.
+  //
+  // drawManyFrom falls back to the full pool when everything is excluded, so a
+  // reader deep in a narrow corner gets a repeat rather than an empty feed.
+  const seen = new Set(excludeIds || []);
+
+  const { picks, scored, temperature } = drawManyFrom(all, prefs, poemsSeen, bands, {
     count,
     startSlot,
     deterministic,
+    seen,
   });
   if (!picks.length) return [];
 
@@ -137,7 +143,7 @@ export async function fetchWeightedFeed({
     'Discovery Bias',
     `Scored draw | ${picks.length} slide${picks.length === 1 ? '' : 's'} ${startSlot}-${startSlot + picks.length - 1} | ` +
       picks.map((p) => `${p.scaled.toFixed(2)}${p.deterministic ? '*' : ''}`).join(' ') +
-      ` /${MAX_SCORE} | ${candidates.length} candidates | T=${temperature.toFixed(2)} | seen: ${poemsSeen}` +
+      ` /${MAX_SCORE} | ${all.length} candidates (${seen.size} already shown) | T=${temperature.toFixed(2)} | seen: ${poemsSeen}` +
       (picks.some((p) => p.deterministic) ? ' | * = ranked, not sampled' : ''),
     'info'
   );
@@ -289,9 +295,10 @@ async function fetchFromDatabase({
   // is biased server-side by the taste profile (config/curation.json) and the
   // reader's downvotes are excluded, so the onboarding draw is skipped.
   const prefs = readPrefs();
-  const weighted = !curated && hasPreferences(prefs)
-    ? await fetchWeightedPoem({ prefs, poet, excludeIds: seenIds, addLog }).catch(() => null)
-    : null;
+  const weighted =
+    !curated && hasPreferences(prefs)
+      ? await fetchWeightedPoem({ prefs, poet, excludeIds: seenIds, addLog }).catch(() => null)
+      : null;
   const newPoem = weighted || (await fetchRandomPoem({ poet, excludeIds, curated }));
   const apiTime = performance.now() - apiStart;
 

@@ -1786,7 +1786,14 @@ app.post(
       // Stripping rather than escaping because the app renders these as React
       // text children (no dangerouslySetInnerHTML reaches them), so `&lt;`
       // would be shown to the reader literally.
-      const clean = (s) => s?.replace(/[<>]/g, '') || null;
+      //
+      // '*' goes too: it is the corpus verse separator, and services/database.js
+      // turns every '*' into a newline on read. A model that writes a title in
+      // markdown italics — "*Saqt al-Zand*" — therefore splits one verse into
+      // three and shifts the rest of the poem out of alignment with the Arabic.
+      // In the explanation and bio it is only markdown that renders literally,
+      // so dropping it there is a tidy-up rather than a fix.
+      const clean = (s) => s?.replace(/[<>*]/g, '') || null;
 
       // Only write if not already translated (write-once guard)
       const result = await pool.query(

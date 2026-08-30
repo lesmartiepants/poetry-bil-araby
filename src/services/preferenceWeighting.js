@@ -221,20 +221,39 @@ export const temperatureFor = (poemsSeen) => {
 export const hasPreferences = (prefs) =>
   !!(
     prefs &&
-    (prefs.family || prefs.era || prefs.difficulty || prefs.moods?.length || prefs.motifs?.length)
+    // era and difficulty are arrays since they became multi-select, and an
+    // EMPTY array is truthy — testing them bare would report "has preferences"
+    // for a reader who skipped every step, which turns the whole feed scored.
+    (prefs.family ||
+      asArray(prefs.era).length ||
+      asArray(prefs.difficulty).length ||
+      prefs.moods?.length ||
+      prefs.motifs?.length)
   );
 
 const asArray = (v) => (Array.isArray(v) ? v.filter(Boolean) : v ? [v] : []);
 
-/** Resolve a stored era band KEY against the live bands. */
-const eraBandFor = (prefs, bands) =>
-  prefs?.era ? (bands?.eraBands || []).find((b) => b.key === prefs.era) || null : null;
+/**
+ * Resolve stored era band KEYS against the live bands.
+ *
+ * Era and difficulty became multi-select, so both are stored as arrays. A v2
+ * payload written before that holds a bare string, and `asArray` reads it as a
+ * one-element list — old answers keep scoring exactly as they did.
+ */
+const eraBandsFor = (prefs, bands) =>
+  asArray(prefs?.era)
+    .map((k) => (bands?.eraBands || []).find((b) => b.key === k))
+    .filter(Boolean);
 
-/** Resolve a stored difficulty band KEY against the live bands. */
-const difficultyBandFor = (prefs, bands) =>
-  prefs?.difficulty
-    ? (bands?.difficultyBands || []).find((b) => b.key === prefs.difficulty) || null
-    : null;
+/** Resolve stored difficulty band KEYS against the live bands. */
+const difficultyBandsFor = (prefs, bands) =>
+  asArray(prefs?.difficulty)
+    .map((k) => (bands?.difficultyBands || []).find((b) => b.key === k))
+    .filter(Boolean);
+
+/** First chosen band. For display surfaces that name a single band. */
+const eraBandFor = (prefs, bands) => eraBandsFor(prefs, bands)[0] || null;
+const difficultyBandFor = (prefs, bands) => difficultyBandsFor(prefs, bands)[0] || null;
 
 /**
  * The member value keys of the reader's chosen family, as `dim:key` pairs.
@@ -271,11 +290,20 @@ export const scopeFiltersFor = (prefs, bands = {}, only = null) => {
     filters.motif = asArray(prefs.motifs).join(',');
 
   if (want('era')) {
-    const band = eraBandFor(prefs, bands);
-    if (band) {
-      if (band.undated) {
-        filters.undated = 1;
-      } else if (Number.isFinite(band.century_from)) {
+    // Multi-select: the scope is the UNION of the chosen bands. It is a
+    // superset when the picks are not adjacent (6-8 plus 15-today also spans
+    // 9-14), which is acceptable here and only here — this builds a counting
+    // and anchoring query, and the scorer below judges each band separately.
+    const chosenEra = eraBandsFor(prefs, bands);
+    const dated = chosenEra.filter((b) => Number.isFinite(b.century_from));
+    if (chosenEra.length && !dated.length) {
+      filters.undated = 1;
+    } else if (dated.length) {
+      const band = {
+        century_from: Math.min(...dated.map((b) => b.century_from)),
+        century_to: Math.max(...dated.map((b) => b.century_to)),
+      };
+      {
         filters.centuryFrom = band.century_from;
         filters.centuryTo = band.century_to;
         // Undated poems are ~25% of the corpus and stay ELIGIBLE under a dated
@@ -286,10 +314,12 @@ export const scopeFiltersFor = (prefs, bands = {}, only = null) => {
   }
 
   if (want('difficulty')) {
-    const band = difficultyBandFor(prefs, bands);
-    if (band) {
-      filters.minAccessibility = band.min;
-      filters.maxAccessibility = band.max;
+    const chosenDiff = difficultyBandsFor(prefs, bands).filter(
+      (b) => Number.isFinite(b.min) && Number.isFinite(b.max)
+    );
+    if (chosenDiff.length) {
+      filters.minAccessibility = Math.min(...chosenDiff.map((b) => b.min));
+      filters.maxAccessibility = Math.max(...chosenDiff.map((b) => b.max));
     }
   }
   return filters;
@@ -375,8 +405,8 @@ export const scorePoem = (poem, prefs, bands = {}) => {
   const f = facetsOf(poem);
   const moods = asArray(prefs?.moods);
   const motifs = asArray(prefs?.motifs);
-  const eraBand = eraBandFor(prefs, bands);
-  const diffBand = difficultyBandFor(prefs, bands);
+  const eraBands = eraBandsFor(prefs, bands);
+  const diffBands = difficultyBandsFor(prefs, bands);
 
   let score = 0;
   let max = 0;
@@ -485,79 +515,85 @@ export const scorePoem = (poem, prefs, bands = {}) => {
   }
 
   /* -- era: ordinal, with adjacency and an undated allowance --------------- */
-  if (eraBand) {
+  // Multi-select: each chosen band is judged on its own and the BEST credit
+  // wins. Merging the picks into one span instead would credit the gap between
+  // two non-adjacent bands as if the reader had asked for it.
+  if (eraBands.length) {
     max += WEIGHTS.era;
-    if (eraBand.undated) {
-      // The late/modern band IS the undated rows. A dated poem is simply not it.
+    const judge = (band) => {
+      if (band.undated) {
+        return f.century == null
+          ? { credit: 1, kind: 'full', why: 'undated, as asked', matched: 'undated' }
+          : { credit: 0, kind: 'none', why: `dated (c${f.century})` };
+      }
       if (f.century == null) {
-        score += WEIGHTS.era;
-        matched.era = 'undated';
-        term('era', WEIGHTS.era, WEIGHTS.era, 'full', 'undated, as asked');
-      } else {
-        term('era', WEIGHTS.era, 0, 'none', `dated (c${f.century})`);
+        // The 15th-to-today band absorbs the undated rows (see FIXED_ERA_BANDS),
+        // so for that band an undated poem is exactly what was asked for. Under
+        // any other band it is a partial credit: undated is ~25% of the corpus
+        // and excluding it outright would starve every dated answer.
+        return band.includesUndated
+          ? { credit: 1, kind: 'full', why: 'undated, in band', matched: 'in-band' }
+          : {
+              credit: UNDATED_ERA_CREDIT,
+              kind: 'partial',
+              why: 'undated',
+              matched: 'undated-under-dated',
+            };
       }
-    } else if (f.century == null) {
-      score += WEIGHTS.era * UNDATED_ERA_CREDIT;
-      matched.era = 'undated-under-dated';
-      term('era', WEIGHTS.era, WEIGHTS.era * UNDATED_ERA_CREDIT, 'partial', 'undated');
-    } else {
-      const from = eraBand.century_from;
-      const to = eraBand.century_to;
-      if (Number.isFinite(from) && Number.isFinite(to)) {
-        if (f.century >= from && f.century <= to) {
-          score += WEIGHTS.era;
-          matched.era = 'in-band';
-          term('era', WEIGHTS.era, WEIGHTS.era, 'full', 'in band');
-        } else {
-          const gap = f.century < from ? from - f.century : f.century - to;
-          if (gap <= ADJACENT_CENTURIES) {
-            score += WEIGHTS.era * ADJACENT_ERA_CREDIT;
-            matched.era = 'adjacent';
-            term(
-              'era',
-              WEIGHTS.era,
-              WEIGHTS.era * ADJACENT_ERA_CREDIT,
-              'partial',
-              `${gap} c. outside`
-            );
-          } else {
-            term('era', WEIGHTS.era, 0, 'none', `${gap} c. outside`);
+      const from = band.century_from;
+      const to = band.century_to;
+      if (!Number.isFinite(from) || !Number.isFinite(to)) {
+        return { credit: 0, kind: 'none', why: 'band has no century range' };
+      }
+      if (f.century >= from && f.century <= to) {
+        return { credit: 1, kind: 'full', why: 'in band', matched: 'in-band' };
+      }
+      const gap = f.century < from ? from - f.century : f.century - to;
+      return gap <= ADJACENT_CENTURIES
+        ? {
+            credit: ADJACENT_ERA_CREDIT,
+            kind: 'partial',
+            why: `${gap} c. outside`,
+            matched: 'adjacent',
           }
-        }
-      } else {
-        term('era', WEIGHTS.era, 0, 'none', 'band has no century range');
-      }
-    }
+        : { credit: 0, kind: 'none', why: `${gap} c. outside` };
+    };
+
+    const best = eraBands
+      .map(judge)
+      .reduce((a, b) => (b.credit > a.credit ? b : a), { credit: -1, kind: 'none', why: '' });
+    score += WEIGHTS.era * best.credit;
+    if (best.matched) matched.era = best.matched;
+    term('era', WEIGHTS.era, WEIGHTS.era * best.credit, best.kind, best.why);
   }
 
   /* -- difficulty: continuous, linear falloff outside the band ------------- */
-  if (diffBand) {
+  // Same rule as era: best of the chosen bands, not their union.
+  if (diffBands.length) {
     max += WEIGHTS.difficulty;
     const a = f.accessibility;
-    if (a != null && Number.isFinite(diffBand.min) && Number.isFinite(diffBand.max)) {
-      if (a >= diffBand.min && a <= diffBand.max) {
-        score += WEIGHTS.difficulty;
-        matched.difficulty = 'in-band';
-        term('difficulty', WEIGHTS.difficulty, WEIGHTS.difficulty, 'full', 'in band');
-      } else {
-        const gap = a < diffBand.min ? diffBand.min - a : a - diffBand.max;
-        const near = Math.max(0, 1 - gap / DIFFICULTY_FALLOFF) * DIFFICULTY_NEAR_CREDIT;
-        if (near > 0) {
-          score += WEIGHTS.difficulty * near;
-          matched.difficulty = 'near';
-          term(
-            'difficulty',
-            WEIGHTS.difficulty,
-            WEIGHTS.difficulty * near,
-            'partial',
-            `${gap.toFixed(1)} outside`
-          );
-        } else {
-          term('difficulty', WEIGHTS.difficulty, 0, 'none', `${gap.toFixed(1)} outside`);
-        }
-      }
-    } else {
+    if (a == null) {
       term('difficulty', WEIGHTS.difficulty, 0, 'none', 'poem has no score');
+    } else {
+      const judge = (band) => {
+        if (!Number.isFinite(band.min) || !Number.isFinite(band.max)) {
+          return { credit: 0, kind: 'none', why: 'band has no range' };
+        }
+        if (a >= band.min && a <= band.max) {
+          return { credit: 1, kind: 'full', why: 'in band', matched: 'in-band' };
+        }
+        const gap = a < band.min ? band.min - a : a - band.max;
+        const near = Math.max(0, 1 - gap / DIFFICULTY_FALLOFF) * DIFFICULTY_NEAR_CREDIT;
+        return near > 0
+          ? { credit: near, kind: 'partial', why: `${gap.toFixed(1)} outside`, matched: 'near' }
+          : { credit: 0, kind: 'none', why: `${gap.toFixed(1)} outside` };
+      };
+      const best = diffBands
+        .map(judge)
+        .reduce((x, y) => (y.credit > x.credit ? y : x), { credit: -1, kind: 'none', why: '' });
+      score += WEIGHTS.difficulty * best.credit;
+      if (best.matched) matched.difficulty = best.matched;
+      term('difficulty', WEIGHTS.difficulty, WEIGHTS.difficulty * best.credit, best.kind, best.why);
     }
   }
 
@@ -705,15 +741,95 @@ export const drawFrom = (candidates, prefs, poemsSeen, bands = {}, rng = Math.ra
 export const DETERMINISTIC_OPENING = 2;
 
 /**
- * Rank comparator: score first, poem id as a stable tie-break.
+ * The reader's dimensions in priority order, most protected first.
  *
- * The tie-break matters more than it looks. A reader who answered only the
- * family step produces a lot of exact ties (every poem in the family scores a
- * flat 5.00), and without a deterministic second key the "top-ranked" pick would
- * be decided by the API's row order, which is randomised — i.e. sampling by
- * another name, in the two slots that exist to not be sampled.
+ * When a poem cannot satisfy everything, the answers are given up from the
+ * RIGHT of this list. Imagery is the last thing surrendered; era is the first.
+ *
+ * Era sits last on the evidence, not by accident: it is the coarsest facet the
+ * flow asks about (four bands over the whole corpus), so it separates the least
+ * and is the cheapest to concede. Family sits third but rarely does work — it is
+ * a bundle of the other dimensions (`love-desire` is satisfied by the same poems
+ * that carry `amorous`), so the tiers either side of it are often the same set.
+ * See FAMILY_OVERLAP_DISCOUNT.
+ */
+export const PRIORITY_ORDER = Object.freeze(['motif', 'mood', 'family', 'difficulty', 'era']);
+
+/**
+ * A poem's position in the priority order, as a place-value address.
+ *
+ * Each dimension is one bit, weighted by its place in PRIORITY_ORDER, so within
+ * this number alone a higher-priority match outranks every combination of lower
+ * ones — imagery alone is 16, mood + family + difficulty + era together is 15.
+ *
+ * That property is deliberate but it is NOT the top-level sort. `byRank` sorts
+ * on match COUNT first and uses this only to break ties between poems matching
+ * the same number of dimensions. Used as the primary key it surfaced poems
+ * matching one thing ahead of poems matching four, which is what a priority
+ * list literally asks for and not what a reader wants.
+ *
+ * A dimension counts as satisfied on ANY credit, not full credit. Full credit is
+ * unreachable on a multi-select axis — a poem carries one primary mood, so
+ * asking for three moods caps that term below its weight forever, and a
+ * "fully matched" ladder would have an empty top rung for every reader who
+ * multi-selected.
+ *
+ * Unanswered steps score no bit in either direction: they are absent from
+ * `terms` entirely, so a reader who skipped a step is ranked on what they did
+ * answer rather than penalised for the rest.
+ */
+export const priorityAddress = (terms) => {
+  const t = terms || [];
+  let address = 0;
+  PRIORITY_ORDER.forEach((key, i) => {
+    const bit = 1 << (PRIORITY_ORDER.length - 1 - i);
+    const term = t.find((x) => x && x.key === key);
+    if (term && term.earned > 0) address += bit;
+  });
+  return address;
+};
+
+/** How many of the reader's answered dimensions this poem satisfies at all. */
+export const matchCount = (terms) => (terms || []).filter((t) => t && t.earned > 0).length;
+
+/**
+ * Rank comparator: how much matched, then the reader's priority order, then the
+ * weighted score, then poem id.
+ *
+ * The four keys do different jobs and the order between the first two is the
+ * whole design:
+ *
+ *   1. COUNT. Matching more of the reader's answers always wins. A poem
+ *      satisfying mood + family + reading + era beats one satisfying imagery
+ *      alone, because four of five is a better answer to "what do you like"
+ *      than one of five, whatever that one is.
+ *
+ *      This was briefly the other way round. A pure place-value address made
+ *      imagery (16) outrank everything below it combined (15), which is what a
+ *      priority list literally asks for — and in practice it surfaced poems
+ *      matching one dimension ahead of poems matching four. Correct to the
+ *      specification, wrong for the reader.
+ *
+ *   2. ADDRESS breaks ties between poems matching the SAME number of
+ *      dimensions. This is where the priority order lives now: among poems that
+ *      match two things, the one holding imagery + mood beats the one holding
+ *      reading + era. Ordering without overriding.
+ *
+ *   3. SCALED orders poems tied on both — and it is the only place the
+ *      continuous credits survive. Count and address are both binary, so a poem
+ *      0.1 outside the chosen difficulty band and one 3.0 outside are otherwise
+ *      identical; the score is what still separates them.
+ *
+ *   4. ID keeps it deterministic. A reader who answered only the family step
+ *      produces a lot of exact ties, and without a stable last key the pick
+ *      would fall through to the API's row order, which is randomised — i.e.
+ *      sampling by another name, in the slots that exist to not be sampled.
  */
 const byRank = (a, b) => {
+  const n = matchCount(b?.terms) - matchCount(a?.terms);
+  if (n !== 0) return n;
+  const addr = priorityAddress(b?.terms) - priorityAddress(a?.terms);
+  if (addr !== 0) return addr;
   const d = (b?.scaled || 0) - (a?.scaled || 0);
   if (d !== 0) return d;
   const ai = String(a?.poem?.id ?? '');
@@ -765,9 +881,20 @@ export const drawManyFrom = (
   prefs,
   poemsSeen,
   bands = {},
-  { count = 1, startSlot = 0, deterministic = 0, rng = Math.random } = {}
+  { count = 1, startSlot = 0, deterministic = 0, rng = Math.random, seen = null } = {}
 ) => {
-  const list = candidates || [];
+  const all = candidates || [];
+  // Already-read poems are dropped BEFORE ranking, which is what makes a tier
+  // exhaust rather than replay. Without it, strict ranking is actively worse
+  // than sampling: the top rung is small (~15 poems for a narrow answer set) and
+  // deterministic, so every session would open on the same poem.
+  //
+  // Dropped only when something is left. A reader who has exhausted the pool
+  // gets it back rather than an empty feed — repeating a poem beats a blank
+  // screen, and the alternative is a dead end the reader cannot escape without
+  // clearing storage.
+  const unseen = seen ? all.filter((p) => !seen.has?.(p?.id) && !seen.includes?.(p?.id)) : all;
+  const list = unseen.length ? unseen : all;
   const temperature = temperatureFor(poemsSeen);
   const scored = list.map((p) => ({ poem: p, ...scorePoem(p, prefs, bands) }));
 

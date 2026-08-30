@@ -37,33 +37,44 @@
     },
     {
       "id": "onboarding-preferences",
-      "name": "Onboarding preference flow (5 steps)",
+      "name": "Onboarding preference flow (6 steps)",
       "tier": "nice",
-      "userFacing": "Full-screen five-step flow at /onboarding: family, mood, motif (optional), era, difficulty. Every option, bilingual label and poem count is read from the live categorization API; the era and difficulty bands are cut from the LIVE DISTRIBUTION (GET /api/categories -> distributions) rather than hardcoded. Counts CASCADE: each step's options are re-counted against the answers already given (GET /api/categories now scopes by prior answers), and a running total under the options shows how many poems match all the choices against how many match at least one. Both are labelled as matches, never as feed contents, because under scoring an intersection count is not a promise about the feed. Every count is measured behind the SERVING predicate, so the numbers describe the ~4,767 poems the feed can actually reach rather than the full 9,073. Answers save to localStorage.onboardingPrefs. PreferencesDrawer was built to re-edit them but is currently mounted nowhere, so there is no in-app way back to these answers yet. They bias the feed as a weight, never a filter (see feed-preference-weighting). Salvaged from PR #517's visual work and rebuilt against the shipped taxonomy. The route has no user-facing link by design (see FEATURES.onboardingPrefs); reach it from the debug panel. Mood (16 options) and motif (12) use a ring constellation only above 640px, since below that the ring is too small to hold the chips without them painting over each other; phones get the staggered rows instead. Signed in, they also mirror to user_settings.onboarding_preferences (versioned JSONB) so they follow the reader across devices; on sign-in the two sides are reconciled whole by most-recent completedAt, and a payload whose version this build does not recognise is left untouched on both sides.",
+      "userFacing": "Full-screen six-step flow at /onboarding: a welcome that offers a curated feed or a way straight into the reading, then mood, imagery (motif, optional), family, reading difficulty and era. Every option and bilingual label is read from the live categorization API, and the era and difficulty bands are cut from the LIVE DISTRIBUTION (GET /api/categories -> distributions) rather than hardcoded. NO poem counts are shown anywhere: the answers are a weight on the feed and never a filter (see feed-preference-weighting), so a number beside an option describes a narrowing that does not happen, and printing one on all six steps turned six different questions into six readings of the same table. Dropping them also removed the per-step cascading scope refetch, so the flow no longer issues a request per answer; the counts still exist on the API and the draw inspector still reports them after a draw, where they mean something. Each step is its own component with its own design feature rather than one data-driven picker reskinned six times: mood is a field of coloured embers that washes the background with the mix of what you pick; imagery is a grid of line-art glyphs, because the question is about images; family is a shelf of vertical spines you pull one volume out of; reading difficulty is a type specimen, each band set in a progressively more classical face (Fustat, Amiri, Katibeh) so the letterforms demonstrate the answer; era hangs its bands off a timeline rail headed by their real century ranges. Every step is skippable and single-select steps toggle off when the chosen option is tapped again. Leaving from the welcome screen writes no completedAt, so declining is not recorded as a finished answer. Answers save to localStorage.onboardingPrefs (shape unchanged: family, moods, motifs, era, difficulty). The account menu is the way back in: an entry that reads 'Set up your feed' with no saved answers and 'Change your feed' once there are some, because finishing the flow REPLACES them. No confirm step \u2014 the flow seeds every picker from the saved answers and writes nothing until the last one, so backing out early leaves them intact. PreferencesDrawer was built to re-edit them and still uses the older generic PreferenceStep, and is mounted nowhere. Signed in, the answers also mirror to user_settings.onboarding_preferences (versioned JSONB) so they follow the reader across devices; on sign-in the two sides are reconciled whole by most-recent completedAt, and a payload whose version this build does not recognise is left untouched on both sides.",
       "entrypoints": [
+        "src/components/AccountMenu.jsx",
         "src/components/PreferencesDrawer.jsx",
-        "src/components/onboarding/MatchTally.jsx",
+        "src/utils/onboardingEntry.js",
         "src/components/onboarding/OnboardingFlow.jsx",
         "src/components/onboarding/PreferenceStep.jsx",
+        "src/components/onboarding/StepShell.jsx",
+        "src/components/onboarding/motifGlyphs.jsx",
+        "src/components/onboarding/stepParts.jsx",
+        "src/components/onboarding/steps/EraStep.jsx",
+        "src/components/onboarding/steps/FamilyStep.jsx",
+        "src/components/onboarding/steps/ImageryStep.jsx",
+        "src/components/onboarding/steps/MoodStep.jsx",
+        "src/components/onboarding/steps/ReadingStep.jsx",
+        "src/components/onboarding/steps/WelcomeStep.jsx",
         "src/constants/eras.js",
+        "src/hooks/useOnboardingPrefs.js",
         "src/services/categoryBands.js",
         "src/services/categoryTags.js",
-        "src/services/preferences.js",
-        "src/constants/eras.js",
-        "src/hooks/useOnboardingPrefs.js"
+        "src/services/preferences.js"
       ],
       "endpoints": ["GET /api/categories"],
       "tests": {
         "unit": [
-          "src/test/onboarding-preferences.test.jsx",
           "src/test/categoryBands.test.js",
-          "src/test/onboarding-prefs-sync.test.jsx"
+          "src/test/onboarding-bilingual-parity.test.jsx",
+          "src/test/onboarding-preferences.test.jsx",
+          "src/test/onboarding-prefs-sync.test.jsx",
+          "src/test/onboarding-entry.test.js"
         ],
         "e2e": []
       },
       "deviceOnly": false,
       "coverage": "behavioral",
-      "gap": "Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all five steps to completion, mood ordering, and the empty pre-migration state. Cross-device sync is unit-tested in both merge directions, plus write-through, read-back and version mismatch, against a stubbed Supabase client. No e2e yet for the rendered flow, and nothing exercises the JSONB column against a real Postgres row."
+      "gap": "Unit tests cover band derivation against a real measured histogram (era grouping, NULL-century handling, quantile difficulty cuts), the categoryTags adapter, stepping all six steps to completion in order, the welcome exit writing no completedAt, mood ordering by feeling rather than corpus size, the optional motif step, single-select clearing on a second tap, the absence of any digit on an option or its aria-label, and the empty pre-migration state. Cross-device sync is unit-tested in both merge directions, plus write-through, read-back and version mismatch, against a stubbed Supabase client. No e2e yet for the rendered flow, nothing exercises the JSONB column against a real Postgres row, and nothing automated checks the layout at phone width -- the six steps were verified by hand at 393x852 and 375x812."
     },
     {
       "id": "taxonomy-tag-ui",

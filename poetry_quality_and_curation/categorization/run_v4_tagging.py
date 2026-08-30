@@ -145,14 +145,23 @@ def write_rows(conn, rows, vlook, model, version):
 
 
 def backfill_century(conn):
-    log("era -> century backfill ...")
+    """Century comes from the POET's dates. See import_categories.backfill_century
+    and #721 — stamping it from era is the bug this replaced."""
+    log("poet dates -> century backfill ...")
     with conn.cursor() as cur:
+        cur.execute("""UPDATE poems p SET century=poet_century(po.death_year, po.active_year, po.birth_year)
+                       FROM poets po
+                       WHERE p.poet_id=po.id
+                         AND COALESCE(po.death_year, po.active_year, po.birth_year) IS NOT NULL
+                         AND p.century IS DISTINCT FROM poet_century(po.death_year, po.active_year, po.birth_year)""")
+        # Undated poets only — never overwrite a poet who has real dates.
         for era_id, century in config.ERA_CENTURY.items():
             if century is None:
                 continue
             cur.execute("""UPDATE poems p SET century=%s FROM poets po
-                           WHERE p.poet_id=po.id AND po.era_id=%s AND p.century IS DISTINCT FROM %s""",
-                        (century, era_id, century))
+                           WHERE p.poet_id=po.id AND po.era_id=%s AND p.century IS NULL
+                             AND COALESCE(po.death_year, po.active_year, po.birth_year) IS NULL""",
+                        (century, era_id))
     conn.commit()
 
 

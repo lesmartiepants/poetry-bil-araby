@@ -1,0 +1,108 @@
+name: Database Backup
+
+# Production has PITR disabled (it is a $100/month add-on) and no automated
+# snapshots. This is the cheap substitute: a nightly logical dump kept in the
+# private `db-backups` storage bucket. It trades PITR's to-the-second rewind for
+# a once-a-day restore point, which is the right trade for a corpus that only
+# changes when a migration runs.
+#
+# The dump is portable — it restores to staging, to local Postgres, or to a
+# different provider entirely, which a provider-internal snapshot cannot do.
+
+on:
+  schedule:
+    # 04:12 UTC. Off the hour on purpose: the top of the hour is when every
+    # other scheduled job on the platform fires and gets queued behind itself.
+    - cron: '12 4 * * *'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Why this manual backup is being taken'
+        required: false
+
+concurrency:
+  group: db-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Dump and upload
+    runs-on: ubuntu-latest
+    # Production runs Postgres 17.6. pg_dump refuses to dump a server newer than
+    # itself, and ubuntu-latest ships an older client, so pin the client here.
+    container: postgres:17-alpine
+    timeout-minutes: 30
+
+    steps:
+      - name: Dump
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          STAMP=$(date -u +%Y%m%d-%H%M%S)
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+          pg_dump "$DATABASE_URL" --no-owner --no-acl -f "prod-$STAMP.sql"
+          gzip "prod-$STAMP.sql"
+          ls -lh "prod-$STAMP.sql.gz"
+
+      - name: Verify the dump is not truncated
+        run: |
+          set -euo pipefail
+          # A dump that fails midway still leaves a plausible-looking file, so
+          # size alone proves nothing. Check the tables we actually care about
+          # carry rows, and that the file terminates the way pg_dump ends one.
+          gunzip -c "prod-$STAMP.sql.gz" > /tmp/check.sql
+          for t in poems poets eras; do
+            n=$(awk "/^COPY public\.$t /{f=1;next} f&&/^\\\\\\.\$/{exit} f{c++} END{print c+0}" /tmp/check.sql)
+            echo "  $t: $n rows"
+            [ "$n" -gt 0 ] || { echo "::error::$t has no rows — dump is bad, not uploading"; exit 1; }
+          done
+          tail -c 2000 /tmp/check.sql | grep -qE "PostgreSQL database dump complete|^\\\\unrestrict" \
+            || { echo "::error::dump does not end cleanly — refusing to upload"; exit 1; }
+          rm -f /tmp/check.sql
+
+      - name: Upload to the private backups bucket
+        env:
+          REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          apk add --no-cache curl jq >/dev/null
+          F="prod-$STAMP.sql.gz"
+          code=$(curl -s -o /tmp/up.json -w '%{http_code}' -X POST \
+            "https://$REF.supabase.co/storage/v1/object/db-backups/$F" \
+            -H "Authorization: Bearer $KEY" -H "apikey: $KEY" \
+            -H "Content-Type: application/gzip" --data-binary "@$F")
+          [ "$code" = "200" ] || { echo "::error::upload failed HTTP $code"; cat /tmp/up.json; exit 1; }
+          echo "uploaded $F"
+
+      - name: Prune to the 30 most recent
+        env:
+          REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          list=$(curl -s -X POST "https://$REF.supabase.co/storage/v1/object/list/db-backups" \
+            -H "Authorization: Bearer $KEY" -H "apikey: $KEY" \
+            -H "Content-Type: application/json" \
+            -d '{"prefix":"","limit":1000,"sortBy":{"column":"name","order":"desc"}}')
+          # Names are timestamped, so a descending name sort is newest-first.
+          old=$(echo "$list" | jq -r '[.[].name] | .[30:] | .[]?')
+          if [ -z "$old" ]; then echo "nothing to prune"; exit 0; fi
+          echo "$old" | while read -r f; do
+            [ -n "$f" ] || continue
+            curl -s -X DELETE "https://$REF.supabase.co/storage/v1/object/db-backups/$f" \
+              -H "Authorization: Bearer $KEY" -H "apikey: $KEY" >/dev/null
+            echo "pruned $f"
+          done
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Database backup"
+            echo ""
+            echo "- file: \`prod-$STAMP.sql.gz\`"
+            echo "- bucket: \`db-backups\` (private)"
+            echo "- retention: 30 most recent"
+          } >> "$GITHUB_STEP_SUMMARY"

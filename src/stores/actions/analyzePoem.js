@@ -5,6 +5,7 @@ import { useUIStore } from '../uiStore';
 import { useModalStore } from '../modalStore';
 import { INSIGHTS_SYSTEM_PROMPT, RATCHET_SYSTEM_PROMPT } from '../../prompts';
 import { parseInsight } from '../../utils/insightParser';
+import { buildInsightPrompt } from '../../utils/insightPrompt';
 import { geminiTextFetch, thinkingConfigFor } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
 import { saveTranslation } from '../../services/database.js';
@@ -87,7 +88,11 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
           'info'
         );
         setTimeout(async () => {
-          const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id, addLog);
+          const finalCheck = await cacheOperations.get(
+            CACHE_CONFIG.stores.insights,
+            current.id,
+            addLog
+          );
           if (finalCheck?.interpretation) {
             addLog(
               'Insights',
@@ -147,15 +152,12 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
 
   try {
     if (FEATURES.streaming) {
-      const poetInfo = current?.poet ? ` by ${current.poet}` : '';
-      const arabicLineCount = (current?.arabic || '').split('\n').filter(l => l.trim()).length;
-      const promptText = `Deep Analysis of${poetInfo}:\n\n${current?.arabic}\n\n[CRITICAL: This poem has exactly ${arabicLineCount} Arabic lines. You MUST produce exactly ${arabicLineCount} English lines in the POEM section. One line per Arabic line, no exceptions.]`;
+      const arabicLineCount = (current?.arabic || '').split('\n').filter((l) => l.trim()).length;
+      const promptText = buildInsightPrompt({ arabic: current?.arabic, poet: current?.poet });
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
       ]).size;
-      const estimatedInputTokens = Math.ceil(
-        (promptText.length + activeSystemPrompt.length) / 4
-      );
+      const estimatedInputTokens = Math.ceil((promptText.length + activeSystemPrompt.length) / 4);
       const promptChars = promptText.length;
       const arabicTextChars = current?.arabic?.length || 0;
       const systemPromptChars = activeSystemPrompt.length;
@@ -255,12 +257,10 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
     } else {
       addLog('Insights', `Analyzing poem...${ratchetMode ? ' [Ratchet Mode]' : ''}`, 'request');
       const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
-      const arabicLineCount = (current?.arabic || '').split('\n').filter(l => l.trim()).length;
+      const arabicLineCount = (current?.arabic || '').split('\n').filter((l) => l.trim()).length;
       const promptText = `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}\n\n[CRITICAL: This poem has exactly ${arabicLineCount} Arabic lines. You MUST produce exactly ${arabicLineCount} English lines in the POEM section. One line per Arabic line, no exceptions.]`;
       const insightsFallbackBody = JSON.stringify({
-        contents: [
-          { parts: [{ text: promptText }] },
-        ],
+        contents: [{ parts: [{ text: promptText }] }],
         systemInstruction: { parts: [{ text: activeSystemPrompt }] },
         generationConfig: { maxOutputTokens: 8192 },
       });
@@ -279,15 +279,20 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
     // CACHE (skip for ratchet mode — different prompt style)
     if (FEATURES.caching && current?.id && insightText && !ratchetMode) {
       const cacheStart = performance.now();
-      await cacheOperations.set(CACHE_CONFIG.stores.insights, current.id, {
-        interpretation: insightText,
-        metadata: {
-          poet: current.poet,
-          title: current.title,
-          charCount: insightText.length,
-          tokens: Math.ceil(insightText.length / 4),
+      await cacheOperations.set(
+        CACHE_CONFIG.stores.insights,
+        current.id,
+        {
+          interpretation: insightText,
+          metadata: {
+            poet: current.poet,
+            title: current.title,
+            charCount: insightText.length,
+            tokens: Math.ceil(insightText.length / 4),
+          },
         },
-      }, addLog);
+        addLog
+      );
       const cacheTime = performance.now() - cacheStart;
       const elapsedTime = apiStartTime
         ? ((performance.now() - apiStartTime) / 1000).toFixed(1)
@@ -303,8 +308,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
     if (current?.isFromDatabase && current?.id && insightText) {
       const parts = parseInsight(insightText, addLog);
       if (parts?.poeticTranslation) {
-        const arabicLines = (current?.arabic || '').split('\n').filter(l => l.trim());
-        const englishLines = parts.poeticTranslation.split('\n').filter(l => l.trim());
+        const arabicLines = (current?.arabic || '').split('\n').filter((l) => l.trim());
+        const englishLines = parts.poeticTranslation.split('\n').filter((l) => l.trim());
         const translation = parts.poeticTranslation;
         if (englishLines.length < arabicLines.length) {
           addLog(
@@ -330,6 +335,10 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
     if (insightText) {
       useModalStore.getState().showToast('insight');
       setTimeout(() => useModalStore.getState().hideToast('insight'), 1500);
+    } else {
+      // The request ran to completion and came back with nothing. This is the
+      // only place that can tell an empty response apart from "still waiting".
+      addLog('Translation', `Request completed with no text | Poem ID: ${current?.id}`, 'error');
     }
   } catch (e) {
     Sentry.captureException(e);

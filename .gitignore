@@ -107,3 +107,6 @@ storybook-static
 
 # Local DB backup dumps — never commit (large data + binaries)
 backups/
+
+# Transient request payloads from scripts/batch-translate.mjs
+.batch-translate-*.jsonl

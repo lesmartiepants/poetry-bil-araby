@@ -58,12 +58,66 @@ const persistCurated = (on) => {
   } catch {}
 };
 
+/**
+ * Reading posture: how much Arabic the reader wants to do unaided.
+ *
+ * `showTranslation` and `showTransliteration` used to be session state with a
+ * fixed default that suited a fluent reader — translation on, transliteration
+ * off — which is backwards for a large part of this audience. Onboarding now
+ * asks once and sets both from the answer, so the posture has to survive a
+ * reload or the question was theatre.
+ *
+ * 'arabic'   reads comfortably: neither aid, just the poem.
+ * 'learning' working through it: both aids. Transliteration is the row that
+ *            maps to SOUND, so it is the one that lets a learner follow the TTS.
+ * 'english'  reading in English: both aids too, and the transliteration is not a
+ *            leftover. Translation exists for only ~13% of the corpus (#713 —
+ *            server.js hardcodes `english: ''`), transliteration for 100%, so
+ *            translation-only would leave an English-first reader with a blank
+ *            screen on 87% of poems. Phonetics they half-use still keep the poem
+ *            legible as sound and drive the TTS follow-along; noise beats blank.
+ *            Revisit if #713 ever backfills translations.
+ */
+const POSTURE_KEY = 'reading-posture';
+/**
+ * What each reading posture puts on screen. One layer added per rung:
+ *
+ *   arabic    the poem alone
+ *   english   + the translation
+ *   learning  + the transliteration
+ *
+ * `learning` and `english` were previously identical — both turned on
+ * translation and transliteration — so the middle choice in the flow decided
+ * nothing. A reader who wants the English without a romanisation running under
+ * every line had no way to ask for it.
+ */
+export const POSTURES = {
+  arabic: { showTranslation: false, showTransliteration: false },
+  english: { showTranslation: true, showTransliteration: false },
+  learning: { showTranslation: true, showTransliteration: true },
+};
+const loadPosture = () => {
+  try {
+    const v = localStorage.getItem(POSTURE_KEY);
+    if (v && POSTURES[v]) return v;
+  } catch {}
+  return null;
+};
+const persistPosture = (posture) => {
+  try {
+    if (posture) localStorage.setItem(POSTURE_KEY, posture);
+    else localStorage.removeItem(POSTURE_KEY);
+  } catch {}
+};
+
 export const CATEGORY_MAP = {
   user: { color: '#00bcd4', prefix: 'USER' },
   request: { color: '#ff9800', prefix: '  →' },
   success: { color: '#4caf50', prefix: '  ←' },
   error: { color: '#ef4444', prefix: '← FAIL' },
-  warning: { color: '#ef4444', prefix: '← FAIL' },
+  // Distinct from error: a warning is something to look at, not something that
+  // broke. Sharing the red FAIL prefix made recoverable states read as outages.
+  warning: { color: '#f59e0b', prefix: '⚠ WARN' },
   info: { color: '#78909c', prefix: ' SYS' },
 };
 
@@ -71,8 +125,12 @@ const initialState = {
   darkMode: true,
   font: 'Amiri',
   textSize: 1, // 0=S, 1=M, 2=L, 3=XL — default Medium so the reader matches the prototype size exactly
-  showTranslation: true,
-  showTransliteration: false,
+  // Seeded from the saved reading posture when there is one; the old fixed
+  // defaults (translation on, transliteration off) remain the answer for a
+  // reader who never took onboarding.
+  readingPosture: loadPosture(),
+  showTranslation: POSTURES[loadPosture()]?.showTranslation ?? true,
+  showTransliteration: POSTURES[loadPosture()]?.showTransliteration ?? false,
   showDebugLogs: FEATURES.debug,
   ratchetMode: false, // Ratchet Mode: explains poems in Gen Z / gangster slang
   ttsMode: loadTtsMode(), // 'rest' | 'live' — defaults to 'live' (streaming)
@@ -139,6 +197,19 @@ export const useUIStore = create((set, get) => ({
   setTextSize: (textSize) => set({ textSize }),
   setShowTranslation: (showTranslation) => set({ showTranslation }),
   setShowTransliteration: (showTransliteration) => set({ showTransliteration }),
+
+  /**
+   * Apply a reading posture, persist it, and set the two aids from it.
+   *
+   * Passing null clears the posture without touching the aids — a reader who
+   * skipped the question keeps whatever they already had rather than being
+   * reset to the fluent-reader default.
+   */
+  setReadingPosture: (posture) => {
+    const preset = POSTURES[posture];
+    persistPosture(preset ? posture : null);
+    set(preset ? { readingPosture: posture, ...preset } : { readingPosture: null });
+  },
   setHeaderOpacity: (headerOpacity) => set({ headerOpacity }),
   toggleRatchetMode: () => set((s) => ({ ratchetMode: !s.ratchetMode })),
   setBgOpacity: (bgOpacity) => set({ bgOpacity }),

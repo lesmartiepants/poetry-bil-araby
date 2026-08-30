@@ -183,20 +183,36 @@ SCALARS = {
     "accessibility_level": "1-5, 1=easy for Arabic learners, 5=requires deep classical knowledge",
 }
 
-# Representative century (CE) per era_id, used to populate `poems.century`
-# WITHOUT asking the model. era_id is the real temporal facet; these are a
-# coarse, honest convenience derived from era (see DIWAN_ERA_MAP in
-# poetry_quality_and_curation/retriever_and_quality_curator/data/prepare_diwan_import.py).
-# `None` = the era is too broad to pin to a single century (kept null on purpose).
+# FALLBACK ONLY. `poems.century` is derived from the POET's dates
+# (poets.death_year / active_year / birth_year, see migration
+# 20260815000000_add_poet_life_dates.sql and the poet_century() function). This
+# map is used only for a poet with no dates at all, and even then it is a coarse
+# stand-in, not a fact about that poet.
+#
+# It used to be the sole source of `century`, which is why every Abbasid poem
+# read as 9th century whether the poet died in 814, 965 or 1057 (#721).
+#
+# !! THESE KEYS MUST MATCH THE LIVE `eras` TABLE. !!
+# They were wrong once already: the table was renumbered underneath this map, so
+# `6: 13` — written for أيوبي — landed on مخضرم and stamped poets who straddled
+# the 6th/7th-century arrival of Islam as 13th century, a ~600 year error. Ayyubid
+# is era 10, not 6. Verify against `SELECT id, name FROM eras` before editing.
+#
+# `None` = too broad or too geographic to pin to a single century, kept NULL on
+# purpose. أندلسي is None because it is a PLACE: Andalusian poetry runs 8th-15th c.
+# and an 11th-century Andalusian and an 11th-century Abbasid share a century
+# while belonging to different eras.
 ERA_CENTURY = {
-    1: 7,     # صدر الإسلام  — Early Islam
-    2: 9,     # عباسي        — Abbasid
-    3: None,  # متأخر        — late / modern: spans too many centuries to assign
-    4: 8,     # أموي         — Umayyad
-    5: 6,     # جاهلي        — pre-Islamic
-    6: 13,    # أيوبي        — Ayyubid
-    7: 11,    # أندلسي       — Andalusian
-    8: 14,    # مملوكي       — Mamluk
+    1: 7,     # إسلامي   — Early Islam / Rashidun
+    2: 9,     # عباسي    — Abbasid
+    3: None,  # متأخر    — late / modern: spans too many centuries to assign
+    4: 8,     # أموي     — Umayyad
+    5: 6,     # جاهلي    — pre-Islamic
+    6: 7,     # مخضرم    — straddles the arrival of Islam (6th/7th c.)
+    7: None,  # أندلسي   — geographic, not a period
+    8: 14,    # مملوكي   — Mamluk
+    9: 17,    # عثماني   — Ottoman
+    10: 13,   # أيوبي    — Ayyubid
 }
 
 # Per-label confidence contract. The classifier asks the model for a 0-100

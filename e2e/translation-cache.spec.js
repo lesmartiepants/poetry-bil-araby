@@ -484,12 +484,17 @@ test.describe('Translation Cache — Poem Variety', () => {
     await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 12000 });
 
-    // After initial load, the app fetches a poem from DB (poemA is served first)
-    // Wait for it to replace the seed poem
-    await expect(page.locator('text=شاعر أ').first()).toBeVisible({ timeout: 12000 });
+    // Boot deliberately keeps the seed poem active (isSeedPoem skips the auto-fetch,
+    // app.jsx "let user press Discover to avoid flash"), so poemA never replaces the
+    // seed. It still lands: the feed's populate pass mounts it as an upcoming slide.
+    // The stacked feed holds inactive slides visibility:hidden (the old carousel left
+    // them rendered offscreen, which is how toBeVisible used to pass here), so the
+    // honest boot check is that the fetched poem is in the feed, not that it is shown.
+    await expect(page.locator('text=شاعر أ').first()).toBeAttached({ timeout: 12000 });
 
     // Click discover — opens the DiscoverDrawer, then click Surprise Me to get a new poem
-    // (poemB or poemC in sequence; first was consumed by auto-load/prefetch)
+    // (poemB or poemC in sequence; the first responses were consumed by the boot
+    // prefetch and the feed's populate pass)
     const openDrawerButton = page.locator('button[aria-label="Open discover"]');
     await expect(openDrawerButton).toBeEnabled({ timeout: 10000 });
     await openDrawerButton.click();

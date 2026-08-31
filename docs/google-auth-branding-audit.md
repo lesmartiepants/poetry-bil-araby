@@ -3,6 +3,17 @@
 This change does not modify Google Cloud, Supabase, Vercel, or production. It audits the
 public app identity and records the free Google Auth Platform values that should match it.
 
+## Current public behavior
+
+A signed-out, read-only production check reached Google's account-selection surface without
+entering an account. The visible destination identifies the Supabase host; it does not yet show
+Poetry Bil-Araby and does not show Nemo. No callback, account, or credential value was captured.
+
+This means the Google branding/publish review below is a real post-merge action, not merely
+optional documentation. Completing it can add the Poetry name and logo to Google's consent
+experience. It cannot remove the `*.supabase.co` destination hostname on the free tier; that
+requires a paid Supabase custom domain and remains outside this rollout.
+
 ## Recommended Branding fields
 
 | Google Auth Platform field | Recommended value                                                                    |
@@ -37,7 +48,8 @@ After the production deployment makes the new legal URLs public:
 2. Compare the fields with the table above. Add or correct only fields that differ—especially
    the Privacy Policy and Terms URLs—and use the existing Poetry quill for the app logo.
 3. Preview the consent screen, verify it says Poetry Bil-Araby and never Nemo, then save/publish
-   the branding or submit the free brand-verification review Google requests.
+   the branding and submit the free brand-verification review Google requests. This step is
+   required because the current public flow does not yet present the Poetry product name.
 
 Do **not** create or rotate an OAuth client, reset its secret, change authorized JavaScript
 origins, or change the Supabase callback URI for this rollout. Those values govern the existing

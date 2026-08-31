@@ -108,6 +108,12 @@ describe('AuthModal', () => {
     it('renders the Google sign-in CTA', () => {
       render(<AuthModal onSignInWithGoogle={onSignInWithGoogle} />);
       expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument();
+      expect(screen.getByTestId('poetry-google-frame')).toHaveClass('p-[2px]');
+      expect(screen.getByRole('button', { name: /continue with google/i })).toHaveClass(
+        'bg-[#131314]',
+        'text-[#e3e3e3]',
+        'border-[#8e918f]'
+      );
     });
 
     it('identifies the app and explains the profile information used', () => {

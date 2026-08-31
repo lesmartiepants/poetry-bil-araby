@@ -1,9 +1,9 @@
-import { LoaderCircle, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useModalStore } from '../../stores/modalStore';
 import BrandMark from '../brand/BrandMark';
-import GoogleMark from './GoogleMark';
+import GoogleSignInButton from './GoogleSignInButton';
 
 const TESS_BG = [
   'repeating-linear-gradient(45deg, rgba(197,160,89,0.18) 0px, rgba(197,160,89,0.18) 1px, transparent 1px, transparent 22px)',
@@ -222,30 +222,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
           </div>
 
           {/* Google CTA */}
-          <button
-            onClick={handleGoogleSignIn}
-            type="button"
-            disabled={isRedirecting}
-            className="relative w-full flex items-center justify-center gap-3 overflow-hidden rounded-md transition-all duration-200 hover:bg-[#f8faff] active:bg-[#eef2f7] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4285f4] disabled:cursor-wait disabled:opacity-75"
-            style={{
-              minHeight: '48px',
-              padding: '0 16px',
-              background: '#fff',
-              border: '1px solid #747775',
-              color: '#1f1f1f',
-              fontFamily: 'Roboto, system-ui, -apple-system, sans-serif',
-              fontSize: '0.875rem',
-              fontWeight: 500,
-              letterSpacing: '0.01em',
-            }}
-          >
-            {isRedirecting ? (
-              <LoaderCircle size={20} className="animate-spin" aria-hidden="true" />
-            ) : (
-              <GoogleMark />
-            )}
-            {isRedirecting ? 'Opening Google…' : 'Continue with Google'}
-          </button>
+          <GoogleSignInButton onClick={handleGoogleSignIn} loading={isRedirecting} />
 
           <div aria-live="polite" className="min-h-[1.4rem] pt-2 text-center">
             {signInError && <p className="text-sm text-[#f0a7a0]">{signInError}</p>}

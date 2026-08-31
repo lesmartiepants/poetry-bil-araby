@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AlertCircle, Check, LoaderCircle } from 'lucide-react';
 import BrandMark from '../brand/BrandMark';
-import GoogleMark from './GoogleMark';
+import GoogleSignInButton from './GoogleSignInButton';
 import { cleanOAuthReturnUrl, readOAuthReturn } from '../../utils/oauthReturn';
 
 export default function AuthReturnOverlay({ authLoading, user, onRetry }) {
@@ -99,19 +99,7 @@ export default function AuthReturnOverlay({ authLoading, user, onRetry }) {
         {showActions && (
           <div className="mt-6 grid gap-2">
             {status !== 'success' && (
-              <button
-                type="button"
-                onClick={retry}
-                disabled={retrying}
-                className="flex min-h-12 items-center justify-center gap-3 rounded-md border border-[#747775] bg-white px-4 text-sm font-medium text-[#1f1f1f] hover:bg-[#f8faff] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4285f4] disabled:opacity-75"
-              >
-                {retrying ? (
-                  <LoaderCircle size={20} className="animate-spin" aria-hidden="true" />
-                ) : (
-                  <GoogleMark />
-                )}
-                {retrying ? 'Opening Google…' : 'Try Google again'}
-              </button>
+              <GoogleSignInButton onClick={retry} loading={retrying} label="Try Google again" />
             )}
             <button
               type="button"

@@ -127,6 +127,7 @@ calm, considered feel.
 
 - A single tap surfaces a new poem from the curated library
 - Poet filtering, and a swipeable carousel of poems by the same poet
+- Explore Poems: browse and filter the library directly by mood, topic, motif, cross-dimension family, emotional intensity, and reading difficulty (account menu)
 - Deep-linkable poems and shareable cards with Open Graph previews
 
 **Personalization**
@@ -310,8 +311,11 @@ npm run test:e2e:full   # full device matrix (local)
 
 Unit tests cover components, utilities, and database integration with Vitest and React
 Testing Library. End-to-end suites in `e2e/` exercise core flows, audio and TTS highlighting,
-the reader feed, translation caching, PWA behavior, and UI/UX quality. The GitHub Actions
-pipeline builds, runs unit tests, then runs the E2E suite against a PostgreSQL service.
+the reader feed, translation caching, PWA behavior, and UI/UX quality. The main GitHub Actions
+pipeline (`ci.yml`) builds, gates on feature-manifest drift, runs unit tests with coverage, then
+runs a Playwright smoke suite (Chromium only, all API calls mocked — no database needed) before
+deploying a PR preview. A separate `db-reconstruct.yml` workflow provisions a real PostgreSQL
+service and rebuilds the schema from migrations whenever migration or seed files change.
 
 ## Deployment
 

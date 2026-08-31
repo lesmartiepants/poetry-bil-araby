@@ -324,18 +324,27 @@
       "userFacing": "Sign in to sync saved poems and settings; app works fully without auth.",
       "entrypoints": [
         "src/components/auth/AuthModal.jsx",
+        "src/components/auth/AuthReturnOverlay.jsx",
+        "src/components/auth/GoogleMark.jsx",
+        "src/components/brand/BrandMark.jsx",
         "src/hooks/useAuth.js",
         "src/supabaseClient.js",
+        "src/utils/oauthReturn.js",
         "src/components/AccountMenu.jsx"
       ],
       "endpoints": [],
       "tests": {
-        "unit": ["src/test/auth.test.jsx", "src/test/account-submenu.test.jsx"],
+        "unit": [
+          "src/test/auth.test.jsx",
+          "src/test/account-submenu.test.jsx",
+          "src/test/auth-modal.test.jsx",
+          "src/test/oauth-return.test.jsx"
+        ],
         "e2e": ["e2e/user-flows.spec.js"]
       },
       "deviceOnly": true,
       "coverage": "mocked",
-      "gap": "Real OAuth redirect/PKCE exchange can't run in CI; only the stash/restore + short-circuit logic is mockable."
+      "gap": "Real Google account selection and PKCE exchange still require preview/production dogfood; callback loading, cancellation, failure, retry, and URL cleanup are unit-tested."
     },
     {
       "id": "settings-sync",

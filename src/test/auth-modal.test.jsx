@@ -23,6 +23,7 @@ vi.mock('framer-motion', () => ({
         aria-modal={ariaModal}
         aria-label={ariaLabel}
         data-tour-anchor={dataTourAnchor}
+        {...rest}
       >
         {children}
       </div>
@@ -81,7 +82,8 @@ describe('AuthModal', () => {
       const dialog = screen.getByRole('dialog');
       expect(dialog).toBeInTheDocument();
       expect(dialog).toHaveAttribute('aria-modal', 'true');
-      expect(dialog).toHaveAttribute('aria-label', 'Sign in to Dīwān');
+      expect(dialog).toHaveAttribute('aria-labelledby', 'auth-dialog-title');
+      expect(dialog).toHaveAttribute('aria-describedby', 'auth-dialog-description');
     });
 
     it('renders the Arabic header title', () => {
@@ -106,6 +108,17 @@ describe('AuthModal', () => {
     it('renders the Google sign-in CTA', () => {
       render(<AuthModal onSignInWithGoogle={onSignInWithGoogle} />);
       expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument();
+    });
+
+    it('identifies the app and explains the profile information used', () => {
+      render(<AuthModal onSignInWithGoogle={onSignInWithGoogle} />);
+      expect(screen.getByLabelText('Poetry Bil-Araby')).toBeInTheDocument();
+      expect(screen.getByText(/Google shares your name, email address/i)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Privacy' })).toHaveAttribute(
+        'href',
+        '/privacy.html'
+      );
+      expect(screen.getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms.html');
     });
 
     it('calls onSignInWithGoogle when the Google button is clicked', () => {

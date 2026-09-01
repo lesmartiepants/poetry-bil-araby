@@ -225,7 +225,7 @@ const PoemReader = memo(function PoemReader({
               className="pc-ttl-ar"
               lang="ar"
               dir="rtl"
-              style={{ fontSize: '1.75rem', color: goldColor }}
+              style={{ fontSize: `calc(1.75rem * ${textScale})`, color: goldColor }}
             >
               {poem?.titleArabic || poem?.title}
             </div>

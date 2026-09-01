@@ -79,6 +79,7 @@ const SplashScreen = () => {
       role="dialog"
       aria-modal="true"
       aria-label="Welcome to Poetry Bil-Araby"
+    >
       <style>{splashStyles}</style>
 
       <div
@@ -138,6 +139,7 @@ const SplashScreen = () => {
           onClick={dismiss}
           className="splash-zen-anim"
           aria-label="Enter the app"
+          autoFocus
           style={{
             display: 'inline-flex',
             alignItems: 'center',

@@ -94,7 +94,10 @@ const DebugPanel = ({ controlBarRef }) => {
     }
   });
   const scrollRef = useRef(null);
-  const btnPos = { right: 8, bottom: 52 };
+  // Lowered from bottom:52 so the dev pair sits in the bottom nav's own band rather than floating
+  // above it over the reader's action buttons. The inspector stacks directly above this one at
+  // bottom:52 (DiscoveryDrawInspector.jsx), so the two together occupy 8..96px.
+  const btnPos = { right: 8, bottom: 8 };
   const panelRight = 68; // clears sidebar (right:8 + ~52px wide + 8px gap)
 
   // Auto-scroll to bottom on new logs when panel is open

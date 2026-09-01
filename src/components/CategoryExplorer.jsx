@@ -361,8 +361,11 @@ export default function CategoryExplorer({
     >
       {/* Centered content column so the full-screen view stays readable on wide displays */}
       <div className="w-full max-w-5xl mx-auto flex flex-col flex-1 min-h-0">
-        {/* Header */}
-        <div className="relative px-5 pb-2 pt-5 flex-shrink-0">
+        {/* Header. Both titles stack on the LEFT and the close button owns the top-right corner.
+            The Arabic needs dir="rtl" for correct shaping but text-align:left to stay under the
+            English — without that override an RTL block spans the row and lands under the X.
+            pr-14 reserves the button's corner so a long title can never run beneath it either. */}
+        <div className="relative px-5 pr-14 pb-2 pt-5 flex-shrink-0">
           <h3
             className="font-brand-en font-bold text-[0.9375rem] leading-none"
             style={{ color: 'var(--gold)' }}
@@ -370,7 +373,7 @@ export default function CategoryExplorer({
             Category Explorer
           </h3>
           <p
-            className="font-tajawal text-[0.6875rem] mt-0.5"
+            className="font-brand-ar text-[0.75rem] leading-none mt-1.5 text-left"
             dir="rtl"
             style={{ color: 'var(--gold)', opacity: 0.55 }}
           >
@@ -556,7 +559,7 @@ function EmptyState({ subTextColor }) {
   return (
     <div className="px-4 py-16 text-center space-y-2">
       <span
-        className="block text-[0.9375rem] font-tajawal"
+        className="block text-[0.9375rem] font-brand-ar"
         dir="rtl"
         style={{ color: 'var(--gold)', opacity: 0.7 }}
       >

@@ -107,6 +107,11 @@ const PoemColumn = forwardRef(function PoemColumn(
   const measure = useCallback(() => {
     const col = colRef.current;
     if (!col) return;
+    // Widest Arabic line in the poem, in px. The English translation wraps against THIS rather than
+    // against the column edge, so the block of English ends where the poem's longest verse ends.
+    // Per-LINE capping was tried first and rejected: each translation stopping wherever its own
+    // verse happened to stop looked accidental. One shared measure reads as a deliberate edge.
+    let widestAr = 0;
     col.querySelectorAll('.pc-ar, .pc-translit').forEach((el) => {
       el.style.setProperty('--fit', '1');
       const box = el.clientWidth;
@@ -121,7 +126,10 @@ const PoemColumn = forwardRef(function PoemColumn(
         natural = el.scrollWidth;
       }
       if (natural > box) el.style.setProperty('--fit', (box / natural).toFixed(4));
+      // Post-shrink rendered width: --fit caps an overlong line at the box, so it is never wider.
+      if (el.classList.contains('pc-ar')) widestAr = Math.max(widestAr, Math.min(natural, box));
     });
+    col.style.setProperty('--ar-widest', widestAr ? `${Math.ceil(widestAr)}px` : '100%');
   }, []);
 
   useLayoutEffect(() => {

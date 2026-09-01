@@ -173,17 +173,24 @@
 
 /* English wraps instead of shrinking. Shrinking Latin text to avoid a wrap buys nothing: there are
    no ligatures to protect and a second line is cheaper than an unreadable first one.
-   Flush right, full column width, per owner feedback: capping the wrap to the Arabic line's own
-   width looked wrong (the English trailing off wherever the Arabic happened to end), so the
-   English uses the full column and right-aligns — first line and every wrapped continuation share
-   the column's right edge, matching the Arabic block beside it. */
+
+   It wraps against the POEM'S WIDEST ARABIC LINE (--ar-widest, measured in PoemColumn.jsx), not
+   against the column edge and not against its own verse. Two earlier attempts and why they lost:
+   per-line capping made each translation stop wherever its own verse happened to stop, which read
+   as accidental; full column width let the English run past the poem's own left edge, so the two
+   languages no longer shared a shape. One measure for the whole poem gives the English block a
+   left edge that lines up with where the longest verse ends.
+
+   Flush right on every line, first and wrapped alike, so it shares the Arabic's right edge.
+   margin-left:auto pins the narrowed box to that edge. */
 .pc-en {
   text-align: right;
   direction: ltr;
   white-space: normal;
   font-style: italic;
   line-height: 1.3;
-  margin: 4px 0 0 0;
+  max-width: var(--ar-widest, 100%);
+  margin: 4px 0 0 auto;
   transition: opacity 0.5s ease;
 }
 

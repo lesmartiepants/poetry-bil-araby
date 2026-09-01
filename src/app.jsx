@@ -15,7 +15,7 @@ import {
   Heart,
   LibraryBig,
   ThumbsDown,
-  Share2,
+  Gift,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -2430,7 +2430,7 @@ export default function DiwanApp() {
                       aria-label="Share poem"
                       className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                     >
-                      <Share2 size={19} style={{ color: ink }} />
+                      <Gift size={19} style={{ color: ink }} />
                     </button>
                     <span
                       className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"

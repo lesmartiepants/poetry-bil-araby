@@ -4,15 +4,13 @@ import { motion } from 'framer-motion';
 import { useModalStore } from '../../stores/modalStore';
 import BrandMark from '../brand/BrandMark';
 import GoogleSignInButton from './GoogleSignInButton';
-
-const TESS_BG = [
-  'repeating-linear-gradient(45deg, rgba(197,160,89,0.18) 0px, rgba(197,160,89,0.18) 1px, transparent 1px, transparent 22px)',
-  'repeating-linear-gradient(-45deg, rgba(197,160,89,0.18) 0px, rgba(197,160,89,0.18) 1px, transparent 1px, transparent 22px)',
-  'repeating-linear-gradient(0deg, rgba(197,160,89,0.09) 0px, rgba(197,160,89,0.09) 1px, transparent 1px, transparent 22px)',
-  'repeating-linear-gradient(90deg, rgba(197,160,89,0.09) 0px, rgba(197,160,89,0.09) 1px, transparent 1px, transparent 22px)',
-  'repeating-linear-gradient(22.5deg, rgba(197,160,89,0.07) 0px, rgba(197,160,89,0.07) 1px, transparent 1px, transparent 44px)',
-  'repeating-linear-gradient(-22.5deg, rgba(197,160,89,0.07) 0px, rgba(197,160,89,0.07) 1px, transparent 1px, transparent 44px)',
-].join(', ');
+import {
+  AUTH_BACKDROP_STYLE,
+  AUTH_HAIRLINE_STYLE,
+  AUTH_HEADER_STYLE,
+  AUTH_PANEL_STYLE,
+  AUTH_TESS_BG,
+} from './authVisuals';
 
 const FEATURES = [
   { icon: '🔖', label: 'Save favourite verses' },
@@ -50,7 +48,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
        desktop → items-center justify-center (centered modal) */
     <motion.div
       className="fixed inset-0 z-[300] flex items-end sm:items-center sm:justify-center"
-      style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(2px)' }}
+      style={AUTH_BACKDROP_STYLE}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -65,11 +63,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
         aria-describedby="auth-dialog-description"
         data-tour-anchor="auth"
         className="w-full overflow-hidden rounded-t-3xl sm:w-[min(480px,90vw)] sm:max-h-[85vh] sm:overflow-y-auto sm:rounded-3xl"
-        style={{
-          background: 'linear-gradient(180deg, rgba(14,12,10,0.98), rgba(10,10,14,0.99))',
-          boxShadow:
-            '0 0 0 1px rgba(197,160,89,0.15), 0 32px 80px rgba(0,0,0,0.8), 0 8px 24px rgba(0,0,0,0.5)',
-        }}
+        style={AUTH_PANEL_STYLE}
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 40 }}
@@ -81,13 +75,13 @@ const AuthModal = ({ onSignInWithGoogle }) => {
           className="relative overflow-hidden"
           style={{
             height: '130px',
-            background: 'linear-gradient(180deg, rgba(20,16,10,0.98), rgba(14,12,10,0.97))',
+            ...AUTH_HEADER_STYLE,
           }}
         >
           {/* tessellation pattern */}
           <div
             className="absolute"
-            style={{ inset: '-10px', backgroundImage: TESS_BG }}
+            style={{ inset: '-10px', backgroundImage: AUTH_TESS_BG }}
             aria-hidden="true"
           />
           {/* vignette fade */}
@@ -100,15 +94,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
             aria-hidden="true"
           />
           {/* gold hairline */}
-          <div
-            className="absolute top-0 left-0 right-0"
-            style={{
-              height: '2px',
-              zIndex: 2,
-              background:
-                'linear-gradient(90deg, transparent, rgba(160,128,64,0.4) 20%, #c5a059 50%, rgba(160,128,64,0.4) 80%, transparent)',
-            }}
-          />
+          <div className="absolute top-0 left-0 right-0" style={AUTH_HAIRLINE_STYLE} />
 
           {/* drag handle — mobile only */}
           <div

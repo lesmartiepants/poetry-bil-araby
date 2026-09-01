@@ -327,6 +327,7 @@
         "src/components/auth/AuthReturnOverlay.jsx",
         "src/components/auth/GoogleMark.jsx",
         "src/components/auth/GoogleSignInButton.jsx",
+        "src/components/auth/authVisuals.js",
         "src/components/brand/BrandMark.jsx",
         "src/hooks/useAuth.js",
         "src/supabaseClient.js",

@@ -38,8 +38,21 @@ describe('AuthReturnOverlay', () => {
     render(<AuthReturnOverlay authLoading={false} user={null} onRetry={vi.fn()} />);
 
     expect(screen.getByLabelText('Poetry Bil-Araby')).toBeInTheDocument();
+    expect(screen.getByTestId('oauth-return-panel')).toHaveClass('rounded-t-3xl');
+    expect(screen.getByTestId('oauth-return-header')).toHaveClass('h-[150px]');
+    expect(screen.getByText('القصيدة ما زالت هنا')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Sign-in cancelled' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Try Google again' })).toBeInTheDocument();
+  });
+
+  it('carries the Poetry editorial treatment into the success state', () => {
+    window.history.replaceState({}, '', '/?code=not-rendered');
+    render(<AuthReturnOverlay authLoading={false} user={{ id: 'user-123' }} onRetry={vi.fn()} />);
+
+    expect(screen.getByText('مجموعتك في انتظارك')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'You’re signed in' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue reading' })).toHaveClass('font-semibold');
+    expect(screen.queryByRole('button', { name: 'Try Google again' })).not.toBeInTheDocument();
   });
 
   it('shows progress while a callback session is being established', () => {

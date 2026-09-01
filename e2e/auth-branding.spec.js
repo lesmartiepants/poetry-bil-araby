@@ -48,6 +48,8 @@ test.describe('Branded authentication continuity', () => {
   test('presents cancellation and preserves ordinary reader URL state', async ({ page }) => {
     await page.goto('/?error=access_denied&insightsMode=inline#reader-section');
 
+    await expect(page.getByTestId('oauth-return-header')).toBeVisible();
+    await expect(page.getByText('القصيدة ما زالت هنا')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Sign-in cancelled' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Try Google again' })).toBeVisible();
     await page.getByRole('button', { name: 'Continue without an account' }).click();

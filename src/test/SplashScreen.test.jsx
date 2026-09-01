@@ -56,6 +56,6 @@ describe('SplashScreen', () => {
       vi.advanceTimersByTime(1400);
     });
 
-    expect(screen.getByRole('button', { name: 'Enter the app' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: "Let's begin" })).toHaveFocus();
   });
 });

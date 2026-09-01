@@ -9,7 +9,7 @@ import {
   Moon,
   Sun,
   SlidersHorizontal,
-  Compass,
+  ScrollText,
   Sparkles,
   Footprints,
   ListChecks,
@@ -88,18 +88,19 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
             className={`z-[60] rounded-xl p-2 flex flex-col gap-1 min-w-[12rem] backdrop-blur-xl border ${theme.border} ${darkMode ? 'bg-black/85' : 'bg-white/92'}`}
             style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
           >
-            {/* Explore poems — filter/browse by mood, theme, motif, intensity, accessibility */}
+            {/* Explore poets — the poet picker. Browsing BY CATEGORY moved to the nav pill's
+                Discover button, so this entry is the poet-shaped door into the corpus. */}
             <button
               onClick={() => {
                 setOpen(false);
-                navigate('/explore');
+                useModalStore.getState().setDiscoverDrawer(true);
               }}
-              aria-label="Explore poems by mood, theme, and reading difficulty"
+              aria-label="Explore poets — browse and filter by poet"
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
               style={{ color: ink }}
             >
-              <Compass size={16} style={{ color: ink }} />
-              <span>Explore Poems</span>
+              <ScrollText size={16} style={{ color: ink }} />
+              <span>Explore Poets</span>
             </button>
 
             {/* Guided walkthrough — the only entry point. It never opens itself, so a reader

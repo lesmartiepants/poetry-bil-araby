@@ -15,7 +15,6 @@ import {
   Heart,
   LibraryBig,
   ThumbsDown,
-  Compass,
   Share2,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
@@ -2355,7 +2354,9 @@ export default function DiwanApp() {
                   </span>
                 </div>
 
-                {/* Discover */}
+                {/* Discover — opens the Category Explorer (taxonomy browser + filter playground).
+                    The long-press Ratchet Mode easter egg stays on this button; the "yalla"
+                    keyboard shortcut is its other entry point. */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                   <button
                     data-tour="discover"
@@ -2363,7 +2364,7 @@ export default function DiwanApp() {
                       setFireTapped(true);
                       setTimeout(() => setFireTapped(false), 400);
                       dismissTTSProgress();
-                      setDiscoverDrawerOpen(true);
+                      navigate('/explore');
                     }}
                     onTouchStart={() => {
                       longPressTimer.current = setTimeout(() => {
@@ -2420,25 +2421,6 @@ export default function DiwanApp() {
                     Discover
                   </span>
                 </div>
-
-                {/* Explore — next to Discover; opens the Category Explorer (taxonomy browser). */}
-                {FEATURES.categoryExplorer && (
-                  <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
-                    <button
-                      onClick={() => navigate('/explore')}
-                      aria-label="Explore poems by mood, theme, and reading difficulty"
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-                    >
-                      <Compass size={21} style={{ color: ink }} />
-                    </button>
-                    <span
-                      className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
-                      style={{ color: ink }}
-                    >
-                      Explore
-                    </span>
-                  </div>
-                )}
 
                 {/* Share — opens the share card modal for the poem on screen. */}
                 {FEATURES.share && (
@@ -2502,7 +2484,9 @@ export default function DiwanApp() {
 
       {/* Insight drawer (InsightOverlay) removed — insights now live inline in the reader only. */}
 
-      {/* Discover Drawer */}
+      {/* Discover Drawer — the poet-shaped door into the corpus (browse by poet + surprise me).
+          Opened from the account menu's "Explore Poets" now that the nav pill's Discover button
+          goes to the Category Explorer instead. */}
       <AnimatePresence>
         {discoverDrawerOpen && (
           <DiscoverDrawer

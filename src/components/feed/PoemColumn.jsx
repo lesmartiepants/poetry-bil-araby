@@ -104,38 +104,23 @@ const PoemColumn = forwardRef(function PoemColumn(
   // Measure the inline content's true width via a Range. A block element's scrollWidth clamps to
   // clientWidth once the content is narrower, so it cannot tell "fits exactly" from "has room",
   // and using it silently disables the shrink.
-  //
-  // The Arabic line's box always spans the column (nowrap doesn't shrink-wrap a block), so its
-  // rendered TEXT width is `min(natural, box)`, not the box width. The English translation below
-  // it is capped to that same pixel width so it wraps where the Arabic line actually ends instead
-  // of at the full column edge.
-  const fitToBox = (el) => {
-    el.style.setProperty('--fit', '1');
-    const box = el.clientWidth;
-    if (!box) return 0;
-    let natural = 0;
-    try {
-      const range = document.createRange();
-      range.selectNodeContents(el);
-      natural = range.getBoundingClientRect().width;
-      range.detach?.();
-    } catch {
-      natural = el.scrollWidth;
-    }
-    if (natural > box) el.style.setProperty('--fit', (box / natural).toFixed(4));
-    return Math.min(natural, box);
-  };
-
   const measure = useCallback(() => {
     const col = colRef.current;
     if (!col) return;
-    col.querySelectorAll('.pc-unit').forEach((unit) => {
-      const ar = unit.querySelector('.pc-ar');
-      const translit = unit.querySelector('.pc-translit');
-      const en = unit.querySelector('.pc-en');
-      const arWidth = ar ? fitToBox(ar) : 0;
-      if (translit) fitToBox(translit);
-      if (en) en.style.maxWidth = arWidth ? `${arWidth}px` : '100%';
+    col.querySelectorAll('.pc-ar, .pc-translit').forEach((el) => {
+      el.style.setProperty('--fit', '1');
+      const box = el.clientWidth;
+      if (!box) return;
+      let natural = 0;
+      try {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        natural = range.getBoundingClientRect().width;
+        range.detach?.();
+      } catch {
+        natural = el.scrollWidth;
+      }
+      if (natural > box) el.style.setProperty('--fit', (box / natural).toFixed(4));
     });
   }, []);
 

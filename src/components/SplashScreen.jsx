@@ -23,12 +23,15 @@ const SplashScreen = () => {
 
   const dismiss = (e) => {
     e.stopPropagation();
-    useModalStore.getState().dismissSplash();
     try {
       localStorage.setItem('hasSeenOnboarding', 'true');
     } catch {}
     const needsOnboarding = FEATURES.onboardingPrefs && !hasSavedPreferences();
+    // Route first, dismiss second: the destination (onboarding route, or "/") commits in the
+    // same pass as the splash unmounting, so there's no frame where the splash is gone but the
+    // reader is showing through with nothing routed on top of it yet.
     navigate(needsOnboarding ? '/onboarding' : '/');
+    useModalStore.getState().dismissSplash();
   };
 
   if (!isOpen) return null;

@@ -173,19 +173,17 @@
 
 /* English wraps instead of shrinking. Shrinking Latin text to avoid a wrap buys nothing: there are
    no ligatures to protect and a second line is cheaper than an unreadable first one.
-   Conditional alignment, per owner feedback: flush right cost wrapped lines a ragged LEFT edge,
-   which is exactly the edge a Latin reader's eye returns to. `width: fit-content` +
-   `margin-left: auto` decides per verse: one line hugs its content and pins right (the shared
-   right edge survives), multiple lines span the column and share the first line's left edge. */
+   Flush right, full column width, per owner feedback: capping the wrap to the Arabic line's own
+   width looked wrong (the English trailing off wherever the Arabic happened to end), so the
+   English uses the full column and right-aligns — first line and every wrapped continuation share
+   the column's right edge, matching the Arabic block beside it. */
 .pc-en {
-  text-align: left;
+  text-align: right;
   direction: ltr;
   white-space: normal;
   font-style: italic;
   line-height: 1.3;
-  width: fit-content;
-  max-width: 100%;
-  margin: 4px 0 0 auto;
+  margin: 4px 0 0 0;
   transition: opacity 0.5s ease;
 }
 

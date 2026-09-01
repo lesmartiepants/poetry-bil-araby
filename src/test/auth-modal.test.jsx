@@ -108,7 +108,7 @@ describe('AuthModal', () => {
     it('renders the Google sign-in CTA', () => {
       render(<AuthModal onSignInWithGoogle={onSignInWithGoogle} />);
       expect(screen.getByRole('button', { name: /continue with google/i })).toBeInTheDocument();
-      expect(screen.getByTestId('poetry-google-frame')).toHaveClass('p-[2px]');
+      expect(screen.getByTestId('poetry-google-frame')).toHaveClass('p-px');
       expect(screen.getByRole('button', { name: /continue with google/i })).toHaveClass(
         'bg-[#131314]',
         'text-[#e3e3e3]',

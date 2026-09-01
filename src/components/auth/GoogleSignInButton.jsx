@@ -14,11 +14,11 @@ export default function GoogleSignInButton({
   return (
     <div
       data-testid="poetry-google-frame"
-      className="w-full rounded-[14px] p-[2px] transition-all duration-200 hover:-translate-y-px hover:scale-[1.006]"
+      className="w-full rounded-[14px] p-px transition-all duration-200 hover:-translate-y-px hover:scale-[1.006]"
       style={{
         background:
           'linear-gradient(135deg, #9b7735, #d8bc6e 24%, #f0d98b 42%, #b8924a 63%, #e0c97a 82%, #9b7735)',
-        boxShadow: '0 0 0 1px rgba(197,160,89,0.16), 0 5px 18px rgba(197,160,89,0.24)',
+        boxShadow: '0 0 0 1px rgba(197,160,89,0.1), 0 5px 18px rgba(197,160,89,0.24)',
       }}
     >
       <button

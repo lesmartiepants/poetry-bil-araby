@@ -78,6 +78,10 @@
   position: relative;
   width: 46px;
   height: 40px;
+  /* The pen/trail/ink cluster is drawn left-heavy inside this box (pen at left:3px, 30px wide),
+     so the box itself sits dead-center in .seal but the drawing reads off-center. Nudge the whole
+     stage right to recenter the visual weight without touching the --p-driven child transforms. */
+  transform: translateX(4px);
 }
 
 .q-pen {
@@ -116,18 +120,27 @@
   fill: rgba(212, 180, 99, calc(0.22 + var(--p, 0) * 0.4));
 }
 
-/* The stroke the quill is laying down. scaleX from the left, so it grows out from under the nib. */
-.q-trail {
+/* The stroke the quill is laying down: a wobbly scribble, revealed left-to-right via
+   stroke-dashoffset against --p (pathLength="1" on the <path> normalizes the dash units so this
+   never has to know the path's real pixel length). Replaces an earlier straight scaleX bar, which
+   read as a loading meter rather than handwriting. */
+.q-scribble {
   position: absolute;
-  left: 9px;
-  bottom: 4px;
-  width: 17px;
-  height: 2px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, rgba(212, 180, 99, 0.15), var(--gold-bright));
-  transform: scaleX(var(--p, 0));
-  transform-origin: left center;
-  will-change: transform;
+  inset: 0;
+  overflow: visible;
+  will-change: opacity;
+}
+
+.q-scribble path {
+  fill: none;
+  stroke: var(--gold-bright);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: calc(1 - var(--p, 0));
+  opacity: calc(0.25 + var(--p, 0) * 0.75);
+  will-change: stroke-dashoffset, opacity;
 }
 
 /* Ink gathering at the nib. */
@@ -157,7 +170,7 @@
   }
 }
 
-.seal.fired .q-trail,
+.seal.fired .q-scribble,
 .seal.fired .q-ink {
   animation: qFade 0.3s ease forwards;
 }

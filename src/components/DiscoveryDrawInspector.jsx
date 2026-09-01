@@ -572,12 +572,12 @@ const DiscoveryDrawInspector = () => {
 
   return (
     <>
-      {/* Trigger — sits immediately left of the debug bug icon so the two read
+      {/* Trigger — stacked directly above the debug bug icon so the two read
           as one cluster of dev tools, clear of the centred nav pill. */}
       <button
         onClick={() => setOpen((v) => !v)}
         className="fixed z-[200] w-[44px] h-[44px] flex items-center justify-center"
-        style={{ right: 52, bottom: 52 }}
+        style={{ right: 8, bottom: 96 }}
         title="الميزان — inspect the scored discovery draw"
         aria-label="Inspect the scored discovery draw"
         aria-expanded={open}

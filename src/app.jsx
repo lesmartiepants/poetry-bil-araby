@@ -15,6 +15,8 @@ import {
   Heart,
   LibraryBig,
   ThumbsDown,
+  Compass,
+  Share2,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -951,6 +953,12 @@ export default function DiwanApp() {
   const cachedAuthorBio = displayedPoem?.cachedAuthorBio;
 
   const insightParts = useMemo(() => {
+    // Parsed once up front so the cached branch below can fall back to it: a poem can carry a
+    // cached translation without a cached explanation/author bio (they're cached separately, on
+    // demand, after an analysis run), and hard-committing to '' in that case froze out a live
+    // interpretation that had already arrived — "No meaning available" and no Author Insights
+    // button even after the analysis genuinely completed.
+    const parsedFromInterpretation = parseInsight(interpretation, addLog);
     // In ratchet mode, always use the AI-generated interpretation so cached scholarly
     // translations don't override the Gen Z ratchet content.
     if (!ratchetMode && cachedTranslation) {
@@ -962,12 +970,12 @@ export default function DiwanApp() {
       if (enCount >= arCount || arCount === 0) {
         return {
           poeticTranslation: cachedTranslation,
-          depth: cachedExplanation || '',
-          author: cachedAuthorBio || '',
+          depth: cachedExplanation || parsedFromInterpretation?.depth || '',
+          author: cachedAuthorBio || parsedFromInterpretation?.author || '',
         };
       }
     }
-    return parseInsight(interpretation, addLog);
+    return parsedFromInterpretation;
   }, [
     interpretation,
     cachedTranslation,
@@ -2413,6 +2421,44 @@ export default function DiwanApp() {
                   </span>
                 </div>
 
+                {/* Explore — next to Discover; opens the Category Explorer (taxonomy browser). */}
+                {FEATURES.categoryExplorer && (
+                  <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                    <button
+                      onClick={() => navigate('/explore')}
+                      aria-label="Explore poems by mood, theme, and reading difficulty"
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                    >
+                      <Compass size={21} style={{ color: ink }} />
+                    </button>
+                    <span
+                      className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                      style={{ color: ink }}
+                    >
+                      Explore
+                    </span>
+                  </div>
+                )}
+
+                {/* Share — opens the share card modal for the poem on screen. */}
+                {FEATURES.share && (
+                  <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                    <button
+                      onClick={handleShare}
+                      aria-label="Share poem"
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                    >
+                      <Share2 size={19} style={{ color: ink }} />
+                    </button>
+                    <span
+                      className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                      style={{ color: ink }}
+                    >
+                      Share
+                    </span>
+                  </div>
+                )}
+
                 {/* Account — rightmost: expandable menu with voice cycle + sign in/out */}
                 <AccountMenu
                   user={user}
@@ -2491,7 +2537,17 @@ export default function DiwanApp() {
           Salvaged from #517; gated on FEATURES.onboardingPrefs so it stays out
           of the default boot path (the app boots straight into the feed). */}
       {FEATURES.onboardingPrefs && isOnboardingRoute && (
-        <Suspense fallback={null}>
+        <Suspense
+          fallback={
+            // Opaque, not null: OnboardingFlow is lazy-loaded, and a transparent
+            // fallback here let the reader flash through underneath for the chunk's
+            // first fetch, right after the splash dismisses into this route.
+            <div
+              className="fixed inset-0 z-[60]"
+              style={{ background: darkMode ? '#000000' : '#fafaf9' }}
+            />
+          }
+        >
           <OnboardingFlow
             key="onboarding-flow"
             onComplete={(prefs) => {

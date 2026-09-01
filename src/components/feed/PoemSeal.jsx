@@ -372,7 +372,16 @@ export default function PoemSeal({ disabled = false, sealRef: externalSealRef })
       >
         <div className="ring" />
         <div className="q-stage">
-          <div className="q-trail" />
+          {/* The stroke the quill is laying down — a wobbly scribble rather than one clean line,
+              since a straight bar read as a progress meter rather than handwriting. Revealed via
+              stroke-dashoffset against --p; pathLength="1" normalizes the dash math so the CSS
+              never has to know the path's real length. */}
+          <svg className="q-scribble" viewBox="0 0 46 40" aria-hidden="true">
+            <path
+              pathLength="1"
+              d="M9 35.5 Q11 32 13.2 35 Q15.4 38 17.6 34.5 Q19.8 31.5 22 35 Q24 38 26 34"
+            />
+          </svg>
           <svg className="q-pen" viewBox="0 0 32 32" aria-hidden="true">
             <path
               className="q-vane"

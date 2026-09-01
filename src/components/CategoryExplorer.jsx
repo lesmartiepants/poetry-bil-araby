@@ -55,7 +55,7 @@ export default function CategoryExplorer({
   };
   const [showSaved, setShowSaved] = useState(false);
 
-  const [activeTab, setActiveTab] = useState('taxonomy'); // 'taxonomy' | 'playground'
+  const [activeTab, setActiveTab] = useState('playground'); // 'taxonomy' | 'playground'
 
   // ── Taxonomy data ──
   const [data, setData] = useState({ dimensions: [], families: [] });

@@ -341,11 +341,11 @@
           "src/test/auth-modal.test.jsx",
           "src/test/oauth-return.test.jsx"
         ],
-        "e2e": ["e2e/user-flows.spec.js"]
+        "e2e": ["e2e/user-flows.spec.js", "e2e/auth-branding.spec.js"]
       },
       "deviceOnly": true,
       "coverage": "mocked",
-      "gap": "Real Google account selection and PKCE exchange still require preview/production dogfood; callback loading, cancellation, failure, retry, and URL cleanup are unit-tested."
+      "gap": "Preview reaches Google's account-selection surface without entering an account. Real account completion and PKCE exchange still require post-merge production dogfood; branded dialog/legal rendering and cancellation continuity are cross-browser e2e-tested, while callback loading, success, failure, retry, and URL cleanup are unit-tested."
     },
     {
       "id": "settings-sync",

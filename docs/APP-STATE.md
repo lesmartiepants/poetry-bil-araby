@@ -112,7 +112,7 @@ _The Manifest Auto-Reconcile bot regenerates this block and commits it via a PR 
 | `tts-prefetch-cache` | nice | mocked | - | cache.test covers Blob->ArrayBuffer (iOS #554). Prefetch is skipped entirely in live mode; the in-flight prefetch poll (60s nested timeouts) is untested. |
 | `ai-insights` | important | mocked | - | Parsing well covered. SSE streaming + swipe-bail (_analysisGeneration) only over mocked routes. |
 | `save-poems` | important | mocked | - | Supabase fully mocked. Optimistic insert + 23505 dedup + post-OAuth auto-save stash only logic-tested. |
-| `auth-oauth` | important | mocked | yes | Real Google account selection and PKCE exchange still require preview/production dogfood; callback loading, cancellation, failure, retry, and URL cleanup are unit-tested. |
+| `auth-oauth` | important | mocked | yes | Preview reaches Google's account-selection surface without entering an account. Real account completion and PKCE exchange still require post-merge production dogfood; branded dialog/legal rendering and cancellation continuity are cross-browser e2e-tested, while callback loading, success, failure, retry, and URL cleanup are unit-tested. |
 | `settings-sync` | nice | mocked | - | Debounced upsert to user_settings only logic-tested; voice_preference column exists but UI uses localStorage. |
 | `text-settings` | important | behavioral | - | Store + highlight defaults covered; full popover interaction matrix not exhaustively e2e-tested. |
 | `theme-toggle` | important | behavioral | - | None significant. Toggle control moved out of the removed ThemeToggle.jsx into the nav/settings. |

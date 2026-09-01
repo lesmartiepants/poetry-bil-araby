@@ -3,9 +3,9 @@ const OAUTH_QUERY_KEYS = ['code', 'error', 'error_code', 'error_description', 's
 export function readOAuthReturn(locationLike = window.location) {
   const params = new URLSearchParams(locationLike.search || '');
   const code = params.get('code');
-  const error = params.get('error');
-  const hash = locationLike.hash || '';
-  const implicit = hash.includes('access_token=') || hash.includes('error=');
+  const hashParams = new URLSearchParams((locationLike.hash || '').replace(/^#/, ''));
+  const error = params.get('error') || hashParams.get('error');
+  const implicit = hashParams.has('access_token') || hashParams.has('error');
 
   if (!code && !error && !implicit) return null;
   if (error) {

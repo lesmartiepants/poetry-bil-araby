@@ -1,49 +1,53 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { useAuth, useUserSettings, useSavedPoems } from '../hooks/useAuth';
-import React from 'react';
+
+let authStateChangeCallback;
 
 // Mock Supabase client
 vi.mock('../supabaseClient', () => ({
   supabase: {
     auth: {
       getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
-      onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } }
-      })),
+      onAuthStateChange: vi.fn((callback) => {
+        authStateChangeCallback = callback;
+        return {
+          data: { subscription: { unsubscribe: vi.fn() } },
+        };
+      }),
       signInWithOAuth: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-      signOut: vi.fn(() => Promise.resolve({ error: null }))
+      signOut: vi.fn(() => Promise.resolve({ error: null })),
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-          order: vi.fn(() => Promise.resolve({ data: [], error: null }))
-        }))
+          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+        })),
       })),
       insert: vi.fn(() => ({
         select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: {}, error: null }))
-        }))
+          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+        })),
       })),
       upsert: vi.fn(() => ({
         select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: {}, error: null }))
-        }))
+          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
+        })),
       })),
       delete: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null }))
-      }))
-    }))
+        eq: vi.fn(() => Promise.resolve({ error: null })),
+      })),
+    })),
   },
-  isSupabaseConfigured: vi.fn(() => true)
+  isSupabaseConfigured: vi.fn(() => true),
 }));
 
 // Test component that uses the auth hook
 function TestAuthComponent() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
-  
+
   return (
     <div>
       <div data-testid="loading">{loading ? 'Loading' : 'Ready'}</div>
@@ -57,7 +61,7 @@ function TestAuthComponent() {
 // Test component for user settings
 function TestSettingsComponent({ user }) {
   const { settings, saveSettings, loading } = useUserSettings(user);
-  
+
   return (
     <div>
       <div data-testid="loading">{loading ? 'Loading' : 'Ready'}</div>
@@ -77,9 +81,9 @@ function TestSavedPoemsComponent({ user }) {
     poet: 'Test Poet',
     title: 'Test Title',
     arabic: 'Test Arabic Text',
-    english: 'Test English'
+    english: 'Test English',
   };
-  
+
   return (
     <div>
       <div data-testid="loading">{loading ? 'Loading' : 'Ready'}</div>
@@ -92,27 +96,32 @@ function TestSavedPoemsComponent({ user }) {
 }
 
 describe('useAuth Hook', () => {
+  beforeEach(() => {
+    authStateChangeCallback = undefined;
+    window.history.replaceState({}, '', '/');
+  });
+
   it('should initialize with no user and not loading after mount', async () => {
     render(<TestAuthComponent />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
     });
-    
+
     expect(screen.getByTestId('user')).toHaveTextContent('Not signed in');
   });
 
   it('should call signInWithGoogle when button clicked', async () => {
     const { supabase } = await import('../supabaseClient');
     render(<TestAuthComponent />);
-    
+
     const signInButton = screen.getByText('Sign In with Google');
     fireEvent.click(signInButton);
-    
+
     await waitFor(() => {
       expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({
         provider: 'google',
-        options: { redirectTo: window.location.origin }
+        options: { redirectTo: window.location.origin },
       });
     });
   });
@@ -120,13 +129,31 @@ describe('useAuth Hook', () => {
   it('should call signOut when sign out button clicked', async () => {
     const { supabase } = await import('../supabaseClient');
     render(<TestAuthComponent />);
-    
+
     const signOutButton = screen.getByText('Sign Out');
     fireEvent.click(signOutButton);
-    
+
     await waitFor(() => {
       expect(supabase.auth.signOut).toHaveBeenCalled();
     });
+  });
+
+  it('removes OAuth artifacts after sign-in while preserving reader URL state', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/poem/4?code=oauth-code&insightsMode=inline#reader-section'
+    );
+    render(<TestAuthComponent />);
+
+    await waitFor(() => expect(authStateChangeCallback).toBeTypeOf('function'));
+    act(() => {
+      authStateChangeCallback('SIGNED_IN', { user: { id: 'user-123' } });
+    });
+
+    expect(`${window.location.pathname}${window.location.search}${window.location.hash}`).toBe(
+      '/poem/4?insightsMode=inline#reader-section'
+    );
   });
 });
 
@@ -160,16 +187,16 @@ describe('useUserSettings Hook', () => {
   it('should call saveSettings when button clicked', async () => {
     const mockUser = { id: 'user-123', email: 'test@example.com' };
     const { supabase } = await import('../supabaseClient');
-    
+
     render(<TestSettingsComponent user={mockUser} />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
     });
-    
+
     const saveButton = screen.getByText('Save Settings');
     fireEvent.click(saveButton);
-    
+
     await waitFor(() => {
       expect(supabase.from).toHaveBeenCalledWith('user_settings');
     });
@@ -208,16 +235,16 @@ describe('useSavedPoems Hook', () => {
   it('should call savePoem when save button clicked', async () => {
     const mockUser = { id: 'user-123', email: 'test@example.com' };
     const { supabase } = await import('../supabaseClient');
-    
+
     render(<TestSavedPoemsComponent user={mockUser} />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
     });
-    
+
     const saveButton = screen.getByText('Save Poem');
     fireEvent.click(saveButton);
-    
+
     await waitFor(() => {
       expect(supabase.from).toHaveBeenCalledWith('saved_poems');
     });
@@ -226,16 +253,16 @@ describe('useSavedPoems Hook', () => {
   it('should call unsavePoem when unsave button clicked', async () => {
     const mockUser = { id: 'user-123', email: 'test@example.com' };
     const { supabase } = await import('../supabaseClient');
-    
+
     render(<TestSavedPoemsComponent user={mockUser} />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
     });
-    
+
     const unsaveButton = screen.getByText('Unsave Poem');
     fireEvent.click(unsaveButton);
-    
+
     await waitFor(() => {
       expect(supabase.from).toHaveBeenCalledWith('saved_poems');
     });

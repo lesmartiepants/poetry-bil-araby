@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as Sentry from '@sentry/react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
+import { cleanOAuthReturnUrl } from '../utils/oauthReturn';
 
 // Structured logger for auth/DB events — captured by Vercel and browser console
 const log = {
@@ -44,9 +45,9 @@ export function useAuth() {
       setLoading(false);
       log.info('StateChange', event);
 
-      // Strip OAuth ?code= param from URL after PKCE exchange
+      // Strip OAuth artifacts after the exchange without discarding ordinary reader state.
       if (event === 'SIGNED_IN' && window.location.search.includes('code=')) {
-        window.history.replaceState({}, '', window.location.pathname);
+        cleanOAuthReturnUrl();
       }
 
       // Sync Sentry user context with auth state

@@ -15,6 +15,9 @@ describe('OAuth return state', () => {
       readOAuthReturn({ search: '?error=access_denied&error_description=cancelled', hash: '' })
     ).toEqual({ kind: 'cancelled' });
     expect(readOAuthReturn({ search: '?error=server_error', hash: '' })?.kind).toBe('error');
+    expect(readOAuthReturn({ search: '', hash: '#error=access_denied' })).toEqual({
+      kind: 'cancelled',
+    });
   });
 
   it('removes OAuth values but preserves normal app parameters', () => {

@@ -480,7 +480,7 @@
       "id": "onboarding-splash",
       "name": "Splash / kinetic onboarding",
       "tier": "nice",
-      "userFacing": "First visit shows a desert splash and a 3-phase kinetic walkthrough.",
+      "userFacing": "First visit shows the Zen splash (brand mark, breathing line, Enter). Dismissing it hands off to the /onboarding preference flow when the reader has no saved prefs yet, otherwise straight into the feed.",
       "entrypoints": ["src/components/SplashScreen.jsx"],
       "endpoints": [],
       "tests": {

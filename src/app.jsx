@@ -269,6 +269,7 @@ export default function DiwanApp() {
   const darkMode = useUIStore((s) => s.darkMode);
   const setDarkMode = useUIStore((s) => s.setDarkMode);
   const curated = useUIStore((s) => s.curated);
+  const showDislike = useUIStore((s) => s.showDislike);
   const currentFont = useUIStore((s) => s.font);
   const setCurrentFont = useUIStore((s) => s.setFont);
   const ratchetMode = useUIStore((s) => s.ratchetMode);
@@ -2258,6 +2259,36 @@ export default function DiwanApp() {
                   WebkitUserSelect: 'none',
                 }}
               >
+                {/* Dislike — left of Save, inside the nav pill. Hideable from the account menu. */}
+                {showDislike && (
+                  <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                    <button
+                      onClick={() =>
+                        current && isPoemDownvoted(current) ? handleUndownvote() : handleDownvote()
+                      }
+                      aria-label={
+                        current && isPoemDownvoted(current) ? 'Remove dislike' : 'Dislike poem'
+                      }
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                    >
+                      <ThumbsDown
+                        size={19}
+                        style={
+                          current && isPoemDownvoted(current)
+                            ? { fill: '#f87171', stroke: '#f87171' }
+                            : { fill: 'none', stroke: ink }
+                        }
+                      />
+                    </button>
+                    <span
+                      className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                      style={{ color: ink }}
+                    >
+                      dislike
+                    </span>
+                  </div>
+                )}
+
                 {/* Listen moved into the reader's action buttons (ReaderActions) — removed from nav. */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                   <button
@@ -2392,32 +2423,6 @@ export default function DiwanApp() {
                   ink={ink}
                 />
               </div>
-
-              {/* Dislike — pinned left, in the gap between the nav pill and the screen edge */}
-              <button
-                onClick={() =>
-                  current && isPoemDownvoted(current) ? handleUndownvote() : handleDownvote()
-                }
-                aria-label={current && isPoemDownvoted(current) ? 'Remove dislike' : 'Dislike poem'}
-                className="absolute left-0 md:left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5"
-              >
-                <span className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full hover:scale-105 transition-transform">
-                  <ThumbsDown
-                    size={19}
-                    style={
-                      current && isPoemDownvoted(current)
-                        ? { fill: '#f87171', stroke: '#f87171' }
-                        : { fill: 'none', stroke: ink }
-                    }
-                  />
-                </span>
-                <span
-                  className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
-                  style={{ color: ink }}
-                >
-                  dislike
-                </span>
-              </button>
             </div>
           </motion.footer>
 
@@ -2551,8 +2556,8 @@ export default function DiwanApp() {
           button, bottom-right). */}
       <TextSettingsPill />
 
-      {/* Vertical sidebar removed — Library + Account moved into the bottom nav, Dislike to the
-          bottom-left, Share/Copy retired (feature-flagged off). */}
+      {/* Vertical sidebar removed — Library + Account moved into the bottom nav, Dislike into the
+          nav pill left of Save, Share/Copy retired (feature-flagged off). */}
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}
       <AnimatePresence>

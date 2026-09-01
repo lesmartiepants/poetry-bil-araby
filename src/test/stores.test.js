@@ -537,7 +537,9 @@ describe('modalStore', () => {
       expect(state.authModal).toBe(false);
       expect(state.authMessage).toBe('');
       expect(state.savedPoems).toBe(false);
-      expect(state.splash).toBe(false); // splash/landing disabled via FEATURES.landing
+      // splash/landing is on (FEATURES.landing); it only opens when the reader has not
+      // seen it before, so its initial value follows localStorage like `onboarding` below.
+      expect(typeof state.splash).toBe('boolean');
       expect(state.insightsDrawer).toBe(false);
       expect(state.shortcutHelp).toBe(false);
       expect(state.poetPicker).toBe(false);

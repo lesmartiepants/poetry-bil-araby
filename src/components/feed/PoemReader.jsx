@@ -5,6 +5,7 @@ import InlineInsights from './InlineInsights.jsx';
 import ReaderActions from './ReaderActions.jsx';
 import ScrollHairline from './ScrollHairline.jsx';
 import '../../styles/reader-actions.css';
+import '../../styles/poem-column.css';
 import { useAudioStore } from '../../stores/audioStore';
 
 // The poem is a continuous scrolling column now, so there is no pinned header to clear and no
@@ -57,6 +58,10 @@ const PoemReader = memo(function PoemReader({
 }) {
   const poemId = poem?.id;
   const summon = useSummon();
+  // Same values PoemColumn computes for its own (scrolling) pc-head, duplicated here because the
+  // insight header below needs them while PoemColumn itself is unmounted.
+  const goldColor = darkMode ? '#c5a059' : '#8B6430';
+  const enTitleColor = darkMode ? 'rgba(255,253,247,0.88)' : 'rgba(28,25,23,0.8)';
 
   // Flat verse lines — match app.jsx's versePairs (blank lines filtered) so wordOffsets/TTS align.
   const lines = useMemo(() => {
@@ -204,10 +209,51 @@ const PoemReader = memo(function PoemReader({
 
         {inInsight && (
           <div
+            className="pc-head"
+            data-testid="insight-header"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 4,
+              padding: '20px 16px 0',
+              pointerEvents: 'none',
+            }}
+          >
+            <div
+              className="pc-ttl-ar"
+              lang="ar"
+              dir="rtl"
+              style={{ fontSize: '1.75rem', color: goldColor }}
+            >
+              {poem?.titleArabic || poem?.title}
+            </div>
+            {poem?.title && poem.title !== poem?.titleArabic && (
+              <div className="pc-ttl-en" dir="ltr" style={{ color: enTitleColor }}>
+                {poem.title}
+              </div>
+            )}
+            <div className="pc-byline" dir="ltr" style={{ color: 'rgba(212,180,99,0.95)' }}>
+              <span
+                lang="ar"
+                style={{ fontFamily: "'Reem Kufi', sans-serif", fontSize: '1.0625rem' }}
+              >
+                {poem?.poetArabic || poem?.poet}
+              </span>
+              {poem?.poet && poem?.poetArabic && poem.poet !== poem.poetArabic && (
+                <span> · {poem.poet}</span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {inInsight && (
+          <div
             ref={insightWrapRef}
             className="w-full max-w-xl mx-auto h-full flex items-center"
             data-insight-ui
-            style={{ paddingBottom: 32 }}
+            style={{ paddingBottom: 32, paddingTop: 108 }}
           >
             <InlineInsights
               stage={endStage}

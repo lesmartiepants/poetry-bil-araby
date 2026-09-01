@@ -13,6 +13,7 @@ import {
   Sparkles,
   Footprints,
   ListChecks,
+  ThumbsDown,
 } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FEATURES } from '../constants/features.js';
@@ -33,6 +34,7 @@ import { onboardingEntryLabel, onboardingEntryDescription } from '../utils/onboa
 export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCycleVoice, ink }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const curated = useUIStore((s) => s.curated);
+  const showDislike = useUIStore((s) => s.showDislike);
   const openDisplaySettings = useModalStore((s) => s.openDisplaySettings);
   const openTour = useModalStore((s) => s.openTour);
   const [, navigate] = useLocation();
@@ -224,6 +226,40 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
                     height: 16,
                     top: 2,
                     left: curated ? 18 : 2,
+                    background: ink,
+                  }}
+                />
+              </span>
+            </button>
+
+            {/* Dislike button — shows/hides the dislike control in the reader's nav pill. */}
+            <button
+              onClick={() => useUIStore.getState().toggleShowDislike()}
+              aria-label={showDislike ? 'Hide dislike button' : 'Show dislike button'}
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+              style={{ color: ink }}
+            >
+              <span className="flex items-center gap-2">
+                <ThumbsDown size={16} style={{ color: showDislike ? '#c5a059' : ink }} />
+                <span>Dislike button</span>
+              </span>
+              <span
+                aria-hidden="true"
+                className="relative inline-flex flex-shrink-0 rounded-full transition-colors duration-200"
+                style={{
+                  width: 38,
+                  height: 22,
+                  background: showDislike ? 'rgba(197,160,89,0.55)' : 'rgba(120,120,140,0.30)',
+                  border: '1px solid rgba(197,160,89,0.45)',
+                }}
+              >
+                <span
+                  className="absolute rounded-full transition-all duration-200"
+                  style={{
+                    width: 16,
+                    height: 16,
+                    top: 2,
+                    left: showDislike ? 18 : 2,
                     background: ink,
                   }}
                 />

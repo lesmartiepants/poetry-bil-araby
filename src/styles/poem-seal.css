@@ -23,27 +23,50 @@
 /* -- N4 - The seal ------------------------------------------------------------- */
 /* A press-and-hold target that exists ONLY at the end of the poem, where the reader has arrived
    deliberately and where B's dimmed-ahead verses have already told them the end was coming. */
+/* Tightened from 26px: the quill SEALS the poem, so it should read as attached to the last verse
+   rather than floating in the black below it. The slack belongs under the control, not above it. */
 .seal-wrap {
-  margin: 26px 0 8px;
+  margin: 14px 0 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-/* 76px, not 92px. Comfortably above the 44px touch minimum, and small enough that a 4-line
-   bilingual poem (four TALL rows -- the baseline capacity #707 measured) doesn't have to scroll
-   far to reach it. */
+/* 68px, down from 76px, against a quill scaled up 1.25x (see .q-stage). The old pairing put a 30px
+   drawing inside a 76px ring, so ~85% of the target was empty and it read as an empty plate rather
+   than a control. This lands the drawing at roughly half the ring's diameter.
+   The border is the control's RESTING edge; .ring paints the charge arc over it. At 0.34 alpha the
+   1px hairline all but vanished on a phone, so nothing said "press me". */
 .seal {
   position: relative;
-  width: 76px;
-  height: 76px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
-  border: 1px solid rgba(197, 160, 89, 0.34);
-  background: radial-gradient(circle at 50% 45%, rgba(197, 160, 89, 0.11), transparent 68%);
+  border: 1.5px solid rgba(197, 160, 89, 0.5);
+  background: radial-gradient(circle at 50% 45%, rgba(197, 160, 89, 0.13), transparent 68%);
   display: grid;
   place-items: center;
   touch-action: none;
+}
+
+/* At rest the ring breathes, because a static hairline on black reads as decoration on a screen
+   where everything else drifts and glows. Stops the moment a charge starts: once --p is moving the
+   arc is the feedback and a second rhythm underneath it would just be noise. */
+.seal:not(.charging):not(.fired) {
+  animation: sealBreath 3.6s ease-in-out infinite;
+}
+
+@keyframes sealBreath {
+  0%,
+  100% {
+    border-color: rgba(197, 160, 89, 0.42);
+    box-shadow: 0 0 0 0 rgba(197, 160, 89, 0);
+  }
+  50% {
+    border-color: rgba(197, 160, 89, 0.68);
+    box-shadow: 0 0 14px 1px rgba(197, 160, 89, 0.12);
+  }
 }
 
 /* A press-and-hold control on iOS is exactly the gesture that raises the selection callout, so
@@ -78,10 +101,14 @@
   position: relative;
   width: 46px;
   height: 40px;
-  /* The pen/trail/ink cluster is drawn left-heavy inside this box (pen at left:3px, 30px wide),
-     so the box itself sits dead-center in .seal but the drawing reads off-center. Nudge the whole
-     stage right to recenter the visual weight without touching the --p-driven child transforms. */
-  transform: translateX(4px);
+  /* Two corrections in one transform, applied right to left.
+     scale(1.25) grows the whole drawing (pen, scribble, ink and their --p-driven transforms alike)
+     against a ring that shrank to 68px, so the control stops reading as mostly empty. Scaling the
+     stage rather than re-tuning each child keeps every hand-tuned offset in proportion.
+     translate() then fixes OPTICAL centering: the cluster is drawn left-heavy (pen at left:3px,
+     30px wide inside a 46px box) and its visual mass sits high, since the vane is the widest part
+     and the nib tapers to a point. Geometric centering leaves it looking up-and-left. */
+  transform: translate(5px, 1px) scale(1.25);
 }
 
 .q-pen {
@@ -181,25 +208,31 @@
   }
 }
 
-/* Charge ring -- conic fill driven by --p (0 to 1) while held. */
+/* Charge ring -- conic fill driven by --p (0 to 1) while held, sweeping from 12 o'clock.
+   This is the whole affordance for a hold gesture: the ring IS the progress track, so it is worth
+   the extra pixel. At a 3px band it was a thread; 4px reads as a filling arc at arm's length. */
 .seal .ring {
   position: absolute;
-  inset: -3px;
+  inset: -4px;
   border-radius: 50%;
   background: conic-gradient(var(--gold-bright) calc(var(--p, 0) * 360deg), transparent 0);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  filter: drop-shadow(0 0 5px rgba(212, 180, 99, calc(var(--p, 0) * 0.55)));
   pointer-events: none;
 }
 
+/* One line, and quieter. Two lines of letterspaced caps outweighed the gold control they were
+   describing, which inverted the hierarchy: the target should lead and the instruction should
+   follow. "Another poem" was doing no work that the end of a poem doesn't already say. */
 .seal-caption {
-  font-size: 0.68rem;
-  letter-spacing: 0.13em;
+  font-size: 0.62rem;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: rgba(236, 231, 221, 0.58);
+  color: rgba(236, 231, 221, 0.45);
   text-align: center;
   max-width: 240px;
-  line-height: 1.6;
+  line-height: 1.5;
 }
 
 /* -- the summon -------------------------------------------------------------------
@@ -399,8 +432,14 @@
 
   .s-burst.go,
   .s-sweep.go,
-  .mote {
+  .mote,
+  .seal:not(.charging):not(.fired) {
     animation: none;
+  }
+
+  /* The resting ring still has to be visible without the breath carrying it. */
+  .seal {
+    border-color: rgba(197, 160, 89, 0.55);
   }
 
   /* The column's own arrival and dissolve are disabled in poem-column.css, which owns them.

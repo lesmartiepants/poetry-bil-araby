@@ -393,12 +393,9 @@ export default function PoemSeal({ disabled = false, sealRef: externalSealRef })
           <div className="q-ink" />
         </div>
       </div>
-      {/* Load-bearing, not decoration: press-and-hold is undiscoverable without it. */}
-      <div className="seal-caption">
-        hold to draw
-        <br />
-        another poem
-      </div>
+      {/* Load-bearing, not decoration: press-and-hold is undiscoverable without it. One line now —
+          the charge ring carries most of that job, so the caption only has to name the gesture. */}
+      <div className="seal-caption">hold to draw</div>
     </div>
   );
 }

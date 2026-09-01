@@ -104,6 +104,20 @@ const PoemReader = memo(function PoemReader({
   const mode = endStage;
   const hasAuthor = !!insightParts?.author;
 
+  // How far into the final stretch of the poem the reader has scrolled (0 to 1). PoemColumn already
+  // computes it; nothing was consuming it until now.
+  const [endApproach, setEndApproach] = useState(0);
+  const handleScrollProgress = useCallback((frac, { lastStretch } = {}) => {
+    setEndApproach(lastStretch ?? 0);
+  }, []);
+
+  // Arriving at the quill is the end-of-poem moment, and it was arriving into competition: a
+  // filled-gold "Poem Insights" pill is the loudest object on the screen, so the reader met two
+  // primary next-actions at once. The fixed row now recedes as the quill comes into view. It stays
+  // interactive at low opacity rather than disappearing, so a reader who wanted Insights after all
+  // is never trapped, and it returns the moment they scroll back up.
+  const actionsDimmed = !inInsight && endApproach > 0.15;
+
   const handleSeeMeaning = () => {
     onStopAudio?.(); // entering insights stops the recitation (it's prose, not the poem)
     onSeeInsight?.(poem);
@@ -184,6 +198,7 @@ const PoemReader = memo(function PoemReader({
             currentVerseIndex={currentVerseIndex}
             isPlaying={isPlaying}
             onOverPull={handleOverPull}
+            onScrollProgress={handleScrollProgress}
           >
             {/* The quill lives inside the column so it scrolls with the poem: it exists only at
                 the end, where the reader has arrived deliberately. */}
@@ -268,12 +283,15 @@ const PoemReader = memo(function PoemReader({
         )}
       </div>
 
-      {/* Action buttons — same position in every state. */}
+      {/* Action buttons — same position in every state, but they yield to the quill at the end of
+          the poem (see actionsDimmed). */}
       <div
         className="absolute left-0 right-0 flex flex-col items-center gap-2 px-4"
         style={{
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
           zIndex: 5,
+          opacity: actionsDimmed ? 0.2 : 1,
+          transition: 'opacity 0.45s ease',
         }}
       >
         {isActive && (

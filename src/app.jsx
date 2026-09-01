@@ -121,6 +121,7 @@ import AccountMenu from './components/AccountMenu.jsx';
 import TourLauncher from './components/tour/TourLauncher.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
+import AuthReturnOverlay from './components/auth/AuthReturnOverlay.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
 import PlayControlsStrip from './components/PlayControlsStrip.jsx';
 
@@ -1472,6 +1473,7 @@ export default function DiwanApp() {
       track('sign_in_completed', { provider: 'google' });
       addLog('Auth', 'Signed in with Google', 'success');
     }
+    return { error };
   };
 
   const handleSignInWithApple = async () => {
@@ -2505,6 +2507,8 @@ export default function DiwanApp() {
           <AuthModal key="auth-modal" onSignInWithGoogle={handleSignInWithGoogle} />
         )}
       </AnimatePresence>
+
+      <AuthReturnOverlay authLoading={authLoading} user={user} onRetry={handleSignInWithGoogle} />
 
       {/* Saved Poems View — Khazana drawer */}
       <SavedPoemsView

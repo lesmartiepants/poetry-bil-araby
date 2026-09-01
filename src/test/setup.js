@@ -1,6 +1,21 @@
-import { expect, afterEach, beforeEach, vi } from 'vitest';
+import { afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
+import { Storage } from 'happy-dom';
+
+// Node 26 exposes experimental storage accessors that return undefined unless the process receives
+// --localstorage-file. In DOM tests, Happy DOM is the authoritative browser environment, so bind
+// its storage objects explicitly and keep the standard `npm run test:run` command self-contained.
+Object.defineProperty(globalThis, 'localStorage', {
+  value: new Storage(),
+  writable: true,
+  configurable: true,
+});
+Object.defineProperty(globalThis, 'sessionStorage', {
+  value: new Storage(),
+  writable: true,
+  configurable: true,
+});
 
 // Mock GSAP as inert in jsdom — the sparkler reveal's tweens/canvas only matter visually,
 // which is covered by the Storybook (real browser) project + Playwright E2E. Here they must

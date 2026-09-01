@@ -1,0 +1,82 @@
+:root {
+  color-scheme: dark;
+  font-family: Forum, Georgia, serif;
+  background: #0c0c0e;
+  color: #ece8e0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  background: radial-gradient(circle at 50% 0, rgba(30, 58, 110, 0.26), transparent 35rem), #0c0c0e;
+}
+
+main {
+  width: min(46rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 5rem;
+}
+
+.brand,
+a {
+  color: #c5a059;
+}
+.brand {
+  text-decoration: none;
+  letter-spacing: 0.04em;
+}
+.arabic {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+.eyebrow {
+  margin-top: 3rem;
+  color: #c5a059;
+  font:
+    0.75rem system-ui,
+    sans-serif;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+h1 {
+  margin: 0.45rem 0 1rem;
+  font-size: clamp(2rem, 7vw, 3.25rem);
+  font-weight: 400;
+}
+h2 {
+  margin-top: 2rem;
+  color: #d9bd78;
+  font-size: 1.25rem;
+  font-weight: 500;
+}
+p,
+li {
+  color: #c8c3ba;
+  font:
+    1rem/1.7 system-ui,
+    sans-serif;
+}
+ul {
+  padding-left: 1.25rem;
+}
+.lede {
+  color: #dedad2;
+  font-size: 1.08rem;
+}
+.meta {
+  color: #817d76;
+  font-size: 0.83rem;
+}
+footer {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(197, 160, 89, 0.2);
+}
+a:focus-visible {
+  outline: 2px solid #c5a059;
+  outline-offset: 3px;
+}

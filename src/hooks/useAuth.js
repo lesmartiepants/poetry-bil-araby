@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import * as Sentry from '@sentry/react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
+import { cleanOAuthReturnUrl } from '../utils/oauthReturn';
 
 // Structured logger for auth/DB events — captured by Vercel and browser console
 const log = {
@@ -29,9 +30,9 @@ export function useAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      log.info('Session', session ? `Restored session for ${session.user.email}` : 'No existing session');
+      log.info('Session', session ? 'Restored authenticated session' : 'No existing session');
       if (session?.user) {
-        Sentry.setUser({ id: session.user.id, email: session.user.email });
+        Sentry.setUser({ id: session.user.id });
       }
     });
 
@@ -42,16 +43,16 @@ export function useAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      log.info('StateChange', `${event}${session ? ` — ${session.user.email}` : ''}`);
+      log.info('StateChange', event);
 
-      // Strip OAuth ?code= param from URL after PKCE exchange
+      // Strip OAuth artifacts after the exchange without discarding ordinary reader state.
       if (event === 'SIGNED_IN' && window.location.search.includes('code=')) {
-        window.history.replaceState({}, '', window.location.pathname);
+        cleanOAuthReturnUrl();
       }
 
       // Sync Sentry user context with auth state
       if (session?.user) {
-        Sentry.setUser({ id: session.user.id, email: session.user.email });
+        Sentry.setUser({ id: session.user.id });
       } else {
         Sentry.setUser(null);
       }
@@ -139,14 +140,15 @@ export function useUserSettings(user) {
     if (!user || !isSupabaseConfigured()) return;
 
     try {
-      log.info('Settings', `Loading settings for user ${user.id}`);
+      log.info('Settings', 'Loading settings for authenticated user');
       const { data, error } = await supabase
         .from('user_settings')
         .select('*')
         .eq('user_id', user.id)
         .single();
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error && error.code !== 'PGRST116') {
+        // PGRST116 = no rows returned
         log.error('Settings', 'Failed to load settings', error.message);
         return;
       }
@@ -164,13 +166,16 @@ export function useUserSettings(user) {
     if (!user || !isSupabaseConfigured()) return;
 
     try {
-      log.info('Settings', 'Saving settings', newSettings);
+      log.info('Settings', 'Saving settings');
       const { data, error } = await supabase
         .from('user_settings')
-        .upsert({
-          user_id: user.id,
-          ...newSettings,
-        }, { onConflict: 'user_id' })
+        .upsert(
+          {
+            user_id: user.id,
+            ...newSettings,
+          },
+          { onConflict: 'user_id' }
+        )
         .select()
         .single();
 
@@ -217,7 +222,7 @@ export function useSavedPoems(user) {
     if (!user || !isSupabaseConfigured()) return;
 
     try {
-      log.info('Poems', `Loading saved poems for user ${user.id}`);
+      log.info('Poems', 'Loading saved poems for authenticated user');
       const { data, error } = await supabase
         .from('saved_poems')
         .select('*')
@@ -242,11 +247,16 @@ export function useSavedPoems(user) {
     if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
 
     // Optimistic update — fill the heart immediately without waiting for the DB round-trip
-    const optimistic = { poem_id: poem.id, poem_text: poem.arabic, poet: poem.poet, title: poem.title };
+    const optimistic = {
+      poem_id: poem.id,
+      poem_text: poem.arabic,
+      poet: poem.poet,
+      title: poem.title,
+    };
     setSavedPoems((prev) => [optimistic, ...prev]);
 
     try {
-      log.info('Poems', `Saving poem: ${poem.poet} — ${poem.title} (id: ${poem.id})`);
+      log.info('Poems', 'Saving poem');
       const { data, error } = await supabase
         .from('saved_poems')
         .insert({
@@ -274,7 +284,7 @@ export function useSavedPoems(user) {
         return { error };
       }
 
-      log.info('Poems', `Poem saved successfully (saved_id: ${data?.id})`);
+      log.info('Poems', 'Poem saved successfully');
       if (data) {
         // Replace optimistic entry with the real DB row
         setSavedPoems((prev) => prev.map((p) => (p === optimistic ? data : p)));
@@ -296,11 +306,8 @@ export function useSavedPoems(user) {
     if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
 
     try {
-      log.info('Poems', `Unsaving poem (id: ${poemId}, text: ${poemText ? 'yes' : 'no'})`);
-      let query = supabase
-        .from('saved_poems')
-        .delete()
-        .eq('user_id', user.id);
+      log.info('Poems', 'Removing poem from library');
+      let query = supabase.from('saved_poems').delete().eq('user_id', user.id);
 
       if (poemId) {
         query = query.eq('poem_id', poemId);
@@ -332,11 +339,11 @@ export function useSavedPoems(user) {
 
   const isPoemSaved = (poem) => {
     if (!savedPoems.length) return false;
-    
+
     if (poem.id) {
       return savedPoems.some((p) => p.poem_id === poem.id);
     }
-    
+
     return savedPoems.some((p) => p.poem_text === poem.arabic);
   };
 
@@ -369,7 +376,7 @@ export function useDownvotes(user) {
   const loadDownvotes = async () => {
     if (!user || !isSupabaseConfigured()) return;
     try {
-      log.info('Downvotes', `Loading downvotes for user ${user.id}`);
+      log.info('Downvotes', 'Loading feedback for authenticated user');
       const { data, error } = await supabase
         .from('poem_events')
         .select('poem_id')
@@ -382,7 +389,7 @@ export function useDownvotes(user) {
       }
 
       log.info('Downvotes', `Loaded ${(data || []).length} downvoted poems`);
-      setDownvotedPoemIds((data || []).map(d => d.poem_id));
+      setDownvotedPoemIds((data || []).map((d) => d.poem_id));
     } catch (error) {
       log.error('Downvotes', 'Exception loading downvotes', error.message);
     } finally {
@@ -393,22 +400,20 @@ export function useDownvotes(user) {
   const downvotePoem = async (poem) => {
     if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
     try {
-      log.info('Downvotes', `Downvoting poem: ${poem.poet} — ${poem.title} (id: ${poem.id})`);
+      log.info('Downvotes', 'Submitting poem feedback');
       // Optimistic update
-      setDownvotedPoemIds(prev => [...prev, poem.id]);
+      setDownvotedPoemIds((prev) => [...prev, poem.id]);
 
-      const { error } = await supabase
-        .from('poem_events')
-        .insert({
-          user_id: user.id,
-          poem_id: poem.id,
-          event_type: 'downvote',
-          metadata: { reason: 'low_quality' },
-        });
+      const { error } = await supabase.from('poem_events').insert({
+        user_id: user.id,
+        poem_id: poem.id,
+        event_type: 'downvote',
+        metadata: { reason: 'low_quality' },
+      });
 
       if (error) {
         // Revert optimistic update
-        setDownvotedPoemIds(prev => prev.filter(id => id !== poem.id));
+        setDownvotedPoemIds((prev) => prev.filter((id) => id !== poem.id));
         log.error('Downvotes', 'Failed to downvote poem', error.message);
         return { error };
       }
@@ -416,7 +421,7 @@ export function useDownvotes(user) {
       log.info('Downvotes', 'Poem downvoted successfully');
       return { error: null };
     } catch (error) {
-      setDownvotedPoemIds(prev => prev.filter(id => id !== poem.id));
+      setDownvotedPoemIds((prev) => prev.filter((id) => id !== poem.id));
       log.error('Downvotes', 'Exception downvoting poem', error.message);
       return { error };
     }
@@ -425,9 +430,9 @@ export function useDownvotes(user) {
   const undownvotePoem = async (poemId) => {
     if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
     try {
-      log.info('Downvotes', `Removing downvote for poem ${poemId}`);
+      log.info('Downvotes', 'Removing poem feedback');
       // Optimistic update
-      setDownvotedPoemIds(prev => prev.filter(id => id !== poemId));
+      setDownvotedPoemIds((prev) => prev.filter((id) => id !== poemId));
 
       const { error } = await supabase
         .from('poem_events')
@@ -438,7 +443,7 @@ export function useDownvotes(user) {
 
       if (error) {
         // Revert optimistic update
-        setDownvotedPoemIds(prev => [...prev, poemId]);
+        setDownvotedPoemIds((prev) => [...prev, poemId]);
         log.error('Downvotes', 'Failed to remove downvote', error.message);
         return { error };
       }
@@ -446,7 +451,7 @@ export function useDownvotes(user) {
       log.info('Downvotes', 'Downvote removed successfully');
       return { error: null };
     } catch (error) {
-      setDownvotedPoemIds(prev => [...prev, poemId]);
+      setDownvotedPoemIds((prev) => [...prev, poemId]);
       log.error('Downvotes', 'Exception removing downvote', error.message);
       return { error };
     }
@@ -475,14 +480,12 @@ export function usePoemEvents(user) {
     if (!user || !isSupabaseConfigured()) return;
     try {
       log.info('Events', `Emitting ${eventType} for poem ${poemId}`);
-      const { error } = await supabase
-        .from('poem_events')
-        .insert({
-          user_id: user.id,
-          poem_id: poemId,
-          event_type: eventType,
-          metadata,
-        });
+      const { error } = await supabase.from('poem_events').insert({
+        user_id: user.id,
+        poem_id: poemId,
+        event_type: eventType,
+        metadata,
+      });
 
       if (error) {
         log.error('Events', `Failed to emit ${eventType}`, error.message);

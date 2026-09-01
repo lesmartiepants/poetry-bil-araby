@@ -1,8 +1,9 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { forwardRef } from 'react';
 import { act, render, screen } from '@testing-library/react';
 import { useModalStore } from '../stores/modalStore';
 import { useUIStore } from '../stores/uiStore';
+import SplashScreen from '../components/SplashScreen.jsx';
 
 vi.mock('wouter', () => ({
   useLocation: () => ['/', vi.fn()],
@@ -34,19 +35,26 @@ vi.mock('framer-motion', () => ({
   ),
 }));
 
-const { default: SplashScreen } = await import('../components/SplashScreen.jsx');
-
 describe('SplashScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useFakeTimers();
     localStorage.removeItem('hasSeenOnboarding');
     useUIStore.getState().reset();
     useModalStore.getState().reset();
     act(() => useModalStore.setState({ splash: true }));
   });
 
-  it('autofocuses the enter button when the splash dialog opens', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('focuses the enter button when the splash dialog opens', () => {
     render(<SplashScreen />);
+
+    act(() => {
+      vi.advanceTimersByTime(1400);
+    });
 
     expect(screen.getByRole('button', { name: 'Enter the app' })).toHaveFocus();
   });

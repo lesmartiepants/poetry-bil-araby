@@ -82,4 +82,20 @@ export default [
       globals: { ...globals.node },
     },
   },
+
+  // Playwright specs are Node too, and were the one test directory with no override: every
+  // `process.env` in a spec read as an undefined variable, so the errors sat there until a spec
+  // was edited and lint-staged finally looked at it. `no-empty-pattern` is off because
+  // `async ({}, testInfo) => {}` is the documented Playwright way to take the second argument
+  // while injecting no fixtures.
+  {
+    files: ['e2e/**/*.{js,mjs,cjs}'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: { ...globals.node },
+    },
+    rules: {
+      'no-empty-pattern': 'off',
+    },
+  },
 ];

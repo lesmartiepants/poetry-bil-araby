@@ -374,6 +374,9 @@ const SplashScreen = () => {
           ref={enterButtonRef}
           onClick={dismiss}
           className="splash-zen-anim splash-zen-cta font-brand-en"
+          // E2E dismisses the splash by this testid, not by label: the copy on this button has
+          // changed twice and each time it silently broke every smoke test that had to get past it.
+          data-testid="splash-enter"
           aria-label="Let's begin"
           style={{
             display: 'inline-flex',

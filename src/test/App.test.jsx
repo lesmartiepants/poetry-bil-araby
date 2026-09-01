@@ -61,7 +61,9 @@ const defaultFetchResponse = {
 // opens the Category Explorer, and the drawer's door is the account menu's "Explore Poets".
 async function openDiscoverDrawer() {
   await userEvent.click(screen.getByLabelText(/Account menu/i));
-  await userEvent.click(screen.getByLabelText(/Explore poets/i));
+  // findBy, not getBy: the menu is a Radix popover with an entrance animation, so on a slower
+  // machine (CI) the row is not in the DOM the instant the click resolves.
+  await userEvent.click(await screen.findByLabelText(/Explore poets/i));
 }
 
 function mockAutoLoadFetch() {

@@ -54,7 +54,7 @@ const SplashScreen = () => {
   }, [isOpen, prefersReducedMotion]);
 
   // Ambient particle field — ported from the option-2-haiku prototype (design-review/splash/zen).
-  // Particles drift within three soft clusters and lean away from the pointer; disabled outright
+  // Particles hold a home position, lean away from the pointer, and spring back; disabled outright
   // under reduced motion rather than frozen mid-layout, since a static scatter added nothing there.
   //
   // Performance: plain canvas + rAF rather than GSAP or DOM nodes — 400 individually-tweened DOM

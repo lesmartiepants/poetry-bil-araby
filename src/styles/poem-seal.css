@@ -33,15 +33,16 @@
   gap: 8px;
 }
 
-/* 68px, down from 76px, against a quill scaled up 1.25x (see .q-stage). The old pairing put a 30px
-   drawing inside a 76px ring, so ~85% of the target was empty and it read as an empty plate rather
-   than a control. This lands the drawing at roughly half the ring's diameter.
+/* 56px. The ring and the drawing shrink together (see .q-stage's scale) so the fill ratio set when
+   this stopped reading as an empty plate is preserved: the quill still spans about half the ring's
+   diameter, the whole control is just quieter in the column. Still comfortably over the 44px touch
+   minimum.
    The border is the control's RESTING edge; .ring paints the charge arc over it. At 0.34 alpha the
    1px hairline all but vanished on a phone, so nothing said "press me". */
 .seal {
   position: relative;
-  width: 68px;
-  height: 68px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   border: 1.5px solid rgba(197, 160, 89, 0.5);
   background: radial-gradient(circle at 50% 45%, rgba(197, 160, 89, 0.13), transparent 68%);
@@ -102,13 +103,13 @@
   width: 46px;
   height: 40px;
   /* Two corrections in one transform, applied right to left.
-     scale(1.25) grows the whole drawing (pen, scribble, ink and their --p-driven transforms alike)
-     against a ring that shrank to 68px, so the control stops reading as mostly empty. Scaling the
+     scale() sizes the whole drawing (pen, scribble, ink and their --p-driven transforms alike)
+     against the ring, holding the fill ratio that stopped this reading as mostly empty. Scaling the
      stage rather than re-tuning each child keeps every hand-tuned offset in proportion.
      translate() then fixes OPTICAL centering: the cluster is drawn left-heavy (pen at left:3px,
      30px wide inside a 46px box) and its visual mass sits high, since the vane is the widest part
      and the nib tapers to a point. Geometric centering leaves it looking up-and-left. */
-  transform: translate(5px, 1px) scale(1.25);
+  transform: translate(4px, 1px) scale(1.03);
 }
 
 .q-pen {

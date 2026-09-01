@@ -201,6 +201,14 @@ const PoemColumn = forwardRef(function PoemColumn(
         atEnd: remaining <= 1,
         // 0 to 1 across the final 170px, for anything that reveals as the reader arrives.
         lastStretch: max > 0 ? Math.max(0, Math.min(1, (170 - remaining) / 170)) : 1,
+        // Whether there is anything to scroll at all, and whether the reader has actually moved.
+        // A poem short enough to fit reports atEnd/lastStretch at their maximums from the first
+        // frame — correct, since you ARE at the end — but "arrived at the end" and "never had to
+        // travel" are different events, and a consumer reacting to arrival must tell them apart.
+        // `travelled` matters separately: a poem only slightly taller than the viewport has its
+        // whole scroll range inside the final 170px, so lastStretch is already high at rest.
+        scrollable: max > 0,
+        travelled: sc.scrollTop > 8,
       });
     };
     sc.addEventListener('scroll', onScroll, { passive: true });

@@ -104,19 +104,27 @@ const PoemReader = memo(function PoemReader({
   const mode = endStage;
   const hasAuthor = !!insightParts?.author;
 
-  // How far into the final stretch of the poem the reader has scrolled (0 to 1). PoemColumn already
-  // computes it; nothing was consuming it until now.
+  // How far into the final stretch of the poem the reader has scrolled (0 to 1), whether the column
+  // scrolls at all, and whether they have actually moved it. PoemColumn computes all three.
   const [endApproach, setEndApproach] = useState(0);
-  const handleScrollProgress = useCallback((frac, { lastStretch } = {}) => {
+  const [arrived, setArrived] = useState(false);
+  const handleScrollProgress = useCallback((frac, { lastStretch, scrollable, travelled } = {}) => {
     setEndApproach(lastStretch ?? 0);
+    setArrived(!!scrollable && !!travelled);
   }, []);
 
   // Arriving at the quill is the end-of-poem moment, and it was arriving into competition: a
   // filled-gold "Poem Insights" pill is the loudest object on the screen, so the reader met two
-  // primary next-actions at once. The fixed row now recedes as the quill comes into view. It stays
+  // primary next-actions at once. The fixed row recedes as the quill comes into view. It stays
   // interactive at low opacity rather than disappearing, so a reader who wanted Insights after all
   // is never trapped, and it returns the moment they scroll back up.
-  const actionsDimmed = !inInsight && endApproach > 0.15;
+  //
+  // `arrived` is the whole point of the gate. The dimming is a response to the reader TRAVELLING to
+  // the quill, so it must not fire when there was no journey: a poem short enough to fit reports
+  // itself at the end from the first frame, and a poem only slightly taller than the viewport has
+  // its entire scroll range inside the final 170px, so `endApproach` alone dimmed the actions at
+  // rest in both cases, with the quill and the buttons plainly visible and nothing having happened.
+  const actionsDimmed = !inInsight && arrived && endApproach > 0.15;
 
   const handleSeeMeaning = () => {
     onStopAudio?.(); // entering insights stops the recitation (it's prose, not the poem)

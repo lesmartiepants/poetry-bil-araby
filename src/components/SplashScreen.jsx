@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
@@ -20,6 +21,7 @@ const SplashScreen = () => {
   const [, navigate] = useLocation();
   const isOpen = useModalStore((s) => s.splash);
   const darkMode = useUIStore((s) => s.darkMode);
+  const enterButtonRef = useRef(null);
 
   const dismiss = (e) => {
     e.stopPropagation();
@@ -34,12 +36,23 @@ const SplashScreen = () => {
     useModalStore.getState().dismissSplash();
   };
 
-  if (!isOpen) return null;
-
   const prefersReducedMotion =
     typeof window !== 'undefined' &&
     window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    const focusDelay = prefersReducedMotion ? 0 : 1400;
+    const timeoutId = setTimeout(() => {
+      enterButtonRef.current?.focus();
+    }, focusDelay);
+
+    return () => clearTimeout(timeoutId);
+  }, [isOpen, prefersReducedMotion]);
+
+  if (!isOpen) return null;
 
   const bg = darkMode ? '#000000' : '#fafaf9';
   const textPrimary = darkMode ? '#ffffff' : '#000000';
@@ -80,6 +93,7 @@ const SplashScreen = () => {
         padding: '2rem',
       }}
       role="dialog"
+      aria-modal="true"
       aria-label="Welcome to Poetry Bil-Araby"
     >
       <style>{splashStyles}</style>
@@ -138,6 +152,7 @@ const SplashScreen = () => {
         </p>
 
         <button
+          ref={enterButtonRef}
           onClick={dismiss}
           className="splash-zen-anim"
           aria-label="Enter the app"

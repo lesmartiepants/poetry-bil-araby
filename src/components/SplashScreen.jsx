@@ -77,8 +77,8 @@ const SplashScreen = () => {
         padding: '2rem',
       }}
       role="dialog"
+      aria-modal="true"
       aria-label="Welcome to Poetry Bil-Araby"
-    >
       <style>{splashStyles}</style>
 
       <div

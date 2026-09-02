@@ -104,9 +104,10 @@ illuminated manuscripts the poems come from.
 
 The animated backgrounds are not stock textures: `SquoctogonBackground.jsx` generates true
 Islamic geometric tessellations — eightfold girih stars and octagon-and-square grids — as
-live SVG, the same construction reused in this README's header banner. The app opens directly
-onto a poem, and motion throughout — the scrolling verse reveal, the quill you hold to summon
-the next poem, and the inline insight panels — is handled with GSAP and Framer Motion for a
+live SVG, the same construction reused in this README's header banner. First-time visitors land
+on a splash screen before the reader; returning readers go straight to a poem. Motion
+throughout — the splash's particle field, the scrolling verse reveal, the quill you hold to
+summon the next poem, and the inline insight panels — is handled with GSAP and Framer Motion for a
 calm, considered feel.
 
 ## Features

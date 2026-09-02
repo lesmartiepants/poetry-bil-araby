@@ -8,6 +8,15 @@ prepends an entry below (newest first) describing **why** it changed and a conci
 
 <!-- New entries are inserted directly below this line, newest first. -->
 
+## 2026-09-02 — 681540d feat(reader): landing screen, onboarding handoff, and nav polish (#746)
+
+**Why:** This commit ships a first-visit splash/landing screen (`SplashScreen.jsx`, gated by `FEATURES.landing`, default on) that hands off to the existing `/onboarding` preference flow, then boots straight to the feed on return visits (`localStorage.hasSeenOnboarding`). The README's Islamic Art and Geometry section still claimed "the app opens directly onto a poem," which is now only true for returning readers.
+
+**README changes:**
+- Islamic Art and Geometry: "The app opens directly onto a poem, and motion throughout..." -> "First-time visitors land on a splash screen before the reader; returning readers go straight to a poem. Motion throughout — the splash's particle field, ..."
+
+_Full diff: see the accompanying PR._
+
 ## 2026-08-30 — 1e8642f feat(reader): flow column + quill summon (N4 port from #714) (#737)
 
 **Why:** This commit removed the sparkler-reveal reader (`SparklerStage.jsx`, `useSparklerReveal.js`, `ProgressScrubber.jsx`, `e2e/sparkler-reader.spec.js`) and replaced it with a scrolling-column reader (`PoemColumn.jsx`, `PoemSeal.jsx`, `e2e/flow-reader.spec.js`): the whole poem now renders in one scrolling column with verses ahead dimmed until read, and poem-to-poem movement is a quill you press and hold to summon the next poem — the vertical swipe between poems is gone (`feature-manifest.json`'s `reader-feed` entry was renamed from "Sparkler reveal reader (vertical feed)" to "Flow reader (scrolling column + quill summon)"). The README's Philosophy, Islamic Art and Geometry, and Features sections still described the old tap-to-reveal sparkler and vertical swipe feed.

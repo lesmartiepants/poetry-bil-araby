@@ -34,7 +34,18 @@ const NOTE_BLOCKS = [
     ],
   },
   { sentences: ['Hope you enjoy it as I have.'], tight: true },
-  { sentences: ['— Siraj'], signature: true },
+  // The signature is bilingual on one line, Arabic leading, in the same order and with the same
+  // interpunct the reader uses for a poet's byline (`أبو الأسود الدؤلي · Abu al-Ala al-Ma'arri`).
+  //
+  // `whole` is not a style choice: Arabic is cursive, and splitting it into per-character spans
+  // severs the joins, rendering سراج as four isolated letters. The line reveals as one beat with
+  // its shaping intact rather than being taken apart to match the Latin text's mechanism.
+  {
+    sentences: ['— سراج · Siraj'],
+    signature: true,
+    whole: true,
+    parts: [{ t: '— ' }, { t: 'سراج', ar: true }, { t: ' · Siraj' }],
+  },
 ];
 
 /** Flat, in reading order: the sequence `ignite` walks. */
@@ -97,8 +108,8 @@ const SplashScreen = () => {
       // The original's reduced-motion branch exactly: drop the clip and fade the unit in over 0.45s.
       units().forEach((el) => {
         if (!el) return;
-        el.querySelectorAll('[data-w]').forEach((w) => {
-          w.style.opacity = '1';
+        el.querySelectorAll('[data-c]').forEach((c) => {
+          c.style.opacity = '1';
         });
       });
       setRevealDone(true);
@@ -140,26 +151,33 @@ const SplashScreen = () => {
           return;
         }
         sparkler?.resize();
-        const words = Array.from(el.querySelectorAll('[data-w]'));
-        const n = words.length;
+        const chars = Array.from(el.querySelectorAll('[data-c]'));
+        const n = chars.length;
         const obj = { p: 0 };
         sparkler?.setEmitting(true);
 
+        // EDGE is the width of the reveal's leading gradient, in characters. The original's clip
+        // edge was a hard sub-pixel line, which a per-element opacity ramp cannot reproduce, but
+        // spreading the ramp over a few glyphs gets the same READ: letters coming up through a
+        // moving edge rather than switching on. At 1 this looks like a typewriter, at 3 it looks
+        // like the clip wipe did.
+        const EDGE = 3;
         const paint = (p) => {
-          const shown = Math.max(0, Math.min(1, p)) * n;
-          const front = Math.floor(shown);
-          const frac = shown - front;
-          words.forEach((w, k) => {
-            if (k < front) w.style.opacity = '1';
-            else if (k === front) w.style.opacity = (0.15 + 0.85 * frac).toFixed(3);
-            else w.style.opacity = '0';
-          });
+          const pos = Math.max(0, Math.min(1, p)) * n;
+          for (let k = 0; k < n; k++) {
+            const a = (pos - k) / EDGE;
+            chars[k].style.opacity = a <= 0 ? '0' : a >= 1 ? '1' : a.toFixed(3);
+          }
           const canvasEl = sparkCanvasRef.current;
-          const headEl = words[Math.min(front, n - 1)];
-          if (!sparkler || !canvasEl || !headEl) return;
-          const r = headEl.getBoundingClientRect();
+          if (!sparkler || !canvasEl) return;
+          // Interpolate ACROSS the boundary glyph rather than snapping to its edge: that is what
+          // keeps the head gliding the way the original's `rect.width * p` did, instead of
+          // teleporting a glyph at a time.
+          const k = Math.max(0, Math.min(n - 1, Math.floor(pos)));
+          const frac = Math.max(0, Math.min(1, pos - k));
+          const r = chars[k].getBoundingClientRect();
           const c = canvasEl.getBoundingClientRect();
-          sparkler.setHead(r.right - c.left, r.top - c.top + r.height / 2);
+          sparkler.setHead(r.left - c.left + r.width * frac, r.top - c.top + r.height / 2);
         };
 
         paint(0);
@@ -421,6 +439,13 @@ const SplashScreen = () => {
     /* Hover fans it: brighter and quicker, like breath on a coal. */
     .splash-zen-cta:hover .splash-zen-label,
     .splash-zen-cta:focus-visible .splash-zen-label { animation-duration: 2.6s; }
+    /* The button takes focus programmatically the moment it arrives, so this ring is not
+       hypothetical — and the browser default is a blue halo, the one colour on this screen that
+       belongs to nothing else in the design. Same affordance, in gold. */
+    .splash-zen-cta:focus-visible {
+      outline: 2px solid rgba(197,160,89,0.75);
+      outline-offset: 3px;
+    }
     @media (prefers-reduced-motion: reduce) {
       .splash-zen-anim, .splash-zen-aura {
         animation: none !important;
@@ -592,16 +617,50 @@ const SplashScreen = () => {
                       blockRefs.current[unitIndex] = el;
                     }}
                   >
-                    {text.split(' ').map((w, k) => (
-                      <span
-                        key={k}
-                        data-w=""
-                        className="reveal-word"
-                        style={{ opacity: prefersReducedMotion ? 1 : 0 }}
-                      >
-                        {w}{' '}
+                    {/* Per character, so the reveal edge can move a glyph at a time rather than a
+                        word at a time. Words stay wrapped in their own inline-block so a line can
+                        only break at a space — without that, every character is its own break
+                        opportunity and the paragraph shatters mid-word.
+                        `whole` opts out entirely, for scripts that must not be cut into glyphs. */}
+                    {block.whole ? (
+                      <span data-c="" style={{ opacity: prefersReducedMotion ? 1 : 0 }}>
+                        {(block.parts ?? [{ t: text }]).map((part, pi) =>
+                          part.ar ? (
+                            <span
+                              key={pi}
+                              className="font-brand-ar"
+                              dir="rtl"
+                              lang="ar"
+                              // Same gold and same opacity as the Latin beside it — only the size
+                              // differs. Reem Kufi has no italic, and faux-slanting Arabic is
+                              // wrong, so the signature's slant stops at the script boundary.
+                              style={{ fontSize: '1.2em', fontStyle: 'normal' }}
+                            >
+                              {part.t}
+                            </span>
+                          ) : (
+                            <span key={pi}>{part.t}</span>
+                          )
+                        )}
                       </span>
-                    ))}
+                    ) : (
+                      text.split(' ').map((word, wi) => (
+                        <span key={wi} style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
+                          {word.split('').map((ch, ci) => (
+                            <span
+                              key={ci}
+                              data-c=""
+                              style={{ opacity: prefersReducedMotion ? 1 : 0 }}
+                            >
+                              {ch}
+                            </span>
+                          ))}
+                          <span data-c="" style={{ opacity: prefersReducedMotion ? 1 : 0 }}>
+                            &nbsp;
+                          </span>
+                        </span>
+                      ))
+                    )}
                   </span>
                 );
               })}

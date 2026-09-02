@@ -8,6 +8,7 @@ import { FEATURES } from '../constants/features.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
 import { hasSavedPreferences } from '../utils/onboardingEntry.js';
+import { createSparkler } from '../utils/sparkler.js';
 import '../styles/tts-highlight.css';
 
 /** The owner's note, as blocks. Split here rather than inline so the reveal can walk every word in
@@ -56,6 +57,7 @@ const SplashScreen = () => {
     []
   );
   const wordRefs = useRef([]);
+  const sparkCanvasRef = useRef(null);
   const [revealDone, setRevealDone] = useState(false);
 
   const dismiss = (e) => {
@@ -100,6 +102,20 @@ const SplashScreen = () => {
       return undefined;
     }
 
+    // The sparkler burns at the reveal head. Mobile gets a lighter spray: this canvas runs
+    // alongside the ambient particle field, and the two together are the splash's whole frame cost.
+    const isMobile = window.innerWidth <= 768;
+    const sparkler = sparkCanvasRef.current
+      ? createSparkler(sparkCanvasRef.current, {
+          direction: 1, // the note is LTR, so the burn point travels right
+          emitPerFrame: isMobile ? 4 : 8,
+          maxParticles: isMobile ? 180 : 360,
+        })
+      : null;
+    sparkler?.resize();
+    const onResize = () => sparkler?.resize();
+    window.addEventListener('resize', onResize);
+
     const apply = (p) => {
       const shown = Math.max(0, Math.min(1, p)) * count;
       const front = Math.floor(shown);
@@ -117,6 +133,16 @@ const SplashScreen = () => {
           el.classList.remove('reveal-front');
         }
       });
+
+      // Hand the sparkler the leading word's trailing edge, in canvas-local coordinates. Read from
+      // the live rect rather than tracked offsets so it stays correct through wrapping and resizes.
+      const canvasEl = sparkCanvasRef.current;
+      const headEl = wordRefs.current[Math.min(front, count - 1)];
+      if (sparkler && canvasEl && headEl) {
+        const c = canvasEl.getBoundingClientRect();
+        const r = headEl.getBoundingClientRect();
+        sparkler.setHead(r.right - c.left, r.top + r.height / 2 - c.top);
+      }
     };
 
     apply(0);
@@ -128,15 +154,23 @@ const SplashScreen = () => {
       duration: 0.4 + count * 0.032,
       ease: 'none',
       delay: 0.85, // let the wordmark finish resolving out of its blur first
+      onStart: () => sparkler?.setEmitting(true),
       onUpdate: () => apply(obj.p),
       onComplete: () => {
         apply(1);
         els().forEach((el) => el?.classList.remove('reveal-front'));
+        // Stop feeding it but let the loop run: the sparks already in the air finish their arc
+        // instead of vanishing the instant the last word lands.
+        sparkler?.setEmitting(false);
         setRevealDone(true);
       },
     });
 
-    return () => tween.kill();
+    return () => {
+      tween.kill();
+      window.removeEventListener('resize', onResize);
+      sparkler?.stop();
+    };
   }, [isOpen, prefersReducedMotion, noteWords]);
 
   // Focus follows the button's arrival, not a fixed clock.
@@ -482,6 +516,7 @@ const SplashScreen = () => {
         <div
           className="font-brand-en"
           style={{
+            position: 'relative',
             fontSize: '0.875rem',
             lineHeight: 1.75,
             letterSpacing: '0.012em',
@@ -492,6 +527,22 @@ const SplashScreen = () => {
             textAlign: 'left',
           }}
         >
+          {/* Sparks are drawn OVER the words, and inset negatively so a spark thrown off the last
+              word on a line is not clipped at the text's own edge — a canvas clips to its box. */}
+          {!prefersReducedMotion && (
+            <canvas
+              ref={sparkCanvasRef}
+              aria-hidden="true"
+              style={{
+                position: 'absolute',
+                inset: '-44px',
+                width: 'calc(100% + 88px)',
+                height: 'calc(100% + 88px)',
+                pointerEvents: 'none',
+                zIndex: 3,
+              }}
+            />
+          )}
           {NOTE_BLOCKS.map((block, blockIndex) => (
             <p
               key={blockIndex}

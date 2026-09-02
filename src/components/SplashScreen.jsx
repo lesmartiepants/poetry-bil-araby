@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
+import { Feather } from 'lucide-react';
 import { BRAND } from '../constants/design.js';
 import { FEATURES } from '../constants/features.js';
 import { useUIStore } from '../stores/uiStore';
@@ -200,6 +201,9 @@ const SplashScreen = () => {
   const borderColor = darkMode ? '#1e1e24' : '#e0e0d8';
 
   const gold = '#c5a059';
+  // The same warm off-white the reader's wordmark uses for "poetry", rather than pure white: it
+  // has to sit beside gold without out-glaring it.
+  const brandInk = darkMode ? '#D4D0C8' : '#1A1614';
 
   // The entrance is a cascade, not one block fade: the wordmark resolves out of a blur first, the
   // paragraph follows, the button arrives last. Each step is transform+opacity+filter only, so it
@@ -222,30 +226,48 @@ const SplashScreen = () => {
       0%, 100% { box-shadow: 0 0 0 0 rgba(197,160,89,0); }
       50% { box-shadow: 0 0 0 7px rgba(197,160,89,0.05); }
     }
-    /* The "sparkle" is a gold glint that travels through the label itself, not an icon beside it. */
-    @keyframes splashZenShimmer {
-      0% { background-position: -130% center; }
-      55%, 100% { background-position: 230% center; }
+    /* The words sit lit rather than getting swept: a warm core with a halo around it, always on,
+       breathing the way an ember does. The keyframe stops are deliberately UNEVEN — an even split
+       reads as a metronome pulse, and embers do not pulse, they catch and settle. Two shadow layers
+       do the work: a tight gold core for the glow on the letterforms, and a wide amber bloom for
+       the heat coming off them. Paint-only on three words, so it costs nothing to keep running. */
+    @keyframes splashZenEmber {
+      0% {
+        color: #e8cd8a;
+        text-shadow: 0 0 5px rgba(197,160,89,0.45), 0 0 16px rgba(214,138,58,0.20);
+      }
+      17% {
+        color: #f7e6ae;
+        text-shadow: 0 0 9px rgba(226,186,102,0.80), 0 0 26px rgba(224,146,58,0.38);
+      }
+      31% {
+        color: #eed49a;
+        text-shadow: 0 0 6px rgba(197,160,89,0.55), 0 0 19px rgba(214,138,58,0.25);
+      }
+      52% {
+        color: #fff0c4;
+        text-shadow: 0 0 12px rgba(240,217,139,0.95), 0 0 32px rgba(232,150,60,0.48);
+      }
+      68% {
+        color: #e8cd8a;
+        text-shadow: 0 0 6px rgba(197,160,89,0.50), 0 0 18px rgba(214,138,58,0.24);
+      }
+      84% {
+        color: #f4e0a6;
+        text-shadow: 0 0 10px rgba(226,186,102,0.72), 0 0 24px rgba(224,146,58,0.34);
+      }
+      100% {
+        color: #e8cd8a;
+        text-shadow: 0 0 5px rgba(197,160,89,0.45), 0 0 16px rgba(214,138,58,0.20);
+      }
     }
     .splash-zen-label {
-      background-image: linear-gradient(
-        100deg,
-        currentColor 0%,
-        currentColor 36%,
-        ${gold} 47%,
-        #f0d98b 50%,
-        ${gold} 53%,
-        currentColor 64%,
-        currentColor 100%
-      );
-      background-size: 260% auto;
-      background-clip: text;
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      animation: splashZenShimmer 4.2s cubic-bezier(0.4, 0, 0.2, 1) 2.2s infinite;
+      color: #e8cd8a;
+      animation: splashZenEmber 5.5s ease-in-out 1.9s infinite;
     }
+    /* Hover fans it: brighter and quicker, like breath on a coal. */
     .splash-zen-cta:hover .splash-zen-label,
-    .splash-zen-cta:focus-visible .splash-zen-label { animation-duration: 1.6s; }
+    .splash-zen-cta:focus-visible .splash-zen-label { animation-duration: 2.6s; }
     @media (prefers-reduced-motion: reduce) {
       .splash-zen-anim, .splash-zen-aura {
         animation: none !important;
@@ -253,10 +275,11 @@ const SplashScreen = () => {
         transform: none !important;
         filter: none !important;
       }
+      /* Keep the ember lit, just stop it flickering. */
       .splash-zen-label {
         animation: none !important;
-        background-image: none;
-        -webkit-text-fill-color: currentColor;
+        color: #f0d98b;
+        text-shadow: 0 0 8px rgba(197,160,89,0.6), 0 0 22px rgba(214,138,58,0.3);
       }
     }
   `;
@@ -334,20 +357,25 @@ const SplashScreen = () => {
               : 'splashZenRise 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s forwards',
           }}
         >
+          {/* The app's own lockup, not a splash-only variant: warm off-white "poetry", gold
+              بالعربي, gold quill — the same three parts, colours and order the reader's corner
+              wordmark uses (BRAND_HEADER in app.jsx). The splash was rendering both words in flat
+              white, so the one screen that introduces the brand was the one screen not wearing it. */}
           <span
             className="font-brand-en"
-            style={{ ...BRAND.english, textTransform: 'lowercase', color: textPrimary }}
+            style={{ ...BRAND.english, textTransform: 'lowercase', color: brandInk }}
           >
             poetry
           </span>
           <span
             className="font-brand-ar"
-            style={{ ...BRAND.arabic, color: textPrimary }}
+            style={{ ...BRAND.arabic, color: gold, textShadow: '0 0 40px rgba(197,160,89,0.3)' }}
             dir="rtl"
             lang="ar"
           >
             بالعربي
           </span>
+          <Feather style={{ ...BRAND.feather, color: gold }} strokeWidth={1.5} />
         </div>
 
         <p

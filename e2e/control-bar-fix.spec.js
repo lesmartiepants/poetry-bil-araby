@@ -43,9 +43,9 @@ async function dismissAllOverlays(page) {
       // Click the splash or any button inside it to dismiss
       try {
         const splashBtn = welcomeSplash.locator('button').first();
-        // Generous: the CTA is held back until the note's word-by-word reveal finishes (~3.6s),
-        // and the fallback below force-clicks the splash itself, which does not dismiss it.
-        if (await splashBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+        // Generous: the CTA is held back until the note finishes revealing (~9.5s), and the
+        // fallback below force-clicks the splash itself, which does not dismiss it.
+        if (await splashBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
           await splashBtn.click({ timeout: 2000 });
         } else {
           await welcomeSplash.click({ force: true });

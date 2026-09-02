@@ -135,7 +135,7 @@ async function loadApp(page) {
   await page.waitForLoadState('domcontentloaded');
   // Dismiss splash screen if visible
   const enterBtn = page.getByTestId('splash-enter');
-  if (await enterBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+  if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
     await enterBtn.click();
     await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
   }

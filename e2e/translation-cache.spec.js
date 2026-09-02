@@ -143,7 +143,7 @@ async function setupMocks(
 /** Dismiss the splash screen if visible. Call after page.goto('/') + waitForLoadState. */
 async function dismissSplashIfVisible(page) {
   const enterBtn = page.getByTestId('splash-enter');
-  if (await enterBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+  if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
     await enterBtn.click();
     await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
   }

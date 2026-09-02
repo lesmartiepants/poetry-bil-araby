@@ -100,7 +100,7 @@ test.describe('User Flows', () => {
     await page.waitForLoadState('domcontentloaded');
     // Dismiss the splash if visible. By testid, not by label: the copy has changed twice.
     const enterBtn = page.getByTestId('splash-enter');
-    if (await enterBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+    if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
     }

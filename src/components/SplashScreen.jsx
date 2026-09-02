@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
 import { gsap } from 'gsap';
@@ -11,21 +11,36 @@ import { hasSavedPreferences } from '../utils/onboardingEntry.js';
 import { createSparkler } from '../utils/sparkler.js';
 import '../styles/tts-highlight.css';
 
-/** The owner's note, as blocks. Split here rather than inline so the reveal can walk every word in
- *  one continuous sweep down the note, across paragraph boundaries. */
+/**
+ * The owner's note, as paragraphs of SENTENCES. The sentence is the reveal's unit — one `ignite`
+ * each, in order — so the split is data rather than a regex at render time; "Al Mutanabbi" and
+ * "100 others" are exactly the kind of thing sentence-splitting regexes get wrong.
+ */
 const NOTE_BLOCKS = [
   {
-    text: "Are you ready to experience Arabic poetry spanning two millennia? Available in both Arabic and English + learning tools like pronunciation and read-along, you'll be immersed at the first poem.",
+    sentences: [
+      'Are you ready to experience Arabic poetry spanning two millennia?',
+      "Available in both Arabic and English + learning tools like pronunciation and read-along, you'll be immersed at the first poem.",
+    ],
   },
   {
-    text: 'Plus, learn about the poem meaning beyond translation, and the story of the poet behind it.',
+    sentences: [
+      'Plus, learn about the poem meaning beyond translation, and the story of the poet behind it.',
+    ],
   },
   {
-    text: 'Classical legends like Al Mutanabbi as well as modern greats like Mahmoud Darwish, and over 100 others in between.',
+    sentences: [
+      'Classical legends like Al Mutanabbi as well as modern greats like Mahmoud Darwish, and over 100 others in between.',
+    ],
   },
-  { text: 'Hope you enjoy it as I have.', tight: true },
-  { text: '— Siraj', signature: true },
+  { sentences: ['Hope you enjoy it as I have.'], tight: true },
+  { sentences: ['— Siraj'], signature: true },
 ];
+
+/** Flat, in reading order: the sequence `ignite` walks. */
+const NOTE_SENTENCES = NOTE_BLOCKS.flatMap((b, blockIndex) =>
+  b.sentences.map((text) => ({ text, blockIndex }))
+);
 
 /**
  * SplashScreen — first-visit landing screen ("Zen Haiku", design-review/splash/zen).
@@ -43,20 +58,7 @@ const SplashScreen = () => {
   const darkMode = useUIStore((s) => s.darkMode);
   const enterButtonRef = useRef(null);
   const canvasRef = useRef(null);
-  // Flat word list across every block, so one tween sweeps the whole note rather than restarting
-  // per paragraph. Each entry keeps its block index so render can still group them.
-  const noteWords = useMemo(
-    () =>
-      NOTE_BLOCKS.flatMap((block, blockIndex) =>
-        block.text
-          .trim()
-          .split(/\s+/)
-          .filter(Boolean)
-          .map((word) => ({ word, blockIndex }))
-      ),
-    []
-  );
-  const wordRefs = useRef([]);
+  const blockRefs = useRef([]);
   const sparkCanvasRef = useRef(null);
   const [revealDone, setRevealDone] = useState(false);
 
@@ -88,15 +90,16 @@ const SplashScreen = () => {
   // the reader, and offering the way out before the sentence lands invites skipping it.
   useEffect(() => {
     if (!isOpen) return undefined;
-    const count = noteWords.length;
-    const els = () => wordRefs.current.slice(0, count);
+    const count = NOTE_SENTENCES.length;
+    const units = () => blockRefs.current.slice(0, count);
 
     if (prefersReducedMotion || count === 0) {
-      els().forEach((el) => {
-        if (el) {
-          el.style.opacity = '1';
-          el.classList.remove('reveal-front');
-        }
+      // The original's reduced-motion branch exactly: drop the clip and fade the unit in over 0.45s.
+      units().forEach((el) => {
+        if (!el) return;
+        el.querySelectorAll('[data-w]').forEach((w) => {
+          w.style.opacity = '1';
+        });
       });
       setRevealDone(true);
       return undefined;
@@ -116,62 +119,86 @@ const SplashScreen = () => {
     const onResize = () => sparkler?.resize();
     window.addEventListener('resize', onResize);
 
-    const apply = (p) => {
-      const shown = Math.max(0, Math.min(1, p)) * count;
-      const front = Math.floor(shown);
-      const frac = shown - front;
-      els().forEach((el, i) => {
-        if (!el) return;
-        if (i < front) {
-          el.style.opacity = '1';
-          el.classList.remove('reveal-front');
-        } else if (i === front) {
-          el.style.opacity = (0.3 + 0.7 * frac).toFixed(3);
-          el.classList.add('reveal-front');
-        } else {
-          el.style.opacity = '0';
-          el.classList.remove('reveal-front');
+    // `ignite`, ported from useSparklerReveal: one unit lit by a travelling head, with the sparkler
+    // burning at it. The original's tuned constants are kept exactly — 1.4s per unit,
+    // power1.inOut, emitter off at the end so the last sparks finish their arc.
+    //
+    // What could NOT be kept is its clip-path wipe. That worked because its unit was a single
+    // Arabic verse line that never wrapped, so `inset(0 0 0 p%)` swept along the reading order. A
+    // sentence of English prose wraps, and clip-path resolves against ONE box spanning every line
+    // fragment, so the same wipe opens a vertical column through all three lines at once instead of
+    // travelling through the sentence. Verified in the browser before changing approach.
+    //
+    // So the sweep is per word inside the unit, which follows reading order through wraps. Same
+    // duration, same easing, same head, same sparks; only the thing being interpolated differs.
+    const tweens = [];
+    const ignite = (i) =>
+      new Promise((resolve) => {
+        const el = blockRefs.current[i];
+        if (!el) {
+          resolve();
+          return;
         }
+        sparkler?.resize();
+        const words = Array.from(el.querySelectorAll('[data-w]'));
+        const n = words.length;
+        const obj = { p: 0 };
+        sparkler?.setEmitting(true);
+
+        const paint = (p) => {
+          const shown = Math.max(0, Math.min(1, p)) * n;
+          const front = Math.floor(shown);
+          const frac = shown - front;
+          words.forEach((w, k) => {
+            if (k < front) w.style.opacity = '1';
+            else if (k === front) w.style.opacity = (0.15 + 0.85 * frac).toFixed(3);
+            else w.style.opacity = '0';
+          });
+          const canvasEl = sparkCanvasRef.current;
+          const headEl = words[Math.min(front, n - 1)];
+          if (!sparkler || !canvasEl || !headEl) return;
+          const r = headEl.getBoundingClientRect();
+          const c = canvasEl.getBoundingClientRect();
+          sparkler.setHead(r.right - c.left, r.top - c.top + r.height / 2);
+        };
+
+        paint(0);
+        tweens.push(
+          gsap.to(obj, {
+            p: 1,
+            duration: 1.4,
+            ease: 'power1.inOut',
+            onUpdate: () => paint(obj.p),
+            onComplete() {
+              paint(1);
+              // The original faded its head element out over 0.4s here; the equivalent is to stop
+              // feeding the emitter and let the sparks already in the air finish their arc.
+              sparkler?.setEmitting(false);
+              resolve();
+            },
+          })
+        );
       });
 
-      // Hand the sparkler the leading word's trailing edge, in canvas-local coordinates. Read from
-      // the live rect rather than tracked offsets so it stays correct through wrapping and resizes.
-      const canvasEl = sparkCanvasRef.current;
-      const headEl = wordRefs.current[Math.min(front, count - 1)];
-      if (sparkler && canvasEl && headEl) {
-        const c = canvasEl.getBoundingClientRect();
-        const r = headEl.getBoundingClientRect();
-        sparkler.setHead(r.right - c.left, r.top + r.height / 2 - c.top);
+    let cancelled = false;
+    const run = async () => {
+      // Let the wordmark finish resolving out of its blur before the first unit lights.
+      await new Promise((r) => setTimeout(r, 850));
+      for (let i = 0; i < count; i++) {
+        if (cancelled) return;
+        await ignite(i);
       }
+      if (!cancelled) setRevealDone(true);
     };
-
-    apply(0);
-    const obj = { p: 0 };
-    // ~32ms a word. RevealText's pace (57ms) is tuned for prose the reader chose to open; this is
-    // the door, and at that pace the note runs past five seconds before the button exists.
-    const tween = gsap.to(obj, {
-      p: 1,
-      duration: 0.4 + count * 0.032,
-      ease: 'none',
-      delay: 0.85, // let the wordmark finish resolving out of its blur first
-      onStart: () => sparkler?.setEmitting(true),
-      onUpdate: () => apply(obj.p),
-      onComplete: () => {
-        apply(1);
-        els().forEach((el) => el?.classList.remove('reveal-front'));
-        // Stop feeding it but let the loop run: the sparks already in the air finish their arc
-        // instead of vanishing the instant the last word lands.
-        sparkler?.setEmitting(false);
-        setRevealDone(true);
-      },
-    });
+    run();
 
     return () => {
-      tween.kill();
+      cancelled = true;
+      tweens.forEach((t) => t.kill());
       window.removeEventListener('resize', onResize);
       sparkler?.stop();
     };
-  }, [isOpen, prefersReducedMotion, noteWords]);
+  }, [isOpen, prefersReducedMotion]);
 
   // Focus follows the button's arrival, not a fixed clock.
   useEffect(() => {
@@ -553,20 +580,31 @@ const SplashScreen = () => {
                   : null),
               }}
             >
-              {noteWords.map(({ word, blockIndex: wb }, i) =>
-                wb !== blockIndex ? null : (
+              {block.sentences.map((text) => {
+                // Index into the flat reading order, which is what `ignite` walks.
+                const unitIndex = NOTE_SENTENCES.findIndex(
+                  (s) => s.blockIndex === blockIndex && s.text === text
+                );
+                return (
                   <span
-                    key={i}
+                    key={unitIndex}
                     ref={(el) => {
-                      wordRefs.current[i] = el;
+                      blockRefs.current[unitIndex] = el;
                     }}
-                    className="reveal-word"
-                    style={{ opacity: 0 }}
                   >
-                    {word}{' '}
+                    {text.split(' ').map((w, k) => (
+                      <span
+                        key={k}
+                        data-w=""
+                        className="reveal-word"
+                        style={{ opacity: prefersReducedMotion ? 1 : 0 }}
+                      >
+                        {w}{' '}
+                      </span>
+                    ))}
                   </span>
-                )
-              )}
+                );
+              })}
             </p>
           ))}
         </div>

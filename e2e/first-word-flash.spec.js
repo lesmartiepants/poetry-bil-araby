@@ -59,7 +59,7 @@ test.describe('first-word flash (timing matrix)', () => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     const enterBtn = page.getByTestId('splash-enter');
-    if (await enterBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+    if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }

@@ -91,11 +91,11 @@ export async function loadApp(page) {
   await page.waitForLoadState('domcontentloaded');
   // By testid, not by label: this button's copy has changed more than once, and each time it
   // silently stranded every test behind an undismissed splash.
-  // The 8s probe is deliberate, do not trim it: the CTA stays hidden until the splash note
-  // finishes its word-by-word reveal (~3.6s), so a 2s probe reports "no splash here" and walks
-  // into that same stranding by another route.
+  // The long probe is deliberate, do not trim it: the CTA stays hidden until the splash note
+  // finishes revealing, sentence by sentence, which takes ~9.5s. A short probe reports "no splash
+  // here" and walks into that same stranding by another route.
   const enterBtn = page.getByTestId('splash-enter');
-  if (await enterBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
+  if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
     await enterBtn.click();
     await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
   }

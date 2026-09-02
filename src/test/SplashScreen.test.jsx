@@ -35,31 +35,30 @@ vi.mock('framer-motion', () => ({
   ),
 }));
 
-// The word-by-word reveal runs on GSAP's own ticker, which vitest's fake timers do not drive, so
-// the tween is captured here and completed on demand. That is the point of these tests: the CTA is
-// gated on the reveal finishing, not on a clock, and the gate is what can regress.
-const tweens = [];
+// The reveal runs on GSAP's own ticker, which vitest's fake timers do not drive. The mock completes
+// each tween the moment it is created, so the sentence chain runs itself: every unit's onComplete
+// resolves the promise the next `ignite` is awaiting. That is the point of these tests — the CTA is
+// gated on the whole chain finishing, not on a clock, and the gate is what can regress.
 vi.mock('gsap', () => ({
   gsap: {
-    to: (target, vars) => {
-      const tween = { vars, kill: vi.fn() };
-      tweens.push(tween);
-      return tween;
+    to: (_target, vars) => {
+      vars.onUpdate?.();
+      vars.onComplete?.();
+      return { kill: vi.fn() };
     },
   },
 }));
 
-function completeReveal() {
-  tweens.forEach(({ vars }) => {
-    vars.onUpdate?.();
-    vars.onComplete?.();
+/** Advance past the pre-roll and let the sentence chain's awaits settle. */
+async function completeReveal() {
+  await act(async () => {
+    vi.advanceTimersByTime(1000);
   });
 }
 
 describe('SplashScreen', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    tweens.length = 0;
     vi.useFakeTimers();
     localStorage.removeItem('hasSeenOnboarding');
     useUIStore.getState().reset();
@@ -71,7 +70,7 @@ describe('SplashScreen', () => {
     vi.useRealTimers();
   });
 
-  it('holds the enter button back until the note has finished revealing', () => {
+  it('holds the enter button back until the note has finished revealing', async () => {
     render(<SplashScreen />);
 
     // Still revealing: the button holds its place in the layout but is hidden, which also takes it
@@ -79,19 +78,15 @@ describe('SplashScreen', () => {
     expect(screen.getByTestId('splash-enter')).not.toBeVisible();
     expect(screen.queryByRole('button', { name: "Let's begin" })).toBeNull();
 
-    act(() => {
-      completeReveal();
-    });
+    await completeReveal();
 
     expect(screen.getByRole('button', { name: "Let's begin" })).toBeVisible();
   });
 
-  it('focuses the enter button once it arrives', () => {
+  it('focuses the enter button once it arrives', async () => {
     render(<SplashScreen />);
 
-    act(() => {
-      completeReveal();
-    });
+    await completeReveal();
     act(() => {
       vi.advanceTimersByTime(420);
     });

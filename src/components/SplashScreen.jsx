@@ -83,7 +83,7 @@ const SplashScreen = () => {
     // The field fills the whole band above the CTA rather than sitting in three tight clusters:
     // edge to edge horizontally, top of the screen down to just above the button. Density is
     // weighted toward the middle so the wordmark still reads as the centre of gravity.
-    const FIELD_BOTTOM = 0.62; // fraction of viewport height where the CTA begins
+    const FIELD_BOTTOM = 0.76; // fraction of viewport height where the CTA begins
     const particleCount = isMobile ? 170 : 460;
     const particles = Array.from({ length: particleCount }, () => {
       // Two uniform samples averaged = a soft centre bias, without the hard edges of a cluster.
@@ -298,7 +298,12 @@ const SplashScreen = () => {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem',
+        // The note is four paragraphs plus a signature, so on a short viewport (a small phone, or
+        // any phone in landscape) the block is taller than the screen. Centred flex content that
+        // overflows gets clipped at BOTH ends and cannot be scrolled back, which would put the
+        // only way into the app off-screen. Scrolling keeps the CTA reachable.
+        overflowY: 'auto',
+        padding: '2rem 2rem calc(2rem + env(safe-area-inset-bottom, 0px))',
       }}
       role="dialog"
       aria-modal="true"
@@ -378,25 +383,50 @@ const SplashScreen = () => {
           <Feather style={{ ...BRAND.feather, color: gold }} strokeWidth={1.5} />
         </div>
 
-        <p
+        {/* A note from the owner, so it is set as one: left-aligned prose rather than the centred
+            marketing block it replaced (centring is fine for a one-line tagline and hostile to four
+            paragraphs), with the sign-off and signature held apart from the body. */}
+        <div
           className="splash-zen-anim font-brand-en"
           style={{
-            fontSize: '0.9375rem',
-            lineHeight: 1.7,
-            letterSpacing: '0.015em',
+            fontSize: '0.875rem',
+            lineHeight: 1.75,
+            letterSpacing: '0.012em',
             color: textSecondary,
-            maxWidth: '34ch',
+            maxWidth: '38ch',
             marginInline: 'auto',
-            marginBottom: '44px',
+            marginBottom: '36px',
+            textAlign: 'left',
             opacity: prefersReducedMotion ? 1 : 0,
             animation: prefersReducedMotion
               ? 'none'
               : 'splashZenLift 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.75s forwards',
           }}
         >
-          A poetry app that brings to light Arabic literature from recent greats all the way back
-          more than 2,000 years. Read the classics or peruse modern poets in Arabic and English.
-        </p>
+          <p style={{ marginBottom: '0.85em' }}>
+            Are you ready to experience Arabic poetry spanning two millennia? Available in both
+            Arabic and English + learning tools like pronunciation and read-along, you&rsquo;ll be
+            immersed at the first poem.
+          </p>
+          <p style={{ marginBottom: '0.85em' }}>
+            Plus, learn about the poem meaning beyond translation, and the story of the poet behind
+            it.
+          </p>
+          <p style={{ marginBottom: '0.85em' }}>
+            Classical legends like Al Mutanabbi as well as modern greats like Mahmoud Darwish, and
+            over 100 others in between.
+          </p>
+          <p style={{ marginBottom: '0.3em' }}>Hope you enjoy it as I have.</p>
+          <p
+            style={{
+              color: gold,
+              fontStyle: 'italic',
+              letterSpacing: '0.04em',
+            }}
+          >
+            &mdash; Siraj
+          </p>
+        </div>
 
         <button
           ref={enterButtonRef}

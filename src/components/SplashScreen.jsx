@@ -163,7 +163,11 @@ const SplashScreen = () => {
         // like the clip wipe did.
         const EDGE = 3;
         const paint = (p) => {
-          const pos = Math.max(0, Math.min(1, p)) * n;
+          // The sweep runs to n + EDGE, not n, so the trailing edge clears the end of the unit.
+          // Stopping at n leaves the last glyph at only 1/EDGE opacity — and for a `whole` unit,
+          // where n is 1, that dimmed the ENTIRE line to a third. The signature was the visible
+          // case; every sentence was quietly ending on two half-lit characters.
+          const pos = Math.max(0, Math.min(1, p)) * (n + EDGE);
           for (let k = 0; k < n; k++) {
             const a = (pos - k) / EDGE;
             chars[k].style.opacity = a <= 0 ? '0' : a >= 1 ? '1' : a.toFixed(3);

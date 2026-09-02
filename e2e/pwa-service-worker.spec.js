@@ -30,13 +30,21 @@ const PREVIEW_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:41
 //   PLAYWRIGHT_TEST_BASE_URL=http://localhost:4173 npx playwright test e2e/pwa-service-worker.spec.js
 const PWA_TESTS_ENABLED = !!process.env.PLAYWRIGHT_TEST_BASE_URL;
 
-// Helper: dismiss splash screen if present
+// Helper: dismiss splash screen if present.
+// A fallback only. Prefer seeding `hasSeenOnboarding` before navigating (skipSplash below):
+// dismissing the splash with no saved preferences hands off to /onboarding, which renders over
+// the reader rather than revealing it.
 async function dismissSplash(page) {
-  const enterBtn = page.locator('button[aria-label="Enter the app"]');
-  if (await enterBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+  const enterBtn = page.getByTestId('splash-enter');
+  if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
     await enterBtn.click();
     await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
   }
+}
+
+// Helper: skip the landing screen entirely. Must run before page.goto().
+async function skipSplash(page) {
+  await page.addInitScript(() => localStorage.setItem('hasSeenOnboarding', 'true'));
 }
 
 // Helper: wait for SW to be active
@@ -69,6 +77,8 @@ test.describe('PWA Service Worker', () => {
     // Listen for SW registration at browser level
     const swPromise = page.context().waitForEvent('serviceworker', { timeout: 20000 });
 
+    await skipSplash(page);
+
     await page.goto('/');
     await dismissSplash(page);
 
@@ -84,6 +94,7 @@ test.describe('PWA Service Worker', () => {
 
   test('navigation uses NetworkFirst — not stale precache', async ({ page }) => {
     // First visit: let SW install and activate
+    await skipSplash(page);
     await page.goto('/');
     await dismissSplash(page);
     await waitForActiveSW(page);
@@ -98,13 +109,13 @@ test.describe('PWA Service Worker', () => {
       // Retry up to 5 times with 1s delay — cache creation is async
       for (let i = 0; i < 5; i++) {
         const cacheNames = await caches.keys();
-        const navCache = cacheNames.find(name => name.includes('html-navigation'));
+        const navCache = cacheNames.find((name) => name.includes('html-navigation'));
         if (navCache) {
           const cache = await caches.open(navCache);
           const entries = (await cache.keys()).length;
           return { cacheNames, navCache, entries };
         }
-        await new Promise(r => setTimeout(r, 1000));
+        await new Promise((r) => setTimeout(r, 1000));
       }
       const cacheNames = await caches.keys();
       return { cacheNames, navCache: null, entries: 0 };
@@ -120,7 +131,9 @@ test.describe('PWA Service Worker', () => {
       expect(swText).not.toContain('createHandlerBoundToURL');
       // And our NetworkFirst rule IS present
       expect(swText).toContain('html-navigation-cache');
-      console.log('Navigation cache not yet populated (expected on localhost), but SW config is correct');
+      console.log(
+        'Navigation cache not yet populated (expected on localhost), but SW config is correct'
+      );
       console.log('All caches:', cacheInfo.cacheNames);
     } else {
       expect(cacheInfo.entries).toBeGreaterThan(0);
@@ -128,6 +141,7 @@ test.describe('PWA Service Worker', () => {
   });
 
   test('Google Fonts are cached after first visit', async ({ page }) => {
+    await skipSplash(page);
     await page.goto('/');
     await dismissSplash(page);
     await waitForActiveSW(page);
@@ -137,8 +151,8 @@ test.describe('PWA Service Worker', () => {
 
     const fontCacheInfo = await page.evaluate(async () => {
       const cacheNames = await caches.keys();
-      const fontsCSSCache = cacheNames.find(n => n.includes('google-fonts-cache'));
-      const fontsFileCache = cacheNames.find(n => n.includes('gstatic-fonts-cache'));
+      const fontsCSSCache = cacheNames.find((n) => n.includes('google-fonts-cache'));
+      const fontsFileCache = cacheNames.find((n) => n.includes('gstatic-fonts-cache'));
 
       let cssEntries = 0;
       let fileEntries = 0;
@@ -166,6 +180,7 @@ test.describe('PWA Service Worker', () => {
 
   test('API responses get cached (cold-start mitigation)', async ({ page }) => {
     // Visit the app and let it make API calls
+    await skipSplash(page);
     await page.goto('/');
     await dismissSplash(page);
     await waitForActiveSW(page);
@@ -176,8 +191,8 @@ test.describe('PWA Service Worker', () => {
 
     const apiCacheInfo = await page.evaluate(async () => {
       const cacheNames = await caches.keys();
-      const poemsCache = cacheNames.find(n => n.includes('api-poems-cache'));
-      const poetsCache = cacheNames.find(n => n.includes('api-poets-cache'));
+      const poemsCache = cacheNames.find((n) => n.includes('api-poems-cache'));
+      const poetsCache = cacheNames.find((n) => n.includes('api-poets-cache'));
 
       let poemEntries = 0;
       let poetEntries = 0;
@@ -211,6 +226,7 @@ test.describe('PWA Service Worker', () => {
 
   test('cached poems available offline (simulated network failure)', async ({ page, context }) => {
     // First: visit online to populate caches
+    await skipSplash(page);
     await page.goto('/');
     await dismissSplash(page);
     await waitForActiveSW(page);
@@ -238,6 +254,7 @@ test.describe('PWA Service Worker', () => {
   });
 
   test('SW update polling is active (iOS fix)', async ({ page }) => {
+    await skipSplash(page);
     await page.goto('/');
     await dismissSplash(page);
     await waitForActiveSW(page);
@@ -272,6 +289,7 @@ test.describe('PWA Service Worker', () => {
   });
 
   test('precache contains expected asset types', async ({ page }) => {
+    await skipSplash(page);
     await page.goto('/');
     await dismissSplash(page);
     await waitForActiveSW(page);
@@ -279,21 +297,21 @@ test.describe('PWA Service Worker', () => {
     const precacheInfo = await page.evaluate(async () => {
       const cacheNames = await caches.keys();
       // Workbox precache uses a name like 'workbox-precache-v2-<origin>'
-      const precacheName = cacheNames.find(n => n.includes('precache'));
+      const precacheName = cacheNames.find((n) => n.includes('precache'));
       if (!precacheName) return { found: false, cacheNames };
 
       const cache = await caches.open(precacheName);
       const keys = await cache.keys();
-      const urls = keys.map(k => new URL(k.url).pathname);
+      const urls = keys.map((k) => new URL(k.url).pathname);
 
       return {
         found: true,
         cacheName: precacheName,
         totalEntries: keys.length,
-        hasJS: urls.some(u => u.endsWith('.js')),
-        hasCSS: urls.some(u => u.endsWith('.css')),
-        hasHTML: urls.some(u => u.includes('index.html') || u === '/'),
-        hasSVG: urls.some(u => u.endsWith('.svg')),
+        hasJS: urls.some((u) => u.endsWith('.js')),
+        hasCSS: urls.some((u) => u.endsWith('.css')),
+        hasHTML: urls.some((u) => u.includes('index.html') || u === '/'),
+        hasSVG: urls.some((u) => u.endsWith('.svg')),
         sampleURLs: urls.slice(0, 10),
       };
     });

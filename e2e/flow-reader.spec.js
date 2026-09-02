@@ -38,6 +38,12 @@ async function setupMocks(page) {
   // checks first so the deterministic fixture is used instead of the random seed pool.
   await page.addInitScript((poem) => {
     localStorage.setItem('qafiyah_nextPoem', JSON.stringify({ poem, storedAt: Date.now() }));
+    // Also skip the landing screen. Dismissing it is no longer enough: with no saved preferences
+    // its Enter button hands off to /onboarding, which renders full-screen OVER the reader. The
+    // column underneath still reads as visible to Playwright, so loadFeed sails through and the
+    // breakage surfaces much later — as a coordinate press that lands on the onboarding overlay
+    // instead of on the quill.
+    localStorage.setItem('hasSeenOnboarding', 'true');
   }, POEM_A);
 
   let n = 0;
@@ -78,8 +84,8 @@ async function setupMocks(page) {
 async function loadFeed(page) {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
-  const enterBtn = page.locator('button[aria-label="Enter the app"]');
-  if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+  const enterBtn = page.getByTestId('splash-enter');
+  if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
     await enterBtn.click();
     await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
   }

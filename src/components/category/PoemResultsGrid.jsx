@@ -168,6 +168,16 @@ export default function PoemResultsGrid({
     );
   };
 
+  // "difficulty 1.7/10" is a measurement, not an answer to anything a reader asked. The band is
+  // what they actually want ("can I read this?"); the score stays alongside it, just quiet, so
+  // nothing is lost for anyone who does want the number.
+  const difficultyBand = (score) => {
+    if (score == null) return null;
+    if (score <= 3) return 'Easy read';
+    if (score <= 6) return 'Moderate';
+    return 'Demanding';
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -183,7 +193,7 @@ export default function PoemResultsGrid({
   if (error) {
     return (
       <div className="px-4 py-10 text-center space-y-1">
-        <span className="block text-[0.8125rem] font-tajawal" dir="rtl" style={{ opacity: 0.5 }}>
+        <span className="block text-[0.8125rem] font-brand-ar" dir="rtl" style={{ opacity: 0.5 }}>
           تعذّر جلب النتائج
         </span>
         <span
@@ -199,7 +209,7 @@ export default function PoemResultsGrid({
   if (poems.length === 0) {
     return (
       <div className="px-4 py-10 text-center space-y-1">
-        <span className="block text-[0.8125rem] font-tajawal" dir="rtl" style={{ opacity: 0.4 }}>
+        <span className="block text-[0.8125rem] font-brand-ar" dir="rtl" style={{ opacity: 0.4 }}>
           لا نتائج
         </span>
         <span
@@ -214,15 +224,14 @@ export default function PoemResultsGrid({
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      {/* items-start: a grid row stretches its cards to the tallest one, and that stretch was
+          landing as dead space inside the shorter card. Let each card be its own height. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 items-start">
         {poems.map((poem) => {
           const tags = tagsFor(poem);
           const fam = familyFor(poem);
           const saved = isPoemSaved(poem);
-          const metrics = [];
-          if (poem.accessibilityScore != null)
-            metrics.push(`difficulty ${poem.accessibilityScore}/10`);
-          if (poem.emotionalIntensity != null) metrics.push(`intensity ${poem.emotionalIntensity}`);
+          const band = difficultyBand(poem.accessibilityScore);
           return (
             <div
               key={poem.id}
@@ -236,83 +245,80 @@ export default function PoemResultsGrid({
                   toggle(poem);
                 }
               }}
-              className={`rounded-2xl p-3.5 flex flex-col gap-2 border transition-colors cursor-pointer hover:border-gold/40 ${expandedId === poem.id ? 'border-gold/50' : ''}`}
+              className={`rounded-2xl px-3.5 py-3 flex flex-col gap-2.5 border transition-colors cursor-pointer hover:border-gold/40 ${expandedId === poem.id ? 'border-gold/50' : ''}`}
               style={{ borderColor: subtleBorder, background: cardBg }}
             >
-              {/* Title + poet — English (left, bold) beside Arabic (right) */}
-              <div className="flex items-start justify-between gap-3">
-                {/* English column, left-aligned */}
-                <div dir="ltr" className="min-w-0 flex-1 text-left">
+              {/* Head — the same bilingual title stack the reader uses (.pc-head in
+                  poem-column.css): Arabic title leads in gold, the English name sits under it, then
+                  one byline carrying both scripts. The old side-by-side columns split every card
+                  down the middle and halved the width available to each language. */}
+              <div className="text-right">
+                <div
+                  className="font-brand-ar font-bold text-[1.0625rem] leading-snug line-clamp-1"
+                  dir="rtl"
+                  style={{ color: 'var(--gold)' }}
+                >
+                  {poem.titleArabic || poem.title || 'قصيدة'}
+                </div>
+                {poem.title && poem.title !== poem.titleArabic && (
                   <div
-                    className="font-brand-en font-bold text-[0.8125rem] leading-tight line-clamp-2"
+                    className="font-brand-en text-[0.75rem] uppercase tracking-[0.06em] leading-snug line-clamp-1 mt-0.5"
+                    dir="ltr"
                     style={{ color: textColor }}
                   >
-                    {poem.title || poem.titleArabic || 'Poem'}
+                    {poem.title}
                   </div>
-                  {(poem.poet || poem.poetArabic) && (
-                    <div
-                      className="font-brand-en font-semibold text-[0.6875rem] truncate mt-0.5"
-                      style={{ color: subTextColor }}
-                    >
-                      {poem.poet || poem.poetArabic}
-                    </div>
-                  )}
-                </div>
-                {/* Arabic column, right-aligned */}
-                <div dir="rtl" className="min-w-0 flex-1 text-right">
+                )}
+                {(poem.poetArabic || poem.poet) && (
                   <div
-                    className="font-bold text-[0.9375rem] leading-tight line-clamp-2"
-                    style={{ fontFamily: "'Reem Kufi', sans-serif", color: 'var(--gold)' }}
+                    className="text-[0.6875rem] truncate mt-1"
+                    dir="ltr"
+                    style={{ color: 'rgba(197,160,89,0.9)' }}
                   >
-                    {poem.titleArabic || poem.title || 'قصيدة'}
-                  </div>
-                  {(poem.poetArabic || poem.poet) && (
-                    <div
-                      className="text-[0.75rem] truncate mt-0.5"
-                      style={{ fontFamily: "'Tajawal', sans-serif", color: textColor }}
-                    >
+                    <span className="font-brand-ar" lang="ar">
                       {poem.poetArabic || poem.poet}
-                    </div>
-                  )}
-                </div>
+                    </span>
+                    {poem.poet && poem.poetArabic && poem.poet !== poem.poetArabic && (
+                      <span className="font-brand-en"> · {poem.poet}</span>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {/* Snippet */}
+              {/* The verse. Loudest thing in the body on purpose: it is the only part of the card
+                  that is actually the poetry, and at 0.8125rem/85% it was reading quieter than the
+                  metadata underneath it. */}
               {expandedId !== poem.id && firstLine(poem) && (
                 <p
-                  className="font-amiri text-[0.8125rem] leading-[1.9] line-clamp-2"
+                  className="font-amiri text-[1rem] leading-[1.95] line-clamp-2"
                   dir="rtl"
-                  style={{ color: textColor, opacity: 0.85 }}
+                  style={{ color: textColor }}
                 >
                   {firstLine(poem)}
                 </p>
               )}
 
-              {/* Metrics — difficulty, intensity, family */}
-              {(metrics.length > 0 || fam) && (
-                <div
-                  className="flex flex-wrap gap-x-2 gap-y-0.5 text-[0.5625rem] font-brand-en font-semibold"
-                  style={{ color: subTextColor }}
-                >
-                  {metrics.length > 0 && <span>{metrics.join(' · ')}</span>}
+              {/* Tags + family */}
+              {(tags.length > 0 || fam) && (
+                <div className="flex flex-wrap gap-1">
                   {fam && (
-                    <span style={{ color: 'var(--gold)' }}>
-                      {metrics.length > 0 ? '· ' : ''}
+                    <span
+                      className="font-brand-en font-semibold text-[0.625rem] rounded-full px-2 py-[3px]"
+                      style={{
+                        color: 'var(--gold)',
+                        background: 'rgba(197,160,89,0.1)',
+                        border: '1px solid rgba(197,160,89,0.3)',
+                      }}
+                    >
                       {fam.label_en}
                     </span>
                   )}
-                </div>
-              )}
-
-              {/* Category tags */}
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
                   {tags.map((t) => (
                     <span
                       key={`${t.dim}-${t.key}`}
-                      className="font-brand-en font-semibold text-[0.5625rem] rounded-full px-1.5 py-0.5"
+                      className="font-brand-en text-[0.625rem] rounded-full px-2 py-[3px]"
                       style={{
-                        color: textColor,
+                        color: subTextColor,
                         background: darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.04)',
                         border: `1px solid ${subtleBorder}`,
                       }}
@@ -382,47 +388,77 @@ export default function PoemResultsGrid({
                 </div>
               )}
 
-              {/* Card actions — save + open in reader (bottom-right) */}
-              {(onToggleSave || onOpenPoem) && (
-                <div className="flex justify-end gap-1.5 mt-0.5">
-                  {onToggleSave && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleSave(poem);
-                      }}
-                      aria-label={saved ? 'Remove from saved' : 'Save poem'}
-                      className="w-7 h-7 flex items-center justify-center rounded-full transition-colors hover:border-gold/40"
-                      style={{
-                        background: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                        border: `1px solid ${subtleBorder}`,
-                      }}
-                    >
-                      <Heart
-                        size={13}
-                        style={{ color: saved ? 'var(--gold)' : subTextColor }}
-                        fill={saved ? 'var(--gold)' : 'none'}
-                      />
-                    </button>
+              {/* Footer — metadata and actions share ONE row. They used to be stacked, and since a
+                  grid row stretches its cards, the actions were pushed to the bottom leaving a
+                  visible void above them. Side by side there is nothing left to stretch.
+                  The buttons carry 44px hit targets with a 32px visual circle inside, so the touch
+                  target meets the minimum without two heavy discs dominating a compact card. */}
+              <div className="flex items-center justify-between gap-2 -mb-1.5">
+                <div
+                  className="font-brand-en text-[0.625rem] leading-tight min-w-0"
+                  style={{ color: subTextColor, opacity: 0.75 }}
+                >
+                  {band && <span>{band}</span>}
+                  {band && poem.accessibilityScore != null && (
+                    <span style={{ opacity: 0.6 }}> {poem.accessibilityScore}/10</span>
                   )}
-                  {onOpenPoem && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onOpenPoem(poem.id);
-                      }}
-                      aria-label="Open this poem in the reader"
-                      className="w-7 h-7 flex items-center justify-center rounded-full transition-colors hover:border-gold/40"
-                      style={{
-                        background: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
-                        border: `1px solid ${subtleBorder}`,
-                      }}
-                    >
-                      <Maximize2 size={12} style={{ color: subTextColor }} />
-                    </button>
+                  {poem.emotionalIntensity != null && (
+                    <span>
+                      {band ? ' · ' : ''}
+                      intensity {poem.emotionalIntensity}
+                    </span>
                   )}
                 </div>
-              )}
+
+                {(onToggleSave || onOpenPoem) && (
+                  <div className="flex items-center shrink-0">
+                    {onToggleSave && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleSave(poem);
+                        }}
+                        aria-label={saved ? 'Remove from saved' : 'Save poem'}
+                        className="w-11 h-11 flex items-center justify-center rounded-full"
+                      >
+                        <span
+                          className="w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:border-gold/40"
+                          style={{
+                            background: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                            border: `1px solid ${subtleBorder}`,
+                          }}
+                        >
+                          <Heart
+                            size={14}
+                            style={{ color: saved ? 'var(--gold)' : subTextColor }}
+                            fill={saved ? 'var(--gold)' : 'none'}
+                          />
+                        </span>
+                      </button>
+                    )}
+                    {onOpenPoem && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenPoem(poem.id);
+                        }}
+                        aria-label="Open this poem in the reader"
+                        className="w-11 h-11 flex items-center justify-center rounded-full"
+                      >
+                        <span
+                          className="w-8 h-8 flex items-center justify-center rounded-full transition-colors hover:border-gold/40"
+                          style={{
+                            background: darkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                            border: `1px solid ${subtleBorder}`,
+                          }}
+                        >
+                          <Maximize2 size={13} style={{ color: subTextColor }} />
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           );
         })}

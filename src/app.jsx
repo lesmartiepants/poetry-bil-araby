@@ -15,6 +15,7 @@ import {
   Heart,
   LibraryBig,
   ThumbsDown,
+  Gift,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -269,6 +270,7 @@ export default function DiwanApp() {
   const darkMode = useUIStore((s) => s.darkMode);
   const setDarkMode = useUIStore((s) => s.setDarkMode);
   const curated = useUIStore((s) => s.curated);
+  const showDislike = useUIStore((s) => s.showDislike);
   const currentFont = useUIStore((s) => s.font);
   const setCurrentFont = useUIStore((s) => s.setFont);
   const ratchetMode = useUIStore((s) => s.ratchetMode);
@@ -950,6 +952,12 @@ export default function DiwanApp() {
   const cachedAuthorBio = displayedPoem?.cachedAuthorBio;
 
   const insightParts = useMemo(() => {
+    // Parsed once up front so the cached branch below can fall back to it: a poem can carry a
+    // cached translation without a cached explanation/author bio (they're cached separately, on
+    // demand, after an analysis run), and hard-committing to '' in that case froze out a live
+    // interpretation that had already arrived — "No meaning available" and no Author Insights
+    // button even after the analysis genuinely completed.
+    const parsedFromInterpretation = parseInsight(interpretation, addLog);
     // In ratchet mode, always use the AI-generated interpretation so cached scholarly
     // translations don't override the Gen Z ratchet content.
     if (!ratchetMode && cachedTranslation) {
@@ -961,12 +969,12 @@ export default function DiwanApp() {
       if (enCount >= arCount || arCount === 0) {
         return {
           poeticTranslation: cachedTranslation,
-          depth: cachedExplanation || '',
-          author: cachedAuthorBio || '',
+          depth: cachedExplanation || parsedFromInterpretation?.depth || '',
+          author: cachedAuthorBio || parsedFromInterpretation?.author || '',
         };
       }
     }
-    return parseInsight(interpretation, addLog);
+    return parsedFromInterpretation;
   }, [
     interpretation,
     cachedTranslation,
@@ -2258,6 +2266,36 @@ export default function DiwanApp() {
                   WebkitUserSelect: 'none',
                 }}
               >
+                {/* Dislike — left of Save, inside the nav pill. Hideable from the account menu. */}
+                {showDislike && (
+                  <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                    <button
+                      onClick={() =>
+                        current && isPoemDownvoted(current) ? handleUndownvote() : handleDownvote()
+                      }
+                      aria-label={
+                        current && isPoemDownvoted(current) ? 'Remove dislike' : 'Dislike poem'
+                      }
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                    >
+                      <ThumbsDown
+                        size={19}
+                        style={
+                          current && isPoemDownvoted(current)
+                            ? { fill: '#f87171', stroke: '#f87171' }
+                            : { fill: 'none', stroke: ink }
+                        }
+                      />
+                    </button>
+                    <span
+                      className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                      style={{ color: ink }}
+                    >
+                      dislike
+                    </span>
+                  </div>
+                )}
+
                 {/* Listen moved into the reader's action buttons (ReaderActions) — removed from nav. */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                   <button
@@ -2316,7 +2354,9 @@ export default function DiwanApp() {
                   </span>
                 </div>
 
-                {/* Discover */}
+                {/* Discover — opens the Category Explorer (taxonomy browser + filter playground).
+                    The long-press Ratchet Mode easter egg stays on this button; the "yalla"
+                    keyboard shortcut is its other entry point. */}
                 <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                   <button
                     data-tour="discover"
@@ -2324,7 +2364,7 @@ export default function DiwanApp() {
                       setFireTapped(true);
                       setTimeout(() => setFireTapped(false), 400);
                       dismissTTSProgress();
-                      setDiscoverDrawerOpen(true);
+                      navigate('/explore');
                     }}
                     onTouchStart={() => {
                       longPressTimer.current = setTimeout(() => {
@@ -2382,6 +2422,25 @@ export default function DiwanApp() {
                   </span>
                 </div>
 
+                {/* Share — opens the share card modal for the poem on screen. */}
+                {FEATURES.share && (
+                  <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                    <button
+                      onClick={handleShare}
+                      aria-label="Share poem"
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                    >
+                      <Gift size={19} style={{ color: ink }} />
+                    </button>
+                    <span
+                      className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
+                      style={{ color: ink }}
+                    >
+                      Share
+                    </span>
+                  </div>
+                )}
+
                 {/* Account — rightmost: expandable menu with voice cycle + sign in/out */}
                 <AccountMenu
                   user={user}
@@ -2392,32 +2451,6 @@ export default function DiwanApp() {
                   ink={ink}
                 />
               </div>
-
-              {/* Dislike — pinned left, in the gap between the nav pill and the screen edge */}
-              <button
-                onClick={() =>
-                  current && isPoemDownvoted(current) ? handleUndownvote() : handleDownvote()
-                }
-                aria-label={current && isPoemDownvoted(current) ? 'Remove dislike' : 'Dislike poem'}
-                className="absolute left-0 md:left-2 top-1/2 -translate-y-1/2 flex flex-col items-center gap-0.5"
-              >
-                <span className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-full hover:scale-105 transition-transform">
-                  <ThumbsDown
-                    size={19}
-                    style={
-                      current && isPoemDownvoted(current)
-                        ? { fill: '#f87171', stroke: '#f87171' }
-                        : { fill: 'none', stroke: ink }
-                    }
-                  />
-                </span>
-                <span
-                  className="font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap"
-                  style={{ color: ink }}
-                >
-                  dislike
-                </span>
-              </button>
             </div>
           </motion.footer>
 
@@ -2451,7 +2484,9 @@ export default function DiwanApp() {
 
       {/* Insight drawer (InsightOverlay) removed — insights now live inline in the reader only. */}
 
-      {/* Discover Drawer */}
+      {/* Discover Drawer — the poet-shaped door into the corpus (browse by poet + surprise me).
+          Opened from the account menu's "Explore Poets" now that the nav pill's Discover button
+          goes to the Category Explorer instead. */}
       <AnimatePresence>
         {discoverDrawerOpen && (
           <DiscoverDrawer
@@ -2486,7 +2521,17 @@ export default function DiwanApp() {
           Salvaged from #517; gated on FEATURES.onboardingPrefs so it stays out
           of the default boot path (the app boots straight into the feed). */}
       {FEATURES.onboardingPrefs && isOnboardingRoute && (
-        <Suspense fallback={null}>
+        <Suspense
+          fallback={
+            // Opaque, not null: OnboardingFlow is lazy-loaded, and a transparent
+            // fallback here let the reader flash through underneath for the chunk's
+            // first fetch, right after the splash dismisses into this route.
+            <div
+              className="fixed inset-0 z-[60]"
+              style={{ background: darkMode ? '#000000' : '#fafaf9' }}
+            />
+          }
+        >
           <OnboardingFlow
             key="onboarding-flow"
             onComplete={(prefs) => {
@@ -2551,8 +2596,8 @@ export default function DiwanApp() {
           button, bottom-right). */}
       <TextSettingsPill />
 
-      {/* Vertical sidebar removed — Library + Account moved into the bottom nav, Dislike to the
-          bottom-left, Share/Copy retired (feature-flagged off). */}
+      {/* Vertical sidebar removed — Library + Account moved into the bottom nav, Dislike into the
+          nav pill left of Save, Share/Copy retired (feature-flagged off). */}
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}
       <AnimatePresence>

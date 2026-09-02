@@ -1,10 +1,11 @@
 import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import PoemColumn from './PoemColumn.jsx';
 import PoemSeal, { useSummon } from './PoemSeal.jsx';
-import InlineInsights from './InlineInsights.jsx';
+import InlineInsights, { INSIGHT_LABELS } from './InlineInsights.jsx';
 import ReaderActions from './ReaderActions.jsx';
 import ScrollHairline from './ScrollHairline.jsx';
 import '../../styles/reader-actions.css';
+import '../../styles/poem-column.css';
 import { useAudioStore } from '../../stores/audioStore';
 
 // The poem is a continuous scrolling column now, so there is no pinned header to clear and no
@@ -57,6 +58,10 @@ const PoemReader = memo(function PoemReader({
 }) {
   const poemId = poem?.id;
   const summon = useSummon();
+  // Same values PoemColumn computes for its own (scrolling) pc-head, duplicated here because the
+  // insight header below needs them while PoemColumn itself is unmounted.
+  const goldColor = darkMode ? '#c5a059' : '#8B6430';
+  const enTitleColor = darkMode ? 'rgba(255,253,247,0.88)' : 'rgba(28,25,23,0.8)';
 
   // Flat verse lines — match app.jsx's versePairs (blank lines filtered) so wordOffsets/TTS align.
   const lines = useMemo(() => {
@@ -98,6 +103,28 @@ const PoemReader = memo(function PoemReader({
   // ReaderActions only ever sees idle / meaning / author now.
   const mode = endStage;
   const hasAuthor = !!insightParts?.author;
+
+  // How far into the final stretch of the poem the reader has scrolled (0 to 1), whether the column
+  // scrolls at all, and whether they have actually moved it. PoemColumn computes all three.
+  const [endApproach, setEndApproach] = useState(0);
+  const [arrived, setArrived] = useState(false);
+  const handleScrollProgress = useCallback((frac, { lastStretch, scrollable, travelled } = {}) => {
+    setEndApproach(lastStretch ?? 0);
+    setArrived(!!scrollable && !!travelled);
+  }, []);
+
+  // Arriving at the quill is the end-of-poem moment, and it was arriving into competition: a
+  // filled-gold "Poem Insights" pill is the loudest object on the screen, so the reader met two
+  // primary next-actions at once. The fixed row recedes as the quill comes into view. It stays
+  // interactive at low opacity rather than disappearing, so a reader who wanted Insights after all
+  // is never trapped, and it returns the moment they scroll back up.
+  //
+  // `arrived` is the whole point of the gate. The dimming is a response to the reader TRAVELLING to
+  // the quill, so it must not fire when there was no journey: a poem short enough to fit reports
+  // itself at the end from the first frame, and a poem only slightly taller than the viewport has
+  // its entire scroll range inside the final 170px, so `endApproach` alone dimmed the actions at
+  // rest in both cases, with the quill and the buttons plainly visible and nothing having happened.
+  const actionsDimmed = !inInsight && arrived && endApproach > 0.15;
 
   const handleSeeMeaning = () => {
     onStopAudio?.(); // entering insights stops the recitation (it's prose, not the poem)
@@ -179,6 +206,7 @@ const PoemReader = memo(function PoemReader({
             currentVerseIndex={currentVerseIndex}
             isPlaying={isPlaying}
             onOverPull={handleOverPull}
+            onScrollProgress={handleScrollProgress}
           >
             {/* The quill lives inside the column so it scrolls with the poem: it exists only at
                 the end, where the reader has arrived deliberately. */}
@@ -202,32 +230,138 @@ const PoemReader = memo(function PoemReader({
           />
         )}
 
+        {/* Insight view: a title card over an essay. Header and body are flex siblings sharing one
+            measure, NOT an absolute header over a body that hand-reserves room for it — the old
+            108px reservation was 6px shy of the header's real height, so the section label landed
+            on the byline. A flex row that shrinks to its content cannot drift out of agreement.
+            It also drops the reading view's .pc-head/.pc-ttl-en classes: those encode the poem
+            column's flush-right axis, which exists to align Latin rows to the Arabic verses. There
+            are no verses here, just centred prose, so the header centres with it. */}
         {inInsight && (
-          <div
-            ref={insightWrapRef}
-            className="w-full max-w-xl mx-auto h-full flex items-center"
-            data-insight-ui
-            style={{ paddingBottom: 32 }}
-          >
-            <InlineInsights
-              stage={endStage}
-              darkMode={darkMode}
-              isInterpreting={isInterpreting}
-              insightParts={insightParts}
-              interpretation={interpretation}
-              animate={!seenStages[endStage]}
-              onProgress={onInsightProgress}
-            />
+          <div className="w-full h-full flex flex-col">
+            <div
+              data-testid="insight-header"
+              className="shrink-0 w-full max-w-xl mx-auto px-4 text-center"
+              style={{ paddingTop: 22 }}
+            >
+              {/* Kicker. It was the most functional text on the screen — it names which insight
+                  you are reading — and it was the quietest, tucked under the byline. Leading the
+                  card gives it a job the eye can find without making it loud. */}
+              <div
+                className="font-brand-en"
+                style={{
+                  fontSize: '0.625rem',
+                  letterSpacing: '0.24em',
+                  textTransform: 'uppercase',
+                  color: goldColor,
+                  opacity: 0.72,
+                  marginBottom: 12,
+                }}
+              >
+                {INSIGHT_LABELS[endStage]}
+              </div>
+
+              {/* Primary. line-height is explicit because Reem Kufi's diacritics overrun a default
+                  line box at this size and were being clipped by the top of the screen. */}
+              <div
+                lang="ar"
+                dir="rtl"
+                style={{
+                  fontFamily: "'Reem Kufi', sans-serif",
+                  fontSize: `calc(1.75rem * ${textScale})`,
+                  lineHeight: 1.4,
+                  color: goldColor,
+                  margin: '0 0 6px',
+                }}
+              >
+                {poem?.titleArabic || poem?.title}
+              </div>
+
+              {/* Subordinate. Was 0.82rem of near-white at 0.88 alpha, which outshouted the gold
+                  title above it: uppercase Latin at high contrast beats larger gold every time. */}
+              {poem?.title && poem.title !== poem?.titleArabic && (
+                <div
+                  className="font-brand-en"
+                  dir="ltr"
+                  style={{
+                    fontSize: '0.7rem',
+                    letterSpacing: '0.12em',
+                    textTransform: 'uppercase',
+                    lineHeight: 1.5,
+                    color: enTitleColor,
+                    opacity: 0.6,
+                    margin: '0 0 8px',
+                  }}
+                >
+                  {poem.title}
+                </div>
+              )}
+
+              {/* Quiet. The Arabic poet name was 1.0625rem, larger than the English title it sat
+                  under, which is part of why the stack read as four competing rows. */}
+              <div
+                className="font-brand-en"
+                dir="ltr"
+                style={{ fontSize: '0.8rem', color: 'rgba(212,180,99,0.72)' }}
+              >
+                <span
+                  lang="ar"
+                  style={{ fontFamily: "'Reem Kufi', sans-serif", fontSize: '0.9rem' }}
+                >
+                  {poem?.poetArabic || poem?.poet}
+                </span>
+                {poem?.poet && poem?.poetArabic && poem.poet !== poem.poetArabic && (
+                  <span> · {poem.poet}</span>
+                )}
+              </div>
+
+              {/* Ends the header rather than letting it bleed into the prose. Fades at both ends so
+                  it reads as a breath, not a box edge. */}
+              <div
+                aria-hidden="true"
+                style={{
+                  height: 1,
+                  margin: '18px 0 0',
+                  background: `linear-gradient(to right, transparent, ${
+                    darkMode ? 'rgba(197,160,89,0.28)' : 'rgba(139,100,48,0.3)'
+                  }, transparent)`,
+                }}
+              />
+            </div>
+
+            <div
+              ref={insightWrapRef}
+              className="flex-1 min-h-0 w-full max-w-xl mx-auto px-4 flex items-center"
+              data-insight-ui
+              // paddingTop, not just the rule's own margin: `items-center` only holds prose off the
+              // header while the prose is short enough to centre. A full-length insight fills the
+              // box and starts flush against the hairline, which is the cramped seam this pass is
+              // meant to remove.
+              style={{ paddingTop: 20, paddingBottom: 32 }}
+            >
+              <InlineInsights
+                stage={endStage}
+                darkMode={darkMode}
+                isInterpreting={isInterpreting}
+                insightParts={insightParts}
+                interpretation={interpretation}
+                animate={!seenStages[endStage]}
+                onProgress={onInsightProgress}
+              />
+            </div>
           </div>
         )}
       </div>
 
-      {/* Action buttons — same position in every state. */}
+      {/* Action buttons — same position in every state, but they yield to the quill at the end of
+          the poem (see actionsDimmed). */}
       <div
         className="absolute left-0 right-0 flex flex-col items-center gap-2 px-4"
         style={{
           bottom: 'calc(env(safe-area-inset-bottom, 0px) + 6px)',
           zIndex: 5,
+          opacity: actionsDimmed ? 0.2 : 1,
+          transition: 'opacity 0.45s ease',
         }}
       >
         {isActive && (

@@ -1,5 +1,6 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
+import { openDiscoverDrawer } from './fixtures/mocks.js';
 
 /**
  * Control Bar Fix — Verify PR #228 against Vercel preview deployment.
@@ -14,7 +15,6 @@ const VIEWPORTS = {
   mobile: { width: 375, height: 812 },
 };
 
-/* global process */
 const BYPASS = process.env.VERCEL_PROTECTION_BYPASS_FOR_AUTOMATION;
 
 /**
@@ -43,7 +43,9 @@ async function dismissAllOverlays(page) {
       // Click the splash or any button inside it to dismiss
       try {
         const splashBtn = welcomeSplash.locator('button').first();
-        if (await splashBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+        // Generous: the CTA is held back until the note finishes revealing (~9.5s), and the
+        // fallback below force-clicks the splash itself, which does not dismiss it.
+        if (await splashBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
           await splashBtn.click({ timeout: 2000 });
         } else {
           await welcomeSplash.click({ force: true });
@@ -165,10 +167,8 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
     const hasTooltip = await tooltip.isVisible({ timeout: 1000 }).catch(() => false);
     console.log(`✓ Flag click (unauthenticated): tooltip=${hasTooltip}, no crash`);
 
-    // Verify Discover drawer opens and Surprise Me works
-    const openDrawerBtn = page.locator('button[aria-label="Open discover"]');
-    await expect(openDrawerBtn).toBeVisible();
-    await openDrawerBtn.click();
+    // Verify Discover drawer opens (account menu → Explore Poets) and Surprise Me works
+    await openDiscoverDrawer(page);
     const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
     await expect(discoverBtn).toBeVisible({ timeout: 3000 });
     await discoverBtn.click();
@@ -275,14 +275,10 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
     const initialUrl = page.url();
     console.log(`  Initial URL: ${initialUrl}`);
 
-    // Click Discover (may be temporarily disabled during initial fetch due to CORS on preview)
-    const openDrawerBtn = page.locator('button[aria-label="Open discover"]');
-    try {
-      await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
-    } catch {
-      console.log('  Discover button still disabled (CORS-blocked fetch) — clicking with force');
-    }
-    await openDrawerBtn.click({ force: true });
+    // Open the Discover drawer via the account menu. This path is not gated on the in-flight
+    // fetch the way the old nav-pill button was, so the force-click workaround for a
+    // CORS-blocked preview no longer applies to opening it.
+    await openDiscoverDrawer(page);
     const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
     await expect(discoverBtn)
       .toBeVisible({ timeout: 3000 })

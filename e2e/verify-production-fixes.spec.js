@@ -31,8 +31,8 @@ test.describe('Production Bug Fix Verification', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Dismiss splash if present
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    if (await enterBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    const enterBtn = page.getByTestId('splash-enter');
+    if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
@@ -52,8 +52,8 @@ test.describe('Production Bug Fix Verification', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Dismiss splash
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    if (await enterBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    const enterBtn = page.getByTestId('splash-enter');
+    if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
@@ -71,17 +71,26 @@ test.describe('Production Bug Fix Verification', () => {
     // If debug panel isn't visible at all, that's also fine (FEATURES.debug could be off)
   });
 
-  // Redesign: the splash/landing screen was removed (FEATURES.landing=false) — the app now boots
-  // straight into the vertical feed reader. Assert the reader loads directly, with no splash.
-  test('app boots straight into the reader (no splash)', async ({ page }) => {
+  // The landing screen is back on (FEATURES.landing=true) and hands off to the preference flow.
+  // A first visit meets the splash; dismissing it lands on /onboarding when no answers are saved.
+  test('first visit shows the splash, which hands off to onboarding', async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
 
-    // No splash/landing dialog and no "Enter the app" gate.
-    await expect(page.locator('[aria-label="Welcome to Poetry Bil-Araby"]')).toHaveCount(0);
-    await expect(page.locator('button[aria-label="Enter the app"]')).toHaveCount(0);
+    await expect(page.locator('[aria-label="Welcome to Poetry Bil-Araby"]')).toBeVisible({
+      timeout: 10000,
+    });
+    await page.getByTestId('splash-enter').click();
+    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 10000 });
+  });
 
-    // The reader feed renders on its own.
+  // A reader who has already been through it boots straight into the feed, no gate.
+  test('returning visit boots straight into the reader', async ({ page }) => {
+    await page.addInitScript(() => localStorage.setItem('hasSeenOnboarding', 'true'));
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+
+    await expect(page.getByTestId('splash-enter')).toHaveCount(0);
     await expect(page.locator('[data-testid="poem-feed"]')).toBeVisible({ timeout: 10000 });
   });
 
@@ -91,8 +100,8 @@ test.describe('Production Bug Fix Verification', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Dismiss splash
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    if (await enterBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    const enterBtn = page.getByTestId('splash-enter');
+    if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
@@ -129,8 +138,8 @@ test.describe('Production Bug Fix Verification', () => {
     await page.waitForLoadState('domcontentloaded');
 
     // Dismiss splash
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    if (await enterBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    const enterBtn = page.getByTestId('splash-enter');
+    if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }

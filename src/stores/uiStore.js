@@ -58,6 +58,22 @@ const persistCurated = (on) => {
   } catch {}
 };
 
+// Dislike button in the nav pill: off by default, opt-in from the account menu for a
+// reader who wants it. Remembered across reloads once toggled.
+const SHOW_DISLIKE_KEY = 'show-dislike';
+const loadShowDislike = () => {
+  try {
+    const v = localStorage.getItem(SHOW_DISLIKE_KEY);
+    if (v !== null) return v === '1';
+  } catch {}
+  return false;
+};
+const persistShowDislike = (on) => {
+  try {
+    localStorage.setItem(SHOW_DISLIKE_KEY, on ? '1' : '0');
+  } catch {}
+};
+
 /**
  * Reading posture: how much Arabic the reader wants to do unaided.
  *
@@ -136,6 +152,7 @@ const initialState = {
   ttsMode: loadTtsMode(), // 'rest' | 'live' — defaults to 'live' (streaming)
   liveVoice: loadLiveVoice(), // selected speaking voice, persisted (default DEFAULT_VOICE)
   curated: loadCurated(), // curated feed on/off, persisted (default off)
+  showDislike: loadShowDislike(), // dislike button in the nav pill, persisted (default off)
   liveTemperature: 0.35,
   highlightStyle: 'pill', // 'none' | 'glow' | 'underline' | 'pill' | 'focus-blur'
   actionWeight: 'bold', // reader action buttons: 'quiet' | 'balanced' | 'bold' (molten) — visual intensity
@@ -183,6 +200,11 @@ export const useUIStore = create((set, get) => ({
     set((s) => {
       persistCurated(!s.curated);
       return { curated: !s.curated };
+    }),
+  toggleShowDislike: () =>
+    set((s) => {
+      persistShowDislike(!s.showDislike);
+      return { showDislike: !s.showDislike };
     }),
   setLiveTemperature: (liveTemperature) => set({ liveTemperature }),
   setHighlightStyle: (highlightStyle) => set({ highlightStyle }),

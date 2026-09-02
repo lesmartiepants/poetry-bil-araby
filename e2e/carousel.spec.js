@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openDiscoverDrawer } from './fixtures/mocks.js';
 
 /**
  * Carousel Feature Tests — Poetry Bil-Araby
@@ -133,8 +134,8 @@ async function loadApp(page) {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
   // Dismiss splash screen if visible
-  const enterBtn = page.locator('button[aria-label="Enter the app"]');
-  if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+  const enterBtn = page.getByTestId('splash-enter');
+  if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
     await enterBtn.click();
     await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
   }
@@ -144,9 +145,11 @@ async function loadApp(page) {
 
 /** Click Discover to load a new poem and wait for carousel dots. */
 async function discoverAndWaitForCarousel(page) {
+  // The nav button no longer opens the drawer (it goes to /explore), but it is still the settle
+  // signal: it disables while a fetch is in flight.
   const openDrawerBtn = page.locator('button[aria-label="Open discover"]');
   await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
-  await openDrawerBtn.click();
+  await openDiscoverDrawer(page);
 
   const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
   await expect(discoverBtn).toBeVisible({ timeout: 3000 });
@@ -432,7 +435,7 @@ test.describe('Poem Carousel', () => {
     // Discover again
     const openDrawerBtn = page.locator('button[aria-label="Open discover"]');
     await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
-    await openDrawerBtn.click();
+    await openDiscoverDrawer(page);
 
     const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
     await expect(discoverBtn).toBeVisible({ timeout: 3000 });

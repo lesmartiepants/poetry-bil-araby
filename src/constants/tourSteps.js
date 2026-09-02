@@ -70,15 +70,16 @@ export const TOUR_STEPS = [
     key: 'discover',
     target: '[data-tour="discover"]',
     arabic: 'اكتشف',
-    title: 'Discover poets',
-    body: 'Open the browser to wander through poets and eras, or summon a random poem. Long-press it later for a surprise.',
-    hint: 'Tap to open Discover',
-    advanceOn: 'click',
+    title: 'Discover by category',
+    body: 'Open the Category Explorer to wander by mood, theme and era. Poets moved to the account menu, under Explore Poets. Long-press this one later for a surprise.',
     side: 'top',
     align: 'center',
-    // Opening Discover slides up a tray; the engine then centers the card in
-    // front of it and closes the tray on Next.
-    tray: 'discover',
+    // No `advanceOn` and no `tray`, unlike the other feature steps, and both omissions are
+    // load-bearing. This button used to slide up the Discover drawer; it now NAVIGATES to
+    // /explore, a full-screen route, and full-screen routes unmount the tour (FULL_SCREEN_ROUTES
+    // in src/constants/routes.js). Requiring the real click would abort the walkthrough mid-run,
+    // and waiting on the `discoverDrawer` tray would hang forever now that this button no longer
+    // opens it. So: a plain spotlight with a manual Next, and no hint inviting the tap.
   },
   {
     key: 'explain',

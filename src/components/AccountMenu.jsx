@@ -9,10 +9,11 @@ import {
   Moon,
   Sun,
   SlidersHorizontal,
-  Compass,
+  ScrollText,
   Sparkles,
   Footprints,
   ListChecks,
+  ThumbsDown,
 } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FEATURES } from '../constants/features.js';
@@ -33,6 +34,7 @@ import { onboardingEntryLabel, onboardingEntryDescription } from '../utils/onboa
 export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCycleVoice, ink }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const curated = useUIStore((s) => s.curated);
+  const showDislike = useUIStore((s) => s.showDislike);
   const openDisplaySettings = useModalStore((s) => s.openDisplaySettings);
   const openTour = useModalStore((s) => s.openTour);
   const [, navigate] = useLocation();
@@ -86,18 +88,19 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
             className={`z-[60] rounded-xl p-2 flex flex-col gap-1 min-w-[12rem] backdrop-blur-xl border ${theme.border} ${darkMode ? 'bg-black/85' : 'bg-white/92'}`}
             style={{ boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
           >
-            {/* Explore poems — filter/browse by mood, theme, motif, intensity, accessibility */}
+            {/* Explore poets — the poet picker. Browsing BY CATEGORY moved to the nav pill's
+                Discover button, so this entry is the poet-shaped door into the corpus. */}
             <button
               onClick={() => {
                 setOpen(false);
-                navigate('/explore');
+                useModalStore.getState().setDiscoverDrawer(true);
               }}
-              aria-label="Explore poems by mood, theme, and reading difficulty"
+              aria-label="Explore poets — browse and filter by poet"
               className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
               style={{ color: ink }}
             >
-              <Compass size={16} style={{ color: ink }} />
-              <span>Explore Poems</span>
+              <ScrollText size={16} style={{ color: ink }} />
+              <span>Explore Poets</span>
             </button>
 
             {/* Guided walkthrough — the only entry point. It never opens itself, so a reader
@@ -224,6 +227,40 @@ export default function AccountMenu({ user, onSignIn, onSignOut, liveVoice, onCy
                     height: 16,
                     top: 2,
                     left: curated ? 18 : 2,
+                    background: ink,
+                  }}
+                />
+              </span>
+            </button>
+
+            {/* Dislike button — shows/hides the dislike control in the reader's nav pill. */}
+            <button
+              onClick={() => useUIStore.getState().toggleShowDislike()}
+              aria-label={showDislike ? 'Hide dislike button' : 'Show dislike button'}
+              className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-brand-en hover:bg-gold/10 transition-colors"
+              style={{ color: ink }}
+            >
+              <span className="flex items-center gap-2">
+                <ThumbsDown size={16} style={{ color: showDislike ? '#c5a059' : ink }} />
+                <span>Dislike button</span>
+              </span>
+              <span
+                aria-hidden="true"
+                className="relative inline-flex flex-shrink-0 rounded-full transition-colors duration-200"
+                style={{
+                  width: 38,
+                  height: 22,
+                  background: showDislike ? 'rgba(197,160,89,0.55)' : 'rgba(120,120,140,0.30)',
+                  border: '1px solid rgba(197,160,89,0.45)',
+                }}
+              >
+                <span
+                  className="absolute rounded-full transition-all duration-200"
+                  style={{
+                    width: 16,
+                    height: 16,
+                    top: 2,
+                    left: showDislike ? 18 : 2,
                     background: ink,
                   }}
                 />

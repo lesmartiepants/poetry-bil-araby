@@ -57,6 +57,15 @@ const defaultFetchResponse = {
   },
 };
 
+// The Discover drawer (browse by poet + Surprise Me) moved off the nav pill: that button now
+// opens the Category Explorer, and the drawer's door is the account menu's "Explore Poets".
+async function openDiscoverDrawer() {
+  await userEvent.click(screen.getByLabelText(/Account menu/i));
+  // findBy, not getBy: the menu is a Radix popover with an entrance animation, so on a slower
+  // machine (CI) the row is not in the DOM the instant the click resolves.
+  await userEvent.click(await screen.findByLabelText(/Explore poets/i));
+}
+
 function mockAutoLoadFetch() {
   // Use a persistent implementation that returns the default poem for any URL,
   // handling all mount-time fetches (auto-load, health ping, auto-explain).
@@ -149,7 +158,7 @@ describe('DiwanApp', () => {
       });
 
       // Open the discover drawer, then click Surprise Me
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 
       await waitFor(
@@ -182,7 +191,7 @@ describe('DiwanApp', () => {
 
       // Open discover drawer, click Surprise Me (starts fetch, drawer closes)
       const fireBtn = screen.getByLabelText('Open discover');
-      await userEvent.click(fireBtn);
+      await openDiscoverDrawer();
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 
       // Fire button should be disabled during fetch — use waitFor because
@@ -233,7 +242,7 @@ describe('DiwanApp', () => {
       });
 
       // Open discover drawer, click Surprise Me
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 
       await waitFor(
@@ -351,9 +360,8 @@ describe('DiwanApp', () => {
     it('opens category dropdown and shows poet list', async () => {
       render(<DiwanApp />);
 
-      // Open poet picker from bottom control bar
-      const poetsBtn = screen.getByLabelText('Open discover');
-      await userEvent.click(poetsBtn);
+      // Open the poet list (Discover drawer), now reached from the account menu
+      await openDiscoverDrawer();
 
       await waitFor(() => {
         expect(document.body.textContent).toContain('كل الشعراء');
@@ -363,9 +371,8 @@ describe('DiwanApp', () => {
     it('sends poet filter parameter when a category is selected and Discover is clicked', async () => {
       render(<DiwanApp />);
 
-      // Open poet picker from bottom control bar
-      const poetsBtn = screen.getByLabelText('Open discover');
-      await userEvent.click(poetsBtn);
+      // Open the poet list (Discover drawer), now reached from the account menu
+      await openDiscoverDrawer();
 
       await waitFor(() => {
         expect(document.body.textContent).toContain('محمود درويش');
@@ -418,7 +425,7 @@ describe('DiwanApp', () => {
       });
 
       // Open poet picker and select Mahmoud Darwish
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
 
       // Queue a mock for the auto-fetch triggered by the selectedCategory effect
@@ -463,7 +470,7 @@ describe('DiwanApp', () => {
       });
 
       // Click Discover — should fetch the next Darwish poem while filter remains active
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 
       // The new poem is shown and still matches the poet filter (correct filtered index)
@@ -486,7 +493,7 @@ describe('DiwanApp', () => {
       });
 
       // ── Step 1: select Mahmoud Darwish ──────────────────────────────────
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
 
       const darwishPoem = {
@@ -507,7 +514,7 @@ describe('DiwanApp', () => {
       });
 
       // ── Step 2: open picker and switch to Al-Mutanabbi ──────────────────
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(document.body.textContent).toContain('المتنبي'));
 
       const mutanabbiPoem = {
@@ -532,7 +539,7 @@ describe('DiwanApp', () => {
 
     it('shows search input when poet picker opens', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => {
         expect(screen.getByLabelText('Search poets')).toBeInTheDocument();
       });
@@ -540,7 +547,7 @@ describe('DiwanApp', () => {
 
     it('shows Surprise Me button and Featured tiles in poet picker', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => {
         expect(screen.getByLabelText('Discover new poem')).toBeInTheDocument();
         expect(screen.getAllByTestId('poet-picker-button').length).toBeGreaterThan(0);
@@ -549,7 +556,7 @@ describe('DiwanApp', () => {
 
     it('filters poets by search query', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
 
       // Type in the search input to filter
       const searchInput = screen.getByLabelText('Search poets');
@@ -566,7 +573,7 @@ describe('DiwanApp', () => {
 
     it('shows no results message for non-matching search', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
 
       const searchInput = screen.getByLabelText('Search poets');
       await userEvent.type(searchInput, 'xyznonexistent');
@@ -578,7 +585,7 @@ describe('DiwanApp', () => {
 
     it('filters poets by English label search', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
 
       const searchInput = screen.getByLabelText('Search poets');
       await userEvent.type(searchInput, 'Darwish');
@@ -594,7 +601,7 @@ describe('DiwanApp', () => {
 
     it('filters poets by partial English label search', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
 
       const searchInput = screen.getByLabelText('Search poets');
       await userEvent.type(searchInput, 'Al-');
@@ -608,7 +615,7 @@ describe('DiwanApp', () => {
 
     it('search input is accessible when discover drawer opens', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
 
       // Drawer should open and search input should be accessible
       await waitFor(() => {
@@ -634,7 +641,7 @@ describe('DiwanApp', () => {
 
       try {
         render(<DiwanApp />);
-        await userEvent.click(screen.getByLabelText('Open discover'));
+        await openDiscoverDrawer();
 
         // Should show dynamic poets in the list
         await waitFor(
@@ -662,7 +669,7 @@ describe('DiwanApp', () => {
       });
 
       // Open poet picker and select a poet
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(screen.getByText('المتنبي')).toBeInTheDocument());
 
       global.fetch.mockResolvedValueOnce({
@@ -679,7 +686,7 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByText('المتنبي'));
 
       // Re-open picker to check for clear filter
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => {
         expect(screen.getByText('Clear filter')).toBeInTheDocument();
       });
@@ -694,7 +701,7 @@ describe('DiwanApp', () => {
       });
 
       // ── First selection: Mahmoud Darwish ────────────────────────────────
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
 
       const darwishPoem1 = {
@@ -725,7 +732,7 @@ describe('DiwanApp', () => {
 
       // ── Re-select the same poet: selectedCategory stays the same so no new fetch fires.
       // The drawer closes and the existing poem remains displayed.
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       // Wait for picker to open — 'Clear filter' only appears when a poet filter is active.
       await waitFor(() => expect(screen.getByText('Clear filter')).toBeInTheDocument());
 
@@ -752,7 +759,7 @@ describe('DiwanApp', () => {
       });
 
       // Select Darwish
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
       const darwishPoem = {
         id: 201,
@@ -771,12 +778,12 @@ describe('DiwanApp', () => {
       });
 
       // Switch to "All"
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(document.body.textContent).toContain('كل الشعراء'));
       await userEvent.click(screen.getByText('كل الشعراء'));
 
       // Switch to Mutanabbi — should fetch a new poem (no Mutanabbi poems cached)
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(document.body.textContent).toContain('المتنبي'));
       const mutanabbiPoem = {
         id: 301,
@@ -801,7 +808,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       // Open picker
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(document.body.textContent).toContain('كل الشعراء'));
 
       // Select a poet — closes the picker
@@ -826,7 +833,7 @@ describe('DiwanApp', () => {
       });
 
       // User can reopen the picker
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(document.body.textContent).toContain('كل الشعراء'));
     });
 
@@ -839,7 +846,7 @@ describe('DiwanApp', () => {
       });
 
       // Select Darwish
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       const darwishPoem = {
         id: 201,
         poet: 'Mahmoud Darwish',
@@ -856,7 +863,7 @@ describe('DiwanApp', () => {
       });
 
       // Reopen picker — the Darwish entry should be highlighted (selected styling)
-      await userEvent.click(screen.getByLabelText('Open discover'));
+      await openDiscoverDrawer();
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
 
       // The selected picker button should have the active styling class

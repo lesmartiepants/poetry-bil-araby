@@ -66,12 +66,36 @@ export async function skipOnboarding(page) {
   await page.addInitScript(() => localStorage.setItem('hasSeenOnboarding', 'true'));
 }
 
+/**
+ * Open the Discover drawer (browse by poet + Surprise Me).
+ *
+ * It used to be one tap on the nav pill's Discover button. That button now opens the Category
+ * Explorer, and the drawer's door is the account menu's "Explore Poets".
+ */
+export async function openDiscoverDrawer(page) {
+  await page.locator('button[aria-label="Account menu"]').first().click();
+  await page.locator('button[aria-label^="Explore poets"]').first().click();
+  // Wait for the drawer to be genuinely interactive, not merely present. The account menu is a
+  // Radix popover, and Radix pins `pointer-events: none` on <body> while a modal popover is open,
+  // clearing it asynchronously on close. A click inside the drawer during that window lands on
+  // nothing and the test then fails somewhere far away, on an assertion about the poem.
+  await page
+    .locator('button[aria-label="Discover new poem"]')
+    .waitFor({ state: 'visible', timeout: 10000 });
+  await page.waitForFunction(() => getComputedStyle(document.body).pointerEvents !== 'none');
+}
+
 /** Navigate to the app, dismiss the enter-gate if shown, wait for a poem to render. */
 export async function loadApp(page) {
   await page.goto('/');
   await page.waitForLoadState('domcontentloaded');
-  const enterBtn = page.locator('button[aria-label="Enter the app"]');
-  if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+  // By testid, not by label: this button's copy has changed more than once, and each time it
+  // silently stranded every test behind an undismissed splash.
+  // The long probe is deliberate, do not trim it: the CTA stays hidden until the splash note
+  // finishes revealing, sentence by sentence, which takes ~9.5s. A short probe reports "no splash
+  // here" and walks into that same stranding by another route.
+  const enterBtn = page.getByTestId('splash-enter');
+  if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
     await enterBtn.click();
     await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
   }

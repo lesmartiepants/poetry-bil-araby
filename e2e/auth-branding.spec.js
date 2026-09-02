@@ -28,8 +28,11 @@ test.describe('Branded authentication continuity', () => {
     await expect(googleButton).toHaveCSS('color', 'rgb(227, 227, 227)');
     await expect(googleButton).toHaveCSS('border-color', 'rgb(142, 145, 143)');
 
+    // 1px, not 2px: the gold surround was deliberately thinned so it reads as an accent line
+    // rather than a heavy outline. The assertion stays because it still guards the frame's
+    // existence, and Google's own button keeps its untouched border underneath it.
     const poetryFrame = dialog.getByTestId('poetry-google-frame');
-    await expect(poetryFrame).toHaveCSS('padding-top', '2px');
+    await expect(poetryFrame).toHaveCSS('padding-top', '1px');
     await expect(poetryFrame).not.toHaveCSS('background-image', 'none');
 
     await expect(dialog.getByRole('link', { name: 'Privacy' })).toHaveAttribute(

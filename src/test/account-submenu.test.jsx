@@ -168,10 +168,10 @@ describe('Account Submenu - Signed In', () => {
 
     await userEvent.click(screen.getByLabelText(/Account menu/));
 
-    // Charon is the current default; the account menu presents its listener-facing
+    // Leda is the current default; the account menu presents its listener-facing
     // English persona rather than the provider voice identifier.
-    expect(screen.getByLabelText(/Reading voice: Aref/)).toBeTruthy();
-    expect(screen.getByText('Aref')).toBeTruthy();
+    expect(screen.getByLabelText(/Reading voice: Saba/)).toBeTruthy();
+    expect(screen.getByText('Saba')).toBeTruthy();
   });
 
   it('opens SavedPoemsView when My Poems sidebar button is clicked', async () => {

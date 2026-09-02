@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openDiscoverDrawer } from './fixtures/mocks.js';
 
 /**
  * User-Flow Smoke Tests — Poetry Bil-Araby
@@ -88,15 +89,18 @@ async function setupRouteMocks(page, { poem = MOCK_POEM_DARWISH } = {}) {
 test.describe('User Flows', () => {
   test.beforeEach(async ({ page }) => {
     await setupRouteMocks(page);
-    // Skip splash/onboarding so tests can interact with the main app
+    // Skip splash/onboarding so tests can interact with the main app.
+    // `show-dislike` is opt-in and OFF by default, so the flows below that exercise the flag
+    // button have to turn it on; the default-off state has its own test further down.
     await page.addInitScript(() => {
       localStorage.setItem('hasSeenOnboarding', 'true');
+      localStorage.setItem('show-dislike', '1');
     });
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
-    // Dismiss splash screen if visible (click "Enter" button)
-    const enterBtn = page.locator('button[aria-label="Enter the app"]');
-    if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    // Dismiss the splash if visible. By testid, not by label: the copy has changed twice.
+    const enterBtn = page.getByTestId('splash-enter');
+    if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
     }
@@ -108,27 +112,30 @@ test.describe('User Flows', () => {
     // Capture the poet name before discover
     const poetBefore = await page.locator('[dir="rtl"]').first().textContent();
 
-    // Open the DiscoverDrawer, then click Surprise Me to fetch a new poem
+    // Open the DiscoverDrawer (account menu → Explore Poets), then Surprise Me for a new poem.
+    // The nav button is still the settle signal: it disables while a fetch is in flight.
     const openDrawerButton = page.locator('button[aria-label="Open discover"]');
     await expect(openDrawerButton).toBeEnabled({ timeout: 10000 });
-    await openDrawerButton.click();
+    await openDiscoverDrawer(page);
 
     const discoverButton = page.locator('button[aria-label="Discover new poem"]');
     await expect(discoverButton).toBeVisible({ timeout: 3000 });
     await discoverButton.click();
 
-    // After click, the mock route serves a different poem
+    // After click, the mock route serves a different poem.
     await expect(openDrawerButton).toBeEnabled({ timeout: 10000 });
-    // Verify that either poet from our mock data is displayed
-    const darwishVisible = await page
-      .locator('text=محمود درويش')
-      .isVisible()
-      .catch(() => false);
-    const mutanabbiVisible = await page
-      .locator('text=المتنبي')
-      .isVisible()
-      .catch(() => false);
-    expect(darwishVisible || mutanabbiVisible).toBe(true);
+
+    // Wait for the drawer to finish animating out first. Its poet list contains these same names,
+    // so asserting while it is still on screen matched several elements at once — a strict-mode
+    // violation that the old `.isVisible().catch(() => false)` quietly turned into `false`, failing
+    // the test on a locator problem rather than on the poem.
+    await expect(discoverButton).toBeHidden({ timeout: 5000 });
+
+    // Scoped to the reader, so the debug log panel's own mention of the poet can't satisfy this.
+    await expect(page.locator('[data-testid="poem-reader"]').first()).toContainText(
+      /محمود درويش|المتنبي/,
+      { timeout: 10000 }
+    );
   });
 
   // #2 — Audio playback loading state
@@ -226,10 +233,8 @@ test.describe('User Flows', () => {
 
   // #6 — Filter poems by poet
   test('user filters poems by poet', async ({ page }) => {
-    // Open the DiscoverDrawer from the control bar
-    const openDrawerBtn = page.locator('button[aria-label="Open discover"]').first();
-    await expect(openDrawerBtn).toBeVisible({ timeout: 5000 });
-    await openDrawerBtn.click();
+    // Open the DiscoverDrawer from the account menu
+    await openDiscoverDrawer(page);
 
     // Wait for drawer to render with poet options
     const dropdownBtn = page
@@ -330,10 +335,10 @@ test.describe('User Flows', () => {
     await expect(saveBtn).toBeVisible({ timeout: 5000 });
     await expect(flagBtn).toBeVisible({ timeout: 5000 });
 
-    // Discover a new poem — open drawer then click Surprise Me
+    // Discover a new poem — open the drawer (account menu → Explore Poets) then Surprise Me
     const openDrawerBtn = page.locator('button[aria-label="Open discover"]');
     await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
-    await openDrawerBtn.click();
+    await openDiscoverDrawer(page);
 
     const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
     await expect(discoverBtn).toBeVisible({ timeout: 3000 });
@@ -343,6 +348,23 @@ test.describe('User Flows', () => {
     // Save and Flag should still be visible after poem change
     await expect(saveBtn).toBeVisible();
     await expect(flagBtn).toBeVisible();
+  });
+
+  // The Dislike button is opt-in from the account menu. The suite seeds it ON in beforeEach so the
+  // flag flows have something to click, so its actual default needs its own check.
+  test('dislike button is hidden by default', async ({ page }) => {
+    await page.addInitScript(() => localStorage.removeItem('show-dislike'));
+    await page.reload();
+    await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
+
+    await expect(page.locator('svg.lucide-thumbs-down')).toHaveCount(0);
+  });
+
+  // The nav pill's Discover button changed jobs: it used to slide up the DiscoverDrawer, and now
+  // it opens the Category Explorer. Nothing else covered that, so the swap could regress silently.
+  test('nav Discover button opens the Category Explorer', async ({ page }) => {
+    await page.locator('button[aria-label="Open discover"]').first().click();
+    await expect(page).toHaveURL(/\/explore$/, { timeout: 10000 });
   });
 
   // #15 — Only one ThumbsDown icon on page (not duplicated in sidebar)
@@ -372,12 +394,12 @@ test.describe('User Flows', () => {
     await expect(page.locator('button[aria-label="Turn curated feed off"]').first()).toBeVisible({
       timeout: 3000,
     });
-    // Close the popover so Discover is reachable (curated state is persisted, so the
-    // toggle survives the close).
+    // Close the popover first: openDiscoverDrawer clicks the same account-menu trigger, which
+    // would TOGGLE an already-open menu shut. Curated state is persisted, so it survives.
     await page.keyboard.press('Escape');
 
-    // Discover a poem.
-    await page.locator('button[aria-label="Open discover"]').first().click();
+    // Discover a poem (account menu → Explore Poets → Surprise Me).
+    await openDiscoverDrawer(page);
     const discoverBtn = page.locator('button[aria-label="Discover new poem"]').first();
     await expect(discoverBtn).toBeVisible({ timeout: 3000 });
     await discoverBtn.click();

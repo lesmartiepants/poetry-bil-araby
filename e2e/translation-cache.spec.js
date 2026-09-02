@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { openDiscoverDrawer } from './fixtures/mocks.js';
 
 /**
  * Translation Cache & Fresh Poem Per Visit — E2E Verification
@@ -141,8 +142,8 @@ async function setupMocks(
 
 /** Dismiss the splash screen if visible. Call after page.goto('/') + waitForLoadState. */
 async function dismissSplashIfVisible(page) {
-  const enterBtn = page.locator('button[aria-label="Enter the app"]');
-  if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+  const enterBtn = page.getByTestId('splash-enter');
+  if (await enterBtn.isVisible({ timeout: 14000 }).catch(() => false)) {
     await enterBtn.click();
     await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
   }
@@ -492,12 +493,12 @@ test.describe('Translation Cache — Poem Variety', () => {
     // honest boot check is that the fetched poem is in the feed, not that it is shown.
     await expect(page.locator('text=شاعر أ').first()).toBeAttached({ timeout: 12000 });
 
-    // Click discover — opens the DiscoverDrawer, then click Surprise Me to get a new poem
+    // Open the DiscoverDrawer (account menu → Explore Poets), then Surprise Me for a new poem
     // (poemB or poemC in sequence; the first responses were consumed by the boot
     // prefetch and the feed's populate pass)
     const openDrawerButton = page.locator('button[aria-label="Open discover"]');
     await expect(openDrawerButton).toBeEnabled({ timeout: 10000 });
-    await openDrawerButton.click();
+    await openDiscoverDrawer(page);
 
     const surpriseMeButton = page.locator('button[aria-label="Discover new poem"]');
     await expect(surpriseMeButton).toBeVisible({ timeout: 8000 });

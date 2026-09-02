@@ -6,8 +6,8 @@ export const FEATURES = {
   streaming: true, // Enable streaming insights (progressive rendering)
   prefetching: true, // Enable smart prefetching (rate-limited to avoid API issues)
   database: true, // Enable database poem source (requires backend server running)
-  landing: false, // Show the splash/landing screen on first visit (disabled: boot straight into the reader)
-  onboarding: false, // Show kinetic walkthrough (phases 1-3) on first visit
+  landing: true, // Show the splash/landing screen (Zen Haiku) on first visit, then hand off to /onboarding
+  onboarding: false, // Unused: the old kinetic walkthrough (phases 1-3) baked into SplashScreen. Superseded by onboardingPrefs, wired in after the landing screen.
   forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
   onboardingPrefs: true, // Preference pickers (mood/era/topic) at the /onboarding route — salvaged from #517, not on the boot path; reach it from the account menu ("Set up your feed" / "Change your feed") or the debug panel ("Preference Flow")
   drawInspector: true, // الميزان — floating inspector for the last scored discovery draw. A verification tool, not a reader feature: it also requires showDebugLogs (seeded from FEATURES.debug), so turning debug off clears it with the rest of the dev surfaces. Set false to remove it outright.

@@ -32,7 +32,7 @@ test.describe('Production Bug Fix Verification', () => {
 
     // Dismiss splash if present
     const enterBtn = page.getByTestId('splash-enter');
-    if (await enterBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await enterBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
@@ -53,7 +53,7 @@ test.describe('Production Bug Fix Verification', () => {
 
     // Dismiss splash
     const enterBtn = page.getByTestId('splash-enter');
-    if (await enterBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await enterBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
@@ -101,7 +101,7 @@ test.describe('Production Bug Fix Verification', () => {
 
     // Dismiss splash
     const enterBtn = page.getByTestId('splash-enter');
-    if (await enterBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await enterBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
@@ -139,7 +139,7 @@ test.describe('Production Bug Fix Verification', () => {
 
     // Dismiss splash
     const enterBtn = page.getByTestId('splash-enter');
-    if (await enterBtn.isVisible({ timeout: 3000 }).catch(() => false)) {
+    if (await enterBtn.isVisible({ timeout: 8000 }).catch(() => false)) {
       await enterBtn.click();
       await enterBtn.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }

@@ -1,12 +1,30 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'wouter';
 import { motion } from 'framer-motion';
+import { gsap } from 'gsap';
 import { Feather } from 'lucide-react';
 import { BRAND } from '../constants/design.js';
 import { FEATURES } from '../constants/features.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
 import { hasSavedPreferences } from '../utils/onboardingEntry.js';
+import '../styles/tts-highlight.css';
+
+/** The owner's note, as blocks. Split here rather than inline so the reveal can walk every word in
+ *  one continuous sweep down the note, across paragraph boundaries. */
+const NOTE_BLOCKS = [
+  {
+    text: "Are you ready to experience Arabic poetry spanning two millennia? Available in both Arabic and English + learning tools like pronunciation and read-along, you'll be immersed at the first poem.",
+  },
+  {
+    text: 'Plus, learn about the poem meaning beyond translation, and the story of the poet behind it.',
+  },
+  {
+    text: 'Classical legends like Al Mutanabbi as well as modern greats like Mahmoud Darwish, and over 100 others in between.',
+  },
+  { text: 'Hope you enjoy it as I have.', tight: true },
+  { text: '— Siraj', signature: true },
+];
 
 /**
  * SplashScreen — first-visit landing screen ("Zen Haiku", design-review/splash/zen).
@@ -24,6 +42,21 @@ const SplashScreen = () => {
   const darkMode = useUIStore((s) => s.darkMode);
   const enterButtonRef = useRef(null);
   const canvasRef = useRef(null);
+  // Flat word list across every block, so one tween sweeps the whole note rather than restarting
+  // per paragraph. Each entry keeps its block index so render can still group them.
+  const noteWords = useMemo(
+    () =>
+      NOTE_BLOCKS.flatMap((block, blockIndex) =>
+        block.text
+          .trim()
+          .split(/\s+/)
+          .filter(Boolean)
+          .map((word) => ({ word, blockIndex }))
+      ),
+    []
+  );
+  const wordRefs = useRef([]);
+  const [revealDone, setRevealDone] = useState(false);
 
   const dismiss = (e) => {
     e.stopPropagation();
@@ -43,16 +76,75 @@ const SplashScreen = () => {
     window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Sparkle reveal — the same vocabulary the inline insights use (RevealText + .reveal-word /
+  // .reveal-front in tts-highlight.css): words fade up in sequence and the leading word carries a
+  // brief gold shimmer as the sweep passes through it. Written here rather than by reusing
+  // RevealText because that component owns one string, its own scroller and the insight's
+  // centred type; this note is five blocks with a signature.
+  //
+  // The CTA waits for this to finish. That is the point of the sequence: the note is addressed to
+  // the reader, and offering the way out before the sentence lands invites skipping it.
   useEffect(() => {
     if (!isOpen) return undefined;
+    const count = noteWords.length;
+    const els = () => wordRefs.current.slice(0, count);
 
-    const focusDelay = prefersReducedMotion ? 0 : 1400;
-    const timeoutId = setTimeout(() => {
-      enterButtonRef.current?.focus();
-    }, focusDelay);
+    if (prefersReducedMotion || count === 0) {
+      els().forEach((el) => {
+        if (el) {
+          el.style.opacity = '1';
+          el.classList.remove('reveal-front');
+        }
+      });
+      setRevealDone(true);
+      return undefined;
+    }
 
-    return () => clearTimeout(timeoutId);
-  }, [isOpen, prefersReducedMotion]);
+    const apply = (p) => {
+      const shown = Math.max(0, Math.min(1, p)) * count;
+      const front = Math.floor(shown);
+      const frac = shown - front;
+      els().forEach((el, i) => {
+        if (!el) return;
+        if (i < front) {
+          el.style.opacity = '1';
+          el.classList.remove('reveal-front');
+        } else if (i === front) {
+          el.style.opacity = (0.3 + 0.7 * frac).toFixed(3);
+          el.classList.add('reveal-front');
+        } else {
+          el.style.opacity = '0';
+          el.classList.remove('reveal-front');
+        }
+      });
+    };
+
+    apply(0);
+    const obj = { p: 0 };
+    // ~32ms a word. RevealText's pace (57ms) is tuned for prose the reader chose to open; this is
+    // the door, and at that pace the note runs past five seconds before the button exists.
+    const tween = gsap.to(obj, {
+      p: 1,
+      duration: 0.4 + count * 0.032,
+      ease: 'none',
+      delay: 0.85, // let the wordmark finish resolving out of its blur first
+      onUpdate: () => apply(obj.p),
+      onComplete: () => {
+        apply(1);
+        els().forEach((el) => el?.classList.remove('reveal-front'));
+        setRevealDone(true);
+      },
+    });
+
+    return () => tween.kill();
+  }, [isOpen, prefersReducedMotion, noteWords]);
+
+  // Focus follows the button's arrival, not a fixed clock.
+  useEffect(() => {
+    if (!isOpen || !revealDone) return undefined;
+    const id = setTimeout(() => enterButtonRef.current?.focus(), prefersReducedMotion ? 0 : 420);
+    return () => clearTimeout(id);
+  }, [isOpen, revealDone, prefersReducedMotion]);
 
   // Ambient particle field — ported from the option-2-haiku prototype (design-review/splash/zen).
   // Particles hold a home position, lean away from the pointer, and spring back; disabled outright
@@ -385,9 +477,10 @@ const SplashScreen = () => {
 
         {/* A note from the owner, so it is set as one: left-aligned prose rather than the centred
             marketing block it replaced (centring is fine for a one-line tagline and hostile to four
-            paragraphs), with the sign-off and signature held apart from the body. */}
+            paragraphs), with the sign-off and signature held apart from the body.
+            Words carry the sparkle reveal; see the tween above. */}
         <div
-          className="splash-zen-anim font-brand-en"
+          className="font-brand-en"
           style={{
             fontSize: '0.875rem',
             lineHeight: 1.75,
@@ -397,35 +490,34 @@ const SplashScreen = () => {
             marginInline: 'auto',
             marginBottom: '36px',
             textAlign: 'left',
-            opacity: prefersReducedMotion ? 1 : 0,
-            animation: prefersReducedMotion
-              ? 'none'
-              : 'splashZenLift 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.75s forwards',
           }}
         >
-          <p style={{ marginBottom: '0.85em' }}>
-            Are you ready to experience Arabic poetry spanning two millennia? Available in both
-            Arabic and English + learning tools like pronunciation and read-along, you&rsquo;ll be
-            immersed at the first poem.
-          </p>
-          <p style={{ marginBottom: '0.85em' }}>
-            Plus, learn about the poem meaning beyond translation, and the story of the poet behind
-            it.
-          </p>
-          <p style={{ marginBottom: '0.85em' }}>
-            Classical legends like Al Mutanabbi as well as modern greats like Mahmoud Darwish, and
-            over 100 others in between.
-          </p>
-          <p style={{ marginBottom: '0.3em' }}>Hope you enjoy it as I have.</p>
-          <p
-            style={{
-              color: gold,
-              fontStyle: 'italic',
-              letterSpacing: '0.04em',
-            }}
-          >
-            &mdash; Siraj
-          </p>
+          {NOTE_BLOCKS.map((block, blockIndex) => (
+            <p
+              key={blockIndex}
+              style={{
+                marginBottom: block.tight ? '0.3em' : block.signature ? 0 : '0.85em',
+                ...(block.signature
+                  ? { color: gold, fontStyle: 'italic', letterSpacing: '0.04em' }
+                  : null),
+              }}
+            >
+              {noteWords.map(({ word, blockIndex: wb }, i) =>
+                wb !== blockIndex ? null : (
+                  <span
+                    key={i}
+                    ref={(el) => {
+                      wordRefs.current[i] = el;
+                    }}
+                    className="reveal-word"
+                    style={{ opacity: 0 }}
+                  >
+                    {word}{' '}
+                  </span>
+                )
+              )}
+            </p>
+          ))}
         </div>
 
         <button
@@ -452,10 +544,18 @@ const SplashScreen = () => {
             cursor: 'pointer',
             transition:
               'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease, background 0.35s ease',
-            opacity: prefersReducedMotion ? 1 : 0,
-            animation: prefersReducedMotion
-              ? 'none'
-              : 'splashZenLift 0.7s cubic-bezier(0.16, 1, 0.3, 1) 1.3s forwards, splashZenPulse 3.4s ease-in-out 2.4s infinite',
+            // Held until the note finishes revealing. `visibility` rather than opacity alone, so
+            // the hidden button is out of the tab order and the a11y tree too — it keeps its space
+            // in the layout either way, so nothing shifts when it arrives.
+            visibility: revealDone ? 'visible' : 'hidden',
+            // Set here rather than left to the keyframe's fill-mode: the resting state should be
+            // in the DOM, not implied by an animation having run. The keyframe still owns opacity
+            // while it plays, and lands on the same value.
+            opacity: revealDone ? 1 : 0,
+            animation:
+              revealDone && !prefersReducedMotion
+                ? 'splashZenLift 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards, splashZenPulse 3.4s ease-in-out 1.1s infinite'
+                : 'none',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = darkMode

@@ -280,6 +280,159 @@
   }
   .cmp-both { align-self: center; }
 
+
+  /* ── Tabs + panels ──────────────────────────────────────────── */
+  .tabs {
+    display: flex; gap: 2px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--ink-edge); margin-bottom: 34px;
+  }
+  .tab {
+    background: transparent; border: 0; border-bottom: 2px solid transparent;
+    margin-bottom: -1px; cursor: pointer; padding: 11px 18px 10px;
+    display: flex; flex-direction: column; gap: 2px; align-items: flex-start;
+    font-family: 'Archivo', system-ui, sans-serif; color: var(--faint);
+    transition: color .2s, border-color .2s;
+  }
+  .tab .tn { font-size: .875rem; font-weight: 500; }
+  .tab .ts { font-size: .5625rem; letter-spacing: .14em; text-transform: uppercase; opacity: .8; }
+  .tab:hover { color: var(--muted); }
+  .tab[aria-selected="true"] { color: var(--gold); border-bottom-color: var(--gold); }
+  .tab:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+
+  .panel {
+    display: grid; grid-template-columns: 352px minmax(0, 1fr);
+    gap: 44px; align-items: start;
+  }
+  .panel[hidden] { display: none !important; }
+  .panel .mock-head { gap: 10px; }
+  .panel .mock-desc { max-width: 34rem; }
+  @media (max-width: 780px) {
+    .panel { grid-template-columns: 1fr; gap: 26px; }
+  }
+
+  /* ── The shipping flow, rebuilt ─────────────────────────────── */
+  .o-stage { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none;
+             display: flex; flex-direction: column; }
+  .o-stage::-webkit-scrollbar { display: none; }
+  .o-foot { flex: 0 0 auto; display: flex; gap: 8px; justify-content: center;
+            align-items: center; padding-top: 12px; }
+  .o-back {
+    width: 44px; height: 44px; border-radius: 999px; flex: 0 0 auto; cursor: pointer;
+    border: 1px solid rgba(236,229,216,.16); background: transparent;
+    color: rgba(236,229,216,.55); font-size: 1rem; line-height: 1;
+  }
+  .o-back:hover { border-color: rgba(197,160,89,.5); color: var(--gold); }
+  .o-title {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    text-align: center; margin-bottom: 14px; flex: 0 0 auto;
+  }
+  .o-title .t-en {
+    font-family: 'Forum', Georgia, serif; font-size: 1.1875rem; color: var(--gold); line-height: 1.2;
+  }
+  .o-title .t-ar {
+    font-family: 'Amiri', serif; direction: rtl; font-size: 1.0625rem;
+    color: var(--gold); opacity: .88;
+  }
+
+  /* hex comb — the real geometry: ROWS [1,2,3,4,3,2,1], pointy-top */
+  .comb { position: relative; flex: 0 0 auto; margin: 0 auto; }
+  .hex { position: absolute; padding: 0; border: 0; background: transparent; cursor: pointer; }
+  .hex .wall, .hex .fill {
+    position: absolute; transition: background .25s ease;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  }
+  .hex .wall { inset: 0; background: rgba(255,255,255,.15); }
+  .hex .fill { inset: 1.5px; background: rgba(255,255,255,.035); }
+  .hex[aria-pressed="true"] .wall { background: var(--c); }
+  .hex[aria-pressed="true"] .fill { background: color-mix(in srgb, var(--c) 35%, transparent); }
+  .hex .lab {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 1px; padding: 0 14%;
+    color: rgba(255,255,255,.72); transition: color .25s ease;
+  }
+  .hex[aria-pressed="true"] .lab { color: #fff; }
+  .hex .lab .e { font-family: 'Forum', Georgia, serif; font-size: 9px; line-height: 1.15; text-align: center; }
+  .hex .lab .a { font-family: 'Amiri', serif; direction: rtl; font-size: 8px; line-height: 1.2; opacity: .88; }
+  .hex:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+
+  /* motif grid */
+  .mgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; flex: 0 0 auto; }
+  .mcard {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    padding: 12px 5px 10px; border-radius: 10px; cursor: pointer; min-height: 84px;
+    border: 1px solid rgba(236,229,216,.1); background: rgba(236,229,216,.022);
+    color: rgba(236,229,216,.6); transition: all .2s;
+  }
+  .mcard:hover { border-color: rgba(236,229,216,.28); }
+  .mcard[aria-pressed="true"] { color: var(--c); border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); }
+  .mcard svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.3; }
+  .mcard .e { font-family: 'Forum', Georgia, serif; font-size: 9.5px; line-height: 1.2; text-align: center; color: var(--parchment); }
+  .mcard[aria-pressed="true"] .e { color: #fff; }
+  .mcard .a { font-family: 'Amiri', serif; direction: rtl; font-size: 8.5px; opacity: .55; text-align: center; }
+  .mcard:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* family blobs */
+  .blobs { position: relative; width: 100%; aspect-ratio: 312 / 392; flex: 0 0 auto; }
+  .blob {
+    position: absolute; border: 0; cursor: pointer; padding: 6px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    background: color-mix(in srgb, var(--c) 30%, transparent);
+    border-radius: 58% 42% 47% 53% / 46% 54% 46% 54%;
+    color: rgba(255,255,255,.62); transition: background .3s, color .3s, box-shadow .3s;
+  }
+  .blob:nth-child(even) { border-radius: 44% 56% 53% 47% / 55% 44% 56% 45%; }
+  .blob[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--c) 82%, transparent);
+    color: #fff; box-shadow: 0 0 44px -6px var(--c);
+  }
+  .blob .e { font-family: 'Forum', Georgia, serif; font-size: 10.5px; line-height: 1.2; text-align: center; }
+  .blob .a { font-family: 'Amiri', serif; direction: rtl; font-size: 9px; opacity: .8; text-align: center; }
+  .blob:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* difficulty rows */
+  .drows { display: flex; flex-direction: column; gap: 9px; flex: 0 0 auto; }
+  .drow {
+    display: flex; gap: 11px; text-align: left; width: 100%; cursor: pointer;
+    padding: 11px 12px; border-radius: 9px;
+    border: 1px solid rgba(236,229,216,.1); background: rgba(236,229,216,.022);
+    transition: border-color .2s, background .2s;
+  }
+  .drow[aria-pressed="true"] { border-color: var(--gold); background: rgba(197,160,89,.09); }
+  .drow .tick { width: 2px; border-radius: 99px; background: var(--gold-dim); flex: 0 0 auto; }
+  .drow[aria-pressed="true"] .tick { background: var(--gold); }
+  .drow .col { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .drow .e { font-family: 'Forum', Georgia, serif; font-size: .9375rem; color: var(--parchment); }
+  .drow .a { font-family: 'Amiri', serif; direction: rtl; font-size: .8125rem; color: rgba(236,229,216,.5); }
+  .drow .d { font-size: .625rem; color: var(--faint); line-height: 1.5; }
+  .drow .da { font-family: 'Amiri', serif; direction: rtl; font-size: .6875rem; color: var(--faint); }
+  .drow:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  /* era timeline */
+  .era { position: relative; display: flex; flex-direction: column; gap: 2px; flex: 0 0 auto; padding-left: 4px; }
+  .era::before {
+    content: ''; position: absolute; left: 8px; top: 10px; bottom: 10px;
+    width: 1px; background: rgba(236,229,216,.16);
+  }
+  .erow {
+    display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: center;
+    background: transparent; border: 0; cursor: pointer; text-align: left;
+    padding: 13px 6px; color: inherit;
+  }
+  .erow .band { display: flex; align-items: center; gap: 7px; }
+  .erow .dot {
+    width: 9px; height: 9px; border-radius: 99px; flex: 0 0 auto; z-index: 1;
+    border: 1px solid var(--gold-dim); background: var(--ink); transition: background .2s;
+  }
+  .erow[aria-pressed="true"] .dot { background: var(--gold); border-color: var(--gold); }
+  .erow .yrs { font-family: 'Forum', Georgia, serif; font-size: .9375rem; color: rgba(236,229,216,.45); }
+  .erow[aria-pressed="true"] .yrs { color: var(--gold); }
+  .erow .nm { display: flex; flex-direction: column; gap: 1px; }
+  .erow .nm .e { font-family: 'Forum', Georgia, serif; font-size: .875rem; color: var(--parchment); }
+  .erow .nm .a { font-family: 'Amiri', serif; direction: rtl; font-size: .8125rem; color: rgba(236,229,216,.5); }
+  .erow:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .o-wash { position: absolute; inset: 0; pointer-events: none; transition: opacity .6s ease; }
+
   /* ── Reveal ─────────────────────────────────────────────────── */
   .reveal { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
   .reveal h4 {
@@ -333,7 +486,7 @@
     <h1>Two Doors Into the Dīwān<span class="ar">بابان إلى الديوان</span></h1>
     <p class="standfirst">
       The flow that ships today asks six questions about poetry before showing any.
-      Both directions below invert that. Tap through each phone — they are live.
+      Two directions below invert that. All three are in the tabs — every phone is live.
     </p>
   </header>
 
@@ -386,75 +539,110 @@
 
   <h2>The mocks</h2>
   <p class="section-note">
-    Both keep the existing scoring engine untouched — answers stay a <em>weight</em>, never a filter —
+    Three flows in one frame — switch tabs to A/B them in place. Every phone is live.
+    Both redesigns leave the scoring engine untouched (answers stay a <em>weight</em>, never a filter)
     and both end on the same reveal. They differ on where the signal comes from.
   </p>
 
-  <div class="stage">
-
-    <!-- ══════════════ MOCK A ══════════════ -->
-    <section class="mock">
-      <div class="mock-head">
-        <span class="mock-tag">Direction A · recommended</span>
-        <h3>The First Draw</h3>
-        <p class="mock-desc">
-          Zero abstract questions. Three real poems, chosen to sit far apart on mood, century and
-          density, so three taps <b>triangulate the space</b>. Onboarding and reading are the same act;
-          a reader who quits after one tap has still read a poem. ~25 seconds, all of it spent on poetry.
-        </p>
-      </div>
-
-      <div class="phone">
-        <!-- A: draw -->
-        <div class="screen" id="a-draw">
-          <div class="prog" id="a-prog"><i class="on"></i><i></i><i></i></div>
-          <p class="ask" id="a-ask">Three poems. Tell us which ones stay.</p>
-          <div class="spacer"></div>
-          <div class="poem fade-in" id="a-poem"></div>
-          <div class="spacer"></div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn keep" style="flex:1" id="a-keep">
-              This one stays<span class="sub">يبقى</span>
-            </button>
-            <button class="btn" style="flex:1" id="a-pass">
-              Not this one<span class="sub">التالي</span>
-            </button>
-          </div>
-          <button class="btn quiet" id="a-skip" style="margin-top:6px">Just let me read →</button>
-        </div>
-
-        <!-- A: reveal -->
-        <div class="screen" id="a-reveal" hidden></div>
-      </div>
-    </section>
-
-    <!-- ══════════════ MOCK B ══════════════ -->
-    <section class="mock">
-      <div class="mock-head">
-        <span class="mock-tag">Direction B · rewritten questions</span>
-        <h3>Four Questions About You</h3>
-        <p class="mock-desc">
-          Same one-sheet shape — but <b>none of the questions are about poetry you haven't read yet</b>.
-          They ask about your evening, not the taxonomy: why you opened this, which of two real lines
-          you'd rather keep reading, how long you have. Each is a different shape, so four questions
-          don't read as one long one.
-        </p>
-      </div>
-
-      <div class="phone">
-        <div class="screen" id="b-sheet" style="padding-bottom:0">
-          <div class="sheet" id="b-fields" style="padding-bottom:150px"></div>
-          <div class="dock">
-            <p class="live" id="b-live"></p>
-            <button class="btn primary" id="b-enter"></button>
-          </div>
-        </div>
-        <div class="screen" id="b-reveal" hidden></div>
-      </div>
-    </section>
-    </section>
-
+  <div class="tabs" role="tablist" aria-label="Onboarding flows">
+    <button class="tab" type="button" role="tab" id="tab-o" aria-controls="panel-o" aria-selected="true" data-panel="o">
+      <span class="tn">Ships today</span><span class="ts">six steps</span>
+    </button>
+    <button class="tab" type="button" role="tab" id="tab-a" aria-controls="panel-a" aria-selected="false" data-panel="a">
+      <span class="tn">A · The First Draw</span><span class="ts">three poems</span>
+    </button>
+    <button class="tab" type="button" role="tab" id="tab-b" aria-controls="panel-b" aria-selected="false" data-panel="b">
+      <span class="tn">B · Four Questions</span><span class="ts">one sheet</span>
+    </button>
   </div>
+
+  <!-- ══════════════ ORIGINAL ══════════════ -->
+  <section class="panel" id="panel-o" role="tabpanel" aria-labelledby="tab-o">
+    <div class="phone">
+      <div class="screen" id="o-screen">
+        <div class="prog" id="o-prog"></div>
+        <div id="o-stage" class="o-stage"></div>
+        <div id="o-foot" class="o-foot"></div>
+      </div>
+      <div class="screen" id="o-done" hidden></div>
+    </div>
+    <div class="mock-head">
+      <span class="mock-tag">What ships today</span>
+      <h3>Six Preference Steps</h3>
+      <p class="mock-desc">
+        Rebuilt here at 1:1 from <code>src/components/onboarding/</code> so the comparison is fair:
+        the same questions, the same bilingual pairs, the same hex comb and blob field. Tap through it —
+        <b>you reach the sixth screen without having read a line of poetry</b>, and the flow ends by
+        returning you to the same reader a skipper would have got.
+      </p>
+      <p class="mock-desc">
+        The craft here is real. Every finding above is about what the flow <em>asks</em>, not how it looks.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════ MOCK A ══════════════ -->
+  <section class="panel" id="panel-a" role="tabpanel" aria-labelledby="tab-a" hidden>
+    <div class="phone">
+      <div class="screen" id="a-draw">
+        <div class="prog" id="a-prog"><i class="on"></i><i></i><i></i></div>
+        <p class="ask" id="a-ask">Three poems. Tell us which ones stay.</p>
+        <div class="spacer"></div>
+        <div class="poem fade-in" id="a-poem"></div>
+        <div class="spacer"></div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn keep" style="flex:1" id="a-keep">
+            This one stays<span class="sub">يبقى</span>
+          </button>
+          <button class="btn" style="flex:1" id="a-pass">
+            Not this one<span class="sub">التالي</span>
+          </button>
+        </div>
+        <button class="btn quiet" id="a-skip" style="margin-top:6px">Just let me read →</button>
+      </div>
+      <div class="screen" id="a-reveal" hidden></div>
+    </div>
+    <div class="mock-head">
+      <span class="mock-tag">Direction A · recommended</span>
+      <h3>The First Draw</h3>
+      <p class="mock-desc">
+        Zero abstract questions. Three real poems, chosen to sit far apart on mood, century and
+        density, so three taps <b>triangulate the space</b>. Onboarding and reading are the same act;
+        a reader who quits after one tap has still read a poem. ~25 seconds, all of it spent on poetry.
+      </p>
+      <p class="mock-desc">
+        The taxonomy still gets filled in — from what was kept, not from what was claimed.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════ MOCK B ══════════════ -->
+  <section class="panel" id="panel-b" role="tabpanel" aria-labelledby="tab-b" hidden>
+    <div class="phone">
+      <div class="screen" id="b-sheet" style="padding-bottom:0">
+        <div class="sheet" id="b-fields" style="padding-bottom:150px"></div>
+        <div class="dock">
+          <p class="live" id="b-live"></p>
+          <button class="btn primary" id="b-enter"></button>
+        </div>
+      </div>
+      <div class="screen" id="b-reveal" hidden></div>
+    </div>
+    <div class="mock-head">
+      <span class="mock-tag">Direction B · rewritten questions</span>
+      <h3>Four Questions About You</h3>
+      <p class="mock-desc">
+        Same one-sheet shape — but <b>none of the questions are about poetry you haven't read yet</b>.
+        They ask about your evening, not the taxonomy: why you opened this, which of two real lines
+        you'd rather keep reading, how long you have. Each is a different shape, so four questions
+        don't read as one long one.
+      </p>
+      <p class="mock-desc">
+        No locks, no order, no back button to regret — and the dock names the poem your answers would
+        actually draw.
+      </p>
+    </div>
+  </section>
 
   <hr class="rule">
 
@@ -941,6 +1129,336 @@
     };
     rev.querySelector('.btn.primary').addEventListener('click', back);
     rev.querySelector('.quiet').addEventListener('click', back);
+  });
+
+  /* ══════════ ORIGINAL — the six steps that ship today ══════════
+     Rebuilt from src/components/onboarding/: same questions, same
+     bilingual pairs, same hex comb (ROWS 1,2,3,4,3,2,1 = 16 exactly),
+     same blob field, same locked doors on welcome. Kept faithful so
+     the tab beside it is an honest comparison and not a straw man.
+     ─────────────────────────────────────────────────────────────── */
+
+  var O_MOODS = [
+    { k: 'amorous',       e: 'Amorous',       a: 'غزل',    c: '#e8647a' },
+    { k: 'passion',       e: 'Passion',       a: 'وجد',    c: '#f43f5e' },
+    { k: 'yearning',      e: 'Yearning',      a: 'شوق',    c: '#c084fc' },
+    { k: 'nostalgia',     e: 'Nostalgia',     a: 'حنين',   c: '#8b7355' },
+    { k: 'bittersweet',   e: 'Bittersweet',   a: 'حلو مرّ', c: '#a78bfa' },
+    { k: 'melancholy',    e: 'Melancholy',    a: 'جوى',    c: '#1e3a6e' },
+    { k: 'grief',         e: 'Grief',         a: 'أسى',    c: '#94a3b8' },
+    { k: 'despair',       e: 'Despair',       a: 'يأس',    c: '#4a4a4a' },
+    { k: 'joy',           e: 'Joy',           a: 'فرح',    c: '#fbbf24' },
+    { k: 'hope',          e: 'Hope',          a: 'أمل',    c: '#4a7c59' },
+    { k: 'serenity',      e: 'Serenity',      a: 'سكينة',  c: '#4a9d8f' },
+    { k: 'contemplation', e: 'Contemplation', a: 'تأمّل',  c: '#38bdf8' },
+    { k: 'reverence',     e: 'Reverence',     a: 'خشوع',   c: '#818cf8' },
+    { k: 'pride',         e: 'Pride',         a: 'اعتزاز', c: '#b8860b' },
+    { k: 'defiance',      e: 'Defiance',      a: 'تحدٍّ',   c: '#ef4444' },
+    { k: 'satire',        e: 'Satire',        a: 'سخرية',  c: '#fb923c' }
+  ];
+
+  var G = {
+    night:   '<path d="M17 14A7 7 0 0 1 9 6a7 7 0 1 0 8 8Z"/>',
+    ruins:   '<path d="M6 20V9l3-2v13M15 20V7l3 2v11M3 20h18"/>',
+    moon:    '<path d="M16 13A6 6 0 0 1 9 6a6 6 0 1 0 7 7Z"/><path d="M18 5v3M16.5 6.5h3"/>',
+    sea:     '<path d="M3 9c2-2 4-2 6 0s4 2 6 0 4-2 6 0M3 14c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/>',
+    garden:  '<circle cx="12" cy="8" r="3"/><path d="M12 11v9M12 15c-2 0-4-1-4-3M12 16c2 0 4-1 4-3"/>',
+    wine:    '<path d="M8 4h8l-1 5a3 3 0 0 1-6 0Z"/><path d="M12 12v7M9 20h6"/>',
+    sword:   '<path d="M12 3v13M8 8h8M10 17h4l-2 4Z"/>',
+    birds:   '<path d="M4 10c2-3 4-3 5 0 1-3 3-3 5 0M13 15c1.5-2.5 3-2.5 4 0 .8-2.5 2-2.5 3 0"/>',
+    fire:    '<path d="M12 21c-3.3 0-6-2.4-6-5.5C6 11 12 3 12 3s6 8 6 12.5c0 3.1-2.7 5.5-6 5.5Z"/>',
+    tears:   '<path d="M9 4s3 4.4 3 6.2A3 3 0 0 1 6 10.2C6 8.4 9 4 9 4Z"/><path d="M16 12s2.5 3.6 2.5 5a2.5 2.5 0 0 1-5 0c0-1.4 2.5-5 2.5-5Z"/>',
+    journey: '<path d="M4 20V11a8 8 0 0 1 16 0v9"/><path d="M12 20v-6"/>',
+    dawn:    '<path d="M6 17a6 6 0 0 1 12 0M3 20h18M12 3v3M4.5 7 6 8.5M19.5 7 18 8.5"/>'
+  };
+
+  var O_MOTIFS = [
+    { k: 'night',   e: 'Night',            a: 'الليل',           g: G.night,   c: '#7f9ccc' },
+    { k: 'ruins',   e: 'Desert & Ruins',   a: 'الصحراء والأطلال', g: G.ruins,   c: '#b08968' },
+    { k: 'moon',    e: 'Moon & Stars',     a: 'القمر والنجوم',    g: G.moon,    c: '#a5b4fc' },
+    { k: 'sea',     e: 'Sea & Water',      a: 'البحر والماء',     g: G.sea,     c: '#0ea5e9' },
+    { k: 'garden',  e: 'Garden & Flowers', a: 'الروض والزهر',     g: G.garden,  c: '#4ade80' },
+    { k: 'wine',    e: 'The Wine Cup',     a: 'الكأس والخمر',     g: G.wine,    c: '#d0a03a' },
+    { k: 'sword',   e: 'Sword & Battle',   a: 'السيف والمعركة',   g: G.sword,   c: '#ef4444' },
+    { k: 'birds',   e: 'Birds',            a: 'الطير',            g: G.birds,   c: '#2dd4bf' },
+    { k: 'fire',    e: 'Fire & Light',     a: 'النار والضوء',     g: G.fire,    c: '#fb923c' },
+    { k: 'tears',   e: 'Tears',            a: 'الدموع',           g: G.tears,   c: '#7dd3fc' },
+    { k: 'journey', e: 'Journey & Mount',  a: 'الرحلة والراحلة',  g: G.journey, c: '#c084fc' },
+    { k: 'dawn',    e: 'Dawn',             a: 'الفجر والصبح',     g: G.dawn,    c: '#fcd34d' }
+  ];
+
+  /* Positions traced from docs/design/onboarding-six-steps/04-family.png. */
+  var O_FAMILIES = [
+    { k: 'love',       e: 'Love & Desire',   a: 'الحب والهوى',     c: '#e8647a', x: 10, y: 2,  w: 33, h: 23 },
+    { k: 'grief',      e: 'Grief & Loss',    a: 'الأسى والفقد',    c: '#94a3b8', x: 56, y: 6,  w: 31, h: 21 },
+    { k: 'longing',    e: 'Longing & Exile', a: 'الحنين والغربة',  c: '#8b6fc0', x: 33, y: 27, w: 33, h: 23 },
+    { k: 'valor',      e: 'Valor & Defiance', a: 'الحماسة والإباء', c: '#ef4444', x: 3,  y: 43, w: 43, h: 29 },
+    { k: 'revelry',    e: 'Revelry & Company', a: 'الطرب والصحبة',  c: '#d0a03a', x: 58, y: 43, w: 32, h: 23 },
+    { k: 'reflection', e: 'Reflection & Faith', a: 'التأمل والإيمان', c: '#818cf8', x: 31, y: 69, w: 30, h: 22 },
+    { k: 'nature',     e: 'Nature & Cosmos', a: 'الطبيعة والكون',  c: '#34a866', x: 57, y: 74, w: 31, h: 23 }
+  ];
+
+  var O_DIFF = [
+    { k: 'gentle',    e: 'Gentle',    a: 'سهل ميسّر', d: 'Plain language, direct imagery',  da: 'لغة قريبة وصور مباشرة' },
+    { k: 'measured',  e: 'Measured',  a: 'متوسط',    d: 'Richer rhetoric, some allusion',  da: 'بلاغة أغنى وبعض الإشارات' },
+    { k: 'demanding', e: 'Demanding', a: 'عميق محكم', d: 'Classical lexicon, dense allusion', da: 'معجم كلاسيكي وإشارات كثيفة' }
+  ];
+
+  var O_ERAS = [
+    { k: 'c6',  y: '6th–8th',    e: 'Pre-Islamic to Umayyad',  a: 'من الجاهلي إلى الأموي' },
+    { k: 'c9',  y: '9th–10th',   e: 'Abbasid',                 a: 'العباسي' },
+    { k: 'c11', y: '11th–14th',  e: 'Andalusian to Mamluk',    a: 'من الأندلسي إلى المملوكي' },
+    { k: 'c15', y: '15th–Today', e: 'Late & Modern',           a: 'المتأخر والحديث' }
+  ];
+
+  var O_TITLES = [
+    null,
+    ['What mood are you in?', 'ما مزاجك الآن؟'],
+    ['Which images stay with you?', 'أي الصور تسكنك؟'],
+    ['What draws you in?', 'ما الذي يستهويك؟'],
+    ['Easy reading, or a challenge?', 'قراءة سهلة أم لغة عسيرة؟'],
+    ['From which age?', 'من أي زمن؟']
+  ];
+
+  var oStep = 0;
+  var oPicks = { posture: null, moods: [], motifs: [], family: null, difficulty: null, era: null };
+
+  var oScreen = document.getElementById('o-screen');
+  var oDone   = document.getElementById('o-done');
+  var oStageEl = document.getElementById('o-stage');
+  var oFoot   = document.getElementById('o-foot');
+  var oProg   = document.getElementById('o-prog');
+
+  function oTitle(i) {
+    var t = O_TITLES[i];
+    return '<div class="o-title"><span class="t-en">' + t[0] + '</span>' +
+           '<span class="t-ar">' + t[1] + '</span></div>';
+  }
+
+  /* The comb's arithmetic is the reason the layout is hardcoded:
+     1+2+3+4+3+2+1 = 16, so the diamond has no orphan cell. */
+  function oComb() {
+    var ROWS = [1, 2, 3, 4, 3, 2, 1], WIDEST = 4, PITCH = 0.866, HR = 1.1547;
+    var spots = [], i = 0;
+    for (var r = 0; r < ROWS.length; r++) {
+      for (var c = 0; c < ROWS[r]; c++, i++) spots.push({ row: r, x: (WIDEST - ROWS[r]) / 2 + c });
+    }
+    var cells = O_MOODS.map(function (m, n) {
+      var sp = spots[n], on = oPicks.moods.indexOf(m.k) !== -1;
+      return '<button class="hex" type="button" data-o="mood" data-key="' + m.k + '" ' +
+        'aria-pressed="' + on + '" aria-label="' + m.e + ' — ' + m.a + '" ' +
+        'style="--c:' + m.c + ';left:calc(var(--hw)*' + sp.x + ');top:calc(var(--hw)*' +
+        (PITCH * sp.row).toFixed(4) + ');width:var(--hw);height:calc(var(--hw)*' + HR + ')">' +
+        '<span class="wall"></span><span class="fill"></span>' +
+        '<span class="lab"><span class="e">' + m.e + '</span><span class="a">' + m.a + '</span></span>' +
+        '</button>';
+    }).join('');
+    return '<div class="comb" style="--hw:min(74px, calc((100% - 2px)/4));' +
+           'width:calc(var(--hw)*4);height:calc(var(--hw)*' + (PITCH * 6 + HR).toFixed(4) + ')">' +
+           cells + '</div>';
+  }
+
+  /* The mood wash: each pick throws light from its own point along the
+     bottom edge, so two picks read as two sources mixing. */
+  function oWash() {
+    var chosen = O_MOODS.filter(function (m) { return oPicks.moods.indexOf(m.k) !== -1; });
+    var el = oScreen.querySelector('.o-wash');
+    if (el) el.remove();
+    if (!chosen.length || oStep !== 1) return;
+    var bg = chosen.map(function (m, i) {
+      var x = chosen.length === 1 ? 50 : 16 + (68 * i) / (chosen.length - 1);
+      return 'radial-gradient(80% 52% at ' + x + '% 108%, ' + m.c +
+             (chosen.length > 3 ? '30' : '44') + ', transparent 70%)';
+    }).join(',');
+    var d = document.createElement('div');
+    d.className = 'o-wash'; d.setAttribute('aria-hidden', 'true');
+    d.style.background = bg;
+    oScreen.insertBefore(d, oScreen.firstChild);
+  }
+
+  function oBody() {
+    if (oStep === 1) return oTitle(1) + oComb();
+
+    if (oStep === 2) {
+      return oTitle(2) + '<div class="mgrid">' + O_MOTIFS.map(function (m) {
+        var on = oPicks.motifs.indexOf(m.k) !== -1;
+        return '<button class="mcard" type="button" data-o="motif" data-key="' + m.k + '" ' +
+          'aria-pressed="' + on + '" style="--c:' + m.c + '">' +
+          '<svg viewBox="0 0 24 24" aria-hidden="true" stroke-linecap="round" stroke-linejoin="round">' +
+          m.g + '</svg>' +
+          '<span class="e">' + m.e + '</span><span class="a">' + m.a + '</span></button>';
+      }).join('') + '</div>';
+    }
+
+    if (oStep === 3) {
+      return oTitle(3) + '<div class="blobs">' + O_FAMILIES.map(function (f) {
+        var on = oPicks.family === f.k;
+        return '<button class="blob" type="button" data-o="family" data-key="' + f.k + '" ' +
+          'aria-pressed="' + on + '" style="--c:' + f.c + ';left:' + f.x + '%;top:' + f.y +
+          '%;width:' + f.w + '%;height:' + f.h + '%">' +
+          '<span class="e">' + f.e + '</span><span class="a">' + f.a + '</span></button>';
+      }).join('') + '</div>';
+    }
+
+    if (oStep === 4) {
+      return oTitle(4) + '<div class="drows">' + O_DIFF.map(function (d) {
+        var on = oPicks.difficulty === d.k;
+        return '<button class="drow" type="button" data-o="difficulty" data-key="' + d.k + '" ' +
+          'aria-pressed="' + on + '"><span class="tick"></span><span class="col">' +
+          '<span class="e">' + d.e + '</span><span class="a">' + d.a + '</span>' +
+          '<span class="d">' + d.d + '</span><span class="da">' + d.da + '</span>' +
+          '</span></button>';
+      }).join('') + '</div>';
+    }
+
+    return oTitle(5) + '<div class="era">' + O_ERAS.map(function (r) {
+      var on = oPicks.era === r.k;
+      return '<button class="erow" type="button" data-o="era" data-key="' + r.k + '" ' +
+        'aria-pressed="' + on + '"><span class="band"><span class="dot"></span>' +
+        '<span class="yrs">' + r.y + '</span></span><span class="nm">' +
+        '<span class="e">' + r.e + '</span><span class="a">' + r.a + '</span></span></button>';
+    }).join('') + '</div>';
+  }
+
+  /* Welcome: the two doors stay dimmed and inert until posture is answered,
+     exactly as they ship — the lock is the point of showing it. */
+  function oWelcome() {
+    var pos = oPicks.posture;
+    var POS = [
+      { k: 'arabic',   e: 'In Arabic',    h: 'just the poem' },
+      { k: 'learning', e: "I'm learning", h: 'sound it out' },
+      { k: 'english',  e: 'In English',   h: 'meaning and sound' }
+    ];
+    var doors = 'style="opacity:' + (pos ? 1 : .5) + ';pointer-events:' + (pos ? 'auto' : 'none') +
+                ';transition:opacity .45s ease"';
+    return '<div style="flex:1 1 auto;min-height:0;display:flex;flex-direction:column;' +
+      'justify-content:center;align-items:center;text-align:center;gap:.9rem">' +
+      '<h1 style="margin:0;font-weight:400;color:var(--gold);display:flex;flex-direction:column;gap:.15rem;font-size:inherit">' +
+        '<span style="font-family:\'Forum\',serif;font-size:1.6rem;line-height:1.15">Read what resembles you</span>' +
+        '<span style="font-family:\'Reem Kufi\',serif;direction:rtl;font-size:1.36rem;opacity:.88">اقرأ ما يشبهك</span>' +
+      '</h1>' +
+      '<span class="hairline" style="width:96px"></span>' +
+      '<div style="display:flex;flex-direction:column;gap:.5rem;max-width:25rem">' +
+        '<p style="font-family:\'Forum\',serif;font-size:1.02rem;line-height:1.55;color:rgba(255,255,255,.82);margin:0">' +
+          'Answer five short questions and we’ll lean your reading toward what suits you.</p>' +
+        '<p style="font-family:\'Forum\',serif;font-size:.9rem;line-height:1.5;color:rgba(255,255,255,.5);margin:0">' +
+          'Or walk straight in. The dīwān is the same either way.</p>' +
+      '</div>' +
+      '<div style="display:flex;flex-direction:column;align-items:center;gap:.45rem;margin-top:.5rem">' +
+        '<span style="font-family:\'Forum\',serif;font-size:.9rem;color:rgba(255,255,255,.5)">I read poems…</span>' +
+        '<div style="display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center">' +
+        POS.map(function (o) {
+          var on = pos === o.k;
+          return '<button type="button" data-o="posture" data-key="' + o.k + '" aria-pressed="' + on + '" ' +
+            'style="display:flex;flex-direction:column;align-items:center;gap:1px;min-height:46px;' +
+            'padding:.4rem .7rem;border-radius:10px;cursor:pointer;background:' +
+            (on ? 'rgba(197,160,89,.08)' : 'transparent') + ';border:1px solid ' +
+            (on ? 'rgba(197,160,89,.53)' : 'rgba(255,255,255,.10)') + ';color:' +
+            (on ? 'var(--gold)' : 'rgba(255,255,255,.55)') + '">' +
+            '<span style="font-family:\'Forum\',serif;font-size:.9rem">' + o.e + '</span>' +
+            '<span style="font-size:.6rem;opacity:.65">' + o.h + '</span></button>';
+        }).join('') + '</div></div>' +
+      '<div ' + doors + ' style="display:flex;flex-direction:column;gap:.55rem;width:100%;max-width:300px;margin-top:.6rem;opacity:' +
+        (pos ? 1 : .5) + ';pointer-events:' + (pos ? 'auto' : 'none') + ';transition:opacity .45s ease">' +
+        '<button class="btn" type="button" data-o="go" ' + (pos ? '' : 'disabled ') +
+          'style="min-height:54px;border-color:rgba(255,255,255,' + (pos ? .22 : .07) + ');color:rgba(255,255,255,' + (pos ? .82 : .3) + ')">' +
+          'Curate my reading<span class="sub">اختر لي</span></button>' +
+        '<button class="btn" type="button" data-o="leave" ' + (pos ? '' : 'disabled ') +
+          'style="min-height:54px;border-color:rgba(255,255,255,' + (pos ? .22 : .07) + ');color:rgba(255,255,255,' + (pos ? .82 : .3) + ')">' +
+          'Just read<span class="sub">ادخل واقرأ</span></button>' +
+      '</div></div>';
+  }
+
+  function oFooter() {
+    if (oStep === 0) return '';
+    var answered = [null, oPicks.moods.length, oPicks.motifs.length,
+                    oPicks.family, oPicks.difficulty, oPicks.era][oStep];
+    var last = oStep === 5;
+    var en = last ? 'Start reading' : (answered ? 'Next' : 'Skip');
+    var ar = last ? 'ابدأ القراءة' : (answered ? 'التالي' : 'تخطَّ');
+    return '<button class="o-back" type="button" data-o="back" aria-label="Back">←</button>' +
+      '<button class="btn" type="button" data-o="next" style="min-width:132px;min-height:50px;' +
+      'border-color:rgba(197,160,89,.45);color:var(--gold)">' + en +
+      '<span class="sub">' + ar + '</span></button>';
+  }
+
+  function renderO() {
+    oProg.innerHTML = '<i class="' + (oStep === 0 ? 'on' : '') + '"></i>' +
+      [1, 2, 3, 4, 5].map(function (i) { return '<i class="' + (oStep === i ? 'on' : '') + '"></i>'; }).join('');
+    oStageEl.innerHTML = oStep === 0 ? oWelcome() : oBody();
+    oStageEl.className = 'o-stage fade-in';
+    oFoot.innerHTML = oFooter();
+    oWash();
+  }
+
+  /* The ending that ships: navigate('/'). Nothing is shown to have changed,
+     which is the whole of finding five. */
+  function oFinish(curated) {
+    var n = oPicks.moods.length + oPicks.motifs.length +
+            (oPicks.family ? 1 : 0) + (oPicks.difficulty ? 1 : 0) + (oPicks.era ? 1 : 0);
+    oDone.innerHTML = '<div class="spacer"></div><div class="reveal fade-in">' +
+      '<span class="hairline"></span>' +
+      '<h4>The reader<span class="ar">القارئ</span></h4>' +
+      '<p class="promise">' + (curated
+        ? 'You answered ' + n + ' time' + (n === 1 ? '' : 's') + ' and landed on <code>/</code> — ' +
+          'the same screen the other door leads to. Nothing on it says what your answers changed.'
+        : 'You took the second door and landed on <code>/</code>. Identical to the screen above.') +
+      '</p></div><div class="spacer"></div>' +
+      '<button class="btn primary" type="button" data-o="restart">Run it again' +
+      '<span class="sub">أعد</span></button>';
+    oScreen.hidden = true; oDone.hidden = false;
+  }
+
+  document.getElementById('panel-o').addEventListener('click', function (e) {
+    var el = e.target.closest('[data-o]');
+    if (!el) return;
+    var kind = el.dataset.o, key = el.dataset.key;
+
+    if (kind === 'mood' || kind === 'motif') {
+      var list = kind === 'mood' ? oPicks.moods : oPicks.motifs;
+      var at = list.indexOf(key);
+      if (at === -1) list.push(key); else list.splice(at, 1);
+      renderO(); return;
+    }
+    if (kind === 'posture')    { oPicks.posture = oPicks.posture === key ? null : key; renderO(); return; }
+    if (kind === 'family')     { oPicks.family = oPicks.family === key ? null : key; renderO(); return; }
+    if (kind === 'difficulty') { oPicks.difficulty = oPicks.difficulty === key ? null : key; renderO(); return; }
+    if (kind === 'era')        { oPicks.era = oPicks.era === key ? null : key; renderO(); return; }
+    if (kind === 'go')    { oStep = 1; renderO(); return; }
+    if (kind === 'leave') { oFinish(false); return; }
+    if (kind === 'back')  { oStep = Math.max(0, oStep - 1); renderO(); return; }
+    if (kind === 'next')  {
+      if (oStep === 5) { oFinish(true); return; }
+      oStep += 1; renderO(); return;
+    }
+    if (kind === 'restart') {
+      oStep = 0;
+      oPicks = { posture: null, moods: [], motifs: [], family: null, difficulty: null, era: null };
+      oDone.hidden = true; oScreen.hidden = false; renderO(); return;
+    }
+  });
+
+  renderO();
+
+  /* ══════════ Tabs ══════════ */
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+  function selectTab(id) {
+    tabs.forEach(function (t) {
+      var on = t.dataset.panel === id;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      document.getElementById('panel-' + t.dataset.panel).hidden = !on;
+    });
+  }
+  tabs.forEach(function (t) {
+    t.addEventListener('click', function () { selectTab(t.dataset.panel); });
+    t.addEventListener('keydown', function (e) {
+      var i = tabs.indexOf(t);
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        var n = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length];
+        selectTab(n.dataset.panel); n.focus();
+      }
+    });
   });
 
   buildB();

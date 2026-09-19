@@ -224,6 +224,62 @@
   }
   .live b { color: var(--gold); font-weight: 400; }
 
+
+  /* ── Mock B: question shapes ────────────────────────────────── */
+  .sheet-lede {
+    font-family: 'Forum', Georgia, serif; font-size: .8125rem; line-height: 1.55;
+    color: var(--faint); margin: 0 0 2px;
+  }
+  .opt-card {
+    display: flex; gap: 11px; align-items: stretch; text-align: left; width: 100%;
+    padding: 11px 12px; border-radius: 10px; cursor: pointer;
+    border: 1px solid rgba(236,229,216,.12); background: rgba(236,229,216,.022);
+    transition: border-color .2s, background .2s;
+  }
+  .opt-card:hover { border-color: rgba(236,229,216,.3); }
+  .opt-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .opt-card .bar { width: 2px; border-radius: 99px; flex: 0 0 auto; opacity: .75; }
+  .opt-card .txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .opt-card .line {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
+  }
+  .opt-card .oc-en {
+    font-family: 'Forum', Georgia, serif; font-size: .875rem; line-height: 1.35;
+    color: var(--parchment);
+  }
+  .opt-card .oc-ar {
+    font-family: 'Amiri', serif; direction: rtl; font-size: .8125rem;
+    color: rgba(236,229,216,.42);
+  }
+  .opt-card .moves {
+    font-size: .625rem; letter-spacing: .06em; color: var(--faint); line-height: 1.4;
+  }
+  .opt-card[aria-pressed="true"] .oc-en { color: #fff; }
+  .opt-card[aria-pressed="true"] .moves { color: var(--muted); }
+
+  .compare { display: flex; flex-direction: column; gap: 7px; }
+  .cmp {
+    display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%;
+    padding: 13px 12px 10px; border-radius: 10px; cursor: pointer; text-align: center;
+    border: 1px solid rgba(236,229,216,.12); background: rgba(236,229,216,.022);
+    transition: border-color .2s, background .2s;
+  }
+  .cmp:hover { border-color: rgba(236,229,216,.3); }
+  .cmp:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+  .cmp .cv {
+    font-family: 'Amiri', serif; direction: rtl; font-size: 1.0625rem; line-height: 1.85;
+    color: var(--parchment);
+  }
+  .cmp .cen {
+    font-family: 'Forum', Georgia, serif; font-size: .6875rem; line-height: 1.5;
+    color: rgba(236,229,216,.38); margin-top: 5px; max-width: 30ch;
+  }
+  .cmp .cpoet {
+    font-family: 'Amiri', serif; direction: rtl; font-size: .75rem;
+    color: var(--gold-dim); margin-top: 5px;
+  }
+  .cmp-both { align-self: center; }
+
   /* ── Reveal ─────────────────────────────────────────────────── */
   .reveal { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
   .reveal h4 {
@@ -375,19 +431,19 @@
     <!-- ══════════════ MOCK B ══════════════ -->
     <section class="mock">
       <div class="mock-head">
-        <span class="mock-tag">Direction B · the minimal cut</span>
-        <h3>One Sheet, One Door</h3>
+        <span class="mock-tag">Direction B · rewritten questions</span>
+        <h3>Four Questions About You</h3>
         <p class="mock-desc">
-          Keeps declared preference but collapses six gated screens into <b>one sheet answerable in any
-          order</b>, nothing required, no locks, no back button to regret. A poem sits at the top the
-          whole time and re-draws as you tap, so every answer has a visible consequence before you commit.
+          Same one-sheet shape — but <b>none of the questions are about poetry you haven't read yet</b>.
+          They ask about your evening, not the taxonomy: why you opened this, which of two real lines
+          you'd rather keep reading, how long you have. Each is a different shape, so four questions
+          don't read as one long one.
         </p>
       </div>
 
       <div class="phone">
         <div class="screen" id="b-sheet" style="padding-bottom:0">
-          <div class="poem fade-in" id="b-poem" style="flex:0 0 auto; padding-bottom:18px; border-bottom:1px solid var(--ink-edge); margin-bottom:18px;"></div>
-          <div class="sheet" id="b-fields" style="padding-bottom:178px"></div>
+          <div class="sheet" id="b-fields" style="padding-bottom:150px"></div>
           <div class="dock">
             <p class="live" id="b-live"></p>
             <button class="btn primary" id="b-enter"></button>
@@ -396,8 +452,59 @@
         <div class="screen" id="b-reveal" hidden></div>
       </div>
     </section>
+    </section>
 
   </div>
+
+  <hr class="rule">
+
+  <h2>The seven rules the new questions follow</h2>
+  <p class="section-note">
+    Direction B's first pass kept the old questions and only re-laid them out, which fixed nothing.
+    These are the rules the rewrite is actually built on — they apply to any question this app ever adds.
+  </p>
+
+  <dl class="findings">
+    <div class="finding" data-weight="high">
+      <dt>Ask about the reader, not the schema</dt>
+      <dd>"Where in time?" is a database column wearing a question mark. Nobody has an opinion about
+        the 11th century. They have an opinion about <b>how they want the next ten minutes to go</b>.</dd>
+    </div>
+    <div class="finding" data-weight="high">
+      <dt>Never require expertise the product is the only source of</dt>
+      <dd>You cannot prefer Abbasid over Andalusi before reading either. Asking anyway produces noise —
+        and teaches the reader, on screen one, that they are <b>unqualified to be here</b>.</dd>
+    </div>
+    <div class="finding" data-weight="high">
+      <dt>Never make the reader rank themselves</dt>
+      <dd>"Easy reading, or a challenge?" is a status test. The rewrite shows two real, unlabelled
+        lines and asks which one they'd rather keep reading. <b>The choice reports density; the reader
+        never grades their own Arabic.</b></dd>
+    </div>
+    <div class="finding" data-weight="mid">
+      <dt>Vary the shape</dt>
+      <dd>Four identical chip fields read as one long question and get answered with one long shrug.
+        Cards, then a side-by-side comparison, then two quick chip rows — different cognitive modes,
+        so the sheet has a rhythm instead of a length.</dd>
+    </div>
+    <div class="finding" data-weight="mid">
+      <dt>Constrain the answer</dt>
+      <dd>An unlimited multi-select carries almost no information — a reader who taps eight of eight
+        moods has told you nothing. <b>Single-select is what makes an answer informative.</b></dd>
+    </div>
+    <div class="finding" data-weight="high">
+      <dt>Every question pays rent</dt>
+      <dd>If you can't name the column it moves, cut it. Occasion moves mood and intensity; the
+        comparison moves <code>accessibility_score</code>; "how long do you have" moves verse count —
+        a real filter <code>server.js</code> already applies, and a question <b>no poetry app asks</b>.</dd>
+    </div>
+    <div class="finding" data-weight="high">
+      <dt>"Surprise me" is an answer, not a skip</dt>
+      <dd>"Read me something I'd never find" sits in the same list as the rest and does real work —
+        it raises the draw temperature. A reader who wants no profile gets to say so <b>inside</b>
+        the flow rather than by leaving it.</dd>
+    </div>
+  </dl>
 
   <hr class="rule">
 
@@ -418,12 +525,12 @@
         <tr>
           <td>Signal source</td>
           <td class="now">5 declared axes across 6 screens</td>
-          <td>3 revealed reactions (A) or 1 optional sheet (B); taxonomy is the fallback, not the gate</td>
+          <td>3 revealed reactions (A), or 4 questions about the reader's evening (B). Taxonomy is derived, never asked.</td>
         </tr>
         <tr>
           <td>Difficulty</td>
           <td class="now">A direct question about the reader's Arabic</td>
-          <td>Inferred from posture + translation opens. Never asked aloud.</td>
+          <td>Revealed by choosing between two real unlabelled lines (B), or by what gets kept (A). Never asked aloud.</td>
         </tr>
         <tr>
           <td>Cost of skipping</td>
@@ -608,144 +715,216 @@
   });
   renderA();
 
-  /* ══════════ B — One Sheet, One Door ══════════ */
+  /* ══════════ B — Four Questions About You ══════════
+     The rewrite is in the QUESTIONS, not the layout.
+
+     Every question below satisfies four rules the old set broke:
+       · it asks about the reader's evening, not the corpus schema
+       · it needs no knowledge the reader can only get by using the app
+       · it has its own shape, so four don't read as one
+       · it pays rent — each one moves a named column in the draw
+     ────────────────────────────────────────────────────────────── */
+
+  /* Q2's two lines are deliberately unlabelled. Nobody is told which one is
+     "harder": the CHOICE reports density, so the reader never has to rank
+     their own Arabic out loud. This replaces the old step 5 entirely. */
+  var COMPARE = [
+    {
+      k: 'plain',
+      ar: 'إِنَّ الشَبابَ وَالفَراغَ وَالجِدَه',
+      ar2: 'مَفسَدَةٌ لِلمَرءِ أَيُّ مَفسَدَه',
+      en: 'Youth, idleness and money — what a ruin for a man, what a ruin.',
+      poet: 'أبو العتاهية'
+    },
+    {
+      k: 'ornate',
+      ar: 'أَنامُ مِلءَ جُفوني عَن شَوارِدِها',
+      ar2: 'وَيَسهَرُ الخَلقُ جَرّاها وَيَختَصِمُ',
+      en: 'I sleep my fill, untroubled by their strays, while the world lies awake over them, quarrelling.',
+      poet: 'المتنبي'
+    }
+  ];
+
   var FIELDS = [
     {
-      key: 'mood', q: 'How do you want to feel?', ar: 'كيف تريد أن تشعر؟', opt: 'pick any',
+      /* Q1 — the occasion, single-select.
+         Does the work of the old mood + difficulty + half of era, because an
+         occasion IMPLIES them. And "read me something I'd never find" is a
+         real answer with a real consequence (temperature up), not a skip. */
+      key: 'occasion', type: 'cards', single: true,
+      q: 'What are you here for tonight?', ar: 'ما الذي جاء بك الليلة؟', opt: 'pick one',
       options: [
-        { k: 'amorous',       en: 'Amorous',       ar: 'غزل',  c: '#e8647a' },
-        { k: 'yearning',      en: 'Yearning',      ar: 'شوق',  c: '#c084fc' },
-        { k: 'grief',         en: 'Grief',         ar: 'حزن',  c: '#94a3b8' },
-        { k: 'nostalgia',     en: 'Nostalgia',     ar: 'حنين', c: '#8b7355' },
-        { k: 'joy',           en: 'Joy',           ar: 'فرح',  c: '#fbbf24' },
-        { k: 'defiance',      en: 'Defiance',      ar: 'تحدٍّ', c: '#ef4444' },
-        { k: 'contemplation', en: 'Contemplation', ar: 'تأمل', c: '#38bdf8' },
-        { k: 'satire',        en: 'Satire',        ar: 'سخرية', c: '#fb923c' }
+        { k: 'heavy',   en: 'Something is heavy — sit with me in it', ar: 'على قلبي ثِقل',
+          moves: 'grief, elegy, the long complaint', c: '#94a3b8' },
+        { k: 'struck',  en: 'Knock me over with one line', ar: 'بيتٌ واحد يصعقني',
+          moves: 'the famous, the quotable, the short', c: '#fbbf24' },
+        { k: 'settle',  en: 'Wind me down', ar: 'هدّئني',
+          moves: 'serenity, plain language, nothing loud', c: '#4a9d8f' },
+        { k: 'learn',   en: 'Teach me the tradition, properly', ar: 'علّمني التراث',
+          moves: 'the canon, in order, with context', c: '#c5a059' },
+        { k: 'stranger', en: 'Read me something I’d never find', ar: 'اقرأ لي ما لا أعرف',
+          moves: 'the far edges of the dīwān', c: '#c084fc' }
       ]
     },
     {
-      key: 'motif', q: 'Which images stay with you?', ar: 'أي الصور تسكنك؟', opt: 'optional',
+      /* Q2 — a comparison, not a self-assessment. Different shape on purpose. */
+      key: 'density', type: 'compare', single: true,
+      q: 'Which would you rather keep reading?', ar: 'أيّهما تُواصل قراءته؟', opt: 'no wrong answer'
+    },
+    {
+      /* Q3 — the budget question nobody asks. Zero expertise, real column:
+         server.js already caps the draw at 24 verse lines. */
+      key: 'span', type: 'chips', single: true,
+      q: 'How long do you have?', ar: 'كم لديك من وقت؟', opt: 'pick one',
       options: [
-        { k: 'night',           en: 'Night',       ar: 'الليل',   c: '#1e3a6e' },
-        { k: 'desert-ruins',    en: 'Ruins',       ar: 'الأطلال', c: '#b08968' },
-        { k: 'wine-cup',        en: 'The cup',     ar: 'الكأس',   c: '#a16207' },
-        { k: 'garden-flowers',  en: 'Gardens',     ar: 'الروض',   c: '#4ade80' },
-        { k: 'sea-water',       en: 'The sea',     ar: 'البحر',   c: '#0ea5e9' },
-        { k: 'sword-battle',    en: 'The sword',   ar: 'السيف',   c: '#ef4444' }
+        { k: 'minute',  en: 'A minute',        ar: 'دقيقة',  c: '#c5a059' },
+        { k: 'sitting', en: 'A sitting',       ar: 'جلسة',   c: '#c5a059' },
+        { k: 'long',    en: 'I’ll be a while', ar: 'سأطيل', c: '#c5a059' }
       ]
     },
     {
-      key: 'era', q: 'Where in time?', ar: 'من أي زمن؟', opt: 'optional',
+      /* Q4 — a settings fact, not a taste claim. Phrased as the consequence
+         you can see, so nothing here reads as a confession of ability. */
+      key: 'posture', type: 'chips', single: true,
+      q: 'What sits under the poem?', ar: 'ماذا يظهر تحت القصيدة؟', opt: 'pick one',
       options: [
-        { k: 'c6', en: 'Before Islam', ar: 'الجاهلية', c: '#b08968' },
-        { k: 'c8', en: 'Abbasid',      ar: 'العباسي',  c: '#c5a059' },
-        { k: 'c11', en: 'Andalusi',    ar: 'الأندلسي', c: '#4ade80' },
-        { k: 'c19', en: 'Modern',      ar: 'الحديث',   c: '#38bdf8' }
-      ]
-    },
-    {
-      key: 'posture', q: 'How do you read?', ar: 'كيف تقرأ؟', opt: 'one', single: true,
-      options: [
-        { k: 'arabic',   en: 'Arabic only',   ar: 'بالعربية',  c: '#c5a059' },
-        { k: 'english',  en: 'With English',  ar: 'مع الترجمة', c: '#c5a059' },
-        { k: 'learning', en: 'And how it sounds', ar: 'ونطقها', c: '#c5a059' }
+        { k: 'arabic',   en: 'Nothing',         ar: 'لا شيء',  c: '#c5a059' },
+        { k: 'english',  en: 'The English',     ar: 'الترجمة', c: '#c5a059' },
+        { k: 'learning', en: 'And how it sounds', ar: 'والنطق',  c: '#c5a059' }
       ]
     }
   ];
 
-  var picks = { mood: [], motif: [], era: [], posture: [] };
+  /* Which poem the dock would draw right now, per occasion. The live preview
+     is the whole point of the sheet: an answer with no visible consequence is
+     indistinguishable from no answer. */
+  var DRAW_BY_OCCASION = {
+    heavy: 2, struck: 3, settle: 1, learn: 0, stranger: 3
+  };
+
+  var picks = { occasion: [], density: [], span: [], posture: [] };
+
+  function cardsHTML(f) {
+    return f.options.map(function (o) {
+      return '<button class="opt-card" type="button" aria-pressed="false" ' +
+        'data-field="' + f.key + '" data-key="' + o.k + '" data-color="' + o.c + '">' +
+        '<span class="bar" style="background:' + o.c + '"></span>' +
+        '<span class="txt">' +
+          '<span class="line"><span class="oc-en">' + o.en + '</span>' +
+          '<span class="oc-ar">' + o.ar + '</span></span>' +
+          '<span class="moves">' + o.moves + '</span>' +
+        '</span></button>';
+    }).join('');
+  }
+
+  function chipsHTML(f) {
+    return '<div class="chips">' + f.options.map(function (o) {
+      return '<button class="chip" type="button" aria-pressed="false" ' +
+        'data-field="' + f.key + '" data-key="' + o.k + '" data-color="' + o.c + '">' +
+        o.en + ' <span style="font-family:Amiri,serif;direction:rtl;opacity:.55;font-size:.9em">' +
+        o.ar + '</span></button>';
+    }).join('') + '</div>';
+  }
+
+  function compareHTML(f) {
+    return '<div class="compare">' + COMPARE.map(function (c) {
+      return '<button class="cmp" type="button" aria-pressed="false" ' +
+        'data-field="' + f.key + '" data-key="' + c.k + '" data-color="#c5a059">' +
+        '<span class="cv">' + c.ar + '</span>' +
+        '<span class="cv">' + c.ar2 + '</span>' +
+        '<span class="cen">' + c.en + '</span>' +
+        '<span class="cpoet">' + c.poet + '</span>' +
+        '</button>';
+    }).join('') +
+    '<button class="chip cmp-both" type="button" aria-pressed="false" ' +
+    'data-field="' + f.key + '" data-key="both" data-color="#c5a059">' +
+    'Both, honestly <span style="font-family:Amiri,serif;direction:rtl;opacity:.55">كلاهما</span>' +
+    '</button></div>';
+  }
 
   function buildB() {
     var host = document.getElementById('b-fields');
-    host.innerHTML = FIELDS.map(function (f) {
-      var chips = f.options.map(function (o) {
-        return '<button class="chip" type="button" aria-pressed="false" ' +
-               'data-field="' + f.key + '" data-key="' + o.k + '" data-color="' + o.c + '">' +
-               '<span class="dot" style="background:' + o.c + '"></span>' + o.en +
-               ' <span style="font-family:Amiri,serif;direction:rtl;opacity:.55;font-size:.9em">' + o.ar + '</span>' +
-               '</button>';
+    host.innerHTML =
+      '<p class="sheet-lede">Four questions about your evening — none about poetry ' +
+      'you haven’t read yet. Answer none of them and the door still opens.</p>' +
+      FIELDS.map(function (f) {
+        var body = f.type === 'cards' ? cardsHTML(f)
+                 : f.type === 'compare' ? compareHTML(f)
+                 : chipsHTML(f);
+        return '<div class="field"><div class="field-label">' +
+          '<span class="q">' + f.q +
+          ' <span style="font-family:Amiri,serif;direction:rtl;opacity:.5">' + f.ar + '</span></span>' +
+          '<span class="opt">' + f.opt + '</span></div>' + body + '</div>';
       }).join('');
-      return '<div class="field"><div class="field-label">' +
-             '<span class="q">' + f.q + ' <span style="font-family:Amiri,serif;direction:rtl;opacity:.5">' + f.ar + '</span></span>' +
-             '<span class="opt">' + f.opt + '</span></div>' +
-             '<div class="chips">' + chips + '</div></div>';
-    }).join('');
 
     host.addEventListener('click', function (e) {
-      var chip = e.target.closest('.chip');
-      if (!chip) return;
-      var field = chip.dataset.field, key = chip.dataset.key;
-      var cfg = FIELDS.filter(function (f) { return f.key === field; })[0];
-      var on = chip.getAttribute('aria-pressed') === 'true';
+      var el = e.target.closest('[data-field]');
+      if (!el) return;
+      var field = el.dataset.field, key = el.dataset.key;
+      var on = el.getAttribute('aria-pressed') === 'true';
 
-      if (cfg.single) {
-        host.querySelectorAll('.chip[data-field="' + field + '"]').forEach(function (c) {
-          c.setAttribute('aria-pressed', 'false');
-          c.style.borderColor = ''; c.style.background = '';
-        });
-        picks[field] = on ? [] : [key];
-      } else {
-        picks[field] = on
-          ? picks[field].filter(function (k) { return k !== key; })
-          : picks[field].concat([key]);
+      host.querySelectorAll('[data-field="' + field + '"]').forEach(function (n) {
+        n.setAttribute('aria-pressed', 'false');
+        n.style.borderColor = ''; n.style.background = '';
+      });
+      picks[field] = on ? [] : [key];
+
+      if (!on) {
+        el.setAttribute('aria-pressed', 'true');
+        el.style.borderColor = el.dataset.color;
+        el.style.background = el.dataset.color + '1c';
       }
-
-      var nowOn = picks[field].indexOf(key) !== -1;
-      chip.setAttribute('aria-pressed', nowOn ? 'true' : 'false');
-      chip.style.borderColor = nowOn ? chip.dataset.color : '';
-      chip.style.background = nowOn ? chip.dataset.color + '22' : '';
       syncB();
     });
   }
 
-  function total() {
-    return picks.mood.length + picks.motif.length + picks.era.length;
+  function answered() {
+    return ['occasion', 'density', 'span', 'posture']
+      .filter(function (k) { return picks[k].length; }).length;
   }
 
   function syncB() {
-    var n = total();
+    var n = answered();
     var btn = document.getElementById('b-enter');
     var live = document.getElementById('b-live');
 
     btn.innerHTML = n
-      ? 'Open the dīwān<span class="sub">افتح الديوان — ' + n + '</span>'
+      ? 'Open the dīwān<span class="sub">افتح الديوان</span>'
       : 'Take me anywhere<span class="sub">خذني إلى أي مكان</span>';
 
-    live.innerHTML = n === 0
-      ? 'Nothing chosen. The whole dīwān, unweighted — which is a perfectly good way in.'
-      : 'Leaning your first poems toward <b>' + n + '</b> of these. ' +
-        'A lean, never a filter — nothing gets locked out.';
-
-    /* The poem above re-draws to match the newest pick: every answer has a
-       visible consequence before the reader commits to anything. */
-    var p = POEMS[0];
-    if (picks.mood.indexOf('joy') !== -1 || picks.motif.indexOf('wine-cup') !== -1) p = POEMS[1];
-    else if (picks.mood.indexOf('grief') !== -1) p = POEMS[2];
-    else if (picks.mood.indexOf('yearning') !== -1 || picks.era.indexOf('c11') !== -1) p = POEMS[3];
-    var host = document.getElementById('b-poem');
-    if (host.dataset.showing !== p.poetEn) {
-      host.dataset.showing = p.poetEn;
-      host.innerHTML = poemHTML(p);
-      host.className = 'poem fade-in';
+    /* Not a count of answers — the actual first poem. A reader can see the
+       consequence of a tap before committing to it. */
+    if (!picks.occasion.length) {
+      live.innerHTML = n
+        ? 'Still drawing from the whole dīwān.'
+        : 'Nothing chosen — the whole dīwān, unweighted. A good way in.';
+    } else {
+      var p = POEMS[DRAW_BY_OCCASION[picks.occasion[0]]];
+      live.innerHTML = 'We’d open with <b>' + p.poet + '</b> — ' + p.meta + '.';
     }
   }
 
   document.getElementById('b-enter').addEventListener('click', function () {
-    var n = total();
     var leanings, promise, title;
-    if (!n) {
+    var OCC = FIELDS[0].options;
+    var occ = OCC.filter(function (o) { return picks.occasion.indexOf(o.k) !== -1; })[0];
+
+    if (!answered()) {
       title = 'Straight in';
       leanings = [['Reading', 'Open, unweighted', '#6b6875']];
       promise = 'No answers, no weighting. Save a poem and the dīwān starts leaning on its own.';
     } else {
       title = 'Your dīwān leans';
-      var moodCfg = FIELDS[0].options.filter(function (o) { return picks.mood.indexOf(o.k) !== -1; });
-      var motifCfg = FIELDS[1].options.filter(function (o) { return picks.motif.indexOf(o.k) !== -1; });
-      var eraCfg = FIELDS[2].options.filter(function (o) { return picks.era.indexOf(o.k) !== -1; });
       leanings = [];
-      if (moodCfg.length) leanings.push(['Mood', moodCfg.map(function (o) { return o.en; }).join(', '), moodCfg[0].c]);
-      if (motifCfg.length) leanings.push(['Imagery', motifCfg.map(function (o) { return o.en; }).join(', '), motifCfg[0].c]);
-      if (eraCfg.length) leanings.push(['Era', eraCfg.map(function (o) { return o.en; }).join(', '), eraCfg[0].c]);
+      if (occ) leanings.push(['Tonight', occ.moves, occ.c]);
+      if (picks.density.length) {
+        leanings.push(['Language', picks.density[0] === 'plain' ? 'Plain, direct'
+          : (picks.density[0] === 'ornate' ? 'Dense, allusive' : 'Either, freely'), '#c5a059']);
+      }
+      if (picks.span.length) {
+        leanings.push(['Length', { minute: 'Short pieces first', sitting: 'A full qasida',
+          long: 'No ceiling' }[picks.span[0]], '#8c7340']);
+      }
       if (!leanings.length) leanings.push(['Reading', 'Open, unweighted', '#6b6875']);
       promise = 'We’ll open there and widen as you read. Nothing in the dīwān is ever closed to you.';
     }

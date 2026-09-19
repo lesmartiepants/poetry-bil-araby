@@ -257,6 +257,26 @@
   .opt-card[aria-pressed="true"] .oc-en { color: #fff; }
   .opt-card[aria-pressed="true"] .moves { color: var(--muted); }
 
+  .eras { display: flex; flex-direction: column; gap: 7px; }
+  .era-card .scene {
+    font-family: 'Forum', Georgia, serif; font-size: .875rem; line-height: 1.42;
+    color: var(--parchment);
+  }
+  .era-card[aria-pressed="true"] .scene { color: #fff; }
+  .era-card .named {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 8px; margin-top: 2px;
+  }
+  .named .nm-en {
+    font-size: .625rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--gold-dim); font-weight: 600; transition: color .2s;
+  }
+  .era-card[aria-pressed="true"] .named .nm-en { color: var(--gold); }
+  .named .nm-ar {
+    font-family: 'Amiri', serif; direction: rtl; font-size: .75rem;
+    color: rgba(236,229,216,.4);
+  }
+  .named .nm-c { font-size: .5625rem; letter-spacing: .06em; color: var(--faint); }
+
   .compare { display: flex; flex-direction: column; gap: 7px; }
   .cmp {
     display: flex; flex-direction: column; align-items: center; gap: 2px; width: 100%;
@@ -590,8 +610,8 @@
       <p class="mock-desc">
         Same one-sheet shape — but <b>none of the questions are about poetry you haven't read yet</b>.
         They ask about your evening, not the taxonomy: why you opened this, which of two real lines
-        you'd rather keep reading, how long you have. Each is a different shape, so four questions
-        don't read as one long one.
+        you'd rather keep reading, which world you want to be in. Each is a different shape, so four
+        questions don't read as one long one.
       </p>
       <p class="mock-desc">
         No locks, no order, no back button to regret — and the dock names the poem your answers would
@@ -647,7 +667,7 @@
 
   <hr class="rule">
 
-  <h2>The seven rules the new questions follow</h2>
+  <h2>The eight rules the new questions follow</h2>
   <p class="section-note">
     Direction B's first pass kept the old questions and only re-laid them out, which fixed nothing.
     These are the rules the rewrite is actually built on — they apply to any question this app ever adds.
@@ -684,8 +704,18 @@
     <div class="finding" data-weight="high">
       <dt>Every question pays rent</dt>
       <dd>If you can't name the column it moves, cut it. Occasion moves mood and intensity; the
-        comparison moves <code>accessibility_score</code>; "how long do you have" moves verse count —
-        a real filter <code>server.js</code> already applies, and a question <b>no poetry app asks</b>.</dd>
+        comparison moves <code>accessibility_score</code>; the world you pick moves
+        <code>poems.century</code>. <b>Three questions cover all five axes the old flow spent six
+        screens on.</b></dd>
+    </div>
+    <div class="finding" data-weight="high">
+      <dt>Teach by the answer, not the question</dt>
+      <dd>"From which age? — 9th–10th, Abbasid" is unanswerable if you don't already know what
+        Abbasid means, which is most people. So the option you tap is a scene you can picture
+        (<em>Baghdad after dark — wine, wit, and the caliph's court</em>) and the proper name sits
+        under it, as the answer to a question you just asked yourself. <b>You choose on feeling and
+        leave knowing a word you arrived without</b> — then meet it a second time on the reveal.
+        Never make a term the price of admission.</dd>
     </div>
     <div class="finding" data-weight="high">
       <dt>"Surprise me" is an answer, not a skip</dt>
@@ -961,14 +991,37 @@
       q: 'Which would you rather keep reading?', ar: 'أيّهما تُواصل قراءته؟', opt: 'no wrong answer'
     },
     {
-      /* Q3 — the budget question nobody asks. Zero expertise, real column:
-         server.js already caps the draw at 24 verse lines. */
-      key: 'span', type: 'chips', single: true,
-      q: 'How long do you have?', ar: 'كم لديك من وقت؟', opt: 'pick one',
+      /* Q3 — era, asked as a WORLD rather than a period label.
+         "From which age? / 9th–10th / Abbasid" is unanswerable for anyone who
+         does not already know what Abbasid means — which is most readers, and
+         certainly most first-time ones. So the option they tap is a scene they
+         can picture, and the proper name sits UNDER it as the answer to the
+         question they just asked themselves. They choose on feeling and leave
+         knowing a term they arrived without: teach by the answer, not by the
+         question. Same four bands the taxonomy already cuts. */
+      key: 'era', type: 'era', single: true,
+      q: 'Which world do you want to be in?', ar: 'في أي عالم تريد أن تكون؟', opt: 'pick one',
       options: [
-        { k: 'minute',  en: 'A minute',        ar: 'دقيقة',  c: '#c5a059' },
-        { k: 'sitting', en: 'A sitting',       ar: 'جلسة',   c: '#c5a059' },
-        { k: 'long',    en: 'I’ll be a while', ar: 'سأطيل', c: '#c5a059' }
+        { k: 'c6',  c: '#b08968',
+          scene: 'Desert camps, tribal honour, and the ruins of a lover\u2019s campsite',
+          nmEn: 'Pre-Islamic & Umayyad', nmAr: 'الجاهلي والأموي',
+          span: '6th–8th century', note: 'where Arabic poetry starts' },
+        { k: 'c9',  c: '#c5a059',
+          scene: 'Baghdad after dark — wine, wit, and the caliph\u2019s court',
+          nmEn: 'Abbasid', nmAr: 'العباسي',
+          span: '9th–10th century', note: 'the golden age' },
+        { k: 'c11', c: '#4ade80',
+          scene: 'Andalusian gardens, and the courts of Cairo and Damascus',
+          nmEn: 'Andalusian & Mamluk', nmAr: 'الأندلسي والمملوكي',
+          span: '11th–14th century', note: 'poetry in exile from itself' },
+        { k: 'c15', c: '#38bdf8',
+          scene: 'Exile, nation, and a voice that sounds like now',
+          nmEn: 'Late & Modern', nmAr: 'المتأخر والحديث',
+          span: '15th century – today', note: 'the tradition arguing with itself' },
+        { k: 'any', c: '#8b8a96',
+          scene: 'Anywhere — I don\u2019t have a century',
+          nmEn: 'All four', nmAr: 'الكل',
+          span: '1,400 years', note: 'no weight either way' }
       ]
     },
     {
@@ -990,7 +1043,11 @@
     heavy: 2, struck: 3, settle: 1, learn: 0, stranger: 3
   };
 
-  var picks = { occasion: [], density: [], span: [], posture: [] };
+  /* An era pick beats an occasion pick for the preview: it is the more
+     specific claim, and seeing the century answer back is half the lesson. */
+  var DRAW_BY_ERA = { c6: 0, c9: 1, c11: 3, c15: null, any: null };
+
+  var picks = { occasion: [], density: [], era: [], posture: [] };
 
   function cardsHTML(f) {
     return f.options.map(function (o) {
@@ -1001,6 +1058,21 @@
           '<span class="line"><span class="oc-en">' + o.en + '</span>' +
           '<span class="oc-ar">' + o.ar + '</span></span>' +
           '<span class="moves">' + o.moves + '</span>' +
+        '</span></button>';
+    }).join('');
+  }
+
+  function eraHTML(f) {
+    return f.options.map(function (o) {
+      return '<button class="opt-card era-card" type="button" aria-pressed="false" ' +
+        'data-field="' + f.key + '" data-key="' + o.k + '" data-color="' + o.c + '">' +
+        '<span class="bar" style="background:' + o.c + '"></span>' +
+        '<span class="txt">' +
+          '<span class="scene">' + o.scene + '</span>' +
+          '<span class="named"><span class="nm-en">' + o.nmEn + '</span>' +
+          '<span class="nm-ar">' + o.nmAr + '</span>' +
+          '<span class="nm-c">' + o.span + '</span></span>' +
+          '<span class="moves">' + o.note + '</span>' +
         '</span></button>';
     }).join('');
   }
@@ -1038,6 +1110,7 @@
       FIELDS.map(function (f) {
         var body = f.type === 'cards' ? cardsHTML(f)
                  : f.type === 'compare' ? compareHTML(f)
+                 : f.type === 'era' ? '<div class="eras">' + eraHTML(f) + '</div>'
                  : chipsHTML(f);
         return '<div class="field"><div class="field-label">' +
           '<span class="q">' + f.q +
@@ -1067,7 +1140,7 @@
   }
 
   function answered() {
-    return ['occasion', 'density', 'span', 'posture']
+    return ['occasion', 'density', 'era', 'posture']
       .filter(function (k) { return picks[k].length; }).length;
   }
 
@@ -1082,12 +1155,16 @@
 
     /* Not a count of answers — the actual first poem. A reader can see the
        consequence of a tap before committing to it. */
-    if (!picks.occasion.length) {
+    var idx = null;
+    if (picks.era.length) idx = DRAW_BY_ERA[picks.era[0]];
+    if (idx == null && picks.occasion.length) idx = DRAW_BY_OCCASION[picks.occasion[0]];
+
+    if (idx == null) {
       live.innerHTML = n
         ? 'Still drawing from the whole dīwān.'
         : 'Nothing chosen — the whole dīwān, unweighted. A good way in.';
     } else {
-      var p = POEMS[DRAW_BY_OCCASION[picks.occasion[0]]];
+      var p = POEMS[idx];
       live.innerHTML = 'We’d open with <b>' + p.poet + '</b> — ' + p.meta + '.';
     }
   }
@@ -1109,9 +1186,11 @@
         leanings.push(['Language', picks.density[0] === 'plain' ? 'Plain, direct'
           : (picks.density[0] === 'ornate' ? 'Dense, allusive' : 'Either, freely'), '#c5a059']);
       }
-      if (picks.span.length) {
-        leanings.push(['Length', { minute: 'Short pieces first', sitting: 'A full qasida',
-          long: 'No ceiling' }[picks.span[0]], '#8c7340']);
+      if (picks.era.length) {
+        var er = FIELDS[2].options.filter(function (o) { return o.k === picks.era[0]; })[0];
+        /* The reveal names the era in full — the reader's second meeting with
+           the term, now attached to the scene they chose it by. */
+        leanings.push(['Era', er.k === 'any' ? 'All four, evenly' : er.nmEn + ' · ' + er.span, er.c]);
       }
       if (!leanings.length) leanings.push(['Reading', 'Open, unweighted', '#6b6875']);
       promise = 'We’ll open there and widen as you read. Nothing in the dīwān is ever closed to you.';

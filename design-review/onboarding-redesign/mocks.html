@@ -576,6 +576,73 @@
     color: rgba(236,229,216,.78);
   }
 
+
+  /* ── Mock B-scroll: segmented forks on one page ─────────────── */
+  .bs-head {
+    flex: 0 0 auto; display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px; padding: 22px 20px 12px;
+    border-bottom: 1px solid var(--ink-edge); background: var(--ink);
+  }
+  .bs-head .bs-t {
+    font-family: 'Forum', Georgia, serif; font-size: 1.0625rem; color: var(--gold);
+  }
+  .bs-head .bs-c {
+    font-size: .625rem; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  #bs-body { padding: 16px 20px 150px; gap: 14px; }
+  /* The sheet is a column flexbox taller than the phone, so every child has
+     to opt out of shrinking or the whole list squashes to hairlines instead
+     of scrolling. */
+  #bs-body > * { flex: 0 0 auto; }
+
+  .segpair {
+    display: flex; flex-direction: column; gap: 0;
+    border: 1px solid rgba(236,229,216,.11); border-radius: 11px; overflow: hidden;
+    transition: border-color .2s;
+  }
+  .segpair.answered { border-color: rgba(197,160,89,.42); }
+  .seg {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+    padding: 11px 13px; min-height: 48px; justify-content: center;
+    background: transparent; border: 0; cursor: pointer; text-align: left; width: 100%;
+    transition: background .2s, color .2s;
+  }
+  .seg:hover { background: rgba(236,229,216,.035); }
+  .seg.on { background: rgba(197,160,89,.13); }
+  .seg .s-en {
+    font-family: 'Forum', Georgia, serif; font-size: .875rem; line-height: 1.32;
+    color: rgba(236,229,216,.72);
+  }
+  .seg.on .s-en { color: #fff; }
+  .seg .s-ar {
+    font-family: 'Amiri', serif; direction: rtl; font-size: .75rem;
+    color: rgba(236,229,216,.32);
+  }
+  .seg:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
+  .seg-or {
+    display: flex; align-items: center; gap: 6px; padding: 2px 13px;
+    font-family: 'Forum', Georgia, serif; font-size: .625rem; letter-spacing: .12em;
+    color: var(--faint); border-block: 1px solid rgba(236,229,216,.08);
+  }
+  .seg-or span { font-family: 'Amiri', serif; direction: rtl; opacity: .7; }
+  .bs-rule {
+    height: 1px; margin: 6px 0 2px;
+    background: linear-gradient(90deg, transparent, var(--ink-edge), transparent);
+  }
+
+  .bs-live {
+    display: flex; align-items: center; gap: 8px; min-height: 26px;
+    justify-content: center; flex-wrap: wrap;
+  }
+  .bs-live-k {
+    font-size: .5625rem; letter-spacing: .13em; text-transform: uppercase; color: var(--faint);
+  }
+  .bs-live-v { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+  .bs-live-empty {
+    font-family: 'Forum', Georgia, serif; font-size: .75rem; color: var(--faint);
+  }
+
   /* ── Reveal ─────────────────────────────────────────────────── */
   .reveal { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
   .reveal h4 {
@@ -651,7 +718,10 @@
       <span class="tn">A · The First Draw</span><span class="ts">three poems</span>
     </button>
     <button class="tab" type="button" role="tab" id="tab-b" aria-controls="panel-b" aria-selected="false" data-panel="b">
-      <span class="tn">B · Would You Rather</span><span class="ts">ten forks</span>
+      <span class="tn">B · Fork carousel</span><span class="ts">one at a time</span>
+    </button>
+    <button class="tab" type="button" role="tab" id="tab-bs" aria-controls="panel-bs" aria-selected="false" data-panel="bs">
+      <span class="tn">B-scroll · One page</span><span class="ts">same ten forks</span>
     </button>
   </div>
 
@@ -750,6 +820,40 @@
         Then one question on how hard you want the language, one on which world, and a
         <b>taste profile</b> built out of the forks — the same <code>{family, moods, motifs, era,
         difficulty}</code> payload the weighting engine already eats, so nothing downstream changes.
+      </p>
+    </div>
+  </section>
+
+  <!-- ══════════════ MOCK B-SCROLL ══════════════ -->
+  <section class="panel" id="panel-bs" role="tabpanel" aria-labelledby="tab-bs" hidden>
+    <div class="phone">
+      <div class="screen" id="bs-sheet" style="padding:0">
+        <div class="bs-head">
+          <span class="bs-t">Would you rather…</span>
+          <span class="bs-c" id="bs-count">0 of 10</span>
+        </div>
+        <div class="sheet" id="bs-body"></div>
+        <div class="dock">
+          <div class="bs-live" id="bs-live"></div>
+          <button class="btn primary" type="button" id="bs-enter"></button>
+        </div>
+      </div>
+      <div class="screen" id="bs-reveal" hidden></div>
+    </div>
+    <div class="mock-head">
+      <span class="mock-tag">Direction B-scroll · the same ten</span>
+      <h3>All Ten at Once</h3>
+      <p class="mock-desc">
+        Identical forks, identical tally, identical profile — <b>only the pacing changes</b>. Ten
+        segmented pairs down one page, answerable in any order, revisable at any time, and skippable
+        by scrolling past. The ease and era questions sit at the bottom of the same scroll.
+      </p>
+      <p class="mock-desc">
+        The trade is real and cuts both ways. The carousel is a <b>ritual</b>: one decision per
+        screen, big type, momentum, and you cannot see the end coming. This is <b>control</b>: all
+        ten are visible up front so nothing feels like a trap — and because everything is visible,
+        the payoff can be continuous. The profile assembles in the dock as you answer, instead of
+        waiting for a reveal.
       </p>
     </div>
   </section>
@@ -1351,14 +1455,15 @@
      Returns raw scores per dimension plus the two continuous directions.
      Kept separate from the collapse below so the profile screen can show
      the reader the same numbers the engine will get. */
-  function tally() {
+  function tally(ans) {
+    ans = ans || bAnswers;
     var mood = {}, motif = {}, family = {}, intensity = 0, length = 0, answered = 0;
     var bump = function (bag, keys, amt) {
       (keys || []).forEach(function (k) { bag[k] = (bag[k] || 0) + amt; });
     };
 
     WYR.forEach(function (f) {
-      var choice = bAnswers[f.k];
+      var choice = ans[f.k];
       if (!choice) return;                        // unanswered contributes nothing
       answered += 1;
       var picked = choice === 'a' ? f.a : f.b;
@@ -1389,14 +1494,17 @@
       .slice(0, cap);
   }
 
-  function toPrefs() {
-    var t = tally();
-    var ease = EASE.filter(function (e) { return e.k === bEase; })[0];
+  function toPrefs(ans, easeK, worldK) {
+    ans = ans || bAnswers;
+    if (easeK === undefined) easeK = bEase;
+    if (worldK === undefined) worldK = bWorld;
+    var t = tally(ans);
+    var ease = EASE.filter(function (e) { return e.k === easeK; })[0];
     return {
       family: topKeys(t.family, 1)[0] || null,
       moods: topKeys(t.mood, 4),
       motifs: topKeys(t.motif, 3),
-      era: bWorld && bWorld !== 'any' ? [bWorld] : [],
+      era: worldK && worldK !== 'any' ? [worldK] : [],
       difficulty: ease && ease.k !== 'any' ? [ease.k] : [],
       /* Continuous hints the anchored candidate query can carry directly. */
       intensityDir: t.intensity,
@@ -1522,10 +1630,10 @@
       }).join('') + '</span></div>';
   }
 
-  function showProfile() {
-    var t = tally(), prefs = toPrefs();
-    var ease = EASE.filter(function (e) { return e.k === bEase; })[0];
-    var world = WORLDS.filter(function (w) { return w.k === bWorld; })[0];
+  function profileBody(ans, easeK, worldK) {
+    var t = tally(ans), prefs = toPrefs(ans, easeK, worldK);
+    var ease = EASE.filter(function (e) { return e.k === easeK; })[0];
+    var world = WORLDS.filter(function (w) { return w.k === worldK; })[0];
     var body;
 
     if (!t.answered && (!ease || ease.k === 'any') && (!world || world.k === 'any')) {
@@ -1555,9 +1663,13 @@
         '<p class="promise">Built from <b>' + t.answered + '</b> of ten forks. ' +
         'A lean, not a filter — we open there and widen as you read.</p>';
     }
+    return body;
+  }
 
+  function showProfile() {
     bRevEl.innerHTML = '<div class="spacer"></div><div class="reveal fade-in">' +
-      '<span class="hairline"></span>' + body + '</div><div class="spacer"></div>' +
+      '<span class="hairline"></span>' + profileBody(bAnswers, bEase, bWorld) +
+      '</div><div class="spacer"></div>' +
       '<button class="btn primary" type="button" data-b="enter">Open the dīwān' +
       '<span class="sub">افتح الديوان</span></button>' +
       '<button class="btn quiet" type="button" data-b="again">Run the forks again →</button>';
@@ -1573,6 +1685,151 @@
   });
 
   renderPair();
+
+  /* ══════════ B-scroll — the same ten, down one page ══════════
+
+     Same WYR data, same tally, same profileBody. The ONLY difference is
+     pacing, which is the whole point of having both: the carousel spends
+     a screen per decision and gains momentum; this spends a page on all
+     ten and gains revisability. Separate answer state so switching tabs
+     does not silently carry one variant's answers into the other.
+
+     Because every fork is visible, the payoff does not have to wait for a
+     reveal — the dock assembles the profile live. That is the one thing
+     the carousel structurally cannot do.
+     ────────────────────────────────────────────────────────────────── */
+
+  var bsAnswers = {}, bsEase = null, bsWorld = null;
+  var bsSheet = document.getElementById('bs-sheet');
+  var bsBody  = document.getElementById('bs-body');
+  var bsRev   = document.getElementById('bs-reveal');
+
+  function bsSegment(f) {
+    var side = function (which) {
+      var s = f[which], on = bsAnswers[f.k] === which;
+      return '<button class="seg' + (on ? ' on' : '') + '" type="button" ' +
+        'data-fork="' + f.k + '" data-side="' + which + '" aria-pressed="' + on + '">' +
+        '<span class="s-en">' + s.en + '</span>' +
+        '<span class="s-ar">' + s.ar + '</span></button>';
+    };
+    return '<div class="segpair' + (bsAnswers[f.k] ? ' answered' : '') + '">' +
+      side('a') + '<span class="seg-or">or<span>أو</span></span>' + side('b') + '</div>';
+  }
+
+  function renderBS() {
+    bsBody.innerHTML =
+      '<p class="sheet-lede">Ten of them. Answer any, in any order — scroll past the ones you ' +
+      'don’t have an opinion about. Nothing here is required.</p>' +
+      WYR.map(bsSegment).join('') +
+      '<div class="bs-rule"></div>' +
+      '<div class="field"><div class="field-label">' +
+        '<span class="q">How hard do you want the language? ' +
+        '<span style="font-family:Amiri,serif;direction:rtl;opacity:.5">ما مستوى اللغة؟</span></span>' +
+        '<span class="opt">pick one</span></div>' +
+        '<div class="eases">' + EASE.map(function (o) {
+          return '<button class="ease-card' + (bsEase === o.k ? ' on' : '') + '" type="button" ' +
+            'data-bsease="' + o.k + '" style="--c:' + o.c + '">' +
+            '<span class="bar" style="background:' + o.c + '"></span>' +
+            '<span class="txt"><span class="line"><span class="e">' + o.en + '</span>' +
+            '<span class="a">' + o.ar + '</span></span>' +
+            '<span class="note">' + o.note + '</span></span>' +
+            '<span class="band">' + o.label + '</span></button>';
+        }).join('') + '</div></div>' +
+      '<div class="field"><div class="field-label">' +
+        '<span class="q">Which world? ' +
+        '<span style="font-family:Amiri,serif;direction:rtl;opacity:.5">أي عالم؟</span></span>' +
+        '<span class="opt">pick one</span></div>' +
+        '<div class="eras">' + WORLDS.map(function (o) {
+          return '<button class="opt-card era-card' + (bsWorld === o.k ? ' on' : '') + '" type="button" ' +
+            'data-bsworld="' + o.k + '" style="--c:' + o.c + '">' +
+            '<span class="bar" style="background:' + o.c + '"></span>' +
+            '<span class="txt"><span class="scene">' + o.scene + '</span>' +
+            '<span class="named"><span class="nm-en">' + o.nmEn + '</span>' +
+            '<span class="nm-ar">' + o.nmAr + '</span>' +
+            '<span class="nm-c">' + o.span + '</span></span>' +
+            '<span class="moves">' + o.note + '</span></span></button>';
+        }).join('') + '</div></div>';
+    syncBS();
+  }
+
+  /* The live dock. Shows the profile's strongest keys as they accumulate —
+     the same topKeys() the reveal uses, so what builds here is exactly what
+     lands there, never a teaser for a different number. */
+  function syncBS() {
+    var t = tally(bsAnswers), prefs = toPrefs(bsAnswers, bsEase, bsWorld);
+    var any = t.answered || bsEase || bsWorld;
+    document.getElementById('bs-count').textContent = t.answered + ' of 10';
+    document.getElementById('bs-enter').innerHTML = any
+      ? 'See my taste profile<span class="sub">أرِني ذائقتي</span>'
+      : 'Take me anywhere<span class="sub">خذني إلى أي مكان</span>';
+
+    var chips = prefs.moods.slice(0, 3).map(function (k) {
+      var c = MOOD_COLOR[k] || '#c5a059';
+      return '<span class="p-chip" style="border-color:' + c + '66;color:' + c + '">' +
+        (MOOD_LABEL[k] || k) + '</span>';
+    }).concat(prefs.motifs.slice(0, 2).map(function (k) {
+      return '<span class="p-chip" style="border-color:#c5a05966;color:#c5a059">' +
+        (MOTIF_LABEL[k] || k) + '</span>';
+    }));
+
+    document.getElementById('bs-live').innerHTML = chips.length
+      ? '<span class="bs-live-k">so far</span><span class="bs-live-v">' + chips.join('') + '</span>'
+      : '<span class="bs-live-empty">Answer one and your profile starts here.</span>';
+  }
+
+  bsBody.addEventListener('click', function (e) {
+    var seg = e.target.closest('[data-fork]');
+    if (seg) {
+      var f = seg.dataset.fork;
+      /* Re-tapping the chosen side clears it: on one page a reader can
+         change their mind, and an answer you cannot withdraw is a trap. */
+      bsAnswers[f] = bsAnswers[f] === seg.dataset.side ? undefined : seg.dataset.side;
+      if (!bsAnswers[f]) delete bsAnswers[f];
+      var pair = seg.parentNode;
+      pair.className = 'segpair' + (bsAnswers[f] ? ' answered' : '');
+      pair.querySelectorAll('.seg').forEach(function (n) {
+        var on = bsAnswers[f] === n.dataset.side;
+        n.classList.toggle('on', on);
+        n.setAttribute('aria-pressed', on);
+      });
+      syncBS(); return;
+    }
+    var ez = e.target.closest('[data-bsease]');
+    if (ez) {
+      bsEase = bsEase === ez.dataset.bsease ? null : ez.dataset.bsease;
+      bsBody.querySelectorAll('[data-bsease]').forEach(function (n) {
+        n.classList.toggle('on', n.dataset.bsease === bsEase);
+      });
+      syncBS(); return;
+    }
+    var w = e.target.closest('[data-bsworld]');
+    if (w) {
+      bsWorld = bsWorld === w.dataset.bsworld ? null : w.dataset.bsworld;
+      bsBody.querySelectorAll('[data-bsworld]').forEach(function (n) {
+        n.classList.toggle('on', n.dataset.bsworld === bsWorld);
+      });
+      syncBS();
+    }
+  });
+
+  document.getElementById('bs-enter').addEventListener('click', function () {
+    bsRev.innerHTML = '<div class="spacer"></div><div class="reveal fade-in">' +
+      '<span class="hairline"></span>' + profileBody(bsAnswers, bsEase, bsWorld) +
+      '</div><div class="spacer"></div>' +
+      '<button class="btn primary" type="button" data-bs="enter">Open the dīwān' +
+      '<span class="sub">افتح الديوان</span></button>' +
+      '<button class="btn quiet" type="button" data-bs="back">Change an answer →</button>';
+    bsSheet.hidden = true; bsRev.hidden = false;
+  });
+
+  bsRev.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-bs]');
+    if (!el) return;
+    if (el.dataset.bs === 'enter') { bsAnswers = {}; bsEase = null; bsWorld = null; renderBS(); }
+    bsRev.hidden = true; bsSheet.hidden = false;
+  });
+
+  renderBS();
 
 
   /* ══════════ ORIGINAL — the six steps that ship today ══════════

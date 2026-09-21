@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;background:#0a0a0f;color-scheme:dark}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
 <title>Two Doors Into the Dīwān</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -302,25 +310,9 @@
 
 
   /* ── Tabs + panels ──────────────────────────────────────────── */
-  /* Four flows and eight versions both outgrow a phone, so the strips
-     scroll horizontally rather than wrapping into a second row that
-     pushes the phone below the fold. */
   .tabs {
-    display: flex; gap: 2px; flex-wrap: nowrap;
-    overflow-x: auto; overscroll-behavior-x: contain;
-    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    display: flex; gap: 2px; flex-wrap: wrap;
     border-bottom: 1px solid var(--ink-edge); margin-bottom: 34px;
-    scroll-snap-type: x proximity;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tabs .tab { flex: 0 0 auto; scroll-snap-align: start; }
-  /* The strip runs to the page edge so a cut-off tab reads as "scroll me",
-     but its contents keep the gutter. */
-  .tabs-wrap { position: relative; }
-  .tabs-wrap::after {
-    content: ''; position: absolute; right: 0; top: 0; bottom: 1px; width: 44px;
-    background: linear-gradient(90deg, transparent, var(--ink));
-    pointer-events: none;
   }
   .tab {
     background: transparent; border: 0; border-bottom: 2px solid transparent;
@@ -592,98 +584,6 @@
     color: rgba(236,229,216,.78);
   }
 
-
-  /* ── Mock B-scroll: segmented forks on one page ─────────────── */
-  .bs-head {
-    flex: 0 0 auto; display: flex; align-items: baseline; justify-content: space-between;
-    gap: 10px; padding: 22px 20px 12px;
-    border-bottom: 1px solid var(--ink-edge); background: var(--ink);
-  }
-  .bs-head .bs-t {
-    font-family: 'Forum', Georgia, serif; font-size: 1.0625rem; color: var(--gold);
-  }
-  .bs-head .bs-c {
-    font-size: .625rem; letter-spacing: .12em; text-transform: uppercase;
-    color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap;
-  }
-  #bs-body { padding: 16px 20px 150px; gap: 14px; }
-  /* The sheet is a column flexbox taller than the phone, so every child has
-     to opt out of shrinking or the whole list squashes to hairlines instead
-     of scrolling. */
-  #bs-body > * { flex: 0 0 auto; }
-
-  .segpair {
-    display: flex; flex-direction: column; gap: 0;
-    border: 1px solid rgba(236,229,216,.11); border-radius: 11px; overflow: hidden;
-    transition: border-color .2s;
-  }
-  .segpair.answered { border-color: rgba(197,160,89,.42); }
-  .seg {
-    display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
-    padding: 11px 13px; min-height: 48px; justify-content: center;
-    background: transparent; border: 0; cursor: pointer; text-align: left; width: 100%;
-    transition: background .2s, color .2s;
-  }
-  .seg:hover { background: rgba(236,229,216,.035); }
-  .seg.on { background: rgba(197,160,89,.13); }
-  .seg .s-en {
-    font-family: 'Forum', Georgia, serif; font-size: .875rem; line-height: 1.32;
-    color: rgba(236,229,216,.72);
-  }
-  .seg.on .s-en { color: #fff; }
-  .seg .s-ar {
-    font-family: 'Amiri', serif; direction: rtl; font-size: .75rem;
-    color: rgba(236,229,216,.32);
-  }
-  .seg:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
-  .seg-or {
-    display: flex; align-items: center; gap: 6px; padding: 2px 13px;
-    font-family: 'Forum', Georgia, serif; font-size: .625rem; letter-spacing: .12em;
-    color: var(--faint); border-block: 1px solid rgba(236,229,216,.08);
-  }
-  .seg-or span { font-family: 'Amiri', serif; direction: rtl; opacity: .7; }
-  .bs-rule {
-    height: 1px; margin: 6px 0 2px;
-    background: linear-gradient(90deg, transparent, var(--ink-edge), transparent);
-  }
-
-  .bs-live {
-    display: flex; align-items: center; gap: 8px; min-height: 26px;
-    justify-content: center; flex-wrap: wrap;
-  }
-  .bs-live-k {
-    font-size: .5625rem; letter-spacing: .13em; text-transform: uppercase; color: var(--faint);
-  }
-  .bs-live-v { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
-  .bs-live-empty {
-    font-family: 'Forum', Georgia, serif; font-size: .75rem; color: var(--faint);
-  }
-
-
-  /* ── Version history ────────────────────────────────────────── */
-  .vtabs { margin-bottom: 24px; }
-  .vtab .ts { font-family: ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .04em; }
-  .vpanel[hidden] { display: none !important; }
-  .vmeta {
-    display: flex; flex-wrap: wrap; gap: 8px 26px; align-items: baseline;
-    padding-bottom: 14px; border-bottom: 1px solid var(--ink-edge);
-  }
-  .vstat { display: flex; align-items: baseline; gap: 8px; }
-  .vk { font-size: .5625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
-  .vv { font-size: .8125rem; color: var(--parchment); }
-  .vv.mono {
-    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-    font-variant-numeric: tabular-nums; color: var(--muted);
-  }
-  .vv a { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(197,160,89,.3); }
-  .vv a:hover { border-bottom-color: var(--gold); }
-  .vdesc { font-size: .9375rem; line-height: 1.62; color: var(--muted); margin: 16px 0 20px; max-width: 46rem; }
-  .vframe {
-    border: 1px solid var(--ink-edge); border-radius: 4px; overflow: hidden;
-    background: var(--ink); height: min(78vh, 760px);
-  }
-  .vframe iframe { width: 100%; height: 100%; border: 0; display: block; }
-
   /* ── Reveal ─────────────────────────────────────────────────── */
   .reveal { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
   .reveal h4 {
@@ -751,7 +651,6 @@
     and both end on the same reveal. They differ on where the signal comes from.
   </p>
 
-  <div class="tabs-wrap">
   <div class="tabs" role="tablist" aria-label="Onboarding flows">
     <button class="tab" type="button" role="tab" id="tab-o" aria-controls="panel-o" aria-selected="true" data-panel="o">
       <span class="tn">Ships today</span><span class="ts">six steps</span>
@@ -760,12 +659,8 @@
       <span class="tn">A · The First Draw</span><span class="ts">three poems</span>
     </button>
     <button class="tab" type="button" role="tab" id="tab-b" aria-controls="panel-b" aria-selected="false" data-panel="b">
-      <span class="tn">B · Fork carousel</span><span class="ts">one at a time</span>
+      <span class="tn">B · Would You Rather</span><span class="ts">ten forks</span>
     </button>
-    <button class="tab" type="button" role="tab" id="tab-bs" aria-controls="panel-bs" aria-selected="false" data-panel="bs">
-      <span class="tn">B-scroll · One page</span><span class="ts">same ten forks</span>
-    </button>
-  </div>
   </div>
 
   <!-- ══════════════ ORIGINAL ══════════════ -->
@@ -863,40 +758,6 @@
         Then one question on how hard you want the language, one on which world, and a
         <b>taste profile</b> built out of the forks — the same <code>{family, moods, motifs, era,
         difficulty}</code> payload the weighting engine already eats, so nothing downstream changes.
-      </p>
-    </div>
-  </section>
-
-  <!-- ══════════════ MOCK B-SCROLL ══════════════ -->
-  <section class="panel" id="panel-bs" role="tabpanel" aria-labelledby="tab-bs" hidden>
-    <div class="phone">
-      <div class="screen" id="bs-sheet" style="padding:0">
-        <div class="bs-head">
-          <span class="bs-t">Would you rather…</span>
-          <span class="bs-c" id="bs-count">0 of 10</span>
-        </div>
-        <div class="sheet" id="bs-body"></div>
-        <div class="dock">
-          <div class="bs-live" id="bs-live"></div>
-          <button class="btn primary" type="button" id="bs-enter"></button>
-        </div>
-      </div>
-      <div class="screen" id="bs-reveal" hidden></div>
-    </div>
-    <div class="mock-head">
-      <span class="mock-tag">Direction B-scroll · the same ten</span>
-      <h3>All Ten at Once</h3>
-      <p class="mock-desc">
-        Identical forks, identical tally, identical profile — <b>only the pacing changes</b>. Ten
-        segmented pairs down one page, answerable in any order, revisable at any time, and skippable
-        by scrolling past. The ease and era questions sit at the bottom of the same scroll.
-      </p>
-      <p class="mock-desc">
-        The trade is real and cuts both ways. The carousel is a <b>ritual</b>: one decision per
-        screen, big type, momentum, and you cannot see the end coming. This is <b>control</b>: all
-        ten are visible up front so nothing feels like a trap — and because everything is visible,
-        the payoff can be continuous. The profile assembles in the dock as you answer, instead of
-        waiting for a reveal.
       </p>
     </div>
   </section>
@@ -1169,109 +1030,6 @@
     new engine</b> — <code>scorePoem</code>, <code>candidateQueries</code> and the draw temperature
     are untouched. The reader never sees a taxonomy key; the engine never sees a would-you-rather.
   </p>
-
-  <hr class="rule">
-
-  <h2>Every version, still running</h2>
-  <p class="section-note">
-    Eight published versions, each one live rather than screenshotted — the frames below are the
-    real files, so the mocks inside them still work. Useful above all for what later versions
-    removed: v2's occasion cards and v2–v6's unlabelled two-line comparison exist nowhere else.
-  </p>
-
-  <div class="tabs-wrap">
-  <div class="tabs vtabs" role="tablist" aria-label="Published versions">
-    <button class="tab vtab" type="button" role="tab" id="vtab-1" aria-controls="vpanel-1" aria-selected="true" data-v="1"><span class="tn">v1 · First Contact</span><span class="ts">27c8469</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-2" aria-controls="vpanel-2" aria-selected="false" data-v="2"><span class="tn">v2 · The Question Rewrite</span><span class="ts">fc92cda</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-3" aria-controls="vpanel-3" aria-selected="false" data-v="3"><span class="tn">v3 · Posture Revert</span><span class="ts">917a173</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-4" aria-controls="vpanel-4" aria-selected="false" data-v="4"><span class="tn">v4 · Three in Tabs</span><span class="ts">1726028</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-5" aria-controls="vpanel-5" aria-selected="false" data-v="5"><span class="tn">v5 · Show, Then Argue</span><span class="ts">05f8aae</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-6" aria-controls="vpanel-6" aria-selected="false" data-v="6"><span class="tn">v6 · Baghdad After Dark</span><span class="ts">9cb9ccf</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-7" aria-controls="vpanel-7" aria-selected="false" data-v="7"><span class="tn">v7 · Ten Forks</span><span class="ts">6bc260d</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-8" aria-controls="vpanel-8" aria-selected="false" data-v="8"><span class="tn">v8 · Two Tempos</span><span class="ts">255c8fc</span></button>
-  </div>
-  </div>
-
-  <section class="vpanel" id="vpanel-1" role="tabpanel" aria-labelledby="vtab-1">
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">27c8469</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">771</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+771</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v1.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Critique plus two mocks side by side. A was The First Draw; B was a single sheet that kept the shipping taxonomy questions and only re-laid them out — which fixed nothing, and is the mistake the next version exists to correct.</p>
-    <div class="vframe"><iframe src="versions/v1.html" title="v1 — First Contact" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-2" role="tabpanel" aria-labelledby="vtab-2" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">fc92cda</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">950</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+278 −99</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v2.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">B’s questions replaced wholesale: occasion cards, the unlabelled two-line comparison, "how long do you have", posture. Introduced the seven rules. The largest conceptual jump on the list.</p>
-    <div class="vframe"><iframe src="versions/v2.html" title="v2 — The Question Rewrite" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-3" role="tabpanel" aria-labelledby="vtab-3" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">917a173</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">949</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+5 −6</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v3.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Six lines. Q4 back to "How do you read?" — Arabic only / With English / And how it sounds.</p>
-    <div class="vframe"><iframe src="versions/v3.html" title="v3 — Posture Revert" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-4" role="tabpanel" aria-labelledby="vtab-4" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">1726028</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,467</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+580 −62</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v4.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">The shipping six-step flow rebuilt at 1:1 — hex comb, blob field, era timeline, locked doors — and all three flows moved into tabs. Doubled the file and turned prose assertions into something tappable.</p>
-    <div class="vframe"><iframe src="versions/v4.html" title="v4 — Three in Tabs" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-5" role="tabpanel" aria-labelledby="vtab-5" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">05f8aae</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,468</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+47 −46</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v5.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Pure reordering: mocks first, critique after. Net one line, and the best ratio of effect to diff in the whole history.</p>
-    <div class="vframe"><iframe src="versions/v5.html" title="v5 — Show, Then Argue" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-6" role="tabpanel" aria-labelledby="vtab-6" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">9cb9ccf</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,547</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+98 −19</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v6.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Session length out, the scene-led era question in, and with it the rule that a term should never be the price of admission.</p>
-    <div class="vframe"><iframe src="versions/v6.html" title="v6 — Baghdad After Dark" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-7" role="tabpanel" aria-labelledby="vtab-7" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">6bc260d</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,909</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+637 −275</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v7.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">B rebuilt as the fork carousel, the ease buckets on accessibility_score, the taste profile, and the query-mapping section. The only version that deletes at scale — occasion cards and the two-line comparison both died here.</p>
-    <div class="vframe"><iframe src="versions/v7.html" title="v7 — Ten Forks" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-8" role="tabpanel" aria-labelledby="vtab-8" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">255c8fc</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">2,166</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+269 −12</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v8.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">B-scroll beside the carousel. Same forks, same tally, same profile; ritual against control.</p>
-    <div class="vframe"><iframe src="versions/v8.html" title="v8 — Two Tempos" loading="lazy"></iframe></div>
-  </section>
 
   <hr class="rule">
 
@@ -1601,15 +1359,14 @@
      Returns raw scores per dimension plus the two continuous directions.
      Kept separate from the collapse below so the profile screen can show
      the reader the same numbers the engine will get. */
-  function tally(ans) {
-    ans = ans || bAnswers;
+  function tally() {
     var mood = {}, motif = {}, family = {}, intensity = 0, length = 0, answered = 0;
     var bump = function (bag, keys, amt) {
       (keys || []).forEach(function (k) { bag[k] = (bag[k] || 0) + amt; });
     };
 
     WYR.forEach(function (f) {
-      var choice = ans[f.k];
+      var choice = bAnswers[f.k];
       if (!choice) return;                        // unanswered contributes nothing
       answered += 1;
       var picked = choice === 'a' ? f.a : f.b;
@@ -1640,17 +1397,14 @@
       .slice(0, cap);
   }
 
-  function toPrefs(ans, easeK, worldK) {
-    ans = ans || bAnswers;
-    if (easeK === undefined) easeK = bEase;
-    if (worldK === undefined) worldK = bWorld;
-    var t = tally(ans);
-    var ease = EASE.filter(function (e) { return e.k === easeK; })[0];
+  function toPrefs() {
+    var t = tally();
+    var ease = EASE.filter(function (e) { return e.k === bEase; })[0];
     return {
       family: topKeys(t.family, 1)[0] || null,
       moods: topKeys(t.mood, 4),
       motifs: topKeys(t.motif, 3),
-      era: worldK && worldK !== 'any' ? [worldK] : [],
+      era: bWorld && bWorld !== 'any' ? [bWorld] : [],
       difficulty: ease && ease.k !== 'any' ? [ease.k] : [],
       /* Continuous hints the anchored candidate query can carry directly. */
       intensityDir: t.intensity,
@@ -1776,10 +1530,10 @@
       }).join('') + '</span></div>';
   }
 
-  function profileBody(ans, easeK, worldK) {
-    var t = tally(ans), prefs = toPrefs(ans, easeK, worldK);
-    var ease = EASE.filter(function (e) { return e.k === easeK; })[0];
-    var world = WORLDS.filter(function (w) { return w.k === worldK; })[0];
+  function showProfile() {
+    var t = tally(), prefs = toPrefs();
+    var ease = EASE.filter(function (e) { return e.k === bEase; })[0];
+    var world = WORLDS.filter(function (w) { return w.k === bWorld; })[0];
     var body;
 
     if (!t.answered && (!ease || ease.k === 'any') && (!world || world.k === 'any')) {
@@ -1809,13 +1563,9 @@
         '<p class="promise">Built from <b>' + t.answered + '</b> of ten forks. ' +
         'A lean, not a filter — we open there and widen as you read.</p>';
     }
-    return body;
-  }
 
-  function showProfile() {
     bRevEl.innerHTML = '<div class="spacer"></div><div class="reveal fade-in">' +
-      '<span class="hairline"></span>' + profileBody(bAnswers, bEase, bWorld) +
-      '</div><div class="spacer"></div>' +
+      '<span class="hairline"></span>' + body + '</div><div class="spacer"></div>' +
       '<button class="btn primary" type="button" data-b="enter">Open the dīwān' +
       '<span class="sub">افتح الديوان</span></button>' +
       '<button class="btn quiet" type="button" data-b="again">Run the forks again →</button>';
@@ -1831,151 +1581,6 @@
   });
 
   renderPair();
-
-  /* ══════════ B-scroll — the same ten, down one page ══════════
-
-     Same WYR data, same tally, same profileBody. The ONLY difference is
-     pacing, which is the whole point of having both: the carousel spends
-     a screen per decision and gains momentum; this spends a page on all
-     ten and gains revisability. Separate answer state so switching tabs
-     does not silently carry one variant's answers into the other.
-
-     Because every fork is visible, the payoff does not have to wait for a
-     reveal — the dock assembles the profile live. That is the one thing
-     the carousel structurally cannot do.
-     ────────────────────────────────────────────────────────────────── */
-
-  var bsAnswers = {}, bsEase = null, bsWorld = null;
-  var bsSheet = document.getElementById('bs-sheet');
-  var bsBody  = document.getElementById('bs-body');
-  var bsRev   = document.getElementById('bs-reveal');
-
-  function bsSegment(f) {
-    var side = function (which) {
-      var s = f[which], on = bsAnswers[f.k] === which;
-      return '<button class="seg' + (on ? ' on' : '') + '" type="button" ' +
-        'data-fork="' + f.k + '" data-side="' + which + '" aria-pressed="' + on + '">' +
-        '<span class="s-en">' + s.en + '</span>' +
-        '<span class="s-ar">' + s.ar + '</span></button>';
-    };
-    return '<div class="segpair' + (bsAnswers[f.k] ? ' answered' : '') + '">' +
-      side('a') + '<span class="seg-or">or<span>أو</span></span>' + side('b') + '</div>';
-  }
-
-  function renderBS() {
-    bsBody.innerHTML =
-      '<p class="sheet-lede">Ten of them. Answer any, in any order — scroll past the ones you ' +
-      'don’t have an opinion about. Nothing here is required.</p>' +
-      WYR.map(bsSegment).join('') +
-      '<div class="bs-rule"></div>' +
-      '<div class="field"><div class="field-label">' +
-        '<span class="q">How hard do you want the language? ' +
-        '<span style="font-family:Amiri,serif;direction:rtl;opacity:.5">ما مستوى اللغة؟</span></span>' +
-        '<span class="opt">pick one</span></div>' +
-        '<div class="eases">' + EASE.map(function (o) {
-          return '<button class="ease-card' + (bsEase === o.k ? ' on' : '') + '" type="button" ' +
-            'data-bsease="' + o.k + '" style="--c:' + o.c + '">' +
-            '<span class="bar" style="background:' + o.c + '"></span>' +
-            '<span class="txt"><span class="line"><span class="e">' + o.en + '</span>' +
-            '<span class="a">' + o.ar + '</span></span>' +
-            '<span class="note">' + o.note + '</span></span>' +
-            '<span class="band">' + o.label + '</span></button>';
-        }).join('') + '</div></div>' +
-      '<div class="field"><div class="field-label">' +
-        '<span class="q">Which world? ' +
-        '<span style="font-family:Amiri,serif;direction:rtl;opacity:.5">أي عالم؟</span></span>' +
-        '<span class="opt">pick one</span></div>' +
-        '<div class="eras">' + WORLDS.map(function (o) {
-          return '<button class="opt-card era-card' + (bsWorld === o.k ? ' on' : '') + '" type="button" ' +
-            'data-bsworld="' + o.k + '" style="--c:' + o.c + '">' +
-            '<span class="bar" style="background:' + o.c + '"></span>' +
-            '<span class="txt"><span class="scene">' + o.scene + '</span>' +
-            '<span class="named"><span class="nm-en">' + o.nmEn + '</span>' +
-            '<span class="nm-ar">' + o.nmAr + '</span>' +
-            '<span class="nm-c">' + o.span + '</span></span>' +
-            '<span class="moves">' + o.note + '</span></span></button>';
-        }).join('') + '</div></div>';
-    syncBS();
-  }
-
-  /* The live dock. Shows the profile's strongest keys as they accumulate —
-     the same topKeys() the reveal uses, so what builds here is exactly what
-     lands there, never a teaser for a different number. */
-  function syncBS() {
-    var t = tally(bsAnswers), prefs = toPrefs(bsAnswers, bsEase, bsWorld);
-    var any = t.answered || bsEase || bsWorld;
-    document.getElementById('bs-count').textContent = t.answered + ' of 10';
-    document.getElementById('bs-enter').innerHTML = any
-      ? 'See my taste profile<span class="sub">أرِني ذائقتي</span>'
-      : 'Take me anywhere<span class="sub">خذني إلى أي مكان</span>';
-
-    var chips = prefs.moods.slice(0, 3).map(function (k) {
-      var c = MOOD_COLOR[k] || '#c5a059';
-      return '<span class="p-chip" style="border-color:' + c + '66;color:' + c + '">' +
-        (MOOD_LABEL[k] || k) + '</span>';
-    }).concat(prefs.motifs.slice(0, 2).map(function (k) {
-      return '<span class="p-chip" style="border-color:#c5a05966;color:#c5a059">' +
-        (MOTIF_LABEL[k] || k) + '</span>';
-    }));
-
-    document.getElementById('bs-live').innerHTML = chips.length
-      ? '<span class="bs-live-k">so far</span><span class="bs-live-v">' + chips.join('') + '</span>'
-      : '<span class="bs-live-empty">Answer one and your profile starts here.</span>';
-  }
-
-  bsBody.addEventListener('click', function (e) {
-    var seg = e.target.closest('[data-fork]');
-    if (seg) {
-      var f = seg.dataset.fork;
-      /* Re-tapping the chosen side clears it: on one page a reader can
-         change their mind, and an answer you cannot withdraw is a trap. */
-      bsAnswers[f] = bsAnswers[f] === seg.dataset.side ? undefined : seg.dataset.side;
-      if (!bsAnswers[f]) delete bsAnswers[f];
-      var pair = seg.parentNode;
-      pair.className = 'segpair' + (bsAnswers[f] ? ' answered' : '');
-      pair.querySelectorAll('.seg').forEach(function (n) {
-        var on = bsAnswers[f] === n.dataset.side;
-        n.classList.toggle('on', on);
-        n.setAttribute('aria-pressed', on);
-      });
-      syncBS(); return;
-    }
-    var ez = e.target.closest('[data-bsease]');
-    if (ez) {
-      bsEase = bsEase === ez.dataset.bsease ? null : ez.dataset.bsease;
-      bsBody.querySelectorAll('[data-bsease]').forEach(function (n) {
-        n.classList.toggle('on', n.dataset.bsease === bsEase);
-      });
-      syncBS(); return;
-    }
-    var w = e.target.closest('[data-bsworld]');
-    if (w) {
-      bsWorld = bsWorld === w.dataset.bsworld ? null : w.dataset.bsworld;
-      bsBody.querySelectorAll('[data-bsworld]').forEach(function (n) {
-        n.classList.toggle('on', n.dataset.bsworld === bsWorld);
-      });
-      syncBS();
-    }
-  });
-
-  document.getElementById('bs-enter').addEventListener('click', function () {
-    bsRev.innerHTML = '<div class="spacer"></div><div class="reveal fade-in">' +
-      '<span class="hairline"></span>' + profileBody(bsAnswers, bsEase, bsWorld) +
-      '</div><div class="spacer"></div>' +
-      '<button class="btn primary" type="button" data-bs="enter">Open the dīwān' +
-      '<span class="sub">افتح الديوان</span></button>' +
-      '<button class="btn quiet" type="button" data-bs="back">Change an answer →</button>';
-    bsSheet.hidden = true; bsRev.hidden = false;
-  });
-
-  bsRev.addEventListener('click', function (e) {
-    var el = e.target.closest('[data-bs]');
-    if (!el) return;
-    if (el.dataset.bs === 'enter') { bsAnswers = {}; bsEase = null; bsWorld = null; renderBS(); }
-    bsRev.hidden = true; bsSheet.hidden = false;
-  });
-
-  renderBS();
 
 
   /* ══════════ ORIGINAL — the six steps that ship today ══════════
@@ -2294,32 +1899,8 @@
       var on = t.dataset.panel === id;
       t.setAttribute('aria-selected', on ? 'true' : 'false');
       document.getElementById('panel-' + t.dataset.panel).hidden = !on;
-      if (on && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
   }
-  /* Version strip: same keyboard contract as the flow strip, and the newly
-     selected tab is scrolled into view, so a tab reached by arrow key never
-     sits off-screen in the horizontal scroller. */
-  var vtabs = Array.prototype.slice.call(document.querySelectorAll('.vtab'));
-  function selectVersion(n) {
-    vtabs.forEach(function (t) {
-      var on = t.dataset.v === n;
-      t.setAttribute('aria-selected', on ? 'true' : 'false');
-      document.getElementById('vpanel-' + t.dataset.v).hidden = !on;
-      if (on && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    });
-  }
-  vtabs.forEach(function (t) {
-    t.addEventListener('click', function () { selectVersion(t.dataset.v); });
-    t.addEventListener('keydown', function (e) {
-      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-      e.preventDefault();
-      var i = vtabs.indexOf(t);
-      var n = vtabs[(i + (e.key === 'ArrowRight' ? 1 : vtabs.length - 1)) % vtabs.length];
-      selectVersion(n.dataset.v); n.focus();
-    });
-  });
-
   tabs.forEach(function (t) {
     t.addEventListener('click', function () { selectTab(t.dataset.panel); });
     t.addEventListener('keydown', function (e) {
@@ -2334,3 +1915,6 @@
 
 })();
 </script>
+
+</body>
+</html>

@@ -1,0 +1,782 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;background:#0a0a0f;color-scheme:dark}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Two Doors Into the Dīwān</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Forum&family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;500&family=Archivo:wght@400;500;600&display=swap">
+
+<style>
+  /* ────────────────────────────────────────────────────────────────
+     Single visual world, deliberately: this page IS the app's ground.
+     Ink + gold are the product's own tokens (INK '#0a0a0f',
+     gold '#c5a059'), so the mocks are not a rendering of the design —
+     they are the design, at 1:1, on the surface it ships on.
+     ──────────────────────────────────────────────────────────────── */
+  :root {
+    --ink:        #0a0a0f;
+    --ink-raised: #12121a;
+    --ink-edge:   #1d1d28;
+    --gold:       #c5a059;
+    --gold-dim:   #8c7340;
+    --parchment:  #ece5d8;
+    --muted:      #8b8a96;   /* grey biased warm, toward the gold */
+    --faint:      #56545f;
+    --keep:       #4a9d8f;
+    --pass:       #6b6875;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ink);
+    color: var(--parchment);
+    font-family: 'Archivo', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-inline: 20px;
+    padding-block: 56px 96px;
+  }
+
+  /* ── Masthead ───────────────────────────────────────────────── */
+  .masthead { display: flex; flex-direction: column; gap: 18px; max-width: 46rem; }
+  .eyebrow {
+    font-size: .6875rem; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--gold-dim); font-weight: 600;
+  }
+  h1 {
+    font-family: 'Forum', Georgia, serif;
+    font-weight: 400; margin: 0;
+    font-size: clamp(2rem, 5.6vw, 3rem); line-height: 1.08;
+    color: var(--gold); text-wrap: balance;
+  }
+  h1 .ar {
+    display: block; font-family: 'Reem Kufi', 'Amiri', serif;
+    font-size: .74em; opacity: .82; margin-top: .22em; direction: rtl;
+    text-align: left;
+  }
+  .standfirst {
+    font-family: 'Forum', Georgia, serif;
+    font-size: 1.125rem; line-height: 1.62; color: var(--parchment);
+    opacity: .82; margin: 0; max-width: 40rem;
+  }
+
+  hr.rule {
+    border: 0; height: 1px; margin-block: 52px;
+    background: linear-gradient(90deg, var(--gold-dim), transparent 62%);
+  }
+
+  h2 {
+    font-family: 'Forum', Georgia, serif; font-weight: 400;
+    font-size: 1.75rem; color: var(--gold); margin: 0 0 6px;
+  }
+  h3 {
+    font-family: 'Forum', Georgia, serif; font-weight: 400;
+    font-size: 1.25rem; color: var(--parchment); margin: 0;
+  }
+  .section-note {
+    font-size: .9375rem; line-height: 1.6; color: var(--muted);
+    margin: 0 0 28px; max-width: 42rem;
+  }
+
+  /* ── Findings: a set, not a sequence — so no numbering ──────── */
+  .findings { display: grid; gap: 1px; background: var(--ink-edge); border-block: 1px solid var(--ink-edge); }
+  .finding {
+    background: var(--ink); padding: 20px 0 20px 18px;
+    display: grid; grid-template-columns: 150px 1fr; gap: 6px 26px; align-items: start;
+    border-left: 2px solid transparent;
+  }
+  .finding[data-weight="high"] { border-left-color: var(--gold); }
+  .finding[data-weight="mid"]  { border-left-color: var(--gold-dim); }
+  .finding dt {
+    font-size: .8125rem; font-weight: 600; letter-spacing: .04em;
+    color: var(--gold); line-height: 1.45;
+  }
+  .finding dd { margin: 0; font-size: .9375rem; line-height: 1.62; color: var(--muted); }
+  .finding dd b { color: var(--parchment); font-weight: 500; }
+  @media (max-width: 640px) {
+    .finding { grid-template-columns: 1fr; gap: 4px; }
+  }
+
+  /* ── Mock stage ─────────────────────────────────────────────── */
+  .stage {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+    gap: 52px 44px; align-items: start;
+  }
+  .mock { display: flex; flex-direction: column; gap: 16px; }
+  .mock-head { display: flex; flex-direction: column; gap: 7px; }
+  .mock-tag {
+    font-size: .6875rem; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--gold-dim); font-weight: 600;
+  }
+  .mock-desc { font-size: .875rem; line-height: 1.6; color: var(--muted); margin: 0; }
+  .mock-desc b { color: var(--parchment); font-weight: 500; }
+
+  .phone {
+    width: 100%; max-width: 352px; aspect-ratio: 352 / 720;
+    border: 1px solid var(--ink-edge); border-radius: 34px;
+    background: var(--ink); position: relative; overflow: hidden;
+    box-shadow: 0 28px 64px -28px rgba(0,0,0,.9);
+  }
+  .screen {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    padding: 26px 20px 22px;
+  }
+  .screen[hidden] { display: none !important; }
+
+  /* progress */
+  .prog { display: flex; gap: 6px; justify-content: center; margin-bottom: 20px; flex: 0 0 auto; }
+  .prog i { width: 5px; height: 5px; border-radius: 99px; background: #2a2a35; transition: all .3s; }
+  .prog i.on { width: 18px; background: var(--gold); }
+
+  /* ── Poem typography (the product's actual hierarchy) ───────── */
+  .poem { display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center; }
+  .poem .v {
+    font-family: 'Amiri', serif; direction: rtl; color: var(--parchment);
+    font-size: 1.28rem; line-height: 2.05;
+  }
+  .poem .en {
+    font-family: 'Forum', Georgia, serif; font-size: .875rem; line-height: 1.62;
+    color: rgba(236,229,216,.46); max-width: 25ch;
+  }
+  .attrib {
+    display: flex; flex-direction: column; align-items: center; gap: 3px; margin-top: 4px;
+  }
+  .attrib .name {
+    font-family: 'Amiri', serif; direction: rtl; color: var(--gold); font-size: 1rem;
+  }
+  .attrib .meta {
+    font-size: .625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--faint);
+  }
+  .hairline { width: 64px; height: 1px; background: linear-gradient(90deg,transparent,var(--gold-dim),transparent); }
+
+  /* ── Controls ───────────────────────────────────────────────── */
+  .btn {
+    font-family: 'Forum', Georgia, serif; font-size: .9375rem;
+    background: transparent; color: var(--parchment); cursor: pointer;
+    border: 1px solid rgba(236,229,216,.2); border-radius: 999px;
+    min-height: 52px; padding: 8px 18px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+    transition: border-color .22s, background .22s, color .22s;
+  }
+  .btn:hover { border-color: rgba(197,160,89,.6); background: rgba(197,160,89,.07); }
+  .btn .sub { font-family: 'Amiri', serif; direction: rtl; font-size: .8125rem; opacity: .6; }
+  .btn.keep { border-color: rgba(74,157,143,.5); color: #7fc4b8; }
+  .btn.keep:hover { background: rgba(74,157,143,.1); border-color: rgba(74,157,143,.85); }
+  .btn.primary { border-color: var(--gold); color: var(--gold); }
+  .btn.primary:hover { background: rgba(197,160,89,.13); }
+  .btn.quiet { border-color: transparent; color: var(--faint); min-height: 40px; font-size: .8125rem; }
+  .btn.quiet:hover { color: var(--muted); background: transparent; }
+  .btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+  .ask {
+    font-family: 'Forum', Georgia, serif; font-size: .875rem;
+    color: var(--faint); text-align: center; margin: 0;
+  }
+
+  .spacer { flex: 1 1 auto; min-height: 0; }
+
+  /* ── Mock B: the sheet ──────────────────────────────────────── */
+  .sheet { overflow-y: auto; scrollbar-width: none; display: flex; flex-direction: column; gap: 22px; }
+  .sheet::-webkit-scrollbar { display: none; }
+  .field { display: flex; flex-direction: column; gap: 9px; }
+  .field-label {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  }
+  .field-label .q {
+    font-family: 'Forum', Georgia, serif; font-size: .9375rem; color: var(--parchment);
+    flex: 1 1 auto; min-width: 0;
+  }
+  .field-label .opt {
+    font-size: .625rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint);
+    flex: 0 0 auto; white-space: nowrap;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-family: 'Forum', Georgia, serif; font-size: .8125rem;
+    padding: 7px 11px; border-radius: 8px; cursor: pointer;
+    border: 1px solid rgba(236,229,216,.13); background: rgba(236,229,216,.025);
+    color: rgba(236,229,216,.62);
+    display: flex; align-items: center; gap: 6px;
+    transition: all .2s;
+  }
+  .chip .dot { width: 6px; height: 6px; border-radius: 99px; background: currentColor; opacity: .55; flex: 0 0 auto; }
+  .chip:hover { border-color: rgba(236,229,216,.3); color: var(--parchment); }
+  .chip[aria-pressed="true"] { color: #fff; }
+  .chip:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .dock {
+    position: absolute; left: 0; right: 0; bottom: 0;
+    padding: 12px 20px 22px;
+    background: var(--ink);
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .dock::before {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: 40px;
+    background: linear-gradient(180deg, transparent, var(--ink));
+    pointer-events: none;
+  }
+  .live {
+    font-family: 'Forum', Georgia, serif; font-size: .75rem; line-height: 1.5;
+    color: var(--faint); text-align: center; margin: 0; min-height: 2.25em;
+  }
+  .live b { color: var(--gold); font-weight: 400; }
+
+  /* ── Reveal ─────────────────────────────────────────────────── */
+  .reveal { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
+  .reveal h4 {
+    font-family: 'Forum', Georgia, serif; font-weight: 400; font-size: 1.375rem;
+    color: var(--gold); margin: 0;
+  }
+  .reveal h4 .ar { display: block; font-family: 'Reem Kufi', serif; font-size: .78em; opacity: .8; direction: rtl; margin-top: .2em; }
+  .leanings { display: flex; flex-direction: column; gap: 7px; width: 100%; }
+  .lean {
+    display: flex; align-items: center; gap: 10px; text-align: left;
+    padding: 9px 12px; border-radius: 9px; border: 1px solid var(--ink-edge);
+    background: rgba(236,229,216,.02);
+  }
+  .lean .bar { width: 3px; align-self: stretch; border-radius: 99px; flex: 0 0 auto; }
+  .lean .txt { display: flex; flex-direction: column; gap: 1px; }
+  .lean .k { font-size: .5625rem; letter-spacing: .13em; text-transform: uppercase; color: var(--faint); }
+  .lean .v { font-family: 'Forum', Georgia, serif; font-size: .9375rem; color: var(--parchment); }
+  .promise {
+    font-family: 'Forum', Georgia, serif; font-size: .8125rem; line-height: 1.6;
+    color: var(--muted); margin: 0; max-width: 28ch;
+  }
+
+  .fade-in { animation: fade .5s cubic-bezier(.2,.7,.3,1) both; }
+  @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .fade-in { animation: none; }
+    * { transition-duration: .01ms !important; }
+  }
+
+  /* ── Comparison table ───────────────────────────────────────── */
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; min-width: 620px; font-size: .875rem; }
+  th, td { text-align: left; padding: 13px 16px 13px 0; border-bottom: 1px solid var(--ink-edge); vertical-align: top; }
+  th {
+    font-size: .625rem; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--gold-dim); font-weight: 600;
+  }
+  td { color: var(--muted); line-height: 1.55; }
+  td:first-child { color: var(--parchment); font-weight: 500; width: 190px; }
+  td.now { color: var(--faint); }
+
+  .refs { display: grid; gap: 9px; font-size: .875rem; line-height: 1.6; color: var(--muted); }
+  .refs a { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(197,160,89,.3); }
+  .refs a:hover { border-bottom-color: var(--gold); }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <span class="eyebrow">Onboarding redesign · poetry bil-araby</span>
+    <h1>Two Doors Into the Dīwān<span class="ar">بابان إلى الديوان</span></h1>
+    <p class="standfirst">
+      The flow that ships today asks six questions about poetry before showing any.
+      Both directions below invert that. Tap through each phone — they are live.
+    </p>
+  </header>
+
+  <hr class="rule">
+
+  <h2>What the current flow gets wrong</h2>
+  <p class="section-note">
+    Not the craft — the hex comb, the bilingual weighting, the honest two doors are all better
+    than most apps ship. The problem is upstream of the pixels: the flow spends its entire
+    attention budget on self-report.
+  </p>
+
+  <dl class="findings">
+    <div class="finding" data-weight="high">
+      <dt>Six screens, no poem</dt>
+      <dd>The product's whole proposition is <b>a line, set well</b> — and the flow withholds it
+        until after the sixth tap. Calm, Duolingo and Spotify all deliver a taste of the core
+        emotion inside the first screen; this delivers a taxonomy quiz.</dd>
+    </div>
+    <div class="finding" data-weight="high">
+      <dt>Declared ≠ revealed</dt>
+      <dd>"Which images stay with you?" asks a reader to already know their own taxonomy.
+        People answer <b>aspirationally</b>. Meanwhile <code>preferenceWeighting.js</code> only needs
+        labels — and a poem someone actually kept carries them more honestly than a checkbox.</dd>
+    </div>
+    <div class="finding" data-weight="high">
+      <dt>Step 5 is a status test</dt>
+      <dd>"Easy reading, or a challenge?" makes a reader rank their own Arabic in public.
+        It is the highest-abandonment shape a question can take, and the answer is
+        <b>inferable for free</b> from reading posture plus whether they open a translation.</dd>
+    </div>
+    <div class="finding" data-weight="mid">
+      <dt>Locked doors</dt>
+      <dd>Both CTAs sit dimmed and inert until posture is picked, with no copy explaining the lock —
+        friction placed at the exact moment the cost of leaving is lowest.</dd>
+    </div>
+    <div class="finding" data-weight="high">
+      <dt>No payoff</dt>
+      <dd>The flow ends on <code>navigate('/')</code>. Six answers, and the reward is the identical
+        screen a skipper gets. <b>Nothing is shown to have changed</b>, so nothing was worth answering.</dd>
+    </div>
+    <div class="finding" data-weight="mid">
+      <dt>Write-once, invisible</dt>
+      <dd>Answers never resurface. No "you're seeing this because you said grief", no one-tap
+        correction — so a wrong answer is a permanent, unattributable tax on the feed.</dd>
+    </div>
+  </dl>
+
+  <hr class="rule">
+
+  <h2>The mocks</h2>
+  <p class="section-note">
+    Both keep the existing scoring engine untouched — answers stay a <em>weight</em>, never a filter —
+    and both end on the same reveal. They differ on where the signal comes from.
+  </p>
+
+  <div class="stage">
+
+    <!-- ══════════════ MOCK A ══════════════ -->
+    <section class="mock">
+      <div class="mock-head">
+        <span class="mock-tag">Direction A · recommended</span>
+        <h3>The First Draw</h3>
+        <p class="mock-desc">
+          Zero abstract questions. Three real poems, chosen to sit far apart on mood, century and
+          density, so three taps <b>triangulate the space</b>. Onboarding and reading are the same act;
+          a reader who quits after one tap has still read a poem. ~25 seconds, all of it spent on poetry.
+        </p>
+      </div>
+
+      <div class="phone">
+        <!-- A: draw -->
+        <div class="screen" id="a-draw">
+          <div class="prog" id="a-prog"><i class="on"></i><i></i><i></i></div>
+          <p class="ask" id="a-ask">Three poems. Tell us which ones stay.</p>
+          <div class="spacer"></div>
+          <div class="poem fade-in" id="a-poem"></div>
+          <div class="spacer"></div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn keep" style="flex:1" id="a-keep">
+              This one stays<span class="sub">يبقى</span>
+            </button>
+            <button class="btn" style="flex:1" id="a-pass">
+              Not this one<span class="sub">التالي</span>
+            </button>
+          </div>
+          <button class="btn quiet" id="a-skip" style="margin-top:6px">Just let me read →</button>
+        </div>
+
+        <!-- A: reveal -->
+        <div class="screen" id="a-reveal" hidden></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ MOCK B ══════════════ -->
+    <section class="mock">
+      <div class="mock-head">
+        <span class="mock-tag">Direction B · the minimal cut</span>
+        <h3>One Sheet, One Door</h3>
+        <p class="mock-desc">
+          Keeps declared preference but collapses six gated screens into <b>one sheet answerable in any
+          order</b>, nothing required, no locks, no back button to regret. A poem sits at the top the
+          whole time and re-draws as you tap, so every answer has a visible consequence before you commit.
+        </p>
+      </div>
+
+      <div class="phone">
+        <div class="screen" id="b-sheet" style="padding-bottom:0">
+          <div class="poem fade-in" id="b-poem" style="flex:0 0 auto; padding-bottom:18px; border-bottom:1px solid var(--ink-edge); margin-bottom:18px;"></div>
+          <div class="sheet" id="b-fields" style="padding-bottom:178px"></div>
+          <div class="dock">
+            <p class="live" id="b-live"></p>
+            <button class="btn primary" id="b-enter"></button>
+          </div>
+        </div>
+        <div class="screen" id="b-reveal" hidden></div>
+      </div>
+    </section>
+
+  </div>
+
+  <hr class="rule">
+
+  <h2>What actually changes</h2>
+  <p class="section-note">Beyond the screens — the dimensions a flow like this usually forgets.</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr><th>Dimension</th><th>Ships today</th><th>Proposed</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>First impression</td>
+          <td class="now">A gold headline and a locked pair of buttons</td>
+          <td>A poem, full bleed, in Amiri — the thing being sold</td>
+        </tr>
+        <tr>
+          <td>Signal source</td>
+          <td class="now">5 declared axes across 6 screens</td>
+          <td>3 revealed reactions (A) or 1 optional sheet (B); taxonomy is the fallback, not the gate</td>
+        </tr>
+        <tr>
+          <td>Difficulty</td>
+          <td class="now">A direct question about the reader's Arabic</td>
+          <td>Inferred from posture + translation opens. Never asked aloud.</td>
+        </tr>
+        <tr>
+          <td>Cost of skipping</td>
+          <td class="now">Locked until posture is answered</td>
+          <td>Always one tap, always labelled — and skipping still leaves you having read</td>
+        </tr>
+        <tr>
+          <td>Ending</td>
+          <td class="now"><code>navigate('/')</code></td>
+          <td>A named reveal: three leanings, in the reader's own words, then the door</td>
+        </tr>
+        <tr>
+          <td>Afterwards</td>
+          <td class="now">Answers vanish into localStorage</td>
+          <td>A "because you said…" chip on the feed, tap to correct. Answers become a conversation.</td>
+        </tr>
+        <tr>
+          <td>Bilingual load</td>
+          <td class="now">Every option label doubled; explanatory copy single</td>
+          <td>Unchanged — the existing rule is right. Doubling stays on questions and controls only.</td>
+        </tr>
+        <tr>
+          <td>Honesty</td>
+          <td class="now">Counts removed because answers are a weight, not a filter</td>
+          <td>Same conviction, stated out loud: <em>"We'll open there and widen as you read."</em></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <hr class="rule">
+
+  <h2>Where the thinking came from</h2>
+  <div class="refs">
+    <p><a href="https://uxcam.com/blog/10-apps-with-great-user-onboarding/">UXCam — 12 apps with great onboarding (2026)</a> · Calm, Duolingo, Spotify all deliver the core emotion inside screen one; features come after feelings.</p>
+    <p><a href="https://goodux.appcues.com/blog/calm-app-new-user-experience">Appcues — Calm's curated first-run</a> · the flow is the product, not a preamble to it.</p>
+    <p><a href="https://www.asappstudio.com/best-app-onboarding-flows-2026/">ASAP Studio — best onboarding flows 2026</a> · each step past 3–4 measurably increases abandonment; 2026 flows are shorter than 2023's.</p>
+    <p><a href="https://www.mlwhiz.com/p/cold-start-problem-recsys-modern-approaches">MLWhiz — modern cold-start approaches</a> · users pick aspirationally, not truthfully; a few real interactions beat a long declared profile.</p>
+    <p><a href="https://bookwiseapp.com/blog/storygraph-review-is-it-the-best-goodreads-alternative">StoryGraph review</a> · the one reading app with genuinely good onboarding — because it asks in <em>experiential</em> terms (slow-paced, dark, tense), not genre taxonomy.</p>
+    <p><a href="https://createbytes.com/insights/pinterest-ui-ux-review-boom-or-bloom">Pinterest UI/UX review</a> · first-run collects preference by putting real content in front of the user, not category lists.</p>
+    <p><a href="https://medium.com/design-bootcamp/arc-browser-rethinking-the-web-through-a-designers-lens-f3922ef2133e">Arc Browser, through a designer's lens</a> · the payoff moment — showing the reader what their answers built — is what earns the retention, not the questions.</p>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── Real lines, real poets. Tags mirror the live taxonomy keys. ── */
+  var POEMS = [
+    {
+      v: ['قِفا نَبكِ مِن ذِكرى حَبيبٍ وَمَنزِلِ', 'بِسِقطِ اللِوى بَينَ الدَخولِ فَحَومَلِ'],
+      en: 'Stop — let us weep at the memory of a love, and a camp on the rim of the drifting sand, between Dakhūl and Ḥawmal.',
+      poet: 'امرؤ القيس', poetEn: 'Imruʾ al-Qays',
+      meta: '6th century · muʿallaqa',
+      mood: { k: 'nostalgia', label: 'Nostalgia', ar: 'حنين', c: '#8b7355' },
+      motif: { k: 'desert-ruins', label: 'Desert & ruins', ar: 'الصحراء والأطلال' },
+      era: { k: 'c6', label: 'Pre-Islamic and early' },
+      diff: 'demanding'
+    },
+    {
+      v: ['دَع عَنكَ لَومي فَإِنَّ اللَومَ إِغراءُ', 'وَداوِني بِالَّتي كانَت هِيَ الداءُ'],
+      en: 'Leave off blaming me — blame only tempts. Cure me with the very thing that was the illness.',
+      poet: 'أبو نواس', poetEn: 'Abū Nuwās',
+      meta: '8th century · khamriyya',
+      mood: { k: 'joy', label: 'Joy', ar: 'فرح', c: '#fbbf24' },
+      motif: { k: 'wine-cup', label: 'The wine cup', ar: 'الكأس والخمر' },
+      era: { k: 'c8', label: 'The Abbasid centuries' },
+      diff: 'gentle'
+    },
+    {
+      v: ['وَإِنَّ صَخراً لَتَأتَمُّ الهُداةُ بِهِ', 'كَأَنَّهُ عَلَمٌ في رَأسِهِ نارُ'],
+      en: 'Ṣakhr — the guides take their bearing from him, a peak with a fire burning on its head.',
+      poet: 'الخنساء', poetEn: 'al-Khansāʾ',
+      meta: '7th century · elegy',
+      mood: { k: 'grief', label: 'Grief', ar: 'حزن', c: '#94a3b8' },
+      motif: { k: 'fire-light', label: 'Fire & light', ar: 'النار والضوء' },
+      era: { k: 'c7', label: 'Pre-Islamic and early' },
+      diff: 'measured'
+    },
+    {
+      v: ['أَضحى التَنائي بَديلاً عَن تَدانينا', 'وَنابَ عَن طيبِ لُقيانا تَجافينا'],
+      en: 'Distance has taken the place of our nearness; our estrangement stands in for the sweetness of meeting.',
+      poet: 'ابن زيدون', poetEn: 'Ibn Zaydūn',
+      meta: '11th century · Andalusi',
+      mood: { k: 'yearning', label: 'Yearning', ar: 'شوق', c: '#c084fc' },
+      motif: { k: 'journey', label: 'Journey', ar: 'الرحلة' },
+      era: { k: 'c11', label: 'Andalusi and after' },
+      diff: 'measured'
+    }
+  ];
+
+  function poemHTML(p) {
+    return '<div class="v">' + p.v[0] + '</div>' +
+           '<div class="v" style="margin-top:-8px">' + p.v[1] + '</div>' +
+           '<span class="hairline"></span>' +
+           '<div class="en">' + p.en + '</div>' +
+           '<div class="attrib"><span class="name">' + p.poet + '</span>' +
+           '<span class="meta">' + p.meta + '</span></div>';
+  }
+
+  function leanRow(kind, value, color) {
+    return '<div class="lean"><span class="bar" style="background:' + color + '"></span>' +
+           '<span class="txt"><span class="k">' + kind + '</span>' +
+           '<span class="v">' + value + '</span></span></div>';
+  }
+
+  /* Shared reveal. The promise echoes preferenceWeighting.js: seed, then broaden. */
+  function revealHTML(leanings, opts) {
+    var rows = leanings.map(function (l) { return leanRow(l[0], l[1], l[2]); }).join('');
+    return '<div class="spacer"></div>' +
+      '<div class="reveal fade-in">' +
+        '<span class="hairline"></span>' +
+        '<h4>' + opts.title + '<span class="ar">' + opts.titleAr + '</span></h4>' +
+        '<div class="leanings">' + rows + '</div>' +
+        '<p class="promise">' + opts.promise + '</p>' +
+      '</div>' +
+      '<div class="spacer"></div>' +
+      '<button class="btn primary">Open the dīwān<span class="sub">افتح الديوان</span></button>' +
+      '<button class="btn quiet" style="margin-top:6px">' + opts.secondary + '</button>';
+  }
+
+  /* ══════════ A — The First Draw ══════════ */
+  var aRound = 0, aKept = [];
+  var aDraw = document.getElementById('a-draw');
+  var aRev  = document.getElementById('a-reveal');
+
+  function renderA() {
+    var p = POEMS[aRound];
+    document.getElementById('a-poem').innerHTML = poemHTML(p);
+    document.getElementById('a-poem').className = 'poem fade-in';
+    var dots = document.getElementById('a-prog').children;
+    for (var i = 0; i < dots.length; i++) dots[i].className = i === aRound ? 'on' : '';
+    document.getElementById('a-ask').textContent = aRound === 0
+      ? 'Three poems. Tell us which ones stay.'
+      : (aRound === 1 ? 'Different century, different weather.' : 'Last one.');
+  }
+
+  function advanceA(kept) {
+    if (kept) aKept.push(POEMS[aRound]);
+    aRound += 1;
+    if (aRound < 3) { renderA(); return; }
+
+    var leanings, promise, title;
+    if (aKept.length === 0) {
+      title = 'Nothing yet';
+      leanings = [['Reading', 'Open, unweighted', '#6b6875']];
+      promise = 'You passed on all three — so we won’t guess. The dīwān opens wide, and starts learning the moment something lands.';
+    } else {
+      var m = aKept[0].mood, mo = aKept[0].motif, er = aKept[0].era;
+      if (aKept.length > 1) er = { label: 'Across the centuries' };
+      leanings = [
+        ['Mood', m.label + ' · ' + m.ar, m.c],
+        ['Imagery', mo.label + ' · ' + mo.ar, '#c5a059'],
+        ['Era', er.label, '#8c7340']
+      ];
+      promise = 'We’ll open there and widen as you read. Nothing in the dīwān is ever closed to you.';
+      title = 'Your dīwān leans';
+    }
+
+    aRev.innerHTML = revealHTML(leanings, {
+      title: title, titleAr: 'ديوانك يميل',
+      promise: promise, id: 'a',
+      secondary: aKept.length ? 'Tune it by hand →' : 'Answer a few questions instead →'
+    });
+    aDraw.hidden = true; aRev.hidden = false;
+    aRev.querySelector('.btn.primary').addEventListener('click', resetA);
+    aRev.querySelector('.quiet').addEventListener('click', resetA);
+  }
+
+  function resetA() {
+    aRound = 0; aKept = [];
+    aRev.hidden = true; aDraw.hidden = false;
+    renderA();
+  }
+
+  document.getElementById('a-keep').addEventListener('click', function () { advanceA(true); });
+  document.getElementById('a-pass').addEventListener('click', function () { advanceA(false); });
+  document.getElementById('a-skip').addEventListener('click', function () {
+    aKept = []; aRound = 3; advanceA(false);
+  });
+  renderA();
+
+  /* ══════════ B — One Sheet, One Door ══════════ */
+  var FIELDS = [
+    {
+      key: 'mood', q: 'How do you want to feel?', ar: 'كيف تريد أن تشعر؟', opt: 'pick any',
+      options: [
+        { k: 'amorous',       en: 'Amorous',       ar: 'غزل',  c: '#e8647a' },
+        { k: 'yearning',      en: 'Yearning',      ar: 'شوق',  c: '#c084fc' },
+        { k: 'grief',         en: 'Grief',         ar: 'حزن',  c: '#94a3b8' },
+        { k: 'nostalgia',     en: 'Nostalgia',     ar: 'حنين', c: '#8b7355' },
+        { k: 'joy',           en: 'Joy',           ar: 'فرح',  c: '#fbbf24' },
+        { k: 'defiance',      en: 'Defiance',      ar: 'تحدٍّ', c: '#ef4444' },
+        { k: 'contemplation', en: 'Contemplation', ar: 'تأمل', c: '#38bdf8' },
+        { k: 'satire',        en: 'Satire',        ar: 'سخرية', c: '#fb923c' }
+      ]
+    },
+    {
+      key: 'motif', q: 'Which images stay with you?', ar: 'أي الصور تسكنك؟', opt: 'optional',
+      options: [
+        { k: 'night',           en: 'Night',       ar: 'الليل',   c: '#1e3a6e' },
+        { k: 'desert-ruins',    en: 'Ruins',       ar: 'الأطلال', c: '#b08968' },
+        { k: 'wine-cup',        en: 'The cup',     ar: 'الكأس',   c: '#a16207' },
+        { k: 'garden-flowers',  en: 'Gardens',     ar: 'الروض',   c: '#4ade80' },
+        { k: 'sea-water',       en: 'The sea',     ar: 'البحر',   c: '#0ea5e9' },
+        { k: 'sword-battle',    en: 'The sword',   ar: 'السيف',   c: '#ef4444' }
+      ]
+    },
+    {
+      key: 'era', q: 'Where in time?', ar: 'من أي زمن؟', opt: 'optional',
+      options: [
+        { k: 'c6', en: 'Before Islam', ar: 'الجاهلية', c: '#b08968' },
+        { k: 'c8', en: 'Abbasid',      ar: 'العباسي',  c: '#c5a059' },
+        { k: 'c11', en: 'Andalusi',    ar: 'الأندلسي', c: '#4ade80' },
+        { k: 'c19', en: 'Modern',      ar: 'الحديث',   c: '#38bdf8' }
+      ]
+    },
+    {
+      key: 'posture', q: 'How do you read?', ar: 'كيف تقرأ؟', opt: 'one', single: true,
+      options: [
+        { k: 'arabic',   en: 'Arabic only',   ar: 'بالعربية',  c: '#c5a059' },
+        { k: 'english',  en: 'With English',  ar: 'مع الترجمة', c: '#c5a059' },
+        { k: 'learning', en: 'And how it sounds', ar: 'ونطقها', c: '#c5a059' }
+      ]
+    }
+  ];
+
+  var picks = { mood: [], motif: [], era: [], posture: [] };
+
+  function buildB() {
+    var host = document.getElementById('b-fields');
+    host.innerHTML = FIELDS.map(function (f) {
+      var chips = f.options.map(function (o) {
+        return '<button class="chip" type="button" aria-pressed="false" ' +
+               'data-field="' + f.key + '" data-key="' + o.k + '" data-color="' + o.c + '">' +
+               '<span class="dot" style="background:' + o.c + '"></span>' + o.en +
+               ' <span style="font-family:Amiri,serif;direction:rtl;opacity:.55;font-size:.9em">' + o.ar + '</span>' +
+               '</button>';
+      }).join('');
+      return '<div class="field"><div class="field-label">' +
+             '<span class="q">' + f.q + ' <span style="font-family:Amiri,serif;direction:rtl;opacity:.5">' + f.ar + '</span></span>' +
+             '<span class="opt">' + f.opt + '</span></div>' +
+             '<div class="chips">' + chips + '</div></div>';
+    }).join('');
+
+    host.addEventListener('click', function (e) {
+      var chip = e.target.closest('.chip');
+      if (!chip) return;
+      var field = chip.dataset.field, key = chip.dataset.key;
+      var cfg = FIELDS.filter(function (f) { return f.key === field; })[0];
+      var on = chip.getAttribute('aria-pressed') === 'true';
+
+      if (cfg.single) {
+        host.querySelectorAll('.chip[data-field="' + field + '"]').forEach(function (c) {
+          c.setAttribute('aria-pressed', 'false');
+          c.style.borderColor = ''; c.style.background = '';
+        });
+        picks[field] = on ? [] : [key];
+      } else {
+        picks[field] = on
+          ? picks[field].filter(function (k) { return k !== key; })
+          : picks[field].concat([key]);
+      }
+
+      var nowOn = picks[field].indexOf(key) !== -1;
+      chip.setAttribute('aria-pressed', nowOn ? 'true' : 'false');
+      chip.style.borderColor = nowOn ? chip.dataset.color : '';
+      chip.style.background = nowOn ? chip.dataset.color + '22' : '';
+      syncB();
+    });
+  }
+
+  function total() {
+    return picks.mood.length + picks.motif.length + picks.era.length;
+  }
+
+  function syncB() {
+    var n = total();
+    var btn = document.getElementById('b-enter');
+    var live = document.getElementById('b-live');
+
+    btn.innerHTML = n
+      ? 'Open the dīwān<span class="sub">افتح الديوان — ' + n + '</span>'
+      : 'Take me anywhere<span class="sub">خذني إلى أي مكان</span>';
+
+    live.innerHTML = n === 0
+      ? 'Nothing chosen. The whole dīwān, unweighted — which is a perfectly good way in.'
+      : 'Leaning your first poems toward <b>' + n + '</b> of these. ' +
+        'A lean, never a filter — nothing gets locked out.';
+
+    /* The poem above re-draws to match the newest pick: every answer has a
+       visible consequence before the reader commits to anything. */
+    var p = POEMS[0];
+    if (picks.mood.indexOf('joy') !== -1 || picks.motif.indexOf('wine-cup') !== -1) p = POEMS[1];
+    else if (picks.mood.indexOf('grief') !== -1) p = POEMS[2];
+    else if (picks.mood.indexOf('yearning') !== -1 || picks.era.indexOf('c11') !== -1) p = POEMS[3];
+    var host = document.getElementById('b-poem');
+    if (host.dataset.showing !== p.poetEn) {
+      host.dataset.showing = p.poetEn;
+      host.innerHTML = poemHTML(p);
+      host.className = 'poem fade-in';
+    }
+  }
+
+  document.getElementById('b-enter').addEventListener('click', function () {
+    var n = total();
+    var leanings, promise, title;
+    if (!n) {
+      title = 'Straight in';
+      leanings = [['Reading', 'Open, unweighted', '#6b6875']];
+      promise = 'No answers, no weighting. Save a poem and the dīwān starts leaning on its own.';
+    } else {
+      title = 'Your dīwān leans';
+      var moodCfg = FIELDS[0].options.filter(function (o) { return picks.mood.indexOf(o.k) !== -1; });
+      var motifCfg = FIELDS[1].options.filter(function (o) { return picks.motif.indexOf(o.k) !== -1; });
+      var eraCfg = FIELDS[2].options.filter(function (o) { return picks.era.indexOf(o.k) !== -1; });
+      leanings = [];
+      if (moodCfg.length) leanings.push(['Mood', moodCfg.map(function (o) { return o.en; }).join(', '), moodCfg[0].c]);
+      if (motifCfg.length) leanings.push(['Imagery', motifCfg.map(function (o) { return o.en; }).join(', '), motifCfg[0].c]);
+      if (eraCfg.length) leanings.push(['Era', eraCfg.map(function (o) { return o.en; }).join(', '), eraCfg[0].c]);
+      if (!leanings.length) leanings.push(['Reading', 'Open, unweighted', '#6b6875']);
+      promise = 'We’ll open there and widen as you read. Nothing in the dīwān is ever closed to you.';
+    }
+
+    var rev = document.getElementById('b-reveal');
+    rev.innerHTML = revealHTML(leanings, {
+      title: title, titleAr: 'ديوانك يميل',
+      promise: promise, id: 'b', secondary: 'Change an answer →'
+    });
+    document.getElementById('b-sheet').hidden = true;
+    rev.hidden = false;
+    var back = function () {
+      rev.hidden = true;
+      document.getElementById('b-sheet').hidden = false;
+    };
+    rev.querySelector('.btn.primary').addEventListener('click', back);
+    rev.querySelector('.quiet').addEventListener('click', back);
+  });
+
+  buildB();
+  syncB();
+})();
+</script>
+
+</body>
+</html>

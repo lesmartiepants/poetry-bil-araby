@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;background:#0a0a0f;color-scheme:dark}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
 <title>Two Doors Into the Dīwān</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -302,25 +310,9 @@
 
 
   /* ── Tabs + panels ──────────────────────────────────────────── */
-  /* Four flows and eight versions both outgrow a phone, so the strips
-     scroll horizontally rather than wrapping into a second row that
-     pushes the phone below the fold. */
   .tabs {
-    display: flex; gap: 2px; flex-wrap: nowrap;
-    overflow-x: auto; overscroll-behavior-x: contain;
-    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    display: flex; gap: 2px; flex-wrap: wrap;
     border-bottom: 1px solid var(--ink-edge); margin-bottom: 34px;
-    scroll-snap-type: x proximity;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tabs .tab { flex: 0 0 auto; scroll-snap-align: start; }
-  /* The strip runs to the page edge so a cut-off tab reads as "scroll me",
-     but its contents keep the gutter. */
-  .tabs-wrap { position: relative; }
-  .tabs-wrap::after {
-    content: ''; position: absolute; right: 0; top: 0; bottom: 1px; width: 44px;
-    background: linear-gradient(90deg, transparent, var(--ink));
-    pointer-events: none;
   }
   .tab {
     background: transparent; border: 0; border-bottom: 2px solid transparent;
@@ -469,221 +461,6 @@
 
   .o-wash { position: absolute; inset: 0; pointer-events: none; transition: opacity .6s ease; }
 
-  /* ── Mock B: the forks ──────────────────────────────────────── */
-  .prog i.done { background: var(--gold-dim); }
-  .wyr { display: flex; flex-direction: column; gap: 4px; flex: 0 0 auto; }
-  .fork {
-    display: flex; flex-direction: column; align-items: center; gap: 5px;
-    padding: 20px 16px; border-radius: 14px; cursor: pointer; text-align: center;
-    border: 1px solid rgba(236,229,216,.13); background: rgba(236,229,216,.025);
-    transition: border-color .2s, background .2s, transform .2s;
-  }
-  .fork:hover { border-color: rgba(197,160,89,.55); background: rgba(197,160,89,.06); }
-  .fork.on {
-    border-color: var(--gold); background: rgba(197,160,89,.14); transform: scale(.985);
-  }
-  .fork .f-en {
-    font-family: 'Forum', Georgia, serif; font-size: 1.0625rem; line-height: 1.38;
-    color: var(--parchment); max-width: 24ch;
-  }
-  .fork.on .f-en { color: #fff; }
-  .fork .f-ar {
-    font-family: 'Amiri', serif; direction: rtl; font-size: .875rem;
-    color: rgba(236,229,216,.42);
-  }
-  .fork:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  .fork-or {
-    display: flex; align-items: center; justify-content: center; gap: 7px;
-    font-family: 'Forum', Georgia, serif; font-size: .75rem; color: var(--faint);
-    padding: 3px 0; letter-spacing: .1em;
-  }
-  .fork-or .or-ar { font-family: 'Amiri', serif; direction: rtl; opacity: .7; }
-  .wyr-foot { display: flex; justify-content: space-between; gap: 8px; flex: 0 0 auto; }
-  .wyr-foot .btn.quiet { padding-inline: 4px; }
-
-  /* ease of reading */
-  .eases { display: flex; flex-direction: column; gap: 7px; flex: 0 0 auto; }
-  .ease-card {
-    display: flex; gap: 11px; align-items: center; text-align: left; width: 100%;
-    padding: 13px 12px; border-radius: 10px; cursor: pointer;
-    border: 1px solid rgba(236,229,216,.12); background: rgba(236,229,216,.022);
-    transition: border-color .2s, background .2s;
-  }
-  .ease-card:hover { border-color: rgba(236,229,216,.32); }
-  .ease-card.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); }
-  .ease-card .bar { width: 2px; align-self: stretch; border-radius: 99px; flex: 0 0 auto; }
-  .ease-card .txt { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
-  .ease-card .line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
-  .ease-card .e { font-family: 'Forum', Georgia, serif; font-size: .9375rem; color: var(--parchment); }
-  .ease-card.on .e { color: #fff; }
-  .ease-card .a { font-family: 'Amiri', serif; direction: rtl; font-size: .8125rem; color: rgba(236,229,216,.42); }
-  .ease-card .note { font-size: .625rem; color: var(--faint); line-height: 1.45; }
-  .ease-card .band {
-    flex: 0 0 auto; font-size: .6875rem; letter-spacing: .06em; color: var(--faint);
-    font-variant-numeric: tabular-nums; padding-left: 6px;
-  }
-  .ease-card.on .band { color: var(--c); }
-  .ease-card:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-  .scale-note {
-    font-size: .625rem; line-height: 1.5; color: var(--faint); text-align: center;
-    margin: 12px 0 0;
-  }
-  .era-card.on { border-color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); }
-  .era-card.on .named .nm-en { color: var(--gold); }
-  .era-card.on .scene { color: #fff; }
-
-  /* the taste profile */
-  .profile { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-  .prow { display: flex; gap: 10px; align-items: baseline; }
-  .p-k {
-    flex: 0 0 62px; font-size: .5625rem; letter-spacing: .13em;
-    text-transform: uppercase; color: var(--faint); text-align: left;
-  }
-  .p-v { display: flex; flex-wrap: wrap; gap: 4px; flex: 1 1 auto; }
-  .p-chip {
-    font-family: 'Forum', Georgia, serif; font-size: .75rem;
-    padding: 3px 8px; border-radius: 99px; border: 1px solid;
-    background: rgba(236,229,216,.02);
-  }
-  .axis { display: flex; flex-direction: column; gap: 4px; }
-  .axis .ax-k {
-    font-size: .5625rem; letter-spacing: .13em; text-transform: uppercase;
-    color: var(--faint); text-align: left;
-  }
-  .ax-line {
-    position: relative; height: 1px; background: rgba(236,229,216,.16);
-    margin: 6px 5px;
-  }
-  .ax-dot {
-    position: absolute; top: 50%; width: 9px; height: 9px; border-radius: 99px;
-    transform: translate(-50%, -50%); transition: left .4s cubic-bezier(.2,.7,.3,1);
-  }
-  .ax-ends {
-    display: flex; justify-content: space-between;
-    font-size: .5625rem; color: var(--faint);
-  }
-
-
-  /* ── Query-mapping section ──────────────────────────────────── */
-  .layers {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-    gap: 1px; background: var(--ink-edge); border: 1px solid var(--ink-edge);
-    border-radius: 3px; margin-bottom: 32px;
-  }
-  .layer { background: var(--ink); padding: 20px 22px; display: flex; flex-direction: column; gap: 8px; }
-  .layer .l-n {
-    font-size: .5625rem; letter-spacing: .16em; text-transform: uppercase;
-    color: var(--gold-dim); font-weight: 600;
-  }
-  .layer h3 { font-size: 1.125rem; }
-  .layer p { margin: 0; font-size: .875rem; line-height: 1.62; color: var(--muted); }
-  .layer p b { color: var(--parchment); font-weight: 500; }
-  table.qmap td:first-child { width: 210px; }
-  .sub-t {
-    display: block; font-size: .625rem; letter-spacing: .05em; color: var(--faint);
-    font-weight: 400; margin-top: 3px;
-  }
-  h3.sub-h {
-    font-family: 'Forum', Georgia, serif; font-weight: 400; font-size: 1.25rem;
-    color: var(--gold); margin: 38px 0 8px;
-  }
-  code {
-    font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .92em;
-    color: rgba(236,229,216,.78);
-  }
-
-
-  /* ── Mock B-scroll: segmented forks on one page ─────────────── */
-  .bs-head {
-    flex: 0 0 auto; display: flex; align-items: baseline; justify-content: space-between;
-    gap: 10px; padding: 22px 20px 12px;
-    border-bottom: 1px solid var(--ink-edge); background: var(--ink);
-  }
-  .bs-head .bs-t {
-    font-family: 'Forum', Georgia, serif; font-size: 1.0625rem; color: var(--gold);
-  }
-  .bs-head .bs-c {
-    font-size: .625rem; letter-spacing: .12em; text-transform: uppercase;
-    color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap;
-  }
-  #bs-body { padding: 16px 20px 150px; gap: 14px; }
-  /* The sheet is a column flexbox taller than the phone, so every child has
-     to opt out of shrinking or the whole list squashes to hairlines instead
-     of scrolling. */
-  #bs-body > * { flex: 0 0 auto; }
-
-  .segpair {
-    display: flex; flex-direction: column; gap: 0;
-    border: 1px solid rgba(236,229,216,.11); border-radius: 11px; overflow: hidden;
-    transition: border-color .2s;
-  }
-  .segpair.answered { border-color: rgba(197,160,89,.42); }
-  .seg {
-    display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
-    padding: 11px 13px; min-height: 48px; justify-content: center;
-    background: transparent; border: 0; cursor: pointer; text-align: left; width: 100%;
-    transition: background .2s, color .2s;
-  }
-  .seg:hover { background: rgba(236,229,216,.035); }
-  .seg.on { background: rgba(197,160,89,.13); }
-  .seg .s-en {
-    font-family: 'Forum', Georgia, serif; font-size: .875rem; line-height: 1.32;
-    color: rgba(236,229,216,.72);
-  }
-  .seg.on .s-en { color: #fff; }
-  .seg .s-ar {
-    font-family: 'Amiri', serif; direction: rtl; font-size: .75rem;
-    color: rgba(236,229,216,.32);
-  }
-  .seg:focus-visible { outline: 2px solid var(--gold); outline-offset: -2px; }
-  .seg-or {
-    display: flex; align-items: center; gap: 6px; padding: 2px 13px;
-    font-family: 'Forum', Georgia, serif; font-size: .625rem; letter-spacing: .12em;
-    color: var(--faint); border-block: 1px solid rgba(236,229,216,.08);
-  }
-  .seg-or span { font-family: 'Amiri', serif; direction: rtl; opacity: .7; }
-  .bs-rule {
-    height: 1px; margin: 6px 0 2px;
-    background: linear-gradient(90deg, transparent, var(--ink-edge), transparent);
-  }
-
-  .bs-live {
-    display: flex; align-items: center; gap: 8px; min-height: 26px;
-    justify-content: center; flex-wrap: wrap;
-  }
-  .bs-live-k {
-    font-size: .5625rem; letter-spacing: .13em; text-transform: uppercase; color: var(--faint);
-  }
-  .bs-live-v { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
-  .bs-live-empty {
-    font-family: 'Forum', Georgia, serif; font-size: .75rem; color: var(--faint);
-  }
-
-
-  /* ── Version history ────────────────────────────────────────── */
-  .vtabs { margin-bottom: 24px; }
-  .vtab .ts { font-family: ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .04em; }
-  .vpanel[hidden] { display: none !important; }
-  .vmeta {
-    display: flex; flex-wrap: wrap; gap: 8px 26px; align-items: baseline;
-    padding-bottom: 14px; border-bottom: 1px solid var(--ink-edge);
-  }
-  .vstat { display: flex; align-items: baseline; gap: 8px; }
-  .vk { font-size: .5625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
-  .vv { font-size: .8125rem; color: var(--parchment); }
-  .vv.mono {
-    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-    font-variant-numeric: tabular-nums; color: var(--muted);
-  }
-  .vv a { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(197,160,89,.3); }
-  .vv a:hover { border-bottom-color: var(--gold); }
-  .vdesc { font-size: .9375rem; line-height: 1.62; color: var(--muted); margin: 16px 0 20px; max-width: 46rem; }
-  .vframe {
-    border: 1px solid var(--ink-edge); border-radius: 4px; overflow: hidden;
-    background: var(--ink); height: min(78vh, 760px);
-  }
-  .vframe iframe { width: 100%; height: 100%; border: 0; display: block; }
-
   /* ── Reveal ─────────────────────────────────────────────────── */
   .reveal { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
   .reveal h4 {
@@ -751,7 +528,6 @@
     and both end on the same reveal. They differ on where the signal comes from.
   </p>
 
-  <div class="tabs-wrap">
   <div class="tabs" role="tablist" aria-label="Onboarding flows">
     <button class="tab" type="button" role="tab" id="tab-o" aria-controls="panel-o" aria-selected="true" data-panel="o">
       <span class="tn">Ships today</span><span class="ts">six steps</span>
@@ -760,12 +536,8 @@
       <span class="tn">A · The First Draw</span><span class="ts">three poems</span>
     </button>
     <button class="tab" type="button" role="tab" id="tab-b" aria-controls="panel-b" aria-selected="false" data-panel="b">
-      <span class="tn">B · Fork carousel</span><span class="ts">one at a time</span>
+      <span class="tn">B · Four Questions</span><span class="ts">one sheet</span>
     </button>
-    <button class="tab" type="button" role="tab" id="tab-bs" aria-controls="panel-bs" aria-selected="false" data-panel="bs">
-      <span class="tn">B-scroll · One page</span><span class="ts">same ten forks</span>
-    </button>
-  </div>
   </div>
 
   <!-- ══════════════ ORIGINAL ══════════════ -->
@@ -831,72 +603,27 @@
   <!-- ══════════════ MOCK B ══════════════ -->
   <section class="panel" id="panel-b" role="tabpanel" aria-labelledby="tab-b" hidden>
     <div class="phone">
-      <!-- the carousel -->
-      <div class="screen" id="b-wyr">
-        <div class="prog" id="b-prog"></div>
-        <p class="ask" id="b-ask">Would you rather read…</p>
-        <div class="spacer"></div>
-        <div class="wyr" id="b-pair"></div>
-        <div class="spacer"></div>
-        <div class="wyr-foot">
-          <button class="btn quiet" type="button" id="b-skip">No preference →</button>
-          <button class="btn quiet" type="button" id="b-done">That's enough →</button>
+      <div class="screen" id="b-sheet" style="padding-bottom:0">
+        <div class="sheet" id="b-fields" style="padding-bottom:150px"></div>
+        <div class="dock">
+          <p class="live" id="b-live"></p>
+          <button class="btn primary" id="b-enter"></button>
         </div>
       </div>
-      <!-- ease of reading -->
-      <div class="screen" id="b-ease" hidden></div>
-      <!-- which world -->
-      <div class="screen" id="b-era" hidden></div>
-      <!-- the taste profile -->
       <div class="screen" id="b-reveal" hidden></div>
     </div>
     <div class="mock-head">
-      <span class="mock-tag">Direction B · would you rather</span>
-      <h3>Ten Forks and a Profile</h3>
+      <span class="mock-tag">Direction B · rewritten questions</span>
+      <h3>Four Questions About You</h3>
       <p class="mock-desc">
-        Ten either/ors, one per screen, <b>auto-advancing the moment you tap</b>. Both sides are
-        always genuinely appealing, neither names a category, and none of them needs you to have
-        read a line of Arabic poetry. Answer ten or answer two — "That's enough" is live from the
-        first screen, and an unanswered fork simply contributes nothing.
+        Same one-sheet shape — but <b>none of the questions are about poetry you haven't read yet</b>.
+        They ask about your evening, not the taxonomy: why you opened this, which of two real lines
+        you'd rather keep reading, which world you want to be in. Each is a different shape, so four
+        questions don't read as one long one.
       </p>
       <p class="mock-desc">
-        Then one question on how hard you want the language, one on which world, and a
-        <b>taste profile</b> built out of the forks — the same <code>{family, moods, motifs, era,
-        difficulty}</code> payload the weighting engine already eats, so nothing downstream changes.
-      </p>
-    </div>
-  </section>
-
-  <!-- ══════════════ MOCK B-SCROLL ══════════════ -->
-  <section class="panel" id="panel-bs" role="tabpanel" aria-labelledby="tab-bs" hidden>
-    <div class="phone">
-      <div class="screen" id="bs-sheet" style="padding:0">
-        <div class="bs-head">
-          <span class="bs-t">Would you rather…</span>
-          <span class="bs-c" id="bs-count">0 of 10</span>
-        </div>
-        <div class="sheet" id="bs-body"></div>
-        <div class="dock">
-          <div class="bs-live" id="bs-live"></div>
-          <button class="btn primary" type="button" id="bs-enter"></button>
-        </div>
-      </div>
-      <div class="screen" id="bs-reveal" hidden></div>
-    </div>
-    <div class="mock-head">
-      <span class="mock-tag">Direction B-scroll · the same ten</span>
-      <h3>All Ten at Once</h3>
-      <p class="mock-desc">
-        Identical forks, identical tally, identical profile — <b>only the pacing changes</b>. Ten
-        segmented pairs down one page, answerable in any order, revisable at any time, and skippable
-        by scrolling past. The ease and era questions sit at the bottom of the same scroll.
-      </p>
-      <p class="mock-desc">
-        The trade is real and cuts both ways. The carousel is a <b>ritual</b>: one decision per
-        screen, big type, momentum, and you cannot see the end coming. This is <b>control</b>: all
-        ten are visible up front so nothing feels like a trap — and because everything is visible,
-        the payoff can be continuous. The profile assembles in the dock as you answer, instead of
-        waiting for a reveal.
+        No locks, no order, no back button to regret — and the dock names the poem your answers would
+        actually draw.
       </p>
     </div>
   </section>
@@ -967,10 +694,9 @@
     </div>
     <div class="finding" data-weight="high">
       <dt>Never make the reader rank themselves</dt>
-      <dd>"Easy reading, or a challenge?" is a status test — it asks the reader to place themselves
-        on a ladder. The same three buckets, asked as <em>appetite</em>, are not: "Keep it plain" /
-        "A bit of work is fine" / "Give me the deep end". <b>Nothing is phrased as a deficiency and
-        nothing flatters the hard option</b>, so every rung is a comfortable thing to pick.</dd>
+      <dd>"Easy reading, or a challenge?" is a status test. The rewrite shows two real, unlabelled
+        lines and asks which one they'd rather keep reading. <b>The choice reports density; the reader
+        never grades their own Arabic.</b></dd>
     </div>
     <div class="finding" data-weight="mid">
       <dt>Vary the shape</dt>
@@ -986,9 +712,9 @@
     <div class="finding" data-weight="high">
       <dt>Every question pays rent</dt>
       <dd>If you can't name the column it moves, cut it. Occasion moves mood and intensity; the
-        each fork moves named mood, motif or family keys; the ease question moves
-        <code>accessibility_score</code>; the world moves <code>poems.century</code>. The table below
-        names the column for every single one. <b>Nothing is asked that the draw cannot use.</b></dd>
+        comparison moves <code>accessibility_score</code>; the world you pick moves
+        <code>poems.century</code>. <b>Three questions cover all five axes the old flow spent six
+        screens on.</b></dd>
     </div>
     <div class="finding" data-weight="high">
       <dt>Teach by the answer, not the question</dt>
@@ -1026,12 +752,12 @@
         <tr>
           <td>Signal source</td>
           <td class="now">5 declared axes across 6 screens</td>
-          <td>3 revealed reactions (A), or 10 optional forks + 2 questions (B). Taxonomy is derived, never asked.</td>
+          <td>3 revealed reactions (A), or 4 questions about the reader's evening (B). Taxonomy is derived, never asked.</td>
         </tr>
         <tr>
           <td>Difficulty</td>
           <td class="now">A direct question about the reader's Arabic</td>
-          <td>Three appetite buckets cut on <code>accessibility_score</code> — 0–2, 2–4, 4+ (B), or inferred from what gets kept (A). Never a self-ranking.</td>
+          <td>Revealed by choosing between two real unlabelled lines (B), or by what gets kept (A). Never asked aloud.</td>
         </tr>
         <tr>
           <td>Cost of skipping</td>
@@ -1061,217 +787,6 @@
       </tbody>
     </table>
   </div>
-
-  <hr class="rule">
-
-  <h2>How an answer becomes a query</h2>
-  <p class="section-note">
-    The single most important constraint: <b>an answer is a weight, not a filter</b>. ANDing five
-    predicates against 4,767 servable poems collapses the funnel to about fourteen results — the
-    reader is punished for answering honestly. So the flow runs in two layers, and only a very small
-    part of any answer becomes real SQL.
-  </p>
-
-  <div class="layers">
-    <div class="layer">
-      <span class="l-n">Layer 1</span>
-      <h3>The candidate query</h3>
-      <p><code>candidateQueries(prefs)</code> issues <b>two</b> requests to
-        <code>/api/poems/by-category</code>, always: one <em>anchored</em> page carrying at most a
-        couple of predicates, and one <em>open</em> page carrying none. Merging them is what
-        guarantees the first of the engine's two promises — nothing in the corpus is ever
-        unreachable, however much you answered.</p>
-    </div>
-    <div class="layer">
-      <span class="l-n">Layer 2</span>
-      <h3>The score</h3>
-      <p>Every other answer is a term in <code>scorePoem</code>, which grades each candidate out of
-        5.0 on how much of the profile it satisfies. <code>sampleByScore</code> then draws by
-        softmax, so a 4-of-5 poem is genuinely likelier than a 1-of-5 one and neither is impossible.
-        Temperature decays over poems seen: <b>seed, then broaden</b>.</p>
-    </div>
-  </div>
-
-  <div class="table-scroll">
-    <table class="qmap">
-      <thead>
-        <tr>
-          <th>Question</th><th>What it yields</th>
-          <th>Layer 1 — query</th><th>Layer 2 — score</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Forks 1, 4, 8, 10<span class="sub-t">valence · hour · stance · certainty</span></td>
-          <td><code>mood</code> keys, signed</td>
-          <td>Top mood joins the anchor as <code>?mood=a,b</code> — only when no family outranks it</td>
-          <td><code>MOOD</code> weight, 1.4 of 5.0, shared across up to 4 kept keys</td>
-        </tr>
-        <tr>
-          <td>Forks 3, 4, 6<span class="sub-t">landscape · hour · motion</span></td>
-          <td><code>motif</code> keys, signed</td>
-          <td class="now">nothing — motif is <code>min_labels 0</code>, so filtering on it drops legitimately unlabelled poems</td>
-          <td><code>MOTIF</code> weight, 0.9 of 5.0, top 3 kept</td>
-        </tr>
-        <tr>
-          <td>Forks 5, 8, 9<span class="sub-t">subject · stance · company</span></td>
-          <td>one <code>family</code> key</td>
-          <td>The anchor: <code>?family=love-desire</code>. Highest-recall predicate in the taxonomy (~2,400 rows)</td>
-          <td><code>FAMILY</code> weight, 0.8 — discounted, because a family <em>contains</em> the moods it implies</td>
-        </tr>
-        <tr>
-          <td>Fork 2<span class="sub-t">whispered or full volume</span></td>
-          <td>a signed direction, −1…+1</td>
-          <td><code>minIntensity</code> / <code>maxIntensity</code> on the anchored page only (0–100)</td>
-          <td>Distance from the implied target on <code>emotional_intensity</code></td>
-        </tr>
-        <tr>
-          <td>Fork 7<span class="sub-t">two lines or a long ode</span></td>
-          <td>a signed direction</td>
-          <td>Tightens or lifts the existing verse-line cap on the anchored page</td>
-          <td>Soft preference on verse count; never excludes</td>
-        </tr>
-        <tr>
-          <td>How hard do you want the language?<span class="sub-t">three buckets</span></td>
-          <td><code>accessibility_score</code> range</td>
-          <td><code>maxAccessibility=2</code> · <code>min=2&amp;max=4</code> · <code>min=4</code> — a genuine range, safe to send because it is one predicate, not five</td>
-          <td><code>DIFFICULTY</code> weight with a falloff past the band edge, so a 4.3 poem still scores for a 2–4 reader</td>
-        </tr>
-        <tr>
-          <td>Which world?<span class="sub-t">five scenes</span></td>
-          <td>a century band</td>
-          <td><code>centuryFrom</code> / <code>centuryTo</code> on the anchored page, with <code>includeUndated</code> left on</td>
-          <td><code>ERA</code> weight by century distance — an adjacent century scores, it does not zero</td>
-        </tr>
-        <tr>
-          <td>How do you read?</td>
-          <td>a display posture</td>
-          <td class="now">nothing — it never touches the draw</td>
-          <td class="now">nothing. It sets <code>readingPosture</code> in the UI store: what renders under the poem, not which poem</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <h3 class="sub-h">The tally, exactly</h3>
-  <p class="section-note">
-    Each fork carries the real taxonomy keys both sides imply. A tap scores <b>+1.0</b> on every key
-    the chosen side carries and <b>−0.4</b> on the other side's — asymmetric on purpose, because
-    "I'd rather read A" is not "I dislike B", it is "B lost one comparison". An unanswered fork
-    contributes <b>exactly zero</b>, which is what makes "No preference" and "That's enough" honest
-    rather than decorative. Keys still positive after ten forks are kept, strongest first, capped at
-    4 moods / 3 motifs / 1 family so a reader who answers everything doesn't hand the scorer a
-    profile that weights everything and therefore nothing.
-  </p>
-  <p class="section-note">
-    The output is the ordinary <code>{family, moods, motifs, era, difficulty}</code> payload that
-    <code>preferenceWeighting.js</code> already consumes. <b>The carousel is an input method, not a
-    new engine</b> — <code>scorePoem</code>, <code>candidateQueries</code> and the draw temperature
-    are untouched. The reader never sees a taxonomy key; the engine never sees a would-you-rather.
-  </p>
-
-  <hr class="rule">
-
-  <h2>Every version, still running</h2>
-  <p class="section-note">
-    Eight published versions, each one live rather than screenshotted — the frames below are the
-    real files, so the mocks inside them still work. Useful above all for what later versions
-    removed: v2's occasion cards and v2–v6's unlabelled two-line comparison exist nowhere else.
-  </p>
-
-  <div class="tabs-wrap">
-  <div class="tabs vtabs" role="tablist" aria-label="Published versions">
-    <button class="tab vtab" type="button" role="tab" id="vtab-1" aria-controls="vpanel-1" aria-selected="true" data-v="1"><span class="tn">v1 · First Contact</span><span class="ts">27c8469</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-2" aria-controls="vpanel-2" aria-selected="false" data-v="2"><span class="tn">v2 · The Question Rewrite</span><span class="ts">fc92cda</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-3" aria-controls="vpanel-3" aria-selected="false" data-v="3"><span class="tn">v3 · Posture Revert</span><span class="ts">917a173</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-4" aria-controls="vpanel-4" aria-selected="false" data-v="4"><span class="tn">v4 · Three in Tabs</span><span class="ts">1726028</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-5" aria-controls="vpanel-5" aria-selected="false" data-v="5"><span class="tn">v5 · Show, Then Argue</span><span class="ts">05f8aae</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-6" aria-controls="vpanel-6" aria-selected="false" data-v="6"><span class="tn">v6 · Baghdad After Dark</span><span class="ts">9cb9ccf</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-7" aria-controls="vpanel-7" aria-selected="false" data-v="7"><span class="tn">v7 · Ten Forks</span><span class="ts">6bc260d</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-8" aria-controls="vpanel-8" aria-selected="false" data-v="8"><span class="tn">v8 · Two Tempos</span><span class="ts">255c8fc</span></button>
-  </div>
-  </div>
-
-  <section class="vpanel" id="vpanel-1" role="tabpanel" aria-labelledby="vtab-1">
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">27c8469</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">771</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+771</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v1.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Critique plus two mocks side by side. A was The First Draw; B was a single sheet that kept the shipping taxonomy questions and only re-laid them out — which fixed nothing, and is the mistake the next version exists to correct.</p>
-    <div class="vframe"><iframe src="versions/v1.html" title="v1 — First Contact" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-2" role="tabpanel" aria-labelledby="vtab-2" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">fc92cda</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">950</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+278 −99</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v2.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">B’s questions replaced wholesale: occasion cards, the unlabelled two-line comparison, "how long do you have", posture. Introduced the seven rules. The largest conceptual jump on the list.</p>
-    <div class="vframe"><iframe src="versions/v2.html" title="v2 — The Question Rewrite" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-3" role="tabpanel" aria-labelledby="vtab-3" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">917a173</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">949</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+5 −6</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v3.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Six lines. Q4 back to "How do you read?" — Arabic only / With English / And how it sounds.</p>
-    <div class="vframe"><iframe src="versions/v3.html" title="v3 — Posture Revert" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-4" role="tabpanel" aria-labelledby="vtab-4" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">1726028</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,467</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+580 −62</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v4.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">The shipping six-step flow rebuilt at 1:1 — hex comb, blob field, era timeline, locked doors — and all three flows moved into tabs. Doubled the file and turned prose assertions into something tappable.</p>
-    <div class="vframe"><iframe src="versions/v4.html" title="v4 — Three in Tabs" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-5" role="tabpanel" aria-labelledby="vtab-5" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">05f8aae</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,468</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+47 −46</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v5.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Pure reordering: mocks first, critique after. Net one line, and the best ratio of effect to diff in the whole history.</p>
-    <div class="vframe"><iframe src="versions/v5.html" title="v5 — Show, Then Argue" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-6" role="tabpanel" aria-labelledby="vtab-6" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">9cb9ccf</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,547</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+98 −19</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v6.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Session length out, the scene-led era question in, and with it the rule that a term should never be the price of admission.</p>
-    <div class="vframe"><iframe src="versions/v6.html" title="v6 — Baghdad After Dark" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-7" role="tabpanel" aria-labelledby="vtab-7" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">6bc260d</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,909</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+637 −275</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v7.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">B rebuilt as the fork carousel, the ease buckets on accessibility_score, the taste profile, and the query-mapping section. The only version that deletes at scale — occasion cards and the two-line comparison both died here.</p>
-    <div class="vframe"><iframe src="versions/v7.html" title="v7 — Ten Forks" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-8" role="tabpanel" aria-labelledby="vtab-8" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">255c8fc</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">2,166</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+269 −12</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v8.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">B-scroll beside the carousel. Same forks, same tally, same profile; ritual against control.</p>
-    <div class="vframe"><iframe src="versions/v8.html" title="v8 — Two Tempos" loading="lazy"></iframe></div>
-  </section>
 
   <hr class="rule">
 
@@ -1427,556 +942,282 @@
   });
   renderA();
 
-  /* ══════════ B — Ten Forks and a Profile ══════════
+  /* ══════════ B — Four Questions About You ══════════
+     The rewrite is in the QUESTIONS, not the layout.
 
-     ## What the carousel is, mechanically
+     Every question below satisfies four rules the old set broke:
+       · it asks about the reader's evening, not the corpus schema
+       · it needs no knowledge the reader can only get by using the app
+       · it has its own shape, so four don't read as one
+       · it pays rent — each one moves a named column in the draw
+     ────────────────────────────────────────────────────────────── */
 
-     It is an INPUT METHOD for the prefs object the app already has. Every
-     fork carries the real taxonomy keys each side implies; tapping tallies
-     them; at the end the tally is collapsed into the exact shape
-     preferenceWeighting.js already consumes:
-
-         { family, moods[], motifs[], era, difficulty }
-
-     Nothing downstream changes — not scorePoem, not candidateQueries, not
-     the draw temperature. The reader never sees a taxonomy key and the
-     engine never sees a would-you-rather.
-
-     ## The tally
-
-     A pick is evidence FOR the chosen side and weak evidence AGAINST the
-     other: PICK = +1.0 on every key the side implies, FOIL = -0.4 on the
-     other side's. Asymmetric on purpose — "I'd rather read A" does not mean
-     "I dislike B", it means B lost one comparison. An unanswered fork
-     contributes exactly zero to both, which is what makes "No preference"
-     and "That's enough" honest rather than decorative.
-
-     Two axes are continuous rather than categorical (emotional_intensity,
-     verse count), so they tally as a signed direction instead of a key set.
-     ────────────────────────────────────────────────────────────────── */
-
-  var PICK = 1.0, FOIL = -0.4;
-
-  var WYR = [
-    { k: 'valence',
-      a: { en: 'A poem that sits with your grief', ar: 'قصيدة تجلس مع حزنك',
-           t: { mood: ['grief', 'melancholy', 'bittersweet'] } },
-      b: { en: 'A poem that pulls you out of it', ar: 'قصيدة تنتشلك منه',
-           t: { mood: ['joy', 'hope', 'serenity'] } } },
-
-    { k: 'intensity',
-      a: { en: 'Quiet. Held back. Almost whispered.', ar: 'هادئة، مكتومة، شبه همس',
-           t: { intensity: -1, mood: ['serenity', 'contemplation'] } },
-      b: { en: 'At full volume, with no apology', ar: 'بأعلى صوت، دون اعتذار',
-           t: { intensity: +1, mood: ['passion', 'defiance'] } } },
-
-    { k: 'landscape',
-      a: { en: 'Open desert, ruins, a camp someone left', ar: 'صحراء وأطلال ومنزل مهجور',
-           t: { motif: ['desert-ruins', 'journey'] } },
-      b: { en: 'A walled garden, water, birds', ar: 'روضة وماء وطير',
-           t: { motif: ['garden-flowers', 'sea-water', 'birds'] } } },
-
-    { k: 'hour',
-      a: { en: 'Night, and the moon doing the talking', ar: 'الليل، والقمر يتكلّم',
-           t: { motif: ['night', 'moon-stars'], mood: ['melancholy'] } },
-      b: { en: 'Dawn, and the first light on everything', ar: 'الفجر، وأول الضوء',
-           t: { motif: ['dawn', 'fire-light'], mood: ['hope'] } } },
-
-    { k: 'subject',
-      a: { en: 'About someone they loved', ar: 'عن من أحبّوا',
-           t: { family: 'love-desire', mood: ['amorous', 'yearning'] } },
-      b: { en: 'About someone they fought', ar: 'عن من قاتلوا',
-           t: { family: 'valor-defiance', mood: ['pride', 'defiance'],
-                motif: ['sword-battle'] } } },
-
-    { k: 'motion',
-      a: { en: 'A journey — a road, a departure', ar: 'رحلة: طريق ورحيل',
-           t: { motif: ['journey'], mood: ['yearning', 'nostalgia'] } },
-      b: { en: 'One place, and staying in it', ar: 'مكان واحد، والبقاء فيه',
-           t: { motif: ['garden-flowers', 'night'], mood: ['contemplation'] } } },
-
-    { k: 'length',
-      a: { en: 'Two lines you will never forget', ar: 'بيتان لا تنساهما',
-           t: { length: -1 } },
-      b: { en: 'A long ode that takes its time', ar: 'قصيدة طويلة تتمهّل',
-           t: { length: +1 } } },
-
-    { k: 'stance',
-      a: { en: 'A poet who praises', ar: 'شاعر يمدح',
-           t: { mood: ['reverence', 'pride'], family: 'reflection-faith' } },
-      b: { en: 'A poet who mocks', ar: 'شاعر يهجو',
-           t: { mood: ['satire', 'defiance'] } } },
-
-    { k: 'company',
-      a: { en: 'Wine, friends, and a long night', ar: 'خمر وصحبة وليل طويل',
-           t: { family: 'revelry-company', motif: ['wine-cup'], mood: ['joy'] } },
-      b: { en: 'Alone, awake, thinking', ar: 'وحدك، ساهراً، تفكّر',
-           t: { family: 'reflection-faith', motif: ['night'],
-                mood: ['contemplation', 'reverence'] } } },
-
-    { k: 'certainty',
-      a: { en: 'Someone sure of something', ar: 'من يقين',
-           t: { mood: ['reverence', 'hope'] } },
-      b: { en: 'Someone arguing with everything', ar: 'من يجادل كل شيء',
-           t: { mood: ['defiance', 'satire', 'despair'] } } }
+  /* Q2's two lines are deliberately unlabelled. Nobody is told which one is
+     "harder": the CHOICE reports density, so the reader never has to rank
+     their own Arabic out loud. This replaces the old step 5 entirely. */
+  var COMPARE = [
+    {
+      k: 'plain',
+      ar: 'إِنَّ الشَبابَ وَالفَراغَ وَالجِدَه',
+      ar2: 'مَفسَدَةٌ لِلمَرءِ أَيُّ مَفسَدَه',
+      en: 'Youth, idleness and money — what a ruin for a man, what a ruin.',
+      poet: 'أبو العتاهية'
+    },
+    {
+      k: 'ornate',
+      ar: 'أَنامُ مِلءَ جُفوني عَن شَوارِدِها',
+      ar2: 'وَيَسهَرُ الخَلقُ جَرّاها وَيَختَصِمُ',
+      en: 'I sleep my fill, untroubled by their strays, while the world lies awake over them, quarrelling.',
+      poet: 'المتنبي'
+    }
   ];
 
-  /* Three buckets cut straight onto poems.accessibility_score (REAL, 0-10,
-     higher = harder, and in practice clustered under 5). Asked as appetite,
-     never as ability: nothing here says beginner, and nothing flatters the
-     hard option. */
-  var EASE = [
-    { k: 'plain', en: 'Keep it plain', ar: 'أبقِها سهلة',
-      note: 'clear on the first read',
-      range: [null, 2], label: '0 – 2', c: '#4a9d8f' },
-    { k: 'mixed', en: 'A bit of work is fine', ar: 'بعض الجهد لا بأس',
-      note: "I'll reach for a gloss now and then",
-      range: [2, 4], label: '2 – 4', c: '#c5a059' },
-    { k: 'deep', en: 'Give me the deep end', ar: 'أعطني العميق',
-      note: 'dense lexicon, layered allusion',
-      range: [4, null], label: '4 +', c: '#c084fc' },
-    { k: 'any', en: 'No preference', ar: 'لا يهم',
-      note: 'anything the draw turns up',
-      range: [null, null], label: 'all', c: '#8b8a96' }
+  var FIELDS = [
+    {
+      /* Q1 — the occasion, single-select.
+         Does the work of the old mood + difficulty + half of era, because an
+         occasion IMPLIES them. And "read me something I'd never find" is a
+         real answer with a real consequence (temperature up), not a skip. */
+      key: 'occasion', type: 'cards', single: true,
+      q: 'What are you here for tonight?', ar: 'ما الذي جاء بك الليلة؟', opt: 'pick one',
+      options: [
+        { k: 'heavy',   en: 'Something is heavy — sit with me in it', ar: 'على قلبي ثِقل',
+          moves: 'grief, elegy, the long complaint', c: '#94a3b8' },
+        { k: 'struck',  en: 'Knock me over with one line', ar: 'بيتٌ واحد يصعقني',
+          moves: 'the famous, the quotable, the short', c: '#fbbf24' },
+        { k: 'settle',  en: 'Wind me down', ar: 'هدّئني',
+          moves: 'serenity, plain language, nothing loud', c: '#4a9d8f' },
+        { k: 'learn',   en: 'Teach me the tradition, properly', ar: 'علّمني التراث',
+          moves: 'the canon, in order, with context', c: '#c5a059' },
+        { k: 'stranger', en: 'Read me something I’d never find', ar: 'اقرأ لي ما لا أعرف',
+          moves: 'the far edges of the dīwān', c: '#c084fc' }
+      ]
+    },
+    {
+      /* Q2 — a comparison, not a self-assessment. Different shape on purpose. */
+      key: 'density', type: 'compare', single: true,
+      q: 'Which would you rather keep reading?', ar: 'أيّهما تُواصل قراءته؟', opt: 'no wrong answer'
+    },
+    {
+      /* Q3 — era, asked as a WORLD rather than a period label.
+         "From which age? / 9th–10th / Abbasid" is unanswerable for anyone who
+         does not already know what Abbasid means — which is most readers, and
+         certainly most first-time ones. So the option they tap is a scene they
+         can picture, and the proper name sits UNDER it as the answer to the
+         question they just asked themselves. They choose on feeling and leave
+         knowing a term they arrived without: teach by the answer, not by the
+         question. Same four bands the taxonomy already cuts. */
+      key: 'era', type: 'era', single: true,
+      q: 'Which world do you want to be in?', ar: 'في أي عالم تريد أن تكون؟', opt: 'pick one',
+      options: [
+        { k: 'c6',  c: '#b08968',
+          scene: 'Desert camps, tribal honour, and the ruins of a lover\u2019s campsite',
+          nmEn: 'Pre-Islamic & Umayyad', nmAr: 'الجاهلي والأموي',
+          span: '6th–8th century', note: 'where Arabic poetry starts' },
+        { k: 'c9',  c: '#c5a059',
+          scene: 'Baghdad after dark — wine, wit, and the caliph\u2019s court',
+          nmEn: 'Abbasid', nmAr: 'العباسي',
+          span: '9th–10th century', note: 'the golden age' },
+        { k: 'c11', c: '#4ade80',
+          scene: 'Andalusian gardens, and the courts of Cairo and Damascus',
+          nmEn: 'Andalusian & Mamluk', nmAr: 'الأندلسي والمملوكي',
+          span: '11th–14th century', note: 'poetry in exile from itself' },
+        { k: 'c15', c: '#38bdf8',
+          scene: 'Exile, nation, and a voice that sounds like now',
+          nmEn: 'Late & Modern', nmAr: 'المتأخر والحديث',
+          span: '15th century – today', note: 'the tradition arguing with itself' },
+        { k: 'any', c: '#8b8a96',
+          scene: 'Anywhere — I don\u2019t have a century',
+          nmEn: 'All four', nmAr: 'الكل',
+          span: '1,400 years', note: 'no weight either way' }
+      ]
+    },
+    {
+      /* Q4 — reading posture, in the wording carried over from B's first pass. */
+      key: 'posture', type: 'chips', single: true,
+      q: 'How do you read?', ar: 'كيف تقرأ؟', opt: 'one',
+      options: [
+        { k: 'arabic',   en: 'Arabic only',       ar: 'بالعربية',  c: '#c5a059' },
+        { k: 'english',  en: 'With English',      ar: 'مع الترجمة', c: '#c5a059' },
+        { k: 'learning', en: 'And how it sounds', ar: 'ونطقها',    c: '#c5a059' }
+      ]
+    }
   ];
 
-  var WORLDS = [
-    { k: 'c6',  c: '#b08968', poem: 0,
-      scene: 'Desert camps, tribal honour, and the ruins of a lover’s campsite',
-      nmEn: 'Pre-Islamic & Umayyad', nmAr: 'الجاهلي والأموي',
-      span: '6th–8th century', note: 'where Arabic poetry starts' },
-    { k: 'c9',  c: '#c5a059', poem: 1,
-      scene: 'Baghdad after dark — wine, wit, and the caliph’s court',
-      nmEn: 'Abbasid', nmAr: 'العباسي',
-      span: '9th–10th century', note: 'the golden age' },
-    { k: 'c11', c: '#4ade80', poem: 3,
-      scene: 'Andalusian gardens, and the courts of Cairo and Damascus',
-      nmEn: 'Andalusian & Mamluk', nmAr: 'الأندلسي والمملوكي',
-      span: '11th–14th century', note: 'poetry in exile from itself' },
-    { k: 'c15', c: '#38bdf8', poem: null,
-      scene: 'Exile, nation, and a voice that sounds like now',
-      nmEn: 'Late & Modern', nmAr: 'المتأخر والحديث',
-      span: '15th century – today', note: 'the tradition arguing with itself' },
-    { k: 'any', c: '#8b8a96', poem: null,
-      scene: 'Anywhere — I don’t have a century',
-      nmEn: 'All four', nmAr: 'الكل',
-      span: '1,400 years', note: 'no weight either way' }
-  ];
-
-  var MOOD_LABEL = {
-    amorous: 'Amorous', passion: 'Passion', yearning: 'Yearning', nostalgia: 'Nostalgia',
-    bittersweet: 'Bittersweet', melancholy: 'Melancholy', grief: 'Grief', despair: 'Despair',
-    joy: 'Joy', hope: 'Hope', serenity: 'Serenity', contemplation: 'Contemplation',
-    reverence: 'Reverence', pride: 'Pride', defiance: 'Defiance', satire: 'Satire'
-  };
-  var MOTIF_LABEL = {
-    night: 'Night', 'moon-stars': 'Moon & stars', 'desert-ruins': 'Desert & ruins',
-    'sea-water': 'Sea & water', 'garden-flowers': 'Garden & flowers', 'wine-cup': 'The wine cup',
-    'sword-battle': 'Sword & battle', birds: 'Birds', 'fire-light': 'Fire & light',
-    journey: 'Journey', tears: 'Tears', dawn: 'Dawn'
-  };
-  var FAMILY_LABEL = {
-    'love-desire': 'Love & desire', 'grief-loss': 'Grief & loss',
-    'longing-exile': 'Longing & exile', 'valor-defiance': 'Valor & defiance',
-    'revelry-company': 'Revelry & company', 'reflection-faith': 'Reflection & faith',
-    'nature-cosmos': 'Nature & cosmos'
-  };
-  var MOOD_COLOR = {
-    amorous: '#e8647a', passion: '#f43f5e', yearning: '#c084fc', nostalgia: '#8b7355',
-    bittersweet: '#a78bfa', melancholy: '#1e3a6e', grief: '#94a3b8', despair: '#4a4a4a',
-    joy: '#fbbf24', hope: '#4a7c59', serenity: '#4a9d8f', contemplation: '#38bdf8',
-    reverence: '#818cf8', pride: '#b8860b', defiance: '#ef4444', satire: '#fb923c'
+  /* Which poem the dock would draw right now, per occasion. The live preview
+     is the whole point of the sheet: an answer with no visible consequence is
+     indistinguishable from no answer. */
+  var DRAW_BY_OCCASION = {
+    heavy: 2, struck: 3, settle: 1, learn: 0, stranger: 3
   };
 
-  var bAt = 0;                 // carousel position
-  var bAnswers = {};           // fork key -> 'a' | 'b'
-  var bEase = null, bWorld = null, bPosture = null;
+  /* An era pick beats an occasion pick for the preview: it is the more
+     specific claim, and seeing the century answer back is half the lesson. */
+  var DRAW_BY_ERA = { c6: 0, c9: 1, c11: 3, c15: null, any: null };
 
-  var bWyr = document.getElementById('b-wyr');
-  var bEaseEl = document.getElementById('b-ease');
-  var bEraEl = document.getElementById('b-era');
-  var bRevEl = document.getElementById('b-reveal');
+  var picks = { occasion: [], density: [], era: [], posture: [] };
 
-  /* ── The tally ─────────────────────────────────────────────────────
-     Returns raw scores per dimension plus the two continuous directions.
-     Kept separate from the collapse below so the profile screen can show
-     the reader the same numbers the engine will get. */
-  function tally(ans) {
-    ans = ans || bAnswers;
-    var mood = {}, motif = {}, family = {}, intensity = 0, length = 0, answered = 0;
-    var bump = function (bag, keys, amt) {
-      (keys || []).forEach(function (k) { bag[k] = (bag[k] || 0) + amt; });
-    };
-
-    WYR.forEach(function (f) {
-      var choice = ans[f.k];
-      if (!choice) return;                        // unanswered contributes nothing
-      answered += 1;
-      var picked = choice === 'a' ? f.a : f.b;
-      var foiled = choice === 'a' ? f.b : f.a;
-
-      [[picked, PICK], [foiled, FOIL]].forEach(function (pair) {
-        var side = pair[0], amt = pair[1];
-        bump(mood, side.t.mood, amt);
-        bump(motif, side.t.motif, amt);
-        if (side.t.family) family[side.t.family] = (family[side.t.family] || 0) + amt;
-        if (side.t.intensity) intensity += side.t.intensity * amt;
-        if (side.t.length) length += side.t.length * amt;
-      });
-    });
-
-    return { mood: mood, motif: motif, family: family,
-             intensity: intensity, length: length, answered: answered };
-  }
-
-  /* ── The collapse ──────────────────────────────────────────────────
-     Positive-scoring keys only, strongest first, capped per dimension so a
-     reader who answers all ten does not hand the scorer a 12-mood profile
-     that weights everything and therefore nothing. */
-  function topKeys(bag, cap) {
-    return Object.keys(bag)
-      .filter(function (k) { return bag[k] > 0; })
-      .sort(function (x, y) { return bag[y] - bag[x]; })
-      .slice(0, cap);
-  }
-
-  function toPrefs(ans, easeK, worldK) {
-    ans = ans || bAnswers;
-    if (easeK === undefined) easeK = bEase;
-    if (worldK === undefined) worldK = bWorld;
-    var t = tally(ans);
-    var ease = EASE.filter(function (e) { return e.k === easeK; })[0];
-    return {
-      family: topKeys(t.family, 1)[0] || null,
-      moods: topKeys(t.mood, 4),
-      motifs: topKeys(t.motif, 3),
-      era: worldK && worldK !== 'any' ? [worldK] : [],
-      difficulty: ease && ease.k !== 'any' ? [ease.k] : [],
-      /* Continuous hints the anchored candidate query can carry directly. */
-      intensityDir: t.intensity,
-      lengthDir: t.length,
-      answered: t.answered
-    };
-  }
-
-  /* ── Carousel ──────────────────────────────────────────────────── */
-  function renderPair() {
-    var f = WYR[bAt];
-    document.getElementById('b-prog').innerHTML = WYR.map(function (x, i) {
-      return '<i class="' + (i === bAt ? 'on' : (bAnswers[x.k] ? 'done' : '')) + '"></i>';
+  function cardsHTML(f) {
+    return f.options.map(function (o) {
+      return '<button class="opt-card" type="button" aria-pressed="false" ' +
+        'data-field="' + f.key + '" data-key="' + o.k + '" data-color="' + o.c + '">' +
+        '<span class="bar" style="background:' + o.c + '"></span>' +
+        '<span class="txt">' +
+          '<span class="line"><span class="oc-en">' + o.en + '</span>' +
+          '<span class="oc-ar">' + o.ar + '</span></span>' +
+          '<span class="moves">' + o.moves + '</span>' +
+        '</span></button>';
     }).join('');
-    document.getElementById('b-ask').textContent =
-      bAt === 0 ? 'Would you rather read…' : 'Would you rather read…';
-
-    var side = function (which) {
-      var s = f[which], on = bAnswers[f.k] === which;
-      return '<button class="fork' + (on ? ' on' : '') + '" type="button" data-side="' + which + '">' +
-        '<span class="f-en">' + s.en + '</span>' +
-        '<span class="f-ar">' + s.ar + '</span></button>';
-    };
-    document.getElementById('b-pair').innerHTML =
-      side('a') + '<span class="fork-or">or<span class="or-ar">أو</span></span>' + side('b');
-    document.getElementById('b-pair').className = 'wyr fade-in';
-    document.getElementById('b-done').textContent =
-      tally().answered ? "That's enough →" : 'Skip all of this →';
   }
 
-  function advance() {
-    if (bAt < WYR.length - 1) { bAt += 1; renderPair(); }
-    else showEase();
-  }
-
-  document.getElementById('b-pair').addEventListener('click', function (e) {
-    var el = e.target.closest('.fork');
-    if (!el) return;
-    bAnswers[WYR[bAt].k] = el.dataset.side;
-    el.classList.add('on');
-    /* Auto-advance: the tap IS the "next". Long enough to see the choice
-       register, short enough that ten forks stay one gesture. */
-    setTimeout(advance, 320);
-  });
-  document.getElementById('b-skip').addEventListener('click', function () {
-    delete bAnswers[WYR[bAt].k];
-    advance();
-  });
-  document.getElementById('b-done').addEventListener('click', showEase);
-
-  /* ── Ease of reading ───────────────────────────────────────────── */
-  function showEase() {
-    bEaseEl.innerHTML =
-      '<div class="spacer"></div>' +
-      '<div class="o-title"><span class="t-en">How hard do you want the language?</span>' +
-      '<span class="t-ar">ما مستوى اللغة الذي تريد؟</span></div>' +
-      '<div class="eases">' + EASE.map(function (o) {
-        return '<button class="ease-card' + (bEase === o.k ? ' on' : '') + '" type="button" ' +
-          'data-ease="' + o.k + '" style="--c:' + o.c + '">' +
-          '<span class="bar" style="background:' + o.c + '"></span>' +
-          '<span class="txt"><span class="line"><span class="e">' + o.en + '</span>' +
-          '<span class="a">' + o.ar + '</span></span>' +
-          '<span class="note">' + o.note + '</span></span>' +
-          '<span class="band">' + o.label + '</span></button>';
-      }).join('') + '</div>' +
-      '<p class="scale-note">Scored 0–10 on <code>accessibility_score</code>, ' +
-      'where higher means harder. You never see the number.</p>' +
-      '<div class="spacer"></div>';
-    bWyr.hidden = true; bEaseEl.hidden = false;
-  }
-
-  bEaseEl.addEventListener('click', function (e) {
-    var el = e.target.closest('[data-ease]');
-    if (!el) return;
-    bEase = el.dataset.ease;
-    el.classList.add('on');
-    setTimeout(showWorld, 320);
-  });
-
-  /* ── Which world ───────────────────────────────────────────────── */
-  function showWorld() {
-    bEraEl.innerHTML =
-      '<div class="o-title"><span class="t-en">Which world do you want to be in?</span>' +
-      '<span class="t-ar">في أي عالم تريد أن تكون؟</span></div>' +
-      '<div class="eras" style="overflow-y:auto;scrollbar-width:none">' + WORLDS.map(function (o) {
-        return '<button class="opt-card era-card' + (bWorld === o.k ? ' on' : '') + '" type="button" ' +
-          'data-world="' + o.k + '" style="--c:' + o.c + '">' +
-          '<span class="bar" style="background:' + o.c + '"></span>' +
-          '<span class="txt"><span class="scene">' + o.scene + '</span>' +
+  function eraHTML(f) {
+    return f.options.map(function (o) {
+      return '<button class="opt-card era-card" type="button" aria-pressed="false" ' +
+        'data-field="' + f.key + '" data-key="' + o.k + '" data-color="' + o.c + '">' +
+        '<span class="bar" style="background:' + o.c + '"></span>' +
+        '<span class="txt">' +
+          '<span class="scene">' + o.scene + '</span>' +
           '<span class="named"><span class="nm-en">' + o.nmEn + '</span>' +
           '<span class="nm-ar">' + o.nmAr + '</span>' +
           '<span class="nm-c">' + o.span + '</span></span>' +
-          '<span class="moves">' + o.note + '</span></span></button>';
-      }).join('') + '</div>';
-    bEaseEl.hidden = true; bEraEl.hidden = false;
+          '<span class="moves">' + o.note + '</span>' +
+        '</span></button>';
+    }).join('');
   }
 
-  bEraEl.addEventListener('click', function (e) {
-    var el = e.target.closest('[data-world]');
-    if (!el) return;
-    bWorld = el.dataset.world;
-    el.classList.add('on');
-    setTimeout(showProfile, 320);
-  });
-
-  /* ── The taste profile ─────────────────────────────────────────── */
-  function meter(label, leftEn, rightEn, pos, color) {
-    /* pos is -1..1; rendered as a dot on a hairline, so the reader sees a
-       LEANING rather than a verdict. */
-    var pct = Math.round((pos + 1) / 2 * 100);
-    return '<div class="axis"><span class="ax-k">' + label + '</span>' +
-      '<div class="ax-line"><span class="ax-dot" style="left:' + pct + '%;background:' + color + '"></span></div>' +
-      '<div class="ax-ends"><span>' + leftEn + '</span><span>' + rightEn + '</span></div></div>';
+  function chipsHTML(f) {
+    return '<div class="chips">' + f.options.map(function (o) {
+      return '<button class="chip" type="button" aria-pressed="false" ' +
+        'data-field="' + f.key + '" data-key="' + o.k + '" data-color="' + o.c + '">' +
+        o.en + ' <span style="font-family:Amiri,serif;direction:rtl;opacity:.55;font-size:.9em">' +
+        o.ar + '</span></button>';
+    }).join('') + '</div>';
   }
 
-  function chipRow(label, keys, labels, colorOf) {
-    if (!keys.length) return '';
-    return '<div class="prow"><span class="p-k">' + label + '</span><span class="p-v">' +
-      keys.map(function (k) {
-        var c = colorOf ? colorOf(k) : '#c5a059';
-        return '<span class="p-chip" style="border-color:' + c + '66;color:' + c + '">' +
-          (labels[k] || k) + '</span>';
-      }).join('') + '</span></div>';
+  function compareHTML(f) {
+    return '<div class="compare">' + COMPARE.map(function (c) {
+      return '<button class="cmp" type="button" aria-pressed="false" ' +
+        'data-field="' + f.key + '" data-key="' + c.k + '" data-color="#c5a059">' +
+        '<span class="cv">' + c.ar + '</span>' +
+        '<span class="cv">' + c.ar2 + '</span>' +
+        '<span class="cen">' + c.en + '</span>' +
+        '<span class="cpoet">' + c.poet + '</span>' +
+        '</button>';
+    }).join('') +
+    '<button class="chip cmp-both" type="button" aria-pressed="false" ' +
+    'data-field="' + f.key + '" data-key="both" data-color="#c5a059">' +
+    'Both, honestly <span style="font-family:Amiri,serif;direction:rtl;opacity:.55">كلاهما</span>' +
+    '</button></div>';
   }
 
-  function profileBody(ans, easeK, worldK) {
-    var t = tally(ans), prefs = toPrefs(ans, easeK, worldK);
-    var ease = EASE.filter(function (e) { return e.k === easeK; })[0];
-    var world = WORLDS.filter(function (w) { return w.k === worldK; })[0];
-    var body;
+  function buildB() {
+    var host = document.getElementById('b-fields');
+    host.innerHTML =
+      '<p class="sheet-lede">Four questions about your evening — none about poetry ' +
+      'you haven’t read yet. Answer none of them and the door still opens.</p>' +
+      FIELDS.map(function (f) {
+        var body = f.type === 'cards' ? cardsHTML(f)
+                 : f.type === 'compare' ? compareHTML(f)
+                 : f.type === 'era' ? '<div class="eras">' + eraHTML(f) + '</div>'
+                 : chipsHTML(f);
+        return '<div class="field"><div class="field-label">' +
+          '<span class="q">' + f.q +
+          ' <span style="font-family:Amiri,serif;direction:rtl;opacity:.5">' + f.ar + '</span></span>' +
+          '<span class="opt">' + f.opt + '</span></div>' + body + '</div>';
+      }).join('');
 
-    if (!t.answered && (!ease || ease.k === 'any') && (!world || world.k === 'any')) {
-      body = '<h4>Nothing declared<span class="ar">بلا تفضيل</span></h4>' +
-        '<p class="promise">You skipped all of it, which is a real answer. The dīwān ' +
-        'opens unweighted and starts leaning the moment you save something.</p>';
-    } else {
-      var clamp = function (v) { return Math.max(-1, Math.min(1, v / 1.4)); };
-      body = '<h4>Your taste profile<span class="ar">ذائقتك</span></h4>' +
-        '<div class="profile">' +
-          chipRow('Moods', prefs.moods, MOOD_LABEL, function (k) { return MOOD_COLOR[k]; }) +
-          chipRow('Imagery', prefs.motifs, MOTIF_LABEL, function () { return '#c5a059'; }) +
-          (prefs.family ? chipRow('Shelf', [prefs.family], FAMILY_LABEL, function () { return '#8c7340'; }) : '') +
-          (t.intensity ? meter('Volume', 'whispered', 'full', clamp(t.intensity), '#e8647a') : '') +
-          (t.length ? meter('Length', 'two lines', 'long ode', clamp(t.length), '#c5a059') : '') +
-          (ease && ease.k !== 'any'
-            ? '<div class="prow"><span class="p-k">Language</span><span class="p-v">' +
-              '<span class="p-chip" style="border-color:' + ease.c + '66;color:' + ease.c + '">' +
-              ease.en.replace('Keep it plain', 'Plain').replace('A bit of work is fine', 'Mixed')
-                  .replace('Give me the deep end', 'Demanding') +
-              ' · ' + ease.label + '</span></span></div>' : '') +
-          (world && world.k !== 'any'
-            ? '<div class="prow"><span class="p-k">Era</span><span class="p-v">' +
-              '<span class="p-chip" style="border-color:' + world.c + '66;color:' + world.c + '">' +
-              world.nmEn + ' · ' + world.span + '</span></span></div>' : '') +
-        '</div>' +
-        '<p class="promise">Built from <b>' + t.answered + '</b> of ten forks. ' +
-        'A lean, not a filter — we open there and widen as you read.</p>';
-    }
-    return body;
+    host.addEventListener('click', function (e) {
+      var el = e.target.closest('[data-field]');
+      if (!el) return;
+      var field = el.dataset.field, key = el.dataset.key;
+      var on = el.getAttribute('aria-pressed') === 'true';
+
+      host.querySelectorAll('[data-field="' + field + '"]').forEach(function (n) {
+        n.setAttribute('aria-pressed', 'false');
+        n.style.borderColor = ''; n.style.background = '';
+      });
+      picks[field] = on ? [] : [key];
+
+      if (!on) {
+        el.setAttribute('aria-pressed', 'true');
+        el.style.borderColor = el.dataset.color;
+        el.style.background = el.dataset.color + '1c';
+      }
+      syncB();
+    });
   }
 
-  function showProfile() {
-    bRevEl.innerHTML = '<div class="spacer"></div><div class="reveal fade-in">' +
-      '<span class="hairline"></span>' + profileBody(bAnswers, bEase, bWorld) +
-      '</div><div class="spacer"></div>' +
-      '<button class="btn primary" type="button" data-b="enter">Open the dīwān' +
-      '<span class="sub">افتح الديوان</span></button>' +
-      '<button class="btn quiet" type="button" data-b="again">Run the forks again →</button>';
-    bEraEl.hidden = true; bRevEl.hidden = false;
+  function answered() {
+    return ['occasion', 'density', 'era', 'posture']
+      .filter(function (k) { return picks[k].length; }).length;
   }
 
-  bRevEl.addEventListener('click', function (e) {
-    var el = e.target.closest('[data-b]');
-    if (!el) return;
-    bAt = 0; bAnswers = {}; bEase = null; bWorld = null;
-    bRevEl.hidden = true; bWyr.hidden = false;
-    renderPair();
-  });
+  function syncB() {
+    var n = answered();
+    var btn = document.getElementById('b-enter');
+    var live = document.getElementById('b-live');
 
-  renderPair();
-
-  /* ══════════ B-scroll — the same ten, down one page ══════════
-
-     Same WYR data, same tally, same profileBody. The ONLY difference is
-     pacing, which is the whole point of having both: the carousel spends
-     a screen per decision and gains momentum; this spends a page on all
-     ten and gains revisability. Separate answer state so switching tabs
-     does not silently carry one variant's answers into the other.
-
-     Because every fork is visible, the payoff does not have to wait for a
-     reveal — the dock assembles the profile live. That is the one thing
-     the carousel structurally cannot do.
-     ────────────────────────────────────────────────────────────────── */
-
-  var bsAnswers = {}, bsEase = null, bsWorld = null;
-  var bsSheet = document.getElementById('bs-sheet');
-  var bsBody  = document.getElementById('bs-body');
-  var bsRev   = document.getElementById('bs-reveal');
-
-  function bsSegment(f) {
-    var side = function (which) {
-      var s = f[which], on = bsAnswers[f.k] === which;
-      return '<button class="seg' + (on ? ' on' : '') + '" type="button" ' +
-        'data-fork="' + f.k + '" data-side="' + which + '" aria-pressed="' + on + '">' +
-        '<span class="s-en">' + s.en + '</span>' +
-        '<span class="s-ar">' + s.ar + '</span></button>';
-    };
-    return '<div class="segpair' + (bsAnswers[f.k] ? ' answered' : '') + '">' +
-      side('a') + '<span class="seg-or">or<span>أو</span></span>' + side('b') + '</div>';
-  }
-
-  function renderBS() {
-    bsBody.innerHTML =
-      '<p class="sheet-lede">Ten of them. Answer any, in any order — scroll past the ones you ' +
-      'don’t have an opinion about. Nothing here is required.</p>' +
-      WYR.map(bsSegment).join('') +
-      '<div class="bs-rule"></div>' +
-      '<div class="field"><div class="field-label">' +
-        '<span class="q">How hard do you want the language? ' +
-        '<span style="font-family:Amiri,serif;direction:rtl;opacity:.5">ما مستوى اللغة؟</span></span>' +
-        '<span class="opt">pick one</span></div>' +
-        '<div class="eases">' + EASE.map(function (o) {
-          return '<button class="ease-card' + (bsEase === o.k ? ' on' : '') + '" type="button" ' +
-            'data-bsease="' + o.k + '" style="--c:' + o.c + '">' +
-            '<span class="bar" style="background:' + o.c + '"></span>' +
-            '<span class="txt"><span class="line"><span class="e">' + o.en + '</span>' +
-            '<span class="a">' + o.ar + '</span></span>' +
-            '<span class="note">' + o.note + '</span></span>' +
-            '<span class="band">' + o.label + '</span></button>';
-        }).join('') + '</div></div>' +
-      '<div class="field"><div class="field-label">' +
-        '<span class="q">Which world? ' +
-        '<span style="font-family:Amiri,serif;direction:rtl;opacity:.5">أي عالم؟</span></span>' +
-        '<span class="opt">pick one</span></div>' +
-        '<div class="eras">' + WORLDS.map(function (o) {
-          return '<button class="opt-card era-card' + (bsWorld === o.k ? ' on' : '') + '" type="button" ' +
-            'data-bsworld="' + o.k + '" style="--c:' + o.c + '">' +
-            '<span class="bar" style="background:' + o.c + '"></span>' +
-            '<span class="txt"><span class="scene">' + o.scene + '</span>' +
-            '<span class="named"><span class="nm-en">' + o.nmEn + '</span>' +
-            '<span class="nm-ar">' + o.nmAr + '</span>' +
-            '<span class="nm-c">' + o.span + '</span></span>' +
-            '<span class="moves">' + o.note + '</span></span></button>';
-        }).join('') + '</div></div>';
-    syncBS();
-  }
-
-  /* The live dock. Shows the profile's strongest keys as they accumulate —
-     the same topKeys() the reveal uses, so what builds here is exactly what
-     lands there, never a teaser for a different number. */
-  function syncBS() {
-    var t = tally(bsAnswers), prefs = toPrefs(bsAnswers, bsEase, bsWorld);
-    var any = t.answered || bsEase || bsWorld;
-    document.getElementById('bs-count').textContent = t.answered + ' of 10';
-    document.getElementById('bs-enter').innerHTML = any
-      ? 'See my taste profile<span class="sub">أرِني ذائقتي</span>'
+    btn.innerHTML = n
+      ? 'Open the dīwān<span class="sub">افتح الديوان</span>'
       : 'Take me anywhere<span class="sub">خذني إلى أي مكان</span>';
 
-    var chips = prefs.moods.slice(0, 3).map(function (k) {
-      var c = MOOD_COLOR[k] || '#c5a059';
-      return '<span class="p-chip" style="border-color:' + c + '66;color:' + c + '">' +
-        (MOOD_LABEL[k] || k) + '</span>';
-    }).concat(prefs.motifs.slice(0, 2).map(function (k) {
-      return '<span class="p-chip" style="border-color:#c5a05966;color:#c5a059">' +
-        (MOTIF_LABEL[k] || k) + '</span>';
-    }));
+    /* Not a count of answers — the actual first poem. A reader can see the
+       consequence of a tap before committing to it. */
+    var idx = null;
+    if (picks.era.length) idx = DRAW_BY_ERA[picks.era[0]];
+    if (idx == null && picks.occasion.length) idx = DRAW_BY_OCCASION[picks.occasion[0]];
 
-    document.getElementById('bs-live').innerHTML = chips.length
-      ? '<span class="bs-live-k">so far</span><span class="bs-live-v">' + chips.join('') + '</span>'
-      : '<span class="bs-live-empty">Answer one and your profile starts here.</span>';
+    if (idx == null) {
+      live.innerHTML = n
+        ? 'Still drawing from the whole dīwān.'
+        : 'Nothing chosen — the whole dīwān, unweighted. A good way in.';
+    } else {
+      var p = POEMS[idx];
+      live.innerHTML = 'We’d open with <b>' + p.poet + '</b> — ' + p.meta + '.';
+    }
   }
 
-  bsBody.addEventListener('click', function (e) {
-    var seg = e.target.closest('[data-fork]');
-    if (seg) {
-      var f = seg.dataset.fork;
-      /* Re-tapping the chosen side clears it: on one page a reader can
-         change their mind, and an answer you cannot withdraw is a trap. */
-      bsAnswers[f] = bsAnswers[f] === seg.dataset.side ? undefined : seg.dataset.side;
-      if (!bsAnswers[f]) delete bsAnswers[f];
-      var pair = seg.parentNode;
-      pair.className = 'segpair' + (bsAnswers[f] ? ' answered' : '');
-      pair.querySelectorAll('.seg').forEach(function (n) {
-        var on = bsAnswers[f] === n.dataset.side;
-        n.classList.toggle('on', on);
-        n.setAttribute('aria-pressed', on);
-      });
-      syncBS(); return;
+  document.getElementById('b-enter').addEventListener('click', function () {
+    var leanings, promise, title;
+    var OCC = FIELDS[0].options;
+    var occ = OCC.filter(function (o) { return picks.occasion.indexOf(o.k) !== -1; })[0];
+
+    if (!answered()) {
+      title = 'Straight in';
+      leanings = [['Reading', 'Open, unweighted', '#6b6875']];
+      promise = 'No answers, no weighting. Save a poem and the dīwān starts leaning on its own.';
+    } else {
+      title = 'Your dīwān leans';
+      leanings = [];
+      if (occ) leanings.push(['Tonight', occ.moves, occ.c]);
+      if (picks.density.length) {
+        leanings.push(['Language', picks.density[0] === 'plain' ? 'Plain, direct'
+          : (picks.density[0] === 'ornate' ? 'Dense, allusive' : 'Either, freely'), '#c5a059']);
+      }
+      if (picks.era.length) {
+        var er = FIELDS[2].options.filter(function (o) { return o.k === picks.era[0]; })[0];
+        /* The reveal names the era in full — the reader's second meeting with
+           the term, now attached to the scene they chose it by. */
+        leanings.push(['Era', er.k === 'any' ? 'All four, evenly' : er.nmEn + ' · ' + er.span, er.c]);
+      }
+      if (!leanings.length) leanings.push(['Reading', 'Open, unweighted', '#6b6875']);
+      promise = 'We’ll open there and widen as you read. Nothing in the dīwān is ever closed to you.';
     }
-    var ez = e.target.closest('[data-bsease]');
-    if (ez) {
-      bsEase = bsEase === ez.dataset.bsease ? null : ez.dataset.bsease;
-      bsBody.querySelectorAll('[data-bsease]').forEach(function (n) {
-        n.classList.toggle('on', n.dataset.bsease === bsEase);
-      });
-      syncBS(); return;
-    }
-    var w = e.target.closest('[data-bsworld]');
-    if (w) {
-      bsWorld = bsWorld === w.dataset.bsworld ? null : w.dataset.bsworld;
-      bsBody.querySelectorAll('[data-bsworld]').forEach(function (n) {
-        n.classList.toggle('on', n.dataset.bsworld === bsWorld);
-      });
-      syncBS();
-    }
+
+    var rev = document.getElementById('b-reveal');
+    rev.innerHTML = revealHTML(leanings, {
+      title: title, titleAr: 'ديوانك يميل',
+      promise: promise, id: 'b', secondary: 'Change an answer →'
+    });
+    document.getElementById('b-sheet').hidden = true;
+    rev.hidden = false;
+    var back = function () {
+      rev.hidden = true;
+      document.getElementById('b-sheet').hidden = false;
+    };
+    rev.querySelector('.btn.primary').addEventListener('click', back);
+    rev.querySelector('.quiet').addEventListener('click', back);
   });
-
-  document.getElementById('bs-enter').addEventListener('click', function () {
-    bsRev.innerHTML = '<div class="spacer"></div><div class="reveal fade-in">' +
-      '<span class="hairline"></span>' + profileBody(bsAnswers, bsEase, bsWorld) +
-      '</div><div class="spacer"></div>' +
-      '<button class="btn primary" type="button" data-bs="enter">Open the dīwān' +
-      '<span class="sub">افتح الديوان</span></button>' +
-      '<button class="btn quiet" type="button" data-bs="back">Change an answer →</button>';
-    bsSheet.hidden = true; bsRev.hidden = false;
-  });
-
-  bsRev.addEventListener('click', function (e) {
-    var el = e.target.closest('[data-bs]');
-    if (!el) return;
-    if (el.dataset.bs === 'enter') { bsAnswers = {}; bsEase = null; bsWorld = null; renderBS(); }
-    bsRev.hidden = true; bsSheet.hidden = false;
-  });
-
-  renderBS();
-
 
   /* ══════════ ORIGINAL — the six steps that ship today ══════════
      Rebuilt from src/components/onboarding/: same questions, same
@@ -2294,32 +1535,8 @@
       var on = t.dataset.panel === id;
       t.setAttribute('aria-selected', on ? 'true' : 'false');
       document.getElementById('panel-' + t.dataset.panel).hidden = !on;
-      if (on && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
   }
-  /* Version strip: same keyboard contract as the flow strip, and the newly
-     selected tab is scrolled into view, so a tab reached by arrow key never
-     sits off-screen in the horizontal scroller. */
-  var vtabs = Array.prototype.slice.call(document.querySelectorAll('.vtab'));
-  function selectVersion(n) {
-    vtabs.forEach(function (t) {
-      var on = t.dataset.v === n;
-      t.setAttribute('aria-selected', on ? 'true' : 'false');
-      document.getElementById('vpanel-' + t.dataset.v).hidden = !on;
-      if (on && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    });
-  }
-  vtabs.forEach(function (t) {
-    t.addEventListener('click', function () { selectVersion(t.dataset.v); });
-    t.addEventListener('keydown', function (e) {
-      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-      e.preventDefault();
-      var i = vtabs.indexOf(t);
-      var n = vtabs[(i + (e.key === 'ArrowRight' ? 1 : vtabs.length - 1)) % vtabs.length];
-      selectVersion(n.dataset.v); n.focus();
-    });
-  });
-
   tabs.forEach(function (t) {
     t.addEventListener('click', function () { selectTab(t.dataset.panel); });
     t.addEventListener('keydown', function (e) {
@@ -2332,5 +1549,10 @@
     });
   });
 
+  buildB();
+  syncB();
 })();
 </script>
+
+</body>
+</html>

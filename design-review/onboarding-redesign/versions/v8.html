@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;background:#0a0a0f;color-scheme:dark}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
 <title>Two Doors Into the Dīwān</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -302,25 +310,9 @@
 
 
   /* ── Tabs + panels ──────────────────────────────────────────── */
-  /* Four flows and eight versions both outgrow a phone, so the strips
-     scroll horizontally rather than wrapping into a second row that
-     pushes the phone below the fold. */
   .tabs {
-    display: flex; gap: 2px; flex-wrap: nowrap;
-    overflow-x: auto; overscroll-behavior-x: contain;
-    scrollbar-width: none; -webkit-overflow-scrolling: touch;
+    display: flex; gap: 2px; flex-wrap: wrap;
     border-bottom: 1px solid var(--ink-edge); margin-bottom: 34px;
-    scroll-snap-type: x proximity;
-  }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tabs .tab { flex: 0 0 auto; scroll-snap-align: start; }
-  /* The strip runs to the page edge so a cut-off tab reads as "scroll me",
-     but its contents keep the gutter. */
-  .tabs-wrap { position: relative; }
-  .tabs-wrap::after {
-    content: ''; position: absolute; right: 0; top: 0; bottom: 1px; width: 44px;
-    background: linear-gradient(90deg, transparent, var(--ink));
-    pointer-events: none;
   }
   .tab {
     background: transparent; border: 0; border-bottom: 2px solid transparent;
@@ -659,31 +651,6 @@
     font-family: 'Forum', Georgia, serif; font-size: .75rem; color: var(--faint);
   }
 
-
-  /* ── Version history ────────────────────────────────────────── */
-  .vtabs { margin-bottom: 24px; }
-  .vtab .ts { font-family: ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: .04em; }
-  .vpanel[hidden] { display: none !important; }
-  .vmeta {
-    display: flex; flex-wrap: wrap; gap: 8px 26px; align-items: baseline;
-    padding-bottom: 14px; border-bottom: 1px solid var(--ink-edge);
-  }
-  .vstat { display: flex; align-items: baseline; gap: 8px; }
-  .vk { font-size: .5625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--faint); }
-  .vv { font-size: .8125rem; color: var(--parchment); }
-  .vv.mono {
-    font-family: ui-monospace, 'SF Mono', Menlo, monospace;
-    font-variant-numeric: tabular-nums; color: var(--muted);
-  }
-  .vv a { color: var(--gold); text-decoration: none; border-bottom: 1px solid rgba(197,160,89,.3); }
-  .vv a:hover { border-bottom-color: var(--gold); }
-  .vdesc { font-size: .9375rem; line-height: 1.62; color: var(--muted); margin: 16px 0 20px; max-width: 46rem; }
-  .vframe {
-    border: 1px solid var(--ink-edge); border-radius: 4px; overflow: hidden;
-    background: var(--ink); height: min(78vh, 760px);
-  }
-  .vframe iframe { width: 100%; height: 100%; border: 0; display: block; }
-
   /* ── Reveal ─────────────────────────────────────────────────── */
   .reveal { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
   .reveal h4 {
@@ -751,7 +718,6 @@
     and both end on the same reveal. They differ on where the signal comes from.
   </p>
 
-  <div class="tabs-wrap">
   <div class="tabs" role="tablist" aria-label="Onboarding flows">
     <button class="tab" type="button" role="tab" id="tab-o" aria-controls="panel-o" aria-selected="true" data-panel="o">
       <span class="tn">Ships today</span><span class="ts">six steps</span>
@@ -765,7 +731,6 @@
     <button class="tab" type="button" role="tab" id="tab-bs" aria-controls="panel-bs" aria-selected="false" data-panel="bs">
       <span class="tn">B-scroll · One page</span><span class="ts">same ten forks</span>
     </button>
-  </div>
   </div>
 
   <!-- ══════════════ ORIGINAL ══════════════ -->
@@ -1169,109 +1134,6 @@
     new engine</b> — <code>scorePoem</code>, <code>candidateQueries</code> and the draw temperature
     are untouched. The reader never sees a taxonomy key; the engine never sees a would-you-rather.
   </p>
-
-  <hr class="rule">
-
-  <h2>Every version, still running</h2>
-  <p class="section-note">
-    Eight published versions, each one live rather than screenshotted — the frames below are the
-    real files, so the mocks inside them still work. Useful above all for what later versions
-    removed: v2's occasion cards and v2–v6's unlabelled two-line comparison exist nowhere else.
-  </p>
-
-  <div class="tabs-wrap">
-  <div class="tabs vtabs" role="tablist" aria-label="Published versions">
-    <button class="tab vtab" type="button" role="tab" id="vtab-1" aria-controls="vpanel-1" aria-selected="true" data-v="1"><span class="tn">v1 · First Contact</span><span class="ts">27c8469</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-2" aria-controls="vpanel-2" aria-selected="false" data-v="2"><span class="tn">v2 · The Question Rewrite</span><span class="ts">fc92cda</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-3" aria-controls="vpanel-3" aria-selected="false" data-v="3"><span class="tn">v3 · Posture Revert</span><span class="ts">917a173</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-4" aria-controls="vpanel-4" aria-selected="false" data-v="4"><span class="tn">v4 · Three in Tabs</span><span class="ts">1726028</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-5" aria-controls="vpanel-5" aria-selected="false" data-v="5"><span class="tn">v5 · Show, Then Argue</span><span class="ts">05f8aae</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-6" aria-controls="vpanel-6" aria-selected="false" data-v="6"><span class="tn">v6 · Baghdad After Dark</span><span class="ts">9cb9ccf</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-7" aria-controls="vpanel-7" aria-selected="false" data-v="7"><span class="tn">v7 · Ten Forks</span><span class="ts">6bc260d</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-8" aria-controls="vpanel-8" aria-selected="false" data-v="8"><span class="tn">v8 · Two Tempos</span><span class="ts">255c8fc</span></button>
-  </div>
-  </div>
-
-  <section class="vpanel" id="vpanel-1" role="tabpanel" aria-labelledby="vtab-1">
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">27c8469</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">771</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+771</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v1.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Critique plus two mocks side by side. A was The First Draw; B was a single sheet that kept the shipping taxonomy questions and only re-laid them out — which fixed nothing, and is the mistake the next version exists to correct.</p>
-    <div class="vframe"><iframe src="versions/v1.html" title="v1 — First Contact" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-2" role="tabpanel" aria-labelledby="vtab-2" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">fc92cda</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">950</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+278 −99</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v2.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">B’s questions replaced wholesale: occasion cards, the unlabelled two-line comparison, "how long do you have", posture. Introduced the seven rules. The largest conceptual jump on the list.</p>
-    <div class="vframe"><iframe src="versions/v2.html" title="v2 — The Question Rewrite" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-3" role="tabpanel" aria-labelledby="vtab-3" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">917a173</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">949</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+5 −6</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v3.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Six lines. Q4 back to "How do you read?" — Arabic only / With English / And how it sounds.</p>
-    <div class="vframe"><iframe src="versions/v3.html" title="v3 — Posture Revert" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-4" role="tabpanel" aria-labelledby="vtab-4" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">1726028</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,467</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+580 −62</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v4.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">The shipping six-step flow rebuilt at 1:1 — hex comb, blob field, era timeline, locked doors — and all three flows moved into tabs. Doubled the file and turned prose assertions into something tappable.</p>
-    <div class="vframe"><iframe src="versions/v4.html" title="v4 — Three in Tabs" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-5" role="tabpanel" aria-labelledby="vtab-5" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">05f8aae</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,468</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+47 −46</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v5.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Pure reordering: mocks first, critique after. Net one line, and the best ratio of effect to diff in the whole history.</p>
-    <div class="vframe"><iframe src="versions/v5.html" title="v5 — Show, Then Argue" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-6" role="tabpanel" aria-labelledby="vtab-6" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">9cb9ccf</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,547</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+98 −19</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v6.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Session length out, the scene-led era question in, and with it the rule that a term should never be the price of admission.</p>
-    <div class="vframe"><iframe src="versions/v6.html" title="v6 — Baghdad After Dark" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-7" role="tabpanel" aria-labelledby="vtab-7" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">6bc260d</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">1,909</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+637 −275</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v7.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">B rebuilt as the fork carousel, the ease buckets on accessibility_score, the taste profile, and the query-mapping section. The only version that deletes at scale — occasion cards and the two-line comparison both died here.</p>
-    <div class="vframe"><iframe src="versions/v7.html" title="v7 — Ten Forks" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel" id="vpanel-8" role="tabpanel" aria-labelledby="vtab-8" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">255c8fc</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">2,166</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+269 −12</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v8.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">B-scroll beside the carousel. Same forks, same tally, same profile; ritual against control.</p>
-    <div class="vframe"><iframe src="versions/v8.html" title="v8 — Two Tempos" loading="lazy"></iframe></div>
-  </section>
 
   <hr class="rule">
 
@@ -2294,32 +2156,8 @@
       var on = t.dataset.panel === id;
       t.setAttribute('aria-selected', on ? 'true' : 'false');
       document.getElementById('panel-' + t.dataset.panel).hidden = !on;
-      if (on && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
   }
-  /* Version strip: same keyboard contract as the flow strip, and the newly
-     selected tab is scrolled into view, so a tab reached by arrow key never
-     sits off-screen in the horizontal scroller. */
-  var vtabs = Array.prototype.slice.call(document.querySelectorAll('.vtab'));
-  function selectVersion(n) {
-    vtabs.forEach(function (t) {
-      var on = t.dataset.v === n;
-      t.setAttribute('aria-selected', on ? 'true' : 'false');
-      document.getElementById('vpanel-' + t.dataset.v).hidden = !on;
-      if (on && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    });
-  }
-  vtabs.forEach(function (t) {
-    t.addEventListener('click', function () { selectVersion(t.dataset.v); });
-    t.addEventListener('keydown', function (e) {
-      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-      e.preventDefault();
-      var i = vtabs.indexOf(t);
-      var n = vtabs[(i + (e.key === 'ArrowRight' ? 1 : vtabs.length - 1)) % vtabs.length];
-      selectVersion(n.dataset.v); n.focus();
-    });
-  });
-
   tabs.forEach(function (t) {
     t.addEventListener('click', function () { selectTab(t.dataset.panel); });
     t.addEventListener('keydown', function (e) {
@@ -2334,3 +2172,6 @@
 
 })();
 </script>
+
+</body>
+</html>

@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html,body{margin:0;background:#0a0a0f;color-scheme:dark}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
 <title>Two Doors Into the Dīwān</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -684,18 +692,6 @@
   }
   .vframe iframe { width: 100%; height: 100%; border: 0; display: block; }
 
-
-  .vtag {
-    font-size: .5625rem; letter-spacing: .1em; text-transform: uppercase;
-    padding: 2px 7px; border-radius: 99px; border: 1px solid;
-  }
-  .vtag.chosen    { color: #7fc4b8; border-color: rgba(74,157,143,.5); }
-  .vtag.alternate { color: var(--faint); border-color: rgba(236,229,216,.16); }
-  .vtag.option    { color: var(--gold); border-color: rgba(197,160,89,.45); }
-  .vtag.tool      { color: #8b8a96; border-color: rgba(139,138,150,.35); }
-  .ptabs { margin-bottom: 24px; }
-  .ptab .tn { max-width: 15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
   /* ── Reveal ─────────────────────────────────────────────────── */
   .reveal { display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center; }
   .reveal h4 {
@@ -1186,13 +1182,10 @@
 
   <h2>Every version, still running</h2>
   <p class="section-note">
-    Nine published versions of this page, plus the twenty-five explorations that came before it —
-    thirty-four documents, every one live rather than screenshotted. The frames are the real files,
-    so the mocks inside them still work. Useful above all for what later versions removed: v2's
-    occasion cards and v2–v6's unlabelled two-line comparison exist nowhere else.
+    Eight published versions, each one live rather than screenshotted — the frames below are the
+    real files, so the mocks inside them still work. Useful above all for what later versions
+    removed: v2's occasion cards and v2–v6's unlabelled two-line comparison exist nowhere else.
   </p>
-
-  <h3 class="sub-h" style="margin-top:30px">This page, v1 – v9</h3>
 
   <div class="tabs-wrap">
   <div class="tabs vtabs" role="tablist" aria-label="Published versions">
@@ -1204,7 +1197,6 @@
     <button class="tab vtab" type="button" role="tab" id="vtab-6" aria-controls="vpanel-6" aria-selected="false" data-v="6"><span class="tn">v6 · Baghdad After Dark</span><span class="ts">9cb9ccf</span></button>
     <button class="tab vtab" type="button" role="tab" id="vtab-7" aria-controls="vpanel-7" aria-selected="false" data-v="7"><span class="tn">v7 · Ten Forks</span><span class="ts">6bc260d</span></button>
     <button class="tab vtab" type="button" role="tab" id="vtab-8" aria-controls="vpanel-8" aria-selected="false" data-v="8"><span class="tn">v8 · Two Tempos</span><span class="ts">255c8fc</span></button>
-    <button class="tab vtab" type="button" role="tab" id="vtab-9" aria-controls="vpanel-9" aria-selected="false" data-v="9"><span class="tn">v9 · The Archive Opens</span><span class="ts">1f852e2</span></button>
   </div>
   </div>
 
@@ -1287,310 +1279,6 @@
     </div>
     <p class="vdesc">B-scroll beside the carousel. Same forks, same tally, same profile; ritual against control.</p>
     <div class="vframe"><iframe src="versions/v8.html" title="v8 — Two Tempos" loading="lazy"></iframe></div>
-  </section>
-
-  <section class="vpanel" id="vpanel-9" role="tabpanel" aria-labelledby="vtab-9" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">commit</span><span class="vv mono">1f852e2</span></div>
-      <div class="vstat"><span class="vk">lines</span><span class="vv mono">2,254</span></div>
-      <div class="vstat"><span class="vk">diff</span><span class="vv mono">+114 −26</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="versions/v9.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <p class="vdesc">Both tab strips made scrollable, and this section added — the version history
-      embedding v1–v8 as live frames. The one recursive entry: the version that first showed the
-      versions, now showing itself showing them.</p>
-    <div class="vframe"><iframe src="versions/v9.html" title="v9 — The Archive Opens" loading="lazy"></iframe></div>
-  </section>
-
-
-  <h3 class="sub-h">Before any of that — 25 explorations already in the repo</h3>
-  <p class="section-note">
-    This redesign did not start on a blank page. <code>design-review/onboarding/</code> holds a
-    full exploration that predates it: three whole-flow options, three identity variations, and
-    competing treatments for each step, each transition and each background. The top-level file in
-    every family is the one that was <b>chosen</b>; <code>archive/</code> keeps the alternates that
-    lost. Four archived files are byte-identical to their promoted twin and are listed once.
-  </p>
-
-  <div class="tabs-wrap">
-  <div class="tabs ptabs" role="tablist" aria-label="Earlier explorations">
-    <button class="tab ptab" type="button" role="tab" id="ptab-e2e-1" aria-controls="ppanel-e2e-1" aria-selected="true" data-p="e2e-1"><span class="tn">Option 1: Seamless Flow</span><span class="ts">Whole flow</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-e2e-2" aria-controls="ppanel-e2e-2" aria-selected="false" data-p="e2e-2"><span class="tn">Option 2: Cinematic Flow</span><span class="ts">Whole flow</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-e2e-3" aria-controls="ppanel-e2e-3" aria-selected="false" data-p="e2e-3"><span class="tn">Option 3: Minimal Flow</span><span class="ts">Whole flow</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-folio" aria-controls="ppanel-folio" aria-selected="false" data-p="folio"><span class="tn">Variation 1: Folio</span><span class="ts">Identity</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-luminara" aria-controls="ppanel-luminara" aria-selected="false" data-p="luminara"><span class="tn">Variation 2: Luminara</span><span class="ts">Identity</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-surge" aria-controls="ppanel-surge" aria-selected="false" data-p="surge"><span class="tn">Variation 3: Surge</span><span class="ts">Identity</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-mood" aria-controls="ppanel-mood" aria-selected="false" data-p="mood"><span class="tn">C2: Bright White English</span><span class="ts">Mood step</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-mood-a" aria-controls="ppanel-mood-a" aria-selected="false" data-p="mood-a"><span class="tn">Option A: Floating Orbs</span><span class="ts">Mood step</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-mood-b" aria-controls="ppanel-mood-b" aria-selected="false" data-p="mood-b"><span class="tn">Option B: Card Flip Grid</span><span class="ts">Mood step</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-mood-c" aria-controls="ppanel-mood-c" aria-selected="false" data-p="mood-c"><span class="tn">Option C: Ink Drop</span><span class="ts">Mood step</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-mood-c1" aria-controls="ppanel-mood-c1" aria-selected="false" data-p="mood-c1"><span class="tn">C1: Pill English</span><span class="ts">Mood step</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-mood-c2" aria-controls="ppanel-mood-c2" aria-selected="false" data-p="mood-c2"><span class="tn">C2: Bright White English</span><span class="ts">Mood step</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-era" aria-controls="ppanel-era" aria-selected="false" data-p="era"><span class="tn">Option B: Time Portal</span><span class="ts">Era step</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-era-a" aria-controls="ppanel-era-a" aria-selected="false" data-p="era-a"><span class="tn">Option A: Split Screen Morph</span><span class="ts">Era step</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-theme" aria-controls="ppanel-theme" aria-selected="false" data-p="theme"><span class="tn">Option A: Constellation Map</span><span class="ts">Theme step</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-theme-b" aria-controls="ppanel-theme-b" aria-selected="false" data-p="theme-b"><span class="tn">Option B: Mosaic Tiles</span><span class="ts">Theme step</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-reveal" aria-controls="ppanel-reveal" aria-selected="false" data-p="reveal"><span class="tn">Option A: Particle Convergence</span><span class="ts">Motion</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-reveal-b" aria-controls="ppanel-reveal-b" aria-selected="false" data-p="reveal-b"><span class="tn">Option B: Calligraphic Stroke</span><span class="ts">Motion</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-exit" aria-controls="ppanel-exit" aria-selected="false" data-p="exit"><span class="tn">Option B: Dissolve to Light</span><span class="ts">Motion</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-exit-a" aria-controls="ppanel-exit-a" aria-selected="false" data-p="exit-a"><span class="tn">Option A: Golden Ring Wipe</span><span class="ts">Motion</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-bg-3" aria-controls="ppanel-bg-3" aria-selected="false" data-p="bg-3"><span class="tn">Muqarnas</span><span class="ts">Background</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-bg-4" aria-controls="ppanel-bg-4" aria-selected="false" data-p="bg-4"><span class="tn">Star &amp; Cross (Lapis Only)</span><span class="ts">Background</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-bg-1" aria-controls="ppanel-bg-1" aria-selected="false" data-p="bg-1"><span class="tn">Star &amp; Cross</span><span class="ts">Background</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-bg-2" aria-controls="ppanel-bg-2" aria-selected="false" data-p="bg-2"><span class="tn">Molded Panel</span><span class="ts">Background</span></button>
-    <button class="tab ptab" type="button" role="tab" id="ptab-patterns" aria-controls="ppanel-patterns" aria-selected="false" data-p="patterns"><span class="tn">TiledPatternMaker Library</span><span class="ts">Tool</span></button>
-  </div>
-  </div>
-
-  <section class="vpanel ppanel" id="ppanel-e2e-1" role="tabpanel" aria-labelledby="ptab-e2e-1">
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Onboarding E2E — Option 1: Seamless Flow</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag option">option</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">onboarding-e2e-1.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">144 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/e2e-1.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/e2e-1.html" title="Onboarding E2E — Option 1: Seamless Flow" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-e2e-2" role="tabpanel" aria-labelledby="ptab-e2e-2" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Onboarding E2E — Option 2: Cinematic Flow</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag option">option</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">onboarding-e2e-2.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">134 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/e2e-2.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/e2e-2.html" title="Onboarding E2E — Option 2: Cinematic Flow" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-e2e-3" role="tabpanel" aria-labelledby="ptab-e2e-3" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Onboarding — Option 3: Minimal Flow</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag option">option</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">onboarding-e2e-3.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">90 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/e2e-3.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/e2e-3.html" title="Onboarding — Option 3: Minimal Flow" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-folio" role="tabpanel" aria-labelledby="ptab-folio" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">شِعر — Variation 1: Folio</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag option">option</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">variation-1-folio.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">29 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/folio.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/folio.html" title="شِعر — Variation 1: Folio" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-luminara" role="tabpanel" aria-labelledby="ptab-luminara" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">شِعر — Variation 2: Luminara</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag option">option</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">variation-2-luminara.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">28 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/luminara.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/luminara.html" title="شِعر — Variation 2: Luminara" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-surge" role="tabpanel" aria-labelledby="ptab-surge" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">شِعر — Variation 3: Surge</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag option">option</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">variation-3-surge.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">28 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/surge.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/surge.html" title="شِعر — Variation 3: Surge" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-mood" role="tabpanel" aria-labelledby="ptab-mood" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Mood Picker — C2: Bright White English</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag chosen">shipped choice</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">mood-picker.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">92 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/mood.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/mood.html" title="Mood Picker — C2: Bright White English" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-mood-a" role="tabpanel" aria-labelledby="ptab-mood-a" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Mood Picker — Option A: Floating Orbs</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/mood-picker-a.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">91 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/mood-a.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/mood-a.html" title="Mood Picker — Option A: Floating Orbs" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-mood-b" role="tabpanel" aria-labelledby="ptab-mood-b" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Mood Picker — Option B: Card Flip Grid</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/mood-picker-b.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">90 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/mood-b.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/mood-b.html" title="Mood Picker — Option B: Card Flip Grid" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-mood-c" role="tabpanel" aria-labelledby="ptab-mood-c" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Mood Picker — Option C: Ink Drop</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/mood-picker-c.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">92 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/mood-c.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/mood-c.html" title="Mood Picker — Option C: Ink Drop" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-mood-c1" role="tabpanel" aria-labelledby="ptab-mood-c1" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Mood Picker — C1: Pill English</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/mood-picker-c1-pill.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">92 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/mood-c1.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/mood-c1.html" title="Mood Picker — C1: Pill English" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-mood-c2" role="tabpanel" aria-labelledby="ptab-mood-c2" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Mood Picker — C2: Bright White English</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/mood-picker-c2-white.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">92 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/mood-c2.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/mood-c2.html" title="Mood Picker — C2: Bright White English" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-era" role="tabpanel" aria-labelledby="ptab-era" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Era Picker — Option B: Time Portal</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag chosen">shipped choice</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">era-picker.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">104 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/era.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/era.html" title="Era Picker — Option B: Time Portal" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-era-a" role="tabpanel" aria-labelledby="ptab-era-a" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Era Picker — Option A: Split Screen Morph</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/era-picker-a.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">100 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/era-a.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/era-a.html" title="Era Picker — Option A: Split Screen Morph" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-theme" role="tabpanel" aria-labelledby="ptab-theme" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Theme Picker — Option A: Constellation Map</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag chosen">shipped choice</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">theme-picker.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">98 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/theme.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/theme.html" title="Theme Picker — Option A: Constellation Map" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-theme-b" role="tabpanel" aria-labelledby="ptab-theme-b" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Theme Picker — Option B: Mosaic Tiles</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/theme-picker-b.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">99 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/theme-b.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/theme-b.html" title="Theme Picker — Option B: Mosaic Tiles" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-reveal" role="tabpanel" aria-labelledby="ptab-reveal" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Brand Reveal — Option A: Particle Convergence</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag chosen">shipped choice</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">brand-reveal.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">83 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/reveal.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/reveal.html" title="Brand Reveal — Option A: Particle Convergence" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-reveal-b" role="tabpanel" aria-labelledby="ptab-reveal-b" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Brand Reveal — Option B: Calligraphic Stroke</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/brand-reveal-b.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">85 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/reveal-b.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/reveal-b.html" title="Brand Reveal — Option B: Calligraphic Stroke" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-exit" role="tabpanel" aria-labelledby="ptab-exit" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Exit Transition — Option B: Dissolve to Light</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag chosen">shipped choice</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">exit-transition.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">91 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/exit.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/exit.html" title="Exit Transition — Option B: Dissolve to Light" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-exit-a" role="tabpanel" aria-labelledby="ptab-exit-a" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Exit Transition — Option A: Golden Ring Wipe</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/exit-transition-a.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">88 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/exit-a.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/exit-a.html" title="Exit Transition — Option A: Golden Ring Wipe" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-bg-3" role="tabpanel" aria-labelledby="ptab-bg-3" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Background 3 — Muqarnas</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag option">option</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">bg-option-3.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">16 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/bg-3.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/bg-3.html" title="Background 3 — Muqarnas" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-bg-4" role="tabpanel" aria-labelledby="ptab-bg-4" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Background 4 — Star &amp; Cross (Lapis Only)</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag option">option</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">bg-option-4.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">17 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/bg-4.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/bg-4.html" title="Background 4 — Star &amp; Cross (Lapis Only)" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-bg-1" role="tabpanel" aria-labelledby="ptab-bg-1" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Background 1 — Star &amp; Cross</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/backgrounds/bg-option-1.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">22 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/bg-1.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/bg-1.html" title="Background 1 — Star &amp; Cross" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-bg-2" role="tabpanel" aria-labelledby="ptab-bg-2" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Background 2 — Molded Panel</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag alternate">rejected alternate</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">archive/backgrounds/bg-option-2.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">29 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/bg-2.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/bg-2.html" title="Background 2 — Molded Panel" loading="lazy"></iframe></div>
-  </section>
-  <section class="vpanel ppanel" id="ppanel-patterns" role="tabpanel" aria-labelledby="ptab-patterns" hidden>
-    <div class="vmeta">
-      <div class="vstat"><span class="vk">title</span><span class="vv">Islamic Pattern Generator — TiledPatternMaker Library</span></div>
-      <div class="vstat"><span class="vk">status</span><span class="vv"><span class="vtag tool">utility</span></span></div>
-      <div class="vstat"><span class="vk">path</span><span class="vv mono">islamic-patterns/generate.html</span></div>
-      <div class="vstat"><span class="vk">size</span><span class="vv mono">690 KB</span></div>
-      <div class="vstat"><span class="vk">open</span><span class="vv"><a href="prior/patterns.html" target="_blank" rel="noopener">full page ↗</a></span></div>
-    </div>
-    <div class="vframe"><iframe src="prior/patterns.html" title="Islamic Pattern Generator — TiledPatternMaker Library" loading="lazy"></iframe></div>
   </section>
 
   <hr class="rule">
@@ -2620,33 +2308,25 @@
   /* Version strip: same keyboard contract as the flow strip, and the newly
      selected tab is scrolled into view, so a tab reached by arrow key never
      sits off-screen in the horizontal scroller. */
-  /* One wiring for every archive strip. Both are long enough to scroll, so a
-     tab reached by arrow key is scrolled into view rather than left off-screen. */
-  function wireStrip(tabClass, dataKey, panelPrefix) {
-    var strip = Array.prototype.slice.call(document.querySelectorAll('.' + tabClass));
-    if (!strip.length) return;
-    var pick = function (key) {
-      strip.forEach(function (t) {
-        var on = t.dataset[dataKey] === key;
-        t.setAttribute('aria-selected', on ? 'true' : 'false');
-        var panel = document.getElementById(panelPrefix + t.dataset[dataKey]);
-        if (panel) panel.hidden = !on;
-        if (on && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-      });
-    };
-    strip.forEach(function (t) {
-      t.addEventListener('click', function () { pick(t.dataset[dataKey]); });
-      t.addEventListener('keydown', function (e) {
-        if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-        e.preventDefault();
-        var i = strip.indexOf(t);
-        var n = strip[(i + (e.key === 'ArrowRight' ? 1 : strip.length - 1)) % strip.length];
-        pick(n.dataset[dataKey]); n.focus();
-      });
+  var vtabs = Array.prototype.slice.call(document.querySelectorAll('.vtab'));
+  function selectVersion(n) {
+    vtabs.forEach(function (t) {
+      var on = t.dataset.v === n;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      document.getElementById('vpanel-' + t.dataset.v).hidden = !on;
+      if (on && t.scrollIntoView) t.scrollIntoView({ block: 'nearest', inline: 'nearest' });
     });
   }
-  wireStrip('vtab', 'v', 'vpanel-');
-  wireStrip('ptab', 'p', 'ppanel-');
+  vtabs.forEach(function (t) {
+    t.addEventListener('click', function () { selectVersion(t.dataset.v); });
+    t.addEventListener('keydown', function (e) {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      e.preventDefault();
+      var i = vtabs.indexOf(t);
+      var n = vtabs[(i + (e.key === 'ArrowRight' ? 1 : vtabs.length - 1)) % vtabs.length];
+      selectVersion(n.dataset.v); n.focus();
+    });
+  });
 
   tabs.forEach(function (t) {
     t.addEventListener('click', function () { selectTab(t.dataset.panel); });
@@ -2662,3 +2342,6 @@
 
 })();
 </script>
+
+</body>
+</html>

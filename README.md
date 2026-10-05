@@ -127,6 +127,8 @@ calm, considered feel.
 
 - A single tap surfaces a new poem from the curated library
 - Poet filtering, and a swipeable carousel of poems by the same poet
+- Explore Poems (account menu): browse and filter the library by mood, topic, motif,
+  emotional intensity, and reading difficulty
 - Deep-linkable poems and shareable cards with Open Graph previews
 
 **Personalization**
@@ -136,6 +138,7 @@ calm, considered feel.
 - Preference flow (mood, era, topic) from the account menu that biases the discovery feed
 - Persistent settings (theme, font) that follow you across sessions
 - Flag low-quality poems to improve the corpus
+- Guided walkthrough tour of the reader, restartable from the account menu
 - Keyboard shortcuts everywhere — press `?` for the full list
 
 **Platform**
@@ -292,6 +295,7 @@ to add a strategy, audit it with Chirp, and retain only useful artifacts.
 | `VITE_SUPABASE_URL`      | Frontend | Supabase project URL (optional)                       |
 | `VITE_SUPABASE_ANON_KEY` | Frontend | Supabase anon key, JWT format (optional)              |
 | `DATABASE_URL`           | Backend  | PostgreSQL connection (Supabase pooler in production) |
+| `GEMINI_API_KEY`         | Backend  | Gemini key for the TTS proxy and AI mode (optional)   |
 | `PORT`                   | Backend  | API port (default 3001)                               |
 | `API_SECRET_KEY`         | Backend  | Protects write endpoints via `X-API-Key` (optional)   |
 
@@ -322,6 +326,7 @@ pipeline builds, runs unit tests, then runs the E2E suite against a PostgreSQL s
 | `VITE_SUPABASE_URL`      | Yes    | —      | —              |
 | `VITE_SUPABASE_ANON_KEY` | Yes    | —      | —              |
 | `DATABASE_URL`           | —      | Yes    | Yes            |
+| `GEMINI_API_KEY`         | —      | Yes    | —              |
 
 **Frontend (Vercel)** — framework preset Vite, build `npm run build`, output `dist`.
 Auto-deploys on push to `main` with preview URLs for pull requests.

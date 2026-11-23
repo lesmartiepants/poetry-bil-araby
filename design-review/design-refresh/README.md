@@ -25,9 +25,9 @@ Fonts load from Google Fonts, so text renders in the brand typefaces when you ar
 
 ## Pages and what to look at
 
-- **Brand · final:** the logo, colour, typography, type roles, pattern and voice (S1–S4), then the newer sheets: Components (S5), Design language and specs (S6), Screen types (S7) and Language and taxonomy (S8).
+- **Brand · final:** the logo, colour, typography, type roles, pattern and voice (S1–S4), then the newer sheets: Components (S5), Design language and specs (S6), Screen types (S7) and Language and taxonomy (S8). Beside S5 and S6, **Errors and loading** (C20–C23): the margin note, error toast and full-area error, the margin note's tap area, screen reader wording and pressed state, and the loading lines.
 - **Pattern library · by region:** a read-me card, then every pattern grouped by where its craft comes from (Andalusia and the Maghreb, Persia, Anatolia, Iraq, Syria, Egypt, Yemen). Frames are coded by region (AN, PE, AT, IQ, SY, EG, YE).
-- **App flow:** every screen, grouped into nine numbered flows. Screens are numbered flow.position (for example 6.3 is the third screen of flow 6). Gray notes under each screen say where it comes from and where each tap goes.
+- **App flow:** every screen, grouped into eleven numbered flows. Flow 10 collects errors (when something fails) and flow 11 the loading states; errors that belong to one place stay in their own flow (4.7, 7.3, 8.8, 5.2). Screens are numbered flow.position (for example 6.3 is the third screen of flow 6). Gray notes under each screen say where it comes from and where each tap goes.
 - **Archive:** earlier rounds and options kept for reference.
 
 ## Bringing it back into Claude for more iteration

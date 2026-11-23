@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Reading settings</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Aref+Ruqaa:wght@400;700&family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&family=Josefin+Sans:wght@400;600&display=swap">
+<style>
+body{margin:0;background:#0A0A0D}
+a{color:#D4B36A}a:hover{color:#E8CC8A}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="width:390px;height:844px;position:relative;overflow:hidden;background:#0A0A0D;color:#F2EEE6;font-family:'Josefin Sans',sans-serif">
+
+<main style="padding:96px 28px 0 28px;display:flex;flex-direction:column;gap:20px;text-align:right">
+<div style="display:flex;flex-direction:column;gap:2px">
+<p lang="ar" dir="rtl" style="margin:0;font-family:Amiri,serif;font-size:30px;line-height:1.6;color:#F2EEE6">أَمُرُّ عَلى الدِيارِ دِيارِ لَيلى</p>
+<p style="margin:0;font-size:14px;letter-spacing:0.02em;color:#D4B36A">amurru ʿalā d-diyāri diyāri Laylā</p>
+<p style="margin:2px 0 0;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:#BDB6A8">I pass by the dwellings, Layla's dwellings,</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<p lang="ar" dir="rtl" style="margin:0;font-family:Amiri,serif;font-size:30px;line-height:1.6;color:#F2EEE6">أُقَبِّلُ ذا الجِدارَ وَذا الجِدارا</p>
+<p style="margin:0;font-size:14px;letter-spacing:0.02em;color:#D4B36A">uqabbilu dhā l-jidāra wa-dhā l-jidārā</p>
+<p style="margin:2px 0 0;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:18px;color:#BDB6A8">and kiss this wall, and then that wall.</p>
+</div>
+</main>
+
+<section role="dialog" aria-label="Reading settings" style="position:absolute;left:0;right:0;bottom:0;height:476px;border-radius:28px 28px 0 0;background:#141318;border-top:1px solid #3A3328;box-shadow:0 -20px 48px rgba(0,0,0,0.6);padding:10px 22px 30px 22px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+<div aria-hidden="true" style="width:40px;height:4px;border-radius:2px;background:#3A362E;align-self:center"></div>
+
+<div>
+<p style="margin:0 0 10px;font-size:10px;letter-spacing:0.2em;color:#A8A296">SHOW</p>
+<div role="group" aria-label="Lines to show" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+<button aria-pressed="true" style="height:48px;border-radius:12px;border:1.5px solid #D4B36A;background:#1E1A12;color:#D4B36A;font-size:13px"><span lang="ar" style="font-family:Amiri,serif;font-size:17px">عربي</span></button>
+<button aria-pressed="true" style="height:48px;border-radius:12px;border:1.5px solid #D4B36A;background:#1E1A12;color:#D4B36A;font-size:13px">Sounds</button>
+<button aria-pressed="true" style="height:48px;border-radius:12px;border:1.5px solid #D4B36A;background:#1E1A12;color:#D4B36A;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:17px">English</button>
+</div>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;min-height:44px">
+<div>
+<p style="margin:0;font-size:15px;color:#F2EEE6">Vowel marks <span lang="ar" style="font-family:Amiri,serif;color:#D4B36A">· تشكيل</span></p>
+<p style="margin:3px 0 0;font-size:12px;color:#A8A296">Helpful for learners, off for fluent readers</p>
+</div>
+<button role="switch" aria-checked="true" aria-label="Vowel marks" style="width:52px;height:32px;border-radius:16px;border:none;background:#D4B36A;position:relative;flex:none"><span style="position:absolute;right:3px;top:3px;width:26px;height:26px;border-radius:13px;background:#17140D"></span></button>
+</div>
+
+<div>
+<div style="display:flex;justify-content:space-between;align-items:baseline"><p style="margin:0;font-size:10px;letter-spacing:0.2em;color:#A8A296">TEXT SIZE</p><span style="font-size:12px;color:#A8A296">Large</span></div>
+<div style="display:flex;align-items:center;gap:14px;margin-top:10px">
+<span lang="ar" aria-hidden="true" style="font-family:Amiri,serif;font-size:16px;color:#A8A296">ا</span>
+<div role="slider" aria-label="Text size" aria-valuemin="1" aria-valuemax="5" aria-valuenow="4" tabindex="0" style="flex:1;height:44px;position:relative;display:flex;align-items:center">
+<span style="position:absolute;left:0;right:0;height:3px;border-radius:2px;background:#2E2A22"></span>
+<span style="position:absolute;left:0;width:75%;height:3px;border-radius:2px;background:#D4B36A"></span>
+<span style="position:absolute;left:calc(75% - 12px);width:24px;height:24px;border-radius:12px;background:#F2EEE6;box-shadow:0 2px 6px rgba(0,0,0,0.5)"></span>
+</div>
+<span lang="ar" aria-hidden="true" style="font-family:Amiri,serif;font-size:28px;color:#D4B36A">ا</span>
+</div>
+</div>
+
+<div>
+<p style="margin:0 0 10px;font-size:10px;letter-spacing:0.2em;color:#A8A296">PAGE</p>
+<div role="group" aria-label="Page theme" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+<button aria-pressed="true" style="height:64px;border-radius:12px;border:1.5px solid #D4B36A;background:#0A0A0D;color:#D4B36A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span lang="ar" style="font-family:Amiri,serif;font-size:18px;line-height:1">ليل</span><span style="font-size:10px;letter-spacing:0.12em">NIGHT</span></button>
+<button aria-pressed="false" style="height:64px;border-radius:12px;border:1px solid #3A362E;background:#EFE6D2;color:#2A2216;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span lang="ar" style="font-family:Amiri,serif;font-size:18px;line-height:1">رَقّ</span><span style="font-size:10px;letter-spacing:0.12em">PARCHMENT</span></button>
+<button aria-pressed="false" style="height:64px;border-radius:12px;border:1px solid #3A362E;background:#141A33;color:#E8CC8A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span lang="ar" style="font-family:Amiri,serif;font-size:18px;line-height:1">نيل</span><span style="font-size:10px;letter-spacing:0.12em">INDIGO</span></button>
+</div>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

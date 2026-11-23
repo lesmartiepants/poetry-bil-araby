@@ -22,6 +22,8 @@ Fonts load from Google Fonts, so text renders in the brand typefaces when you ar
 | `canvas/*.dc.html` | One file per frame (screen, board or pattern). Each also opens on its own in a browser. |
 | `tools/build_viewer.py` | Rebuilds `index.html` from `canvas/`. |
 | `tools/viewer_template.html` | The viewer's HTML, CSS and JS. |
+| `archive/` | The earlier canvases (5 redesign directions, 10 Reader Concepts, Finalists), each with its own viewer. See `archive/README.md`. |
+| `../current-app-catalog.md` | The catalog of the current app (screens, features, jobs to be done, redesign notes and open decisions). |
 
 ## Pages and what to look at
 
@@ -46,7 +48,7 @@ The original artifact this was exported from is "Poetry بالعربي: Brand" i
 python3 design-review/design-refresh/tools/build_viewer.py
 ```
 
-This reads `canvas/canvas.json` and every frame it lists, and writes a new `index.html`. It needs only Python 3.
+This reads `canvas/canvas.json` and every frame it lists, and writes a new `index.html`. It needs only Python 3. Pass a folder to build a different canvas, for example one in `archive/`.
 
 ## Notes
 

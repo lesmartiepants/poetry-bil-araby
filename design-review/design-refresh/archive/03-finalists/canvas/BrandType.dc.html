@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Typography</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Aref+Ruqaa:wght@400;700&family=Cormorant+Garamond:ital,wght@0,500;1,400&family=Josefin+Sans:wght@400;600&display=swap">
+<style>body{margin:0;background:#0A0A0D}a{color:#D4B36A}a:hover{color:#E8CC8A}</style>
+</helmet>
+<div style="width:1080px;height:720px;box-sizing:border-box;padding:48px 56px;background:#0A0A0D;color:#F2EEE6;font-family:'Josefin Sans',sans-serif;display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+<h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:500;font-size:40px">Typography</h1>
+<span style="font-size:12px;letter-spacing:0.22em;color:#A8A296">BRAND · 05</span>
+</div>
+
+<div style="display:grid;grid-template-columns:200px minmax(0,1fr) 220px;align-items:center;gap:24px;padding:16px 0;border-top:1px solid #2A2722">
+<div><p style="margin:0;font-size:11px;letter-spacing:0.2em;color:#D4B36A">DISPLAY · ARABIC</p><p style="margin:6px 0 0;font-size:14px;color:#F2EEE6">Aref Ruqaa Bold</p></div>
+<p lang="ar" dir="rtl" style="margin:0;font-family:'Aref Ruqaa',serif;font-weight:700;font-size:64px;line-height:1.2;color:#D4B36A;text-align:right">أمرُّ على الديار</p>
+<p style="margin:0;font-size:13px;line-height:1.5;color:#A8A296">Poem titles and the logo only. 40 to 64px. Never for verse.</p>
+</div>
+
+<div style="display:grid;grid-template-columns:200px minmax(0,1fr) 220px;align-items:center;gap:24px;padding:16px 0;border-top:1px solid #2A2722">
+<div><p style="margin:0;font-size:11px;letter-spacing:0.2em;color:#D4B36A">VERSE · ARABIC</p><p style="margin:6px 0 0;font-size:14px;color:#F2EEE6">Amiri Regular</p></div>
+<p lang="ar" dir="rtl" style="margin:0;font-family:Amiri,serif;font-size:34px;line-height:1.7;color:#F2EEE6;text-align:right">وَما حُبُّ الدِيارِ شَغَفنَ قَلبي</p>
+<p style="margin:0;font-size:13px;line-height:1.5;color:#A8A296">Naskh with full vowel marks. 27px, line height 1.6 so marks never collide.</p>
+</div>
+
+<div style="display:grid;grid-template-columns:200px minmax(0,1fr) 220px;align-items:center;gap:24px;padding:16px 0;border-top:1px solid #2A2722">
+<div><p style="margin:0;font-size:11px;letter-spacing:0.2em;color:#D4B36A">VERSE · ENGLISH</p><p style="margin:6px 0 0;font-size:14px;color:#F2EEE6">Cormorant Garamond Italic</p></div>
+<p style="margin:0;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;line-height:1.4;color:#BDB6A8;text-align:right">It is not love of the dwellings that took my heart</p>
+<p style="margin:0;font-size:13px;line-height:1.5;color:#A8A296">Set about two-thirds the Arabic size so the translation reads as a gloss, not a rival.</p>
+</div>
+
+<div style="display:grid;grid-template-columns:200px minmax(0,1fr) 220px;align-items:center;gap:24px;padding:16px 0;border-top:1px solid #2A2722">
+<div><p style="margin:0;font-size:11px;letter-spacing:0.2em;color:#D4B36A">INTERFACE</p><p style="margin:6px 0 0;font-size:14px;color:#F2EEE6">Josefin Sans 400 / 600</p></div>
+<div style="display:flex;gap:28px;align-items:baseline;justify-content:flex-end"><span style="font-size:13px;font-weight:600;letter-spacing:0.14em;color:#D4B36A">LISTEN · INSIGHTS</span><span style="font-size:15px;color:#F2EEE6">Recited by a native voice</span></div>
+<p style="margin:0;font-size:13px;line-height:1.5;color:#A8A296">Caps with 0.14em tracking for actions, sentence case for everything else.</p>
+</div>
+
+<div style="margin-top:auto;padding:16px 20px;border-radius:12px;background:#111015;border:1px solid #2A2722;font-size:14px;line-height:1.5;color:#BDB6A8">
+<span style="color:#D4B36A">Rule of hierarchy:</span> Arabic always leads in size, weight and position. English is italic and quieter. Interface type stays out of the verse area.
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1080,"height":720}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>04 Gallery: one poem a day</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Naskh+Arabic:wght@400;600&amp;family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#D4B57A}a:hover{color:#E8CD98}
+.step{margin:0;width:360px;flex:none;display:flex;flex-direction:column;gap:18px}
+.ph{width:360px;height:780px;border-radius:44px;overflow:hidden;position:relative;box-sizing:border-box;background:#16241F;border:1px solid #2C3D37;display:flex;flex-direction:column;color:#EEE8DC;font-family:Inter,sans-serif}
+.cap{font:400 14px/1.5 Inter,sans-serif;color:#B9C2BC;margin:0}
+.cap b{color:#EEE8DC;font-weight:600}
+.ar{font-family:'Noto Naskh Arabic',serif;direction:rtl}
+.lbl{font:600 11px Inter;letter-spacing:.18em;text-transform:uppercase;color:#A9B3AC}
+.disp{font-family:'Cormorant Garamond',serif}
+.room{display:flex;align-items:center;justify-content:space-between;padding:56px 24px 0}
+.next{height:52px;border-radius:26px;border:1px solid #D4B57A;background:none;color:#EEE8DC;font:500 14px Inter;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;margin:0 24px 30px}
+.tap{position:absolute;width:44px;height:44px;border-radius:50%;border:2px solid #D4B57A;box-shadow:0 0 0 8px rgba(212,181,122,.16);pointer-events:none}
+.spot{position:absolute;left:50%;top:-120px;width:520px;height:520px;transform:translateX(-50%);border-radius:50%;background:radial-gradient(closest-side,rgba(255,240,210,.10),transparent);pointer-events:none}
+</style>
+</helmet>
+<div style="width:2952px;height:1040px;box-sizing:border-box;padding:64px;background:#0F1915;display:flex;gap:64px;font-family:Inter,sans-serif">
+
+<aside style="width:400px;flex:none;display:flex;flex-direction:column;gap:22px;color:#EEE8DC">
+<div style="font:600 12px Inter;letter-spacing:.14em;color:#D4B57A">DIRECTION 04 · THE MUSEUM CURATOR</div>
+<h1 style="margin:0;font:500 64px/1 'Cormorant Garamond',serif">Gallery</h1>
+<p style="margin:0;font:400 18px/1.5 Inter;color:#D3D9D4">Each day, one poem as an exhibition in four rooms: context, poem, voice, exit. No feed, no badges, no infinite scroll. Scarcity is the luxury.</p>
+<div style="display:flex;flex-direction:column;gap:8px"><div class="lbl">Built from</div><p style="margin:0;font:400 15px/1.5 Inter;color:#D3D9D4">The curator: "You're giving the poet a notification count." Plus the critique: context belongs before the poem, not hidden behind Insights.</p></div>
+<div style="display:flex;flex-direction:column;gap:8px"><div class="lbl">Principles</div>
+<ul style="margin:0;padding-left:18px;font:400 15px/1.6 Inter;color:#D3D9D4"><li>One poem a day. The archive stays open.</li><li>Linear rooms with a single "next" door.</li><li>Wall-label typography: small caps, brass.</li><li>Sharing is the gift shop, at the exit.</li></ul></div>
+<div style="display:flex;flex-direction:column;gap:8px"><div class="lbl">Flow</div>
+<ol style="margin:0;padding-left:20px;font:400 15px/1.6 Inter;color:#D3D9D4"><li>Entrance: today's exhibition</li><li>Room I: context wall</li><li>Room II: the poem</li><li>Room III: the listening room</li><li>Room IV: exit and gift shop</li><li>Closed until tomorrow, archive open</li></ol></div>
+<div style="margin-top:auto;border-top:1px solid #2C3D37;padding-top:18px;font:400 14px/1.5 Inter;color:#B9C2BC"><b style="color:#EEE8DC">Measure (hypothesis):</b> returning on consecutive days and finishing all four rooms, rather than time in app.</div>
+</aside>
+
+<div style="display:flex;gap:40px">
+
+<figure class="step">
+<div class="ph">
+<div class="spot" aria-hidden="true"></div>
+<div style="padding:64px 28px 0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px">
+<div class="lbl">Today's exhibition</div>
+<div style="font:500 13px Inter;color:#B9C2BC">Wednesday 18 November</div>
+</div>
+<div style="margin:56px 28px 0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px">
+<div class="ar" lang="ar" style="font-size:46px;font-weight:600;line-height:1.4">قِفا نَبْكِ</div>
+<div class="disp" style="font-size:26px;font-style:italic;color:#E2DBCC">Stop, let us weep</div>
+<div style="width:36px;height:1px;background:#D4B57A;margin:6px 0"></div>
+<div class="lbl" style="color:#D4B57A">Imruʾ al-Qays · 6th century</div>
+</div>
+<div style="margin:54px 32px 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;text-align:center">
+<div><div class="disp" style="font-size:24px">I</div><div style="font:500 11px Inter;color:#A9B3AC">Context</div></div>
+<div><div class="disp" style="font-size:24px">II</div><div style="font:500 11px Inter;color:#A9B3AC">Poem</div></div>
+<div><div class="disp" style="font-size:24px">III</div><div style="font:500 11px Inter;color:#A9B3AC">Voice</div></div>
+<div><div class="disp" style="font-size:24px">IV</div><div style="font:500 11px Inter;color:#A9B3AC">Exit</div></div>
+</div>
+<div style="flex:1"></div>
+<button class="next" style="background:#D4B57A;color:#16241F;border:0;font-weight:600">Enter the exhibition</button>
+<div class="tap" aria-hidden="true" style="left:158px;top:702px"></div>
+</div>
+<figcaption class="cap"><b>1 · Entrance.</b> One poem, one date, four numbered rooms. A soft spotlight and a single door. Nothing else on offer today.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<div class="room"><span class="lbl">Room I of IV</span><button aria-label="Leave exhibition" style="width:44px;height:44px;border:0;background:none;color:#EEE8DC;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+<svg viewBox="0 0 360 150" width="360" height="150" aria-hidden="true" style="margin-top:20px"><path d="M0 120 C60 90 110 96 160 110 S260 80 360 100" fill="none" stroke="#D4B57A" stroke-width="1.2"></path><path d="M0 135 C80 112 140 124 200 130 S300 110 360 122" fill="none" stroke="#5E7A6E" stroke-width="1"></path><path d="M0 100 C50 80 120 70 180 88 S290 60 360 76" fill="none" stroke="#3E5A50" stroke-width="1"></path></svg>
+<div style="padding:10px 28px 0;display:flex;flex-direction:column;gap:12px">
+<div class="disp" style="font-size:32px;font-weight:600;line-height:1.1">Imruʾ al-Qays</div>
+<div class="lbl" style="color:#D4B57A">Kinda, Arabia · died 6th century</div>
+<p style="margin:6px 0 0;font:400 15px/1.6 Inter;color:#D3D9D4">A prince of the tribe of Kinda, remembered as the wandering king. He opens his ode the way the desert ode often opens: at an abandoned campsite, asking two companions to stop.</p>
+<p style="margin:0;font:400 15px/1.6 Inter;color:#D3D9D4">By tradition, it was one of the poems hung at the Kaaba. Most scholars treat that story as legend.</p>
+</div>
+<div style="flex:1"></div>
+<button class="next">Room II · The poem <span aria-hidden="true">→</span></button>
+</div>
+<figcaption class="cap"><b>2 · Context wall.</b> A wall label you read standing up: who, where, when, and the one idea you need before the first line. Legend is labelled as legend.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<div class="spot" aria-hidden="true" style="top:60px"></div>
+<div class="room"><span class="lbl">Room II of IV</span><button aria-label="Leave exhibition" style="width:44px;height:44px;border:0;background:none;color:#EEE8DC;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+<div style="margin:60px 24px 0;padding:30px 22px;border:1px solid #3A4C45;display:flex;flex-direction:column;gap:10px">
+<div class="ar" lang="ar" style="font-size:25px;line-height:1.8;text-align:center">قِفا نَبْكِ مِنْ ذِكْرى حَبيبٍ ومَنْزِلِ<br>بِسِقْطِ اللِّوى بَيْنَ الدَّخولِ فَحَوْمَلِ</div>
+<div style="width:28px;height:1px;background:#D4B57A;align-self:center;margin:6px 0"></div>
+<div class="disp" style="font-size:19px;font-style:italic;line-height:1.4;text-align:center;color:#E2DBCC">Stop, both of you, and let us weep for a beloved and a home remembered, where the dunes end, between al-Dakhūl and Ḥawmal.</div>
+</div>
+<div style="margin:18px 24px 0;display:flex;justify-content:space-between;align-items:center"><span class="lbl">Plate 1 of [N]</span><span style="font:500 13px Inter;color:#B9C2BC">Swipe for the next couplet</span></div>
+<div style="flex:1"></div>
+<button class="next">Room III · The voice <span aria-hidden="true">→</span></button>
+</div>
+<figcaption class="cap"><b>3 · The poem.</b> Each couplet framed like a plate on the wall, Arabic above, translation as the caption. Swipe sideways through plates; the door forward is always the same button.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<div class="room"><span class="lbl">Room III of IV</span><button aria-label="Leave exhibition" style="width:44px;height:44px;border:0;background:none;color:#EEE8DC;cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"></path></svg></button></div>
+<div style="margin-top:64px;display:flex;flex-direction:column;align-items:center;gap:24px">
+<div class="lbl">The listening room</div>
+<button aria-label="Play recitation" style="width:132px;height:132px;border-radius:66px;border:1px solid #D4B57A;background:radial-gradient(circle,#22352E,#16241F);color:#D4B57A;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="40" height="40" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"></path></svg></button>
+<div aria-hidden="true" style="display:flex;align-items:center;gap:3px;height:48px">
+<span style="width:3px;height:14px;background:#D4B57A;border-radius:2px"></span><span style="width:3px;height:28px;background:#D4B57A;border-radius:2px"></span><span style="width:3px;height:40px;background:#D4B57A;border-radius:2px"></span><span style="width:3px;height:22px;background:#D4B57A;border-radius:2px"></span><span style="width:3px;height:34px;background:#D4B57A;border-radius:2px"></span><span style="width:3px;height:18px;background:#D4B57A;border-radius:2px"></span><span style="width:3px;height:44px;background:#D4B57A;border-radius:2px"></span><span style="width:3px;height:26px;background:#5E7A6E;border-radius:2px"></span><span style="width:3px;height:36px;background:#5E7A6E;border-radius:2px"></span><span style="width:3px;height:16px;background:#5E7A6E;border-radius:2px"></span><span style="width:3px;height:30px;background:#5E7A6E;border-radius:2px"></span><span style="width:3px;height:20px;background:#5E7A6E;border-radius:2px"></span><span style="width:3px;height:38px;background:#5E7A6E;border-radius:2px"></span><span style="width:3px;height:12px;background:#5E7A6E;border-radius:2px"></span>
+</div>
+<div style="text-align:center"><div class="disp" style="font-size:22px">Recited by [RECITER NAME]</div><div style="font:500 13px Inter;color:#B9C2BC;margin-top:4px">[LENGTH] · headphones recommended</div></div>
+</div>
+<div style="margin:30px 28px 0;padding-top:18px;border-top:1px solid #2C3D37"><div class="ar" lang="ar" style="font-size:20px;line-height:1.8;text-align:center;color:#EEE8DC">قِفا نَبْكِ مِنْ ذِكْرى حَبيبٍ ومَنْزِلِ</div></div>
+<div style="flex:1"></div>
+<button class="next">Room IV · Exit <span aria-hidden="true">→</span></button>
+</div>
+<figcaption class="cap"><b>4 · Listening room.</b> A darkened room with one control. The current line sits quietly under the waveform. Recitation credits are part of the exhibit.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<div class="room"><span class="lbl">Room IV · Exit</span><span></span></div>
+<div style="margin:30px 24px 0;text-align:center"><div class="disp" style="font-size:30px;font-weight:600">The gift shop</div><div style="font:400 14px Inter;color:#B9C2BC;margin-top:4px">Take a plate home with you</div></div>
+<div style="margin:22px 36px 0;padding:28px 20px;background:#EEE8DC;color:#16241F;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;box-shadow:0 18px 40px rgba(0,0,0,.4)">
+<div class="ar" lang="ar" style="font-size:21px;line-height:1.8">قِفا نَبْكِ مِنْ ذِكْرى حَبيبٍ ومَنْزِلِ</div>
+<div style="width:24px;height:1px;background:#8C6B33"></div>
+<div class="disp" style="font-size:16px;font-style:italic;line-height:1.35">Stop, both of you, and let us weep for a beloved and a home remembered.</div>
+<div style="font:600 10px Inter;letter-spacing:.18em;color:#5C4A26">IMRUʾ AL-QAYS · 18 NOV</div>
+</div>
+<div style="margin:26px 24px 0;display:flex;flex-direction:column;gap:10px">
+<button style="height:52px;border-radius:26px;border:0;background:#D4B57A;color:#16241F;font:600 15px Inter;cursor:pointer">Send as a card</button>
+<button style="height:52px;border-radius:26px;border:1px solid #3A4C45;background:none;color:#EEE8DC;font:500 15px Inter;cursor:pointer">Keep in my collection</button>
+</div>
+<div style="flex:1"></div>
+<a href="#" style="text-align:center;font:500 14px Inter;padding-bottom:34px;min-height:44px">Leave the exhibition</a>
+</div>
+<figcaption class="cap"><b>5 · Exit through the gift shop.</b> Sharing lives here, at the end, as a printed plate dated to today. Keeping it adds it to your personal collection.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<div style="padding:72px 28px 0;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px">
+<div class="lbl">Closed for today</div>
+<div class="disp" style="font-size:34px;font-weight:600;line-height:1.1">The next exhibition opens at dawn</div>
+<div style="font:500 15px Inter;color:#D4B57A;margin-top:4px">in 14 h 22 min</div>
+<button style="margin-top:10px;height:44px;padding:0 20px;border-radius:22px;border:1px solid #3A4C45;background:none;color:#EEE8DC;font:500 13px Inter;cursor:pointer">Remind me</button>
+</div>
+<div style="margin:36px 24px 0" class="lbl">The archive</div>
+<div style="margin:10px 24px 0;display:flex;flex-direction:column">
+<a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #2C3D37;color:#EEE8DC;text-decoration:none"><span style="font:500 13px Inter;color:#A9B3AC">Tue 17 Nov</span><span class="ar" lang="ar" style="font-size:20px">واحَرَّ قَلباه</span></a>
+<a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #2C3D37;color:#EEE8DC;text-decoration:none"><span style="font:500 13px Inter;color:#A9B3AC">Mon 16 Nov</span><span class="ar" lang="ar" style="font-size:20px">أَضْحى التَّنائي</span></a>
+<a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid #2C3D37;color:#EEE8DC;text-decoration:none"><span style="font:500 13px Inter;color:#A9B3AC">Sun 15 Nov</span><span class="ar" lang="ar" style="font-size:20px">هَلْ غادَرَ الشُّعَراءُ</span></a>
+</div>
+<div style="flex:1"></div>
+<div style="text-align:center;font:400 13px Inter;color:#A9B3AC;padding:0 32px 34px">Past exhibitions stay open. Only today's is new.</div>
+</div>
+<figcaption class="cap"><b>6 · Closed until tomorrow.</b> A real ending: a countdown, an optional reminder, and an archive of past rooms. Missing a day costs nothing.</figcaption>
+</figure>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2952,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

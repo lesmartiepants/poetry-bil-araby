@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>v2: three directions</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Reem+Kufi:wght@500;700&amp;family=Jost:wght@400;500&amp;family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#D4B06A}a:hover{color:#F2D58E}
+.step{margin:0;width:360px;flex:none;display:flex;flex-direction:column;gap:16px}
+.ph{width:360px;height:780px;border-radius:44px;overflow:hidden;position:relative;box-sizing:border-box;background:#0B0A0F;border:1px solid #2A2730;display:flex;flex-direction:column;color:#F2EDE3;font-family:Inter,sans-serif}
+.cap{font:400 14px/1.5 Inter;color:#BDB5A6;margin:0}
+.cap b{color:#F2EDE3;font-weight:600}
+.ar{font-family:Amiri,serif;direction:rtl;text-align:right}
+.kufi{font-family:'Reem Kufi',sans-serif;direction:rtl}
+.caps{font:400 13px Jost,sans-serif;letter-spacing:.2em;text-transform:uppercase}
+.en{font-family:'Cormorant Garamond',serif;font-style:italic;text-align:right;color:#D6CFC1}
+.ib{background:none;border:0;color:#F2EDE3;width:48px;height:48px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:24px;cursor:pointer}
+.lab{font:600 11px Inter;letter-spacing:.14em;color:#9C9588;text-transform:uppercase}
+th,td{text-align:left;vertical-align:top;padding:12px 10px;border-bottom:1px solid #2A2730;font:400 14px/1.45 Inter;color:#D6CFC1}
+th{font:600 11px Inter;letter-spacing:.12em;color:#9C9588;text-transform:uppercase}
+.tag{display:inline-block;font:600 10px Inter;letter-spacing:.08em;padding:3px 7px;border-radius:6px;background:#211E27;color:#D4B06A;margin-left:6px;vertical-align:middle}
+</style>
+</helmet>
+<div style="width:2112px;height:1040px;box-sizing:border-box;padding:64px;background:#08070B;display:flex;gap:64px;font-family:Inter,sans-serif">
+
+<aside style="width:760px;flex:none;display:flex;flex-direction:column;gap:22px;color:#F2EDE3">
+<div style="font:600 12px Inter;letter-spacing:.14em;color:#D4B06A">PRINCIPAL REDESIGN · V2</div>
+<h1 style="margin:0;font:500 52px/1.05 'Cormorant Garamond',serif">Three directions from the original screen. Recommend A.</h1>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px">
+<div style="padding:16px;border-radius:16px;background:#17151C"><div class="lab">User goal</div><p style="margin:8px 0 0;font:400 14px/1.45 Inter;color:#D6CFC1">Read and feel a poem in Arabic, and understand it at my level.</p></div>
+<div style="padding:16px;border-radius:16px;background:#17151C"><div class="lab">Business goal <span class="tag">ASSUMED</span></div><p style="margin:8px 0 0;font:400 14px/1.45 Inter;color:#D6CFC1">Day-7 retention and listen rate, ahead of any subscription.</p></div>
+<div style="padding:16px;border-radius:16px;background:#17151C"><div class="lab">Constraint</div><p style="margin:8px 0 0;font:400 14px/1.45 Inter;color:#D6CFC1">Mobile web (PWA), RTL and LTR mixed, cleared text and audio rights.</p></div>
+</div>
+<table style="border-collapse:collapse;width:100%">
+<thead><tr><th>Direction</th><th>Best for</th><th>Primary action</th><th>Main risk</th><th>Effort</th></tr></thead>
+<tbody>
+<tr><td style="color:#F2EDE3"><b>A · Night Reader</b><span class="tag">PICK</span></td><td>All three segments</td><td>Play, then tap a word</td><td>Feels familiar, less distinctive</td><td>Low</td></tr>
+<tr><td style="color:#F2EDE3"><b>B · Recital</b></td><td>Native and heritage listeners</td><td>Listen, one couplet at a time</td><td>Weak for skimming and study</td><td>Medium</td></tr>
+<tr><td style="color:#F2EDE3"><b>C · Study</b></td><td>Learners of Arabic</td><td>Read with layers on</td><td>Clutter; feels like homework to native readers</td><td>Medium</td></tr>
+</tbody>
+</table>
+<div style="padding:18px 20px;border-radius:16px;border:1px solid #3A3328;background:#141218">
+<div class="lab" style="color:#D4B06A">Why A</div>
+<ul style="margin:10px 0 0;padding-left:18px;font:400 15px/1.6 Inter;color:#D6CFC1">
+<li>It keeps the brand equity of the original (night, gold, star lattice, Kufi title) and fixes all four Major audit issues. <span class="tag">INFERENCE</span></li>
+<li>B's karaoke highlight and C's layers become features inside A (Listen mode, Layers chip), so nothing is lost. <span class="tag">INFERENCE</span></li>
+<li>One reader serves all three levels if a first-run choice sets the default layers. <span class="tag">HYPOTHESIS</span> Test: task success for word lookup at least 80% in each segment.</li>
+</ul>
+</div>
+<p style="margin:auto 0 0;font:400 13px/1.5 Inter;color:#9C9588">Verse shown is al-Mutanabbi (10th c., public domain) with original translations, in place of the Darwish text, which is still under copyright.</p>
+</aside>
+
+<div style="display:flex;gap:40px">
+
+<figure class="step">
+<div class="ph">
+<svg aria-hidden="true" width="360" height="320" style="position:absolute;left:0;top:0;pointer-events:none"><defs><pattern id="st" width="44" height="44" patternUnits="userSpaceOnUse"><path d="M22 6 L38 22 L22 38 L6 22Z M10.7 10.7H33.3V33.3H10.7Z" fill="none" stroke="#33406B" stroke-width="1"></path></pattern><linearGradient id="fd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".85"></stop><stop offset="1" stop-color="#fff" stop-opacity="0"></stop></linearGradient><mask id="mk"><rect width="360" height="320" fill="url(#fd)"></rect></mask></defs><rect width="360" height="320" fill="url(#st)" mask="url(#mk)"></rect></svg>
+<header style="position:relative;display:flex;align-items:center;justify-content:space-between;padding:48px 10px 0 6px"><button class="ib" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"></path></svg></button><button style="height:36px;padding:0 14px;border-radius:18px;border:1px solid #7A7380;background:#0B0A0Fcc;color:#F2EDE3;font:500 13px Inter;cursor:pointer">Layers</button></header>
+<div style="position:relative;padding:8px 26px 0;text-align:right">
+<div class="kufi" lang="ar" style="font-size:42px;font-weight:700;color:#D4B06A;line-height:1.2">واحر قلباه</div>
+<div class="caps" style="color:#F2EDE3;margin-top:8px">O, the fire in my heart</div>
+<div style="margin-top:8px;font:500 15px Inter;color:#D4B06A"><span class="ar" lang="ar" style="font-size:18px">المتنبي</span> · al-Mutanabbi</div>
+</div>
+<div style="position:relative;padding:26px 26px 0;display:flex;flex-direction:column;gap:6px">
+<div class="ar" lang="ar" style="font-size:29px;line-height:1.7">الخَيْلُ وَاللّيْلُ وَالبَيْداءُ تَعرِفُني</div>
+<div class="en" style="font-size:19px;line-height:1.35">The horses, the night and the desert know me,</div>
+<div class="ar" lang="ar" style="font-size:29px;line-height:1.7;margin-top:12px">وَالسّيفُ وَالرّمحُ والقِرْطاسُ وَالقَلَمُ</div>
+<div class="en" style="font-size:19px;line-height:1.35">and the sword, the spear, the paper and the pen.</div>
+</div>
+<div style="margin-top:auto;padding:0 20px 28px;display:flex;align-items:center;gap:4px">
+<button style="height:56px;padding:0 26px;border-radius:28px;border:0;background:#D4B06A;color:#141210;font:600 15px Inter;display:flex;align-items:center;gap:8px;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5v14l12-7z"></path></svg>Listen</button>
+<div style="flex:1"></div>
+<button class="ib" aria-label="Save"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"></path></svg></button>
+<button class="ib" aria-label="Share"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 13v6h14v-6"></path></svg></button>
+<button class="ib" aria-label="Insights and more"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"></circle><circle cx="12" cy="12" r="1.8"></circle><circle cx="19" cy="12" r="1.8"></circle></svg></button>
+</div>
+</div>
+<figcaption class="cap"><b>A · Night Reader (recommended).</b> The original screen, kept: lattice header, Kufi title, tracked caps, voweled verse, italic translation. Fixed: Listen is primary, actions sit in one row, the translation passes contrast (12.7:1), Layers adapts to level.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph" style="justify-content:center">
+<svg aria-hidden="true" width="360" height="320" style="position:absolute;left:0;top:0;pointer-events:none;opacity:.6"><defs><pattern id="st2" width="44" height="44" patternUnits="userSpaceOnUse"><path d="M22 6 L38 22 L22 38 L6 22Z M10.7 10.7H33.3V33.3H10.7Z" fill="none" stroke="#33406B" stroke-width="1"></path></pattern><linearGradient id="fd2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".7"></stop><stop offset="1" stop-color="#fff" stop-opacity="0"></stop></linearGradient><mask id="mk2"><rect width="360" height="320" fill="url(#fd2)"></rect></mask></defs><rect width="360" height="320" fill="url(#st2)" mask="url(#mk2)"></rect></svg>
+<div style="position:absolute;top:56px;left:0;right:0;text-align:center"><div class="kufi" lang="ar" style="font-size:20px;color:#D4B06A">واحر قلباه</div><div class="caps" style="font-size:11px;color:#BDB5A6;margin-top:4px">Couplet 2 of [N]</div></div>
+<div style="padding:0 28px;text-align:center">
+<div class="ar" lang="ar" style="text-align:center;font-size:38px;line-height:1.8"><span>الخَيْلُ وَاللّيْلُ </span><span style="color:#D4B06A;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:12px">وَالبَيْداءُ</span><span style="color:#9C9588"> تَعرِفُني</span></div>
+<div class="ar" lang="ar" style="text-align:center;font-size:38px;line-height:1.8;color:#9C9588">وَالسّيفُ وَالرّمحُ والقِرْطاسُ وَالقَلَمُ</div>
+</div>
+<div style="position:absolute;left:20px;right:20px;bottom:28px;display:flex;flex-direction:column;gap:14px">
+<div style="height:4px;border-radius:2px;background:#26232C"><div style="width:34%;height:4px;border-radius:2px;background:#D4B06A"></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between">
+<button class="ib" aria-label="Previous couplet"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 5v14M18 6l-8 6 8 6z"></path></svg></button>
+<button class="ib" aria-label="Show translation" style="font:600 13px Inter">EN</button>
+<button aria-label="Pause" style="width:68px;height:68px;border-radius:34px;border:0;background:#D4B06A;color:#141210;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"></rect><rect x="14" y="5" width="4" height="14" rx="1"></rect></svg></button>
+<button class="ib" aria-label="Playback speed" style="font:600 13px Inter">1×</button>
+<button class="ib" aria-label="Next couplet"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M18 5v14M6 6l8 6-8 6z"></path></svg></button>
+</div>
+</div>
+</div>
+<figcaption class="cap"><b>B · Recital.</b> Audio-first, one couplet on screen, word-by-word highlight. Unlike v1's Ink, every control is visible (no hidden gestures), at the cost of some atmosphere. Strong for listeners, weak for study.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<header style="display:flex;align-items:center;gap:6px;padding:48px 14px 0 6px"><button class="ib" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"></path></svg></button><div style="flex:1"><div class="kufi" lang="ar" style="font-size:18px;color:#D4B06A;text-align:left">واحر قلباه</div></div><div style="font:500 12px Inter;color:#BDB5A6">Study</div></header>
+<div role="group" aria-label="Layers" style="display:flex;gap:8px;padding:14px 20px 0;flex-wrap:wrap">
+<button aria-pressed="true" style="height:36px;padding:0 12px;border-radius:18px;border:0;background:#F2EDE3;color:#0B0A0F;font:500 12px Inter">✓ Arabic</button>
+<button aria-pressed="true" style="height:36px;padding:0 12px;border-radius:18px;border:0;background:#F2EDE3;color:#0B0A0F;font:500 12px Inter">✓ Sound it out</button>
+<button aria-pressed="true" style="height:36px;padding:0 12px;border-radius:18px;border:0;background:#F2EDE3;color:#0B0A0F;font:500 12px Inter">✓ English</button>
+<button aria-pressed="false" style="height:36px;padding:0 12px;border-radius:18px;border:1px solid #7A7380;background:none;color:#BDB5A6;font:500 12px Inter">Meter</button>
+</div>
+<div style="padding:24px 24px 0;display:flex;flex-direction:column;gap:6px">
+<div class="ar" lang="ar" style="font-size:29px;line-height:1.9"><span style="text-decoration:underline dotted #7A7380;text-underline-offset:10px">الخَيْلُ</span> <span style="text-decoration:underline dotted #7A7380;text-underline-offset:10px">وَاللّيْلُ</span> <span style="text-decoration:underline dotted #7A7380;text-underline-offset:10px">وَالبَيْداءُ</span> <span style="text-decoration:underline dotted #7A7380;text-underline-offset:10px">تَعرِفُني</span></div>
+<div style="font:italic 400 14px Inter;color:#BDB5A6;text-align:right">al-khaylu wa-l-laylu wa-l-baydāʾu taʿrifunī</div>
+<div class="en" style="font-size:18px">The horses, the night and the desert know me,</div>
+</div>
+<div style="margin:22px 20px 0;padding:16px;border-radius:18px;background:#17151C;display:flex;flex-direction:column;gap:8px">
+<div class="lab">New in this couplet</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end"><span style="padding:6px 10px;border-radius:10px;background:#211E27;font:500 13px Inter"><span class="ar" lang="ar" style="font-size:16px">البَيْداء</span> desert</span><span style="padding:6px 10px;border-radius:10px;background:#211E27;font:500 13px Inter"><span class="ar" lang="ar" style="font-size:16px">القِرْطاس</span> paper</span></div>
+</div>
+<div style="margin-top:auto;padding:0 20px 28px;display:flex;gap:10px"><button style="flex:1;height:52px;border-radius:26px;border:1px solid #7A7380;background:none;color:#F2EDE3;font:500 15px Inter">Recite</button><button style="flex:1;height:52px;border-radius:26px;border:0;background:#D4B06A;color:#141210;font:600 15px Inter">Next couplet</button></div>
+</div>
+<figcaption class="cap"><b>C · Study.</b> Layers on by default, a sound-it-out line, new words gathered under each couplet, recitation practice. Best learning value, but busy for fluent readers and the furthest from the original's mood.</figcaption>
+</figure>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2112,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

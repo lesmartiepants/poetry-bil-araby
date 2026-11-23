@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>v2: spec sheet</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Reem+Kufi:wght@500;700&amp;family=Jost:wght@400;500&amp;family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&amp;family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#D4B06A}a:hover{color:#F2D58E}
+.card{background:#121117;border:1px solid #23202A;border-radius:24px;padding:28px;display:flex;flex-direction:column;gap:16px;box-sizing:border-box}
+.h{margin:0;font:500 30px 'Cormorant Garamond',serif;color:#F2EDE3}
+.lab{font:600 11px Inter;letter-spacing:.14em;color:#9C9588;text-transform:uppercase}
+.mono{font:400 12px 'JetBrains Mono',monospace;color:#BDB5A6}
+table{border-collapse:collapse;width:100%}
+th,td{text-align:left;padding:8px 8px;border-bottom:1px solid #23202A;font:400 13px/1.4 Inter;color:#D6CFC1;vertical-align:middle}
+th{font:600 10px Inter;letter-spacing:.12em;color:#9C9588;text-transform:uppercase}
+.sw{width:22px;height:22px;border-radius:6px;border:1px solid #34303A;display:inline-block;vertical-align:middle}
+.pass{font:600 11px Inter;color:#8CC9A0}
+.ar{font-family:Amiri,serif;direction:rtl}
+.st{display:flex;flex-direction:column;align-items:center;gap:8px}
+.st span{font:500 11px Inter;color:#9C9588}
+</style>
+</helmet>
+<div style="width:2952px;height:1240px;box-sizing:border-box;padding:64px;background:#08070B;display:flex;flex-direction:column;gap:32px;font-family:Inter,sans-serif;color:#F2EDE3">
+
+<div style="display:flex;align-items:flex-end;justify-content:space-between">
+<div><div style="font:600 12px Inter;letter-spacing:.14em;color:#D4B06A">NIGHT READER · HANDOFF</div><h1 style="margin:8px 0 0;font:500 56px/1 'Cormorant Garamond',serif">Spec sheet</h1></div>
+<p style="margin:0;max-width:760px;font:400 15px/1.55 Inter;color:#BDB5A6">Contrast ratios are computed against canvas #0B0A0F per WCAG 2.2 (text 4.5:1, UI 3:1). Spacing on a 4/8 scale. Dark is the only theme for v1; a light "paper" theme is a later token swap.</p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;flex:1">
+
+<section class="card" style="grid-row:span 2">
+<h2 class="h">Color roles</h2>
+<table>
+<thead><tr><th></th><th>Token</th><th>Hex</th><th>On bg</th></tr></thead>
+<tbody>
+<tr><td><span class="sw" style="background:#0B0A0F"></span></td><td>bg.canvas</td><td class="mono">#0B0A0F</td><td>base</td></tr>
+<tr><td><span class="sw" style="background:#17151C"></span></td><td>surface.1 (cards, sheets)</td><td class="mono">#17151C</td><td>base</td></tr>
+<tr><td><span class="sw" style="background:#211E27"></span></td><td>surface.2 (chips, toasts)</td><td class="mono">#211E27</td><td>base</td></tr>
+<tr><td><span class="sw" style="background:#F2EDE3"></span></td><td>text.primary, verse</td><td class="mono">#F2EDE3</td><td><span class="pass">16.9</span></td></tr>
+<tr><td><span class="sw" style="background:#D6CFC1"></span></td><td>text.translation</td><td class="mono">#D6CFC1</td><td><span class="pass">12.7</span></td></tr>
+<tr><td><span class="sw" style="background:#BDB5A6"></span></td><td>text.secondary</td><td class="mono">#BDB5A6</td><td><span class="pass">9.7</span></td></tr>
+<tr><td><span class="sw" style="background:#9C9588"></span></td><td>text.muted, inactive tab</td><td class="mono">#9C9588</td><td><span class="pass">6.6</span></td></tr>
+<tr><td><span class="sw" style="background:#D4B06A"></span></td><td>accent.gold</td><td class="mono">#D4B06A</td><td><span class="pass">9.6</span></td></tr>
+<tr><td><span class="sw" style="background:#141210"></span></td><td>on.accent (on gold)</td><td class="mono">#141210</td><td><span class="pass">9.1</span></td></tr>
+<tr><td><span class="sw" style="background:#7A7380"></span></td><td>border.control</td><td class="mono">#7A7380</td><td><span class="pass">4.3</span></td></tr>
+<tr><td><span class="sw" style="background:#F2D58E"></span></td><td>focus.ring</td><td class="mono">#F2D58E</td><td><span class="pass">13.8</span></td></tr>
+<tr><td><span class="sw" style="background:#8CC9A0"></span></td><td>status.success</td><td class="mono">#8CC9A0</td><td><span class="pass">10.3</span></td></tr>
+<tr><td><span class="sw" style="background:#F08A7E"></span></td><td>status.danger</td><td class="mono">#F08A7E</td><td><span class="pass">8.1</span></td></tr>
+<tr><td><span class="sw" style="background:#33406B"></span></td><td>pattern.lattice</td><td class="mono">#33406B</td><td>decor</td></tr>
+</tbody>
+</table>
+<p style="margin:0;font:400 13px/1.5 Inter;color:#BDB5A6">Gold is reserved for: the primary action, the active tab, the spoken word, and titles. Never for status. Muted text never carries required information.</p>
+</section>
+
+<section class="card" style="grid-column:span 2">
+<h2 class="h">Type scale</h2>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 32px">
+<div><div class="lab">display.ar · Reem Kufi 700 · 52/62</div><div lang="ar" style="font:700 52px/62px 'Reem Kufi';direction:rtl;color:#D4B06A">واحر قلباه</div></div>
+<div><div class="lab">verse.ar · Amiri 400 · 29/49 (1.7)</div><div class="ar" lang="ar" style="font-size:29px;line-height:49px">الخَيْلُ وَاللّيْلُ وَالبَيْداءُ تَعرِفُني</div></div>
+<div><div class="lab">eyebrow · Jost 400 · 13/16 · +0.2em caps</div><div style="font:400 13px/16px Jost;letter-spacing:.2em;text-transform:uppercase;margin-top:8px">O, the fire in my heart</div></div>
+<div><div class="lab">translation · Cormorant italic 400 · 19/26</div><div style="font:italic 400 19px/26px 'Cormorant Garamond';color:#D6CFC1;margin-top:6px">The horses, the night and the desert know me,</div></div>
+<div><div class="lab">body · Inter 400 · 15/22</div><div style="font:400 15px/22px Inter;color:#D6CFC1;margin-top:6px">Borrowed through Greek chártēs, the same ancestor as chart.</div></div>
+<div><div class="lab">label · Inter 600 · 11/16 · +0.14em caps</div><div style="font:600 11px/16px Inter;letter-spacing:.14em;text-transform:uppercase;color:#9C9588;margin-top:6px">Continue</div></div>
+</div>
+<p style="margin:0;font:400 13px/1.5 Inter;color:#BDB5A6">Verse line-height stays at 1.7 or more so stacked tashkeel never collides. The Aa control scales verse from 24 to 40 px; layout reflows, never truncates. Kufi is for titles only: it renders vowel marks poorly, so verse is always Naskh (Amiri).</p>
+</section>
+
+<section class="card">
+<h2 class="h">Space, size, shape</h2>
+<div style="display:flex;align-items:flex-end;gap:10px">
+<div class="st"><div style="width:4px;height:4px;background:#D4B06A"></div><span>4</span></div>
+<div class="st"><div style="width:8px;height:8px;background:#D4B06A"></div><span>8</span></div>
+<div class="st"><div style="width:12px;height:12px;background:#D4B06A"></div><span>12</span></div>
+<div class="st"><div style="width:16px;height:16px;background:#D4B06A"></div><span>16</span></div>
+<div class="st"><div style="width:24px;height:24px;background:#D4B06A"></div><span>24</span></div>
+<div class="st"><div style="width:32px;height:32px;background:#D4B06A"></div><span>32</span></div>
+<div class="st"><div style="width:48px;height:48px;background:#D4B06A"></div><span>48</span></div>
+</div>
+<ul style="margin:0;padding-left:18px;font:400 13px/1.6 Inter;color:#D6CFC1">
+<li>Side margin 24 to 26 px; verse block max 42 ch on tablet and desktop, centered.</li>
+<li>Touch targets 48 × 48 minimum; 8 px between targets.</li>
+<li>Radius: button full, card 18, sheet 28, tab pill 36.</li>
+<li>Elevation by surface step, not shadows, except the floating tab pill.</li>
+<li>Use CSS logical properties (margin-inline-start) so RTL and LTR mirror correctly.</li>
+</ul>
+</section>
+
+<section class="card" style="grid-column:span 2">
+<h2 class="h">Component states</h2>
+<div class="lab">Primary button</div>
+<div style="display:flex;gap:18px;align-items:center">
+<div class="st"><div style="height:52px;padding:0 24px;border-radius:26px;background:#D4B06A;color:#141210;font:600 15px Inter;display:flex;align-items:center">Listen</div><span>Default</span></div>
+<div class="st"><div style="height:52px;padding:0 24px;border-radius:26px;background:#B8955A;color:#141210;font:600 15px Inter;display:flex;align-items:center;transform:scale(.97)">Listen</div><span>Pressed</span></div>
+<div class="st"><div style="height:52px;padding:0 24px;border-radius:26px;background:#D4B06A;color:#141210;font:600 15px Inter;display:flex;align-items:center;outline:2px solid #F2D58E;outline-offset:3px">Listen</div><span>Focus-visible</span></div>
+<div class="st"><div style="height:52px;padding:0 24px;border-radius:26px;border:1px dashed #7A7380;color:#BDB5A6;font:500 15px Inter;display:flex;align-items:center">Audio offline</div><span>Disabled, labelled</span></div>
+<div class="st"><div style="height:52px;padding:0 24px;border-radius:26px;background:#D4B06A;color:#141210;font:600 15px Inter;display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9"></path></svg>Loading</div><span>Busy</span></div>
+</div>
+<div class="lab" style="margin-top:6px">Word token (every word in a verse)</div>
+<div style="display:flex;gap:28px;align-items:center" lang="ar">
+<div class="st"><div class="ar" style="font-size:30px">وَالبَيْداءُ</div><span>Idle</span></div>
+<div class="st"><div class="ar" style="font-size:30px;outline:2px solid #F2D58E;outline-offset:4px;border-radius:6px">وَالبَيْداءُ</div><span>Focus</span></div>
+<div class="st"><div class="ar" style="font-size:30px;color:#9C9588">وَالبَيْداءُ</div><span>Not yet spoken</span></div>
+<div class="st"><div class="ar" style="font-size:30px;color:#D4B06A;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:10px">وَالبَيْداءُ</div><span>Speaking</span></div>
+<div class="st"><div class="ar" style="font-size:30px;background:#211E27;border-radius:8px;padding:0 6px">وَالبَيْداءُ</div><span>Open in sheet</span></div>
+</div>
+<div class="lab" style="margin-top:6px">Tab item</div>
+<div style="display:flex;gap:18px;align-items:center">
+<div class="st"><div style="width:76px;height:60px;border-radius:30px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#9C9588;font:400 11px Jost;letter-spacing:.12em"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>SAVED</div><span>Inactive</span></div>
+<div class="st"><div style="width:76px;height:60px;border-radius:30px;background:#211E27;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#D4B06A;font:500 11px Jost;letter-spacing:.12em"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>SAVED</div><span>Active: pill + fill + weight</span></div>
+<div class="st"><div style="width:76px;height:60px;border-radius:30px;outline:2px solid #F2D58E;outline-offset:2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#9C9588;font:400 11px Jost;letter-spacing:.12em"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>SAVED</div><span>Focus</span></div>
+</div>
+</section>
+
+<section class="card">
+<h2 class="h">Motion</h2>
+<table>
+<thead><tr><th>Event</th><th>Spec</th><th>Reduce Motion</th></tr></thead>
+<tbody>
+<tr><td>Spoken word</td><td>color 0 ms, underline 120 ms ease-out</td><td>same, no glow</td></tr>
+<tr><td>Auto-scroll to line</td><td>300 ms, ease-in-out</td><td>jump</td></tr>
+<tr><td>Sheet open / close</td><td>240 / 180 ms, cubic-bezier(.2,.8,.2,1)</td><td>150 ms fade</td></tr>
+<tr><td>Toast</td><td>200 ms in, 4 s hold, undo keeps it</td><td>fade</td></tr>
+<tr><td>Skeleton</td><td>shown after 300 ms, 1.2 s shimmer</td><td>static</td></tr>
+<tr><td>Press</td><td>scale .97, 90 ms</td><td>color only</td></tr>
+</tbody>
+</table>
+</section>
+
+<section class="card">
+<h2 class="h">Accessibility and build notes</h2>
+<ul style="margin:0;padding-left:18px;font:400 13px/1.6 Inter;color:#D6CFC1">
+<li>Each line is its own element with lang="ar" dir="rtl" or lang="en"; screen readers switch voice per line.</li>
+<li>Verse is real text, never an image, so it can be selected, zoomed and translated.</li>
+<li>Words are buttons inside the line; arrow keys move between words, Enter opens the sheet.</li>
+<li>Sheets trap focus, close on Escape, and return focus to the word.</li>
+<li>Live regions: polite for loading and saves, assertive only for errors.</li>
+<li>PWA: service worker caches texts on view; audio only when downloaded.</li>
+</ul>
+</section>
+
+<section class="card">
+<h2 class="h">Content rules</h2>
+<ul style="margin:0;padding-left:18px;font:400 13px/1.6 Inter;color:#D6CFC1">
+<li>Every poem carries a source edition and an editor-verified flag before it can publish.</li>
+<li>Tashkeel and translation are reviewed together; person and number must agree.</li>
+<li>AI text is always labelled, cites what it drew on, and can be reported.</li>
+<li>Errors: what happened, then what to do. Buttons are verbs.</li>
+</ul>
+</section>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2952,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

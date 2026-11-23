@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>v2: edge states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&amp;family=Reem+Kufi:wght@500;700&amp;family=Jost:wght@400;500&amp;family=Cormorant+Garamond:ital,wght@0,500;1,400;1,500&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#D4B06A}a:hover{color:#F2D58E}
+.step{margin:0;width:360px;flex:none;display:flex;flex-direction:column;gap:16px}
+.ph{width:360px;height:780px;border-radius:44px;overflow:hidden;position:relative;box-sizing:border-box;background:#0B0A0F;border:1px solid #2A2730;display:flex;flex-direction:column;color:#F2EDE3;font-family:Inter,sans-serif}
+.cap{font:400 14px/1.5 Inter;color:#BDB5A6;margin:0}
+.cap b{color:#F2EDE3;font-weight:600}
+.ar{font-family:Amiri,serif;direction:rtl;text-align:right}
+.kufi{font-family:'Reem Kufi',sans-serif;direction:rtl}
+.caps{font:400 13px Jost,sans-serif;letter-spacing:.2em;text-transform:uppercase}
+.en{font-family:'Cormorant Garamond',serif;font-style:italic;text-align:right;color:#D6CFC1}
+.ib{background:none;border:0;color:#F2EDE3;width:48px;height:48px;display:flex;align-items:center;justify-content:center;padding:0;border-radius:24px;cursor:pointer}
+.lab{font:600 11px Inter;letter-spacing:.14em;color:#9C9588;text-transform:uppercase}
+.pill{position:absolute;left:14px;right:14px;bottom:18px;height:72px;border-radius:36px;background:#141218;border:1px solid #2A2730;display:flex;align-items:center;justify-content:space-around;padding:0 8px}
+.tab{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:3px;font:400 11px Jost;letter-spacing:.12em;text-transform:uppercase;color:#9C9588;min-width:72px;height:60px;justify-content:center;border-radius:30px;cursor:pointer}
+.tab.on{background:#211E27;color:#D4B06A;font-weight:500}
+.pri{height:52px;border-radius:26px;border:0;background:#D4B06A;color:#141210;font:600 15px Inter;cursor:pointer}
+.sec{height:52px;border-radius:26px;border:1px solid #7A7380;background:none;color:#F2EDE3;font:500 15px Inter;cursor:pointer}
+.sk{background:#1D1B22;border-radius:8px}
+.opt{display:flex;gap:14px;align-items:flex-start;padding:16px;border-radius:18px;background:#17151C;border:1px solid #2A2730;text-align:left;color:#F2EDE3;cursor:pointer;width:100%;box-sizing:border-box}
+.radio{width:22px;height:22px;border-radius:11px;border:2px solid #7A7380;flex:none;margin-top:2px;box-sizing:border-box}
+</style>
+</helmet>
+<div style="width:2952px;height:1040px;box-sizing:border-box;padding:64px;background:#08070B;display:flex;gap:64px;font-family:Inter,sans-serif">
+
+<aside style="width:400px;flex:none;display:flex;flex-direction:column;gap:20px;color:#F2EDE3">
+<div style="font:600 12px Inter;letter-spacing:.14em;color:#D4B06A">NIGHT READER · EDGE STATES</div>
+<h1 style="margin:0;font:500 52px/1.05 'Cormorant Garamond',serif">The screens nobody mocks up</h1>
+<p style="margin:0;font:400 15px/1.55 Inter;color:#D6CFC1">The v1 explorations skipped these. Each state says what happened, what still works, and the one next step.</p>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="lab">State rules</div>
+<ul style="margin:0;padding-left:18px;font:400 14px/1.55 Inter;color:#D6CFC1">
+<li><b style="color:#F2EDE3">First run</b> sets default layers by self-reported level; changeable any time in Layers.</li>
+<li><b style="color:#F2EDE3">Loading</b> uses a skeleton shaped like the real layout; the shimmer is off under Reduce Motion; a polite live region announces "Loading poem".</li>
+<li><b style="color:#F2EDE3">Offline</b> degrades by feature: text works, audio says why it doesn't.</li>
+<li><b style="color:#F2EDE3">Errors</b> name the cause and the fix, and never block reading.</li>
+<li><b style="color:#F2EDE3">Empty</b> states teach the gesture that fills them.</li>
+<li><b style="color:#F2EDE3">No results</b> is honest about the catalogue (rights), and offers a root search.</li>
+</ul>
+</div>
+<div style="margin-top:auto;border-top:1px solid #2A2730;padding-top:16px;font:400 13px/1.5 Inter;color:#BDB5A6"><b style="color:#F2EDE3">Still to design:</b> reminder permission denied, account sync conflict, very long poems (lazy loading), right-to-left screen reader order audit.</div>
+</aside>
+
+<div style="display:flex;gap:40px">
+
+<figure class="step">
+<div class="ph" style="padding:0 20px">
+<svg aria-hidden="true" width="360" height="300" style="position:absolute;left:0;top:0;pointer-events:none"><defs><pattern id="e1" width="44" height="44" patternUnits="userSpaceOnUse"><path d="M22 6 L38 22 L22 38 L6 22Z M10.7 10.7H33.3V33.3H10.7Z" fill="none" stroke="#33406B" stroke-width="1"></path></pattern><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".85"></stop><stop offset="1" stop-color="#fff" stop-opacity="0"></stop></linearGradient><mask id="m1"><rect width="360" height="300" fill="url(#g1)"></rect></mask></defs><rect width="360" height="300" fill="url(#e1)" mask="url(#m1)"></rect></svg>
+<div style="position:relative;padding:84px 6px 0;text-align:center"><div class="kufi" lang="ar" style="font-size:34px;font-weight:700;color:#D4B06A">أهلاً</div><h2 style="margin:10px 0 0;font:500 30px/1.15 'Cormorant Garamond',serif">How do you read Arabic?</h2><p style="margin:8px 0 0;font:400 14px Inter;color:#BDB5A6">This sets what you see first. Change it any time.</p></div>
+<fieldset style="position:relative;border:0;margin:24px 0 0;padding:0;display:flex;flex-direction:column;gap:10px">
+<legend style="position:absolute;width:1px;height:1px;overflow:hidden">Reading level</legend>
+<button class="opt" role="radio" aria-checked="false"><span class="radio"></span><span><span style="display:block;font:600 15px Inter">I'm new to Arabic</span><span style="display:block;font:400 13px/1.4 Inter;color:#BDB5A6;margin-top:2px">Arabic, a sound-it-out line and English</span></span></button>
+<button class="opt" role="radio" aria-checked="true" style="border-color:#D4B06A;background:#1B1810"><span class="radio" style="border:7px solid #D4B06A"></span><span><span style="display:block;font:600 15px Inter">I'm learning</span><span style="display:block;font:400 13px/1.4 Inter;color:#BDB5A6;margin-top:2px">Arabic and English, tap words for help</span></span></button>
+<button class="opt" role="radio" aria-checked="false"><span class="radio"></span><span><span style="display:block;font:600 15px Inter">I read it fluently</span><span style="display:block;font:400 13px/1.4 Inter;color:#BDB5A6;margin-top:2px">Arabic only, English on request</span></span></button>
+</fieldset>
+<div style="margin-top:auto;padding-bottom:26px;display:flex;flex-direction:column;gap:6px"><button class="pri">Continue</button><button style="height:44px;border:0;background:none;color:#D6CFC1;font:500 14px Inter;cursor:pointer">Decide later</button></div>
+</div>
+<figcaption class="cap"><b>1 · First run.</b> One question, three options, one sensible default (Learning). It drives the Layers default so a single reader serves every level. No account wall before the first poem.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<div role="status" style="position:absolute;width:1px;height:1px;overflow:hidden">Loading poem</div>
+<header style="display:flex;align-items:center;justify-content:space-between;padding:48px 12px 0 6px"><button class="ib" aria-label="Back to Today"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"></path></svg></button><div class="sk" style="width:150px;height:40px;border-radius:20px"></div></header>
+<div aria-hidden="true" style="padding:10px 26px 0;display:flex;flex-direction:column;align-items:flex-end;gap:12px">
+<div class="sk" style="width:210px;height:44px"></div>
+<div class="sk" style="width:190px;height:14px"></div>
+<div class="sk" style="width:150px;height:14px"></div>
+<div style="height:16px"></div>
+<div class="sk" style="width:290px;height:28px"></div>
+<div class="sk" style="width:240px;height:16px;background:#17151C"></div>
+<div style="height:8px"></div>
+<div class="sk" style="width:270px;height:28px"></div>
+<div class="sk" style="width:220px;height:16px;background:#17151C"></div>
+<div style="height:8px"></div>
+<div class="sk" style="width:300px;height:28px"></div>
+<div class="sk" style="width:230px;height:16px;background:#17151C"></div>
+</div>
+<div style="margin-top:auto;padding:0 20px 28px;display:flex;align-items:center;gap:10px" aria-hidden="true"><div class="sk" style="width:130px;height:56px;border-radius:28px"></div><div style="flex:1"></div><div class="sk" style="width:40px;height:40px;border-radius:20px"></div><div class="sk" style="width:40px;height:40px;border-radius:20px"></div><div class="sk" style="width:40px;height:40px;border-radius:20px"></div></div>
+</div>
+<figcaption class="cap"><b>2 · Loading.</b> A skeleton that matches the reader exactly, so nothing jumps when the text arrives. Shown only after 300 ms, to avoid a flash on fast loads. Verse text is cached before audio.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<div role="status" style="margin:52px 16px 0;padding:12px 14px;border-radius:16px;background:#211E27;display:flex;gap:10px;align-items:flex-start">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F2D58E" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" style="flex:none;margin-top:1px"><path d="M2 8.5a15 15 0 0 1 20 0M5 12a10 10 0 0 1 14 0M8.5 15.5a5 5 0 0 1 7 0M3 3l18 18"></path></svg>
+<div style="font:400 13px/1.45 Inter;color:#D6CFC1"><b style="color:#F2EDE3">You're offline.</b> This poem's text is saved on your device. Recitation needs a connection.</div>
+</div>
+<div style="padding:18px 26px 0;text-align:right">
+<div class="kufi" lang="ar" style="font-size:34px;font-weight:700;color:#D4B06A">واحر قلباه</div>
+<div style="margin-top:6px;font:500 14px Inter;color:#D4B06A">al-Mutanabbi</div>
+</div>
+<div style="padding:16px 26px 0;display:flex;flex-direction:column;gap:6px">
+<div class="ar" lang="ar" style="font-size:28px;line-height:1.7">الخَيْلُ وَاللّيْلُ وَالبَيْداءُ تَعرِفُني</div>
+<div class="en" style="font-size:18px">The horses, the night and the desert know me,</div>
+<div class="ar" lang="ar" style="font-size:28px;line-height:1.7;margin-top:10px">وَالسّيفُ وَالرّمحُ والقِرْطاسُ وَالقَلَمُ</div>
+<div class="en" style="font-size:18px">and the sword, the spear, the paper and the pen.</div>
+</div>
+<div style="margin:18px 20px 0;padding:14px 16px;border-radius:16px;background:#17151C;display:flex;align-items:center;gap:12px">
+<div style="flex:1"><div style="font:600 14px Inter">Download for offline</div><div style="font:400 12px Inter;color:#BDB5A6">Text and audio, when you're back online</div></div>
+<button role="switch" aria-checked="true" aria-label="Download for offline" style="width:52px;height:32px;border-radius:16px;border:0;background:#D4B06A;position:relative;cursor:pointer"><span style="position:absolute;right:3px;top:3px;width:26px;height:26px;border-radius:13px;background:#141210"></span></button>
+</div>
+<div style="margin-top:auto;padding:0 20px 28px;display:flex;align-items:center;gap:10px">
+<button disabled aria-describedby="offnote" style="height:56px;padding:0 22px;border-radius:28px;border:1px dashed #7A7380;background:none;color:#BDB5A6;font:500 15px Inter;display:flex;align-items:center;gap:8px"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M7 5v14l12-7zM3 3l18 18"></path></svg>Audio offline</button>
+<span id="offnote" style="font:400 12px/1.4 Inter;color:#9C9588">Available when you reconnect</span>
+</div>
+</div>
+<figcaption class="cap"><b>3 · Offline.</b> Reading keeps working. The Listen button turns into a dashed, labelled "Audio offline" state instead of failing on tap. Download for offline queues itself.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<header style="display:flex;align-items:center;justify-content:space-between;padding:48px 12px 0 6px"><button class="ib" aria-label="Back to Today"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"></path></svg></button><div class="kufi" lang="ar" style="font-size:18px;color:#D4B06A">واحر قلباه</div><div style="width:48px"></div></header>
+<div style="padding:20px 26px 0;display:flex;flex-direction:column;gap:6px">
+<div class="ar" lang="ar" style="font-size:28px;line-height:1.7">أنَا الذي نَظَرَ الأعْمَى إلى أدَبي</div>
+<div class="en" style="font-size:18px">I am the one whose craft the blind have seen,</div>
+<div class="ar" lang="ar" style="font-size:28px;line-height:1.7;margin-top:10px">وَأسْمَعَتْ كَلِماتي مَنْ بهِ صَمَمُ</div>
+<div class="en" style="font-size:18px">whose words have reached even the deaf.</div>
+</div>
+<div role="alert" style="margin:auto 14px 24px;padding:16px;border-radius:24px;background:#17151C;border:1px solid #6B3A33;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:10px;align-items:flex-start"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#F08A7E" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex:none"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v6M12 16.5v.5"></path></svg><div><div style="font:600 14px Inter">The recitation didn't load</div><div style="font:400 13px/1.45 Inter;color:#BDB5A6;margin-top:2px">The connection dropped partway. Your place is saved at 1:12.</div></div></div>
+<div style="display:flex;gap:10px"><button class="sec" style="flex:1;height:48px">Keep reading</button><button class="pri" style="flex:1;height:48px">Try again</button></div>
+</div>
+</div>
+<figcaption class="cap"><b>4 · Audio error.</b> It says what happened, keeps your place, and gives two clear exits. An icon and a red border, not color alone. Announced via role="alert".</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<header style="padding:60px 24px 0"><h2 style="margin:0;font:500 36px 'Cormorant Garamond',serif">Saved</h2></header>
+<div style="display:flex;flex-direction:column;align-items:center;text-align:center;padding:70px 34px 0;gap:14px">
+<svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true"><path d="M48 8 L88 48 L48 88 L8 48Z M19.7 19.7H76.3V76.3H19.7Z" fill="none" stroke="#33406B" stroke-width="1.5"></path><path d="M38 34h20v30l-10-7-10 7z" fill="none" stroke="#D4B06A" stroke-width="2"></path></svg>
+<div style="font:500 26px 'Cormorant Garamond',serif">Nothing saved yet</div>
+<p style="margin:0;font:400 14px/1.55 Inter;color:#BDB5A6">Tap the bookmark on a poem, or press and hold a single line to keep just that line. Words you save appear here too.</p>
+<button class="pri" style="margin-top:8px;padding:0 24px">Go to today's poem</button>
+</div>
+<nav class="pill" aria-label="Main">
+<button class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 2c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 3 3 5 1-2 0-5 0-8z"></path></svg>Today</button>
+<button class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 4v16M10 4v16M15 4l4 16"></path></svg>Library</button>
+<button class="tab on" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4h12v16l-6-4-6 4z"></path></svg>Saved</button>
+<button class="tab"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6"></path></svg>You</button>
+</nav>
+</div>
+<figcaption class="cap"><b>5 · Empty Saved.</b> It teaches both save gestures (poem and single line) and offers one way forward. The lattice star returns as the empty-state mark.</figcaption>
+</figure>
+
+<figure class="step">
+<div class="ph">
+<header style="display:flex;align-items:center;gap:8px;padding:52px 16px 0 6px"><button class="ib" aria-label="Back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m15 5-7 7 7 7"></path></svg></button>
+<label for="s" style="position:absolute;width:1px;height:1px;overflow:hidden">Search poems, poets or roots</label>
+<input id="s" value="نزار قباني" dir="rtl" lang="ar" style="flex:1;height:48px;border-radius:24px;border:1px solid #7A7380;background:#17151C;color:#F2EDE3;padding:0 16px;font:400 18px Amiri"></header>
+<div style="padding:40px 28px 0;display:flex;flex-direction:column;gap:12px">
+<div role="status" style="font:500 24px/1.25 'Cormorant Garamond',serif">No poems by this poet yet</div>
+<p style="margin:0;font:400 14px/1.55 Inter;color:#BDB5A6">Poems are added once the rights to the text and recordings are cleared. You can ask us to prioritise this poet.</p>
+<button class="sec" style="align-self:flex-start;padding:0 20px;height:48px">Request this poet</button>
+</div>
+<div style="padding:30px 28px 10px" class="lab">Try instead</div>
+<div style="padding:0 20px;display:flex;flex-direction:column;gap:8px">
+<a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:16px;background:#17151C;text-decoration:none;color:#F2EDE3;min-height:24px"><span style="font:500 14px Inter">Search by root</span><span class="ar" lang="ar" style="font-size:20px;letter-spacing:.2em">ح ب ب</span></a>
+<a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:16px;background:#17151C;text-decoration:none;color:#F2EDE3"><span style="font:500 14px Inter">Browse the theme Love</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#BDB5A6" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></a>
+<a href="#" style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-radius:16px;background:#17151C;text-decoration:none;color:#F2EDE3"><span style="font:500 14px Inter">Poets of the 20th century</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#BDB5A6" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m9 6 6 6-6 6"></path></svg></a>
+</div>
+</div>
+<figcaption class="cap"><b>6 · No results.</b> Honest about why (rights), useful about what next (request, root search, related browse). The request count doubles as demand data for licensing priorities.</figcaption>
+</figure>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":2952,"height":1040}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -23,7 +23,7 @@ Fonts load from Google Fonts, so text renders in the brand typefaces when you ar
 | `tools/build_viewer.py` | Rebuilds `index.html` from `canvas/`. |
 | `tools/viewer_template.html` | The viewer's HTML, CSS and JS. |
 | `archive/` | The earlier canvases (5 redesign directions, 10 Reader Concepts, Finalists), each with its own viewer. See `archive/README.md`. |
-| `../current-app-catalog.md` | The catalog of the current app (screens, features, jobs to be done, redesign notes and open decisions). |
+| `november-app-redesign-review.md` | November app redesign review: the current app's screens, features and jobs to be done, with redesign notes and open decisions. |
 
 ## Pages and what to look at
 

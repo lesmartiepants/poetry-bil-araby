@@ -1,4 +1,4 @@
-# poetry بالعربي · Current app catalog
+# poetry بالعربي · November app redesign review
 
 Nov 18, 2026 · @Albert
 

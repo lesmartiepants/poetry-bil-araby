@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 
 const arg = (k) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : undefined; };
 const area = arg('area'); const only = arg('frame');
-const base = arg('base') ?? 'http://localhost:5180/new/';
+const base = arg('base') ?? 'http://localhost:5182/new/';
 const canvas = new URL('../../design-review/design-refresh/canvas/', import.meta.url);
 const out = new URL('./out/', import.meta.url);
 mkdirSync(out, { recursive: true });
@@ -17,7 +17,8 @@ const pick = frames.filter((f) => (!area || f.frame.split('.')[0] === area) && (
 async function up(url) { try { return (await fetch(url)).ok; } catch { return false; } }
 let server;
 if (!(await up(base))) {
-  server = spawn('npx', ['vite', '--port', '5180', '--strictPort'], { cwd: new URL('..', import.meta.url), stdio: 'ignore' });
+  // QA compares against the mocks, so the app runs on mock data.
+  server = spawn('npx', ['vite', '--port', '5182', '--strictPort'], { cwd: new URL('..', import.meta.url), stdio: 'ignore', env: { ...process.env, VITE_SOURCES: 'mock' } });
   for (let i = 0; i < 60 && !(await up(base)); i++) await new Promise((r) => setTimeout(r, 500));
 }
 

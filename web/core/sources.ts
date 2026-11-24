@@ -5,12 +5,14 @@ export type Domain =
 
 export type Source = 'mock' | 'live';
 
+// V1.2 reader, V1.3 tap a word, V1.5 Explore and V1.6 poet pages are live (server/redesign2.js).
+// tts flips when a Gemini key is configured for live recitation; profile when Supabase auth is wired.
 export const SOURCES: Record<Domain, Source> = {
-  poems: 'mock',
-  ai: 'mock',
+  poems: 'live',
+  ai: 'live',
   tts: 'mock',
-  poets: 'mock',
-  explore: 'mock',
+  poets: 'live',
+  explore: 'live',
   profile: 'mock',
   keeps: 'mock',
   lists: 'mock',

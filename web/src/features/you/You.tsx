@@ -1,13 +1,14 @@
 // Area 12 · You (12.1–12.8).
-import { useState, type ComponentType } from 'react';
+import { useState, type ComponentType, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { api } from '@core/api';
 import { qk, useAccount, useFeelings, useInvalidate, usePrefs, useSetPrefs } from '@core/hooks';
 import { isAvailable } from '@core/sources';
 import { FEMALE_VOICES, MALE_VOICES } from '@core/voices';
-import { GroupCard, Header, Segmented, Sheet, Skeleton, Switch, TitleRow } from '@ds/primitives';
-import { Mark, Play } from '@ds/icons';
-import { RowLink } from '@components/index';
+import { GroupCard, Header, Segmented, Sheet, Skeleton, Slider, Switch, TitleRow } from '@ds/primitives';
+import { Check, Chevron, Play } from '@ds/icons';
+import { BrandLogo, RowLink } from '@components/index';
+import './you.css';
 import { useOverlay } from '@components/overlays';
 
 function AccountCard({ onDelete }: { onDelete: () => void }) {
@@ -25,32 +26,46 @@ function AccountCard({ onDelete }: { onDelete: () => void }) {
   );
 }
 
+const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
+
 export function YouHub() {
   const p = usePrefs().data;
+  const set = useSetPrefs();
+  const feelings = useFeelings().data;
   const [deleting, setDeleting] = useState(false);
   const guide = isAvailable('profile', 'journey');
-  const fontName = { amiri: 'Amiri', naskh: 'Naskh', scheherazade: 'Scheherazade' };
+  const SIZES = ['Small', 'Medium', 'Large', 'Larger', 'Largest'];
+  const leaning = (x: number) => (x < 0.2 ? 'Classical' : x < 0.45 ? 'Mostly classical, some modern' : x <= 0.55 ? 'Classical and modern' : x <= 0.8 ? 'Mostly modern, some classical' : 'Modern');
+  const moves = p?.feelings.map((k) => feelings?.find((f) => f.key === k)?.en ?? k).join(', ');
   return (
     <div className="screen">
-      <header className="row" style={{ justifyContent: 'center', height: 60, paddingTop: 16 }}><Mark size={23} colour="var(--c-accent)" /></header>
-      <main className="pad stack gap-4">
+      <header className="hub-hdr"><BrandLogo /></header>
+      <main className="pad stack" style={{ paddingTop: 6 }}>
         {guide && (
           <>
-            <p className="t-eyebrow t-eyebrow--accent mt-8">YOUR GUIDE</p>
+            <p className="you-label">YOUR GUIDE</p>
             <GroupCard>
-              <RowLink href="/you/moves" title="What moves you" sub={p?.feelings.length ? p.feelings.join(', ') : 'Nothing picked yet'} />
-              <RowLink href="/you/guide" title="How the guide chooses" sub={p ? `${p.classicalModern < 0.5 ? 'Mostly classical' : 'Mostly modern'} · ${p.difficulty === 'any' ? 'any difficulty' : p.difficulty}` : ''} />
+              <RowLink href="/you/moves" title="What moves you" sub={moves ? cap(moves.toLowerCase()) : 'Nothing picked yet'} />
+              <RowLink href="/you/guide" title="How the guide chooses" sub={p ? `${leaning(p.classicalModern)}${p.difficulty === 'any' ? '' : ` · ${p.difficulty}`}` : ''} />
             </GroupCard>
-            <p className="t-eyebrow t-eyebrow--accent mt-8">LISTENING</p>
-            <GroupCard><RowLink href="/you/reciter" title="Reciter" sub={p?.voice ?? ''} /></GroupCard>
+            <p className="you-label">LISTENING</p>
+            <GroupCard>
+              <RowLink href="/you/reciter" title="Reciter" sub={p?.voice ?? ''} />
+              {p && (
+                <div className="group-row">
+                  <div className="group-row__main"><p className="group-row__title">Play through silent mode</p><p className="group-row__sub">{p.silentMode ? 'On' : 'Off'}</p></div>
+                  <Switch label="Play through silent mode" on={p.silentMode} onChange={(silentMode) => set.mutate({ silentMode })} />
+                </div>
+              )}
+            </GroupCard>
           </>
         )}
-        <p className="t-eyebrow t-eyebrow--accent mt-8">READING</p>
+        <p className="you-label">READING</p>
         <GroupCard>
-          <RowLink href="/you/appearance" title="Appearance" sub={p ? `${p.page[0].toUpperCase()}${p.page.slice(1)} · ${fontName[p.font]} · Size ${p.textSize} · Vowel marks ${p.vowelMarks ? 'on' : 'off'}` : ''} />
-          {guide && <RowLink href="/you/translation" title="Translation and sounds" sub={p ? `Under the Arabic: ${p.under}` : ''} />}
+          <RowLink href="/you/appearance" title="Appearance" sub={p ? `${cap(p.page)} · ${SIZES[p.textSize - 1]} text · Vowel marks ${p.vowelMarks ? 'on' : 'off'}` : ''} />
+          {guide && <RowLink href="/you/translation" title="Translation and sounds" sub={p ? { english: 'English under the Arabic', sounds: 'Sounds under the Arabic', nothing: 'Arabic only' }[p.under] : ''} />}
         </GroupCard>
-        <p className="t-eyebrow t-eyebrow--accent mt-8">ACCOUNT</p>
+        <p className="you-label">ACCOUNT</p>
         <AccountCard onDelete={() => setDeleting(true)} />
         {!guide && <p className="t-note mt-12">Your voice is the last one you picked while listening. The guide’s settings arrive with the guide.</p>}
       </main>
@@ -59,7 +74,6 @@ export function YouHub() {
   );
 }
 
-/** 12.8 Delete account: confirm. */
 function DeleteAccount({ onClose }: { onClose: () => void }) {
   const inv = useInvalidate();
   const showToast = useOverlay((s) => s.showToast);
@@ -126,7 +140,7 @@ export function GuideScreen() {
         <p className="t-eyebrow">CLASSICAL OR MODERN</p>
         <div className="stack gap-4">
           <div className="row between t-small"><span>Classical</span><span className="t-eyebrow t-eyebrow--accent">{p.classicalModern < 0.4 ? 'MOSTLY CLASSICAL' : p.classicalModern > 0.6 ? 'MOSTLY MODERN' : 'BOTH'}</span><span>Modern</span></div>
-          <input className="slider" type="range" min={0} max={1} step={0.1} value={p.classicalModern} aria-label="Classical or modern" onChange={(e) => set.mutate({ classicalModern: Number(e.target.value) })} />
+          <Slider label="Classical or modern" min={0} max={1} step={0.1} value={p.classicalModern} onChange={(classicalModern) => set.mutate({ classicalModern })} />
         </div>
         <p className="t-eyebrow">DIFFICULTY</p>
         <Segmented label="Difficulty" value={p.difficulty} onChange={(difficulty) => set.mutate({ difficulty })}
@@ -143,33 +157,41 @@ export function ReciterScreen() {
   const [, nav] = useLocation();
   const p = usePrefs().data;
   const set = useSetPrefs();
-  const [silent, setSilent] = useState(true);
-  const [pause, setPause] = useState(false);
+  const [open, setOpen] = useState<Record<string, boolean>>({});
   if (!p) return null;
-  const group = (title: string, list: typeof FEMALE_VOICES) => (
-    <>
-      <p className="t-eyebrow">{title}</p>
-      <GroupCard>
-        {list.map((v) => (
-          <button key={v.name} role="radio" aria-checked={p.voice === v.name} className="group-row" onClick={() => set.mutate({ voice: v.name })}>
-            <span className="icon-btn" style={{ width: 32, height: 32, border: '1px solid var(--c-accent-deep)' }} aria-hidden><Play size={12} /></span>
-            <div className="group-row__main"><p className="group-row__title">{v.name} <span className="group-row__sub">{v.descriptor}</span></p></div>
-            {p.voice === v.name && <span className="t-eyebrow t-eyebrow--accent">✓</span>}
-          </button>
-        ))}
-      </GroupCard>
-    </>
-  );
+  const group = (key: string, title: ReactNode, list: typeof FEMALE_VOICES) => {
+    // Three show at first, with the chosen voice always among them.
+    const chosen = list.findIndex((v) => v.name === p.voice);
+    const first = chosen > 2 ? [...list.slice(0, 2), list[chosen]] : list.slice(0, 3);
+    const shown = open[key] ? list : first;
+    return (
+      <>
+        <div className="row between you-voices__head"><p className="t-eyebrow">{title}</p><span className="t-eyebrow">{list.length}</span></div>
+        <div className="reciter-group" role="radiogroup" aria-label={key}>
+          {shown.map((v) => (
+            <button key={v.name} role="radio" aria-checked={p.voice === v.name} className="voice-row" onClick={() => set.mutate({ voice: v.name })}>
+              <span className="voice-row__play" aria-hidden><Play size={12} /></span>
+              <span className="voice-row__name">{v.name} <span className="voice-row__desc">{v.descriptor}</span></span>
+              {p.voice === v.name && <Check size={16} className="voice-row__check" />}
+            </button>
+          ))}
+          {!open[key] && list.length > shown.length && (
+            <button className="voice-more" onClick={() => setOpen({ ...open, [key]: true })}>{list.length - shown.length} MORE <Chevron size={16} /></button>
+          )}
+        </div>
+      </>
+    );
+  };
   return (
     <div className="screen">
       <Header onBack={() => nav('/you')} label="Back to You" />
       <TitleRow en="Reciter" ar="القارئ" />
-      <div className="pad stack gap-8 mt-12">
-        {group('FEMALE · 8', FEMALE_VOICES)}
-        {group('MALE · 8', MALE_VOICES)}
-        <div className="card stack" style={{ padding: 14, gap: 12 }}>
-          <div className="row between"><p className="group-row__title">Play through silent mode</p><Switch label="Play through silent mode" on={silent} onChange={setSilent} /></div>
-          <div className="row between"><div><p className="group-row__title">Pause between lines</p><p className="group-row__sub">A breath after each bayt</p></div><Switch label="Pause between lines" on={pause} onChange={setPause} /></div>
+      <div className="pad stack gap-8 mt-8">
+        {group('Female voices', <>FEMALE · <span lang="ar">نساء</span></>, FEMALE_VOICES)}
+        {group('Male voices', <>MALE · <span lang="ar">رجال</span></>, MALE_VOICES)}
+        <div className="reciter-group mt-8">
+          <div className="voice-setting"><p className="group-row__title">Play through silent mode</p><Switch label="Play through silent mode" on={p.silentMode} onChange={(silentMode) => set.mutate({ silentMode })} /></div>
+          <div className="voice-setting"><div><p className="group-row__title">Pause between lines</p><p className="group-row__sub">A breath after each bayt</p></div><Switch label="Pause between lines" on={p.pauseLines} onChange={(pauseLines) => set.mutate({ pauseLines })} /></div>
         </div>
       </div>
     </div>

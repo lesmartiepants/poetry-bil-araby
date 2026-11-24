@@ -1,6 +1,6 @@
 // Design-system primitives. They know nothing about poetry.
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Back } from './icons';
+import { Back, Mark } from './icons';
 
 export function Header({ onBack, right, label = 'Back' }: { onBack?: () => void; right?: ReactNode; label?: string }) {
   return (
@@ -11,9 +11,10 @@ export function Header({ onBack, right, label = 'Back' }: { onBack?: () => void;
   );
 }
 
-export function TitleRow({ en, ar }: { en: string; ar?: string }) {
+/** `bare` drops the side padding, for titles inside an already padded column. */
+export function TitleRow({ en, ar, bare }: { en: string; ar?: string; bare?: boolean }) {
   return (
-    <div className="title-row">
+    <div className="title-row" style={bare ? { padding: 0 } : undefined}>
       <h1 className="t-title">{en}</h1>
       {ar && <span lang="ar" className="t-title-ar">{ar}</span>}
     </div>
@@ -48,12 +49,16 @@ export function Sheet({ label, onClose, children, height }: { label: string; onC
   );
 }
 
-export function Toast({ children, action, onAction, alert }: { children: ReactNode; action?: string; onAction?: () => void; alert?: boolean }) {
+export function Toast({ children, action, onAction, undo, alert, mark }: {
+  children: ReactNode; action?: string; onAction?: () => void; undo?: () => void; alert?: boolean; mark?: boolean;
+}) {
   return (
     <div className="toast" role={alert ? 'alert' : 'status'}>
       {alert && <span className="toast__icon" aria-hidden>!</span>}
+      {mark && <Mark size={22} colour="#4A1620" />}
       <span style={{ flex: 1 }}>{children}</span>
-      {action && <button className="toast__action" onClick={onAction}>{action}</button>}
+      {undo && <button className="toast__action" onClick={undo}>UNDO</button>}
+      {action && <button className={`toast__action${undo ? ' toast__action--outline' : ''}`} onClick={onAction}>{action}</button>}
     </div>
   );
 }
@@ -62,11 +67,12 @@ export function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boo
   return <button role="switch" aria-checked={on} aria-label={label} className="switch" onClick={() => onChange(!on)} />;
 }
 
-export function Segmented<T extends string | number>({ label, value, options, onChange, tall }: {
-  label: string; value: T; options: { value: T; label: ReactNode }[]; onChange: (v: T) => void; tall?: boolean;
+/** Settings choices are separate boxes; `pill` is the two-way switch between views (Hub / Poems). */
+export function Segmented<T extends string | number>({ label, value, options, onChange, tall, pill }: {
+  label: string; value: T; options: { value: T; label: ReactNode }[]; onChange: (v: T) => void; tall?: boolean; pill?: boolean;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={`seg${tall ? ' seg--tall' : ''}`}>
+    <div role="radiogroup" aria-label={label} className={`seg${tall ? ' seg--tall' : ''}${pill ? ' seg--pill' : ''}`}>
       {options.map((o) => (
         <button key={String(o.value)} role="radio" aria-checked={o.value === value} className="seg__opt" onClick={() => onChange(o.value)}>{o.label}</button>
       ))}
@@ -111,5 +117,16 @@ export function Coming({ title, body, action }: { title: string; body: string; a
       <p className="t-body">{body}</p>
       {action}
     </div>
+  );
+}
+
+/** A range with the mock's track: gold up to the thumb, quiet after it. */
+export function Slider({ label, value, min, max, step = 1, onChange, valueText }: {
+  label: string; value: number; min: number; max: number; step?: number; onChange: (v: number) => void; valueText?: string;
+}) {
+  const fill = `${((value - min) / (max - min)) * 100}%`;
+  return (
+    <input className="slider" type="range" min={min} max={max} step={step} value={value} aria-label={label} aria-valuetext={valueText}
+      style={{ ['--fill' as string]: fill }} onChange={(e) => onChange(Number(e.target.value))} />
   );
 }

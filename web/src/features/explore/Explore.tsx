@@ -1,11 +1,14 @@
 // Area 4 · Explore (4.1–4.7).
 import { Link, useLocation } from 'wouter';
-import { useBands, useCollections, useEras, useFeaturedPoet, useFeelings, usePoems, usePoets } from '@core/hooks';
+import { useBands, useCollections, useEras, useFeaturedPoet, useFeelings, useFollows, usePoems, usePoets } from '@core/hooks';
+import { arabicInitial, arabicSortKey } from '@core/logic/arabic';
 import { isAvailable } from '@core/sources';
 import { Header, SectionLabel, Skeleton, TitleRow } from '@ds/primitives';
-import { Chevron, Search } from '@ds/icons';
-import { CollectionCard, PoemRow, PoetAvatar, PoetRow } from '@components/index';
-import { useState } from 'react';
+import { Bookmark, Chevron, Search } from '@ds/icons';
+import { BrandLogo, CollectionCard, eraArt, PoemRow, PoemTile, PoetAvatar } from '@components/index';
+import { Pattern } from '@ds/Pattern';
+import { Fragment, useState, type ReactNode } from 'react';
+import type { PoemFilter } from '@core/api/contract';
 import './explore.css';
 
 export function ExploreHub() {
@@ -20,41 +23,41 @@ export function ExploreHub() {
   return (
     <div className="screen">
       <header className="hub-hdr">
-        <span className="hdr__spacer" />
-        <span className="hub-logo"><span className="hub-logo__en">poetry</span><span lang="ar" className="hub-logo__ar">بالعربي</span></span>
-        {v3 ? <button className="icon-btn hub-search" aria-label="Search" onClick={() => nav('/search')}><Search /></button> : <span className="hdr__spacer" />}
+        <BrandLogo />
+        {v3 && <button className="icon-btn hub-search" aria-label="Search" onClick={() => nav('/search')}><Search /></button>}
       </header>
       <main className="pad stack gap-12" style={{ paddingTop: 14 }}>
         <SectionLabel>POET OF THE WEEK</SectionLabel>
         {featured ? (
           <Link href={`/poet/${featured.poet.slug}`} className="potw">
-            <PoetAvatar initial={featured.poet.initial} eraKey={featured.poet.eraKey} size={54} />
-            <span className="potw__main"><span className="potw__name">{featured.poet.nameEn} · <span lang="ar" className="ar">{featured.poet.nameAr}</span></span><span className="potw__note">{featured.note}</span><span className="potw__note">{featured.poet.poemCount} poems</span></span>
+            <PoetAvatar initial={featured.poet.initial} eraKey={featured.poet.eraKey} size={64} />
+            <span className="potw__main"><span className="potw__name">{featured.poet.nameEn} <span lang="ar" className="potw__ar">· {featured.poet.nameAr}</span></span><span className="potw__note">{featured.note} · {featured.poet.poemCount} poems</span></span>
             <Chevron />
           </Link>
         ) : <Skeleton lines={2} />}
-        <SectionLabel action={<Link href="/explore/poets" className="link-btn">SEE ALL</Link>}>POETS</SectionLabel>
-        <div className="chips" style={{ gap: 14 }}>
+        <SectionLabel action={<Link href="/explore/poets" className="see-all">SEE ALL</Link>}>POETS</SectionLabel>
+        <div className="chips" style={{ gap: 12 }}>
           {poets?.slice(0, 6).map((p) => (
-            <Link key={p.slug} href={`/poet/${p.slug}`} className="poet-dot"><PoetAvatar initial={p.initial} eraKey={p.eraKey} size={52} /><span>{p.nameEn.split(' ').slice(-1)[0]}</span></Link>
+            <Link key={p.slug} href={`/poet/${p.slug}`} className="poet-dot"><PoetAvatar initial={p.initial} eraKey={p.eraKey} size={56} /><span>{p.nameEn.split(' ').slice(-1)[0].replace(/^al-/i, '')}</span></Link>
           ))}
         </div>
         {v3 && colls && (
           <>
-            <SectionLabel action={<Link href="/explore/collections" className="link-btn">SEE ALL</Link>}>COLLECTIONS</SectionLabel>
+            <SectionLabel action={<Link href="/explore/collections" className="see-all">SEE ALL</Link>}>COLLECTIONS</SectionLabel>
             <div className="chips" style={{ gap: 10 }}>{colls.map((c) => <CollectionCard key={c.slug} c={c} />)}</div>
           </>
         )}
-        <SectionLabel action={<Link href="/explore/feelings" className="link-btn">SEE ALL</Link>}>FIND BY FEELING</SectionLabel>
+        <SectionLabel action={<Link href="/explore/feelings" className="see-all">SEE ALL</Link>}>FIND BY FEELING</SectionLabel>
         <div className="chips">{feelings?.map((f) => <Link key={f.key} href={`/explore/feeling/${f.key}`} className="chip">{f.en}<span lang="ar" className="ar">{f.ar}</span></Link>)}</div>
         <SectionLabel>BY DIFFICULTY</SectionLabel>
         <div className="chips">{bands?.map((b) => <Link key={b.key} href={`/explore/difficulty/${b.key}`} className="chip">{b.en}<span lang="ar" className="ar">{b.ar}</span></Link>)}</div>
-        <SectionLabel action={<Link href="/explore/eras" className="link-btn">SEE ALL</Link>}>ERAS</SectionLabel>
+        <SectionLabel action={<Link href="/explore/eras" className="see-all">SEE ALL</Link>}>ERAS</SectionLabel>
         <div className="chips" style={{ gap: 10 }}>
           {eras?.map((e) => (
-            <Link key={e.slug} href={`/explore/era/${e.slug}`} className="era-card" style={{ background: e.colour }}>
-              <span className="row between"><span className="era-card__en">{e.nameEn}</span><span lang="ar" className="era-card__ar">{e.nameAr}</span></span>
-              <span className="era-card__meta">{e.years.toUpperCase()} · {e.place.toUpperCase()}</span>
+            <Link key={e.slug} href={`/explore/era/${e.slug}`} className="era-card panel" style={{ background: e.colour }}>
+              <Pattern {...eraArt(e.slug)} scale={0.7} scrim={0.72} />
+              <span className="row between" style={{ alignItems: 'baseline' }}><span className="era-card__en">{e.nameEn}</span><span lang="ar" className="era-card__ar">{e.nameAr}</span></span>
+              <span className="era-card__meta">{e.years} · {e.place.toUpperCase()}</span>
               <span className="era-card__line">{e.line}</span>
             </Link>
           ))}
@@ -67,21 +70,60 @@ export function ExploreHub() {
 export function AllPoets() {
   const poets = usePoets().data;
   const eras = useEras().data;
+  const follows = new Set(useFollows().data ?? []);
   const [era, setEra] = useState<string | null>(null);
   const [, nav] = useLocation();
-  const shown = poets?.filter((p) => !era || p.eraKey === era);
+  const eraName = (key: string) => eras?.find((e) => e.slug === key)?.nameEn ?? key;
+  const shown = poets
+    ?.filter((p) => !era || p.eraKey === era)
+    .sort((a, b) => arabicSortKey(a.nameAr).localeCompare(arabicSortKey(b.nameAr), 'ar'));
   return (
     <div className="screen">
       <Header onBack={() => nav('/explore')} />
-      <TitleRow en="All poets" ar="الشعراء" />
-      <div className="pad stack gap-10 mt-8">
-        <span className="t-count">{shown?.length ?? '…'} POETS · A–Z</span>
+      <TitleRow en="Poets" ar="شعراء" />
+      <div className="pad stack gap-10">
+        <div className="row between t-count" style={{ marginTop: 6 }}><span>{shown?.length ?? '…'} POETS</span><span>ARABIC A–Z</span></div>
         <div className="chips">
-          <button className="chip chip--sm" aria-pressed={era === null} onClick={() => setEra(null)}>ALL ERAS</button>
+          <button className="chip chip--sm" aria-pressed={era === null} onClick={() => setEra(null)}>ALL</button>
           {eras?.map((e) => <button key={e.slug} className="chip chip--sm" aria-pressed={era === e.slug} onClick={() => setEra(e.slug)}>{e.nameEn.toUpperCase()}</button>)}
         </div>
-        <div className="list">{shown?.map((p) => <PoetRow key={p.slug} poet={p} />)}</div>
+        <div>
+          {shown?.map((p, i) => (
+            <Fragment key={p.slug}>
+              {arabicInitial(p.nameAr) !== arabicInitial(shown[i - 1]?.nameAr ?? '') && <p lang="ar" className="letter-head">{arabicInitial(p.nameAr)}</p>}
+              <Link href={`/poet/${p.slug}`} className="poet-line">
+                <PoetAvatar initial={p.initial} eraKey={p.eraKey} size={40} />
+                <span className="poet-line__main">
+                  <span className="poet-line__name">{p.nameEn}</span>
+                  <span className="poet-line__sub">{eraName(p.eraKey).toUpperCase()} · {p.poemCount} POEMS</span>
+                </span>
+                <span lang="ar" className="poet-line__ar">{p.nameAr}</span>
+                <Bookmark size={14} className={follows.has(p.slug) ? 'poet-line__mark poet-line__mark--on' : 'poet-line__mark'} aria-label={follows.has(p.slug) ? 'Following' : undefined} />
+              </Link>
+            </Fragment>
+          ))}
+        </div>
       </div>
+    </div>
+  );
+}
+
+/** One shelf: a heading that opens the whole list, and its first poems as tiles. */
+function Shelf({ href, label, count, filter }: { href: string; label: ReactNode; count: number; filter: PoemFilter }) {
+  const poems = usePoems(filter).data;
+  return (
+    <section className="stack gap-8">
+      <Link href={href} className="shelf-head"><span className="shelf-head__label">{label}</span><span className="shelf-head__count">{count} <Chevron size={12} /></span></Link>
+      <div className="chips">{poems ? poems.slice(0, 8).map((p) => <PoemTile key={p.id} poem={p} />) : <Skeleton lines={1} />}</div>
+    </section>
+  );
+}
+
+function ShelfToggle({ on }: { on: 'feeling' | 'era' }) {
+  return (
+    <div className="chips">
+      {on === 'feeling' ? <button className="chip chip--sm" aria-pressed>FEELING</button> : <Link href="/explore/feelings" className="chip chip--sm">FEELING</Link>}
+      {on === 'era' ? <button className="chip chip--sm" aria-pressed>ERA</button> : <Link href="/explore/eras" className="chip chip--sm">ERA</Link>}
     </div>
   );
 }
@@ -92,14 +134,13 @@ export function FeelingShelves() {
   return (
     <div className="screen">
       <Header onBack={() => nav('/explore')} />
-      <TitleRow en="By feeling" ar="المشاعر" />
-      <div className="pad stack gap-10 mt-8">
-        <div className="chips"><button className="chip chip--sm" aria-pressed>FEELING</button><Link href="/explore/eras" className="chip chip--sm">ERA</Link></div>
+      <TitleRow en="By feeling" ar="مشاعر" />
+      <div className="pad stack gap-12">
+        <p className="t-count shelf-count">{feelings?.length ?? '…'} FEELINGS · ACROSS EVERY POEM</p>
+        <ShelfToggle on="feeling" />
         {feelings?.map((f) => (
-          <Link key={f.key} href={`/explore/feeling/${f.key}`} className="shelf">
-            <span className="row between"><span className="shelf__en">{f.en}</span><span lang="ar" className="shelf__ar">{f.ar}</span></span>
-            <span className="t-count">{f.poemCount} POEMS · {f.poetCount} POETS</span>
-          </Link>
+          <Shelf key={f.key} href={`/explore/feeling/${f.key}`} count={f.poemCount} filter={{ feeling: f.key }}
+            label={<>{f.en} <span lang="ar" className="shelf-head__ar">· {f.ar}</span></>} />
         ))}
       </div>
     </div>
@@ -112,15 +153,13 @@ export function EraShelves() {
   return (
     <div className="screen">
       <Header onBack={() => nav('/explore')} />
-      <TitleRow en="By era" ar="العصور" />
-      <div className="pad stack gap-10 mt-8">
-        <div className="chips"><Link href="/explore/feelings" className="chip chip--sm">FEELING</Link><button className="chip chip--sm" aria-pressed>ERA</button></div>
-        <span className="t-count">OLDEST FIRST</span>
+      <TitleRow en="By era" ar="عصور" />
+      <div className="pad stack gap-12">
+        <p className="t-count shelf-count">{eras?.length ?? '…'} ERAS · OLDEST FIRST</p>
+        <ShelfToggle on="era" />
         {eras?.map((e) => (
-          <Link key={e.slug} href={`/explore/era/${e.slug}`} className="shelf" style={{ borderLeft: `3px solid ${e.colour}` }}>
-            <span className="row between"><span className="shelf__en">{e.nameEn}</span><span lang="ar" className="shelf__ar">{e.nameAr}</span></span>
-            <span className="t-count">{e.years.toUpperCase()} · {e.poemCount} POEMS</span>
-          </Link>
+          <Shelf key={e.slug} href={`/explore/era/${e.slug}`} count={e.poemCount} filter={{ era: e.slug }}
+            label={<>{e.nameEn} · <bdi lang="ar" className="shelf-head__ar">{e.nameAr}</bdi> <span className="shelf-head__years">· {e.years}</span></>} />
         ))}
       </div>
     </div>

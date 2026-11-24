@@ -111,6 +111,9 @@ export interface Prefs {
   difficulty: 'any' | BandKey;
   length: 'short' | 'any' | 'long';
   tapWord: boolean;
+  // 12.6 listening
+  silentMode: boolean; // play through the phone's silent switch (native app; the web always plays)
+  pauseLines: boolean; // a breath after each bayt
   displayName?: string;
 }
 
@@ -133,7 +136,11 @@ export interface Collection {
   stepEn: string;
   stepAr: string;
   colour: string;
+  /** A pattern-library name (laceria, seljuk…); the card picks one when unset. */
+  pattern?: string;
   poemIds: string[];
+  /** Each step's theme (Pride, Longing…), aligned with poemIds; null where unnamed. */
+  themes?: (string | null)[];
 }
 
 export interface Progress {

@@ -2,9 +2,12 @@
 import { Link, useLocation } from 'wouter';
 import { useQueries } from '@tanstack/react-query';
 import { api } from '@core/api';
-import { useCollection, useCollections, useInvalidate, useProgress } from '@core/hooks';
+import { useCollection, useCollections, useEras, useInvalidate, useProgress } from '@core/hooks';
 import { Header, Skeleton, TitleRow } from '@ds/primitives';
-import { CollectionCard, PoemRow, ProgressBar } from '@components/index';
+import { Back, Bookmark } from '@ds/icons';
+import { Pattern } from '@ds/Pattern';
+import { CollectionCard, collectionArt, PathDock } from '@components/index';
+import './collections.css';
 
 export function AllCollections() {
   const c = useCollections('collection').data;
@@ -23,29 +26,54 @@ export function AllCollections() {
 export function CollectionScreen({ slug }: { slug: string }) {
   const c = useCollection(slug);
   const prog = useProgress().data?.find((p) => p.slug === slug);
+  const eras = useEras().data;
   const inv = useInvalidate();
   const [, nav] = useLocation();
   const poems = useQueries({ queries: (c.data?.poemIds ?? []).map((id) => ({ queryKey: ['poem', id], queryFn: () => api.poems.get(id) })) });
   if (c.isLoading) return <div className="screen pad" style={{ paddingTop: 120 }} aria-busy="true"><Skeleton lines={6} /></div>;
   if (!c.data) return null;
-  const done = prog?.position ?? 0;
-  const next = c.data.poemIds[Math.min(done, c.data.poemIds.length - 1)];
-  const save = async () => { await api.collections.setProgress({ slug, position: done, saved: !prog?.saved }); inv(['progress']); };
+  const col = c.data;
+  const of = col.poemIds.length;
+  const pos = Math.min(prog?.position ?? 0, of);
+  const saved = prog?.saved ?? false;
+  const lines = poems.reduce((n, q) => n + (q.data?.lines.length ?? 0), 0);
+  const href = (i: number) => `/p/${poems[i]?.data?.slug ?? col.poemIds[i]}?journey=${slug}&step=${i + 1}`;
+  const save = async () => { await api.collections.setProgress({ slug, position: pos, saved: !saved, completedAt: prog?.completedAt }); inv(['progress']); };
+  const eraName = (key: string) => eras?.find((e) => e.slug === key)?.nameEn;
   return (
     <div className="screen">
-      <Header onBack={() => (history.length > 1 ? history.back() : nav('/explore'))} right={<button className="link-btn" style={{ marginRight: 12 }} onClick={save}>{prog?.saved ? 'SAVED' : 'SAVE'}</button>} />
-      <div className="pad stack gap-12">
-        <div className="coll-cover" style={{ background: c.data.colour }}>
-          <span lang="ar" className="coll-card__ar" style={{ fontSize: 30 }}>{c.data.titleAr}</span>
-          <span className="coll-card__en" style={{ fontSize: 24 }}>{c.data.titleEn}</span>
-        </div>
-        <p className="t-lede">{c.data.intro}</p>
-        <ProgressBar done={done} of={c.data.poemIds.length} label={`${c.data.titleEn} progress`} />
-        {next && <Link href={`/p/${next}`} className="btn btn--primary btn--block" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>CONTINUE</Link>}
-        <div className="list">
-          {poems.map((q, i) => q.data && <PoemRow key={`${q.data.id}-${i}`} poem={q.data} badge={`${c.data!.stepEn.toUpperCase()} ${i + 1}`} />)}
+      <div className="coll-hero panel" style={{ background: col.colour }}>
+        <Pattern {...collectionArt(col)} scrim={0.45} />
+        <header className="coll-hero__bar">
+          <button className="icon-btn" aria-label="Back" onClick={() => (history.length > 1 ? history.back() : nav('/explore'))}><Back /></button>
+          <button className="icon-btn" aria-pressed={saved} aria-label={saved ? 'Saved' : 'Save'} onClick={save}><Bookmark style={saved ? { fill: 'currentColor' } : undefined} /></button>
+        </header>
+        <div className="coll-hero__title">
+          <p lang="ar" dir="rtl" className="coll-hero__ar">{col.titleAr}</p>
+          <p className="coll-hero__en">{col.titleEn}</p>
         </div>
       </div>
+      <main className="coll-body">
+        <p className="coll-body__intro">{col.intro}</p>
+        <p className="t-count">{of} {of === 1 ? 'POEM' : 'POEMS'}{lines ? ` · ABOUT ${Math.max(1, Math.round(lines / 4))} MIN` : ''}</p>
+        <div>
+          {col.poemIds.map((id, i) => {
+            const p = poems[i]?.data;
+            return (
+              <Link key={`${id}-${i}`} href={href(i)} className="coll-row">
+                <span className="coll-row__num">{String(i + 1).padStart(2, '0')}</span>
+                <span className="coll-row__main">
+                  <span className="coll-row__title">{p?.titleEn ?? '…'}{i < pos ? ' · read' : ''}</span>
+                  <span className="coll-row__sub">{[p?.poetEn, p && eraName(p.eraKey)].filter(Boolean).join(' · ')}</span>
+                </span>
+                {p && <span lang="ar" className="coll-row__ar">{p.poetAr}</span>}
+              </Link>
+            );
+          })}
+        </div>
+      </main>
+      <PathDock label={col.kind === 'journey' ? 'JOURNEY' : 'COLLECTION'} pos={pos} of={of} title={col.titleEn}
+        next={pos < of ? { href: href(pos), label: `${col.stepEn.toUpperCase()} ${String(pos + 1).padStart(2, '0')}` } : undefined} />
     </div>
   );
 }

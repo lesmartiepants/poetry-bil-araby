@@ -103,10 +103,10 @@ export const BANDS: Band[] = [
 ];
 
 export const COLLECTIONS: Collection[] = [
-  { slug: 'your-first-seven', kind: 'journey', titleEn: 'Your first seven', titleAr: 'سبع سماوات', intro: 'Seven heavens, one poem each: the shapes Arabic poetry takes.', stepEn: 'Heaven', stepAr: 'سماء', colour: '#22406E', poemIds: ['87201', '1001', '1002', '1003', '1004', '1005', '87201'] },
-  { slug: 'home', kind: 'journey', titleEn: 'Home', titleAr: 'الوطن', intro: 'Five poems about the places we leave and carry.', stepEn: 'Home', stepAr: 'وطن', colour: '#2F6B5A', poemIds: ['1001', '87201', '1003', '1004', '1005'] },
-  { slug: 'women-who-wrote-the-canon', kind: 'collection', titleEn: 'Women who wrote the canon', titleAr: 'نساء كتبن الديوان', intro: 'From Al-Khansa to Wallada, the women Arabic poetry was built on.', stepEn: 'Poem', stepAr: 'قصيدة', colour: '#4A1620', poemIds: ['1002', '87201', '1004'] },
-  { slug: 'start-here-gibran-to-darwish', kind: 'collection', titleEn: 'Start here: Gibran to Darwish', titleAr: 'ابدأ هنا', intro: 'Nine modern poems that read easily in translation.', stepEn: 'Poem', stepAr: 'قصيدة', colour: '#22406E', poemIds: ['1005', '87201', '1003'] },
+  { slug: 'your-first-seven', kind: 'journey', titleEn: 'Your first seven', titleAr: 'سبع سماوات', intro: 'Seven heavens, one poem each: the shapes Arabic poetry takes.', stepEn: 'Heaven', stepAr: 'سماء', colour: '#22406E', pattern: 'seljuk', themes: ['Pride', 'Longing', 'Grief', 'Defiance', 'The divine', 'Song', 'Home'], poemIds: ['87201', '1001', '1002', '1003', '1004', '1005', '87201'] },
+  { slug: 'home', kind: 'journey', titleEn: 'Home', titleAr: 'الوطن', intro: 'Five poems about the places we leave and carry.', stepEn: 'Home', stepAr: 'وطن', colour: '#2F6B5A', pattern: 'ogee', poemIds: ['1001', '87201', '1003', '1004', '1005'] },
+  { slug: 'women-who-wrote-the-canon', kind: 'collection', titleEn: 'Women who wrote the canon', titleAr: 'نساء كتبن الديوان', intro: 'From Al-Khansa to Wallada, the women Arabic poetry was built on.', stepEn: 'Poem', stepAr: 'قصيدة', colour: '#4A1620', pattern: 'laceria', poemIds: ['1002', '87201', '1004'] },
+  { slug: 'start-here-gibran-to-darwish', kind: 'collection', titleEn: 'Start here: Gibran to Darwish', titleAr: 'من جبران إلى درويش', intro: 'Nine modern poems that read easily in translation.', stepEn: 'Poem', stepAr: 'قصيدة', colour: '#22406E', pattern: 'starcross', poemIds: ['1005', '87201', '1003'] },
 ];
 
 export const FEATURED_NOTE = 'The greatest elegist in Arabic. 7th c.';

@@ -1,13 +1,13 @@
 // Area 2 · Reading (2.1–2.18) and the reader side of listening (3.7).
 import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import { Link, useLocation } from 'wouter';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, NotFoundError } from '@core/api';
-import { useDoors, useExplanation, useGloss, usePoem, usePoet, usePrefs, useSetPrefs } from '@core/hooks';
+import { qk, useDoors, useExplanation, useGloss, useInvalidate, useKeeps, usePoem, usePoet, usePrefs, useSetPrefs } from '@core/hooks';
 import { sourceOf } from '@core/sources';
 import { transliterate } from '@core/logic/transliterate';
 import type { Poem } from '@core/types';
-import { FullAreaError, MarginNote, Segmented, Sheet, Skeleton, Switch } from '@ds/primitives';
+import { FullAreaError, MarginNote, Segmented, Sheet, Skeleton, Slider, Switch } from '@ds/primitives';
 import { Back, Heart, Lamp, Mark, Pause, Play, Share, Up } from '@ds/icons';
 import { PoetAvatar, Verse } from '@components/index';
 import { useOverlay } from '@components/overlays';
@@ -29,6 +29,9 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const open = useOverlay((s) => s.open);
+  const showToast = useOverlay((s) => s.showToast);
+  const keeps = useKeeps().data;
+  const inv = useInvalidate();
 
   useEffect(() => {
     const on = () => {
@@ -64,16 +67,23 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
     if (listening) return setVerseMenu(line);
     if (prefs?.tapWord !== false) setGloss({ line, word });
   };
+  const kept = keeps?.includes(poem.id) ?? false;
+  const unkeep = async () => {
+    await api.keeps.unkeep([poem.id]);
+    await inv(qk.keeps, qk.lists);
+    showToast({ text: 'Removed from your diwan', undo: async () => { await api.keeps.keep(poem.id); inv(qk.keeps, qk.lists); } });
+  };
   const actions = {
     listen: () => (listening ? pb.send(pb.status === 'playing' ? { type: 'PAUSE' } : { type: 'RESUME' }) : startListening()),
     insights: () => setSheet('insights'),
-    keep: () => open({ type: 'keep', poemId: poem.id }),
+    keep: () => (kept ? unkeep() : open({ type: 'keep', poemId: poem.id })),
     share: () => open({ type: 'share', poemId: poem.id }),
     aa: () => setSheet('aa'),
   };
 
   return (
     <div className="screen reader" data-testid="reader">
+      <ReaderBackdrop />
       <header className="reader__top">
         <button className="icon-btn" aria-label="Back" onClick={() => history.length > 1 ? history.back() : nav('/explore')}><Back /></button>
         <Mark size={28} colour="var(--c-accent-line)" />
@@ -102,10 +112,10 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
           <span className="reader__progress" aria-hidden><span style={{ width: `${progress}%` }} /></span>
         </div>
       ) : (
-        <Dock {...actions} listening={false} />
+        <Dock {...actions} listening={false} kept={kept} />
       )}
 
-      {sheet === 'fan' && <Fan {...actions} listening={listening && pb.status === 'playing'} onClose={() => setSheet('none')} />}
+      {sheet === 'fan' && <Fan {...actions} kept={kept} listening={listening && pb.status === 'playing'} onClose={() => setSheet('none')} />}
       {sheet === 'aa' && <AaSheet onClose={() => setSheet('none')} />}
       {sheet === 'insights' && <InsightsSheet poem={poem} onClose={() => setSheet('none')} />}
       {gloss && <GlossSheet poem={poem} at={gloss} onClose={() => setGloss(null)} />}
@@ -120,14 +130,33 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
   );
 }
 
-type Actions = { listen: () => void; insights: () => void; keep: () => void; share: () => void; aa: () => void; listening: boolean };
+/** The faint eight-point lattice behind the title, fading out down the page. */
+function ReaderBackdrop() {
+  return (
+    <svg aria-hidden className="reader__backdrop" width="100%" height="420">
+      <defs>
+        <pattern id="reader-lattice" width="64" height="64" patternUnits="userSpaceOnUse">
+          <g fill="none" stroke="var(--c-lattice)" strokeWidth="1">
+            <rect x="16" y="16" width="32" height="32" />
+            <rect x="16" y="16" width="32" height="32" transform="rotate(45 32 32)" />
+          </g>
+        </pattern>
+        <linearGradient id="reader-fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient>
+        <mask id="reader-mask"><rect width="100%" height="420" fill="url(#reader-fade)" /></mask>
+      </defs>
+      <rect width="100%" height="420" fill="url(#reader-lattice)" mask="url(#reader-mask)" />
+    </svg>
+  );
+}
 
-function Dock({ listen, insights, keep, share }: Actions) {
+type Actions = { listen: () => void; insights: () => void; keep: () => void; share: () => void; aa: () => void; listening: boolean; kept: boolean };
+
+function Dock({ listen, insights, keep, share, kept }: Actions) {
   return (
     <nav aria-label="Poem actions" className="dock">
       <button className="dock__btn" onClick={listen}><Play size={14} /> LISTEN</button>
       <button className="dock__btn dock__btn--main" onClick={insights}><Lamp size={18} /> INSIGHTS</button>
-      <button className="dock__btn" aria-label="Keep" onClick={keep}><Heart /></button>
+      <button className={`dock__btn${kept ? ' dock__btn--kept' : ''}`} aria-label={kept ? 'Kept. Tap to remove' : 'Keep'} onClick={keep}><Heart filled={kept} /></button>
       <button className="dock__btn" aria-label="Share" onClick={share}><Share /></button>
     </nav>
   );
@@ -139,10 +168,10 @@ const FAN = [
   { key: 'share', x: 244, b: 135 }, { key: 'aa', x: 284, b: 62 },
 ] as const;
 
-function Fan({ listen, insights, keep, share, aa, listening, onClose }: Actions & { onClose: () => void }) {
+function Fan({ listen, insights, keep, share, aa, listening, kept, onClose }: Actions & { onClose: () => void }) {
   const fns = { listen, insights, keep, share, aa };
   const label = { listen: listening ? 'PAUSE' : 'LISTEN', insights: 'INSIGHTS', keep: 'KEEP', share: 'SHARE', aa: 'TEXT' };
-  const icon = { listen: listening ? <Pause size={20} /> : <Play size={20} />, insights: <Lamp />, keep: <Heart />, share: <Share />, aa: <span style={{ fontFamily: 'var(--font-serif)', fontSize: 20 }}>Aa</span> };
+  const icon = { listen: listening ? <Pause size={20} /> : <Play size={20} />, insights: <Lamp />, keep: <Heart filled={kept} />, share: <Share />, aa: <span style={{ fontFamily: 'var(--font-serif)', fontSize: 20 }}>Aa</span> };
   return (
     <>
       <div className="fan-scrim" onClick={onClose} />
@@ -160,6 +189,11 @@ function Fan({ listen, insights, keep, share, aa, listening, onClose }: Actions 
 }
 
 /** 2.4 Aa: what sits under the Arabic, Arabic font, size, vowel marks, page. */
+/**
+ * Reading settings. In the Aa sheet (2.4) "under the Arabic" leads; on the
+ * Appearance page (12.2) a live preview leads and "under the Arabic" lives on
+ * Translation and sounds instead.
+ */
 export function AppearanceControls({ preview }: { preview?: boolean }) {
   const p = usePrefs().data;
   const set = useSetPrefs();
@@ -169,33 +203,55 @@ export function AppearanceControls({ preview }: { preview?: boolean }) {
     { value: 'naskh' as const, label: <><span lang="ar" style={{ fontFamily: 'var(--font-naskh)', fontSize: 19, lineHeight: 1 }}>ليلى</span><span>NASKH</span></> },
     { value: 'scheherazade' as const, label: <><span lang="ar" style={{ fontFamily: 'var(--font-scheherazade)', fontSize: 24, lineHeight: 1 }}>ليلى</span><span>SCHEHERAZADE</span></> },
   ];
-  return (
-    <div className="stack gap-12">
-      {preview && (
-        <div className="card" style={{ padding: '12px 18px', textAlign: 'right', background: 'var(--c-bg)' }}>
-          <p lang="ar" dir="rtl" style={{ margin: 0, fontFamily: 'var(--reading-font)', fontSize: 22, lineHeight: 1.7 }}>أَمُرُّ عَلى الدِيارِ دِيارِ لَيلى</p>
-          <p style={{ margin: 0, fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 16, color: 'var(--c-muted)' }}>I pass by the dwellings, Layla’s dwellings,</p>
-        </div>
-      )}
+  const SIZES = ['SMALL', 'MEDIUM', 'LARGE', 'LARGER', 'LARGEST'];
+  const under = (
+    <>
       <p className="t-eyebrow">SHOW UNDER THE ARABIC</p>
       <Segmented label="Show under the Arabic" value={p.under} onChange={(under) => set.mutate({ under })}
         options={[{ value: 'english', label: 'ENGLISH' }, { value: 'sounds', label: 'SOUNDS' }, { value: 'nothing', label: 'NOTHING' }]} />
-      <p className="t-eyebrow">ARABIC FONT</p>
-      <Segmented label="Arabic font" tall value={p.font} onChange={(font) => set.mutate({ font })} options={fonts} />
-      <div className="card row between" style={{ padding: '12px 14px', gap: 14 }}>
-        <div><p className="group-row__title">Vowel marks <span lang="ar" className="ar" style={{ color: 'var(--c-accent)' }}>· تشكيل</span></p><p className="group-row__sub">For learners; turn off when fluent</p></div>
-        <Switch label="Vowel marks" on={p.vowelMarks} onChange={(vowelMarks) => set.mutate({ vowelMarks })} />
-      </div>
-      <div className="row between"><p className="t-eyebrow">TEXT SIZE</p><span className="t-eyebrow t-eyebrow--accent">{['SMALL', 'MEDIUM', 'LARGE', 'LARGER', 'LARGEST'][p.textSize - 1]}</span></div>
-      <input className="slider" type="range" min={1} max={5} step={1} value={p.textSize} aria-label="Text size" onChange={(e) => set.mutate({ textSize: Number(e.target.value) as 1 | 2 | 3 | 4 | 5 })} />
-      <p className="t-eyebrow">PAGE</p>
-      <Segmented label="Page" tall value={p.page} onChange={(page) => set.mutate({ page })} options={[
-        { value: 'night', label: <><span lang="ar" className="ar">ليل</span><span>NIGHT</span></> },
-        { value: 'parchment', label: <><span lang="ar" className="ar">رَقّ</span><span>PARCHMENT</span></> },
-        { value: 'indigo', label: <><span lang="ar" className="ar">نيل</span><span>INDIGO</span></> },
-      ]} />
+    </>
+  );
+  const font = <><p className="t-eyebrow">ARABIC FONT</p><Segmented label="Arabic font" tall value={p.font} onChange={(font) => set.mutate({ font })} options={fonts} /></>;
+  const marks = (
+    <div className="card row between" style={{ padding: '12px 14px', gap: 14 }}>
+      <div><p className="group-row__title">Vowel marks <span lang="ar" className="ar" style={{ color: 'var(--c-accent)' }}>· تشكيل</span></p><p className="group-row__sub">For learners; turn off when fluent</p></div>
+      <Switch label="Vowel marks" on={p.vowelMarks} onChange={(vowelMarks) => set.mutate({ vowelMarks })} />
     </div>
   );
+  const size = (
+    <>
+      <div className="row between"><p className="t-eyebrow">TEXT SIZE</p><span className="t-eyebrow t-eyebrow--accent">{SIZES[p.textSize - 1]}</span></div>
+      <div className="size-row">
+        <span lang="ar" aria-hidden className="size-row__small">ع</span>
+        <Slider label="Text size" min={1} max={5} value={p.textSize} valueText={SIZES[p.textSize - 1]} onChange={(v) => set.mutate({ textSize: v as 1 | 2 | 3 | 4 | 5 })} />
+        <span lang="ar" aria-hidden className="size-row__large">ع</span>
+      </div>
+    </>
+  );
+  const page = (
+    <>
+      <p className="t-eyebrow">PAGE</p>
+      <div role="radiogroup" aria-label="Page" className="page-tiles">
+        {([['night', 'ليل', 'NIGHT'], ['parchment', 'رَقّ', 'PARCHMENT'], ['indigo', 'نيل', 'INDIGO']] as const).map(([v, ar, en]) => (
+          <button key={v} role="radio" aria-checked={p.page === v} className={`page-tile page-tile--${v}`} onClick={() => set.mutate({ page: v })}>
+            <span lang="ar" className="page-tile__ar">{ar}</span><span className="page-tile__en">{en}</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+  if (preview) {
+    return (
+      <div className="stack gap-12">
+        <div className="card" style={{ padding: '12px 18px', textAlign: 'right', background: 'var(--c-bg)' }}>
+          <p lang="ar" dir="rtl" style={{ margin: 0, fontFamily: 'var(--reading-font)', fontSize: 22, lineHeight: 1.7 }}>{p.vowelMarks ? 'أَمُرُّ عَلى الدِيارِ دِيارِ لَيلى' : 'أمر على الديار ديار ليلى'}</p>
+          <p style={{ margin: 0, fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 16, color: 'var(--c-muted)' }}>I pass by the dwellings, Layla’s dwellings,</p>
+        </div>
+        {font}{page}{size}{marks}
+      </div>
+    );
+  }
+  return <div className="stack gap-12">{under}{font}{marks}{size}{page}</div>;
 }
 
 function AaSheet({ onClose }: { onClose: () => void }) {
@@ -256,8 +312,10 @@ function GlossSheet({ poem, at, onClose }: { poem: Poem; at: { line: number; wor
 
 /** 2.7 (V1) End of poem: next poem, more by the poet, more of the feeling. V3 swaps in the doors (2.17). */
 /** A poem counts as read once the reader passes its last line (V2.3). */
-function useMarkReadAtEnd(poemId: string) {
+function useMarkReadAtEnd(poemId: string, onEnd?: () => void) {
   const ref = useRef<HTMLDivElement>(null);
+  const endRef = useRef(onEnd);
+  endRef.current = onEnd;
   const qc = useQueryClient();
   useEffect(() => {
     const el = ref.current;
@@ -266,6 +324,7 @@ function useMarkReadAtEnd(poemId: string) {
     const io = new IntersectionObserver((entries) => {
       if (done || !entries.some((e) => e.isIntersecting)) return;
       done = true;
+      endRef.current?.();
       api.library.markRead(poemId).then(() => qc.invalidateQueries({ queryKey: ['reads'] })).catch(() => {});
     });
     io.observe(el);
@@ -274,8 +333,29 @@ function useMarkReadAtEnd(poemId: string) {
   return ref;
 }
 
+/** A poem opened from a journey step (?journey=slug&step=n) completes that step at its end. */
+function useJourneyStep(atEnd: boolean) {
+  const params = new URLSearchParams(location.search);
+  const slug = params.get('journey');
+  const step = Number(params.get('step')) || 0;
+  const qc = useQueryClient();
+  const j = useQuery({ queryKey: ['collection', slug], queryFn: () => api.collections.get(slug!), enabled: !!slug }).data;
+  useEffect(() => {
+    if (!atEnd || !slug || !step || !j) return;
+    (async () => {
+      const mine = (await api.collections.progress()).find((p) => p.slug === slug);
+      if ((mine?.position ?? 0) >= step) return; // already past this step
+      await api.collections.setProgress({ slug, position: step, saved: true, completedAt: step >= j.poemIds.length ? Date.now() : undefined });
+      qc.invalidateQueries({ queryKey: ['progress'] });
+    })().catch(() => {});
+  }, [atEnd, slug, step, j, qc]);
+  return slug && step ? { slug, step, label: j?.stepEn ?? 'Step' } : null;
+}
+
 function EndOfPoem({ poem }: { poem: Poem }) {
-  const readRef = useMarkReadAtEnd(poem.id);
+  const [atEnd, setAtEnd] = useState(false);
+  const readRef = useMarkReadAtEnd(poem.id, () => setAtEnd(true));
+  const journey = useJourneyStep(atEnd);
   const guide = sourceOf('journey') === 'live' || new URLSearchParams(location.search).get('end') === 'doors';
   const poet = usePoet(poem.poetSlug).data;
   const [, nav] = useLocation();
@@ -292,6 +372,15 @@ function EndOfPoem({ poem }: { poem: Poem }) {
     }
   };
   const feeling = poem.feelingKeys[0];
+  if (journey) {
+    return (
+      <section className="end" aria-label="End of poem">
+        <div ref={readRef} data-testid="read-sentinel" />
+        <p className="end__mark">END · <span lang="ar" className="ar" style={{ fontSize: 14, letterSpacing: 0 }}>تمّت</span></p>
+        <Link href={`/journey/${journey.slug}/done/${journey.step}`} className="btn btn--primary btn--block end__journey">{journey.label} {journey.step} complete</Link>
+      </section>
+    );
+  }
   if (guide) return <><div ref={readRef} data-testid="read-sentinel" /><Doors poem={poem} /></>;
   return (
     <section className="end" aria-label="End of poem">

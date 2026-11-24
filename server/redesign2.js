@@ -413,9 +413,14 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     stepEn: r.step_label_en,
     stepAr: r.step_label_ar,
     colour: r.colour,
+    pattern: r.pattern_key ?? undefined,
     poemIds: (r.poem_ids ?? []).map(String),
+    themes: r.themes ?? [],
   });
-  const COLL_SELECT = `SELECT c.*, COALESCE((SELECT array_agg(cp.poem_id ORDER BY cp.position) FROM collection_poems cp WHERE cp.collection_id = c.id), '{}') AS poem_ids FROM collections c WHERE c.published`;
+  const COLL_SELECT = `SELECT c.*,
+    COALESCE((SELECT array_agg(cp.poem_id ORDER BY cp.position) FROM collection_poems cp WHERE cp.collection_id = c.id), '{}') AS poem_ids,
+    COALESCE((SELECT array_agg(cp.theme ORDER BY cp.position) FROM collection_poems cp WHERE cp.collection_id = c.id), '{}') AS themes
+    FROM collections c WHERE c.published`;
 
   app.get('/api/v2/collections', async (req, res) => {
     try {

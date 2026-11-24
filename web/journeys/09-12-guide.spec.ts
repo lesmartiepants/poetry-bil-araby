@@ -13,25 +13,28 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await page.getByRole('button', { name: 'Read my first poem' }).click();
     await expect(page.getByRole('heading', { name: 'أمرُّ على الديار' })).toBeVisible();
     await page.goto('./journey');
-    await expect(page.getByText(/HEAVEN 3 OF 7/)).toBeVisible();
+    await expect(page.getByText(/HEAVEN 3 OF YOUR FIRST SEVEN/)).toBeVisible();
   });
 
-  test('9.6–9.7 completing a journey step advances the path', async ({ page }) => {
+  test('9.6–9.7 reading a journey step to its end completes it and shows the next', async ({ page }) => {
     await fresh(page);
     await page.goto('./journey/your-first-seven');
-    await expect(page.getByText('2 of 7')).toBeVisible();
-    await page.getByRole('button', { name: /I’ve read heaven 3/ }).click();
-    await expect(page.getByText('HEAVEN 3 COMPLETE')).toBeVisible();
+    await expect(page.getByText('JOURNEY · 2 OF 7 READ')).toBeVisible();
+    await page.getByRole('link', { name: /HEAVEN 3/ }).last().click();
+    await page.getByTestId('read-sentinel').scrollIntoViewIfNeeded();
+    await page.getByRole('link', { name: 'Heaven 3 complete' }).click();
+    await expect(page.getByText(/Heaven three, grief\./)).toBeVisible();
+    await expect(page.getByText('THE NEXT HEAVEN')).toBeVisible();
     await page.goto('./journey/your-first-seven');
-    await expect(page.getByText('3 of 7')).toBeVisible();
+    await expect(page.getByText('JOURNEY · 3 OF 7 READ')).toBeVisible();
   });
 
   test('10.2 a collection can be saved and continued', async ({ page }) => {
     await fresh(page);
     await page.goto('./collection/women-who-wrote-the-canon');
-    await page.getByRole('button', { name: 'SAVE' }).click();
-    await expect(page.getByRole('button', { name: 'SAVED' })).toBeVisible();
-    await page.getByRole('link', { name: 'CONTINUE' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('button', { name: 'Saved' })).toBeVisible();
+    await page.getByRole('link', { name: /POEM 01/ }).click();
     await expect(page.getByRole('navigation', { name: 'Poem actions' })).toBeVisible();
   });
 

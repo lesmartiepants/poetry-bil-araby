@@ -55,8 +55,8 @@ test.describe('@live V1 against the real API', () => {
     await fresh(page);
     await page.goto('./poet/test-poet-five');
     await expect(page.getByRole('heading', { name: 'شاعرة الاختبار الخامسة' })).toBeVisible();
-    await expect(page.locator('.list-row').first()).toBeVisible();
-    await expect(page.getByText(/NAJD/)).toBeVisible();
+    await expect(page.locator('.poet-poem').first()).toBeVisible();
+    await expect(page.getByText(/NAJD ·/)).toBeVisible();
   });
 });
 
@@ -64,9 +64,9 @@ test.describe('@live V3 against the real API', () => {
   test('@live 9.4 Tonight is the same pick for everyone and names its journey step', async ({ page }) => {
     await fresh(page);
     await page.goto('./journey');
-    await expect(page.getByText('HEAVEN 1 OF 3 · FIXTURE JOURNEY')).toBeVisible();
+    await expect(page.getByText('CHOSEN FOR YOU · HEAVEN 1 OF FIXTURE JOURNEY')).toBeVisible();
     await expect(page.getByText('A fixture reason for tonight.')).toBeVisible();
-    await page.getByRole('link', { name: 'Read tonight’s poem' }).click();
+    await page.getByRole('link', { name: 'Enter the poem' }).click();
     await expect(page.getByText('A second line made for testing')).toBeVisible();
   });
 
@@ -76,14 +76,15 @@ test.describe('@live V3 against the real API', () => {
     await page.getByRole('radio', { name: 'PATHWAYS' }).click();
     await page.getByRole('link', { name: /Fixture journey/ }).click();
     await expect(page.getByRole('heading', { name: 'Fixture journey' })).toBeVisible();
-    await expect(page.getByText('0 of 3')).toBeVisible();
+    await expect(page.getByText('JOURNEY · 0 OF 3 READ')).toBeVisible();
   });
 
   test('@live 10.2 a collection lists its poems in order', async ({ page }) => {
     await fresh(page);
     await page.goto('./collection/fixture-collection');
-    await expect(page.getByText('POEM 1', { exact: true })).toBeVisible();
-    await expect(page.getByText('POEM 2', { exact: true })).toBeVisible();
+    await expect(page.getByText('01', { exact: true })).toBeVisible();
+    await expect(page.getByText('02', { exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: /POEM 01/ })).toBeVisible();
   });
 
   test('@live 5.3 the poet tab shows where to find the poet', async ({ page }) => {

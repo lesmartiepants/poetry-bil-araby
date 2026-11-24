@@ -13,6 +13,8 @@ export const DEFAULT_PREFS: Prefs = {
   difficulty: 'any',
   length: 'any',
   tapWord: true,
+  silentMode: true,
+  pauseLines: false,
 };
 
 /** Your settings = the defaults with your choices on top; unknown keys are dropped. */

@@ -36,7 +36,8 @@ export function TonightScreen() {
 function Pathways({ onTonight }: { onTonight: () => void }) {
   const journeys = useCollections('journey').data;
   const prog = useProgress().data;
-  const doors = useQueries({ queries: [{ queryKey: ['doors', 'home'], queryFn: () => api.ai.doors('87201') }] })[0].data;
+  const tonight = useTonight().data;
+  const doors = useQueries({ queries: [{ queryKey: ['doors', tonight?.poem.id], queryFn: () => api.ai.doors(tonight!.poem.id), enabled: !!tonight }] })[0].data;
   return (
     <div className="screen journey">
       <header className="journey__top"><Mark size={26} colour="var(--c-accent)" /><Segmented label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={[{ value: 'tonight', label: 'TONIGHT' }, { value: 'pathways', label: 'PATHWAYS' }]} /></header>
@@ -110,7 +111,8 @@ export function JourneyScreen({ slug }: { slug: string }) {
 }
 
 /** 9.1–9.3 First run. */
-export function WelcomeFlow({ onDone }: { onDone: () => void }) {
+export function WelcomeFlow({ onDone }: { onDone: (firstPoemSlug: string) => void }) {
+  const tonight = useTonight().data;
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
   const set = useSetPrefs();
@@ -139,7 +141,7 @@ export function WelcomeFlow({ onDone }: { onDone: () => void }) {
           </button>
         ))}
       </div>
-      <button className="btn btn--primary btn--block" onClick={() => { set.mutate({ under }); onDone(); }}>Read my first poem</button>
+      <button className="btn btn--primary btn--block" onClick={() => { set.mutate({ under }); onDone(tonight?.poem.slug ?? ''); }}>Read my first poem</button>
     </div>
   );
 }

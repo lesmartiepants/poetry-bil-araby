@@ -2,14 +2,185 @@
   "v": 3,
   "attachments": {},
   "boards": {
+    "FRKeepToast.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "6.3 · Keep goes to Favorites; the toast offers Change",
+      "w": 390,
+      "x": 940,
+      "y": 15712
+    },
+    "FRKeepSheet.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "6.4 · Change: keep in more lists",
+      "w": 390,
+      "x": 1410,
+      "y": 15712
+    },
+    "FRKeepNewList.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "6.5 · New list (from 6.4 only)",
+      "w": 390,
+      "x": 1880,
+      "y": 15712
+    },
+    "FRLibLists.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "8.1 · Library hub with your lists",
+      "w": 390,
+      "x": 0,
+      "y": 19360
+    },
+    "FRDevEdge.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "1.3 · Edge tab after an error: red, with the count",
+      "w": 390,
+      "x": 940,
+      "y": 2224
+    },
+    "FRWordGloss.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "2.6 · Tap a word · its meaning in this line",
+      "w": 390,
+      "x": 2350,
+      "y": 4048
+    },
+    "FRAaFont.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "2.4 · Aa · with Arabic font",
+      "w": 390,
+      "x": 1410,
+      "y": 4048
+    },
+    "FRCopyText.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "7.2 · Share · Copy text",
+      "w": 390,
+      "x": 470,
+      "y": 17536
+    },
+    "FRVoices.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "3.3 · Voice · every reciter, grouped, by Gemini name",
+      "w": 390,
+      "x": 940,
+      "y": 7696
+    },
+    "FRSeek.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "3.7 · Listening · tap a verse: play from here, or a word's meaning",
+      "w": 390,
+      "x": 2820,
+      "y": 7696
+    },
+    "FRLibSelect.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "8.10 · Library · Select, then Remove",
+      "w": 390,
+      "x": 4230,
+      "y": 19360
+    },
+    "FRLibRemoved.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "8.11 · Library · Removed, with Undo",
+      "w": 390,
+      "x": 4700,
+      "y": 19360
+    },
+    "FRYouGuide.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "12.5 · You · How the guide chooses, with difficulty",
+      "w": 390,
+      "x": 940,
+      "y": 31024
+    },
+    "FRYouAppearance.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "12.2 · You · Appearance: Arabic font, page, text size, vowel marks",
+      "w": 390,
+      "x": 470,
+      "y": 13468
+    },
+    "FRParchReading.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "2.8 · Parchment · Reading",
+      "w": 390,
+      "x": 3290,
+      "y": 4048
+    },
+    "FRParchLibrary.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "8.13 · Parchment · Library",
+      "w": 390,
+      "x": 5640,
+      "y": 19360
+    },
+    "FRParchAa.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "2.9 · Parchment · a sheet (Aa)",
+      "w": 390,
+      "x": 3760,
+      "y": 4048
+    },
+    "FRDevEvents.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "1.4 · Developer panel · events and errors",
+      "w": 390,
+      "x": 1410,
+      "y": 2224
+    },
+    "FRDevReport.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "1.5 · Developer panel · report a bug",
+      "w": 390,
+      "x": 1880,
+      "y": 2224
+    },
     "AppSplash.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "2.1 · Splash · the mark while the app opens",
+      "title": "1.1 · Splash · the mark while the app opens",
       "w": 390,
       "x": 0,
-      "y": 1564
+      "y": 2224
     },
     "AppWoven.dc.html": {
       "h": 844,
@@ -158,274 +329,239 @@
       "x": 0,
       "y": 0
     },
-    "NAa.dc.html": {
-      "h": 844,
-      "page": "bottom",
-      "radius": 44,
-      "title": "3.4 · Aa · reading settings sheet",
-      "w": 390,
-      "x": 1410,
-      "y": 3128
-    },
     "NCollection.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.12 · Collection · read in order, or any poem",
+      "title": "10.2 · Collection · read in order, or any poem",
       "w": 390,
-      "x": 5170,
-      "y": 7820
+      "x": 470,
+      "y": 27376
     },
     "NCollectionsAll.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.11 · Explore · All collections",
+      "title": "10.1 · Explore · All collections",
       "w": 390,
-      "x": 4700,
-      "y": 7820
-    },
-    "NCoverage.dc.html": {
-      "h": 844,
-      "page": "bottom",
-      "title": "1.1 · Coverage · every job, one place",
-      "w": 1080,
       "x": 0,
-      "y": 0
+      "y": 27376
     },
     "NDoors.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "2.6 · Journey tab · Pathways: doors and journeys",
+      "title": "9.5 · Journey tab · Pathways: doors and journeys",
       "w": 390,
       "x": 2350,
-      "y": 1564
+      "y": 25552
     },
     "NEnd.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "3.6 · End of poem · the guide's next doors",
+      "title": "2.17 · End of poem · the guide's next doors",
       "w": 390,
-      "x": 2350,
-      "y": 3128
+      "x": 0,
+      "y": 21904
     },
     "NExplore.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.1 · Explore · poets, feelings, eras, collections",
+      "title": "4.1 · Explore · poets, feelings, eras, collections",
       "w": 390,
       "x": 0,
-      "y": 7820
+      "y": 9520
     },
     "NExploreEra.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.10 · Explore · One era: Abbasid",
+      "title": "4.6 · Explore · One era: Abbasid",
       "w": 390,
-      "x": 4230,
-      "y": 7820
+      "x": 2350,
+      "y": 9520
     },
     "NFan.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "3.3 · Tap the mark · Listen, Insights, Keep, Share, Aa",
+      "title": "2.3 · Tap the mark · Listen, Insights, Keep, Share, Aa",
       "w": 390,
       "x": 940,
-      "y": 3128
+      "y": 4048
     },
     "NFinished.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "3.7 · You finished · three doors, or enough for tonight",
+      "title": "2.18 · You finished · three doors, or enough for tonight",
       "w": 390,
-      "x": 2820,
-      "y": 3128
+      "x": 470,
+      "y": 21904
     },
     "NHeavenDone.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "3.8 · Journey · A step complete (Heaven 3 of Your first seven)",
+      "title": "9.7 · Journey · A step complete (Heaven 3 of Your first seven)",
       "w": 390,
       "x": 3290,
-      "y": 3128
+      "y": 25552
     },
     "NImmersed.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "3.2 · Scrolling · dock folds into the mark",
+      "title": "2.2 · Scrolling · dock folds into the mark",
       "w": 390,
       "x": 470,
-      "y": 3128
+      "y": 4048
     },
     "NInsights.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "3.5 · Insights · a sheet over the poem, the player stays",
+      "title": "2.5 · Insights · a sheet over the poem, the player stays",
       "w": 390,
       "x": 1880,
-      "y": 3128
+      "y": 4048
     },
     "NJourney.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "2.7 · Journey · seven heavens, one at a time",
+      "title": "9.6 · Journey · seven heavens, one at a time",
       "w": 390,
       "x": 2820,
-      "y": 1564
+      "y": 25552
     },
     "NJourneyDone.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "3.9 · Journey · A journey complete",
+      "title": "9.8 · Journey · A journey complete",
       "w": 390,
       "x": 3760,
-      "y": 3128
+      "y": 25552
     },
     "NKept.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.1 · Keep · a moment: the mark stamps the poem, then fades back",
+      "title": "6.1 · Keep · a moment: the mark stamps the poem, then fades back",
       "w": 390,
       "x": 0,
-      "y": 6256
-    },
-    "NKeptBack.dc.html": {
-      "h": 844,
-      "page": "bottom",
-      "radius": 44,
-      "title": "5.3 · Back to reading · kept, with Undo",
-      "w": 390,
-      "x": 940,
-      "y": 6256
-    },
-    "NLibrary.dc.html": {
-      "h": 844,
-      "page": "bottom",
-      "radius": 44,
-      "title": "8.1 · Library · Hub: collections, poets, recent, resurfaced",
-      "w": 390,
-      "x": 0,
-      "y": 10948
+      "y": 15712
     },
     "NLibraryByEra.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "8.6 · Library · Your poems by era",
+      "title": "8.9 · Library · Your poems by era",
       "w": 390,
-      "x": 2350,
-      "y": 10948
+      "x": 3760,
+      "y": 19360
     },
     "NLibraryByFeeling.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "8.5 · Library · Your poems by feeling",
+      "title": "8.8 · Library · Your poems by feeling",
       "w": 390,
-      "x": 1880,
-      "y": 10948
+      "x": 3290,
+      "y": 19360
     },
     "NLibraryCollections.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "8.7 · Library · Saved collections, then browse more",
+      "title": "8.15 · Library · Saved collections, then browse more",
       "w": 390,
-      "x": 2820,
-      "y": 10948
+      "x": 0,
+      "y": 23728
     },
     "NLibraryEmpty.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "8.8 · Library · Empty, before you keep anything",
+      "title": "8.12 · Library · Empty, before you keep anything",
       "w": 390,
-      "x": 3290,
-      "y": 10948
+      "x": 5170,
+      "y": 19360
     },
     "NLibraryEra.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.9 · Explore · Shelves by era, oldest first",
+      "title": "4.5 · Explore · Shelves by era, oldest first",
       "w": 390,
-      "x": 3760,
-      "y": 7820
+      "x": 1880,
+      "y": 9520
     },
     "NLibraryFeeling.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.8 · Explore · One feeling: Longing",
+      "title": "4.4 · Explore · One feeling: Longing",
       "w": 390,
-      "x": 3290,
-      "y": 7820
+      "x": 1410,
+      "y": 9520
     },
     "NLibraryPoems.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "8.3 · Library · Your poems by poet (Arabic order)",
+      "title": "8.6 · Library · Your poems by poet (Arabic order)",
       "w": 390,
-      "x": 940,
-      "y": 10948
+      "x": 2350,
+      "y": 19360
     },
     "NLibraryPoemsEn.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "8.4 · Library · Poems in English order (one tap on the sort label)",
+      "title": "8.7 · Library · Poems in English order (one tap on the sort label)",
       "w": 390,
-      "x": 1410,
-      "y": 10948
+      "x": 2820,
+      "y": 19360
     },
     "NLibraryPoets.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "8.2 · Library · Poets you follow",
+      "title": "8.5 · Library · Poets you follow",
       "w": 390,
-      "x": 470,
-      "y": 10948
+      "x": 1880,
+      "y": 19360
     },
     "NLibraryResults.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "7.2 · Search · results across everything",
+      "title": "11.2 · Search · results across everything",
       "w": 390,
       "x": 470,
-      "y": 9384
+      "y": 29200
     },
     "NLibrarySearch.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "7.1 · Search · tapped: the icon opens into a bar (Library or Explore)",
+      "title": "11.1 · Search · tapped: the icon opens into a bar (Library or Explore)",
       "w": 390,
       "x": 0,
-      "y": 9384
+      "y": 29200
     },
     "NLibraryShelves.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.7 · Explore · Shelves by feeling (or era)",
+      "title": "4.3 · Explore · Shelves by feeling (or era)",
       "w": 390,
-      "x": 2820,
-      "y": 7820
+      "x": 940,
+      "y": 9520
     },
     "NListen.dc.html": {
       "h": 844,
@@ -440,208 +576,181 @@
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "4.5 · Pill to fan · animated",
+      "title": "3.5 · Pill to fan · animated",
       "w": 390,
       "x": 1880,
-      "y": 4692
+      "y": 7696
     },
     "NListenError.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "4.7 · Listening · The recitation won't load",
+      "title": "3.8 · Listening · The recitation won't load",
       "w": 390,
-      "x": 2820,
-      "y": 4692
+      "x": 3290,
+      "y": 7696
     },
     "NListenFan.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "4.6 · The fan while listening · Listen shows pause",
+      "title": "3.6 · The fan while listening · Listen shows pause",
       "w": 390,
       "x": 2350,
-      "y": 4692
+      "y": 7696
     },
     "NListenPill.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "4.4 · Scrolling while listening · the player becomes a pill",
+      "title": "3.4 · Scrolling while listening · the player becomes a pill",
       "w": 390,
       "x": 1410,
-      "y": 4692
-    },
-    "NListenVoice.dc.html": {
-      "h": 844,
-      "page": "bottom",
-      "radius": 44,
-      "title": "4.3 · Voice · choose who recites",
-      "w": 390,
-      "x": 940,
-      "y": 4692
+      "y": 7696
     },
     "NPoet.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.3 · Poet · Poems, every one by its first line",
+      "title": "5.1 · Poet · Poems, every one by its first line",
       "w": 390,
-      "x": 940,
-      "y": 7820
+      "x": 0,
+      "y": 11344
     },
     "NPoetAbout.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.5 · Poet · The poet, and where to find her",
+      "title": "5.3 · Poet · The poet, and where to find her",
       "w": 390,
-      "x": 1880,
-      "y": 7820
+      "x": 940,
+      "y": 11344
     },
     "NPoetAboutScrolled.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.6 · Poet · The poet, scrolled",
+      "title": "5.4 · Poet · The poet, scrolled",
       "w": 390,
-      "x": 2350,
-      "y": 7820
+      "x": 1410,
+      "y": 11344
     },
     "NPoetScrolled.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.4 · Poet · Scrolled, the hero folds into a band",
+      "title": "5.2 · Poet · Scrolled, the hero folds into a band",
       "w": 390,
-      "x": 1410,
-      "y": 7820
+      "x": 470,
+      "y": 11344
     },
     "NPoetsAll.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "6.2 · Explore · All poets, A–Z or by era",
+      "title": "4.2 · Explore · All poets, A–Z or by era",
       "w": 390,
       "x": 470,
-      "y": 7820
+      "y": 9520
     },
     "NReading.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "3.1 · Reading · action dock",
+      "title": "2.1 · Reading · action dock",
       "w": 390,
       "x": 0,
-      "y": 3128
+      "y": 4048
     },
     "NSearchEmpty.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "7.3 · Search · No results",
+      "title": "11.3 · Search · No results",
       "w": 390,
       "x": 940,
-      "y": 9384
+      "y": 29200
     },
     "NSignin.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.2 · Save while signed out · sign in or Not now",
+      "title": "6.2 · Save while signed out · sign in or Not now",
       "w": 390,
       "x": 470,
-      "y": 6256
+      "y": 15712
     },
     "NTonight.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "2.5 · Journey tab · Tonight's poem",
+      "title": "9.4 · Journey tab · Tonight's poem, when it's a journey step",
       "w": 390,
-      "x": 1880,
-      "y": 1564
+      "x": 1410,
+      "y": 25552
     },
     "NWelcome.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "2.2 · First run · Welcome, and your name",
+      "title": "9.1 · First run · Welcome, and your name",
       "w": 390,
-      "x": 470,
-      "y": 1564
+      "x": 0,
+      "y": 25552
     },
     "NWelcomeFirst.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "2.4 · First run · Your first poem",
+      "title": "9.3 · First run · Your first poem",
       "w": 390,
-      "x": 1410,
-      "y": 1564
+      "x": 940,
+      "y": 25552
     },
     "NWelcomeRead.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "2.3 · First run · How you'd like to read",
+      "title": "9.2 · First run · How you'd like to read",
       "w": 390,
-      "x": 940,
-      "y": 1564
+      "x": 470,
+      "y": 25552
     },
     "NYou.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "9.1 · You",
+      "title": "12.3 · You · every setting",
       "w": 390,
       "x": 0,
-      "y": 12512
-    },
-    "NYouAppearance.dc.html": {
-      "h": 844,
-      "page": "bottom",
-      "radius": 44,
-      "title": "9.5 · You · Appearance",
-      "w": 390,
-      "x": 1880,
-      "y": 12512
-    },
-    "NYouGuide.dc.html": {
-      "h": 844,
-      "page": "bottom",
-      "radius": 44,
-      "title": "9.3 · You · How the guide chooses",
-      "w": 390,
-      "x": 940,
-      "y": 12512
+      "y": 31024
     },
     "NYouMoves.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "9.2 · You · What moves you",
+      "title": "12.4 · You · What moves you",
       "w": 390,
       "x": 470,
-      "y": 12512
+      "y": 31024
     },
     "NYouReciter.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "9.4 · You · Reciter and listening",
+      "title": "12.6 · You · Reciter, grouped, by Gemini name",
       "w": 390,
       "x": 1410,
-      "y": 12512
+      "y": 31024
     },
     "NYouTranslation.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "9.6 · You · Translation and sounds",
+      "title": "12.7 · You · Translation and sounds",
       "w": 390,
-      "x": 2350,
-      "y": 12512
+      "x": 1880,
+      "y": 31024
     },
     "PatAblaqArch.dc.html": {
       "h": 560,
@@ -997,10 +1106,10 @@
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "4.2 · Listen tapped · read along, animated",
+      "title": "3.2 · Listen tapped · read along, animated",
       "w": 390,
       "x": 470,
-      "y": 4692
+      "y": 7696
     },
     "RaBlur.dc.html": {
       "h": 844,
@@ -1033,10 +1142,10 @@
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "4.1 · Listening · read along: the word being recited glows",
+      "title": "3.1 · Listening · read along: the word being recited glows",
       "w": 390,
       "x": 0,
-      "y": 4692
+      "y": 7696
     },
     "RaOff.dc.html": {
       "h": 844,
@@ -1235,98 +1344,98 @@
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.4 · Share · short poem, whole poem on one card",
+      "title": "7.1 · Share · short poem, whole poem on one card",
       "w": 390,
-      "x": 1410,
-      "y": 6256
+      "x": 0,
+      "y": 17536
     },
     "ShR4FB2.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.7 · Share · 8 lines chosen, two cards (4 + 4)",
+      "title": "7.5 · Share · 8 lines chosen, two cards (4 + 4)",
       "w": 390,
-      "x": 2820,
-      "y": 6256
+      "x": 1880,
+      "y": 17536
     },
     "ShR4FB3.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.8 · Share · 10 lines chosen, two cards (6 + 4)",
+      "title": "7.6 · Share · 10 lines chosen, two cards (6 + 4)",
       "w": 390,
-      "x": 3290,
-      "y": 6256
+      "x": 2350,
+      "y": 17536
     },
     "ShR4FC.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.9 · Share · dedication, typing",
+      "title": "7.7 · Share · dedication, typing",
       "w": 390,
-      "x": 3760,
-      "y": 6256
+      "x": 2820,
+      "y": 17536
     },
     "ShR4FD.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.10 · Share · dedication on the card",
+      "title": "7.8 · Share · dedication on the card",
       "w": 390,
-      "x": 4230,
-      "y": 6256
+      "x": 3290,
+      "y": 17536
     },
     "ShR4FE.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.11 · Share · long poem, card 1 of 28",
+      "title": "7.9 · Share · long poem, card 1 of 28",
       "w": 390,
-      "x": 4700,
-      "y": 6256
+      "x": 3760,
+      "y": 17536
     },
     "ShR4FF.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.12 · Share · long poem, card 2 of 28",
+      "title": "7.10 · Share · long poem, card 2 of 28",
       "w": 390,
-      "x": 5170,
-      "y": 6256
+      "x": 4230,
+      "y": 17536
     },
     "ShR4FX1.dc.html": {
       "h": 540,
       "page": "bottom",
-      "title": "5.13 · Saved image · short, with dedication",
+      "title": "7.11 · Saved image · short, with dedication",
       "w": 432,
-      "x": 5640,
-      "y": 6256
+      "x": 4700,
+      "y": 17536
     },
     "ShR4FX2.dc.html": {
       "h": 540,
       "page": "bottom",
-      "title": "5.16 · Saved image · long poem, card 2 of 28",
+      "title": "7.14 · Saved image · long poem, card 2 of 28",
       "w": 432,
-      "x": 7176,
-      "y": 6256
+      "x": 6236,
+      "y": 17536
     },
     "ShR4LsAr.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.5 · Share · choose lines, shown in Arabic",
+      "title": "7.3 · Share · choose lines, shown in Arabic",
       "w": 390,
-      "x": 1880,
-      "y": 6256
+      "x": 940,
+      "y": 17536
     },
     "ShR4LsEn.dc.html": {
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "5.6 · Share · choose lines, shown in English",
+      "title": "7.4 · Share · choose lines, shown in English",
       "w": 390,
-      "x": 2350,
-      "y": 6256
+      "x": 1410,
+      "y": 17536
     },
     "ShR4Split10_1.dc.html": {
       "h": 540,
@@ -1363,18 +1472,18 @@
     "ShR4Split8_1.dc.html": {
       "h": 540,
       "page": "bottom",
-      "title": "5.14 · Saved image · 8 lines, card 1 of 2",
+      "title": "7.12 · Saved image · 8 lines, card 1 of 2",
       "w": 432,
-      "x": 6152,
-      "y": 6256
+      "x": 5212,
+      "y": 17536
     },
     "ShR4Split8_2.dc.html": {
       "h": 540,
       "page": "bottom",
-      "title": "5.15 · Saved image · 8 lines, card 2 of 2",
+      "title": "7.13 · Saved image · 8 lines, card 2 of 2",
       "w": 432,
-      "x": 6664,
-      "y": 6256
+      "x": 5724,
+      "y": 17536
     },
     "ShTo.dc.html": {
       "h": 844,
@@ -1427,111 +1536,111 @@
     },
     "ErrPoem.dc.html": {
       "x": 0,
-      "y": 14076,
+      "y": 5872,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.1 · Error · A poem didn’t open"
+      "title": "2.10 · Error · A poem didn’t open"
     },
     "ErrInsights.dc.html": {
       "x": 1880,
-      "y": 14076,
+      "y": 5872,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.5 · Error · Insights didn’t load"
+      "title": "2.14 · Error · Insights didn’t load"
     },
     "ErrSave.dc.html": {
-      "x": 4700,
-      "y": 14076,
+      "x": 6748,
+      "y": 17536,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.11 · Error · Save image failed, no Photos access"
+      "title": "7.15 · Error · Save image failed, no Photos access"
     },
     "ErrSignin.dc.html": {
-      "x": 4230,
-      "y": 14076,
+      "x": 3290,
+      "y": 15712,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.10 · Error · Sign-in didn’t finish"
+      "title": "6.8 · Error · Sign-in didn’t finish"
     },
     "ErrAudioStop.dc.html": {
-      "x": 2350,
-      "y": 14076,
+      "x": 3760,
+      "y": 7696,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.6 · Error · Recitation stopped mid read-along"
+      "title": "3.9 · Error · Recitation stopped mid read-along"
     },
     "ErrAudioLines.dc.html": {
-      "x": 2820,
-      "y": 14076,
+      "x": 4230,
+      "y": 7696,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.7 · Fallback · Audio plays, no word timing"
+      "title": "3.10 · Fallback · Audio plays, no word timing"
     },
     "ErrLink.dc.html": {
       "x": 470,
-      "y": 14076,
+      "y": 5872,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.2 · Error · A shared link leads nowhere"
+      "title": "2.11 · Error · A shared link leads nowhere"
     },
     "ErrNext.dc.html": {
       "x": 1410,
-      "y": 14076,
+      "y": 5872,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.4 · Error · The next poem didn’t arrive"
+      "title": "2.13 · Error · The next poem didn’t arrive"
     },
     "ErrVoice.dc.html": {
-      "x": 3290,
-      "y": 14076,
+      "x": 4700,
+      "y": 7696,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.8 · Error · A voice isn’t available"
+      "title": "3.11 · Error · A voice isn’t available"
     },
     "ErrKeep.dc.html": {
-      "x": 3760,
-      "y": 14076,
+      "x": 2820,
+      "y": 15712,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.9 · Error · Keep didn’t save"
+      "title": "6.7 · Error · Keep didn’t save"
     },
     "ErrSync.dc.html": {
-      "x": 5170,
-      "y": 14076,
+      "x": 6110,
+      "y": 19360,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.12 · Error · Library didn’t sync"
+      "title": "8.14 · Error · Library didn’t sync"
     },
     "ErrTranslation.dc.html": {
       "x": 940,
-      "y": 14076,
+      "y": 5872,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "10.3 · Error · The translation didn’t come through"
+      "title": "2.12 · Error · The translation didn’t come through"
     },
     "ErrCompactD.dc.html": {
       "x": 1870,
@@ -1605,40 +1714,40 @@
       "title": "C23 · Loading lines"
     },
     "LoadPoem.dc.html": {
-      "x": 0,
-      "y": 15640,
+      "x": 2350,
+      "y": 5872,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "11.1 · Loading · A poem opening"
+      "title": "2.15 · Loading · A poem opening"
     },
     "LoadInsights.dc.html": {
-      "x": 470,
-      "y": 15640,
+      "x": 2820,
+      "y": 5872,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "11.2 · Loading · Insights on their way"
+      "title": "2.16 · Loading · Insights on their way"
     },
     "LoadCollection.dc.html": {
       "x": 940,
-      "y": 15640,
+      "y": 27376,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "11.3 · Loading · A collection opening"
+      "title": "10.3 · Loading · A collection opening"
     },
     "LoadJourney.dc.html": {
-      "x": 1410,
-      "y": 15640,
+      "x": 4230,
+      "y": 25552,
       "w": 390,
       "h": 844,
       "page": "bottom",
       "radius": 44,
-      "title": "11.4 · Loading · A journey opening"
+      "title": "9.9 · Loading · A journey opening"
     },
     "ErrInlSpec.dc.html": {
       "x": 3200,
@@ -1663,6 +1772,114 @@
       "h": 300,
       "page": "archive",
       "title": "C20d · How it wraps"
+    },
+    "FRDevEdgeQuiet.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "1.2 · Edge tab, quiet: no new errors",
+      "w": 390,
+      "x": 470,
+      "y": 2224
+    },
+    "FRDevToggle.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "1.6 · Long-press the tab bar: hide or show the tab",
+      "w": 390,
+      "x": 2350,
+      "y": 2224
+    },
+    "FRDevToggleRead.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "1.7 · Reading: long-press the dock or the mark to show or hide the tab",
+      "w": 390,
+      "x": 2820,
+      "y": 2224
+    },
+    "FRListsAll.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "8.2 · Your lists (SEE ALL)",
+      "w": 390,
+      "x": 470,
+      "y": 19360
+    },
+    "FRListOptions.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "8.3 · A list's options: rename, colour, delete",
+      "w": 390,
+      "x": 940,
+      "y": 19360
+    },
+    "FRListDelete.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "8.4 · Delete a list: confirm",
+      "w": 390,
+      "x": 1410,
+      "y": 19360
+    },
+    "FRListLetter.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "6.6 · Choose a letter: the whole alphabet",
+      "w": 390,
+      "x": 2350,
+      "y": 15712
+    },
+    "FRV1End.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "2.7 · End of poem, first build: next poem, more by the poet, more of the feeling",
+      "w": 390,
+      "x": 2820,
+      "y": 4048
+    },
+    "NTonightFeatured.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "9.10 · Journey tab · Tonight's poem, when it isn't a journey step",
+      "w": 390,
+      "x": 1880,
+      "y": 25552
+    },
+    "FRYouV1.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "12.1 · You, first build: Appearance and account",
+      "w": 390,
+      "x": 0,
+      "y": 13468
+    },
+    "FRExploreDiff.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "4.7 · Explore · By difficulty: Gentle",
+      "w": 390,
+      "x": 2820,
+      "y": 9520
+    },
+    "FRDeleteAccount.dc.html": {
+      "h": 844,
+      "page": "bottom",
+      "radius": 44,
+      "title": "12.8 · You · Delete account: confirm",
+      "w": 390,
+      "x": 600,
+      "y": 33308
     }
   },
   "createdOnFiles": {
@@ -1686,13 +1903,10 @@
     "fl_NInsights",
     "fl_NKept",
     "fl_NSignin",
-    "fl_NKeptBack",
     "fl_NEnd",
     "fl_NTonight",
     "fl_NExplore",
-    "fl_NLibrary",
     "fl_NYou",
-    "fl_NAa",
     "fl_NDoors",
     "fl_NJourney",
     "fl_NCollection",
@@ -1712,9 +1926,7 @@
     "fl_NLibraryCollections",
     "fl_NLibraryEra",
     "fl_NYouMoves",
-    "fl_NYouGuide",
     "fl_NYouReciter",
-    "fl_NYouAppearance",
     "fl_NYouTranslation",
     "fl_NLibraryPoemsEn",
     "fl_NLibraryFeeling",
@@ -1723,22 +1935,12 @@
     "fl_LoB1",
     "fl_LoB3",
     "arcListenB",
-    "fl_NListenVoice",
     "fl_NListenPill",
     "fl_NListenAnim",
     "fl_NListenFan",
     "fl_NFinished",
     "fl_NLibraryByFeeling",
     "fl_NLibraryByEra",
-    "flow1",
-    "flow2",
-    "flow3",
-    "flow4",
-    "flow5",
-    "flow6",
-    "flow7",
-    "flow8",
-    "flow9",
     "fl_NExploreEra",
     "fl_NPoet",
     "fl_NPoetScrolled",
@@ -1825,12 +2027,144 @@
     "fl_LoadCollection",
     "fl_LoadJourney",
     "arcErrInl",
-    "flow10",
-    "flow11",
     "fl_flow10a",
-    "brErr"
+    "brErr",
+    "numbering"
   ],
   "notes": {
+    "frN14": {
+      "page": "bottom",
+      "w": 390,
+      "x": 940,
+      "y": 16596,
+      "text": "From: 6.1 or 6.2.\nKeep stays one tap: the poem goes to Favorites and the toast reads \"Kept in Favorites\" with UNDO and CHANGE. CHANGE → 6.4, the only way into lists; the heart has no long-press. UNDO removes it · keep reading (2.1)."
+    },
+    "frN15": {
+      "page": "bottom",
+      "w": 390,
+      "x": 1410,
+      "y": 16596,
+      "text": "From CHANGE on the toast (6.3) only. A poem can sit in several lists; Favorites is ticked already. New list → 6.5. Done or swipe down → back to the poem."
+    },
+    "frN17": {
+      "page": "bottom",
+      "w": 390,
+      "x": 1880,
+      "y": 16596,
+      "text": "From New list in 6.4 only; lists are never created from the Library. A name, then its ICON: set from the name as you type (Layla poems → ل, AUTO), with the other words' letters beside it and CHOOSE for the whole alphabet (6.6). Then a colour. Create adds this poem straight away."
+    },
+    "frN18": {
+      "page": "bottom",
+      "w": 390,
+      "x": 0,
+      "y": 20244,
+      "text": "From: Library tab.\nYOUR LISTS first: Favorites, then your lists by most recent keep; a list opens like a collection without the progress bar; SEE ALL → 8.2; no New list here. A poet you follow → their page (5.1) · SEE ALL poets → 8.5 · a recent keep → 2.1 · POEMS tab → 8.6 · search icon → 11.1. The Collections row appears once collections ship (V3): a collection → 10.2, SEE ALL → 8.15. Resurfaced is deferred (Later). New users with nothing kept see 8.12 instead."
+    },
+    "frN21": {
+      "page": "bottom",
+      "w": 390,
+      "x": 940,
+      "y": 3108,
+      "text": "After any front-end or back-end error the tab turns red, widens slightly and shows the count of errors since you last opened the panel. Opening 1.4 clears it back to 1.2."
+    },
+    "frN0": {
+      "page": "bottom",
+      "w": 390,
+      "x": 2350,
+      "y": 4932,
+      "text": "From: tapping any Arabic word on the reading screen (2.1).\nThe word lifts in gold; the sheet gives the word, its sounds, its root, its sense in this line, and other senses. Listen plays the word alone. Glosses are written by the guide (Gemini) once per word in its line and cached.\nSwipe down or × closes, back to 2.1 in place."
+    },
+    "frN1": {
+      "page": "bottom",
+      "w": 390,
+      "x": 1410,
+      "y": 4932,
+      "text": "From: Aa in the mark's fan (2.3 or 3.6).\nShow under the Arabic: English, Sounds or Nothing (matches 12.7). ARABIC FONT: Amiri (default), Naskh, Scheherazade, each shown in its own face. Changes apply live behind the sheet · swipe down or × closes. The same rows are in You · Appearance (12.2)."
+    },
+    "frN2": {
+      "page": "bottom",
+      "w": 390,
+      "x": 470,
+      "y": 18420,
+      "text": "7.1 with Copy text added to the dock, beside Copy link. Copies the chosen lines (or the whole poem), Arabic then English if En is on, with title, poet and the short link. The toast confirms what was copied."
+    },
+    "frN3": {
+      "page": "bottom",
+      "w": 390,
+      "x": 940,
+      "y": 8580,
+      "text": "From: the voice name on the player (3.1).\nEvery reciter in today's catalogue under its Gemini name, grouped Female and Male (8 + 8; the voices archived for poor read-along timing stay out). The current one is marked Playing. Tapping another switches at once and restarts the current line, so the choice is its own preview; the last voice picked becomes the default. Scroll for the rest. Curated down to named reciters later."
+    },
+    "frN4": {
+      "page": "bottom",
+      "w": 390,
+      "x": 2820,
+      "y": 8580,
+      "text": "While listening, tapping a verse frames it and offers two chips: PLAY FROM HERE jumps the recitation to that verse (the player shows LINE 3 OF 4), and MEANING opens 2.6 for the word tapped. Not listening: a tap goes straight to 2.6."
+    },
+    "frN5": {
+      "page": "bottom",
+      "w": 390,
+      "x": 4230,
+      "y": 20244,
+      "text": "From: SELECT on the POEMS tab (8.6).\nRows gain checkboxes; the tab bar gives way to REMOVE and DONE. Swiping a row left also offers Remove, outside select mode."
+    },
+    "frN6": {
+      "page": "bottom",
+      "w": 390,
+      "x": 4700,
+      "y": 20244,
+      "text": "After REMOVE: the rows go, counts update, and a toast offers UNDO for 6 s. Same toast style as Kept (6.3)."
+    },
+    "frN7": {
+      "page": "bottom",
+      "w": 390,
+      "x": 940,
+      "y": 31908,
+      "text": "From: 12.3.\nClassical↔modern balance, DIFFICULTY (Any, Gentle, Measured, Demanding: the same bands as Explore 4.7; the line under it explains them), and poem length. No surprise setting, and no nightly reminder."
+    },
+    "frN8": {
+      "page": "bottom",
+      "w": 390,
+      "x": 470,
+      "y": 14352,
+      "text": "From: 12.1 (first build) and 12.3.\nSame controls as the Aa sheet (2.4): ARABIC FONT, PAGE (Night, Parchment, Indigo), text size and vowel marks, with a live preview that follows the font; changes sync both ways. Moved to V1 so Parchment and the font have a home outside the reader."
+    },
+    "frN9": {
+      "page": "bottom",
+      "w": 390,
+      "x": 3290,
+      "y": 4932,
+      "text": "Parchment tokens: page #EFE6D2, ink #2A2216, accent #6E4F14 (5.6:1 on the page), secondary #5E5444, hairline #D8CCB2, dock #E6DBC3. Every screen inherits these; these three are the spot checks."
+    },
+    "frN10": {
+      "page": "bottom",
+      "w": 390,
+      "x": 5640,
+      "y": 20244,
+      "text": "A dense list on parchment: avatars keep their own colours, the selected tab and chip turn ink-brown with page-coloured text."
+    },
+    "frN11": {
+      "page": "bottom",
+      "w": 390,
+      "x": 3760,
+      "y": 4932,
+      "text": "A sheet on parchment: a lighter sheet over a soft ink scrim, so the poem behind stays legible."
+    },
+    "frN12": {
+      "page": "bottom",
+      "w": 390,
+      "x": 1410,
+      "y": 3108,
+      "text": "Dev builds only (FEATURES.debug), from the edge tab (1.2, 1.3). One timeline of front-end events and back-end requests, errors in red. Filter by source; Copy log copies the visible list. Back-end entries come from GET /api/dev/events."
+    },
+    "frN13": {
+      "page": "bottom",
+      "w": 390,
+      "x": 1880,
+      "y": 3108,
+      "text": "From: REPORT A BUG on 1.4. Sends to the existing /api/bug-reports, which opens a GitHub issue with the last 200 events and the current poem attached."
+    },
     "a1": {
       "kind": "title1",
       "maxW": 2600,
@@ -1897,10 +2231,10 @@
     "fl_AppSplash": {
       "fill": "gray",
       "page": "bottom",
-      "text": "Every launch. The Seven heavens mark and wordmark while the app loads. First open goes on to Welcome (2.2); after that, straight to Tonight's poem (2.5).",
+      "text": "Every launch. The Seven heavens mark and wordmark while the app loads. First open goes on to Welcome (9.1); after that, straight to Tonight's poem (9.4).",
       "w": 390,
       "x": 0,
-      "y": 2448
+      "y": 3108
     },
     "fl_LoB1": {
       "fill": "gray",
@@ -1918,109 +2252,101 @@
       "x": 470,
       "y": 9028
     },
-    "fl_NAa": {
-      "fill": "gray",
-      "page": "bottom",
-      "text": "From: Aa in the mark's fan (3.3 or 4.6).\nShow under the Arabic: English, Sounds or Nothing (matches 9.6). Changes apply live behind the sheet · swipe down or × closes.",
-      "w": 390,
-      "x": 1410,
-      "y": 4012
-    },
     "fl_NCollection": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: a collection in Explore (6.1) or Library (8.7).\nCover, intro, numbered list; any row → that poem. The shared progress bar sits above the tabs: segments, '1 of 12', and Continue → the next unread poem (3.1). Same bar as journeys (2.7).",
+      "text": "From: a collection in Explore (4.1) or Library (8.15).\nCover, intro, numbered list; any row → that poem. The shared progress bar sits above the tabs: segments, '1 of 12', and Continue → the next unread poem (2.1). Same bar as journeys (9.6).",
       "w": 390,
-      "x": 5170,
-      "y": 8704
+      "x": 470,
+      "y": 28260
     },
     "fl_NCollectionsAll": {
       "fill": "gray",
       "page": "bottom",
-      "text": "BROWSE COLLECTIONS in Library and SEE ALL in Explore land here. Two-up cards in each collection's pattern; a gold bookmark marks ones you've saved. Tap for the collection (6.12).",
+      "text": "BROWSE COLLECTIONS in Library and SEE ALL in Explore land here. Two-up cards in each collection's pattern; a gold bookmark marks ones you've saved. Tap for the collection (10.2).",
       "w": 390,
-      "x": 4700,
-      "y": 8704
+      "x": 0,
+      "y": 28260
     },
     "fl_NDoors": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: Pathways in the Journey tab's top switch.\nNext: a door opens that poem directly (3.1), no detail screen in between · a journey → its seven heavens (2.7). The base journey is suggested, never required.\nJourneys vary in length and each names its steps: Woman 1–7, Home 1–5, Voice 1–6.",
+      "text": "From: Pathways in the Journey tab's top switch.\nNext: a door opens that poem directly (2.1), no detail screen in between · a journey → its seven heavens (9.6). The base journey is suggested, never required.\nJourneys vary in length and each names its steps: Woman 1–7, Home 1–5, Voice 1–6.",
       "w": 390,
       "x": 2350,
-      "y": 2448
+      "y": 26436
     },
     "fl_NEnd": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: reading past the last line.\nNext: a door → that poem (3.1) · swipe up → 3.7 (You finished) · Journey tab.",
+      "text": "From: reading past the last line.\nNext: a door → that poem (2.1) · swipe up → 2.18 (You finished) · Journey tab.",
       "w": 390,
-      "x": 2350,
-      "y": 4012
+      "x": 0,
+      "y": 22788
     },
     "fl_NExplore": {
       "fill": "gray",
       "page": "bottom",
-      "text": "Next: a feeling chip → 6.8 · SEE ALL feelings → 6.7 · an era card → 6.10 · SEE ALL eras → 6.9 · SEE ALL poets → 6.2 · a poet → their page and poems · a feeling or an era → a short, ordered list → 3.1 · search icon (top right) → 7.1, same search as Library.\nPoet avatar: Ruq'ah initial centred by ink weight on a parchment disc; thick rim and letter in the era colour (pomegranate desert, indigo Abbasid, verdigris Andalusia, cobalt modern). Same in 8.3.\nEra cards carry the name in both languages, dates and place, and one line on what the era sounds like.",
+      "text": "Next: a feeling chip → 4.4 · SEE ALL feelings → 4.3 · an era card → 4.6 · SEE ALL eras → 4.5 · a difficulty chip → 4.7 · SEE ALL poets → 4.2 · a poet → their page and poems · a feeling or an era → a short, ordered list → 2.1 · search icon (top right) → 11.1, same search as Library.\nPoet avatar: Ruq'ah initial centred by ink weight on a parchment disc; thick rim and letter in the era colour (pomegranate desert, indigo Abbasid, verdigris Andalusia, cobalt modern). Same in 8.6.\nEra cards carry the name in both languages, dates and place, and one line on what the era sounds like.",
       "w": 390,
       "x": 0,
-      "y": 8704
+      "y": 10404
     },
     "fl_NExploreEra": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: an era's title or count on 6.9, or a world tile on Explore (6.1).\nTwin of One feeling (6.8): title in both languages, a line from the guide, era chips to hop between eras, rows with poet avatars, oldest first. Next: a poem → 3.1 · back → where you came from.",
+      "text": "From: an era's title or count on 4.5, or a world tile on Explore (4.1).\nTwin of One feeling (4.4): title in both languages, a line from the guide, era chips to hop between eras, rows with poet avatars, oldest first. Next: a poem → 2.1 · back → where you came from.",
       "w": 390,
-      "x": 4230,
-      "y": 8704
+      "x": 2350,
+      "y": 10404
     },
     "fl_NFan": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: tap the mark (3.2).\nThe five actions: Listen, Insights, Keep, Share, Aa (text and page settings → 3.4). Aa lives here now, not in the header corner.\nNext: an action · tap the mark again or outside → 3.2.",
+      "text": "From: tap the mark (2.2).\nThe five actions: Listen, Insights, Keep, Share, Aa (text and page settings → 2.4). Aa lives here now, not in the header corner.\nNext: an action · tap the mark again or outside → 2.2.",
       "w": 390,
       "x": 940,
-      "y": 4012
+      "y": 4932
     },
     "fl_NFinished": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: swiping up past the end of a poem (3.6), when the poem isn't part of a journey. A journey poem gets 3.8 instead.\nNext: ← back to the poem (3.6, at its last lines) · a door → that poem (3.1) · Enough for tonight → Journey tab (2.5), which says tomorrow brings a new poem · tabs to leave. The poem is behind you now, so the bottom nav returns.",
+      "text": "From: swiping up past the end of a poem (2.17), when the poem isn't part of a journey. A journey poem gets 9.7 instead.\nNext: ← back to the poem (2.17, at its last lines) · a door → that poem (2.1) · Enough for tonight → Journey tab (9.4), which says tomorrow brings a new poem · tabs to leave. The poem is behind you now, so the bottom nav returns.",
       "w": 390,
-      "x": 2820,
-      "y": 4012
+      "x": 470,
+      "y": 22788
     },
     "fl_NHeavenDone": {
       "fill": "gray",
       "page": "bottom",
-      "text": "Shown instead of 3.7 when the poem you finished is a step in a journey. Each journey has its own short name for its steps: Your first seven uses Heaven (Heaven 1–7), Homeland uses Home (Home 1–5). Journeys can be any length.\nOne mark per step, yours lit; a line on what you read; one door to the next step with its opening line. Read opens it; Enough for tonight closes.",
+      "text": "Shown instead of 2.18 when the poem you finished is a step in a journey. Each journey has its own short name for its steps: Your first seven uses Heaven (Heaven 1–7), Homeland uses Home (Home 1–5). Journeys can be any length.\nOne mark per step, yours lit; a line on what you read; one door to the next step with its opening line. Read opens it; Enough for tonight closes.",
       "w": 390,
       "x": 3290,
-      "y": 4012
+      "y": 26436
     },
     "fl_NImmersed": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: scrolling down in 3.1.\nNext: scroll up → dock returns (3.1) · tap the mark → 3.3.\nWhile listening: the player shrinks to a pill instead (4.4).",
+      "text": "From: scrolling down in 2.1.\nNext: scroll up → dock returns (2.1) · tap the mark → 2.3.\nWhile listening: the player shrinks to a pill instead (3.4).",
       "w": 390,
       "x": 470,
-      "y": 4012
+      "y": 4932
     },
     "fl_NInsights": {
       "fill": "gray",
       "page": "bottom",
-      "text": "Insights opens over the poem instead of replacing it. The same player as 4.1 stays at the bottom (mark, line progress, Voice, pause), so nothing changes under your thumb. Done (top right) or swipe the sheet down → back to 4.1 in sync.\nBack (top left) always means leave the poem.\nNot listening: the same sheet, no player.",
+      "text": "Insights opens over the poem instead of replacing it. The same player as 3.1 stays at the bottom (mark, line progress, Voice, pause), so nothing changes under your thumb. Done (top right) or swipe the sheet down → back to 3.1 in sync.\nBack (top left) always means leave the poem.\nNot listening: the same sheet, no player.",
       "w": 390,
       "x": 1880,
-      "y": 4012
+      "y": 4932
     },
     "fl_NJourney": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: a journey in Pathways (2.6).\nPath of seven heavens; locked ones show who's coming. The shared progress bar sits above the tabs: segments, '2 of 7', and Continue → the next heaven's poem (3.1). Same bar as collections (6.12).",
+      "text": "From: a journey in Pathways (9.5).\nPath of seven heavens; locked ones show who's coming. The shared progress bar sits above the tabs: segments, '2 of 7', and Continue → the next heaven's poem (2.1). Same bar as collections (10.2).",
       "w": 390,
       "x": 2820,
-      "y": 2448
+      "y": 26436
     },
     "fl_NJourneyDone": {
       "fill": "gray",
@@ -2028,127 +2354,111 @@
       "text": "After the last step of a journey (here Your first seven, so all seven heavens). The full row of marks, the steps you passed through, and the next journeys, each named with its own step label and length. No streaks or badges.\nHeadline pattern for any journey: “All [count], complete.” (All five, complete. for Homeland).",
       "w": 390,
       "x": 3760,
-      "y": 4012
+      "y": 26436
     },
     "fl_NKept": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: Save in 3.1 or Keep in 3.3.\nA 1.5 s moment, no buttons. Then: signed out → 5.2 · signed in → 5.3.",
+      "text": "From: Save in 2.1 or Keep in 2.3.\nA 1.5 s moment, no buttons. Then: signed out → 6.2 · signed in → 6.3.",
       "w": 390,
       "x": 0,
-      "y": 7140
-    },
-    "fl_NKeptBack": {
-      "fill": "gray",
-      "page": "bottom",
-      "text": "From: 5.1 or 5.2.\nNext: Undo removes it · keep reading (3.1) · the poem is now in Your diwan (8.1).",
-      "w": 390,
-      "x": 940,
-      "y": 7140
-    },
-    "fl_NLibrary": {
-      "fill": "gray",
-      "page": "bottom",
-      "text": "From: Library tab.\nNext: a collection → 6.12 · SEE ALL collections → 8.7 · a poet you follow → their page (6.3) · SEE ALL poets → 8.2 · resurfaced poem or a recent keep → 3.1 · POEMS tab → 8.3 · search icon → 7.1.\nNew users with nothing kept see 8.8 instead.",
-      "w": 390,
-      "x": 0,
-      "y": 11832
+      "y": 16596
     },
     "fl_NLibraryByEra": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: BY ERA on the POEMS tab (8.3).\nSame shelves as Explore's By era (6.9), filtered to your diwan. Next: a poem → 3.1 · an era's count → that era, your poems only.",
+      "text": "From: BY ERA on the POEMS tab (8.6).\nSame shelves as Explore's By era (4.5), filtered to your diwan. Next: a poem → 2.1 · an era's count → that era, your poems only.",
       "w": 390,
-      "x": 2350,
-      "y": 11832
+      "x": 3760,
+      "y": 20244
     },
     "fl_NLibraryByFeeling": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: BY FEELING on the POEMS tab (8.3).\nSame shelves as Explore's By feeling (6.7), but only the poems you kept, under the Library header and tabs. Next: a poem → 3.1 · a shelf's title or count → that feeling, your poems only.",
+      "text": "From: BY FEELING on the POEMS tab (8.6).\nSame shelves as Explore's By feeling (4.3), but only the poems you kept, under the Library header and tabs. Next: a poem → 2.1 · a shelf's title or count → that feeling, your poems only.",
       "w": 390,
-      "x": 1880,
-      "y": 11832
+      "x": 3290,
+      "y": 20244
     },
     "fl_NLibraryCollections": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: SEE ALL on the hub's collections row (8.1). If none saved, that goes straight to all collections (6.11) instead.\nNext: a collection → 6.12 (continues where you left off) · Browse collections → 6.11 · back → 8.1.",
+      "text": "From: SEE ALL on the hub's collections row (8.1). If none saved, that goes straight to all collections (10.1) instead.\nNext: a collection → 10.2 (continues where you left off) · Browse collections → 10.1 · back → 8.1.",
       "w": 390,
-      "x": 2820,
-      "y": 11832
+      "x": 0,
+      "y": 24612
     },
     "fl_NLibraryEmpty": {
       "fill": "gray",
       "page": "bottom",
       "text": "New users see one line on how keeping works, then two ways in: tonight's poem or the collections.",
       "w": 390,
-      "x": 3290,
-      "y": 11832
+      "x": 5170,
+      "y": 20244
     },
     "fl_NLibraryEra": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: Worlds of poetry on Explore (6.1), or the ERA chip on 6.7.\nNext: a poem → 3.1 · an era's title or count → that era (6.10) · shelf tints and patterns follow the era colours.",
+      "text": "From: Worlds of poetry on Explore (4.1), or the ERA chip on 4.3.\nNext: a poem → 2.1 · an era's title or count → that era (4.6) · shelf tints and patterns follow the era colours.",
       "w": 390,
-      "x": 3760,
-      "y": 8704
+      "x": 1880,
+      "y": 10404
     },
     "fl_NLibraryFeeling": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: a feeling chip on Explore (6.1), or a shelf title on 6.7.\nNext: a poem → 3.1 · feeling chips hop to the next feeling · back → where you came from. One era works the same way with era chips.",
+      "text": "From: a feeling chip on Explore (4.1), or a shelf title on 4.3.\nNext: a poem → 2.1 · feeling chips hop to the next feeling · back → where you came from. One era works the same way with era chips.",
       "w": 390,
-      "x": 3290,
-      "y": 8704
+      "x": 1410,
+      "y": 10404
     },
     "fl_NLibraryPoems": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: POEMS tab on 8.1 (or Kept, not reread / search, filtered).\nNext: a row → 3.1 · poet header → poet page · rail jumps by Arabic letter. Built for 1,000+ poems. Avatars as 6.1.\nSort label: one tap on ARABIC A–Z switches to ENGLISH A–Z (8.4) and back.\nGrouping chips: BY POET (this) · BY FEELING (8.5) · BY ERA (8.6).",
+      "text": "From: POEMS tab on 8.1 (or Kept, not reread / search, filtered).\nNext: a row → 2.1 · poet header → poet page · rail jumps by Arabic letter. Built for 1,000+ poems. Avatars as 4.1.\nSort label: one tap on ARABIC A–Z switches to ENGLISH A–Z (8.7) and back.\nGrouping chips: BY POET (this) · BY FEELING (8.8) · BY ERA (8.9).",
       "w": 390,
-      "x": 940,
-      "y": 11832
+      "x": 2350,
+      "y": 20244
     },
     "fl_NLibraryPoemsEn": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: one tap on ARABIC A–Z on 8.3 (tap ENGLISH A–Z to go back).\nGroups re-sort by the English name, the rail switches to A–Z, English titles lead. The choice is remembered.",
+      "text": "From: one tap on ARABIC A–Z on 8.6 (tap ENGLISH A–Z to go back).\nGroups re-sort by the English name, the rail switches to A–Z, English titles lead. The choice is remembered.",
       "w": 390,
-      "x": 1410,
-      "y": 11832
+      "x": 2820,
+      "y": 20244
     },
     "fl_NLibraryPoets": {
       "fill": "gray",
       "page": "bottom",
-      "text": "Where the bookmark on a poet page goes. SEE ALL on the hub's poets row. Each poet with era, total poems and how many you've read; Find more poets opens All poets (6.2).",
+      "text": "Where the bookmark on a poet page goes. SEE ALL on the hub's poets row. Each poet with era, total poems and how many you've read; Find more poets opens All poets (4.2).",
       "w": 390,
-      "x": 470,
-      "y": 11832
+      "x": 1880,
+      "y": 20244
     },
     "fl_NLibraryResults": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: typing in 7.1.\nSearches the whole app, not just your diwan: poets, lines (matched in the verse, vowel marks ignored), poems, collections. Your kept items are marked. Chips narrow by type; a line → 3.1 at that line.\nSame from Explore; bottom bar stays on Explore.",
+      "text": "From: typing in 11.1.\nSearches the whole app, not just your diwan: poets, lines (matched in the verse, vowel marks ignored), poems, collections. Your kept items are marked. Chips narrow by type; a line → 2.1 at that line.\nSame from Explore; bottom bar stays on Explore.",
       "w": 390,
       "x": 470,
-      "y": 10268
+      "y": 30084
     },
     "fl_NLibrarySearch": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: the search icon beside HUB | POEMS (8.1, 8.3).\nThe tabs give way to a full-width bar with the keyboard up. Recent searches, a few prompts. Cancel → back where you were.\nShared with Explore (6.1): same screen, the bottom bar keeps whichever tab you came from.",
+      "text": "From: the search icon beside HUB | POEMS (8.1, 8.6).\nThe tabs give way to a full-width bar with the keyboard up. Recent searches, a few prompts. Cancel → back where you were.\nShared with Explore (4.1): same screen, the bottom bar keeps whichever tab you came from.",
       "w": 390,
       "x": 0,
-      "y": 10268
+      "y": 30084
     },
     "fl_NLibraryShelves": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: See all beside Find by feeling on Explore (6.1).\nAcross every poem in the app, not just yours. Next: a poem → 3.1 · a shelf's title or count → that feeling (6.8) · ERA chip → 6.9 · back → 6.1.",
+      "text": "From: See all beside Find by feeling on Explore (4.1).\nAcross every poem in the app, not just yours. Next: a poem → 2.1 · a shelf's title or count → that feeling (4.4) · ERA chip → 4.5 · back → 4.1.",
       "w": 390,
-      "x": 2820,
-      "y": 8704
+      "x": 940,
+      "y": 10404
     },
     "fl_NListenAnim": {
       "fill": "gray",
@@ -2156,183 +2466,159 @@
       "text": "8 s loop. Tap the mark → a gold ripple, the pill folds away, the night sky fades in, the mark grows into the fan's centre and the five actions (Listen, Insights, Keep, Share, Aa) spring out with a 60 ms stagger. Tap the centre to close: the same motion in reverse, back to the pill.\nAudio never stops. Reduced motion: the fan simply appears.",
       "w": 390,
       "x": 1880,
-      "y": 5576
+      "y": 8580
     },
     "fl_NListenError": {
       "fill": "gray",
       "page": "bottom",
-      "text": "When audio fails, the player shows a margin note (C20): The recitation didn’t load. Try again; the whole note retries. With no recitation there is no read-along: the poem returns to plain white with full English, readable as on 3.1.",
+      "text": "When audio fails, the player shows a margin note (C20): The recitation didn’t load. Try again; the whole note retries. With no recitation there is no read-along: the poem returns to plain white with full English, readable as on 2.1.",
       "w": 390,
-      "x": 2820,
-      "y": 5576
+      "x": 3290,
+      "y": 8580
     },
     "fl_NListenFan": {
       "fill": "gray",
       "page": "bottom",
-      "text": "Same five as 3.3: Listen, Insights, Keep, Share, Aa. While playing, Listen shows a pause ring; tapping it pauses. Audio keeps playing while the fan is open. The read-along stays visible, dimmed, behind the fan.",
+      "text": "Same five as 2.3: Listen, Insights, Keep, Share, Aa. While playing, Listen shows a pause ring; tapping it pauses. Audio keeps playing while the fan is open. The read-along stays visible, dimmed, behind the fan.",
       "w": 390,
       "x": 2350,
-      "y": 5576
+      "y": 8580
     },
     "fl_NListenPill": {
       "fill": "gray",
       "page": "bottom",
-      "text": "Audio controls never vanish while sound plays: the bar shrinks to mark + pause. Scroll up, or tap LINE 3 OF 4 ⌃, to expand back to 4.1. The page follows the voice; reduced motion jumps instead. Read along continues: the word being recited keeps glowing as the page follows it.",
+      "text": "Audio controls never vanish while sound plays: the bar shrinks to mark + pause. Scroll up, or tap LINE 3 OF 4 ⌃, to expand back to 3.1. The page follows the voice; reduced motion jumps instead. Read along continues: the word being recited keeps glowing as the page follows it.",
       "w": 390,
       "x": 1410,
-      "y": 5576
-    },
-    "fl_NListenVoice": {
-      "fill": "gray",
-      "page": "bottom",
-      "text": "From: VOICE 1 ▾ on the player (4.1).\nThree voices, the current one marked Playing. Tapping another switches at once and restarts the current line, so the choice is its own preview. Swipe down closes.",
-      "w": 390,
-      "x": 940,
-      "y": 5576
+      "y": 8580
     },
     "fl_NPoet": {
       "fill": "gray",
       "page": "bottom",
       "text": "Pattern hero, POEMS | THE POET pills, then every poem as a P9 card (the frame scrolls). READ badge stacked above the number once opened, red heart if kept. Total at the foot in both languages.",
       "w": 390,
-      "x": 940,
-      "y": 8704
+      "x": 0,
+      "y": 12228
     },
     "fl_NPoetAbout": {
       "fill": "gray",
       "page": "bottom",
-      "text": "The insight in the guide's voice, then Find her in: the collection and journey she belongs to, and where she sits in each.",
+      "text": "The insight in the guide's voice, then \"Find Al-Khansa in\": the collections and journeys the poet appears in, and where in each. The heading uses the poet's name, so no pronoun is needed.",
       "w": 390,
-      "x": 1880,
-      "y": 8704
+      "x": 940,
+      "y": 12228
     },
     "fl_NPoetAboutScrolled": {
       "fill": "gray",
       "page": "bottom",
-      "text": "The same collapsed band on the poet tab, mid-read, with Find her in coming up. Switching tabs keeps the band collapsed.",
+      "text": "The same collapsed band on the poet tab, mid-read, with \"Find Al-Khansa in\" coming up. Switching tabs keeps the band collapsed.",
       "w": 390,
-      "x": 2350,
-      "y": 8704
+      "x": 1410,
+      "y": 12228
     },
     "fl_NPoetScrolled": {
       "fill": "gray",
       "page": "bottom",
       "text": "Scrolled to the end: the hero has folded into the slim lacería band with name and pinned tabs. The list ends on the total, 9 POEMS · ٩ قصائد. Scroll back to the top to unfold.",
       "w": 390,
-      "x": 1410,
-      "y": 8704
+      "x": 470,
+      "y": 12228
     },
     "fl_NPoetsAll": {
       "fill": "gray",
       "page": "bottom",
-      "text": "SEE ALL on the poets row in Explore. Every poet A–Z by Arabic name (one tap on the label for English), era chips to filter. Gold bookmark means you follow them; tap a row for the poet page (6.3).",
+      "text": "SEE ALL on the poets row in Explore. Every poet A–Z by Arabic name (one tap on the label for English), era chips to filter. Gold bookmark means you follow them; tap a row for the poet page (5.1).",
       "w": 390,
       "x": 470,
-      "y": 8704
+      "y": 10404
     },
     "fl_NReading": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: Begin on Journey (2.5), a pathway (2.6), Explore, or Library.\nNext: scroll → 3.2 · Listen → 4.1 (the dock becomes the player, in place) · Insights → 3.5 · Save → 5.1 · Share → 5.4 · last line → 3.6 · ← back to where you came from.\nHeader: back and the mark only. Aa moved into the mark's fan.",
+      "text": "From: Begin on Journey (9.4), a pathway (9.5), Explore, or Library.\nNext: scroll → 2.2 · Listen → 3.1 (the dock becomes the player, in place) · Insights → 2.5 · Save → 6.1 · Share → 7.1 · last line → 2.17 · ← back to where you came from.\nHeader: back and the mark only. Aa moved into the mark's fan.",
       "w": 390,
       "x": 0,
-      "y": 4012
+      "y": 4932
     },
     "fl_NSearchEmpty": {
       "fill": "gray",
       "page": "bottom",
-      "text": "Never a dead end: say why (here, Rumi wrote in Persian), offer the nearest poets and feelings, and a hint on what you can search.",
+      "text": "Never a dead end: offer the nearest poets and feelings, and a hint on what you can search. No reason line.",
       "w": 390,
       "x": 940,
-      "y": 10268
+      "y": 30084
     },
     "fl_NSignin": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: any save while signed out (5.1 keep, or Save on a journey, collection or poet).\nNext: Apple, Google or Not now → back where you were (5.3 after a keep). Kept on this phone either way; asks again on the next save.",
+      "text": "From: any save while signed out (6.1 keep, or Save on a journey, collection or poet).\nNext: Apple, Google or Not now → back where you were (6.3 after a keep). Kept on this phone either way; asks again on the next save.",
       "w": 390,
       "x": 470,
-      "y": 7140
+      "y": 16596
     },
     "fl_NTonight": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: opening the app (first run: heaven 1 of Your first seven).\nNext: Enter (the arch) or swipe up → 3.1 · Pathways → 2.6. Listen lives on the reading screen. No back, no Aa: this is home.",
+      "text": "From: opening the app (first run: heaven 1 of Your first seven).\nNext: Enter (the arch) or swipe up → 2.1 · Pathways → 9.5. Listen lives on the reading screen. No back, no Aa: this is home.\nThis is the journey case: tonight's featured poem is a journey step, so the eyebrow names it. Otherwise → 9.10.",
       "w": 390,
-      "x": 1880,
-      "y": 2448
+      "x": 1410,
+      "y": 26436
     },
     "fl_NWelcome": {
       "fill": "gray",
       "page": "bottom",
       "text": "First open. The mark, a one-line promise, and a single question: what should the guide call you? Optional; Skip goes straight on. No language or taste questions.",
       "w": 390,
-      "x": 470,
-      "y": 2448
+      "x": 0,
+      "y": 26436
     },
     "fl_NWelcomeFirst": {
       "fill": "gray",
       "page": "bottom",
-      "text": "Lands straight on Tonight's poem, greeted by name. From here the app is the normal Journey tab (2.5).",
+      "text": "Lands straight on Tonight's poem, greeted by name. From here the app is the normal Journey tab (9.4).",
       "w": 390,
-      "x": 1410,
-      "y": 2448
+      "x": 940,
+      "y": 26436
     },
     "fl_NWelcomeRead": {
       "fill": "gray",
       "page": "bottom",
-      "text": "One choice, shown on the same verse three ways: Arabic only, with translation, or with sounds (transliteration plus English). Translation is preselected. Changeable later in You · Translation and sounds (9.6).",
+      "text": "One choice, shown on the same verse three ways: Arabic only, with translation, or with sounds (transliteration plus English). Translation is preselected. Changeable later in You · Translation and sounds (12.7).",
       "w": 390,
-      "x": 940,
-      "y": 2448
+      "x": 470,
+      "y": 26436
     },
     "fl_NYou": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: You tab.\nNext: each row opens its own screen (9.2–9.6) · Sign out signs out in place, no screen; signed-out users see Sign in → Apple or Google (5.2) instead · Take the short tour → first run (2.2).",
+      "text": "From: You tab, V3.\nThe first-build hub (12.1) plus the guide's settings. Next: each row opens its own screen (12.4 What moves you, 12.5 How the guide chooses, 12.6 Reciter, 12.2 Appearance, 12.7 Translation) · Sign out signs out in place; signed-out users see Sign in → Apple or Google (6.2) instead. No short tour (deprecated).",
       "w": 390,
       "x": 0,
-      "y": 13396
-    },
-    "fl_NYouAppearance": {
-      "fill": "gray",
-      "page": "bottom",
-      "text": "From: 9.1.\nSame controls as the Aa sheet (3.4), with a live preview; changes sync both ways.",
-      "w": 390,
-      "x": 1880,
-      "y": 13396
-    },
-    "fl_NYouGuide": {
-      "fill": "gray",
-      "page": "bottom",
-      "text": "From: 9.1.\nClassical↔modern balance, how adventurous, poem length, and when Tonight's poem arrives (the only notification).",
-      "w": 390,
-      "x": 940,
-      "y": 13396
+      "y": 31908
     },
     "fl_NYouMoves": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: 9.1.\nPicks feed Tonight's poem and Pathways. Learn from what I keep lets kept poems shape the guide's choices.",
+      "text": "From: 12.3.\nPicks feed Tonight's poem and Pathways. Learn from what I keep lets kept poems shape the guide's choices.",
       "w": 390,
       "x": 470,
-      "y": 13396
+      "y": 31908
     },
     "fl_NYouReciter": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: 9.1 (the Voice picker on the player, 4.3, uses the same list).\nPlay a sample before choosing. No speed setting.",
+      "text": "From: 12.3.\nThe same voices as the player's sheet (3.3), grouped Female and Male under their Gemini names, each with a sample button; 5 MORE opens the rest of the group. No speed setting.",
       "w": 390,
       "x": 1410,
-      "y": 13396
+      "y": 31908
     },
     "fl_NYouTranslation": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: 9.1.\nWhat sits under the Arabic (matches 3.4), translation voice, and how sounds are spelled. Sign in → 5.2; Short tour reuses the first-run screens.",
+      "text": "From: 12.3.\nWhat sits under the Arabic (matches 2.4), translation voice, and how sounds are spelled.",
       "w": 390,
-      "x": 2350,
-      "y": 13396
+      "x": 1880,
+      "y": 31908
     },
     "fl_PoetEraGilt": {
       "fill": "gray",
@@ -2420,15 +2706,15 @@
       "text": "R6 in motion, from the start, looping (about 18s). The poem sits with the reading dock; Listen is tapped (press and ripple); the dock turns into the player and the pause button appears. Each Arabic word glows gold as it is recited and then fades; the English line turns gold for its verse; LINE n OF 4 updates and each progress segment fills with its verse. At the end the button turns back to play and the label reads FINISHED; then the player hands back to the dock and it starts over. Still under reduced motion.",
       "w": 390,
       "x": 470,
-      "y": 5576
+      "y": 8580
     },
     "fl_RaMix": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: Listen in the reading dock (3.1) or the fan (3.3).\nThe dock becomes the player in place. Read along: words still to come stay white, the word being recited glows gold, words already recited fade to 45%. The English line for the verse being recited turns gold; the others sit at 40%. LINE n OF 4, four progress segments, VOICE ▾ (4.3), pause. Next: scroll → 4.4 · the mark → 4.6 · voice → 4.3.",
+      "text": "From: Listen in the reading dock (2.1) or the fan (2.3).\nThe dock becomes the player in place. Read along: words still to come stay white, the word being recited glows gold, words already recited fade to 45%. The English line for the verse being recited turns gold; the others sit at 40%. LINE n OF 4, four progress segments, VOICE ▾ (3.3), pause. Next: scroll → 3.4 · the mark → 3.6 · voice → 3.3.",
       "w": 390,
       "x": 0,
-      "y": 5576
+      "y": 8580
     },
     "fl_ShA": {
       "fill": "gray",
@@ -2585,106 +2871,106 @@
     "fl_ShR4FA": {
       "fill": "gray",
       "page": "bottom",
-      "text": "From: Share in the fan (3.3). Back → the poem.\nSend this poem to… types its recipient; tap it to add a dedication (5.9). WHOLE POEM / CHOOSE LINES; colour arches; dock: En (on if the reader reads with translation), Save image, Send, Copy link.\nCard: Ruq'ah title, English title, poet in both languages, the mark between hairlines, diamonds between verses. Up to 6 Arabic–English pairs a card; more becomes a carousel.",
+      "text": "From: Share in the fan (2.3). Back → the poem.\nSend this poem to… types its recipient; tap it to add a dedication (7.7). WHOLE POEM / CHOOSE LINES; colour arches; dock: En (on if the reader reads with translation), Save image, Send, Copy link.\nCard: Ruq'ah title, English title, poet in both languages, the mark between hairlines, diamonds between verses. Up to 6 Arabic–English pairs a card; more becomes a carousel.",
       "w": 390,
-      "x": 1410,
-      "y": 7140
+      "x": 0,
+      "y": 18420
     },
     "fl_ShR4FB2": {
       "fill": "gray",
       "page": "bottom",
       "text": "Up to 6 Arabic–English pairs a card. 8 splits evenly at the verse into two cards; 1 / 2 in the corner and the next card peeks in.",
       "w": 390,
-      "x": 2820,
-      "y": 7140
+      "x": 1880,
+      "y": 18420
     },
     "fl_ShR4FB3": {
       "fill": "gray",
       "page": "bottom",
       "text": "Five verses can't split evenly without breaking one, so the first card takes three.",
       "w": 390,
-      "x": 3290,
-      "y": 7140
+      "x": 2350,
+      "y": 18420
     },
     "fl_ShR4FC": {
       "fill": "gray",
       "page": "bottom",
       "text": "Tap the recipient and it becomes a field; what you type prints on the card live.",
       "w": 390,
-      "x": 3760,
-      "y": 7140
+      "x": 2820,
+      "y": 18420
     },
     "fl_ShR4FD": {
       "fill": "gray",
       "page": "bottom",
       "text": "The dedication sits above the title in the accent colour.",
       "w": 390,
-      "x": 4230,
-      "y": 7140
+      "x": 3290,
+      "y": 18420
     },
     "fl_ShR4FE": {
       "fill": "gray",
       "page": "bottom",
       "text": "A carousel, 3 verses (6 pairs) a card. A hairline along the bottom fills as you go.",
       "w": 390,
-      "x": 4700,
-      "y": 7140
+      "x": 3760,
+      "y": 18420
     },
     "fl_ShR4FF": {
       "fill": "gray",
       "page": "bottom",
       "text": "Every card looks like card 1. Only the number and the progress hairline change.",
       "w": 390,
-      "x": 5170,
-      "y": 7140
+      "x": 4230,
+      "y": 18420
     },
     "fl_ShR4FX1": {
       "fill": "gray",
       "page": "bottom",
       "text": "1080 × 1350, with the short link beside poetry بالعربي.",
       "w": 432,
-      "x": 5640,
-      "y": 6836
+      "x": 4700,
+      "y": 18116
     },
     "fl_ShR4FX2": {
       "fill": "gray",
       "page": "bottom",
       "text": "",
       "w": 432,
-      "x": 7176,
-      "y": 6836
+      "x": 6236,
+      "y": 18116
     },
     "fl_ShR4LsAr": {
       "fill": "gray",
       "page": "bottom",
-      "text": "CHOOSE LINES opens this sheet. No limit: picks flow onto as many cards as needed and the count shows how many. عربي / EN switch to recognise lines in either language. Done → back to 5.4 with the cards.",
+      "text": "CHOOSE LINES opens this sheet. No limit: picks flow onto as many cards as needed and the count shows how many. عربي / EN switch to recognise lines in either language. Done → back to 7.1 with the cards.",
       "w": 390,
-      "x": 1880,
-      "y": 7140
+      "x": 940,
+      "y": 18420
     },
     "fl_ShR4LsEn": {
       "fill": "gray",
       "page": "bottom",
       "text": "The same list in English.",
       "w": 390,
-      "x": 2350,
-      "y": 7140
+      "x": 1410,
+      "y": 18420
     },
     "fl_ShR4Split8_1": {
       "fill": "gray",
       "page": "bottom",
       "text": "Even split.",
       "w": 432,
-      "x": 6152,
-      "y": 6836
+      "x": 5212,
+      "y": 18116
     },
     "fl_ShR4Split8_2": {
       "fill": "gray",
       "page": "bottom",
       "text": "Same as card 1 apart from the number and progress line.",
       "w": 432,
-      "x": 6664,
-      "y": 6836
+      "x": 5724,
+      "y": 18116
     },
     "fl_ShTo": {
       "fill": "gray",
@@ -2693,87 +2979,6 @@
       "w": 390,
       "x": 1880,
       "y": 13316
-    },
-    "flow1": {
-      "kind": "title1",
-      "maxW": 1080,
-      "page": "bottom",
-      "text": "1 · Overview",
-      "w": 240,
-      "x": 0,
-      "y": -260
-    },
-    "flow2": {
-      "kind": "title1",
-      "maxW": 1330,
-      "page": "bottom",
-      "text": "2 · First run, then Home · Journey tab",
-      "w": 240,
-      "x": 0,
-      "y": 1304
-    },
-    "flow3": {
-      "kind": "title1",
-      "maxW": 3210,
-      "page": "bottom",
-      "text": "3 · Reading a poem, to the end",
-      "w": 240,
-      "x": 0,
-      "y": 2868
-    },
-    "flow4": {
-      "kind": "title1",
-      "maxW": 2270,
-      "page": "bottom",
-      "text": "4 · Listening",
-      "w": 240,
-      "x": 0,
-      "y": 4432
-    },
-    "flow5": {
-      "kind": "title1",
-      "maxW": 1800,
-      "page": "bottom",
-      "text": "5 · Keeping and sharing",
-      "w": 240,
-      "x": 0,
-      "y": 5996
-    },
-    "flow6": {
-      "kind": "title1",
-      "maxW": 2740,
-      "page": "bottom",
-      "text": "6 · Explore · poets, feelings, eras, collections",
-      "w": 240,
-      "x": 0,
-      "y": 7560
-    },
-    "flow7": {
-      "kind": "title1",
-      "maxW": 860,
-      "page": "bottom",
-      "text": "7 · Search · from Explore or Library",
-      "w": 240,
-      "x": 0,
-      "y": 9124
-    },
-    "flow8": {
-      "kind": "title1",
-      "maxW": 2740,
-      "page": "bottom",
-      "text": "8 · Library · your diwan",
-      "w": 240,
-      "x": 0,
-      "y": 10688
-    },
-    "flow9": {
-      "kind": "title1",
-      "maxW": 2740,
-      "page": "bottom",
-      "text": "9 · You · settings",
-      "w": 240,
-      "x": 0,
-      "y": 12252
     },
     "n1": {
       "kind": "title1",
@@ -2907,7 +3112,7 @@
       "size": "s",
       "w": 390,
       "x": 0,
-      "y": 14960,
+      "y": 6756,
       "text": "Full-area error (C22) on the reading screen. Back still works; Try again reloads; Read tonight's poem is the way on."
     },
     "fl_ErrInsights": {
@@ -2916,7 +3121,7 @@
       "size": "s",
       "w": 390,
       "x": 1880,
-      "y": 14960,
+      "y": 6756,
       "text": "Inline error (C20, margin note) inside the Insights sheet. Audio keeps playing behind it; the tabs stay so The poet can still be tried."
     },
     "fl_ErrSave": {
@@ -2924,8 +3129,8 @@
       "page": "bottom",
       "size": "s",
       "w": 390,
-      "x": 4700,
-      "y": 14960,
+      "x": 6748,
+      "y": 18420,
       "text": "Error toast (C21) on the share screen. The reason and the fix in one line; SETTINGS opens the system permission page. Send and Copy link still work."
     },
     "fl_ErrSignin": {
@@ -2933,8 +3138,8 @@
       "page": "bottom",
       "size": "s",
       "w": 390,
-      "x": 4230,
-      "y": 14960,
+      "x": 3290,
+      "y": 16596,
       "text": "Error toast (C21) at the top of the sign-in sheet. Reassures the poem is still kept on this phone; both sign-in buttons stay."
     },
     "fl_ErrAudioStop": {
@@ -2942,8 +3147,8 @@
       "page": "bottom",
       "size": "s",
       "w": 390,
-      "x": 2350,
-      "y": 14960,
+      "x": 3760,
+      "y": 8580,
       "text": "Audio drops partway through. The read-along freezes on the last word heard (that word keeps its gold glow, still). The player shows a margin note, Stopped at line 2. Resume from here; the whole note resumes from that line."
     },
     "fl_ErrAudioLines": {
@@ -2951,8 +3156,8 @@
       "page": "bottom",
       "size": "s",
       "w": 390,
-      "x": 2820,
-      "y": 14960,
+      "x": 4230,
+      "y": 8580,
       "text": "The recitation works but word timings didn’t arrive. Read-along falls back to whole verses: the verse being recited glows gold as one piece, recited verses fade, its English line stays gold. No error shown; it just degrades."
     },
     "fl_ErrLink": {
@@ -2961,7 +3166,7 @@
       "size": "s",
       "w": 390,
       "x": 470,
-      "y": 14960,
+      "y": 6756,
       "text": "Deep link /poem/:id to a poem that was removed or a mistyped link. Full-area error (C22); the way on is tonight's poem or search. Different from 10.1: retrying won't help, so no Try again."
     },
     "fl_ErrNext": {
@@ -2970,7 +3175,7 @@
       "size": "s",
       "w": 390,
       "x": 1410,
-      "y": 14960,
+      "y": 6756,
       "text": "Swipe or the guide's next door fails. Toast (C21) at the end of the poem; the current poem stays readable."
     },
     "fl_ErrVoice": {
@@ -2978,26 +3183,26 @@
       "page": "bottom",
       "size": "s",
       "w": 390,
-      "x": 3290,
-      "y": 14960,
-      "text": "The chosen reciter fails to load. Recitation carries on in the previous voice and the toast says so; OK dismisses. No interruption."
+      "x": 4700,
+      "y": 8580,
+      "text": "From: tapping a voice in the sheet (3.3) that fails to load.\nRecitation carries on in the voice already playing; that row reads NOT AVAILABLE and the toast says so. OK dismisses. No interruption."
     },
     "fl_ErrKeep": {
       "fill": "gray",
       "page": "bottom",
       "size": "s",
       "w": 390,
-      "x": 3760,
-      "y": 14960,
-      "text": "Replaces the Kept toast (5.3). The heart goes back to empty so the screen never claims a keep that didn't happen."
+      "x": 2820,
+      "y": 16596,
+      "text": "Replaces the Kept toast (6.3). The heart goes back to empty so the screen never claims a keep that didn't happen."
     },
     "fl_ErrSync": {
       "fill": "gray",
       "page": "bottom",
       "size": "s",
       "w": 390,
-      "x": 5170,
-      "y": 14960,
+      "x": 6110,
+      "y": 20244,
       "text": "Signed in, sync failed. Margin note (C20) at the top of the Library hub; everything kept on this phone still shows."
     },
     "fl_ErrTranslation": {
@@ -3006,7 +3211,7 @@
       "size": "s",
       "w": 390,
       "x": 940,
-      "y": 14960,
+      "y": 6756,
       "text": "The poem reads normally in Arabic; only the English is missing. Margin note (C20) above the first verse, mirrored to the right; verses close up where the English sat. Once it arrives the note goes and the English fades in under each verse."
     },
     "fl_ErrCompactD": {
@@ -3041,8 +3246,8 @@
       "page": "bottom",
       "size": "s",
       "w": 390,
-      "x": 0,
-      "y": 16524,
+      "x": 2350,
+      "y": 6756,
       "text": "Title, poet and every verse hold their place as soft lines, right-aligned like the Arabic. The dock and back stay live; Listen waits until the poem is in."
     },
     "fl_LoadInsights": {
@@ -3050,8 +3255,8 @@
       "page": "bottom",
       "size": "s",
       "w": 390,
-      "x": 470,
-      "y": 16524,
+      "x": 2820,
+      "y": 6756,
       "text": "Keeps the current app’s line, “Consulting the diwan…”, over paragraph-shaped lines. The tabs work; the other tab loads on its own."
     },
     "fl_LoadCollection": {
@@ -3060,7 +3265,7 @@
       "size": "s",
       "w": 390,
       "x": 940,
-      "y": 16524,
+      "y": 28260,
       "text": "The cover’s pattern and colour arrive first (they’re local); its title, description and poem list hold their shape until the words arrive."
     },
     "fl_LoadJourney": {
@@ -3068,8 +3273,8 @@
       "page": "bottom",
       "size": "s",
       "w": 390,
-      "x": 1410,
-      "y": 16524,
+      "x": 4230,
+      "y": 26436,
       "text": "The step markers and the line between them stay; names and the description are soft lines."
     },
     "arcErrInl": {
@@ -3080,31 +3285,13 @@
       "maxW": 2400,
       "page": "archive"
     },
-    "flow10": {
-      "kind": "title1",
-      "maxW": 2400,
-      "page": "bottom",
-      "text": "10 · When something fails · errors",
-      "w": 240,
-      "x": 0,
-      "y": 13816
-    },
-    "flow11": {
-      "kind": "title1",
-      "maxW": 2400,
-      "page": "bottom",
-      "text": "11 · Loading · wherever there’s copy to read",
-      "w": 240,
-      "x": 0,
-      "y": 15380
-    },
     "fl_flow10a": {
       "fill": "gray",
       "page": "bottom",
       "w": 390,
-      "x": 5640,
-      "y": 14076,
-      "text": "Also in their own flows: 4.7 recitation won’t load, 7.3 search with no results, 8.8 empty Library, 5.2 save while signed out.\nComponents: C20 margin note, C21 error toast, C22 full-area error (Brand · Errors and loading)."
+      "x": 3290,
+      "y": 5872,
+      "text": "Also in their own flows: 3.8 recitation won’t load, 11.3 search with no results, 8.12 empty Library, 6.2 save while signed out.\nComponents: C20 margin note, C21 error toast, C22 full-area error (Brand · Errors and loading)."
     },
     "brErr": {
       "kind": "title1",
@@ -3114,6 +3301,274 @@
       "w": 240,
       "x": 3200,
       "y": 3500
+    },
+    "frN23": {
+      "page": "bottom",
+      "w": 390,
+      "x": 470,
+      "y": 3108,
+      "text": "Dev builds only, on every screen. A slim, muted tab on the right edge, half-way down: grey DEV on the dock colour, no count. Tap or swipe it left → the panel (1.4). Takes almost no space and never covers buttons. Long-press the tab bar (1.6), or the dock or mark on a poem (1.7), to hide or show it."
+    },
+    "frN24": {
+      "page": "bottom",
+      "w": 390,
+      "x": 2350,
+      "y": 3108,
+      "text": "Dev builds only. Long-press the tab bar (about 0.8 s) to hide the edge tab; long-press again to show it. On a poem, the dock or the mark does the same (1.7). A toast confirms each change; the choice is remembered on this device. Hidden, errors still count and show once the tab is back."
+    },
+    "frN25": {
+      "page": "bottom",
+      "w": 390,
+      "x": 2820,
+      "y": 3108,
+      "text": "The reading screen has no tab bar, so the same toggle lives on the action dock: long-press the dock, or the mark once the dock has folded into it (2.2), for about 0.8 s. The heart has no long-press, so nothing clashes."
+    },
+    "frN26": {
+      "page": "bottom",
+      "w": 390,
+      "x": 470,
+      "y": 20244,
+      "text": "From SEE ALL on Your lists (8.1). Same pattern as Poets you follow (8.5). Favorites first, locked: it can't be renamed or deleted. Others sorted by most recent keep. A row opens the list; ⋯ opens 8.3. Swiping a row left also offers Delete. No New list here."
+    },
+    "frN27": {
+      "page": "bottom",
+      "w": 390,
+      "x": 940,
+      "y": 20244,
+      "text": "From ⋯ on a list (8.2), or ⋯ in a list's own header. Rename in place, change the colour, Done saves. ICON: by default the first letter of the name, as the nearest Arabic letter (L→ل, F→ف, T→ت; C→ك, P→ب, V→ف, G→ج); an Arabic name uses its own first letter. The row also offers the first letters of the name's other words, or CHOOSE, which opens every letter (6.6). Renaming updates an AUTO icon, never a chosen one. Favorites keeps its heart. Delete list → 8.4."
+    },
+    "frN28": {
+      "page": "bottom",
+      "w": 390,
+      "x": 1410,
+      "y": 20244,
+      "text": "Deleting never loses a poem: the list goes and its poems stay kept, in Your poems and any other list they're in. After Delete: back to 8.2 with a toast, “List deleted · UNDO”."
+    },
+    "frN29": {
+      "page": "bottom",
+      "w": 390,
+      "x": 2350,
+      "y": 16596,
+      "text": "From CHOOSE on 6.5 or 8.3. A drawer with a live preview of the list's icon, the letters from its name (AUTO first), and all 28 Arabic letters in alphabetical order, right to left. Tap one, then Done. Cancel keeps the icon as it was."
+    },
+    "later_list": {
+      "page": "bottom",
+      "x": 0,
+      "y": 33308,
+      "w": 520,
+      "fill": "gray",
+      "text": "Deferred (scope, 24 Nov):\n· Faithful / Poetic translations; Scholarly sounds\n· Keep while signed out, merge on sign-in\n· Resurfaced poems in the Library hub\n· A new guided tour\n· Delete account: designed (12.8), ships before an App Store release with Apple sign-in\n· Desktop / tablet layouts; update and offline prompts\n\nDropped: nightly reminder."
+    },
+    "frV1End": {
+      "page": "bottom",
+      "w": 390,
+      "x": 2820,
+      "y": 4932,
+      "text": "Before the guide exists. Reading past the last line shows END and three ways on: NEXT POEM (swipe up or tap; the curated draw from what you read, as today), MORE BY THE POET → 5.1, MORE OF THE FEELING → 4.4. Replaced in V3 by the guide's doors (2.17)."
+    },
+    "ver_v1": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "V1 · First build: reader, Explore, poet pages, listening",
+      "x": 0,
+      "y": 1544,
+      "size": "xxl",
+      "color": "green",
+      "maxW": 6000
+    },
+    "band_v1_0": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "1 · Shell and the developer panel  (1.1–1.7)",
+      "x": 0,
+      "y": 1964,
+      "maxW": 3210
+    },
+    "band_v1_1": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "2 · Reading  (2.1–2.9)",
+      "x": 0,
+      "y": 3788,
+      "maxW": 4150
+    },
+    "band_v1_2": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "2 · Reading · errors and loading  (2.10–2.16)",
+      "x": 0,
+      "y": 5612,
+      "maxW": 3680
+    },
+    "band_v1_3": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "3 · Listening  (3.1–3.11)",
+      "x": 0,
+      "y": 7436,
+      "maxW": 5090
+    },
+    "band_v1_4": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "4 · Explore  (4.1–4.7)",
+      "x": 0,
+      "y": 9260,
+      "maxW": 3210
+    },
+    "band_v1_5": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "5 · Poet pages  (5.1–5.4)",
+      "x": 0,
+      "y": 11084,
+      "maxW": 1800
+    },
+    "ver_v2": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "V2 · Keep, lists, share, Library",
+      "x": 0,
+      "y": 15032,
+      "size": "xxl",
+      "color": "blue",
+      "maxW": 6000
+    },
+    "band_v2_0": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "6 · Keep and lists  (6.1–6.8)",
+      "x": 0,
+      "y": 15452,
+      "maxW": 3680
+    },
+    "band_v2_1": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "7 · Share  (7.1–7.15)",
+      "x": 0,
+      "y": 17276,
+      "maxW": 7138
+    },
+    "band_v2_2": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "8 · Library  (8.1–8.14)",
+      "x": 0,
+      "y": 19100,
+      "maxW": 6500
+    },
+    "ver_v3": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "V3 · The guide, journeys and first run, collections, search, You",
+      "x": 0,
+      "y": 21224,
+      "size": "xxl",
+      "color": "purple",
+      "maxW": 6000
+    },
+    "band_v3_0": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "2 · Reading · the guide's doors at the end of a poem  (2.17–2.18)",
+      "x": 0,
+      "y": 21644,
+      "maxW": 1200
+    },
+    "band_v3_1": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "8 · Library · saved collections  (8.15)",
+      "x": 0,
+      "y": 23468,
+      "maxW": 1200
+    },
+    "band_v3_2": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "9 · Journey and first run  (9.1–9.10)",
+      "x": 0,
+      "y": 25292,
+      "maxW": 4620
+    },
+    "band_v3_3": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "10 · Collections  (10.1–10.3)",
+      "x": 0,
+      "y": 27116,
+      "maxW": 1330
+    },
+    "band_v3_4": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "11 · Search  (11.1–11.3)",
+      "x": 0,
+      "y": 28940,
+      "maxW": 1330
+    },
+    "band_v3_5": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "12 · You · the guide's settings  (12.3–12.7)",
+      "x": 0,
+      "y": 30764,
+      "maxW": 2270
+    },
+    "ver_later": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "Later · deferred, not designed for a version yet",
+      "x": 0,
+      "y": 32888,
+      "size": "xxl",
+      "color": "gray",
+      "maxW": 6000
+    },
+    "fl_NTonightFeatured": {
+      "page": "bottom",
+      "w": 390,
+      "x": 1880,
+      "y": 26436,
+      "text": "Same screen as 9.4 when tonight's featured poem isn't a step in a journey: the eyebrow reads CHOSEN FOR TONIGHT, with no step. Tonight's poem is the same for everyone; 9.4 applies when the curated pick is a journey step, and its eyebrow names that step."
+    },
+    "band_v1_6": {
+      "kind": "title1",
+      "page": "bottom",
+      "text": "12 · You · first build  (12.1–12.2)",
+      "x": 0,
+      "y": 13208,
+      "maxW": 1200
+    },
+    "fr_FRYouV1": {
+      "page": "bottom",
+      "w": 390,
+      "x": 0,
+      "y": 14352,
+      "text": "From: You tab, first build.\nOnly what V1 needs: Appearance (12.2) and the account. Signed out: Sign in → Apple or Google (6.2) instead of the account rows. No reciter row: the voice is the last one picked on the player (3.3). The guide's settings join this hub in V3 (12.3)."
+    },
+    "fr_FRExploreDiff": {
+      "page": "bottom",
+      "w": 390,
+      "x": 2820,
+      "y": 10404,
+      "text": "From: a difficulty chip on Explore (4.1).\nThree bands, Gentle, Measured and Demanding, cut from accessibility_score where the corpus actually sits (as today's onboarding does), so each holds about a third of the poems. Chips hop between bands; rows as One feeling (4.4), oldest first. The same bands drive Difficulty in How the guide chooses (12.5)."
+    },
+    "fr_FRDeleteAccount": {
+      "page": "bottom",
+      "w": 390,
+      "x": 600,
+      "y": 34192,
+      "text": "From: Delete account in You · Account (12.3), signed in only.\nSays exactly what goes: keeps, lists, follows, reading history and settings. DELETE ACCOUNT erases them and the sign-in, then returns to the reader signed out with a toast. KEEP MY ACCOUNT closes. Required before an App Store release with Apple sign-in."
+    },
+    "numbering": {
+      "page": "bottom",
+      "w": 520,
+      "x": 0,
+      "y": 0,
+      "fill": "blue",
+      "text": "NUMBERING · N.x\nN is the feature area and never changes: 1 Shell and developer panel · 2 Reading · 3 Listening · 4 Explore · 5 Poet pages · 6 Keep and lists · 7 Share · 8 Library · 9 Journey and first run · 10 Collections · 11 Search · 12 You.\nA later version continues its area's sequence: V1 reading ends at 2.16, V3 adds 2.17 and 2.18. A new feature takes the next free number in its area; a new area takes the next free N."
     }
   },
   "order": [
@@ -3137,7 +3592,6 @@
     "ArcLock3.dc.html",
     "ArcLock4.dc.html",
     "ArcLock5.dc.html",
-    "NCoverage.dc.html",
     "NReading.dc.html",
     "NImmersed.dc.html",
     "NFan.dc.html",
@@ -3147,11 +3601,9 @@
     "NSignin.dc.html",
     "NEnd.dc.html",
     "NTonight.dc.html",
+    "NTonightFeatured.dc.html",
     "NExplore.dc.html",
-    "NLibrary.dc.html",
     "NYou.dc.html",
-    "NKeptBack.dc.html",
-    "NAa.dc.html",
     "NDoors.dc.html",
     "NJourney.dc.html",
     "NCollection.dc.html",
@@ -3170,9 +3622,7 @@
     "NLibraryCollections.dc.html",
     "NLibraryEra.dc.html",
     "NYouMoves.dc.html",
-    "NYouGuide.dc.html",
     "NYouReciter.dc.html",
-    "NYouAppearance.dc.html",
     "NYouTranslation.dc.html",
     "NLibraryPoemsEn.dc.html",
     "NLibraryFeeling.dc.html",
@@ -3190,7 +3640,6 @@
     "PatOgee.dc.html",
     "LoB1.dc.html",
     "LoB3.dc.html",
-    "NListenVoice.dc.html",
     "NListenPill.dc.html",
     "NListenAnim.dc.html",
     "NListenFan.dc.html",
@@ -3305,7 +3754,37 @@
     "ErrInld2.dc.html",
     "ErrInlSpec.dc.html",
     "ErrInlStates.dc.html",
-    "ErrInlWrap.dc.html"
+    "ErrInlWrap.dc.html",
+    "FRWordGloss.dc.html",
+    "FRAaFont.dc.html",
+    "FRCopyText.dc.html",
+    "FRVoices.dc.html",
+    "FRSeek.dc.html",
+    "FRLibSelect.dc.html",
+    "FRLibRemoved.dc.html",
+    "FRYouGuide.dc.html",
+    "FRYouAppearance.dc.html",
+    "FRParchReading.dc.html",
+    "FRParchLibrary.dc.html",
+    "FRParchAa.dc.html",
+    "FRDevEdgeQuiet.dc.html",
+    "FRDevEdge.dc.html",
+    "FRDevEvents.dc.html",
+    "FRDevReport.dc.html",
+    "FRDevToggle.dc.html",
+    "FRDevToggleRead.dc.html",
+    "FRKeepToast.dc.html",
+    "FRKeepSheet.dc.html",
+    "FRKeepNewList.dc.html",
+    "FRLibLists.dc.html",
+    "FRListsAll.dc.html",
+    "FRListOptions.dc.html",
+    "FRListDelete.dc.html",
+    "FRListLetter.dc.html",
+    "FRV1End.dc.html",
+    "FRYouV1.dc.html",
+    "FRExploreDiff.dc.html",
+    "FRDeleteAccount.dc.html"
   ],
   "pages": [
     {

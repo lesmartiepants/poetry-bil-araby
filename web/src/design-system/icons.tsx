@@ -25,6 +25,7 @@ export const Headphones = ({ size = 20, ...p }: P) => <svg {...base(size)} {...p
 export const Lamp = ({ size = 20, ...p }: P) => <svg {...base(size)} {...p}><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9V16h7v-2.1A6 6 0 0 0 12 3z" /></svg>;
 export const Dots = ({ size = 20, ...p }: P) => <svg {...base(size)} {...p} fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8" /><circle cx="12" cy="12" r="1.8" /><circle cx="19" cy="12" r="1.8" /></svg>;
 export const Lock = ({ size = 16, ...p }: P) => <svg {...base(size)} {...p}><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>;
+export const Clock = ({ size = 16, ...p }: P) => <svg {...base(size)} {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>;
 export const Up = ({ size = 20, ...p }: P) => <svg {...base(size)} {...p}><path d="M6 14l6-6 6 6" /></svg>;
 export const Copy = ({ size = 18, ...p }: P) => <svg {...base(size)} {...p}><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" /></svg>;
 export const Link = ({ size = 18, ...p }: P) => <svg {...base(size)} {...p}><path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1" /></svg>;

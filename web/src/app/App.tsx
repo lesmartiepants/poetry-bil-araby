@@ -75,7 +75,7 @@ function Routes() {
   const voice = useDefaultVoice();
   const [, nav] = useLocation();
   const [loc] = useLocation();
-  const hideTabs = loc.startsWith('/p/') || loc === '/welcome' || loc === '/search';
+  const hideTabs = loc.startsWith('/p/') || loc === '/welcome';
   return (
     <>
       <Switch>

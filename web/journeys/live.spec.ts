@@ -55,8 +55,8 @@ test.describe('@live V1 against the real API', () => {
     await fresh(page);
     await page.goto('./poet/test-poet-five');
     await expect(page.getByRole('heading', { name: 'شاعرة الاختبار الخامسة' })).toBeVisible();
-    await expect(page.locator('.list-row').first()).toBeVisible();
-    await expect(page.getByText(/NAJD/)).toBeVisible();
+    await expect(page.locator('.poet-poem').first()).toBeVisible();
+    await expect(page.getByText(/NAJD ·/)).toBeVisible();
   });
 });
 
@@ -76,7 +76,7 @@ test.describe('@live V3 against the real API', () => {
     await page.getByRole('radio', { name: 'PATHWAYS' }).click();
     await page.getByRole('link', { name: /Fixture journey/ }).click();
     await expect(page.getByRole('heading', { name: 'Fixture journey' })).toBeVisible();
-    await expect(page.getByText('0 of 3')).toBeVisible();
+    await expect(page.getByText('JOURNEY · 0 OF 3 READ')).toBeVisible();
   });
 
   test('@live 10.2 a collection lists its poems in order', async ({ page }) => {

@@ -314,6 +314,8 @@ function GlossSheet({ poem, at, onClose }: { poem: Poem; at: { line: number; wor
 /** A poem counts as read once the reader passes its last line (V2.3). */
 function useMarkReadAtEnd(poemId: string, onEnd?: () => void) {
   const ref = useRef<HTMLDivElement>(null);
+  const endRef = useRef(onEnd);
+  endRef.current = onEnd;
   const qc = useQueryClient();
   useEffect(() => {
     const el = ref.current;
@@ -322,7 +324,7 @@ function useMarkReadAtEnd(poemId: string, onEnd?: () => void) {
     const io = new IntersectionObserver((entries) => {
       if (done || !entries.some((e) => e.isIntersecting)) return;
       done = true;
-      onEnd?.();
+      endRef.current?.();
       api.library.markRead(poemId).then(() => qc.invalidateQueries({ queryKey: ['reads'] })).catch(() => {});
     });
     io.observe(el);

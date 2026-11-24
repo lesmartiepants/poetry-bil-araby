@@ -56,7 +56,7 @@ test.describe('@live @supabase per-user data', () => {
     await other.getByRole('button', { name: 'DELETE LIST' }).click();
     await expect(other.getByText('Longing for home')).toHaveCount(0);
     await other.goto('./library');
-    await expect(other.locator('.list-row').first()).toBeVisible();
+    await expect(other.locator('.poem-tile').first()).toBeVisible();
   });
 
   test('@live @supabase 12.2 settings follow the reader to another device', async ({ browser }) => {
@@ -68,9 +68,9 @@ test.describe('@live @supabase per-user data', () => {
     await expect(page.locator('html')).toHaveAttribute('data-page', 'parchment');
     await page.waitForTimeout(500);
     const other = await as(browser, user);
-    await other.goto('./you');
+    await other.goto('./you/appearance');
     await expect(other.locator('html')).toHaveAttribute('data-page', 'parchment');
-    await expect(other.getByText(/Naskh/)).toBeVisible();
+    await expect(other.getByRole('radio', { name: /NASKH/ })).toHaveAttribute('aria-checked', 'true');
   });
 
   test('@live @supabase 8.5 following a poet shows in the Library, with poems read', async ({ browser }) => {
@@ -92,14 +92,16 @@ test.describe('@live @supabase per-user data', () => {
     const user = await newUser();
     const page = await as(browser, user);
     await page.goto('./journey/fixture-journey');
-    await page.getByRole('button', { name: /I’ve read heaven 1/ }).click();
-    await expect(page.getByText('HEAVEN 1 COMPLETE')).toBeVisible();
+    await page.getByRole('link', { name: /HEAVEN 1/ }).last().click();
+    await page.getByTestId('read-sentinel').scrollIntoViewIfNeeded();
+    await page.getByRole('link', { name: 'Heaven 1 complete' }).click();
+    await expect(page.getByText(/Heaven one/)).toBeVisible();
     const other = await as(browser, user);
     await other.goto('./journey/fixture-journey');
-    await expect(other.getByText('1 of 3')).toBeVisible();
+    await expect(other.getByText('JOURNEY · 1 OF 3 READ')).toBeVisible();
     const stranger = await as(browser, await newUser());
     await stranger.goto('./journey/fixture-journey');
-    await expect(stranger.getByText('0 of 3')).toBeVisible();
+    await expect(stranger.getByText('JOURNEY · 0 OF 3 READ')).toBeVisible();
   });
 
   test('@live @supabase 8.10 removing a keep removes it everywhere; another reader never sees it', async ({ browser }) => {

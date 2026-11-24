@@ -1,0 +1,20 @@
+.verse { display: flex; flex-direction: column; gap: 2px; text-align: right; cursor: default; }
+.verse__ar { margin: 0; font-family: var(--reading-font, var(--font-amiri)); font-size: var(--reading-size, var(--verse-3)); line-height: 1.6; color: var(--c-text); }
+.verse__en { margin: 0; font-family: var(--font-serif); font-style: italic; font-size: 18px; color: var(--c-text-3); text-align: right; }
+.verse__en--sounds { font-style: normal; font-family: var(--font-ui); font-size: 15px; letter-spacing: 0.02em; }
+.verse--dim .verse__en { opacity: 0.4; }
+.verse--active .verse__en { color: var(--c-accent); opacity: 0.9; }
+.word { border-radius: 6px; transition: color var(--motion-fast); }
+.word[role='button'] { cursor: pointer; }
+.word--past { color: rgba(255, 255, 255, 0.45); }
+[data-page='parchment'] .word--past { color: rgba(42, 34, 22, 0.45); }
+.word--now { color: var(--c-accent); text-shadow: 0 0 8px var(--c-accent), 0 0 20px rgba(201, 168, 76, 0.5); }
+.word--selected { background: var(--c-accent); color: var(--c-on-accent); padding: 0 4px; }
+.coll-card { flex: none; width: 200px; height: 112px; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; text-decoration: none; color: #EDE3CF; position: relative; overflow: hidden; }
+.coll-card__ar { font-family: var(--font-ruqaa); font-size: 22px; direction: rtl; text-align: right; color: #E8CC8A; }
+.coll-card__en { font-family: var(--font-serif); font-size: 15px; }
+.coll-card__count { font-size: 10px; letter-spacing: 0.16em; color: #E8CC8A; }
+.coll-cover { border-radius: 18px; height: 150px; padding: 18px; display: flex; flex-direction: column; justify-content: flex-end; color: #EDE3CF; }
+.list-icon { flex: none; width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-family: var(--font-ruqaa); font-weight: 700; font-size: 20px; color: #E8CC8A; }
+.search-bar { flex: 1; height: 48px; border-radius: 24px; border: 1px solid var(--c-border-2); background: var(--c-surface); display: flex; align-items: center; gap: 10px; padding: 0 16px; color: var(--c-muted); }
+.search-bar input { flex: 1; border: none; background: none; color: var(--c-text); font: inherit; font-size: 15px; outline: none; }

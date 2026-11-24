@@ -1,0 +1,7 @@
+.share-card { aspect-ratio: 1080 / 1350; width: 100%; max-width: 280px; align-self: center; border-radius: 14px; padding: 22px 18px 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 8px 28px rgba(0,0,0,0.4); }
+.share-card__ar { margin: 0; font-family: var(--font-amiri); font-size: 19px; line-height: 1.6; text-align: right; }
+.share-card__en { margin: 0; font-family: var(--font-serif); font-style: italic; font-size: 16px; }
+.share-card__ded { margin: 0; font-family: var(--font-serif); font-style: italic; font-size: 14px; }
+.share-card__foot { font-size: 9px; letter-spacing: 0.14em; }
+.pick-line { display: flex; align-items: center; gap: 10px; background: none; border: none; padding: 6px 0; text-align: right; color: var(--c-text); }
+.pick-line__ar { flex: 1; font-size: 17px; }

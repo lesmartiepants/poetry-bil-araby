@@ -1,0 +1,7 @@
+.poet-hero { position: sticky; top: 0; z-index: 5; background: linear-gradient(180deg, var(--c-surface) 0%, var(--c-bg) 100%); padding-bottom: 14px; border-bottom: 1px solid var(--c-hairline); }
+.poet-hero__body { display: flex; align-items: center; gap: 16px; padding: 8px 22px 0; }
+.poet-hero__ar { margin: 0; font-family: var(--font-ruqaa); font-size: 32px; line-height: 1.2; color: var(--c-accent); }
+.poet-hero--folded .poet-hero__ar { font-size: 22px; }
+.poet-hero__en { margin: 0; font-family: var(--font-serif); font-size: 20px; color: var(--c-text); }
+.poem-num { width: 22px; font-size: 11px; color: var(--c-muted-2); text-align: center; }
+.poem-first { margin: 0; font-family: var(--font-amiri); font-size: 18px; color: var(--c-text); direction: rtl; text-align: right; }

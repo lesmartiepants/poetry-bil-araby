@@ -84,9 +84,11 @@ export interface Explanation {
 
 export interface Gloss {
   word: string;
+  translit: string;
   root: string;
-  meaning: string;
-  inLine: string;
+  partOfSpeech: string;
+  meaning: string; // the sense in this line
+  otherSenses: string;
 }
 
 export interface Voice {

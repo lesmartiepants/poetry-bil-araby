@@ -1,0 +1,63 @@
+import { expect, test } from '@playwright/test';
+import { fresh } from './helpers';
+
+test.describe('Areas 9–12 · First run, journeys, collections, search, You', () => {
+  test('9.1–9.4 a new reader goes from Welcome to a first poem, then Tonight', async ({ page }) => {
+    await page.goto('./');
+    await page.evaluate(() => { localStorage.clear(); sessionStorage.setItem('splashed', '1'); });
+    await page.goto('./');
+    await expect(page).toHaveURL(/welcome/);
+    await page.getByRole('textbox', { name: 'Your name' }).fill('Siraj');
+    await page.getByRole('button', { name: 'Continue' }).click();
+    await page.getByRole('radio', { name: /WITH SOUNDS/ }).click();
+    await page.getByRole('button', { name: 'Read my first poem' }).click();
+    await expect(page.getByRole('heading', { name: 'أمرُّ على الديار' })).toBeVisible();
+    await page.goto('./journey');
+    await expect(page.getByText(/HEAVEN 3 OF 7/)).toBeVisible();
+  });
+
+  test('9.6–9.7 completing a journey step advances the path', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./journey/your-first-seven');
+    await expect(page.getByText('2 of 7')).toBeVisible();
+    await page.getByRole('button', { name: /I’ve read heaven 3/ }).click();
+    await expect(page.getByText('HEAVEN 3 COMPLETE')).toBeVisible();
+    await page.goto('./journey/your-first-seven');
+    await expect(page.getByText('3 of 7')).toBeVisible();
+  });
+
+  test('10.2 a collection can be saved and continued', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./collection/women-who-wrote-the-canon');
+    await page.getByRole('button', { name: 'SAVE' }).click();
+    await expect(page.getByRole('button', { name: 'SAVED' })).toBeVisible();
+    await page.getByRole('link', { name: 'CONTINUE' }).click();
+    await expect(page.getByRole('navigation', { name: 'Poem actions' })).toBeVisible();
+  });
+
+  test('11.2 a half-remembered line finds its poem; 11.3 nothing found shows the closest', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./search');
+    await page.getByRole('textbox', { name: /Search/ }).fill('الديار');
+    await expect(page.getByText('LINES')).toBeVisible();
+    await page.getByRole('textbox', { name: /Search/ }).fill('zzzz');
+    await expect(page.getByText('CLOSEST MATCHES:')).toBeVisible();
+  });
+
+  test('12.5 the guide’s difficulty uses the same bands as Explore', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./you/guide');
+    await page.getByRole('radio', { name: 'GENTLE' }).click();
+    await page.goto('./you');
+    await expect(page.getByText(/gentle/)).toBeVisible();
+  });
+
+  test('12.8 deleting the account asks first', async ({ page }) => {
+    await fresh(page, { 'mock.account': JSON.stringify({ signedIn: true, provider: 'apple' }) });
+    await page.goto('./you');
+    await page.getByRole('button', { name: 'Delete account' }).click();
+    await expect(page.getByRole('dialog', { name: 'Delete account' })).toContainText('can’t be undone');
+    await page.getByRole('button', { name: 'KEEP MY ACCOUNT' }).click();
+    await expect(page.getByText('Signed in with Apple')).toBeVisible();
+  });
+});

@@ -1,0 +1,18 @@
+.hub-hdr { display: flex; align-items: center; justify-content: space-between; padding: 16px 12px 0; height: 60px; }
+.hub-logo { display: flex; align-items: baseline; gap: 4px; }
+.hub-logo__en { font-weight: 200; font-size: 18px; color: var(--c-text-3); }
+.hub-logo__ar { font-family: var(--font-kufi); font-weight: 500; font-size: 17px; color: var(--c-text-3); }
+.hub-search { border: 1px solid var(--c-border-2); background: var(--c-surface-2); }
+.potw { display: flex; gap: 14px; align-items: center; padding: 14px; border-radius: 18px; background: var(--c-surface); border: 1px solid var(--c-border); text-decoration: none; color: var(--c-muted); }
+.potw__main { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.potw__name { font-family: var(--font-serif); font-size: 19px; color: var(--c-text); }
+.potw__note { font-size: 12px; color: var(--c-muted); }
+.poet-dot { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: var(--c-text-3); text-decoration: none; }
+.era-card { flex: none; width: 228px; height: 128px; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; text-decoration: none; color: #EDE3CF; }
+.era-card__en { font-family: var(--font-serif); font-size: 19px; }
+.era-card__ar { font-family: var(--font-ruqaa); font-size: 18px; color: #E8CC8A; }
+.era-card__meta { font-size: 9px; letter-spacing: 0.18em; color: #E8CC8A; }
+.era-card__line { font-size: 12px; line-height: 1.35; }
+.shelf { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: var(--c-surface); border: 1px solid var(--c-border); text-decoration: none; }
+.shelf__en { font-family: var(--font-serif); font-size: 21px; color: var(--c-text); }
+.shelf__ar { font-family: var(--font-amiri); font-size: 20px; color: var(--c-accent); }

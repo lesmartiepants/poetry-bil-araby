@@ -61,7 +61,11 @@ export const mockApi: Api = {
     async gloss(poemId, line, word) {
       const p = findPoem(poemId);
       const w = p?.lines[line]?.ar.split(/\s+/)[word] ?? '';
-      return wait({ word: w, root: 'ج د ر', meaning: 'wall; a wall of a house', inLine: 'Here: the walls of Layla’s house, kissed for her sake.' }, 150);
+      return wait({
+        word: w, translit: 'al-jidāra', root: 'ج د ر', partOfSpeech: 'noun · object of “kiss”',
+        meaning: 'the wall: here, the walls of Layla’s empty home, which he kisses one after another.',
+        otherSenses: 'an enclosure; a partition. From the same root, جدير: worthy, fit for.',
+      }, 150);
     },
     async doors(poemId) {
       return wait(POEMS.filter((p) => p.id !== poemId).slice(0, 3).map((p, i) => ({

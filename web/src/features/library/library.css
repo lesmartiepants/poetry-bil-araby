@@ -1,0 +1,6 @@
+.list-tile { flex: none; width: 128px; padding: 12px; border-radius: 14px; background: var(--c-surface); border: 1px solid var(--c-border); display: flex; flex-direction: column; gap: 8px; text-decoration: none; }
+.list-tile__name { font-size: 14px; color: var(--c-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.select-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: 104px; width: min(358px, calc(100vw - 32px)); display: flex; align-items: center; justify-content: space-between; padding: 8px 8px 8px 18px; border-radius: 30px; background: var(--c-nav); border: 1px solid var(--c-border-2); z-index: 30; font-size: 13px; }
+.delete-fab { position: fixed; left: 50%; transform: translateX(-50%); bottom: 12px; z-index: 45; width: min(346px, calc(100vw - 44px)); }
+.check { flex: none; width: 24px; height: 24px; border-radius: 7px; border: 1.5px solid var(--c-border-sheet); display: flex; align-items: center; justify-content: center; }
+.check--on { background: var(--c-accent); border-color: var(--c-accent); }

@@ -11,9 +11,10 @@ export function Header({ onBack, right, label = 'Back' }: { onBack?: () => void;
   );
 }
 
-export function TitleRow({ en, ar }: { en: string; ar?: string }) {
+/** `bare` drops the side padding, for titles inside an already padded column. */
+export function TitleRow({ en, ar, bare }: { en: string; ar?: string; bare?: boolean }) {
   return (
-    <div className="title-row">
+    <div className="title-row" style={bare ? { padding: 0 } : undefined}>
       <h1 className="t-title">{en}</h1>
       {ar && <span lang="ar" className="t-title-ar">{ar}</span>}
     </div>

@@ -5,7 +5,7 @@ import { arabicInitial, arabicSortKey } from '@core/logic/arabic';
 import { isAvailable } from '@core/sources';
 import { Header, SectionLabel, Skeleton, TitleRow } from '@ds/primitives';
 import { Bookmark, Chevron, Search } from '@ds/icons';
-import { CollectionCard, eraArt, PoemRow, PoemTile, PoetAvatar } from '@components/index';
+import { BrandLogo, CollectionCard, eraArt, PoemRow, PoemTile, PoetAvatar } from '@components/index';
 import { Pattern } from '@ds/Pattern';
 import { Fragment, useState, type ReactNode } from 'react';
 import type { PoemFilter } from '@core/api/contract';
@@ -23,9 +23,8 @@ export function ExploreHub() {
   return (
     <div className="screen">
       <header className="hub-hdr">
-        <span className="hdr__spacer" />
-        <span className="hub-logo"><span className="hub-logo__en">poetry</span><span lang="ar" className="hub-logo__ar">بالعربي</span></span>
-        {v3 ? <button className="icon-btn hub-search" aria-label="Search" onClick={() => nav('/search')}><Search /></button> : <span className="hdr__spacer" />}
+        <BrandLogo />
+        {v3 && <button className="icon-btn hub-search" aria-label="Search" onClick={() => nav('/search')}><Search /></button>}
       </header>
       <main className="pad stack gap-12" style={{ paddingTop: 14 }}>
         <SectionLabel>POET OF THE WEEK</SectionLabel>

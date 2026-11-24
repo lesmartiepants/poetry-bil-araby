@@ -1,33 +1,3 @@
-.hub-hdr {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 12px 0;
-  height: 60px;
-}
-.hub-logo {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-.hub-logo__en {
-  font-weight: 200;
-  font-size: 18px;
-  color: var(--c-text-3);
-}
-.hub-logo__ar {
-  font-family: var(--font-kufi);
-  font-weight: 500;
-  font-size: 17px;
-  color: var(--c-text-3);
-}
-.icon-btn.hub-search {
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
-  border: 1px solid #2a2722;
-  background: var(--c-surface-2);
-}
 .potw {
   display: flex;
   gap: 14px;
@@ -58,26 +28,6 @@
   font-size: 12px;
   line-height: 1.4;
   color: var(--c-muted);
-}
-.poet-dot {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  color: #e4ded2;
-  text-decoration: none;
-}
-.poet-dot > span:last-child {
-  width: 60px;
-  text-align: center;
-}
-.see-all {
-  font-size: 11px;
-  letter-spacing: 0.14em;
-  color: var(--c-muted);
-  text-decoration: none;
 }
 .era-card {
   flex: none;

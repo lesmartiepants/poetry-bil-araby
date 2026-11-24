@@ -7,8 +7,8 @@ import { qk, useAccount, useCollections, useFollows, useInvalidate, useKeeps, us
 import { isAvailable } from '@core/sources';
 import type { Poem, Poet, UserList } from '@core/types';
 import { Header, SectionLabel, Segmented, Sheet, Skeleton, TitleRow } from '@ds/primitives';
-import { Dots, Lock, Search } from '@ds/icons';
-import { CollectionCard, PoemRow, PoetRow } from '@components/index';
+import { Compass, Dots, Lock, Mark, Search } from '@ds/icons';
+import { BrandLogo, CollectionCard, PoemRow, PoemTile, PoetAvatar, PoetRow } from '@components/index';
 import { useOverlay } from '@components/overlays';
 import './library.css';
 
@@ -32,59 +32,69 @@ export function LibraryHub({ ListIcon }: { ListIcon: ListIconT }) {
   const [, nav] = useLocation();
   const open = useOverlay((s) => s.open);
   const [tab, setTab] = useState<'hub' | 'poems'>('hub');
-  if (account && !account.signedIn) {
-    return (
-      <div className="screen" style={{ paddingTop: 48 }}>
-        <TitleRow en="Your diwan" ar="ديوانك" />
-        <div className="pad stack gap-12 mt-16">
-          <p className="t-lede">Poems you keep live here, in Favorites and your own lists, on every device.</p>
-          <button className="btn btn--primary" onClick={() => open({ type: 'signin' })}>Sign in to keep poems</button>
-        </div>
-      </div>
-    );
-  }
-  if (lists && poems.length === 0 && lists.every((l) => l.poemIds.length === 0)) {
-    return (
-      <div className="screen" style={{ paddingTop: 48 }}>
-        <TitleRow en="Your diwan" ar="ديوانك" />
-        <div className="coming"><h2 className="t-title" style={{ fontSize: 26 }}>Nothing kept yet</h2><p className="t-body">Tap the heart on any poem. It goes to Favorites, and you can sort it into lists from there.</p>
-          <Link href="/explore" className="btn" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>Find a poem</Link></div>
-      </div>
-    );
-  }
-  const followed = poets?.filter((p) => follows?.includes(p.slug));
-  const saved = colls?.filter((c) => prog?.some((p) => p.slug === c.slug && p.saved));
+  const signedOut = account && !account.signedIn;
+  const empty = signedOut || (lists && poems.length === 0 && lists.every((l) => l.poemIds.length === 0));
+  const followed = poets?.filter((p) => follows?.includes(p.slug)) ?? [];
+  const saved = colls?.filter((c) => prog?.some((p) => p.slug === c.slug && p.saved)) ?? [];
+  const keptPoets = new Set(poems.map((p) => p.poetSlug)).size;
+  const tabs = (
+    <div className="row gap-8">
+      <div style={{ flex: 1 }}><Segmented pill label="Library" value={tab} onChange={setTab} options={[{ value: 'hub', label: 'HUB' }, { value: 'poems', label: 'POEMS' }]} /></div>
+      {isAvailable('search') && <button className="icon-btn lib-search" aria-label="Search" onClick={() => nav('/search')}><Search /></button>}
+    </div>
+  );
   return (
     <div className="screen">
-      <div className="row between" style={{ padding: '48px 12px 0 0' }}>
-        <TitleRow en="Your diwan" ar="ديوانك" />
-        {isAvailable('search') && <button className="icon-btn" aria-label="Search" onClick={() => nav('/search')}><Search /></button>}
-      </div>
-      <div className="pad stack gap-12 mt-12">
-        <Segmented pill label="Library" value={tab} onChange={setTab} options={[{ value: 'hub', label: 'HUB' }, { value: 'poems', label: 'POEMS' }]} />
-        {tab === 'poems' ? <YourPoems /> : (
+      <header className="hub-hdr"><BrandLogo /></header>
+      <main className="pad stack gap-12" style={{ paddingTop: 14 }}>
+        <TitleRow en="Your diwan" ar="ديواني" bare />
+        <p className="t-count lib-count">{empty ? 'NOTHING KEPT YET' : `${poems.length} ${poems.length === 1 ? 'POEM' : 'POEMS'} · ${keptPoets} ${keptPoets === 1 ? 'POET' : 'POETS'}`}</p>
+        {tabs}
+        {empty ? (
+          <div className="lib-empty">
+            <Mark size={76} colour="#5C4C2A" />
+            <p className="lib-empty__title">Your diwan starts with one poem.</p>
+            <p className="lib-empty__body">While reading, tap the heart to keep a poem. Poems you keep, poets you follow and collections you save all gather here.</p>
+            <div className="stack gap-10" style={{ alignSelf: 'stretch', marginTop: 22 }}>
+              {signedOut && <button className="btn btn--primary btn--block" onClick={() => open({ type: 'signin' })}>Sign in to keep poems</button>}
+              <Link href="/" className={`btn btn--block lib-empty__btn${signedOut ? '' : ' btn--primary'}`}>Read tonight’s poem</Link>
+              <Link href="/explore/collections" className="btn btn--block lib-empty__btn"><Compass size={16} /> Browse collections</Link>
+            </div>
+          </div>
+        ) : tab === 'poems' ? <YourPoems /> : (
           <>
-            <SectionLabel action={<Link href="/library/lists" className="link-btn">SEE ALL</Link>}>YOUR LISTS</SectionLabel>
+            <SectionLabel action={<Link href="/library/lists" className="see-all">SEE ALL</Link>}>YOUR LISTS · {lists?.length ?? 0}</SectionLabel>
             <div className="chips" style={{ gap: 10 }}>
               {lists?.map((l) => (
-                <Link key={l.id} href={`/library/list/${l.id}`} className="list-tile">
-                  <ListIcon list={l} size={44} /><span className="list-tile__name">{l.name}</span><span className="t-count">{l.poemIds.length} POEMS</span>
+                <Link key={l.id} href={`/library/list/${l.id}`} className={`list-tile${l.isDefault ? ' list-tile--fav' : ''}`}>
+                  <ListIcon list={l} size={36} />
+                  <span className="list-tile__text"><span className="list-tile__name">{l.name}</span><span className="list-tile__count">{l.poemIds.length} {l.poemIds.length === 1 ? 'POEM' : 'POEMS'}</span></span>
                 </Link>
               ))}
             </div>
-            <SectionLabel action={<Link href="/library/poets" className="link-btn">SEE ALL</Link>}>POETS YOU FOLLOW</SectionLabel>
-            <div className="list">{followed?.slice(0, 3).map((p) => <PoetRow key={p.slug} poet={p} />)}</div>
-            {isAvailable('collections') && saved && saved.length > 0 && (
+            {isAvailable('collections') && saved.length > 0 && (
               <>
-                <SectionLabel action={<Link href="/explore/collections" className="link-btn">BROWSE MORE</Link>}>SAVED COLLECTIONS</SectionLabel>
-                <div className="chips" style={{ gap: 10 }}>{saved.map((c) => <CollectionCard key={c.slug} c={c} />)}</div>
+                <SectionLabel action={<Link href="/explore/collections" className="see-all">SEE ALL</Link>}>COLLECTIONS · {saved.length} SAVED</SectionLabel>
+                <div className="chips" style={{ gap: 10 }}>
+                  {saved.map((c) => <CollectionCard key={c.slug} c={c} progress={prog?.find((p) => p.slug === c.slug)?.position ?? 0} />)}
+                </div>
               </>
             )}
-            <SectionLabel>RECENT KEEPS</SectionLabel>
-            <div className="list">{poems.slice(0, 4).map((p) => <PoemRow key={p.id} poem={p} />)}</div>
+            {followed.length > 0 && (
+              <>
+                <SectionLabel action={<Link href="/library/poets" className="see-all">SEE ALL</Link>}>POETS YOU FOLLOW · {followed.length}</SectionLabel>
+                <div className="chips" style={{ gap: 12 }}>
+                  {followed.map((p) => (
+                    <Link key={p.slug} href={`/poet/${p.slug}`} className="poet-dot"><PoetAvatar initial={p.initial} eraKey={p.eraKey} size={56} /><span>{p.nameEn.split(' ').slice(-1)[0].replace(/^al-/i, '')}</span></Link>
+                  ))}
+                </div>
+              </>
+            )}
+            <SectionLabel action={<button className="see-all" onClick={() => setTab('poems')}>SEE ALL</button>}>RECENTLY KEPT</SectionLabel>
+            <div className="chips">{poems.slice(0, 8).map((p) => <PoemTile key={p.id} poem={p} small />)}</div>
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }

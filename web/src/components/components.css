@@ -180,3 +180,116 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.brand {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.brand__en {
+  font-weight: 200;
+  font-size: 18px;
+  color: var(--c-text-3);
+}
+.brand__ar {
+  font-family: var(--font-kufi);
+  font-weight: 500;
+  font-size: 17px;
+  color: var(--c-text-3);
+}
+.brand__mark {
+  display: flex;
+  margin-left: 1px;
+  transform: translateY(5px);
+}
+.coll-card--progress {
+  padding: 12px 14px;
+}
+.coll-card--progress .coll-card__ar {
+  font-weight: 500;
+}
+.coll-card--progress .coll-card__en {
+  font-family: var(--font-ui);
+  font-size: 12.5px;
+  color: #e4ded2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+.coll-card__progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 7px 0 0;
+}
+.coll-card__progress .coll-card__count {
+  margin: 0;
+  font-size: 9px;
+  letter-spacing: 0.12em;
+}
+.coll-card__bar {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(242, 238, 230, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+.coll-card__bar > span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--c-accent);
+}
+.poem-tile--small {
+  width: 104px;
+  height: 112px;
+}
+.poem-tile--small .poem-tile__art {
+  height: 40px;
+}
+.hub-hdr {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px 16px 0;
+  height: 60px;
+}
+.icon-btn.hub-search {
+  position: absolute;
+  right: 16px;
+  top: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  border: 1px solid #2a2722;
+  background: var(--c-surface-2);
+}
+
+.poet-dot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #e4ded2;
+  text-decoration: none;
+}
+.poet-dot > span:last-child {
+  width: 60px;
+  text-align: center;
+}
+.see-all {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--c-muted);
+  text-decoration: none;
+}
+button.see-all {
+  background: none;
+  border: none;
+  padding: 0;
+}

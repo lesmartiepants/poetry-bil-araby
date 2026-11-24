@@ -74,7 +74,7 @@ jobs:
         run: npm ci
       - name: Database schema and seed
         working-directory: .
-        run: npm run db:setup && npm run db:seed
+        run: npm run db:setup && npm run db:seed && psql "$LOCAL_DATABASE_URL" -q -f web/journeys/live-seed.sql
       - name: Start API
         working-directory: .
         run: node server.js > /tmp/server.log 2>&1 &

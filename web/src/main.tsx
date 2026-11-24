@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { setStore } from '@core/storage';
 import { SOURCES, setShowMocks, setSourceOverride, type Domain } from '@core/sources';
+import { setApiBase } from '@core/api/live';
 import { App } from './app/App';
 import { installDevLog } from './features/shell/devlog';
 import './design-system/base.css';
@@ -16,6 +17,7 @@ setStore({
 // Production hides mocked areas; dev and preview builds show them.
 setShowMocks(import.meta.env.DEV || import.meta.env.VITE_SHOW_MOCKS === '1');
 installDevLog();
+setApiBase(import.meta.env.VITE_API_URL ?? '');
 // VITE_SOURCES=mock forces every domain onto mocks (journey tests on mock data).
 if (import.meta.env.VITE_SOURCES === 'mock') {
   setSourceOverride(Object.fromEntries(Object.keys(SOURCES).map((d) => [d, 'mock'])) as Record<Domain, 'mock'>);

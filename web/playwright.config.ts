@@ -20,11 +20,13 @@ export default defineConfig({
     trace: 'off',
     launchOptions: exe ? { executablePath: exe } : {},
   },
+  grep: LIVE ? /@live/ : undefined,
+  grepInvert: LIVE ? undefined : /@live/,
   projects: [{ name: 'phone', use: { browserName: 'chromium' } }],
   webServer: {
     command: `${LIVE ? '' : 'VITE_SOURCES=mock '}npx vite --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}/new/`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false, // never reuse: a server started with other sources would mix live and mock data
     timeout: 60_000,
   },
 });

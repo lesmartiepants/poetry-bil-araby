@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { deriveBands } from './bands';
 import { autoIconLetter, iconLetterChoices, iconLetterOf } from './iconLetter';
 import { DEFAULT_PREFS, mergePrefs } from './prefs';
-import { splitForCards } from './cards';
+import { cardSvg, splitForCards } from './shareCard';
 import { arabicInitial, arabicSortKey, normalizeArabic, stripMarks } from './arabic';
 import { initialPlayback, playbackReducer } from './playback';
 
@@ -88,5 +88,17 @@ describe('playback state machine', () => {
     expect(st.status).toBe('stalled');
     expect(playbackReducer(st, { type: 'RESUME' }).status).toBe('playing');
     expect(playbackReducer(playing, { type: 'SEEK_LINE', line: 9 }).line).toBe(3);
+  });
+});
+
+describe('share cards', () => {
+  const spec = { titleAr: 'أمرُّ على الديار', titleEn: 'I pass by the dwellings', poetAr: 'قيس', poetEn: 'Majnun Layla', lines: [{ ar: 'أَمُرُّ', en: 'I pass' }], showEn: true, colourway: 'obsidian' };
+  it('draws the dedication, escaped', () => {
+    const svg = cardSvg({ ...spec, dedication: '<b>Nour</b>' });
+    expect(svg).toContain('for &lt;b&gt;Nour&lt;/b&gt;');
+    expect(svg).not.toContain('<b>');
+  });
+  it('is 1080 × 1350 for saved images', () => {
+    expect(cardSvg(spec, { width: 1080 })).toMatch(/width="1080" height="1350"/);
   });
 });

@@ -16,6 +16,11 @@ export function setPerUser(api: PerUser) {
 export function setApiBase(url: string) {
   base = url.replace(/\/$/, '');
 }
+let appUrl = 'https://bilaraby.app/';
+/** Where shared links point: this app's own address (e.g. https://…/new/ until cut-over). */
+export function setAppUrl(url: string) {
+  appUrl = url.endsWith('/') ? url : `${url}/`;
+}
 export async function getJSON<T>(path: string, what = 'item'): Promise<T> {
   const res = await fetch(`${base}${path}`);
   if (res.status === 404) throw new NotFoundError(what);
@@ -63,6 +68,11 @@ export const liveApi: Api = {
     setProgress: (p) => (perUser ? perUser.progress.setProgress(p) : mockApi.collections.setProgress(p)),
     all: (kind) => getJSON<Collection[]>(`/api/v2/collections${kind ? `?kind=${kind}` : ''}`),
     get: (slug) => getJSON<Collection>(`/api/v2/collections/${encodeURIComponent(slug)}`, 'collection'),
+  },
+  share: {
+    cardUrl: ({ poemId, lines, en, colourway, dedication, card, link }) =>
+      `${base}/api/v2/poems/${poemId}/card.png${qs({ lines: lines?.join(','), en: en ? '1' : undefined, cw: colourway, for: dedication, card: String(card), link })}`,
+    link: (poem) => `${appUrl}p/${poem.slug}`,
   },
   search: {
     search: (q) => getJSON<SearchResults>(`/api/v2/search?q=${encodeURIComponent(q)}`),

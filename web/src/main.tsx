@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { setStore } from '@core/storage';
 import { SOURCES, configureSources, setShowMocks, setSourceOverride, type Domain } from '@core/sources';
-import { setApiBase, setPerUser } from '@core/api/live';
+import { setApiBase, setAppUrl, setPerUser } from '@core/api/live';
 import { makeSupabaseApi } from '@core/api/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { App } from './app/App';
@@ -20,6 +20,7 @@ setStore({
 setShowMocks(import.meta.env.DEV || import.meta.env.VITE_SHOW_MOCKS === '1');
 installDevLog();
 setApiBase(import.meta.env.VITE_API_URL ?? '');
+setAppUrl(location.origin + import.meta.env.BASE_URL);
 
 // Per-user data goes live when Supabase is configured; otherwise those domains stay on mocks.
 const sbUrl = import.meta.env.VITE_SUPABASE_URL;

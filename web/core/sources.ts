@@ -6,7 +6,7 @@ export type Domain =
 export type Source = 'mock' | 'live';
 
 // V1.2 reader, V1.3 tap a word, V1.5 Explore and V1.6 poet pages are live (server/redesign2.js).
-// V3 Tonight, journeys, collections and search are live; collection progress stays on the device until auth.
+// V2.2 share cards render on the server. V3 Tonight, journeys, collections and search are live; collection progress stays on the device until auth.
 // tts flips when a Gemini key is configured for live recitation; profile when Supabase auth is wired.
 export const SOURCES: Record<Domain, Source> = {
   poems: 'live',
@@ -17,7 +17,7 @@ export const SOURCES: Record<Domain, Source> = {
   profile: 'mock',
   keeps: 'mock',
   lists: 'mock',
-  share: 'mock',
+  share: 'live',
   library: 'mock',
   journey: 'live',
   collections: 'live',

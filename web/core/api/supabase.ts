@@ -33,11 +33,6 @@ export function makeSupabaseApi(sb: SupabaseClient, opts: { redirectTo?: () => s
     defaults = mergePrefs(DEFAULT_PREFS, (r.data?.prefs as Partial<Prefs>) ?? {});
     return defaults;
   };
-  const poetIdOf = async (slug: string) => {
-    const r = await sb.from('poets').select('id').eq('slug', slug).maybeSingle();
-    if (!r.data) throw new NotFoundError('poet');
-    return r.data.id as number;
-  };
   const collectionIdOf = async (slug: string) => {
     const r = await sb.from('collections').select('id').eq('slug', slug).maybeSingle();
     if (!r.data) throw new NotFoundError('collection');
@@ -140,18 +135,15 @@ export function makeSupabaseApi(sb: SupabaseClient, opts: { redirectTo?: () => s
       async follows() {
         const id = await uid();
         if (!id) return [];
-        const r = check(await sb.from('poet_follows').select('poets(slug)').eq('user_id', id).order('followed_at', { ascending: false }), 'follows');
-        return r.map((x) => (x.poets as unknown as { slug: string }).slug);
+        // Poets stay off the Data API, so slugs come through a function.
+        const r = check(await sb.rpc('followed_poet_slugs'), 'follows');
+        return r as unknown as string[];
       },
       async follow(slug, on) {
-        const id = await need();
-        const poetId = await poetIdOf(slug);
-        if (on) {
-          const r = await sb.from('poet_follows').insert({ user_id: id, poet_id: poetId });
-          if (r.error && r.error.code !== '23505') check(r, 'follow');
-        } else {
-          check(await sb.from('poet_follows').delete().eq('user_id', id).eq('poet_id', poetId), 'unfollow');
-        }
+        await need();
+        const r = await sb.rpc('set_follow', { p_slug: slug, p_on: on });
+        if (r.error?.code === 'P0002') throw new NotFoundError('poet');
+        check(r, on ? 'follow' : 'unfollow');
       },
       async reads() {
         const id = await uid();

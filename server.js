@@ -828,7 +828,14 @@ app.use('/api', devEventsMiddleware); // ReDesign2 developer panel timeline
 app.use('/api/ai', express.json({ limit: '10mb' }));
 app.use(
   '/api/',
-  rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false })
+  // API_RATE_LIMIT_PER_MIN lets local test runs (many parallel browser sessions
+  // from one address) raise the limit; production keeps the default of 100.
+  rateLimit({
+    windowMs: 60_000,
+    max: Number(process.env.API_RATE_LIMIT_PER_MIN) || 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
 );
 
 // API key authentication middleware for protected endpoints

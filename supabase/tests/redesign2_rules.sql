@@ -17,7 +17,7 @@ SET LOCAL request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","r
 
 DO $$
 DECLARE me uuid := '11111111-1111-1111-1111-111111111111'; other uuid := '22222222-2222-2222-2222-222222222222';
-        fav uuid; mine uuid; theirs uuid; ids uuid[]; n int;
+        fav uuid; mine uuid; theirs uuid; ids uuid[]; n int; poet text;
 BEGIN
   -- The first keep creates Favorites and puts the poem in it.
   INSERT INTO saved_poems (user_id, poem_id) VALUES (me, 1);
@@ -59,6 +59,19 @@ BEGIN
   PERFORM mark_read(1); PERFORM mark_read(1);
   SELECT read_count INTO n FROM poem_reads WHERE user_id = me AND poem_id = 1;
   ASSERT n = 2, 'mark_read counts rereads';
+
+  -- Follows go by slug through functions; poets stay off the Data API.
+  SELECT slug INTO poet FROM poets WHERE slug IS NOT NULL LIMIT 1;
+  PERFORM set_follow(poet, true); PERFORM set_follow(poet, true);
+  ASSERT (SELECT array_agg(s) FROM followed_poet_slugs() s) = ARRAY[poet], 'following twice is one follow';
+  PERFORM set_follow(poet, false);
+  ASSERT NOT EXISTS (SELECT 1 FROM followed_poet_slugs()), 'unfollow';
+
+  -- What a signed-in reader may do through the Data API.
+  ASSERT has_column_privilege('authenticated', 'public.saved_poems', 'list_ids', 'UPDATE'), 'readers can file kept poems in lists';
+  ASSERT NOT has_table_privilege('authenticated', 'public.poets', 'SELECT'), 'poets are served by the API, not the Data API';
+  ASSERT has_function_privilege('authenticated', 'public.set_follow(text, boolean)', 'EXECUTE'), 'readers can follow';
+  ASSERT NOT has_function_privilege('anon', 'public.set_follow(text, boolean)', 'EXECUTE'), 'signed-out visitors cannot follow';
   RAISE NOTICE 'redesign2 rules: all assertions passed';
 END $$;
 ROLLBACK;

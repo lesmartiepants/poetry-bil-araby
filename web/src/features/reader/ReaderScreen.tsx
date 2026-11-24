@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
 import { Link, useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, NotFoundError } from '@core/api';
-import { useDoors, useExplanation, useGloss, usePoem, usePoet, usePrefs, useSetPrefs } from '@core/hooks';
+import { qk, useDoors, useExplanation, useGloss, useInvalidate, useKeeps, usePoem, usePoet, usePrefs, useSetPrefs } from '@core/hooks';
 import { sourceOf } from '@core/sources';
 import { transliterate } from '@core/logic/transliterate';
 import type { Poem } from '@core/types';
@@ -29,6 +29,9 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const open = useOverlay((s) => s.open);
+  const showToast = useOverlay((s) => s.showToast);
+  const keeps = useKeeps().data;
+  const inv = useInvalidate();
 
   useEffect(() => {
     const on = () => {
@@ -64,16 +67,23 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
     if (listening) return setVerseMenu(line);
     if (prefs?.tapWord !== false) setGloss({ line, word });
   };
+  const kept = keeps?.includes(poem.id) ?? false;
+  const unkeep = async () => {
+    await api.keeps.unkeep([poem.id]);
+    await inv(qk.keeps, qk.lists);
+    showToast({ text: 'Removed from your diwan', undo: async () => { await api.keeps.keep(poem.id); inv(qk.keeps, qk.lists); } });
+  };
   const actions = {
     listen: () => (listening ? pb.send(pb.status === 'playing' ? { type: 'PAUSE' } : { type: 'RESUME' }) : startListening()),
     insights: () => setSheet('insights'),
-    keep: () => open({ type: 'keep', poemId: poem.id }),
+    keep: () => (kept ? unkeep() : open({ type: 'keep', poemId: poem.id })),
     share: () => open({ type: 'share', poemId: poem.id }),
     aa: () => setSheet('aa'),
   };
 
   return (
     <div className="screen reader" data-testid="reader">
+      <ReaderBackdrop />
       <header className="reader__top">
         <button className="icon-btn" aria-label="Back" onClick={() => history.length > 1 ? history.back() : nav('/explore')}><Back /></button>
         <Mark size={28} colour="var(--c-accent-line)" />
@@ -102,10 +112,10 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
           <span className="reader__progress" aria-hidden><span style={{ width: `${progress}%` }} /></span>
         </div>
       ) : (
-        <Dock {...actions} listening={false} />
+        <Dock {...actions} listening={false} kept={kept} />
       )}
 
-      {sheet === 'fan' && <Fan {...actions} listening={listening && pb.status === 'playing'} onClose={() => setSheet('none')} />}
+      {sheet === 'fan' && <Fan {...actions} kept={kept} listening={listening && pb.status === 'playing'} onClose={() => setSheet('none')} />}
       {sheet === 'aa' && <AaSheet onClose={() => setSheet('none')} />}
       {sheet === 'insights' && <InsightsSheet poem={poem} onClose={() => setSheet('none')} />}
       {gloss && <GlossSheet poem={poem} at={gloss} onClose={() => setGloss(null)} />}
@@ -120,14 +130,33 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
   );
 }
 
-type Actions = { listen: () => void; insights: () => void; keep: () => void; share: () => void; aa: () => void; listening: boolean };
+/** The faint eight-point lattice behind the title, fading out down the page. */
+function ReaderBackdrop() {
+  return (
+    <svg aria-hidden className="reader__backdrop" width="100%" height="420">
+      <defs>
+        <pattern id="reader-lattice" width="64" height="64" patternUnits="userSpaceOnUse">
+          <g fill="none" stroke="var(--c-lattice)" strokeWidth="1">
+            <rect x="16" y="16" width="32" height="32" />
+            <rect x="16" y="16" width="32" height="32" transform="rotate(45 32 32)" />
+          </g>
+        </pattern>
+        <linearGradient id="reader-fade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#fff" stopOpacity="0" /></linearGradient>
+        <mask id="reader-mask"><rect width="100%" height="420" fill="url(#reader-fade)" /></mask>
+      </defs>
+      <rect width="100%" height="420" fill="url(#reader-lattice)" mask="url(#reader-mask)" />
+    </svg>
+  );
+}
 
-function Dock({ listen, insights, keep, share }: Actions) {
+type Actions = { listen: () => void; insights: () => void; keep: () => void; share: () => void; aa: () => void; listening: boolean; kept: boolean };
+
+function Dock({ listen, insights, keep, share, kept }: Actions) {
   return (
     <nav aria-label="Poem actions" className="dock">
       <button className="dock__btn" onClick={listen}><Play size={14} /> LISTEN</button>
       <button className="dock__btn dock__btn--main" onClick={insights}><Lamp size={18} /> INSIGHTS</button>
-      <button className="dock__btn" aria-label="Keep" onClick={keep}><Heart /></button>
+      <button className={`dock__btn${kept ? ' dock__btn--kept' : ''}`} aria-label={kept ? 'Kept. Tap to remove' : 'Keep'} onClick={keep}><Heart filled={kept} /></button>
       <button className="dock__btn" aria-label="Share" onClick={share}><Share /></button>
     </nav>
   );
@@ -139,10 +168,10 @@ const FAN = [
   { key: 'share', x: 244, b: 135 }, { key: 'aa', x: 284, b: 62 },
 ] as const;
 
-function Fan({ listen, insights, keep, share, aa, listening, onClose }: Actions & { onClose: () => void }) {
+function Fan({ listen, insights, keep, share, aa, listening, kept, onClose }: Actions & { onClose: () => void }) {
   const fns = { listen, insights, keep, share, aa };
   const label = { listen: listening ? 'PAUSE' : 'LISTEN', insights: 'INSIGHTS', keep: 'KEEP', share: 'SHARE', aa: 'TEXT' };
-  const icon = { listen: listening ? <Pause size={20} /> : <Play size={20} />, insights: <Lamp />, keep: <Heart />, share: <Share />, aa: <span style={{ fontFamily: 'var(--font-serif)', fontSize: 20 }}>Aa</span> };
+  const icon = { listen: listening ? <Pause size={20} /> : <Play size={20} />, insights: <Lamp />, keep: <Heart filled={kept} />, share: <Share />, aa: <span style={{ fontFamily: 'var(--font-serif)', fontSize: 20 }}>Aa</span> };
   return (
     <>
       <div className="fan-scrim" onClick={onClose} />

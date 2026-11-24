@@ -1,6 +1,6 @@
 // Design-system primitives. They know nothing about poetry.
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Back } from './icons';
+import { Back, Mark } from './icons';
 
 export function Header({ onBack, right, label = 'Back' }: { onBack?: () => void; right?: ReactNode; label?: string }) {
   return (
@@ -48,12 +48,16 @@ export function Sheet({ label, onClose, children, height }: { label: string; onC
   );
 }
 
-export function Toast({ children, action, onAction, alert }: { children: ReactNode; action?: string; onAction?: () => void; alert?: boolean }) {
+export function Toast({ children, action, onAction, undo, alert, mark }: {
+  children: ReactNode; action?: string; onAction?: () => void; undo?: () => void; alert?: boolean; mark?: boolean;
+}) {
   return (
     <div className="toast" role={alert ? 'alert' : 'status'}>
       {alert && <span className="toast__icon" aria-hidden>!</span>}
+      {mark && <Mark size={22} colour="#4A1620" />}
       <span style={{ flex: 1 }}>{children}</span>
-      {action && <button className="toast__action" onClick={onAction}>{action}</button>}
+      {undo && <button className="toast__action" onClick={undo}>UNDO</button>}
+      {action && <button className={`toast__action${undo ? ' toast__action--outline' : ''}`} onClick={onAction}>{action}</button>}
     </div>
   );
 }

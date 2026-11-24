@@ -41,9 +41,9 @@ test.describe('@live @supabase per-user data', () => {
     await expect(page.getByRole('status').filter({ hasText: 'Kept in Favorites' })).toBeVisible();
     await page.getByRole('button', { name: 'CHANGE' }).click();
     await expect(page.getByRole('checkbox', { name: /Favorites/ })).toHaveAttribute('aria-checked', 'true');
-    await page.getByRole('button', { name: '+ New list' }).click();
+    await page.getByRole('button', { name: 'New list' }).click();
     await page.getByRole('textbox', { name: 'List name' }).fill('Longing for home');
-    await page.getByRole('button', { name: 'Create list' }).click();
+    await page.getByRole('button', { name: 'Create and add this poem' }).click();
     await expect(page.getByRole('checkbox', { name: /Longing for home/ })).toHaveAttribute('aria-checked', 'true');
 
     // A second device sees the same lists, from the database.

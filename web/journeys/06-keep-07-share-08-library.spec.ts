@@ -15,13 +15,13 @@ test.describe('Areas 6–8 · Keep, share and the Library', () => {
     await page.goto('./p/amurru');
     await page.getByRole('button', { name: 'Keep' }).click();
     await page.getByRole('button', { name: 'CHANGE' }).click();
-    await page.getByRole('button', { name: '+ New list' }).click();
+    await page.getByRole('button', { name: 'New list' }).click();
     await page.getByRole('textbox', { name: 'List name' }).fill('Longing for home');
     await expect(page.getByRole('radiogroup', { name: 'Icon letter' }).getByRole('radio', { name: /ل/ }).first()).toBeVisible();
-    await page.getByRole('button', { name: 'Create list' }).click();
+    await page.getByRole('button', { name: 'Create and add this poem' }).click();
     await expect(page.getByRole('checkbox', { name: /Longing for home/ })).toHaveAttribute('aria-checked', 'true');
     await expect(page.getByRole('checkbox', { name: /Favorites/ })).toHaveAttribute('aria-checked', 'true');
-    await page.getByRole('button', { name: 'DONE' }).click();
+    await page.getByRole('button', { name: /^Done · in/ }).click();
 
     await page.goto('./library/lists');
     await page.getByRole('button', { name: 'Options for Longing for home' }).click();

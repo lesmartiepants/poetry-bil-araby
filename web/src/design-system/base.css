@@ -527,15 +527,15 @@ a {
   transform: translateX(-50%);
   bottom: 110px;
   width: min(346px, calc(100vw - 44px));
-  min-height: 52px;
-  border-radius: 26px;
+  min-height: 48px;
+  border-radius: 24px;
   background: var(--c-toast-bg);
   color: var(--c-toast-text);
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 16px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  padding: 0 8px 0 14px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
   z-index: 60;
   font-size: 13px;
   animation: fade var(--motion-base);
@@ -543,12 +543,24 @@ a {
 .toast__action {
   background: none;
   border: none;
-  color: #7a2230;
+  color: #4a1620;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 8px 4px;
+  height: 36px;
+  padding: 0 12px;
+}
+.toast__action--outline {
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(74, 22, 32, 0.45);
+  border-radius: 18px;
+}
+.toast em {
+  font-style: normal;
+  font-weight: 600;
+  color: #4a1620;
 }
 .toast__icon {
   flex: none;

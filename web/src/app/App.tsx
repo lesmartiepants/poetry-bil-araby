@@ -47,7 +47,13 @@ function Overlays() {
       {overlay?.type === 'keep-lists' && <KeepListsSheet poemId={overlay.poemId} />}
       {overlay?.type === 'share' && <ShareSheet poemId={overlay.poemId} />}
       {overlay?.type === 'signin' && <SignInSheet then={overlay.then} />}
-      {toast && <Toast action={toast.action} onAction={() => { toast.onAction?.(); useOverlay.getState().showToast(null); }} alert={toast.alert}>{toast.text}</Toast>}
+      {toast && (
+        <Toast action={toast.action} alert={toast.alert} mark={toast.mark}
+          onAction={() => { toast.onAction?.(); useOverlay.getState().showToast(null); }}
+          undo={toast.undo && (() => { toast.undo?.(); useOverlay.getState().showToast(null); })}>
+          {toast.text}
+        </Toast>
+      )}
     </>
   );
 }

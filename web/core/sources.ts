@@ -6,6 +6,7 @@ export type Domain =
 export type Source = 'mock' | 'live';
 
 // V1.2 reader, V1.3 tap a word, V1.5 Explore and V1.6 poet pages are live (server/redesign2.js).
+// V3 Tonight, journeys, collections and search are live; collection progress stays on the device until auth.
 // tts flips when a Gemini key is configured for live recitation; profile when Supabase auth is wired.
 export const SOURCES: Record<Domain, Source> = {
   poems: 'live',
@@ -18,9 +19,9 @@ export const SOURCES: Record<Domain, Source> = {
   lists: 'mock',
   share: 'mock',
   library: 'mock',
-  journey: 'mock',
-  collections: 'mock',
-  search: 'mock',
+  journey: 'live',
+  collections: 'live',
+  search: 'live',
 };
 
 let override: Partial<Record<Domain, Source>> = {};

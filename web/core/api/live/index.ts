@@ -3,7 +3,7 @@
 import type { Api } from '../contract';
 import { NotFoundError } from '../contract';
 import { mockApi } from '../mock';
-import type { Band, Era, Explanation, FeaturedPoet, Feeling, Gloss, Poem, PoemSummary, Poet } from '../../types';
+import type { Band, Collection, Door, Era, Explanation, FeaturedPoet, Feeling, Gloss, Poem, PoemSummary, Poet, SearchResults, Tonight } from '../../types';
 
 let base = '';
 export function setApiBase(url: string) {
@@ -31,16 +31,31 @@ export const liveApi: Api = {
     ...mockApi.ai,
     explanation: (id) => getJSON<Explanation>(`/api/v2/poems/${id}/ai?kind=explanation`),
     gloss: (id, line, word) => getJSON<Gloss>(`/api/v2/poems/${id}/ai?kind=gloss&line=${line}&word=${word}`),
+    doors: (id) => getJSON<Door[]>(`/api/v2/poems/${id}/doors`),
   },
   poets: {
     ...mockApi.poets,
     list: () => getJSON<Poet[]>('/api/v2/poets'),
     get: (slug) => getJSON<Poet>(`/api/v2/poets/${encodeURIComponent(slug)}`, 'poet'),
     featured: () => getJSON<FeaturedPoet>('/api/v2/featured/poet'),
+    appearsIn: (slug) => getJSON<Collection[]>(`/api/v2/poets/${encodeURIComponent(slug)}/appears-in`),
   },
   explore: {
     feelings: () => getJSON<Feeling[]>('/api/v2/explore/feelings'),
     eras: () => getJSON<Era[]>('/api/v2/explore/eras'),
     bands: () => getJSON<Band[]>('/api/v2/explore/bands'),
+  },
+  journey: {
+    tonight: () => getJSON<Tonight>('/api/v2/tonight'),
+    journeys: () => getJSON<Collection[]>('/api/v2/collections?kind=journey'),
+  },
+  collections: {
+    // Per-user progress stays on the device until Supabase auth is wired (V3 · progress table is ready).
+    ...mockApi.collections,
+    all: (kind) => getJSON<Collection[]>(`/api/v2/collections${kind ? `?kind=${kind}` : ''}`),
+    get: (slug) => getJSON<Collection>(`/api/v2/collections/${encodeURIComponent(slug)}`, 'collection'),
+  },
+  search: {
+    search: (q) => getJSON<SearchResults>(`/api/v2/search?q=${encodeURIComponent(q)}`),
   },
 };

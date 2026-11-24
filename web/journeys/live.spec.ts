@@ -36,12 +36,13 @@ test.describe('@live V1 against the real API', () => {
     await expect(page.getByRole('dialog', { name: 'Insights' }).getByText('A fixture explanation')).toBeVisible();
   });
 
-  test('@live 2.7 next poem draws a different poem from the server', async ({ page }) => {
+  test('@live 2.17 with the guide live, every poem ends with three doors that have reasons', async ({ page }) => {
     await fresh(page);
     await page.goto('./p/24');
-    await page.getByRole('button', { name: /Next poem/ }).click();
+    const doors = page.getByRole('region', { name: 'Where the guide goes next' }).locator('.door');
+    await expect(doors).toHaveCount(3);
+    await doors.first().click();
     await expect(page).not.toHaveURL(/\/p\/24$/);
-    await expect(page.getByRole('navigation', { name: 'Poem actions' })).toBeVisible();
   });
 
   test('@live 2.11 an unknown poem id says the link leads nowhere', async ({ page }) => {
@@ -56,5 +57,48 @@ test.describe('@live V1 against the real API', () => {
     await expect(page.getByRole('heading', { name: 'شاعرة الاختبار الخامسة' })).toBeVisible();
     await expect(page.locator('.list-row').first()).toBeVisible();
     await expect(page.getByText(/NAJD/)).toBeVisible();
+  });
+});
+
+test.describe('@live V3 against the real API', () => {
+  test('@live 9.4 Tonight is the same pick for everyone and names its journey step', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./journey');
+    await expect(page.getByText('HEAVEN 1 OF 3 · FIXTURE JOURNEY')).toBeVisible();
+    await expect(page.getByText('A fixture reason for tonight.')).toBeVisible();
+    await page.getByRole('link', { name: 'Read tonight’s poem' }).click();
+    await expect(page.getByText('A second line made for testing')).toBeVisible();
+  });
+
+  test('@live 9.5–9.6 Pathways lists the published journeys and opens one', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./journey');
+    await page.getByRole('radio', { name: 'PATHWAYS' }).click();
+    await page.getByRole('link', { name: /Fixture journey/ }).click();
+    await expect(page.getByRole('heading', { name: 'Fixture journey' })).toBeVisible();
+    await expect(page.getByText('0 of 3')).toBeVisible();
+  });
+
+  test('@live 10.2 a collection lists its poems in order', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./collection/fixture-collection');
+    await expect(page.getByText('POEM 1', { exact: true })).toBeVisible();
+    await expect(page.getByText('POEM 2', { exact: true })).toBeVisible();
+  });
+
+  test('@live 5.3 the poet tab shows where to find the poet', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./poet/test-poet-five/about');
+    await expect(page.getByText(/FIND TEST POET FIVE IN/)).toBeVisible();
+    await expect(page.getByRole('link', { name: /Fixture journey/ })).toBeVisible();
+  });
+
+  test('@live 11.2 a line search ignores vowel marks; 11.3 nothing found offers the closest', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./search');
+    await page.getByRole('textbox', { name: /Search/ }).fill('الحنين');
+    await expect(page.getByText('LINES')).toBeVisible();
+    await page.getByRole('textbox', { name: /Search/ }).fill('zzzz');
+    await expect(page.getByText('CLOSEST MATCHES:')).toBeVisible();
   });
 });

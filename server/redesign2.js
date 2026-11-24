@@ -403,6 +403,218 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     }
   });
 
+  // ── V3: collections, journeys, Tonight, search, doors ───────────────────
+  const collection = (r) => ({
+    slug: r.slug,
+    kind: r.kind,
+    titleEn: r.title_en,
+    titleAr: r.title_ar,
+    intro: r.intro,
+    stepEn: r.step_label_en,
+    stepAr: r.step_label_ar,
+    colour: r.colour,
+    poemIds: (r.poem_ids ?? []).map(String),
+  });
+  const COLL_SELECT = `SELECT c.*, COALESCE((SELECT array_agg(cp.poem_id ORDER BY cp.position) FROM collection_poems cp WHERE cp.collection_id = c.id), '{}') AS poem_ids FROM collections c WHERE c.published`;
+
+  app.get('/api/v2/collections', async (req, res) => {
+    try {
+      const kind = req.query.kind;
+      const { rows } = await pool.query(
+        `${COLL_SELECT} ${kind ? 'AND c.kind = $1' : ''} ORDER BY c.id`,
+        kind ? [kind] : []
+      );
+      res.json(rows.map(collection));
+    } catch (e) {
+      fail(res, 'collections', e);
+    }
+  });
+  app.get('/api/v2/collections/:slug', async (req, res) => {
+    try {
+      const { rows } = await pool.query(`${COLL_SELECT} AND c.slug = $1`, [req.params.slug]);
+      if (!rows.length) return res.status(404).json({ error: 'Collection not found' });
+      res.json(collection(rows[0]));
+    } catch (e) {
+      fail(res, 'collection', e);
+    }
+  });
+  app.get('/api/v2/poets/:slug/appears-in', async (req, res) => {
+    try {
+      const { rows } = await pool.query(
+        `${COLL_SELECT} AND EXISTS (SELECT 1 FROM collection_poems cp JOIN poems p ON p.id = cp.poem_id JOIN poets po ON po.id = p.poet_id WHERE cp.collection_id = c.id AND po.slug = $1) ORDER BY c.id`,
+        [req.params.slug]
+      );
+      res.json(rows.map(collection));
+    } catch (e) {
+      fail(res, 'appears-in', e);
+    }
+  });
+
+  // Tonight: one pick per day, the same for everyone. If none is set, pick one and keep it.
+  app.get('/api/v2/tonight', async (_req, res) => {
+    try {
+      let { rows } = await pool.query(
+        'SELECT poem_id, reason FROM featured_poems WHERE date = CURRENT_DATE'
+      );
+      if (!rows.length) {
+        const pick = await pool.query(
+          `SELECT p.id FROM poems p WHERE ${servable()} ORDER BY md5(p.id::text || CURRENT_DATE::text) LIMIT 1`
+        );
+        if (!pick.rows.length) return res.status(404).json({ error: 'No poem' });
+        await pool.query(
+          'INSERT INTO featured_poems (date, poem_id, reason) VALUES (CURRENT_DATE, $1, $2) ON CONFLICT (date) DO NOTHING',
+          [pick.rows[0].id, 'Chosen for tonight from the poems readers keep coming back to.']
+        );
+        ({ rows } = await pool.query(
+          'SELECT poem_id, reason FROM featured_poems WHERE date = CURRENT_DATE'
+        ));
+      }
+      const poem = (await pool.query(`${POEM_SELECT()} WHERE p.id = $1`, [rows[0].poem_id]))
+        .rows[0];
+      const step = (
+        await pool.query(
+          `SELECT c.slug, c.title_en, c.step_label_en, cp.position, (SELECT COUNT(*)::int FROM collection_poems x WHERE x.collection_id = c.id) AS of
+        FROM collection_poems cp JOIN collections c ON c.id = cp.collection_id WHERE c.published AND c.kind = 'journey' AND cp.poem_id = $1 ORDER BY c.id LIMIT 1`,
+          [rows[0].poem_id]
+        )
+      ).rows[0];
+      res.json({
+        poem: summary(poem),
+        reason: rows[0].reason,
+        journeyStep: step
+          ? {
+              slug: step.slug,
+              stepEn: step.step_label_en,
+              index: step.position,
+              of: step.of,
+              titleEn: step.title_en,
+            }
+          : undefined,
+      });
+    } catch (e) {
+      fail(res, 'tonight', e);
+    }
+  });
+
+  // Search: poets, poems, lines and collections; diacritic-insensitive on Arabic.
+  const NORM_SQL = (col) =>
+    `translate(regexp_replace(${col}, '[\\u064B-\\u065F\\u0670\\u0640]', '', 'g'), 'أإآٱىة', 'اااايه')`;
+  const normalize = (s) =>
+    s
+      .replace(/[ً-ٰٟـ]/g, '')
+      .replace(/[أإآٱ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/ة/g, 'ه')
+      .trim();
+  app.get('/api/v2/search', async (req, res) => {
+    const q = String(req.query.q ?? '')
+      .trim()
+      .slice(0, 80);
+    if (q.length < 2) return res.json({ poets: [], poems: [], lines: [], collections: [] });
+    try {
+      const like = `%${normalize(q).replace(/[%_]/g, '')}%`;
+      const [poets, poems, lines, colls] = await Promise.all([
+        pool.query(
+          `${POET_SELECT} WHERE ${NORM_SQL('po.name')} ILIKE $1 OR po.name_en ILIKE $1 ORDER BY name_en LIMIT 8`,
+          [like]
+        ),
+        pool.query(
+          `${POEM_SELECT()} WHERE ${servable()} AND (${NORM_SQL('p.title')} ILIKE $1 OR p.title_en ILIKE $1) ORDER BY p.id LIMIT 12`,
+          [like]
+        ),
+        pool.query(
+          `${POEM_SELECT()} WHERE ${servable()} AND ${NORM_SQL(contentExpr())} ILIKE $1 ORDER BY p.id LIMIT 12`,
+          [like]
+        ),
+        pool.query(
+          `${COLL_SELECT} AND (c.title_en ILIKE $1 OR ${NORM_SQL('c.title_ar')} ILIKE $1) LIMIT 6`,
+          [like]
+        ),
+      ]);
+      const needle = normalize(q);
+      const lineHits = lines.rows.flatMap((r) =>
+        splitLines(r.arabic)
+          .map((l, i) => ({ l, i, r }))
+          .filter(({ l }) => normalize(l).includes(needle))
+          .slice(0, 2)
+          .map(({ l, i, r }) => ({ poem: summary(r), line: l, lineIndex: i }))
+      );
+      const out = {
+        poets: poets.rows.map(poet),
+        poems: poems.rows.map(summary),
+        lines: lineHits,
+        collections: colls.rows.map(collection),
+      };
+      if (!out.poets.length && !out.poems.length && !out.lines.length && !out.collections.length) {
+        const [np, nf] = await Promise.all([
+          pool.query(`${POET_SELECT} ORDER BY poem_count DESC LIMIT 3`),
+          pool.query(
+            `SELECT v.key, v.label_en AS en, v.label_ar AS ar, COALESCE(v.explore_line, '') AS line FROM category_values v JOIN category_dimensions d ON d.id = v.dimension_id WHERE d.key = 'mood' AND v.show_in_explore ORDER BY v.sort_order LIMIT 3`
+          ),
+        ]);
+        out.nearest = {
+          poets: np.rows.map(poet),
+          feelings: nf.rows.map((r) => ({ ...r, poemCount: 0, poetCount: 0 })),
+        };
+      }
+      res.json(out);
+    } catch (e) {
+      fail(res, 'search', e);
+    }
+  });
+
+  // The guide's doors: three poems that share a feeling, the poet or the era, with a reason each.
+  async function doors(id) {
+    const { rows } = await pool.query(
+      `
+      WITH me AS (SELECT p.id, p.poet_id, po.era_id, p.mood_primary FROM poems p JOIN poets po ON po.id = p.poet_id WHERE p.id = $1)
+      SELECT q.*, CASE WHEN x.mood_primary IS NOT NULL AND x.mood_primary = me.mood_primary THEN 'feeling'
+                       WHEN x.poet_id = me.poet_id THEN 'poet' ELSE 'era' END AS why
+      FROM me, poems x JOIN poets xp ON xp.id = x.poet_id
+      JOIN LATERAL (${POEM_SELECT()} WHERE p.id = x.id) q ON TRUE
+      WHERE x.id <> me.id AND x.id IN (SELECT p.id FROM poems p WHERE TRUE ${servingFilters()})
+        AND (x.mood_primary = me.mood_primary OR x.poet_id = me.poet_id OR xp.era_id = me.era_id)
+      ORDER BY (x.mood_primary = me.mood_primary) DESC NULLS LAST, md5(x.id::text || CURRENT_DATE::text) LIMIT 3`,
+      [id]
+    );
+    const hook = {
+      feeling: 'The same feeling, another voice',
+      poet: 'More from this poet',
+      era: 'From the same age',
+    };
+    const reason = {
+      feeling: 'Because you stayed with this feeling',
+      poet: 'The same hand, a different night',
+      era: 'Written in the same world',
+    };
+    const out = rows.map((r) => ({ poem: summary(r), hook: hook[r.why], reason: reason[r.why] }));
+    if (out.length < 3) {
+      // Always three doors: fill with poems the reader hasn't just seen.
+      const taken = [id, ...rows.map((r) => r.id)];
+      const more = await pool.query(
+        `${POEM_SELECT()} WHERE ${servable()} AND NOT (p.id = ANY($1::int[])) ORDER BY md5(p.id::text || CURRENT_DATE::text) LIMIT $2`,
+        [taken, 3 - out.length]
+      );
+      out.push(
+        ...more.rows.map((r) => ({
+          poem: summary(r),
+          hook: 'Somewhere new',
+          reason: 'A change of voice for the next poem',
+        }))
+      );
+    }
+    return out;
+  }
+  app.get('/api/v2/poems/:id/doors', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id)) return res.status(400).json({ error: 'Bad request' });
+    try {
+      res.json(await doors(id));
+    } catch (e) {
+      fail(res, 'doors', e);
+    }
+  });
+
   app.get('/api/dev/events', (_req, res) => {
     if (process.env.ENABLE_DEV_LAB !== 'true' && process.env.NODE_ENV === 'production')
       return res.status(404).json({ error: 'Not found' });

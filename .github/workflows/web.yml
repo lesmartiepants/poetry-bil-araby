@@ -75,6 +75,9 @@ jobs:
       - name: Database schema and seed
         working-directory: .
         run: npm run db:setup && npm run db:seed && psql "$LOCAL_DATABASE_URL" -q -f web/journeys/live-seed.sql
+      - name: Database rules (keeps, lists, reads)
+        working-directory: .
+        run: psql "$LOCAL_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/redesign2_rules.sql
       - name: Start API
         working-directory: .
         run: node server.js > /tmp/server.log 2>&1 &

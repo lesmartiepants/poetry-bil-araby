@@ -73,7 +73,7 @@ function Routes() {
     <>
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/welcome">{() => <Gate domains={['journey']} title="Welcome"><WelcomeFlow onDone={() => { writeJSON('welcomed', true); nav('/p/amurru'); }} /></Gate>}</Route>
+        <Route path="/welcome">{() => <Gate domains={['journey']} title="Welcome"><WelcomeFlow onDone={(slug) => { writeJSON('welcomed', true); nav(slug ? `/p/${slug}` : '/journey'); }} /></Gate>}</Route>
         <Route path="/journey">{() => <Gate domains={['journey']} title="Tonight’s poem"><TonightScreen /></Gate>}</Route>
         <Route path="/journey/:slug">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><JourneyScreen slug={p.slug} /></Gate>}</Route>
         <Route path="/p/:id">{(p) => <Gate domains={['poems']} title="The reader"><ReaderScreen key={p.id} id={p.id} Player={Player} defaultVoice={voice} /></Gate>}</Route>

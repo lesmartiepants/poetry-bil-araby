@@ -6,6 +6,8 @@ import { fileURLToPath, URL } from 'node:url';
 export default defineConfig({
   base: '/new/',
   plugins: [react()],
+  // Pre-bundle up front: a mid-session dependency re-optimisation reloads the page (and breaks journeys).
+  optimizeDeps: { include: ['react', 'react-dom', 'wouter', '@tanstack/react-query', 'zustand', '@supabase/supabase-js'] },
   resolve: {
     alias: {
       '@core': fileURLToPath(new URL('./core', import.meta.url)),

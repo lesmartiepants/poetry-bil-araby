@@ -6,6 +6,13 @@ import { mockApi } from '../mock';
 import type { Band, Collection, Door, Era, Explanation, FeaturedPoet, Feeling, Gloss, Poem, PoemSummary, Poet, SearchResults, Tonight } from '../../types';
 
 let base = '';
+type PerUser = ReturnType<typeof import('../supabase').makeSupabaseApi>;
+let perUser: PerUser | null = null;
+/** Per-user domains (profile, keeps, lists, library, progress) come from Supabase when it is configured. */
+export function setPerUser(api: PerUser) {
+  perUser = api;
+  Object.assign(liveApi, { profile: api.profile, keeps: api.keeps, lists: api.lists, library: api.library });
+}
 export function setApiBase(url: string) {
   base = url.replace(/\/$/, '');
 }
@@ -50,8 +57,10 @@ export const liveApi: Api = {
     journeys: () => getJSON<Collection[]>('/api/v2/collections?kind=journey'),
   },
   collections: {
-    // Per-user progress stays on the device until Supabase auth is wired (V3 · progress table is ready).
+    // Progress is per user: Supabase when configured (signed out: this device), else the mock.
     ...mockApi.collections,
+    progress: () => (perUser ? perUser.progress.progress() : mockApi.collections.progress()),
+    setProgress: (p) => (perUser ? perUser.progress.setProgress(p) : mockApi.collections.setProgress(p)),
     all: (kind) => getJSON<Collection[]>(`/api/v2/collections${kind ? `?kind=${kind}` : ''}`),
     get: (slug) => getJSON<Collection>(`/api/v2/collections/${encodeURIComponent(slug)}`, 'collection'),
   },

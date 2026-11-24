@@ -1,11 +1,19 @@
 -- Rules for keeps and lists (build spec V2.1, V2.3). Runs against a local database:
 --   psql "$LOCAL_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/redesign2_rules.sql
+--   local Supabase: psql postgresql://supabase_admin:postgres@127.0.0.1:54322/postgres -f …
 -- Everything happens in one transaction that is rolled back.
 BEGIN;
--- Local stand-in for Supabase's auth.uid(): read the test user from a setting.
-CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT nullif(current_setting('test.uid', true), '')::uuid $$;
+-- The signed-in user comes from the JWT claims, as on Supabase. On plain Postgres
+-- (scripts/db-setup.sh stubs auth.uid() to NULL) install a stand-in that reads them.
+DO $do$ BEGIN
+  IF position('NULL::uuid' in pg_get_functiondef('auth.uid'::regproc)) > 0 THEN
+    EXECUTE $f$CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
+      $b$ SELECT nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $b$$f$;
+  END IF;
+END $do$;
 INSERT INTO auth.users (id) VALUES ('11111111-1111-1111-1111-111111111111'), ('22222222-2222-2222-2222-222222222222');
-SET LOCAL test.uid = '11111111-1111-1111-1111-111111111111';
+SET LOCAL request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+SET LOCAL request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 
 DO $$
 DECLARE me uuid := '11111111-1111-1111-1111-111111111111'; other uuid := '22222222-2222-2222-2222-222222222222';

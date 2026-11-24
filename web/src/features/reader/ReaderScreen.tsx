@@ -1,5 +1,5 @@
 // Area 2 · Reading (2.1–2.18) and the reader side of listening (3.7).
-import { useEffect, useMemo, useState, type ComponentType } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQueryClient } from '@tanstack/react-query';
 import { api, NotFoundError } from '@core/api';
@@ -255,7 +255,27 @@ function GlossSheet({ poem, at, onClose }: { poem: Poem; at: { line: number; wor
 }
 
 /** 2.7 (V1) End of poem: next poem, more by the poet, more of the feeling. V3 swaps in the doors (2.17). */
+/** A poem counts as read once the reader passes its last line (V2.3). */
+function useMarkReadAtEnd(poemId: string) {
+  const ref = useRef<HTMLDivElement>(null);
+  const qc = useQueryClient();
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let done = false;
+    const io = new IntersectionObserver((entries) => {
+      if (done || !entries.some((e) => e.isIntersecting)) return;
+      done = true;
+      api.library.markRead(poemId).then(() => qc.invalidateQueries({ queryKey: ['reads'] })).catch(() => {});
+    });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [poemId, qc]);
+  return ref;
+}
+
 function EndOfPoem({ poem }: { poem: Poem }) {
+  const readRef = useMarkReadAtEnd(poem.id);
   const guide = sourceOf('journey') === 'live' || new URLSearchParams(location.search).get('end') === 'doors';
   const poet = usePoet(poem.poetSlug).data;
   const [, nav] = useLocation();
@@ -272,9 +292,10 @@ function EndOfPoem({ poem }: { poem: Poem }) {
     }
   };
   const feeling = poem.feelingKeys[0];
-  if (guide) return <Doors poem={poem} />;
+  if (guide) return <><div ref={readRef} data-testid="read-sentinel" /><Doors poem={poem} /></>;
   return (
     <section className="end" aria-label="End of poem">
+      <div ref={readRef} data-testid="read-sentinel" />
       <p className="end__mark">END · <span lang="ar" className="ar" style={{ fontSize: 14, letterSpacing: 0 }}>تمّت</span></p>
       <button className="end__next" onClick={next}><span className="end__up"><Up /></span><span><span className="end__next-t">Next poem</span><span className="end__next-s">Swipe up, or tap · chosen from what you read</span></span></button>
       {err && <MarginNote message="The next poem didn’t arrive." onRetry={next} />}

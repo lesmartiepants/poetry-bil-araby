@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Redirect, Route, Router, Switch, useLocation } from 'wouter';
 import { useHashLocation } from 'wouter/use-hash-location';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { usePrefs } from '@core/hooks';
 import { isAvailable, type Domain } from '@core/sources';
 import { readJSON, writeJSON } from '@core/storage';
@@ -104,7 +105,17 @@ function Routes() {
   );
 }
 
-export function App() {
+/** When the signed-in user changes, every per-user query refetches. */
+function AuthSync({ supabase }: { supabase: SupabaseClient | null }) {
+  useEffect(() => {
+    if (!supabase) return;
+    const { data } = supabase.auth.onAuthStateChange(() => { queryClient.invalidateQueries(); });
+    return () => data.subscription.unsubscribe();
+  }, [supabase]);
+  return null;
+}
+
+export function App({ supabase = null }: { supabase?: SupabaseClient | null }) {
   const [splash, setSplash] = useState(() => !sessionStorage.getItem('splashed'));
   useEffect(() => {
     if (!splash) return;
@@ -115,6 +126,7 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <PrefsOnPage />
+      <AuthSync supabase={supabase} />
       <Router base={hash ? '' : import.meta.env.BASE_URL.replace(/\/$/, '')} hook={hash ? useHashLocation : undefined}>
         <div className="app-frame">
           <Routes />

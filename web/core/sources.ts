@@ -24,6 +24,11 @@ export const SOURCES: Record<Domain, Source> = {
   search: 'live',
 };
 
+/** Turns domains live at boot when their backend is configured (e.g. Supabase for per-user data). */
+export function configureSources(patch: Partial<Record<Domain, Source>>) {
+  Object.assign(SOURCES, patch);
+}
+
 let override: Partial<Record<Domain, Source>> = {};
 /** Tests and the dev panel can force a source; e.g. journeys run all-mock. */
 export function setSourceOverride(o: Partial<Record<Domain, Source>>) {

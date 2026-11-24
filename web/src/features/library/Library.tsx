@@ -3,9 +3,9 @@ import { useState, type ComponentType } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQueries } from '@tanstack/react-query';
 import { api } from '@core/api';
-import { qk, useAccount, useCollections, useFollows, useInvalidate, useKeeps, useLists, usePoets, useProgress, useReads } from '@core/hooks';
+import { qk, useAccount, useCollections, useFollows, useInvalidate, useKeeps, useLists, usePoems, usePoets, useProgress, useReads } from '@core/hooks';
 import { isAvailable } from '@core/sources';
-import type { Poem, UserList } from '@core/types';
+import type { Poem, Poet, UserList } from '@core/types';
 import { Header, SectionLabel, Segmented, Sheet, Skeleton, TitleRow } from '@ds/primitives';
 import { Dots, Lock, Search } from '@ds/icons';
 import { CollectionCard, PoemRow, PoetRow } from '@components/index';
@@ -211,6 +211,12 @@ export function ListScreen({ id, ListIcon }: { id: string; ListIcon: ListIconT }
   );
 }
 
+function FollowedPoetRow({ poet, reads }: { poet: Poet; reads: Record<string, number> }) {
+  const poems = usePoems({ poet: poet.slug }).data;
+  const read = poems?.filter((p) => reads[p.id]).length;
+  return <PoetRow poet={poet} sub={`${poet.poemCount} poems${read !== undefined ? ` · ${read} read` : ''}`} />;
+}
+
 export function FollowedPoets() {
   const follows = useFollows().data;
   const poets = usePoets().data;
@@ -221,7 +227,7 @@ export function FollowedPoets() {
       <Header onBack={() => nav('/library')} />
       <TitleRow en="Poets you follow" ar="شعراؤك" />
       <div className="pad list mt-8">
-        {poets?.filter((p) => follows?.includes(p.slug)).map((p) => <PoetRow key={p.slug} poet={p} sub={`${p.eraKey} · ${p.poemCount} poems · ${Object.keys(reads).length} read`} />)}
+        {poets?.filter((p) => follows?.includes(p.slug)).map((p) => <FollowedPoetRow key={p.slug} poet={p} reads={reads} />)}
         <Link href="/explore/poets" className="btn mt-16" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>Find more poets</Link>
       </div>
     </div>

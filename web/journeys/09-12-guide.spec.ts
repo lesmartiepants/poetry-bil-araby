@@ -32,9 +32,9 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
   test('10.2 a collection can be saved and continued', async ({ page }) => {
     await fresh(page);
     await page.goto('./collection/women-who-wrote-the-canon');
-    await page.getByRole('button', { name: 'SAVE' }).click();
-    await expect(page.getByRole('button', { name: 'SAVED' })).toBeVisible();
-    await page.getByRole('link', { name: 'CONTINUE' }).click();
+    await page.getByRole('button', { name: 'Save' }).click();
+    await expect(page.getByRole('button', { name: 'Saved' })).toBeVisible();
+    await page.getByRole('link', { name: /POEM 01/ }).click();
     await expect(page.getByRole('navigation', { name: 'Poem actions' })).toBeVisible();
   });
 

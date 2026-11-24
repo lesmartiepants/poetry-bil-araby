@@ -82,8 +82,9 @@ test.describe('@live V3 against the real API', () => {
   test('@live 10.2 a collection lists its poems in order', async ({ page }) => {
     await fresh(page);
     await page.goto('./collection/fixture-collection');
-    await expect(page.getByText('POEM 1', { exact: true })).toBeVisible();
-    await expect(page.getByText('POEM 2', { exact: true })).toBeVisible();
+    await expect(page.getByText('01', { exact: true })).toBeVisible();
+    await expect(page.getByText('02', { exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: /POEM 01/ })).toBeVisible();
   });
 
   test('@live 5.3 the poet tab shows where to find the poet', async ({ page }) => {

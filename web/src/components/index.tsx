@@ -2,7 +2,7 @@
 import { Link } from 'wouter';
 import type { Collection, Line, PoemSummary, Poet } from '@core/types';
 import { stripMarks, words } from '@core/logic/arabic';
-import { Chevron, Mark } from '@ds/icons';
+import { Chevron, Mark, Play } from '@ds/icons';
 import { isPatternName, Pattern, type PatternName, type Tone } from '@ds/Pattern';
 
 const ERA_INK: Record<string, string> = {
@@ -177,5 +177,20 @@ export function RowLink({ href, title, sub }: { href: string; title: string; sub
       <div className="group-row__main"><p className="group-row__title">{title}</p>{sub && <p className="group-row__sub">{sub}</p>}</div>
       <Chevron />
     </Link>
+  );
+}
+
+/** The dock over a journey or collection: how far along, and the next step. */
+export function PathDock({ label, pos, of, title, next }: { label: string; pos: number; of: number; title: string; next?: { href: string; label: string } }) {
+  return (
+    <div className="path-dock">
+      <div className="path-dock__progress">
+        <div className="path-dock__label"><span>{label}</span><span>{pos} OF {of}</span></div>
+        <div className="path-dock__bar" role="progressbar" aria-label={`${title} progress`} aria-valuemin={0} aria-valuemax={of} aria-valuenow={pos}>
+          {Array.from({ length: of }, (_, i) => <span key={i} className={i < pos ? 'is-read' : i === pos ? 'is-next' : ''} />)}
+        </div>
+      </div>
+      {next ? <Link href={next.href} className="path-dock__go"><Play size={14} /> {next.label}</Link> : <span className="path-dock__go path-dock__go--done">COMPLETE</span>}
+    </div>
   );
 }

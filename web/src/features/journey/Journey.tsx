@@ -6,9 +6,9 @@ import { api } from '@core/api';
 import { useCollection, useCollections, useEras, useInvalidate, usePoem, useProgress, useSetPrefs, useTonight } from '@core/hooks';
 import type { Collection } from '@core/types';
 import { Header, Segmented, Skeleton } from '@ds/primitives';
-import { Back, Bookmark, Chevron, Mark, Play } from '@ds/icons';
+import { Back, Bookmark, Chevron, Mark } from '@ds/icons';
 import { Pattern } from '@ds/Pattern';
-import { collectionArt } from '@components/index';
+import { collectionArt, PathDock } from '@components/index';
 import './journey.css';
 
 /** The arched door at the foot of Tonight: tap, or swipe up, to enter the poem. */
@@ -171,17 +171,7 @@ export function JourneyScreen({ slug }: { slug: string }) {
           })}
         </ol>
       </main>
-      <div className="journey-dock">
-        <div className="journey-dock__progress">
-          <div className="row between journey-dock__label"><span>JOURNEY</span><span>{pos} OF {of}</span></div>
-          <div className="journey-dock__bar" role="progressbar" aria-label={`${j.titleEn} progress`} aria-valuemin={0} aria-valuemax={of} aria-valuenow={pos}>
-            {j.poemIds.map((_, i) => <span key={i} className={i < pos ? 'is-read' : i === pos ? 'is-next' : ''} />)}
-          </div>
-        </div>
-        {pos < of
-          ? <Link href={stepHref(j, pos, nextPoem?.slug)} className="journey-dock__go"><Play size={14} /> {step} {pos + 1}</Link>
-          : <span className="journey-dock__go journey-dock__go--done">COMPLETE</span>}
-      </div>
+      <PathDock label="JOURNEY" pos={pos} of={of} title={j.titleEn} next={pos < of ? { href: stepHref(j, pos, nextPoem?.slug), label: `${step} ${pos + 1}` } : undefined} />
     </div>
   );
 }

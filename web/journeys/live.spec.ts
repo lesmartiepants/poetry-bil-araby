@@ -64,9 +64,9 @@ test.describe('@live V3 against the real API', () => {
   test('@live 9.4 Tonight is the same pick for everyone and names its journey step', async ({ page }) => {
     await fresh(page);
     await page.goto('./journey');
-    await expect(page.getByText('HEAVEN 1 OF 3 · FIXTURE JOURNEY')).toBeVisible();
+    await expect(page.getByText('CHOSEN FOR YOU · HEAVEN 1 OF FIXTURE JOURNEY')).toBeVisible();
     await expect(page.getByText('A fixture reason for tonight.')).toBeVisible();
-    await page.getByRole('link', { name: 'Read tonight’s poem' }).click();
+    await page.getByRole('link', { name: 'Enter the poem' }).click();
     await expect(page.getByText('A second line made for testing')).toBeVisible();
   });
 

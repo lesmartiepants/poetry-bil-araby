@@ -40,5 +40,30 @@ for (const file of readdirSync(canvas).filter((f) => /^Pat[A-Z].*\.dc\.html$/.te
   patterns[name.toLowerCase()] = { ...shape, variants };
 }
 
+// Pajarita (Tonight's hero) is drawn as loose paths, not a tile. Every path is one
+// bow-tie on a 40 × 69.28 lattice (rows staggered by 20), so rebuild the tile from
+// the first path, with copies on every side so nothing is clipped at the edges.
+{
+  const hero = readFileSync(new URL('NTonight.dc.html', canvas), 'utf8');
+  const d = hero.match(/<path d="(M-?[\d.]+ -?[\d.]+ Q[^"]+)" fill="#3A7D69"/)[1];
+  const [x0, y0] = d.match(/M(-?[\d.]+) (-?[\d.]+)/).slice(1).map(Number);
+  const shift = (dx, dy) => d.replace(/(-?[\d.]+) (-?[\d.]+)/g, (_, x, y) => `${(Number(x) - x0 + dx).toFixed(2)} ${(Number(y) - y0 + dy).toFixed(2)}`);
+  const W = 40, H = 69.28;
+  const copies = [];
+  for (const [rowX, rowY] of [[0, H / 2], [20, H]]) {
+    for (const dx of [-W, 0, W]) for (const dy of [-H, 0, H]) copies.push(`<path d="${shift(rowX + dx, rowY + dy)}" fill="%1"/>`);
+  }
+  patterns.pajarita = {
+    w: W, h: H,
+    body: `<pattern id="%id0" width="${W}" height="${H}" patternUnits="userSpaceOnUse">${copies.join('')}</pattern>`,
+    variants: {
+      m: { ground: '#2F6B5A', colours: ['#2F6B5A', '#3A7D69'] },
+      pom: { ground: '#4A1620', colours: ['#4A1620', '#5A2230'] },
+      cob: { ground: '#22406E', colours: ['#22406E', '#2D4E80'] },
+      ind: { ground: '#141A33', colours: ['#141A33', '#1E2646'] },
+    },
+  };
+}
+
 writeFileSync(out, JSON.stringify(patterns));
 console.log(`patterns.json: ${Object.keys(patterns).join(', ')}`);

@@ -19,7 +19,7 @@ import { PoetScreen } from '../features/poet/PoetScreen';
 import { KeepFlow, KeepListsSheet, ListIcon, NewListSheet, SignInSheet } from '../features/keep/Keep';
 import { ShareSheet } from '../features/share/Share';
 import { AllLists, FollowedPoets, LibraryHub, ListScreen } from '../features/library/Library';
-import { JourneyScreen, TonightScreen, WelcomeFlow } from '../features/journey/Journey';
+import { JourneyScreen, StepDone, TonightScreen, WelcomeFlow } from '../features/journey/Journey';
 import { AllCollections, CollectionScreen } from '../features/collections/Collections';
 import { SearchScreen } from '../features/search/Search';
 import { AppearanceScreen, GuideScreen, MovesScreen, ReciterScreen, TranslationScreen, YouHub } from '../features/you/You';
@@ -82,6 +82,7 @@ function Routes() {
         <Route path="/" component={Home} />
         <Route path="/welcome">{() => <Gate domains={['journey']} title="Welcome"><WelcomeFlow onDone={(slug) => { writeJSON('welcomed', true); nav(slug ? `/p/${slug}` : '/journey'); }} /></Gate>}</Route>
         <Route path="/journey">{() => <Gate domains={['journey']} title="Tonight’s poem"><TonightScreen /></Gate>}</Route>
+        <Route path="/journey/:slug/done/:step">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><StepDone slug={p.slug} step={Number(p.step)} /></Gate>}</Route>
         <Route path="/journey/:slug">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><JourneyScreen slug={p.slug} /></Gate>}</Route>
         <Route path="/p/:id">{(p) => <Gate domains={['poems']} title="The reader"><ReaderScreen key={p.id} id={p.id} Player={Player} defaultVoice={voice} /></Gate>}</Route>
         <Route path="/explore">{() => <Gate domains={['explore', 'poets']} title="Explore"><ExploreHub /></Gate>}</Route>

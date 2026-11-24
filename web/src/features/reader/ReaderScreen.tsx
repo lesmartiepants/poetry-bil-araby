@@ -1,7 +1,7 @@
 // Area 2 · Reading (2.1–2.18) and the reader side of listening (3.7).
 import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
 import { Link, useLocation } from 'wouter';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, NotFoundError } from '@core/api';
 import { qk, useDoors, useExplanation, useGloss, useInvalidate, useKeeps, usePoem, usePoet, usePrefs, useSetPrefs } from '@core/hooks';
 import { sourceOf } from '@core/sources';
@@ -285,7 +285,7 @@ function GlossSheet({ poem, at, onClose }: { poem: Poem; at: { line: number; wor
 
 /** 2.7 (V1) End of poem: next poem, more by the poet, more of the feeling. V3 swaps in the doors (2.17). */
 /** A poem counts as read once the reader passes its last line (V2.3). */
-function useMarkReadAtEnd(poemId: string) {
+function useMarkReadAtEnd(poemId: string, onEnd?: () => void) {
   const ref = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
   useEffect(() => {
@@ -295,6 +295,7 @@ function useMarkReadAtEnd(poemId: string) {
     const io = new IntersectionObserver((entries) => {
       if (done || !entries.some((e) => e.isIntersecting)) return;
       done = true;
+      onEnd?.();
       api.library.markRead(poemId).then(() => qc.invalidateQueries({ queryKey: ['reads'] })).catch(() => {});
     });
     io.observe(el);
@@ -303,8 +304,29 @@ function useMarkReadAtEnd(poemId: string) {
   return ref;
 }
 
+/** A poem opened from a journey step (?journey=slug&step=n) completes that step at its end. */
+function useJourneyStep(atEnd: boolean) {
+  const params = new URLSearchParams(location.search);
+  const slug = params.get('journey');
+  const step = Number(params.get('step')) || 0;
+  const qc = useQueryClient();
+  const j = useQuery({ queryKey: ['collection', slug], queryFn: () => api.collections.get(slug!), enabled: !!slug }).data;
+  useEffect(() => {
+    if (!atEnd || !slug || !step || !j) return;
+    (async () => {
+      const mine = (await api.collections.progress()).find((p) => p.slug === slug);
+      if ((mine?.position ?? 0) >= step) return; // already past this step
+      await api.collections.setProgress({ slug, position: step, saved: true, completedAt: step >= j.poemIds.length ? Date.now() : undefined });
+      qc.invalidateQueries({ queryKey: ['progress'] });
+    })().catch(() => {});
+  }, [atEnd, slug, step, j, qc]);
+  return slug && step ? { slug, step, label: j?.stepEn ?? 'Step' } : null;
+}
+
 function EndOfPoem({ poem }: { poem: Poem }) {
-  const readRef = useMarkReadAtEnd(poem.id);
+  const [atEnd, setAtEnd] = useState(false);
+  const readRef = useMarkReadAtEnd(poem.id, () => setAtEnd(true));
+  const journey = useJourneyStep(atEnd);
   const guide = sourceOf('journey') === 'live' || new URLSearchParams(location.search).get('end') === 'doors';
   const poet = usePoet(poem.poetSlug).data;
   const [, nav] = useLocation();
@@ -321,6 +343,15 @@ function EndOfPoem({ poem }: { poem: Poem }) {
     }
   };
   const feeling = poem.feelingKeys[0];
+  if (journey) {
+    return (
+      <section className="end" aria-label="End of poem">
+        <div ref={readRef} data-testid="read-sentinel" />
+        <p className="end__mark">END · <span lang="ar" className="ar" style={{ fontSize: 14, letterSpacing: 0 }}>تمّت</span></p>
+        <Link href={`/journey/${journey.slug}/done/${journey.step}`} className="btn btn--primary btn--block end__journey">{journey.label} {journey.step} complete</Link>
+      </section>
+    );
+  }
   if (guide) return <><div ref={readRef} data-testid="read-sentinel" /><Doors poem={poem} /></>;
   return (
     <section className="end" aria-label="End of poem">

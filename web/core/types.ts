@@ -136,6 +136,8 @@ export interface Collection {
   /** A pattern-library name (laceria, seljuk…); the card picks one when unset. */
   pattern?: string;
   poemIds: string[];
+  /** Each step's theme (Pride, Longing…), aligned with poemIds; null where unnamed. */
+  themes?: (string | null)[];
 }
 
 export interface Progress {

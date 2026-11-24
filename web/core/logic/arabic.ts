@@ -18,3 +18,14 @@ export function normalizeArabic(s: string): string {
 export function words(line: string): string[] {
   return line.split(/\s+/).filter(Boolean);
 }
+
+/** A name as an Arabic dictionary files it: marks off, the article "ال" set aside. */
+export function arabicSortKey(name: string): string {
+  return normalizeArabic(name).replace(/^ال/, '');
+}
+
+/** The letter a name is filed under, with every alif written أ. */
+export function arabicInitial(name: string): string {
+  const first = arabicSortKey(name)[0] ?? '';
+  return first === 'ا' ? 'أ' : first;
+}

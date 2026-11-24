@@ -413,6 +413,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     stepEn: r.step_label_en,
     stepAr: r.step_label_ar,
     colour: r.colour,
+    pattern: r.pattern_key ?? undefined,
     poemIds: (r.poem_ids ?? []).map(String),
   });
   const COLL_SELECT = `SELECT c.*, COALESCE((SELECT array_agg(cp.poem_id ORDER BY cp.position) FROM collection_poems cp WHERE cp.collection_id = c.id), '{}') AS poem_ids FROM collections c WHERE c.published`;

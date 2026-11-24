@@ -61,7 +61,7 @@ export function LibraryHub({ ListIcon }: { ListIcon: ListIconT }) {
         {isAvailable('search') && <button className="icon-btn" aria-label="Search" onClick={() => nav('/search')}><Search /></button>}
       </div>
       <div className="pad stack gap-12 mt-12">
-        <Segmented label="Library" value={tab} onChange={setTab} options={[{ value: 'hub', label: 'HUB' }, { value: 'poems', label: 'POEMS' }]} />
+        <Segmented pill label="Library" value={tab} onChange={setTab} options={[{ value: 'hub', label: 'HUB' }, { value: 'poems', label: 'POEMS' }]} />
         {tab === 'poems' ? <YourPoems /> : (
           <>
             <SectionLabel action={<Link href="/library/lists" className="link-btn">SEE ALL</Link>}>YOUR LISTS</SectionLabel>

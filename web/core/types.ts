@@ -133,6 +133,8 @@ export interface Collection {
   stepEn: string;
   stepAr: string;
   colour: string;
+  /** A pattern-library name (laceria, seljuk…); the card picks one when unset. */
+  pattern?: string;
   poemIds: string[];
 }
 

@@ -62,11 +62,12 @@ export function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boo
   return <button role="switch" aria-checked={on} aria-label={label} className="switch" onClick={() => onChange(!on)} />;
 }
 
-export function Segmented<T extends string | number>({ label, value, options, onChange, tall }: {
-  label: string; value: T; options: { value: T; label: ReactNode }[]; onChange: (v: T) => void; tall?: boolean;
+/** Settings choices are separate boxes; `pill` is the two-way switch between views (Hub / Poems). */
+export function Segmented<T extends string | number>({ label, value, options, onChange, tall, pill }: {
+  label: string; value: T; options: { value: T; label: ReactNode }[]; onChange: (v: T) => void; tall?: boolean; pill?: boolean;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className={`seg${tall ? ' seg--tall' : ''}`}>
+    <div role="radiogroup" aria-label={label} className={`seg${tall ? ' seg--tall' : ''}${pill ? ' seg--pill' : ''}`}>
       {options.map((o) => (
         <button key={String(o.value)} role="radio" aria-checked={o.value === value} className="seg__opt" onClick={() => onChange(o.value)}>{o.label}</button>
       ))}

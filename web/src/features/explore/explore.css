@@ -1,18 +1,195 @@
-.hub-hdr { display: flex; align-items: center; justify-content: space-between; padding: 16px 12px 0; height: 60px; }
-.hub-logo { display: flex; align-items: baseline; gap: 4px; }
-.hub-logo__en { font-weight: 200; font-size: 18px; color: var(--c-text-3); }
-.hub-logo__ar { font-family: var(--font-kufi); font-weight: 500; font-size: 17px; color: var(--c-text-3); }
-.hub-search { border: 1px solid var(--c-border-2); background: var(--c-surface-2); }
-.potw { display: flex; gap: 14px; align-items: center; padding: 14px; border-radius: 18px; background: var(--c-surface); border: 1px solid var(--c-border); text-decoration: none; color: var(--c-muted); }
-.potw__main { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.potw__name { font-family: var(--font-serif); font-size: 19px; color: var(--c-text); }
-.potw__note { font-size: 12px; color: var(--c-muted); }
-.poet-dot { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: var(--c-text-3); text-decoration: none; }
-.era-card { flex: none; width: 228px; height: 128px; border-radius: 16px; padding: 14px; display: flex; flex-direction: column; justify-content: flex-end; gap: 4px; text-decoration: none; color: #EDE3CF; }
-.era-card__en { font-family: var(--font-serif); font-size: 19px; }
-.era-card__ar { font-family: var(--font-ruqaa); font-size: 18px; color: #E8CC8A; }
-.era-card__meta { font-size: 9px; letter-spacing: 0.18em; color: #E8CC8A; }
-.era-card__line { font-size: 12px; line-height: 1.35; }
-.shelf { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: 14px; background: var(--c-surface); border: 1px solid var(--c-border); text-decoration: none; }
-.shelf__en { font-family: var(--font-serif); font-size: 21px; color: var(--c-text); }
-.shelf__ar { font-family: var(--font-amiri); font-size: 20px; color: var(--c-accent); }
+.hub-hdr {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 12px 0;
+  height: 60px;
+}
+.hub-logo {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.hub-logo__en {
+  font-weight: 200;
+  font-size: 18px;
+  color: var(--c-text-3);
+}
+.hub-logo__ar {
+  font-family: var(--font-kufi);
+  font-weight: 500;
+  font-size: 17px;
+  color: var(--c-text-3);
+}
+.icon-btn.hub-search {
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  border: 1px solid #2a2722;
+  background: var(--c-surface-2);
+}
+.potw {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px;
+  border-radius: 18px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  text-decoration: none;
+  color: var(--c-muted);
+}
+.potw__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.potw__name {
+  font-size: 16px;
+  color: var(--c-text);
+}
+.potw__ar {
+  font-family: var(--font-amiri);
+  color: var(--c-accent);
+}
+.potw__note {
+  margin-top: 3px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--c-muted);
+}
+.poet-dot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #e4ded2;
+  text-decoration: none;
+}
+.poet-dot > span:last-child {
+  width: 60px;
+  text-align: center;
+}
+.see-all {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--c-muted);
+  text-decoration: none;
+}
+.era-card {
+  flex: none;
+  width: 228px;
+  height: 128px;
+  border-radius: 16px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  text-decoration: none;
+  color: var(--brand-ivory);
+}
+.era-card__en {
+  font-size: 16px;
+}
+.era-card__ar {
+  font-family: var(--font-kufi);
+  font-weight: 500;
+  font-size: 17px;
+  color: #e8cc8a;
+}
+.era-card__meta {
+  margin-top: 2px;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  color: #e8cc8a;
+}
+.era-card__line {
+  margin-top: 5px;
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: #e4ded2;
+}
+.letter-head {
+  margin: 10px 0 2px;
+  font-family: var(--font-kufi);
+  font-size: 15px;
+  color: var(--c-accent);
+  text-align: right;
+}
+.poet-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 62px;
+  border-top: 1px solid #1a191e;
+  text-decoration: none;
+}
+.poet-line__main {
+  flex: 1;
+  min-width: 0;
+}
+.poet-line__name {
+  display: block;
+  font-size: 14px;
+  color: var(--c-text);
+}
+.poet-line__sub {
+  display: block;
+  margin-top: 3px;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: var(--c-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.poet-line__ar {
+  font-family: var(--font-ruqaa);
+  font-size: 18px;
+  color: #e4ded2;
+  white-space: nowrap;
+}
+.poet-line__mark {
+  flex: none;
+  color: var(--c-muted-2);
+}
+.poet-line__mark--on {
+  color: var(--c-accent);
+  fill: currentColor;
+}
+.shelf-count {
+  margin: 6px 0 0;
+  letter-spacing: 0.16em;
+}
+.shelf-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  text-decoration: none;
+}
+.shelf-head__label {
+  font-size: 15px;
+  color: var(--c-text);
+}
+.shelf-head__ar {
+  font-family: var(--font-amiri);
+  font-size: 17px;
+  color: var(--c-accent);
+}
+.shelf-head__years {
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--c-muted);
+  text-transform: uppercase;
+}
+.shelf-head__count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--c-muted);
+}

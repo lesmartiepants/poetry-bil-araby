@@ -3,7 +3,7 @@ import { deriveBands } from './bands';
 import { autoIconLetter, iconLetterChoices, iconLetterOf } from './iconLetter';
 import { DEFAULT_PREFS, mergePrefs } from './prefs';
 import { splitForCards } from './cards';
-import { normalizeArabic, stripMarks } from './arabic';
+import { arabicInitial, arabicSortKey, normalizeArabic, stripMarks } from './arabic';
 import { initialPlayback, playbackReducer } from './playback';
 
 describe('difficulty bands', () => {
@@ -54,6 +54,12 @@ describe('arabic text', () => {
   it('strips vowel marks and normalises for search', () => {
     expect(stripMarks('أَمُرُّ عَلى')).toBe('أمر على');
     expect(normalizeArabic('أَمُرُّ عَلى الدِيارِ')).toBe('امر علي الديار');
+  });
+  it('files names as a dictionary does: the article set aside, every alif under أ', () => {
+    expect(arabicInitial('الخنساء')).toBe('خ');
+    expect(arabicInitial('امرؤ القيس')).toBe('أ');
+    expect(arabicInitial('أبو فراس')).toBe('أ');
+    expect(['جبران', 'الخنساء', 'أبو نواس'].sort((a, b) => arabicSortKey(a).localeCompare(arabicSortKey(b), 'ar'))).toEqual(['أبو نواس', 'جبران', 'الخنساء']);
   });
 });
 

@@ -17,7 +17,7 @@ export function TonightScreen() {
   if (tab === 'pathways') return <Pathways onTonight={() => setTab('tonight')} />;
   return (
     <div className="screen journey">
-      <header className="journey__top"><Mark size={26} colour="var(--c-accent)" /><Segmented label="Journey" value={tab} onChange={setTab} options={[{ value: 'tonight', label: 'TONIGHT' }, { value: 'pathways', label: 'PATHWAYS' }]} /></header>
+      <header className="journey__top"><Mark size={26} colour="var(--c-accent)" /><Segmented pill label="Journey" value={tab} onChange={setTab} options={[{ value: 'tonight', label: 'TONIGHT' }, { value: 'pathways', label: 'PATHWAYS' }]} /></header>
       {!t.data ? <div className="pad" style={{ paddingTop: 60 }}><Skeleton lines={6} /></div> : (
         <main className="pad stack gap-16" style={{ paddingTop: 30 }}>
           <p className="t-eyebrow t-eyebrow--accent">{t.data.journeyStep ? `${t.data.journeyStep.stepEn.toUpperCase()} ${t.data.journeyStep.index} OF ${t.data.journeyStep.of} · ${t.data.journeyStep.titleEn.toUpperCase()}` : 'CHOSEN FOR TONIGHT'}</p>
@@ -40,7 +40,7 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
   const doors = useQueries({ queries: [{ queryKey: ['doors', tonight?.poem.id], queryFn: () => api.ai.doors(tonight!.poem.id), enabled: !!tonight }] })[0].data;
   return (
     <div className="screen journey">
-      <header className="journey__top"><Mark size={26} colour="var(--c-accent)" /><Segmented label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={[{ value: 'tonight', label: 'TONIGHT' }, { value: 'pathways', label: 'PATHWAYS' }]} /></header>
+      <header className="journey__top"><Mark size={26} colour="var(--c-accent)" /><Segmented pill label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={[{ value: 'tonight', label: 'TONIGHT' }, { value: 'pathways', label: 'PATHWAYS' }]} /></header>
       <main className="pad stack gap-12" style={{ paddingTop: 20 }}>
         <p className="t-eyebrow t-eyebrow--accent">THREE DOORS</p>
         {doors?.map((d) => (

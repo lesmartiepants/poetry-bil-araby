@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build && cp -r design-review dist/design-review",
+  "buildCommand": "npm run build && npm --prefix web ci && npm --prefix web run build:vercel && cp -r design-review dist/design-review",
   "outputDirectory": "dist",
   "framework": "vite",
   "cleanUrls": false,
@@ -33,6 +33,8 @@
     { "source": "/api/og/:id", "destination": "/api/og/[id]" },
     { "source": "/tts-lab", "destination": "https://poetry-bil-araby-2mb0.onrender.com/tts-lab" },
     { "source": "/enjoyability", "destination": "https://poetry-bil-araby-2mb0.onrender.com/enjoyability" },
-    { "source": "/((?!design-review|api/).*)", "destination": "/index.html" }
+    { "source": "/new", "destination": "/new/index.html" },
+    { "source": "/new/(.*)", "destination": "/new/index.html" },
+    { "source": "/((?!design-review|api/|new/).*)", "destination": "/index.html" }
   ]
 }

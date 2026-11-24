@@ -16,12 +16,12 @@ This spec says what gets built for ReDesign2, version by version, in an order yo
 
 **Versions at a glance**
 
-| Version | What users get | Areas | Editorial content needed |
-| --- | --- | --- | --- |
-| V1 | Read, listen, browse: the reader, tap a word, recitation, Explore, poet pages, Appearance, developer panel | 1, 2, 3, 4, 5, 12 (first build) | A poet of the week |
-| V2 | Keep and share: Favorites and lists, share cards, the Library | 6, 7, 8 | None |
-| V3 | The guide: first run, Tonight's poem, doors, journeys, collections, search, the rest of You | 2 (doors), 8.15, 9, 10, 11, 12 | 4 journeys, 24 collections, step names, a featured poem a day |
-| Later | Dual translations, scholarly sounds, keeps while signed out, resurfaced poems, a new tour, delete account (designed), desktop | — | — |
+| Version | What users get                                                                                                                | Areas                           | Editorial content needed                                      |
+| ------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------------- |
+| V1      | Read, listen, browse: the reader, tap a word, recitation, Explore, poet pages, Appearance, developer panel                    | 1, 2, 3, 4, 5, 12 (first build) | A poet of the week                                            |
+| V2      | Keep and share: Favorites and lists, share cards, the Library                                                                 | 6, 7, 8                         | None                                                          |
+| V3      | The guide: first run, Tonight's poem, doors, journeys, collections, search, the rest of You                                   | 2 (doors), 8.15, 9, 10, 11, 12  | 4 journeys, 24 collections, step names, a featured poem a day |
+| Later   | Dual translations, scholarly sounds, keeps while signed out, resurfaced poems, a new tour, delete account (designed), desktop | —                               | —                                                             |
 
 **Frame numbers.** Every screen is numbered N.x. N is a feature area and never changes: 1 Shell and developer panel · 2 Reading · 3 Listening · 4 Explore · 5 Poet pages · 6 Keep and lists · 7 Share · 8 Library · 9 Journey and first run · 10 Collections · 11 Search · 12 You. A later version continues its area's sequence (Reading is 2.1–2.16 in V1, 2.17–2.18 in V3). Feature folders, routes and test names use the same numbers.
 
@@ -168,7 +168,7 @@ Everything else in today's `src/` is left behind and retired at cut-over, includ
 - **New list (6.5, 6.6):** a name, a colour, and an icon letter. By default the icon is the name's first letter as the nearest Arabic letter (L→ل, F→ف, T→ت, C→ك, P→ب, V→ف, G→ج); an Arabic name uses its own first letter. The row also offers the first letters of the name's other words, or CHOOSE, which opens all 28 letters in a drawer. Renaming updates an automatic icon, never a chosen one.
 - **Errors (6.7, 6.8):** keep didn't save; sign-in didn't finish.
 - **Rules (in the database):** `saved_poems` is the record of every keep. Favorites is each user's default list, created with the first keep; it can't be renamed or deleted, but poems can be taken out of it. Taking a poem out of a list never un-keeps it.
-- **Data:** `user_lists` (id, user, name, colour, icon\_letter, is\_default); `saved_poems.list_ids` (array, indexed).
+- **Data:** `user_lists` (id, user, name, colour, icon_letter, is_default); `saved_poems.list_ids` (array, indexed).
 - **Done when:** a poem kept in two lists shows in both; deleting one list leaves it in the other; taking it out of Favorites leaves it kept.
 
 ### V2.2 · Share · 7.1–7.15
@@ -176,7 +176,7 @@ Everything else in today's `src/` is left behind and retired at cut-over, includ
 - **Cards:** from Share in the dock or fan: a short poem fits one card (7.1); otherwise choose lines, shown in Arabic or English (7.3, 7.4). Chosen lines split across cards (8 lines → 4 + 4, 10 lines → 6 + 4; 7.5, 7.6); a long poem pages through cards (7.9, 7.10). Optional dedication (7.7, 7.8). Four grounds in brand colours.
 - **Copy text (7.2):** beside Copy link.
 - **Saved images (7.11–7.14):** 1080×1350 PNGs with a short link, `/p/<slug>`. Photos permission error (7.15).
-- **Build:** cards render on the server, extending today's `api/og/[id].js` to the grounds, chosen lines, splits and dedication, so every platform shares identical images.
+- **Build:** one card layout, `web/core/logic/shareCard.js`, draws the card as SVG. The app shows it as the preview; `GET /api/v2/poems/:id/card.png` rasterises the same SVG with resvg and the vendored fonts (`server/fonts`, OFL), so every platform shares identical images. Six colours (the frames' swatches) rather than four.
 - **Data:** `poems.share_slug` (unique, from the transliterated title, e.g. `/p/amurru`); `GET /api/poems/:idOrSlug` accepts either.
 - **Done when:** sharing 8 chosen lines produces two 1080×1350 images that open the poem from their link.
 
@@ -189,7 +189,7 @@ Everything else in today's `src/` is left behind and retired at cut-over, includ
 - **Select and remove (8.10, 8.11):** select, then Remove, with Undo.
 - **States (8.12–8.14):** empty before the first keep; Parchment check; sync error.
 - **Reads:** a poem counts as read when the reader passes its last line. Reads drive READ badges on poet pages and the read counts in 8.5.
-- **Data:** `poet_follows` (user, poet, followed\_at); `poem_reads` (user, poem, first and last read, count); grouping as Postgres views or RPCs so large libraries group on the server.
+- **Data:** `poet_follows` (user, poet, followed_at); `poem_reads` (user, poem, first and last read, count); grouping as Postgres views or RPCs so large libraries group on the server.
 - **Done when:** a seeded user with 1,000 keeps loads every Library view in under a second.
 
 ## V3 · The guide
@@ -252,68 +252,68 @@ Everything else in today's `src/` is left behind and retired at cut-over, includ
 
 **Not carried into the new app.** These stay in today's app until cut-over and are not rebuilt.
 
-| Today | Instead |
-| --- | --- |
-| Random poem, Surprise Me, hold the quill for next | Next poem at the end of a poem (V1), the guide's doors (V3) |
-| Same-poet carousel | Poet page (5.1) |
-| Poet picker and poet search drawer | Explore and All poets (4.1, 4.2) |
-| Category Explorer and tag UI | Feeling, era and difficulty shelves; the taxonomy data stays |
-| Six-step onboarding and preferences drawer | First run (9.1–9.3) and You (12.4, 12.5); saved answers migrate into prefs |
-| Curated-feed toggle, ratchet mode, AI-generated poems | Always curated, database only |
-| 10+ fonts, highlight styles, sparkles, parallax, backgrounds | Three Arabic fonts and three pages; the rest only in the developer panel |
-| 30 voices, engine and temperature switches | The 16-voice grouped sheet; switches only in the developer panel |
-| 9 share card styles | 4 grounds (7.1) |
-| Spotlight tour | Removed; a new tour comes later |
-| Debug panel, draw inspector, enjoyability lab, design review, TTS lab | The developer panel (1.2–1.7) |
-| Dislike / downvote | Removed from the UI; the guide learns from keeps |
-| Pin a poem | Removed |
-| Nightly reminder | Dropped |
-| `discussions` and legacy `tags` tables | Unused; drop after cut-over |
+| Today                                                                 | Instead                                                                    |
+| --------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Random poem, Surprise Me, hold the quill for next                     | Next poem at the end of a poem (V1), the guide's doors (V3)                |
+| Same-poet carousel                                                    | Poet page (5.1)                                                            |
+| Poet picker and poet search drawer                                    | Explore and All poets (4.1, 4.2)                                           |
+| Category Explorer and tag UI                                          | Feeling, era and difficulty shelves; the taxonomy data stays               |
+| Six-step onboarding and preferences drawer                            | First run (9.1–9.3) and You (12.4, 12.5); saved answers migrate into prefs |
+| Curated-feed toggle, ratchet mode, AI-generated poems                 | Always curated, database only                                              |
+| 10+ fonts, highlight styles, sparkles, parallax, backgrounds          | Three Arabic fonts and three pages; the rest only in the developer panel   |
+| 30 voices, engine and temperature switches                            | The 16-voice grouped sheet; switches only in the developer panel           |
+| 9 share card styles                                                   | 4 grounds (7.1)                                                            |
+| Spotlight tour                                                        | Removed; a new tour comes later                                            |
+| Debug panel, draw inspector, enjoyability lab, design review, TTS lab | The developer panel (1.2–1.7)                                              |
+| Dislike / downvote                                                    | Removed from the UI; the guide learns from keeps                           |
+| Pin a poem                                                            | Removed                                                                    |
+| Nightly reminder                                                      | Dropped                                                                    |
+| `discussions` and legacy `tags` tables                                | Unused; drop after cut-over                                                |
 
 ## Reference: data and API by version
 
 **Database changes.** All additive, in `supabase/migrations/`, shipped with the slice that needs them. Ten new tables; everything else reuses `poems`, `poets`, `eras`, the mood taxonomy, `saved_poems` and `user_settings`.
 
-| Version | Slice | Table or column | Holds | Shared or per user |
-| --- | --- | --- | --- | --- |
-| V1 | 1.1 | `settings_defaults` (new) | One row of default prefs | shared |
-| V1 | 1.1 | `user_settings.prefs` | Your choices over the defaults | per user |
-| V1 | 1.2 | `poem_ai_text` (new) | poem, kind (explanation, gloss, doors), key (line:word for glosses), payload, model; unique on poem + kind + key | shared |
-| V1 | 1.5 | `featured_poets` (new) | week, poet, note | shared |
-| V1 | 1.5 | `eras.name_ar`, `years`, `colour` | Era shelves and pages | shared |
-| V1 | 1.5 | `category_values.show_in_explore` | Picks the 9 feelings | shared |
-| V1 | 1.6 | `poets.region`, `poets.gender` | Hero pattern; future collections | shared |
-| V2 | 2.1 | `user_lists` (new) | name, colour, icon\_letter, is\_default | per user |
-| V2 | 2.1 | `saved_poems.list_ids` | The lists a kept poem is in | per user |
-| V2 | 2.2 | `poems.share_slug` | Word links like `/p/amurru` | shared |
-| V2 | 2.3 | `poet_follows` (new) | user, poet, followed\_at | per user |
-| V2 | 2.3 | `poem_reads` (new) | user, poem, first and last read, count | per user |
-| V3 | 3.1 | `collections` (new) | slug, kind, titles, intro, step labels EN/AR, pattern | shared |
-| V3 | 3.1 | `collection_poems` (new) | collection, position, poem, theme | shared |
-| V3 | 3.1 | `progress` (new) | user, collection, position, saved, completed\_at | per user |
-| V3 | 3.1 | `featured_poems` (new) | date, poem, reason | shared |
-| V3 | 3.1 | `user_settings.display_name` | Your name from first run | per user |
+| Version | Slice | Table or column                   | Holds                                                                                                            | Shared or per user |
+| ------- | ----- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------ |
+| V1      | 1.1   | `settings_defaults` (new)         | One row of default prefs                                                                                         | shared             |
+| V1      | 1.1   | `user_settings.prefs`             | Your choices over the defaults                                                                                   | per user           |
+| V1      | 1.2   | `poem_ai_text` (new)              | poem, kind (explanation, gloss, doors), key (line:word for glosses), payload, model; unique on poem + kind + key | shared             |
+| V1      | 1.5   | `featured_poets` (new)            | week, poet, note                                                                                                 | shared             |
+| V1      | 1.5   | `eras.name_ar`, `years`, `colour` | Era shelves and pages                                                                                            | shared             |
+| V1      | 1.5   | `category_values.show_in_explore` | Picks the 9 feelings                                                                                             | shared             |
+| V1      | 1.6   | `poets.region`, `poets.gender`    | Hero pattern; future collections                                                                                 | shared             |
+| V2      | 2.1   | `user_lists` (new)                | name, colour, icon_letter, is_default                                                                            | per user           |
+| V2      | 2.1   | `saved_poems.list_ids`            | The lists a kept poem is in                                                                                      | per user           |
+| V2      | 2.2   | `poems.share_slug`                | Word links like `/p/amurru`                                                                                      | shared             |
+| V2      | 2.3   | `poet_follows` (new)              | user, poet, followed_at                                                                                          | per user           |
+| V2      | 2.3   | `poem_reads` (new)                | user, poem, first and last read, count                                                                           | per user           |
+| V3      | 3.1   | `collections` (new)               | slug, kind, titles, intro, step labels EN/AR, pattern                                                            | shared             |
+| V3      | 3.1   | `collection_poems` (new)          | collection, position, poem, theme                                                                                | shared             |
+| V3      | 3.1   | `progress` (new)                  | user, collection, position, saved, completed_at                                                                  | per user           |
+| V3      | 3.1   | `featured_poems` (new)            | date, poem, reason                                                                                               | shared             |
+| V3      | 3.1   | `user_settings.display_name`      | Your name from first run                                                                                         | per user           |
 
-Computed, not stored: line count, reading time, first lines, avatar initials, century. Queries, not tables: Explore shelves and counts, "Find Al-Khansa in", most read and most followed. On the device only: recent searches. Unchanged: `poem_events` as the raw event log; recitation stays live TTS with a device cache. Today's poems.cached\_explanation and cached\_author\_bio stay readable until moved into poem\_ai\_text and poets.bio.
+Computed, not stored: line count, reading time, first lines, avatar initials, century. Queries, not tables: Explore shelves and counts, "Find Al-Khansa in", most read and most followed. On the device only: recent searches. Unchanged: `poem_events` as the raw event log; recitation stays live TTS with a device cache. Today's poems.cached_explanation and cached_author_bio stay readable until moved into poem_ai_text and poets.bio.
 
 **Express endpoints.** Per-user data does not go through Express; it uses Supabase from the client, with the hooks `useProfile` (V1), `useKeeps`, `useLists`, `useReads`, `useFollows`, `useLibrary` (V2) and `useProgress` (V3).
 
-| Version | Endpoint | Returns |
-| --- | --- | --- |
-| V1 | `GET /api/dev/events` | Recent server requests and errors, dev only |
-| V1 | `GET /api/poems/:idOrSlug` (extend) | Poem plus era, line count, reading time; 404 for removed poems; slug from V2 |
-| V1 | `GET /api/poems/:id/ai?kind=&line=&word=` | Read-or-generate explanation, gloss, and (V3) doors |
-| V1 | `GET /api/poems/random` (existing) | Next poem until the doors arrive |
-| V1 | `/api/ai/live-tts` (existing) | Recitation audio with word timings |
-| V1 | `GET /api/poets` (extend) | Adds era, region, century, poem count; Arabic or English sort |
-| V1 | `GET /api/poets/:slug` | Poet, bio, poems in order; "Find… in" from V3 |
-| V1 | `GET /api/featured/poet` | This week's poet |
-| V1 | `GET /api/categories` (existing) | Feelings with counts; accessibility histogram for the bands |
-| V1 | `GET /api/poems/by-category` (existing) | One feeling, era or difficulty band, oldest first |
-| V2 | `api/og` (extend) | Share card images for the 4 grounds, chosen lines, splits, dedication |
-| V3 | `GET /api/tonight` | Today's featured poem and reason, the same for everyone |
-| V3 | `GET /api/collections`, `GET /api/collections/:slug` | Collections and journeys with step labels; one in order |
-| V3 | `GET /api/search?q=&type=` | Grouped hits; nearest poets and feelings when nothing matches |
+| Version | Endpoint                                             | Returns                                                                      |
+| ------- | ---------------------------------------------------- | ---------------------------------------------------------------------------- |
+| V1      | `GET /api/dev/events`                                | Recent server requests and errors, dev only                                  |
+| V1      | `GET /api/poems/:idOrSlug` (extend)                  | Poem plus era, line count, reading time; 404 for removed poems; slug from V2 |
+| V1      | `GET /api/poems/:id/ai?kind=&line=&word=`            | Read-or-generate explanation, gloss, and (V3) doors                          |
+| V1      | `GET /api/poems/random` (existing)                   | Next poem until the doors arrive                                             |
+| V1      | `/api/ai/live-tts` (existing)                        | Recitation audio with word timings                                           |
+| V1      | `GET /api/poets` (extend)                            | Adds era, region, century, poem count; Arabic or English sort                |
+| V1      | `GET /api/poets/:slug`                               | Poet, bio, poems in order; "Find… in" from V3                                |
+| V1      | `GET /api/featured/poet`                             | This week's poet                                                             |
+| V1      | `GET /api/categories` (existing)                     | Feelings with counts; accessibility histogram for the bands                  |
+| V1      | `GET /api/poems/by-category` (existing)              | One feeling, era or difficulty band, oldest first                            |
+| V2      | `api/og` (extend)                                    | Share card images for the 4 grounds, chosen lines, splits, dedication        |
+| V3      | `GET /api/tonight`                                   | Today's featured poem and reason, the same for everyone                      |
+| V3      | `GET /api/collections`, `GET /api/collections/:slug` | Collections and journeys with step labels; one in order                      |
+| V3      | `GET /api/search?q=&type=`                           | Grouped hits; nearest poets and feelings when nothing matches                |
 
 Not built: `/api/voices` (the voice list is a constant in the app; samples are static files), `/api/explore`, `/api/feelings*`, `/api/eras*`.
 

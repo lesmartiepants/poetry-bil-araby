@@ -54,16 +54,26 @@ test.describe('Areas 6–8 · Keep, share and the Library', () => {
     await expect(page.getByRole('link', { name: /A mote in your eye/ })).toBeVisible();
   });
 
-  test('7.1–7.6 share: choosing 8 lines would split, short poems fit one card, Copy text copies', async ({ page, context }) => {
+  test('7.1–7.7 share: a full-screen card, colours, choosing lines, a dedication, Copy text', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
     await fresh(page);
     await page.goto('./p/amurru');
     await page.getByRole('button', { name: 'Share' }).click();
     const s = page.getByRole('dialog', { name: 'Share' });
-    await expect(s.getByTestId('share-card')).toBeVisible();
-    await expect(s.getByText('CHOOSE LINES · 4 OF 4')).toBeVisible();
-    await s.getByRole('radio', { name: 'cobalt' }).click();
-    await s.getByRole('button', { name: /Copy text/ }).click();
+    await expect(s.getByTestId('share-card').locator('svg')).toHaveCount(1);
+    await expect(s.getByRole('radio', { name: 'WHOLE POEM · 4' })).toHaveAttribute('aria-checked', 'true');
+    await s.getByRole('radio', { name: 'ivory on cobalt' }).click();
+    await expect(s.getByText('IVORY ON COBALT')).toBeVisible();
+    await s.getByRole('radio', { name: 'CHOOSE LINES' }).click();
+    await page.getByRole('dialog', { name: 'Choose lines' }).getByRole('checkbox').nth(3).click();
+    await page.getByRole('button', { name: 'DONE' }).click();
+    await expect(s.getByRole('radio', { name: 'CHOSEN · 3' })).toBeVisible();
+    await s.getByRole('button', { name: 'Add a dedication' }).click();
+    await s.getByRole('textbox', { name: 'Dedication' }).fill('Nour');
+    await s.getByRole('textbox', { name: 'Dedication' }).press('Enter');
+    await expect(s.getByTestId('share-card')).toContainText('for Nour');
+    await s.getByRole('button', { name: 'Copy' }).click();
+    await page.getByRole('menuitem', { name: 'Copy text' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Text copied' })).toBeVisible();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('أَمُرُّ');
   });

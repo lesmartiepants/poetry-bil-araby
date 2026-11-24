@@ -71,7 +71,8 @@ export interface SearchApi {
   search(q: string): Promise<SearchResults>;
 }
 export interface ShareApi {
-  cardUrl(input: { poemId: string; lines: number[]; ground: string; dedication?: string; card: number }): string;
+  /** The saved image of one card (1080 × 1350 PNG), or null where no server renders cards (mocks). */
+  cardUrl(input: { poemId: string; lines?: number[]; en: boolean; colourway: string; dedication?: string; card: number; link?: string }): string | null;
   link(poem: { slug: string }): string;
 }
 

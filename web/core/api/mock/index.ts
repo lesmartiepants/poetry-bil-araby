@@ -221,7 +221,7 @@ export const mockApi: Api = {
     },
   },
   share: {
-    cardUrl: ({ poemId, card }) => `/api/og/${poemId}?card=${card}`,
+    cardUrl: () => null,
     link: (poem) => `https://bilaraby.app/p/${poem.slug}`,
   },
 };

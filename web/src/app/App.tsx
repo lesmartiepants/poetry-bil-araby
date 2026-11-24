@@ -17,7 +17,7 @@ import { Player, useDefaultVoice } from '../features/listening/Player';
 import { AllPoets, EraShelves, ExploreHub, FeelingShelves, OneShelf } from '../features/explore/Explore';
 import { PoetScreen } from '../features/poet/PoetScreen';
 import { KeepFlow, KeepListsSheet, ListIcon, NewListSheet, SignInSheet } from '../features/keep/Keep';
-import { ShareSheet } from '../features/share/Share';
+import { ShareScreen } from '../features/share/Share';
 import { AllLists, FollowedPoets, LibraryHub, ListScreen } from '../features/library/Library';
 import { JourneyScreen, StepDone, TonightScreen, WelcomeFlow } from '../features/journey/Journey';
 import { AllCollections, CollectionScreen } from '../features/collections/Collections';
@@ -45,7 +45,7 @@ function Overlays() {
     <>
       {overlay?.type === 'keep' && <KeepFlow poemId={overlay.poemId} />}
       {overlay?.type === 'keep-lists' && <KeepListsSheet poemId={overlay.poemId} />}
-      {overlay?.type === 'share' && <ShareSheet poemId={overlay.poemId} />}
+      {overlay?.type === 'share' && <ShareScreen poemId={overlay.poemId} />}
       {overlay?.type === 'signin' && <SignInSheet then={overlay.then} />}
       {toast && (
         <Toast action={toast.action} alert={toast.alert} mark={toast.mark}

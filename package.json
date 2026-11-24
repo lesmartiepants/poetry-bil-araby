@@ -63,6 +63,7 @@
   "dependencies": {
     "@google-cloud/speech": "^7.5.0",
     "@gsap/react": "^2.1.2",
+    "@resvg/resvg-js": "^2.6.2",
     "@sentry/node": "^10.42.0",
     "@sentry/react": "^10.42.0",
     "@supabase/supabase-js": "^2.90.1",

@@ -1,4 +1,5 @@
 import process from 'node:process';
+import { cardRequest, renderCardPng } from './share-card.js';
 
 // ReDesign2 API (web/ at /new). Kept apart from the endpoints today's app uses,
 // under /api/v2, so the old app keeps working until cut-over.
@@ -200,6 +201,26 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
       res.json(full(rows[0], b));
     } catch (e) {
       fail(res, 'poem', e);
+    }
+  });
+
+  // 7.11–7.14 A share card as a 1080 × 1350 PNG. Cacheable: the query is the card.
+  app.get('/api/v2/poems/:id/card.png', async (req, res) => {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id < 1) return res.status(404).json({ error: 'Poem not found' });
+    try {
+      const [{ rows }, b] = await Promise.all([
+        pool.query(`${POEM_SELECT()} WHERE p.id = $1`, [id]),
+        bands(),
+      ]);
+      if (!rows.length) return res.status(404).json({ error: 'Poem not found' });
+      const { spec, error } = cardRequest(full(rows[0], b), req.query);
+      if (error) return res.status(400).json({ error });
+      res.setHeader('Content-Type', 'image/png');
+      res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800');
+      res.send(renderCardPng(spec));
+    } catch (e) {
+      fail(res, 'card', e);
     }
   });
 

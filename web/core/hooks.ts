@@ -52,5 +52,6 @@ export function useSetPrefs() {
 }
 export function useInvalidate() {
   const qc = useQueryClient();
-  return (...keys: (readonly unknown[])[]) => Promise.all(keys.map((k) => qc.invalidateQueries({ queryKey: k })));
+  // refetchType 'all' so a screen that mounts next (e.g. keep after sign-in) never reads stale data.
+  return (...keys: (readonly unknown[])[]) => Promise.all(keys.map((k) => qc.invalidateQueries({ queryKey: k, refetchType: 'all' })));
 }

@@ -1,0 +1,12 @@
+.kept-stamp { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--brand-pomegranate-light); z-index: 50; pointer-events: none; animation: stamp 700ms var(--motion-ease) forwards; }
+@keyframes stamp { 0% { transform: scale(0.6); opacity: 0; } 30% { transform: scale(1.1); opacity: 1; } 100% { transform: scale(1); opacity: 0; } }
+.check { flex: none; width: 24px; height: 24px; border-radius: 7px; border: 1.5px solid var(--c-border-sheet); display: flex; align-items: center; justify-content: center; color: var(--c-on-accent); }
+.check--on { background: var(--c-accent); border-color: var(--c-accent); }
+.text-in { flex: 1; height: 48px; border-radius: 14px; border: 1px solid var(--c-border-2); background: var(--c-surface); color: var(--c-text); padding: 0 14px; font: inherit; font-size: 16px; }
+.letters { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; direction: rtl; }
+.letter { height: 48px; min-width: 48px; border-radius: 12px; border: 1px solid var(--c-border-2); background: var(--c-surface); color: var(--c-text); font-family: var(--font-ruqaa); font-size: 22px; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; }
+.letter small { font-family: var(--font-ui); font-size: 8px; letter-spacing: 0.14em; color: var(--c-muted); margin-top: 2px; }
+.letter[aria-checked='true'] { border: 1.5px solid var(--c-accent); background: var(--c-accent-bg); color: var(--c-accent); }
+.letter--choose { font-family: var(--font-ui); font-size: 10px; letter-spacing: 0.14em; padding: 0 10px; color: var(--c-accent); }
+.swatch { width: 34px; height: 34px; border-radius: 17px; border: 2px solid transparent; }
+.swatch[aria-checked='true'] { border-color: var(--c-text); }

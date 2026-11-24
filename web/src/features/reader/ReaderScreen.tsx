@@ -7,7 +7,7 @@ import { qk, useDoors, useExplanation, useGloss, useInvalidate, useKeeps, usePoe
 import { sourceOf } from '@core/sources';
 import { transliterate } from '@core/logic/transliterate';
 import type { Poem } from '@core/types';
-import { FullAreaError, MarginNote, Segmented, Sheet, Skeleton, Switch } from '@ds/primitives';
+import { FullAreaError, MarginNote, Segmented, Sheet, Skeleton, Slider, Switch } from '@ds/primitives';
 import { Back, Heart, Lamp, Mark, Pause, Play, Share, Up } from '@ds/icons';
 import { PoetAvatar, Verse } from '@components/index';
 import { useOverlay } from '@components/overlays';
@@ -189,6 +189,11 @@ function Fan({ listen, insights, keep, share, aa, listening, kept, onClose }: Ac
 }
 
 /** 2.4 Aa: what sits under the Arabic, Arabic font, size, vowel marks, page. */
+/**
+ * Reading settings. In the Aa sheet (2.4) "under the Arabic" leads; on the
+ * Appearance page (12.2) a live preview leads and "under the Arabic" lives on
+ * Translation and sounds instead.
+ */
 export function AppearanceControls({ preview }: { preview?: boolean }) {
   const p = usePrefs().data;
   const set = useSetPrefs();
@@ -198,33 +203,55 @@ export function AppearanceControls({ preview }: { preview?: boolean }) {
     { value: 'naskh' as const, label: <><span lang="ar" style={{ fontFamily: 'var(--font-naskh)', fontSize: 19, lineHeight: 1 }}>ليلى</span><span>NASKH</span></> },
     { value: 'scheherazade' as const, label: <><span lang="ar" style={{ fontFamily: 'var(--font-scheherazade)', fontSize: 24, lineHeight: 1 }}>ليلى</span><span>SCHEHERAZADE</span></> },
   ];
-  return (
-    <div className="stack gap-12">
-      {preview && (
-        <div className="card" style={{ padding: '12px 18px', textAlign: 'right', background: 'var(--c-bg)' }}>
-          <p lang="ar" dir="rtl" style={{ margin: 0, fontFamily: 'var(--reading-font)', fontSize: 22, lineHeight: 1.7 }}>أَمُرُّ عَلى الدِيارِ دِيارِ لَيلى</p>
-          <p style={{ margin: 0, fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 16, color: 'var(--c-muted)' }}>I pass by the dwellings, Layla’s dwellings,</p>
-        </div>
-      )}
+  const SIZES = ['SMALL', 'MEDIUM', 'LARGE', 'LARGER', 'LARGEST'];
+  const under = (
+    <>
       <p className="t-eyebrow">SHOW UNDER THE ARABIC</p>
       <Segmented label="Show under the Arabic" value={p.under} onChange={(under) => set.mutate({ under })}
         options={[{ value: 'english', label: 'ENGLISH' }, { value: 'sounds', label: 'SOUNDS' }, { value: 'nothing', label: 'NOTHING' }]} />
-      <p className="t-eyebrow">ARABIC FONT</p>
-      <Segmented label="Arabic font" tall value={p.font} onChange={(font) => set.mutate({ font })} options={fonts} />
-      <div className="card row between" style={{ padding: '12px 14px', gap: 14 }}>
-        <div><p className="group-row__title">Vowel marks <span lang="ar" className="ar" style={{ color: 'var(--c-accent)' }}>· تشكيل</span></p><p className="group-row__sub">For learners; turn off when fluent</p></div>
-        <Switch label="Vowel marks" on={p.vowelMarks} onChange={(vowelMarks) => set.mutate({ vowelMarks })} />
-      </div>
-      <div className="row between"><p className="t-eyebrow">TEXT SIZE</p><span className="t-eyebrow t-eyebrow--accent">{['SMALL', 'MEDIUM', 'LARGE', 'LARGER', 'LARGEST'][p.textSize - 1]}</span></div>
-      <input className="slider" type="range" min={1} max={5} step={1} value={p.textSize} aria-label="Text size" onChange={(e) => set.mutate({ textSize: Number(e.target.value) as 1 | 2 | 3 | 4 | 5 })} />
-      <p className="t-eyebrow">PAGE</p>
-      <Segmented label="Page" tall value={p.page} onChange={(page) => set.mutate({ page })} options={[
-        { value: 'night', label: <><span lang="ar" className="ar">ليل</span><span>NIGHT</span></> },
-        { value: 'parchment', label: <><span lang="ar" className="ar">رَقّ</span><span>PARCHMENT</span></> },
-        { value: 'indigo', label: <><span lang="ar" className="ar">نيل</span><span>INDIGO</span></> },
-      ]} />
+    </>
+  );
+  const font = <><p className="t-eyebrow">ARABIC FONT</p><Segmented label="Arabic font" tall value={p.font} onChange={(font) => set.mutate({ font })} options={fonts} /></>;
+  const marks = (
+    <div className="card row between" style={{ padding: '12px 14px', gap: 14 }}>
+      <div><p className="group-row__title">Vowel marks <span lang="ar" className="ar" style={{ color: 'var(--c-accent)' }}>· تشكيل</span></p><p className="group-row__sub">For learners; turn off when fluent</p></div>
+      <Switch label="Vowel marks" on={p.vowelMarks} onChange={(vowelMarks) => set.mutate({ vowelMarks })} />
     </div>
   );
+  const size = (
+    <>
+      <div className="row between"><p className="t-eyebrow">TEXT SIZE</p><span className="t-eyebrow t-eyebrow--accent">{SIZES[p.textSize - 1]}</span></div>
+      <div className="size-row">
+        <span lang="ar" aria-hidden className="size-row__small">ع</span>
+        <Slider label="Text size" min={1} max={5} value={p.textSize} valueText={SIZES[p.textSize - 1]} onChange={(v) => set.mutate({ textSize: v as 1 | 2 | 3 | 4 | 5 })} />
+        <span lang="ar" aria-hidden className="size-row__large">ع</span>
+      </div>
+    </>
+  );
+  const page = (
+    <>
+      <p className="t-eyebrow">PAGE</p>
+      <div role="radiogroup" aria-label="Page" className="page-tiles">
+        {([['night', 'ليل', 'NIGHT'], ['parchment', 'رَقّ', 'PARCHMENT'], ['indigo', 'نيل', 'INDIGO']] as const).map(([v, ar, en]) => (
+          <button key={v} role="radio" aria-checked={p.page === v} className={`page-tile page-tile--${v}`} onClick={() => set.mutate({ page: v })}>
+            <span lang="ar" className="page-tile__ar">{ar}</span><span className="page-tile__en">{en}</span>
+          </button>
+        ))}
+      </div>
+    </>
+  );
+  if (preview) {
+    return (
+      <div className="stack gap-12">
+        <div className="card" style={{ padding: '12px 18px', textAlign: 'right', background: 'var(--c-bg)' }}>
+          <p lang="ar" dir="rtl" style={{ margin: 0, fontFamily: 'var(--reading-font)', fontSize: 22, lineHeight: 1.7 }}>{p.vowelMarks ? 'أَمُرُّ عَلى الدِيارِ دِيارِ لَيلى' : 'أمر على الديار ديار ليلى'}</p>
+          <p style={{ margin: 0, fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 16, color: 'var(--c-muted)' }}>I pass by the dwellings, Layla’s dwellings,</p>
+        </div>
+        {font}{page}{size}{marks}
+      </div>
+    );
+  }
+  return <div className="stack gap-12">{under}{font}{marks}{size}{page}</div>;
 }
 
 function AaSheet({ onClose }: { onClose: () => void }) {

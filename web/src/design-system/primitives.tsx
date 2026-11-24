@@ -119,3 +119,14 @@ export function Coming({ title, body, action }: { title: string; body: string; a
     </div>
   );
 }
+
+/** A range with the mock's track: gold up to the thumb, quiet after it. */
+export function Slider({ label, value, min, max, step = 1, onChange, valueText }: {
+  label: string; value: number; min: number; max: number; step?: number; onChange: (v: number) => void; valueText?: string;
+}) {
+  const fill = `${((value - min) / (max - min)) * 100}%`;
+  return (
+    <input className="slider" type="range" min={min} max={max} step={step} value={value} aria-label={label} aria-valuetext={valueText}
+      style={{ ['--fill' as string]: fill }} onChange={(e) => onChange(Number(e.target.value))} />
+  );
+}

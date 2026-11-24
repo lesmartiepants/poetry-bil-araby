@@ -111,6 +111,9 @@ export interface Prefs {
   difficulty: 'any' | BandKey;
   length: 'short' | 'any' | 'long';
   tapWord: boolean;
+  // 12.6 listening
+  silentMode: boolean; // play through the phone's silent switch (native app; the web always plays)
+  pauseLines: boolean; // a breath after each bayt
   displayName?: string;
 }
 

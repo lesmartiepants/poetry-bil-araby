@@ -84,7 +84,7 @@ test.describe('@prod the deployed app, read-only', () => {
   test('@prod 2.17 a poem ends with three doors, and a door opens its poem', async ({ page }) => {
     await page.goto('./explore/difficulty/gentle');
     await page.locator('.list-row').first().click();
-    const doors = page.getByRole('region', { name: 'Where the guide goes next' }).locator('.door');
+    const doors = page.getByRole('region', { name: 'Where the guide would take you next' }).locator('.door-card');
     await expect(doors).toHaveCount(3);
     const here = page.url();
     await doors.first().click();

@@ -1,0 +1,846 @@
+{
+  "$comment": "Slim feature manifest for web/ (ReDesign2): one entry per BUILD-SPEC feature. `name` is the spec's label, or its slice when the spec names none. `journeys` is generated (npm run check:features -- --write). A feature with no journey carries a `gap`. CI runs the check; the old app's feature-manifest.json goes at cut-over.",
+  "features": [
+    {
+      "id": "1.1",
+      "name": "Foundations and developer panel",
+      "version": "V1.1",
+      "journeys": [
+        "01-shell.spec.ts › 1.1 the splash shows on first open, then the app"
+      ]
+    },
+    {
+      "id": "1.2",
+      "name": "Foundations and developer panel",
+      "version": "V1.1",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "1.3",
+      "name": "Foundations and developer panel",
+      "version": "V1.1",
+      "journeys": [
+        "01-shell.spec.ts › 1.3 a server error turns the edge tab red with a count; 1.4 the timeline shows it"
+      ]
+    },
+    {
+      "id": "1.4",
+      "name": "Foundations and developer panel",
+      "version": "V1.1",
+      "journeys": [
+        "01-shell.spec.ts › 1.3 a server error turns the edge tab red with a count; 1.4 the timeline shows it"
+      ]
+    },
+    {
+      "id": "1.5",
+      "name": "Foundations and developer panel",
+      "version": "V1.1",
+      "journeys": [
+        "01-shell.spec.ts › 1.5 Report a bug sends the description and the timeline to the bug-report endpoint"
+      ]
+    },
+    {
+      "id": "1.6",
+      "name": "Foundations and developer panel",
+      "version": "V1.1",
+      "journeys": [
+        "01-shell.spec.ts › 1.6 long-press the tab bar hides and shows the edge tab"
+      ]
+    },
+    {
+      "id": "1.7",
+      "name": "Foundations and developer panel",
+      "version": "V1.1",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "2.1",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "journeys": [
+        "02-reading.spec.ts › 2.1 a poem opens with its title, poet and verses",
+        "live.spec.ts › 2.1 + 2.5 a poem with its translation, and its stored explanation",
+        "prod.spec.ts › 4.4 → 2.1 a feeling lists poems and one opens with its Arabic and the dock"
+      ]
+    },
+    {
+      "id": "2.2",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "journeys": [
+        "02-reading.spec.ts › 2.2–2.3 scrolling folds the dock into the mark, which opens the fan"
+      ]
+    },
+    {
+      "id": "2.3",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "journeys": [
+        "02-reading.spec.ts › 2.2–2.3 scrolling folds the dock into the mark, which opens the fan"
+      ]
+    },
+    {
+      "id": "2.4",
+      "name": "Aa sheet",
+      "version": "V1.2",
+      "journeys": [
+        "02-reading.spec.ts › 2.4 Aa: font, size, page and vowel marks apply live and survive a reload",
+        "02-reading.spec.ts › 2.4 show under the Arabic: Sounds swaps the English for transliteration"
+      ]
+    },
+    {
+      "id": "2.5",
+      "name": "Insights",
+      "version": "V1.2",
+      "journeys": [
+        "02-reading.spec.ts › 2.5 Insights opens over the poem with The meaning and The poet",
+        "live.spec.ts › 2.1 + 2.5 a poem with its translation, and its stored explanation"
+      ]
+    },
+    {
+      "id": "2.6",
+      "name": "Tap a word",
+      "version": "V1.3",
+      "journeys": [
+        "02-reading.spec.ts › 2.6 tap a word shows its root and meaning in this line"
+      ]
+    },
+    {
+      "id": "2.7",
+      "name": "End of poem",
+      "version": "V1.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "2.8",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "2.9",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "2.10",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "2.11",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "journeys": [
+        "02-reading.spec.ts › 2.11 a broken link says so and offers Explore",
+        "live.spec.ts › 2.11 an unknown poem id says the link leads nowhere",
+        "prod.spec.ts › 2.11 an unknown poem says the link leads nowhere"
+      ]
+    },
+    {
+      "id": "2.12",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "2.13",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "2.14",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "2.15",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "2.16",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "2.17",
+      "name": "The guide's doors",
+      "version": "V3.2",
+      "journeys": [
+        "02-reading.spec.ts › 2.17 the end of the poem offers three different doors, and the guide’s settings change them",
+        "live.spec.ts › 2.17 with the guide live, every poem ends with three doors that have reasons",
+        "prod.spec.ts › 2.17 a poem ends with three doors, and a door opens its poem"
+      ]
+    },
+    {
+      "id": "2.18",
+      "name": "The guide's doors",
+      "version": "V3.2",
+      "journeys": [
+        "09-12-guide.spec.ts › 2.18 Tonight’s poem, read to the end, offers three doors with reasons, or enough for tonight"
+      ]
+    },
+    {
+      "id": "3.1",
+      "name": "Listening",
+      "version": "V1.4",
+      "journeys": [
+        "03-listening.spec.ts › 3.1 Listen turns the dock into the player and the glow advances"
+      ]
+    },
+    {
+      "id": "3.2",
+      "name": "Listening",
+      "version": "V1.4",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "3.3",
+      "name": "Voice sheet",
+      "version": "V1.4",
+      "journeys": [
+        "03-listening.spec.ts › 3.3 switching voice restarts the current line and becomes the default"
+      ]
+    },
+    {
+      "id": "3.4",
+      "name": "Listening",
+      "version": "V1.4",
+      "journeys": [
+        "03-listening.spec.ts › 3.4–3.6 scrolling shrinks the player to a pill; the fan shows Pause and the recitation keeps going"
+      ]
+    },
+    {
+      "id": "3.5",
+      "name": "Listening",
+      "version": "V1.4",
+      "journeys": [
+        "03-listening.spec.ts › 3.4–3.6 scrolling shrinks the player to a pill; the fan shows Pause and the recitation keeps going"
+      ]
+    },
+    {
+      "id": "3.6",
+      "name": "Listening",
+      "version": "V1.4",
+      "journeys": [
+        "03-listening.spec.ts › 3.4–3.6 scrolling shrinks the player to a pill; the fan shows Pause and the recitation keeps going"
+      ]
+    },
+    {
+      "id": "3.7",
+      "name": "Play from a verse",
+      "version": "V1.4",
+      "journeys": [
+        "03-listening.spec.ts › 3.7 tapping a verse while listening offers Play from here"
+      ]
+    },
+    {
+      "id": "3.8",
+      "name": "Listening",
+      "version": "V1.4",
+      "journeys": [
+        "03-listening.spec.ts › 3.8 a recitation that won’t load offers Try again"
+      ]
+    },
+    {
+      "id": "3.9",
+      "name": "Listening",
+      "version": "V1.4",
+      "journeys": [
+        "03-listening.spec.ts › 3.9 a recitation that stalls says where it stopped and resumes from there"
+      ]
+    },
+    {
+      "id": "3.10",
+      "name": "Listening",
+      "version": "V1.4",
+      "journeys": [
+        "03-listening.spec.ts › 3.10 without word timings the verse is highlighted instead of words"
+      ]
+    },
+    {
+      "id": "3.11",
+      "name": "Listening",
+      "version": "V1.4",
+      "journeys": [
+        "03-listening.spec.ts › 3.11 a voice that fails keeps the current one and says so"
+      ]
+    },
+    {
+      "id": "4.1",
+      "name": "Hub",
+      "version": "V1.5",
+      "journeys": [
+        "04-explore-05-poet.spec.ts › 4.1 → 4.4 a feeling chip opens its shelf and a poem",
+        "live.spec.ts › 4.1 Explore shows the poet of the week, feelings and difficulty bands from the database",
+        "prod.spec.ts › 4.1 Explore shows the poet of the week, feelings, bands and eras from the database",
+        "prod.spec.ts › 4.1 → 5.3 the poet of the week has a bio on the poet tab"
+      ]
+    },
+    {
+      "id": "4.2",
+      "name": "Explore",
+      "version": "V1.5",
+      "journeys": [
+        "04-explore-05-poet.spec.ts › 4.2 all poets filter by era",
+        "prod.spec.ts › 4.2 → 5.1 a poet from All poets opens a page of their poems"
+      ]
+    },
+    {
+      "id": "4.3",
+      "name": "Explore",
+      "version": "V1.5",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "4.4",
+      "name": "Explore",
+      "version": "V1.5",
+      "journeys": [
+        "04-explore-05-poet.spec.ts › 4.1 → 4.4 a feeling chip opens its shelf and a poem",
+        "live.spec.ts › 4.4 a feeling lists its poems and opens one in the reader",
+        "prod.spec.ts › 4.4 → 2.1 a feeling lists poems and one opens with its Arabic and the dock"
+      ]
+    },
+    {
+      "id": "4.5",
+      "name": "Explore",
+      "version": "V1.5",
+      "journeys": [
+        "04-explore-05-poet.spec.ts › 4.5 → 4.6 an era shelf opens one era"
+      ]
+    },
+    {
+      "id": "4.6",
+      "name": "Explore",
+      "version": "V1.5",
+      "journeys": [
+        "04-explore-05-poet.spec.ts › 4.5 → 4.6 an era shelf opens one era"
+      ]
+    },
+    {
+      "id": "4.7",
+      "name": "Explore",
+      "version": "V1.5",
+      "journeys": [
+        "04-explore-05-poet.spec.ts › 4.7 a difficulty band lists its poems and hops between bands",
+        "live.spec.ts › 4.7 each difficulty band has poems",
+        "prod.spec.ts › 4.7 each difficulty band has poems"
+      ]
+    },
+    {
+      "id": "5.1",
+      "name": "Poet pages",
+      "version": "V1.6",
+      "journeys": [
+        "04-explore-05-poet.spec.ts › 5.1 every poet in All poets opens their page, listing as many poems as it counts",
+        "04-explore-05-poet.spec.ts › 5.1 every poet in Explore opens a page of their poems; 5.3 the poet tab shows the bio",
+        "live.spec.ts › 5.1 a poet page lists the poet’s poems",
+        "prod.spec.ts › 4.2 → 5.1 a poet from All poets opens a page of their poems"
+      ]
+    },
+    {
+      "id": "5.2",
+      "name": "Poet pages",
+      "version": "V1.6",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "5.3",
+      "name": "Poet pages",
+      "version": "V1.6",
+      "journeys": [
+        "04-explore-05-poet.spec.ts › 5.1 every poet in Explore opens a page of their poems; 5.3 the poet tab shows the bio",
+        "live.spec.ts › 5.3 the poet tab shows where to find the poet",
+        "prod.spec.ts › 4.1 → 5.3 the poet of the week has a bio on the poet tab"
+      ]
+    },
+    {
+      "id": "5.4",
+      "name": "Poet pages",
+      "version": "V1.6",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "6.1",
+      "name": "Keep and lists",
+      "version": "V2.1",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "6.2",
+      "name": "Sign in on save",
+      "version": "V2.1",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 6.2 keeping while signed out asks to sign in, then keeps"
+      ]
+    },
+    {
+      "id": "6.3",
+      "name": "Keep and lists",
+      "version": "V2.1",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 6.3–6.6 keep → Change → new list with an automatic icon → delete the list keeps the poem",
+        "supabase.spec.ts › 6.3–6.6 keep goes to Favorites, a new list holds it, deleting the list keeps the poem, on any device"
+      ]
+    },
+    {
+      "id": "6.4",
+      "name": "Lists",
+      "version": "V2.1",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 6.3–6.6 keep → Change → new list with an automatic icon → delete the list keeps the poem",
+        "06-keep-07-share-08-library.spec.ts › 6.4 a poem in two lists shows in both; out of Favorites it stays kept; deleting a list leaves it kept",
+        "supabase.spec.ts › 6.3–6.6 keep goes to Favorites, a new list holds it, deleting the list keeps the poem, on any device"
+      ]
+    },
+    {
+      "id": "6.5",
+      "name": "Keep and lists",
+      "version": "V2.1",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 6.3–6.6 keep → Change → new list with an automatic icon → delete the list keeps the poem",
+        "supabase.spec.ts › 6.3–6.6 keep goes to Favorites, a new list holds it, deleting the list keeps the poem, on any device"
+      ]
+    },
+    {
+      "id": "6.6",
+      "name": "Keep and lists",
+      "version": "V2.1",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 6.3–6.6 keep → Change → new list with an automatic icon → delete the list keeps the poem",
+        "supabase.spec.ts › 6.3–6.6 keep goes to Favorites, a new list holds it, deleting the list keeps the poem, on any device"
+      ]
+    },
+    {
+      "id": "6.7",
+      "name": "Keep and lists",
+      "version": "V2.1",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "6.8",
+      "name": "Keep and lists",
+      "version": "V2.1",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "7.1",
+      "name": "Share",
+      "version": "V2.2",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 7.1–7.7 share: a full-screen card, colours, choosing lines, a dedication, Copy text"
+      ]
+    },
+    {
+      "id": "7.2",
+      "name": "Copy text",
+      "version": "V2.2",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 7.1–7.7 share: a full-screen card, colours, choosing lines, a dedication, Copy text"
+      ]
+    },
+    {
+      "id": "7.3",
+      "name": "Share",
+      "version": "V2.2",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 7.1–7.7 share: a full-screen card, colours, choosing lines, a dedication, Copy text"
+      ]
+    },
+    {
+      "id": "7.4",
+      "name": "Share",
+      "version": "V2.2",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 7.1–7.7 share: a full-screen card, colours, choosing lines, a dedication, Copy text"
+      ]
+    },
+    {
+      "id": "7.5",
+      "name": "Share",
+      "version": "V2.2",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 7.1–7.7 share: a full-screen card, colours, choosing lines, a dedication, Copy text"
+      ]
+    },
+    {
+      "id": "7.6",
+      "name": "Share",
+      "version": "V2.2",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 7.1–7.7 share: a full-screen card, colours, choosing lines, a dedication, Copy text"
+      ]
+    },
+    {
+      "id": "7.7",
+      "name": "Share",
+      "version": "V2.2",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 7.1–7.7 share: a full-screen card, colours, choosing lines, a dedication, Copy text"
+      ]
+    },
+    {
+      "id": "7.8",
+      "name": "Share",
+      "version": "V2.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "7.9",
+      "name": "Share",
+      "version": "V2.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "7.10",
+      "name": "Share",
+      "version": "V2.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "7.11",
+      "name": "Share",
+      "version": "V2.2",
+      "journeys": [
+        "live.spec.ts › 7.11 a saved card is a 1080 × 1350 PNG from the server",
+        "prod.spec.ts › 7.11 the server renders a share card as a 1080 × 1350 PNG"
+      ]
+    },
+    {
+      "id": "7.12",
+      "name": "Share",
+      "version": "V2.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "7.13",
+      "name": "Share",
+      "version": "V2.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "7.14",
+      "name": "Share",
+      "version": "V2.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "7.15",
+      "name": "Share",
+      "version": "V2.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "8.1",
+      "name": "Hub",
+      "version": "V2.3",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "8.2",
+      "name": "Library",
+      "version": "V2.3",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 8.2 Favorites can’t be renamed or deleted"
+      ]
+    },
+    {
+      "id": "8.3",
+      "name": "Library",
+      "version": "V2.3",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "8.4",
+      "name": "Library",
+      "version": "V2.3",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 8.4 List deleted · UNDO brings the list back with its poems"
+      ]
+    },
+    {
+      "id": "8.5",
+      "name": "Follow",
+      "version": "V2.3",
+      "journeys": [
+        "supabase.spec.ts › 8.5 following a poet shows in the Library, with poems read"
+      ]
+    },
+    {
+      "id": "8.6",
+      "name": "Library",
+      "version": "V2.3",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 8.6–8.9 your poems group by poet, feeling and era; the sort label switches to English order"
+      ]
+    },
+    {
+      "id": "8.7",
+      "name": "Library",
+      "version": "V2.3",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 8.6–8.9 your poems group by poet, feeling and era; the sort label switches to English order"
+      ]
+    },
+    {
+      "id": "8.8",
+      "name": "Library",
+      "version": "V2.3",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 8.6–8.9 your poems group by poet, feeling and era; the sort label switches to English order"
+      ]
+    },
+    {
+      "id": "8.9",
+      "name": "Library",
+      "version": "V2.3",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 8.6–8.9 your poems group by poet, feeling and era; the sort label switches to English order"
+      ]
+    },
+    {
+      "id": "8.10",
+      "name": "Library",
+      "version": "V2.3",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 8.10–8.11 select, remove, then undo",
+        "supabase.spec.ts › 8.10 removing a keep removes it everywhere; another reader never sees it"
+      ]
+    },
+    {
+      "id": "8.11",
+      "name": "Library",
+      "version": "V2.3",
+      "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 8.10–8.11 select, remove, then undo"
+      ]
+    },
+    {
+      "id": "8.12",
+      "name": "Library",
+      "version": "V2.3",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "8.13",
+      "name": "Library",
+      "version": "V2.3",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "8.14",
+      "name": "Library",
+      "version": "V2.3",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "8.15",
+      "name": "Collections",
+      "version": "V3.3",
+      "journeys": [
+        "10-collections-11-search.spec.ts › 10.2 a saved collection resumes at the next unread poem, after a reload; 8.15 it shows in the Library"
+      ]
+    },
+    {
+      "id": "9.1",
+      "name": "First run, Tonight and journeys",
+      "version": "V3.1",
+      "journeys": [
+        "09-12-guide.spec.ts › 9.1–9.4 a new reader goes from Welcome to how they read, then Tonight greets them, then the poem"
+      ]
+    },
+    {
+      "id": "9.2",
+      "name": "First run, Tonight and journeys",
+      "version": "V3.1",
+      "journeys": [
+        "09-12-guide.spec.ts › 9.1–9.4 a new reader goes from Welcome to how they read, then Tonight greets them, then the poem"
+      ]
+    },
+    {
+      "id": "9.3",
+      "name": "First run, Tonight and journeys",
+      "version": "V3.1",
+      "journeys": [
+        "09-12-guide.spec.ts › 9.1–9.4 a new reader goes from Welcome to how they read, then Tonight greets them, then the poem"
+      ]
+    },
+    {
+      "id": "9.4",
+      "name": "First run, Tonight and journeys",
+      "version": "V3.1",
+      "journeys": [
+        "09-12-guide.spec.ts › 9.1–9.4 a new reader goes from Welcome to how they read, then Tonight greets them, then the poem",
+        "live.spec.ts › 9.4 Tonight is the same pick for everyone and names its journey step",
+        "prod.spec.ts › 9.4 Tonight shows one poem with its reason"
+      ]
+    },
+    {
+      "id": "9.5",
+      "name": "Pathways",
+      "version": "V3.1",
+      "journeys": [
+        "09-12-guide.spec.ts › 9.5 Pathways shows the doors of the last poem finished, and none before the first",
+        "live.spec.ts › 9.5–9.6 Pathways lists the published journeys and opens one"
+      ]
+    },
+    {
+      "id": "9.6",
+      "name": "First run, Tonight and journeys",
+      "version": "V3.1",
+      "journeys": [
+        "09-12-guide.spec.ts › 9.6–9.7 reading a journey step to its end completes it and shows the next",
+        "live.spec.ts › 9.5–9.6 Pathways lists the published journeys and opens one",
+        "supabase.spec.ts › 9.6 journey progress is kept per reader"
+      ]
+    },
+    {
+      "id": "9.7",
+      "name": "First run, Tonight and journeys",
+      "version": "V3.1",
+      "journeys": [
+        "09-12-guide.spec.ts › 9.6–9.7 reading a journey step to its end completes it and shows the next"
+      ]
+    },
+    {
+      "id": "9.8",
+      "name": "First run, Tonight and journeys",
+      "version": "V3.1",
+      "journeys": [
+        "09-12-guide.spec.ts › 9.8 reading the last step completes the journey and offers the next one"
+      ]
+    },
+    {
+      "id": "9.9",
+      "name": "First run, Tonight and journeys",
+      "version": "V3.1",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "9.10",
+      "name": "First run, Tonight and journeys",
+      "version": "V3.1",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "10.1",
+      "name": "Collections",
+      "version": "V3.3",
+      "journeys": [
+        "10-collections-11-search.spec.ts › 10.1 every collection in Explore opens and lists its poems in order",
+        "prod.spec.ts › 10.1 → 10.2 a published collection opens with its poems in order"
+      ]
+    },
+    {
+      "id": "10.2",
+      "name": "Collections",
+      "version": "V3.3",
+      "journeys": [
+        "09-12-guide.spec.ts › 10.2 a collection can be saved and continued",
+        "10-collections-11-search.spec.ts › 10.2 a long collection lists five, then names who the rest reach",
+        "10-collections-11-search.spec.ts › 10.2 a saved collection resumes at the next unread poem, after a reload; 8.15 it shows in the Library",
+        "live.spec.ts › 10.2 a collection lists its poems in order",
+        "prod.spec.ts › 10.1 → 10.2 a published collection opens with its poems in order"
+      ]
+    },
+    {
+      "id": "10.3",
+      "name": "Collections",
+      "version": "V3.3",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "11.1",
+      "name": "Search",
+      "version": "V3.4",
+      "journeys": [
+        "10-collections-11-search.spec.ts › 11.1 recent searches stay on the device and can be forgotten"
+      ]
+    },
+    {
+      "id": "11.2",
+      "name": "Search",
+      "version": "V3.4",
+      "journeys": [
+        "09-12-guide.spec.ts › 11.2 a half-remembered line finds its poem; 11.3 nothing found shows the closest",
+        "10-collections-11-search.spec.ts › 11.2 a half-remembered line without vowel marks opens its poem",
+        "live.spec.ts › 11.2 a line search ignores vowel marks; 11.3 nothing found offers the closest",
+        "prod.spec.ts › 11.2 an Arabic word finds poems or lines; 11.3 nonsense offers the closest"
+      ]
+    },
+    {
+      "id": "11.3",
+      "name": "Search",
+      "version": "V3.4",
+      "journeys": [
+        "09-12-guide.spec.ts › 11.2 a half-remembered line finds its poem; 11.3 nothing found shows the closest",
+        "live.spec.ts › 11.2 a line search ignores vowel marks; 11.3 nothing found offers the closest",
+        "prod.spec.ts › 11.2 an Arabic word finds poems or lines; 11.3 nonsense offers the closest"
+      ]
+    },
+    {
+      "id": "12.1",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "12.2",
+      "name": "Reader and Appearance",
+      "version": "V1.2",
+      "journeys": [
+        "supabase.spec.ts › 12.2 settings follow the reader to another device"
+      ]
+    },
+    {
+      "id": "12.3",
+      "name": "Hub",
+      "version": "V3.5",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "12.4",
+      "name": "What moves you",
+      "version": "V3.5",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "12.5",
+      "name": "How the guide chooses",
+      "version": "V3.5",
+      "journeys": [
+        "09-12-guide.spec.ts › 12.5 the guide’s difficulty uses the same bands as Explore"
+      ]
+    },
+    {
+      "id": "12.6",
+      "name": "Reciter",
+      "version": "V3.5",
+      "gap": "no journey yet"
+    },
+    {
+      "id": "12.7",
+      "name": "Translation and sounds",
+      "version": "V3.5",
+      "journeys": [
+        "09-12-guide.spec.ts › 12.7 the translation choice is previewed on a real line"
+      ]
+    },
+    {
+      "id": "12.8",
+      "name": "Delete account",
+      "version": "Later",
+      "journeys": [
+        "09-12-guide.spec.ts › 12.8 account only offers supported actions"
+      ]
+    }
+  ]
+}

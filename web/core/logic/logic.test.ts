@@ -4,6 +4,7 @@ import { autoIconLetter, iconLetterChoices, iconLetterOf } from './iconLetter';
 import { DEFAULT_PREFS, mergePrefs } from './prefs';
 import { cardSvg, splitForCards } from './shareCard';
 import { arabicInitial, arabicSortKey, matchRange, normalizeArabic, stripMarks } from './arabic';
+import { chooseDoors, doorPools, parseSteer, uniqueHooks, wordDoors } from './guide';
 import { initialPlayback, playbackReducer } from './playback';
 
 describe('difficulty bands', () => {
@@ -116,5 +117,58 @@ describe('search match highlighting', () => {
   it('matches English case-insensitively and says when nothing matches', () => {
     expect(matchRange('I pass by the dwellings', 'DWELL')).toEqual([14, 19]);
     expect(matchRange(line, 'قمر')).toBeNull();
+  });
+});
+
+describe('the guide’s doors', () => {
+  const row = (id: number, poetId: number, poet: string, era: string, mood: string, extra = {}) => ({
+    id, title: `قصيدة ${id}`, title_en: `Poem ${id}`, poet_id: poetId, poet_en: poet, era_id: era === 'modern' ? 9 : era === 'umayyad' ? 3 : era === 'abbasid' ? 4 : 1,
+    era_key: era, mood_primary: mood, death_year: { 1: 646, 2: 704, 3: 1964, 4: 965 }[poetId], ...extra,
+  });
+  const me = row(10, 1, 'Al-Khansa', 'pre-islamic', 'grief');
+  const near = [row(11, 1, 'Al-Khansa', 'pre-islamic', 'pride'), row(12, 2, 'Layla al-Akhyaliyya', 'umayyad', 'grief'), row(13, 3, 'Al-Sayyab', 'modern', 'grief')];
+  const anywhere = [...near, row(14, 4, 'Al-Mutanabbi', 'abbasid', 'pride')];
+
+  it('offers one door of each kind, in specific words, with no hook repeated', () => {
+    const chosen = chooseDoors(me, doorPools(me, near, anywhere, null));
+    expect(chosen.map((d) => `${d.kind}:${d.row.id}`)).toEqual(['feeling:12', 'poet:11', 'era:13']);
+    const words = wordDoors(chosen, me, 'grief');
+    expect(words.map((d) => d.hook)).toEqual(['Also grief, from the Umayyad age', 'More from Al-Khansa', 'Same grief, 1,300 years on']);
+    expect(words.every((d) => d.reason.length > 0)).toBe(true);
+  });
+
+  it('puts the complete poem first when the poem read is an excerpt', () => {
+    const excerpt = row(15, 1, 'Al-Khansa', 'pre-islamic', 'grief', { full_poem_id: 11 });
+    const chosen = chooseDoors(excerpt, doorPools(excerpt, near, anywhere, near[0]));
+    expect(chosen).toHaveLength(3);
+    expect(chosen[0]).toMatchObject({ kind: 'full', row: { id: 11 } });
+    expect(wordDoors(chosen, excerpt, 'grief')[0].hook).toBe('The whole poem');
+  });
+
+  it('tops up with somewhere new, on a poet and an age not already offered', () => {
+    const lonely = row(11, 1, 'Al-Khansa', 'pre-islamic', 'pride');
+    const chosen = chooseDoors(lonely, doorPools(lonely, [], anywhere, null));
+    expect(chosen).toHaveLength(3);
+    expect(chosen.every((d) => d.kind === 'new')).toBe(true);
+    expect(new Set(chosen.map((d) => d.row.poet_id)).size).toBe(3);
+    expect(new Set(wordDoors(chosen, lonely, 'pride').map((d) => d.hook)).size).toBe(3);
+  });
+
+  it('never offers the poem itself or a poem twice, even from small pools', () => {
+    const chosen = chooseDoors(me, doorPools(me, [me], [me, near[0]], null));
+    expect(chosen.map((d) => d.row.id)).toEqual([11]);
+  });
+
+  it('uniqueHooks rewrites a repeated hook so no two doors read the same', () => {
+    const door = (id: string, hook: string) => ({ hook, poem: { id, poetEn: `Poet ${id}`, titleEn: `Title ${id}` } });
+    const out = uniqueHooks([door('1', 'More from X'), door('2', 'more from x'), door('3', 'Other')]);
+    expect(out.map((d) => d.hook)).toEqual(['More from X', 'Another way in: Poet 2', 'Other']);
+  });
+
+  it('parseSteer reads the guide’s settings from the query and ignores anything else', () => {
+    expect(parseSteer({ cm: '0.3', difficulty: 'gentle', length: 'short', feelings: 'grief, love,' })).toEqual({ cm: 0.3, difficulty: 'gentle', length: 'short', feelings: ['grief', 'love'] });
+    expect(parseSteer({ cm: '7', difficulty: 'hard', length: 'epic' })).toEqual({ cm: 1, difficulty: 'any', length: 'any', feelings: [] });
+    expect(parseSteer({ cm: 'abc' }).cm).toBeNull();
+    expect(parseSteer()).toEqual({ cm: null, difficulty: 'any', length: 'any', feelings: [] });
   });
 });

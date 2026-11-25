@@ -100,33 +100,6 @@ describe('the guide’s doors', () => {
     vi.unstubAllGlobals();
   });
 
-  it('offers one door of each kind, in specific words, with no hook repeated', async () => {
-    const { doors } = harness();
-    const { body } = await doors(10);
-    expect(body.map((d) => d.poem.id)).toEqual(['12', '11', '13']);
-    expect(body.map((d) => d.hook)).toEqual([
-      'Also grief, from the Umayyad age',
-      'More from Al-Khansa',
-      'Same grief, 1,300 years on',
-    ]);
-    expect(body.every((d) => d.reason.length > 0)).toBe(true);
-    expect(new Set(body.map((d) => d.hook)).size).toBe(3);
-  });
-
-  it('puts the complete poem first when the poem is an excerpt', async () => {
-    const { doors } = harness();
-    const { body } = await doors(15);
-    expect(body[0]).toMatchObject({ poem: { id: '11' }, hook: 'The whole poem' });
-    expect(body).toHaveLength(3);
-  });
-
-  it('follows the guide’s settings: modern first when the reader leans modern', async () => {
-    const { doors } = harness();
-    const { body } = await doors(11, { cm: '1' }); // pride: no same-feeling poet, so "somewhere new" tops up
-    const fresh = body.filter((d) => d.hook.startsWith('Somewhere new'));
-    expect(fresh[0].poem.eraKey).toBe('modern');
-  });
-
   it('uses Gemini’s hook and reason for each pair, stores them, and reads them back', async () => {
     vi.stubEnv('GEMINI_API_KEY', 'test-key');
     const fetch = vi.fn(async (_url, init) => {

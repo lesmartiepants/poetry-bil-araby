@@ -1,23 +1,34 @@
 // Area 10 · Collections (10.1–10.3).
+import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQueries } from '@tanstack/react-query';
 import { api } from '@core/api';
 import { useCollection, useCollections, useEras, useInvalidate, useProgress } from '@core/hooks';
 import { Header, Skeleton, TitleRow } from '@ds/primitives';
-import { Back, Bookmark } from '@ds/icons';
+import { Back, Bookmark, Search } from '@ds/icons';
 import { Pattern } from '@ds/Pattern';
 import { CollectionCard, collectionArt, PathDock } from '@components/index';
 import './collections.css';
 
 export function AllCollections() {
   const c = useCollections('collection').data;
+  const prog = useProgress().data;
   const [, nav] = useLocation();
+  const [only, setOnly] = useState<'all' | 'saved'>('all');
+  const saved = (slug: string) => !!prog?.find((p) => p.slug === slug)?.saved;
+  const savedCount = c?.filter((x) => saved(x.slug)).length ?? 0;
+  const shown = c?.filter((x) => only === 'all' || saved(x.slug));
   return (
     <div className="screen">
-      <Header onBack={() => nav('/explore')} />
-      <TitleRow en="Collections" ar="مختارات" />
-      <div className="pad mt-12" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-        {c?.map((x) => <CollectionCard key={x.slug} c={x} />)}
+      <Header onBack={() => nav('/explore')} right={<Link href="/search" className="icon-btn" aria-label="Search"><Search size={18} /></Link>} />
+      <TitleRow en="Collections" ar="مجموعات" />
+      <p className="pad colls__meta"><span>{c?.length ?? 0} COLLECTIONS</span><span>CURATED BY THE GUIDE</span></p>
+      <div role="radiogroup" aria-label="Show" className="pad colls__filters">
+        <button role="radio" aria-checked={only === 'all'} className="chip chip--sm" onClick={() => setOnly('all')}>ALL</button>
+        <button role="radio" aria-checked={only === 'saved'} className="chip chip--sm" onClick={() => setOnly('saved')}>SAVED · {savedCount}</button>
+      </div>
+      <div className="pad colls__grid">
+        {shown?.map((x) => <CollectionCard key={x.slug} c={x} saved={saved(x.slug)} />)}
       </div>
     </div>
   );

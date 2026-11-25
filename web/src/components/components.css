@@ -57,6 +57,12 @@
   color: var(--c-on-accent);
   padding: 0 4px;
 }
+.coll-card__saved {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  color: var(--c-accent);
+}
 .coll-card {
   flex: none;
   width: 200px;

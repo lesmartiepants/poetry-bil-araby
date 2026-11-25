@@ -39,7 +39,7 @@ const CASES = [];
 for (const [name, route, expect, steps] of SCREENS) {
   // Library and You read this device first (keeps, account, settings), so nothing of theirs waits on /api/v2.
   CASES.push({ id: `${name}--loading`, mode: 'live', api: 'hang', route, steps, expectBusy: !['library', 'you'].includes(name) });
-  CASES.push({ id: `${name}--error`, mode: 'live', api: 'fail', route, steps, expectNot: expect });
+  CASES.push({ id: `${name}--error`, mode: 'live', api: 'fail', route, steps, expectNot: expect, expectMessage: name !== 'library' }); // signed out, Library is all on this device
   CASES.push({ id: `${name}--ready`, mode: 'mock', route, steps, expect });
 }
 // Per-user states (mock store).
@@ -114,7 +114,7 @@ for (const c of CASES.filter((c) => !only || only.test(c.id))) {
   }
   const busy = await page.locator('[aria-busy=true], .skeleton, [class*=skeleton]').count();
   if (c.expectBusy && !busy) problems.push('loading: no skeleton or aria-busy while data is pending');
-  if (c.api === 'fail' && !/try again|couldn.t|could not|went wrong|offline|retry/i.test(text)) problems.push('error: no error message or retry shown');
+  if (c.api === 'fail' && c.expectMessage !== false && !/try again|couldn.t|could not|went wrong|offline|retry/i.test(text)) problems.push('error: no error message or retry shown');
   const main = text.replace(/poetry|بالعربي|explore|library|you|tonight/gi, '').trim();
   if (main.length < 15 && !busy) problems.push('blank screen');
   await page.screenshot({ path: new URL(`${c.id}.png`, out).pathname });

@@ -121,6 +121,9 @@ Key:
 ## What not to add (and what to cut)
 
 - **No unit tests for components, hooks, API clients or the mock layer.** The journeys cover them through the UI. A test that rebuilds the implementation's output in the test is restating code.
+- **No route tests over a fake SQL pool.** A pool that pattern-matches query strings and re-implements their `WHERE` in JS breaks on every rewrite and never runs the real SQL. Pure selection logic goes in `web/core/logic` and gets unit tests there. SQL is proven by `@live`.
+  - Example: `src/test/redesign2-doors.test.js`, added in #756. Move its door choice and wording tests to `guide.js` unit tests.
+  - Keep its Gemini store-and-read-back and fallback cases until cut-over. They are the only proof of "Gemini once, then the database", and CI has no Gemini key. At cut-over, move them beside a real-Postgres API test.
 - **No snapshot or pixel tests in CI.** Visual fidelity is `qa:mocks`, reviewed by a person per slice.
 - **No duplicate journeys across layers.** Mock covers the UI flow. L and S re-run only the flows whose data path matters (SQL, RLS, triggers). P is a thin read-only spine.
 - **Cut in this branch:** nothing in `web/`; the 22 unit tests are all pure logic with edge cases. In CI, `--pass-with-no-tests` on the live job is gone, because it let a grep that matched nothing pass.

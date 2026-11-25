@@ -62,8 +62,8 @@ test.describe('Area 2 · Reading', () => {
     const doors = end.locator('.door-card');
     await expect(doors).toHaveCount(3);
     await expect(doors.nth(0)).toContainText('Also longing, from the Pre-Islamic age');
-    await expect(doors.nth(1)).toContainText('Same longing, 1,300 years on');
-    await expect(doors.nth(2)).toContainText('Somewhere new: the Abbasid age');
+    await expect(doors.nth(1)).toContainText('Somewhere new: the Abbasid age');
+    await expect(doors.nth(2)).toContainText('Or the Modern age, with Al-Sayyab');
     // Leaning modern (12.5) brings the modern poem to the first door.
     await page.evaluate(() => localStorage.setItem('mock.prefs', JSON.stringify({ classicalModern: 1 })));
     await page.reload();
@@ -72,16 +72,30 @@ test.describe('Area 2 · Reading', () => {
     await expect(page).toHaveURL(/unshudat-al-matar/);
   });
 
-  test('the reader tabs offer Home at the start of the Guide and after following its suggestions', async ({ page }) => {
+  test('2.17 a shared image connects poems with different feelings', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./p/qadhan');
+    const end = page.getByRole('region', { name: 'Where the guide would take you next' });
+    const image = end.getByRole('link', { name: /Tears, this time with love/ });
+    await expect(image).toContainText('Abu Firas');
+    await image.click();
+    await expect(page).toHaveURL(/\/p\/araka$/);
+  });
+
+  test('the standard reader tabs appear at the start of the Guide and return to Journey', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 700 });
     await fresh(page);
     await page.goto('./');
     await expect(page).toHaveURL(/\/new\/journey$/);
+    const tabs = page.getByRole('navigation', { name: 'Main' });
+    const tabLinks = () => tabs.getByRole('link').evaluateAll((links) =>
+      links.map((link) => [link.getAttribute('aria-label'), link.getAttribute('href')])
+    );
+    const standardLinks = await tabLinks();
     await page.getByRole('link', { name: 'Explore', exact: true }).click();
     await page.getByRole('link', { name: /Longing/ }).first().click();
     await page.locator('a[href$="/p/amurru"]').first().click();
     await expect(page).toHaveURL(/\/new\/p\/amurru$/);
-    const tabs = page.getByRole('navigation', { name: 'Main' });
     const guide = page.getByRole('region', { name: 'Where the guide would take you next' });
     const scrollTop = () => page.evaluate(() => window.scrollY);
     const toBottom = () => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
@@ -91,14 +105,15 @@ test.describe('Area 2 · Reading', () => {
     await guide.evaluate((section) => {
       window.scrollBy(0, section.getBoundingClientRect().top - (window.innerHeight - 220));
     });
-    await expect(tabs.getByRole('link', { name: 'Home' })).toBeInViewport();
+    await expect(tabs.getByRole('link', { name: 'Journey' })).toBeInViewport();
     await expect(guide.getByRole('link').last()).not.toBeInViewport();
+    expect(await tabLinks()).toEqual(standardLinks);
 
     for (let step = 0; step < 2; step++) {
       const doors = guide.getByRole('link');
       await expect(doors).toHaveCount(3);
       await toBottom();
-      await expect(tabs.getByRole('link', { name: 'Home' })).toBeInViewport();
+      await expect(tabs.getByRole('link', { name: 'Journey' })).toBeInViewport();
       const next = doors.nth(step);
       const href = await next.getAttribute('href');
       await next.click();
@@ -109,7 +124,7 @@ test.describe('Area 2 · Reading', () => {
 
     await expect(guide.getByRole('link')).toHaveCount(3);
     await toBottom();
-    await tabs.getByRole('link', { name: 'Home' }).click();
+    await tabs.getByRole('link', { name: 'Journey' }).click();
     await expect(page).toHaveURL(/\/new\/journey$/);
     await expect.poll(scrollTop).toBe(0);
     await expect(page.getByRole('link', { name: 'Enter the poem' })).toBeVisible();

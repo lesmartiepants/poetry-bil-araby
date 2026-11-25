@@ -504,12 +504,6 @@ a {
   transition: transform 380ms cubic-bezier(0.21, 0.76, 0.34, 1.19), opacity 150ms var(--motion-ease);
 }
 .tabbar--reader .tabbar__tab {
-  flex: 1;
-  width: auto;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 11px;
-  letter-spacing: 0.04em;
   opacity: 0;
   transition: opacity 145ms var(--motion-ease);
 }

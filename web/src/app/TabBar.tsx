@@ -21,12 +21,10 @@ export function TabBar({ readerVisible }: { readerVisible?: boolean } = {}) {
     <nav aria-label="Main" aria-hidden={readerVisible === false || undefined} className={classes.filter(Boolean).join(' ')} {...inert} {...press} data-testid="tabbar">
       {TABS.map((t) => {
         const on = t.match.some((m) => loc === m || loc.startsWith(`${m}/`));
-        const home = inReader && t.href === '/journey';
-        const label = home ? 'Home' : t.label;
         return (
-          <Link key={t.href} href={home ? '/' : t.href} className="tabbar__tab" aria-label={label} aria-current={on ? 'page' : undefined}
+          <Link key={t.href} href={t.href} className="tabbar__tab" aria-label={t.label} aria-current={on ? 'page' : undefined}
             onClick={inReader ? () => requestAnimationFrame(() => window.scrollTo(0, 0)) : undefined}>
-            {t.icon(on)}{inReader ? label : on && label.toUpperCase()}
+            {t.icon(on)}{on && t.label.toUpperCase()}
           </Link>
         );
       })}

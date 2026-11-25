@@ -80,7 +80,7 @@ function Routes() {
     <>
       <Switch>
         <Route path="/" component={Home} />
-        <Route path="/welcome">{() => <Gate domains={['journey']} title="Welcome"><WelcomeFlow onDone={(slug) => { writeJSON('welcomed', true); nav(slug ? `/p/${slug}` : '/journey'); }} /></Gate>}</Route>
+        <Route path="/welcome">{() => <Gate domains={['journey']} title="Welcome"><WelcomeFlow onDone={(slug) => { writeJSON('welcomed', true); nav('/journey', { replace: true }); if (slug) nav(`/p/${slug}`); }} /></Gate>}</Route>
         <Route path="/journey">{() => <Gate domains={['journey']} title="Tonight’s poem"><TonightScreen /></Gate>}</Route>
         <Route path="/journey/:slug/done/:step">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><StepDone slug={p.slug} step={Number(p.step)} /></Gate>}</Route>
         <Route path="/journey/:slug">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><JourneyScreen slug={p.slug} /></Gate>}</Route>

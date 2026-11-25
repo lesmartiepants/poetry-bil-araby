@@ -8,7 +8,6 @@ export interface GuideRow {
   title_en?: string;
   poet_id: string | number;
   poet_en: string;
-  poet_ar?: string;
   era_id?: string | number | null;
   era_key?: string | null;
   mood_primary?: string | null;

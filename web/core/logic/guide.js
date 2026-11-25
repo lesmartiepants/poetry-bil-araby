@@ -231,14 +231,12 @@ export function doorWords(kind, me, r, mood, nth = 0) {
         reason: `${r.poet_en} on ${mood ? `the same ${mood}` : 'what you just read'}.`,
       };
     }
-    case 'poet': {
-      const poet = r.poet_en || r.poet_ar;
+    case 'poet':
       return {
-        label: poet ? `Another poem by ${poet}` : 'Another poem by this poet',
+        label: 'More from this poet',
         hook: `More from ${r.poet_en}`,
         reason: `The same hand, in ${title}.`,
       };
-    }
     case 'image': {
       const image = sharedImage(me, r);
       const originalFeeling = feelingName(me);

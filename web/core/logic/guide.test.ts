@@ -54,15 +54,13 @@ describe('image doors', () => {
     const picks = wordDoors([
       { kind: 'full', row: source },
       { kind: 'poet', row: source },
-      { kind: 'poet', row: { ...source, poet_en: '', poet_ar: 'أبو البقاء الرندي' } },
       { kind: 'image', row: { ...target, mood_primary: 'amorous', mood_label: 'amorous' } },
       { kind: 'new', row: { ...target, era_key: 'unspecified' } },
     ], source, 'contemplation');
 
     expect(picks.map(({ connection }) => connection.label)).toEqual([
       'The full poem behind this excerpt',
-      'Another poem by Al-Rundī',
-      'Another poem by أبو البقاء الرندي',
+      'More from this poet',
       'Stars, from contemplation to desire',
       'A different voice',
     ]);

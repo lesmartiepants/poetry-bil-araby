@@ -103,7 +103,7 @@ describe('the guide’s doors', () => {
     expect(body.map((d) => d.poem.id)).toEqual(['12', '11', '14']);
     expect(body.map((d) => d.connection)).toEqual([
       { kind: 'feeling', label: 'Grief, in another poet’s voice' },
-      { kind: 'poet', label: 'Another poem by Al-Khansa' },
+      { kind: 'poet', label: 'More from this poet' },
       { kind: 'image', label: 'Tears, from grief to pride' },
     ]);
     expect(body.map((d) => d.hook)).toEqual([

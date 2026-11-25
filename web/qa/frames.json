@@ -134,12 +134,12 @@
       "file": "ErrVoice",
       "route": "/p/amurru",
       "steps": [
-        { "storage": { "local": { "mock.failVoice": "Leda" } } },
+        { "storage": { "local": { "mock.failVoice": "Autonoe" } } },
         { "reload": true },
         { "click": "text=LISTEN" },
         { "wait": 500 },
         { "click": "[aria-haspopup=dialog]" },
-        { "click": "[role=radio]:has-text('Leda')" },
+        { "click": "[role=radio]:has-text('Autonoe')" },
         { "wait": 600 }
       ]
     },

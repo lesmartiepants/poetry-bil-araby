@@ -2,6 +2,7 @@
 // rasterised with resvg at 1080 × 1350, with the same fonts the app loads, so a
 // card looks the same on every platform. Fonts are OFL; licences sit beside them.
 import { readdirSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Resvg } from '@resvg/resvg-js';
 import { cardSvg, cardsFor, COLOURWAYS, EXPORT_W } from '../web/core/logic/shareCard.js';
@@ -10,10 +11,10 @@ import { cardSvg, cardsFor, COLOURWAYS, EXPORT_W } from '../web/core/logic/share
 let fontFiles;
 function fonts() {
   if (!fontFiles) {
-    const dir = fileURLToPath(new URL('./fonts/', import.meta.url));
+    const dir = join(dirname(fileURLToPath(import.meta.url)), 'fonts');
     fontFiles = readdirSync(dir)
       .filter((f) => f.endsWith('.ttf'))
-      .map((f) => dir + f);
+      .map((f) => join(dir, f));
   }
   return fontFiles;
 }
@@ -63,8 +64,8 @@ export function cardRequest(poem, query) {
   };
 }
 
-export function renderCardPng(spec) {
-  const svg = cardSvg(spec, { width: EXPORT_W, rounded: false });
+export function renderCardPng(spec, { preview = false } = {}) {
+  const svg = cardSvg(spec, { width: EXPORT_W, rounded: false, preview });
   const resvg = new Resvg(svg, {
     font: { fontFiles: fonts(), loadSystemFonts: false, defaultFontFamily: 'Amiri' },
   });

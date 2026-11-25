@@ -1,6 +1,6 @@
 // Poetry pieces used by two or more features.
 import { Link } from 'wouter';
-import type { Collection, Line, PoemSummary, Poet } from '@core/types';
+import type { Collection, Door, Line, PoemSummary, Poet } from '@core/types';
 import { stripMarks, words } from '@core/logic/arabic';
 import { Chevron, Mark, Play } from '@ds/icons';
 import { isPatternName, Pattern, type PatternName, type Tone } from '@ds/Pattern';
@@ -167,6 +167,24 @@ export function PoemTile({ poem, href, small }: { poem: PoemSummary; href?: stri
         <span className="poem-tile__en">{poem.titleEn}</span>
         <span className="poem-tile__poet">{poem.poetEn}</span>
       </span>
+    </Link>
+  );
+}
+
+/**
+ * One of the guide's doors (2.17, 2.18, 9.5): the poem's era art, the hook and,
+ * beneath it, the poet (`end`, `path`) or the reason (`finished`, with the poet in Arabic).
+ */
+export function DoorCard({ door, size = 'end' }: { door: Door; size?: 'end' | 'path' | 'finished' }) {
+  const finished = size === 'finished';
+  return (
+    <Link href={`/p/${door.poem.slug}`} className={`door-card door-card--${size}`}>
+      <span className="door-card__art panel"><Pattern {...eraArt(door.poem.eraKey)} scale={finished ? 0.55 : 0.45} /></span>
+      <span className="door-card__text">
+        <span className="door-card__hook">{door.hook}</span>
+        <span className="door-card__sub">{finished && door.reason ? door.reason : door.poem.poetEn}</span>
+      </span>
+      {finished ? <span lang="ar" className="door-card__ar">{door.poem.poetAr}</span> : <Chevron size={18} />}
     </Link>
   );
 }

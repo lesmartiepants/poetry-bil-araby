@@ -2,6 +2,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type PoemFilter } from './api';
 import type { Prefs } from './types';
+import { steerQuery } from './logic/guide';
 
 export const qk = {
   poem: (id: string) => ['poem', id] as const,
@@ -24,7 +25,12 @@ export const useBands = () => useQuery({ queryKey: ['bands'], queryFn: () => api
 export const useExplanation = (id: string, on = true) => useQuery({ queryKey: ['explanation', id], queryFn: () => api.ai.explanation(id), enabled: on, retry: false });
 export const useGloss = (id: string, line: number, word: number, on = true) =>
   useQuery({ queryKey: ['gloss', id, line, word], queryFn: () => api.ai.gloss(id, line, word), enabled: on && line >= 0 });
-export const useDoors = (id: string) => useQuery({ queryKey: ['doors', id], queryFn: () => api.ai.doors(id) });
+/** 2.17 The doors for a poem, steered by the guide's settings: changing one changes the doors. */
+export function useDoors(id: string | null | undefined) {
+  const prefs = usePrefs().data;
+  return useQuery({ queryKey: ['doors', id, steerQuery(prefs)], queryFn: () => api.ai.doors(id!, prefs), enabled: !!id && !!prefs, retry: false });
+}
+export const useLastRead = () => useQuery({ queryKey: ['last-read'], queryFn: () => api.library.lastRead() });
 export const useTonight = () => useQuery({ queryKey: ['tonight'], queryFn: () => api.journey.tonight() });
 export const useCollections = (kind?: 'collection' | 'journey') => useQuery({ queryKey: ['collections', kind], queryFn: () => api.collections.all(kind) });
 export const useCollection = (slug: string) => useQuery({ queryKey: ['collection', slug], queryFn: () => api.collections.get(slug), retry: false });

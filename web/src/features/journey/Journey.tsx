@@ -3,12 +3,12 @@ import { useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQueries } from '@tanstack/react-query';
 import { api } from '@core/api';
-import { useCollection, useCollections, useEras, useInvalidate, usePoem, useProgress, useSetPrefs, useTonight } from '@core/hooks';
+import { useCollection, useCollections, useDoors, useEras, useInvalidate, useLastRead, usePoem, useProgress, useSetPrefs, useTonight } from '@core/hooks';
 import type { Collection } from '@core/types';
 import { Header, Segmented, Skeleton } from '@ds/primitives';
 import { Back, Bookmark, Chevron, Mark } from '@ds/icons';
 import { Pattern } from '@ds/Pattern';
-import { collectionArt, PathDock } from '@components/index';
+import { BrandLogo, collectionArt, DoorCard, PathDock } from '@components/index';
 import './journey.css';
 
 /** The arched door at the foot of Tonight: tap, or swipe up, to enter the poem. */
@@ -39,8 +39,9 @@ export function TonightScreen() {
   const [, nav] = useLocation();
   const startY = useRef<number | null>(null);
   if (tab === 'pathways') return <Pathways onTonight={() => setTab('tonight')} />;
-  const href = t.data ? `/p/${t.data.poem.slug}` : '/';
   const step = t.data?.journeyStep;
+  // A journey step opens as that step (its end completes it, 9.7); otherwise its end is You finished (2.18).
+  const href = !t.data ? '/' : step ? `/p/${t.data.poem.slug}?journey=${step.slug}&step=${step.index}` : `/p/${t.data.poem.slug}?from=tonight`;
   const era = eras?.find((e) => e.slug === t.data?.poem.eraKey);
   const minutes = poem ? Math.max(1, Math.round(poem.lines.length / 4)) : 0;
   return (
@@ -90,8 +91,10 @@ const TABS: { value: 'tonight' | 'pathways'; label: string }[] = [{ value: 'toni
 function Pathways({ onTonight }: { onTonight: () => void }) {
   const journeys = useCollections('journey').data;
   const prog = useProgress().data;
-  const tonight = useTonight().data;
-  const doors = useQueries({ queries: [{ queryKey: ['doors', tonight?.poem.id], queryFn: () => api.ai.doors(tonight!.poem.id), enabled: !!tonight }] })[0].data;
+  // The doors of the last poem the reader finished; none until they have finished one.
+  const lastId = useLastRead().data;
+  const last = usePoem(lastId ?? '').data;
+  const doors = useDoors(lastId).data;
   return (
     <div className="screen journey">
       <header className="hub-hdr"><BrandMark /></header>
@@ -107,12 +110,12 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
             </Link>
           );
         })}
-        <p className="t-eyebrow t-eyebrow--accent mt-12">THREE DOORS</p>
-        {doors?.map((d) => (
-          <Link key={d.poem.id} href={`/p/${d.poem.slug}`} className="door">
-            <span className="door__hook">{d.hook}</span><span lang="ar" className="door__ar">{d.poem.titleAr}</span><span className="door__meta">{d.poem.poetEn} · {d.reason}</span>
-          </Link>
-        ))}
+        {last && doors?.length ? (
+          <section aria-label="From your last poem" className="stack gap-12">
+            <p className="t-eyebrow t-eyebrow--accent mt-12">FROM YOUR LAST POEM · {last.titleEn.toUpperCase()}</p>
+            {doors.map((d) => <DoorCard key={d.poem.id} door={d} size="path" />)}
+          </section>
+        ) : null}
       </main>
     </div>
   );
@@ -232,6 +235,29 @@ export function StepDone({ slug, step }: { slug: string; step: number }) {
     </div>
   );
 }
+/** 2.18 You finished Tonight's poem: three doors with their reasons, or enough for tonight. */
+export function FinishedScreen({ id }: { id: string }) {
+  const poem = usePoem(id).data;
+  const doors = useDoors(poem?.id);
+  const [, nav] = useLocation();
+  return (
+    <div className="screen journey">
+      <header className="finished__top">
+        <button className="icon-btn finished__back" aria-label="Back to the poem" onClick={() => history.back()}><Back /></button>
+        <BrandLogo />
+      </header>
+      <main className="finished">
+        <div className="finished__head">
+          <h1 className="finished__title">{poem ? `You finished ${poem.titleEn}.` : 'You finished.'}</h1>
+          <p className="finished__body">The guide would take you to one of these next.</p>
+        </div>
+        {doors.data ? doors.data.map((d) => <DoorCard key={d.poem.id} door={d} size="finished" />) : <Skeleton lines={4} />}
+        <button className="finished__enough" onClick={() => nav('/journey')}>ENOUGH FOR TONIGHT</button>
+      </main>
+    </div>
+  );
+}
+
 export function WelcomeFlow({ onDone }: { onDone: (firstPoemSlug: string) => void }) {
   const tonight = useTonight().data;
   const [step, setStep] = useState(0);

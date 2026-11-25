@@ -54,7 +54,18 @@
       "route": "/p/amurru",
       "steps": [{ "click": "[data-line='1'] [data-word='2']" }, { "wait": 300 }]
     },
-    { "frame": "2.7", "file": "FRV1End", "route": "/p/amurru", "steps": [{ "scroll": 2000 }] },
+    {
+      "frame": "2.17",
+      "file": "NEnd",
+      "route": "/p/amurru",
+      "steps": [{ "scroll": 2000 }, { "wait": 400 }]
+    },
+    {
+      "frame": "2.18",
+      "file": "NFinished",
+      "route": "/journey/finished/qadhan",
+      "steps": [{ "wait": 400 }]
+    },
     {
       "frame": "2.8",
       "file": "FRParchReading",
@@ -220,6 +231,17 @@
     },
     { "frame": "9.1", "file": "NWelcome", "route": "/welcome" },
     { "frame": "9.4", "file": "NTonight", "route": "/journey" },
+    {
+      "frame": "9.5",
+      "file": "NDoors",
+      "route": "/journey",
+      "steps": [
+        { "storage": { "local": { "mock.lastRead": "\"1002\"" } } },
+        { "reload": true },
+        { "click": "text=PATHWAYS" },
+        { "wait": 500 }
+      ]
+    },
     { "frame": "9.6", "file": "NJourney", "route": "/journey/your-first-seven" },
     { "frame": "10.2", "file": "NCollection", "route": "/collection/women-who-wrote-the-canon" },
     { "frame": "11.1", "file": "NLibrarySearch", "route": "/search" },

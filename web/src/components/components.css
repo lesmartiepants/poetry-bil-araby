@@ -365,3 +365,73 @@ button.see-all {
   display: flex;
   justify-content: space-between;
 }
+/* The guide's doors (2.17 end of poem, 2.18 you finished, 9.5 Pathways). */
+.door-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  text-decoration: none;
+  color: var(--c-accent);
+}
+.door-card__art {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+}
+.door-card__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.door-card__hook {
+  font-size: 14px;
+  color: var(--c-text);
+}
+.door-card__sub {
+  font-size: 12px;
+  color: var(--c-muted);
+}
+.door-card--path {
+  padding: 10px 12px;
+}
+.door-card--path .door-card__art {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+}
+.door-card--path .door-card__sub {
+  font-size: 11px;
+}
+.door-card--finished {
+  gap: 14px;
+  padding: 14px;
+  border-radius: 16px;
+}
+.door-card--finished .door-card__art {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+}
+.door-card--finished .door-card__hook {
+  font-size: 15px;
+}
+.door-card--finished .door-card__text {
+  gap: 4px;
+}
+.door-card--finished .door-card__sub {
+  font-size: 13px;
+  line-height: 1.4;
+}
+.door-card__ar {
+  flex: none;
+  font-family: var(--font-amiri);
+  font-size: 15px;
+  color: var(--c-accent);
+}

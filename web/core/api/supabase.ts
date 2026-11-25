@@ -13,6 +13,7 @@ type Per = Pick<Api, 'profile' | 'keeps' | 'lists' | 'library'> & { progress: Pi
 
 const LOCAL_PREFS = 'prefs.local';
 const LOCAL_PROGRESS = 'progress.local';
+const LOCAL_LAST_READ = 'lastRead.local';
 
 function check<T>(r: { data: T; error: { message: string; code?: string } | null }, what: string): NonNullable<T> {
   if (r.error) throw Object.assign(new Error(`${what}: ${r.error.message}`), { code: r.error.code });
@@ -152,8 +153,15 @@ export function makeSupabaseApi(sb: SupabaseClient, opts: { redirectTo?: () => s
         return Object.fromEntries(r.map((x) => [String(x.poem_id), x.read_count as number]));
       },
       async markRead(poemId) {
+        writeJSON(LOCAL_LAST_READ, poemId); // the device remembers the last poem, for Pathways
         if (!(await uid())) return; // reads are only kept for signed-in readers
         check(await sb.rpc('mark_read', { p_poem_id: Number(poemId) }), 'read');
+      },
+      async lastRead() {
+        const id = await uid();
+        if (!id) return readJSON<string | null>(LOCAL_LAST_READ, null);
+        const r = check(await sb.from('poem_reads').select('poem_id').eq('user_id', id).order('last_read_at', { ascending: false }).limit(1), 'last read');
+        return r[0] ? String(r[0].poem_id) : readJSON<string | null>(LOCAL_LAST_READ, null);
       },
     },
     progress: {

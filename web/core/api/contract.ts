@@ -13,13 +13,15 @@ export interface PoemFilter {
 
 export interface PoemsApi {
   get(idOrSlug: string): Promise<Poem>;
-  next(excludeIds: string[]): Promise<PoemSummary>;
+  /** Next poem; `prefs` steers the draw by the guide's settings (12.5). */
+  next(excludeIds: string[], prefs?: Prefs): Promise<PoemSummary>;
   list(filter: PoemFilter): Promise<PoemSummary[]>;
 }
 export interface AiApi {
   explanation(poemId: string): Promise<Explanation>;
   gloss(poemId: string, line: number, word: number): Promise<Gloss>;
-  doors(poemId: string): Promise<Door[]>;
+  /** 2.17 The guide's three doors, steered by the guide's settings. */
+  doors(poemId: string, prefs?: Prefs): Promise<Door[]>;
 }
 export interface PoetsApi {
   list(): Promise<Poet[]>;
@@ -56,6 +58,8 @@ export interface LibraryApi {
   follow(slug: string, on: boolean): Promise<void>;
   reads(): Promise<Record<string, number>>;
   markRead(poemId: string): Promise<void>;
+  /** The last poem the reader finished (signed out: on this device), for Pathways. */
+  lastRead(): Promise<string | null>;
 }
 export interface JourneyApi {
   tonight(): Promise<Tonight>;

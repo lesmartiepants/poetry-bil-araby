@@ -92,30 +92,53 @@
   font: inherit;
   font-size: 16px;
 }
-.door {
+/* 2.18 You finished: brand header with a way back, the line, three doors, enough for tonight. */
+.finished__top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  padding: 16px 16px 0;
+}
+.finished__back {
+  position: absolute;
+  left: 12px;
+  top: 16px;
+}
+.finished {
+  padding: 36px 22px 120px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 16px;
-  border-radius: 16px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  text-decoration: none;
+  gap: 14px;
 }
-.door__hook {
+.finished__head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 6px;
+  text-align: center;
+}
+.finished__title {
+  margin: 0;
   font-family: var(--font-serif);
-  font-size: 19px;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 26px;
   color: var(--c-text);
 }
-.door__ar {
-  font-family: var(--font-ruqaa);
-  font-size: 20px;
-  color: var(--c-accent);
-  text-align: right;
-  direction: rtl;
+.finished__body {
+  margin: 0;
+  font-size: 13px;
+  color: var(--c-muted);
 }
-.door__meta {
+.finished__enough {
+  border: none;
+  background: none;
+  padding: 10px;
   font-size: 12px;
+  letter-spacing: 0.16em;
   color: var(--c-muted);
 }
 .tonight {

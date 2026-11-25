@@ -3,6 +3,7 @@
 import type { Api } from '../contract';
 import { NotFoundError } from '../contract';
 import { mockApi } from '../mock';
+import { steerQuery } from '../../logic/guide';
 import type { Band, Collection, Door, Era, Explanation, FeaturedPoet, Feeling, Gloss, Poem, PoemSummary, Poet, SearchResults, Tonight } from '../../types';
 
 let base = '';
@@ -36,14 +37,14 @@ export const liveApi: Api = {
   ...mockApi,
   poems: {
     get: (id) => getJSON<Poem>(`/api/v2/poems/${encodeURIComponent(id)}`, 'poem'),
-    next: (exclude) => getJSON<PoemSummary>(`/api/v2/poems/next${qs({ exclude: exclude.join(',') })}`, 'poem'),
+    next: (exclude, prefs) => getJSON<PoemSummary>(`/api/v2/poems/next?${new URLSearchParams([['exclude', exclude.join(',')], ...new URLSearchParams(steerQuery(prefs))])}`, 'poem'),
     list: (f) => getJSON<PoemSummary[]>(`/api/v2/poems${qs({ feeling: f.feeling, era: f.era, band: f.band, poet: f.poet })}`),
   },
   ai: {
     ...mockApi.ai,
     explanation: (id) => getJSON<Explanation>(`/api/v2/poems/${id}/ai?kind=explanation`),
     gloss: (id, line, word) => getJSON<Gloss>(`/api/v2/poems/${id}/ai?kind=gloss&line=${line}&word=${word}`),
-    doors: (id) => getJSON<Door[]>(`/api/v2/poems/${id}/doors`),
+    doors: (id, prefs) => getJSON<Door[]>(`/api/v2/poems/${id}/doors?${steerQuery(prefs)}`),
   },
   poets: {
     ...mockApi.poets,

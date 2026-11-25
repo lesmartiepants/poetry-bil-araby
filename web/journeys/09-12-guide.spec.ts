@@ -29,6 +29,38 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await expect(page.getByText('JOURNEY · 3 OF 7 READ')).toBeVisible();
   });
 
+  test('9.5 Pathways shows the doors of the last poem finished, and none before the first', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./journey');
+    await expect(page.getByText(/A poem about loving a place/)).toBeVisible(); // Tonight settled: an earlier click hits a detached tab
+    await page.getByRole('radio', { name: 'PATHWAYS' }).click();
+    await expect(page.getByRole('link', { name: /Your first seven/ })).toBeVisible();
+    await expect(page.getByText(/FROM YOUR LAST POEM/)).toHaveCount(0);
+    await page.goto('./p/qadhan');
+    await page.getByTestId('read-sentinel').scrollIntoViewIfNeeded();
+    await expect(page.locator('.door-card')).toHaveCount(3);
+    await page.goto('./journey');
+    await expect(page.getByText(/A poem about loving a place/)).toBeVisible(); // Tonight settled: an earlier click hits a detached tab
+    await page.getByRole('radio', { name: 'PATHWAYS' }).click();
+    const last = page.getByRole('region', { name: 'From your last poem' });
+    await expect(last.getByText('FROM YOUR LAST POEM · A MOTE IN YOUR EYE')).toBeVisible();
+    await expect(last.locator('.door-card')).toHaveCount(3);
+  });
+
+  test('2.18 Tonight’s poem, read to the end, offers three doors with reasons, or enough for tonight', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./p/qadhan?from=tonight');
+    await page.getByTestId('read-sentinel').scrollIntoViewIfNeeded();
+    await page.getByRole('link', { name: 'Tonight’s poem, finished' }).click();
+    await expect(page.getByRole('heading', { name: 'You finished A mote in your eye.' })).toBeVisible();
+    await expect(page.getByText('The guide would take you to one of these next.')).toBeVisible();
+    const doors = page.locator('.door-card--finished');
+    await expect(doors).toHaveCount(3);
+    await expect(doors.first().locator('.door-card__sub')).not.toBeEmpty();
+    await page.getByRole('button', { name: 'ENOUGH FOR TONIGHT' }).click();
+    await expect(page).toHaveURL(/\/journey$/);
+  });
+
   test('10.2 a collection can be saved and continued', async ({ page }) => {
     await fresh(page);
     await page.goto('./collection/women-who-wrote-the-canon');

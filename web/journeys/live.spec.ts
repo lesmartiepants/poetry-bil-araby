@@ -3,6 +3,8 @@
 import { expect, test } from '@playwright/test';
 import { fresh } from './helpers';
 
+const API = process.env.API_PROXY ?? 'http://localhost:3001';
+
 test.describe('@live V1 against the real API', () => {
   test('@live 4.1 Explore shows the poet of the week, feelings and difficulty bands from the database', async ({ page }) => {
     await fresh(page);
@@ -39,8 +41,11 @@ test.describe('@live V1 against the real API', () => {
   test('@live 2.17 with the guide live, every poem ends with three doors that have reasons', async ({ page }) => {
     await fresh(page);
     await page.goto('./p/24');
-    const doors = page.getByRole('region', { name: 'Where the guide goes next' }).locator('.door');
+    const doors = page.getByRole('region', { name: 'Where the guide would take you next' }).locator('.door-card');
     await expect(doors).toHaveCount(3);
+    // Each door has its own hook, in specific words (the local server has no Gemini key).
+    const hooks = await doors.locator('.door-card__hook').allTextContents();
+    expect(new Set(hooks).size).toBe(3);
     await doors.first().click();
     await expect(page).not.toHaveURL(/\/p\/24$/);
   });
@@ -104,12 +109,12 @@ test.describe('@live V3 against the real API', () => {
   });
 
   test('@live 7.11 a saved card is a 1080 × 1350 PNG from the server', async ({ request }) => {
-    const res = await request.get('http://localhost:3001/api/v2/poems/24/card.png?en=1&cw=cobalt&for=Nour');
+    const res = await request.get(`${API}/api/v2/poems/24/card.png?en=1&cw=cobalt&for=Nour`);
     expect(res.status()).toBe(200);
     expect(res.headers()['content-type']).toBe('image/png');
     const png = await res.body();
     expect(png.readUInt32BE(16)).toBe(1080);
     expect(png.readUInt32BE(20)).toBe(1350);
-    expect((await request.get('http://localhost:3001/api/v2/poems/24/card.png?lines=99')).status()).toBe(400);
+    expect((await request.get(`${API}/api/v2/poems/24/card.png?lines=99`)).status()).toBe(400);
   });
 });

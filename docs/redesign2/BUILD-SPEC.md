@@ -210,9 +210,11 @@ Everything else in today's `src/` is left behind and retired at cut-over, includ
 
 ### V3.2 · The guide's doors · 2.17, 2.18
 
-- **Behaviour:** the end of every poem shows three doors, each with a hook and a reason (2.17), replacing V1's end of poem. You finished offers three doors or "enough for tonight" (2.18).
-- **Build:** today's scoring (`src/services/preferenceWeighting.js`) moves where the server can use it, driven by classical or modern, difficulty and length. Gemini writes each door's hook and reason.
-- **Data and API:** `poem_ai_text` rows of kind doors, through `GET /api/poems/:id/ai?kind=doors`.
+- **Behaviour:** the end of every poem shows "Where the guide would take you next" with three doors, each a hook over the poet (2.17), replacing V1's Next poem. A journey step still ends in step complete (9.7). Tonight's poem, when it isn't a journey step, ends in "Tonight's poem, finished", which opens You finished (2.18, `/journey/finished/:id`): "You finished <title>.", three doors with their reasons, "Enough for tonight". Pathways (9.5) shows "From your last poem · <title>" with that poem's doors, hidden until the reader has finished one (`library.lastRead()`: the latest `poem_reads.last_read_at` when signed in, else this device).
+- **Choosing:** at most one door per kind: the complete poem first when this one is an excerpt (`full_poem_id`), then the same feeling from another poet, more from this poet, the same feeling from another age (the farthest); "somewhere new" (a poet and age not already offered) tops up to three. Only servable poems, in a daily order. The rules live in `web/core/logic/guide.js`, shared by `server/redesign2.js` and the mock API.
+- **Steering:** the guide's settings (classical or modern, difficulty band, length, feelings) go with every doors and Next poem request (`?cm=&difficulty=&length=&feelings=`) and rank each pool; a cut-down `preferenceWeighting.js` (`guideScore`). Changing a setting changes the doors (journey 2.17).
+- **Words:** Gemini writes each door's hook (under 8 words) and one-line reason from both poems, once per pair, stored in `poem_ai_text` (kind `doors`, poem = the poem read, key = the door's poem id). Without a key, or when Gemini fails or breaks the brief, the guide's own words fill in with real detail ("More from Al-Khansa", "Also grief, from the Umayyad age", "Same grief, 1,300 years on"). No two doors in a set share a hook.
+- **Data and API:** `GET /api/v2/poems/:id/doors` (also `GET /api/v2/poems/:id/ai?kind=doors`); `GET /api/v2/poems/next` takes the same settings.
 - **Done when:** every poem ends with three doors that have reasons.
 
 ### V3.3 · Collections · 10.1–10.3, 8.15

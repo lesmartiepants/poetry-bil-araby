@@ -1,5 +1,16 @@
 import process from 'node:process';
 import { cardRequest, renderCardPng } from './share-card.js';
+import {
+  byFit,
+  chooseDoors,
+  cleanDoorText,
+  doorPools,
+  ERA_NAMES,
+  guideScore,
+  parseSteer,
+  uniqueHooks,
+  wordDoors,
+} from '../web/core/logic/guide.js';
 
 // ReDesign2 API (web/ at /new). Kept apart from the endpoints today's app uses,
 // under /api/v2, so the old app keeps working until cut-over.
@@ -24,17 +35,7 @@ const BAND_META = {
   measured: { en: 'Measured', ar: 'متوسّط', line: 'Richer rhetoric and some allusion.' },
   demanding: { en: 'Demanding', ar: 'عميق', line: 'Classical vocabulary and dense allusion.' },
 };
-const ERA_EN = {
-  'pre-islamic': 'Pre-Islamic',
-  islamic: 'Early Islamic',
-  umayyad: 'Umayyad',
-  abbasid: 'Abbasid',
-  andalusian: 'Andalusian',
-  ayyubid: 'Ayyubid',
-  mamluk: 'Mamluk',
-  ottoman: 'Ottoman',
-  modern: 'Modern',
-};
+const ERA_EN = ERA_NAMES;
 
 /** Equal-weight difficulty bands from an accessibility histogram (same rule as web/core/logic/bands.ts). */
 export function deriveBands(histogram) {
@@ -88,9 +89,11 @@ const PROMPTS = {
     `You are a guide to Arabic poetry for English readers. Poem by ${poet}:\n${arabic.join('\n')}\n\nReturn JSON {"meaning": string (one paragraph, plain English, what the poem says and how), "poet": string (two sentences on the poet)}.`,
   gloss: ({ arabic, line, word }) =>
     `Arabic verse line: ${arabic[line]}\nWord number ${word + 1} (counting from the right): ${(arabic[line] ?? '').split(/\s+/)[word]}\nReturn JSON {"word": the word with vowel marks, "translit": simple transliteration, "root": the three root letters separated by spaces, "partOfSpeech": short, e.g. "noun · object of kiss", "meaning": its meaning in this line, one sentence, "otherSenses": one sentence}.`,
-  doors: ({ arabic }) =>
-    `For a reader who just finished this Arabic poem:\n${arabic.join('\n')}\nReturn JSON {"hooks": [three short hooks, each under 8 words]}.`,
+  doors: ({ from, to }) =>
+    `You are a guide to Arabic poetry for English readers. A reader just finished this poem:\n${describe(from)}\n\nThe guide offers these next poems as doors:\n${to.map((t) => `id ${t.id} (${t.kind}): ${describe(t)}`).join('\n\n')}\n\nFor each door write a hook (under 8 words, specific to the pair: a poet, a feeling, an age or an image; no quotation marks) and a reason (one plain sentence, under 16 words, saying why this poem follows the one just read). No two hooks alike. Return JSON {"doors": [{"id": number, "hook": string, "reason": string}]}.`,
 };
+const describe = (p) =>
+  `"${p.title}" by ${p.poet}${p.era ? `, ${p.era} age` : ''}${p.mood ? `, feeling: ${p.mood}` : ''}\n${(p.arabic ?? []).slice(0, 4).join('\n')}`;
 export async function geminiText(kind, input) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
@@ -103,6 +106,7 @@ export async function geminiText(kind, input) {
         contents: [{ parts: [{ text: PROMPTS[kind](input) }] }],
         generationConfig: { responseMimeType: 'application/json' },
       }),
+      signal: AbortSignal.timeout(12_000),
     }
   );
   if (!res.ok) throw new Error(`Gemini ${res.status}`);
@@ -136,6 +140,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
 
   const POEM_SELECT = () => `
     SELECT p.id, p.title, p.title_en, p.full_poem_id, ${contentExpr()} AS arabic, p.cached_translation, p.accessibility_score,
+           p.mood_primary, p.poet_id, po.era_id, po.birth_year, po.death_year, po.active_year,
            po.slug AS poet_slug, po.name AS poet_ar, COALESCE(po.name_en, po.name) AS poet_en, e.slug AS era_key,
            COALESCE((SELECT array_agg(v.key ORDER BY pc.confidence DESC) FROM poem_categories pc
                      JOIN category_values v ON v.id = pc.value_id JOIN category_dimensions d ON d.id = v.dimension_id
@@ -174,18 +179,28 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
   };
 
   // ── Poems ────────────────────────────────────────────────────────────────
+  // Next poem: a random draw, the best fit for the guide's settings among a handful.
   app.get('/api/v2/poems/next', async (req, res) => {
     try {
       const exclude = String(req.query.exclude ?? '')
         .split(',')
         .map(Number)
         .filter(Boolean);
-      const { rows } = await pool.query(
-        `${POEM_SELECT()} WHERE ${servable()} AND NOT (p.id = ANY($1::int[])) ORDER BY random() LIMIT 1`,
-        [exclude]
-      );
+      const [{ rows }, b] = await Promise.all([
+        pool.query(
+          `${POEM_SELECT()} WHERE ${servable()} AND NOT (p.id = ANY($1::int[])) ORDER BY random() LIMIT 24`,
+          [exclude]
+        ),
+        bands(),
+      ]);
       if (!rows.length) return res.status(404).json({ error: 'No poem' });
-      res.json(summary(rows[0]));
+      const steer = parseSteer(req.query);
+      const best = rows.reduce((top, r) =>
+        guideScore(r, steer, (s) => bandOf(s, b)) > guideScore(top, steer, (s) => bandOf(s, b))
+          ? r
+          : top
+      );
+      res.json(summary(best));
     } catch (e) {
       fail(res, 'next', e);
     }
@@ -279,6 +294,8 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     const key =
       kind === 'gloss' ? `${Number(req.query.line) || 0}:${Number(req.query.word) || 0}` : '';
     try {
+      // Doors are a set, each pair's text stored on its own row (see doors() below).
+      if (kind === 'doors') return res.json(await doors(id, parseSteer(req.query)));
       const hit = await pool.query(
         'SELECT payload FROM poem_ai_text WHERE poem_id = $1 AND kind = $2 AND key = $3',
         [id, kind, key]
@@ -594,54 +611,89 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     }
   });
 
-  // The guide's doors: three poems that share a feeling, the poet or the era, with a reason each.
-  async function doors(id) {
-    const { rows } = await pool.query(
-      `
-      WITH me AS (SELECT p.id, p.poet_id, po.era_id, p.mood_primary, p.full_poem_id FROM poems p JOIN poets po ON po.id = p.poet_id WHERE p.id = $1)
-      SELECT q.*, CASE WHEN x.id = me.full_poem_id THEN 'full'
-                       WHEN x.mood_primary IS NOT NULL AND x.mood_primary = me.mood_primary THEN 'feeling'
-                       WHEN x.poet_id = me.poet_id THEN 'poet' ELSE 'era' END AS why
-      FROM me, poems x JOIN poets xp ON xp.id = x.poet_id
-      JOIN LATERAL (${POEM_SELECT()} WHERE p.id = x.id) q ON TRUE
-      WHERE x.id <> me.id AND (
-        x.id = me.full_poem_id OR (
-          ${servable('x')} AND (x.mood_primary = me.mood_primary OR x.poet_id = me.poet_id OR xp.era_id = me.era_id)
-        )
-      )
-      ORDER BY (x.id = me.full_poem_id) DESC NULLS LAST,
-        (x.mood_primary = me.mood_primary) DESC NULLS LAST, md5(x.id::text || CURRENT_DATE::text) LIMIT 3`,
-      [id]
+  // The guide's doors: three poems of different kinds, each with a hook and a
+  // reason. Gemini writes the text for each pair once (poem_ai_text, kind
+  // doors, key = the door's poem id); without it the guide's own wording.
+  async function doors(id, steer = parseSteer()) {
+    const [meQ, b] = await Promise.all([
+      pool.query(`${POEM_SELECT()} WHERE p.id = $1`, [id]),
+      bands(),
+    ]);
+    const me = meQ.rows[0];
+    if (!me) return [];
+    const mood = me.mood_primary
+      ? ((
+          await pool.query(
+            `SELECT lower(v.label_en) AS label FROM category_values v JOIN category_dimensions d ON d.id = v.dimension_id
+             WHERE d.key = 'mood' AND v.key = $1 LIMIT 1`,
+            [me.mood_primary]
+          )
+        ).rows[0]?.label ?? me.mood_primary)
+      : null;
+    // Related poems (same feeling, poet or age) and a few from anywhere, each in a daily order.
+    const daily = `md5(p.id::text || CURRENT_DATE::text)`;
+    const [near, anywhere, full] = await Promise.all([
+      pool.query(
+        `${POEM_SELECT()} WHERE ${servable()} AND p.id <> $1
+           AND (p.mood_primary = $2 OR p.poet_id = $3) ORDER BY ${daily} LIMIT 200`,
+        [id, me.mood_primary, me.poet_id]
+      ),
+      pool.query(
+        `${POEM_SELECT()} WHERE ${servable()} AND p.id <> $1 AND p.poet_id <> $2 ORDER BY ${daily} LIMIT 24`,
+        [id, me.poet_id]
+      ),
+      me.full_poem_id ? pool.query(`${POEM_SELECT()} WHERE p.id = $1`, [me.full_poem_id]) : null,
+    ]);
+    // Best fit for the reader's settings first; ties keep the daily order.
+    const fit = (rows) => byFit(rows, steer, (x) => bandOf(x, b));
+    const chosen = chooseDoors(
+      me,
+      doorPools(me, fit(near.rows), fit(anywhere.rows), full?.rows[0])
     );
-    const hook = {
-      feeling: 'The same feeling, another voice',
-      poet: 'More from this poet',
-      era: 'From the same age',
-    };
-    const reason = {
-      feeling: 'Because you stayed with this feeling',
-      poet: 'The same hand, a different night',
-      era: 'Written in the same world',
-    };
-    const out = rows.map((r) => {
-      const poem = summary(r);
-      return r.why === 'full'
-        ? { poem, hook: poem.titleEn, reason: '' }
-        : { poem, hook: hook[r.why], reason: reason[r.why] };
+    const fallback = wordDoors(chosen, me, mood).map(({ row, hook, reason }) => ({
+      poem: summary(row),
+      hook,
+      reason,
+    }));
+    const text = await doorText(me, chosen).catch((e) => {
+      log.error('V2', `doors text: ${e.message}`);
+      return {};
     });
-    if (out.length < 3) {
-      // Always three doors: fill with poems the reader hasn't just seen.
-      const taken = [id, ...rows.map((r) => r.id)];
-      const more = await pool.query(
-        `${POEM_SELECT()} WHERE ${servable()} AND NOT (p.id = ANY($1::int[])) ORDER BY md5(p.id::text || CURRENT_DATE::text) LIMIT $2`,
-        [taken, 3 - out.length]
-      );
-      out.push(
-        ...more.rows.map((r) => ({
-          poem: summary(r),
-          hook: 'Somewhere new',
-          reason: 'A change of voice for the next poem',
-        }))
+    return uniqueHooks(fallback.map((d) => ({ ...d, ...(text[d.poem.id] ?? {}) }))).map(
+      ({ kind: _k, ...d }) => d
+    );
+  }
+
+  /** Stored Gemini text for each pair; the missing ones asked for in one call and stored. */
+  async function doorText(me, chosen) {
+    if (!chosen.length) return {};
+    const keys = chosen.map((c) => String(c.row.id));
+    const hit = await pool.query(
+      `SELECT key, payload FROM poem_ai_text WHERE poem_id = $1 AND kind = 'doors' AND key = ANY($2::text[])`,
+      [me.id, keys]
+    );
+    const out = Object.fromEntries(hit.rows.map((r) => [r.key, r.payload]));
+    const missing = chosen.filter((c) => !out[String(c.row.id)]);
+    if (!missing.length || !gemini) return out;
+    const brief = (r) => ({
+      title: r.title_en || r.title,
+      poet: r.poet_en,
+      era: ERA_NAMES[r.era_key] ?? null,
+      mood: r.mood_primary,
+      arabic: splitLines(r.arabic),
+    });
+    const res = await gemini('doors', {
+      from: brief(me),
+      to: missing.map((c) => ({ id: c.row.id, kind: c.kind, ...brief(c.row) })),
+    });
+    for (const d of res?.doors ?? []) {
+      const c = missing.find((x) => String(x.row.id) === String(d.id));
+      const clean = c && cleanDoorText(d);
+      if (!clean) continue;
+      out[String(c.row.id)] = clean;
+      await pool.query(
+        `INSERT INTO poem_ai_text (poem_id, kind, key, payload, model) VALUES ($1, 'doors', $2, $3, 'gemini') ON CONFLICT DO NOTHING`,
+        [me.id, String(c.row.id), clean]
       );
     }
     return out;
@@ -650,7 +702,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     const id = Number(req.params.id);
     if (!Number.isInteger(id)) return res.status(400).json({ error: 'Bad request' });
     try {
-      res.json(await doors(id));
+      res.json(await doors(id, parseSteer(req.query)));
     } catch (e) {
       fail(res, 'doors', e);
     }

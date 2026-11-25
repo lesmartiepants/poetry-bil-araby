@@ -14,13 +14,18 @@ Standing instructions from the user (2026-11-24). Re-read this before each step.
 ## Progress
 
 - [x] 1. Migration 20261124000003 in production (column and index already existed; now recorded)
-- [~] 2. PR #752 opened (https://github.com/lesmartiepants/poetry-bil-araby/pull/752); waiting on CI, then merge
-- [ ] 3. Production checked
+- [x] 2. PR #752 merged into main (01683ec) after CI green and test-agent sign-off. Production DB was already up to date, so deploy.yml's db push is a no-op.
+- [x] 3. Production checked (2026-11-25): https://poetry-bil-araby.vercel.app/new/ loads on a phone viewport with no errors; calls Render /api/v2 and Supabase; Tonight = seed night 1; journey + collection from the seed; card.png 200. deploy.yml migration step failed on CLI v3 config → fix PR #754 merged (7995edd) after sign-off.
+  - QA issues seen in production for step 6: (a) Tonight on a shorter phone (iPhone 13, 664px tall) the ENTER door overlaps the WHY TONIGHT text; (b) poet of the week reads "· 295 poems" with an empty era; (c) Explore's poet row leads with obscure poets (Yarbu'i, Rabi'ah, Fahl…); (d) Pathways doors are the old ones (V3 agent); (e) Tonight requests `/api/v2/poems/` with an empty id before tonight loads (`usePoem('')` needs `enabled: !!id`); (f) live test 9.5–9.6 (Pathways) failed on main CI after the merge: the PATHWAYS tab kept detaching for 30s, but it passed on the PR and passes locally in a CI-like setup, so it's timing-dependent; rerun passed (flaky confirmed); the test agent is hardening it (wait for Tonight's content before clicking the tab).
 - [x] 4. Editorial seed in production (user approved; launch 2026-11-25; 2 collections, 24 steps, 49 Tonight picks to 2027-01-12)
-- [~] 5. V3 agent started (branch claude/redesign2-v3-doors) / taken over
+- [~] 5. V3 taken over (2026-11-25) on branch claude/redesign2-v3. V3.2 doors done by the agent (5ba298c), verified here: 36 mock + 18 live journeys, unit suites green. Remaining V3 (from the agent's audit):
+  - V3.1: 9.2 to match NWelcomeRead ("<NAME>, HOW WOULD YOU LIKE TO READ?", row descriptions, "BEGIN WITH TONIGHT'S POEM"); 9.3 Tonight "WELCOME · YOUR FIRST POEM" missing; 9.8 journey complete vs NJourneyDone; Pathways journey list vs NDoors (START HERE card + rows).
+  - V3.3 Collections and V3.4 Search: audit against Done-when + mocks.
+  - V3.5 You: audit 12.3–12.7 vs mocks; fix frames.json 12.1 mapping (NYou is 12.3; 12.1 is FRYouV1). Next poem left the UI (doors replace it).
+  - QA notes: 2.18 reasons repeat "A change of voice" with fixture data; 2.17 end lacks the reader dock shown in the mock.
 - [ ] 6. Screenshot + state QA script, issues collected, fixes applied
 
-- [~] Test-strategy agent started (branch claude/redesign2-test-strategy): TEST-STRATEGY.md, coverage matrix by area, feature-focused CI, old-app test deprecation plan. Merge its branch after review.
+- [~] Test-strategy agent started (branch claude/redesign2-test-strategy): TEST-STRATEGY.md, coverage matrix by area, feature-focused CI, old-app test deprecation plan. The agent opens a PR when done; this session reviews and integrates (merges) that PR itself. It must make real changes (tests, CI), not just docs. STANDING RULE: every time this session opens a PR, wake the test agent (SendMessage) with the PR number so it checks the PR's tests/CI and pushes fixes. Do NOT merge a PR until the test agent signs off that CI is sound.
 - [~] Editorial agent started (branch claude/redesign2-editorial) to gather missing content from the user; relay the user's messages to it.
 
 ## Still needed for a complete app (not covered by steps 1–6)

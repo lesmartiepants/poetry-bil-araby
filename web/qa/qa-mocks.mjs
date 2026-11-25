@@ -44,6 +44,11 @@ for (const f of pick) {
   await page.goto(base + f.route.replace(/^\//, ''));
   await page.waitForTimeout(600); // let mock data settle before driving the state
   for (const s of f.steps ?? []) {
+    if (s.api) {
+      const { path, method = 'GET', status = 200, response = {} } = s.api;
+      await page.route(`**${path}`, (route) => route.fulfill({ status, json: response }), { times: 1 });
+      await page.evaluate(({ path, method }) => fetch(path, { method }), { path, method });
+    }
     if (s.storage) await page.evaluate((st) => {
       for (const [k, v] of Object.entries(st.local ?? {})) localStorage.setItem(k, v);
       for (const [k, v] of Object.entries(st.session ?? {})) { if (v) sessionStorage.setItem(k, v); else sessionStorage.removeItem(k); }

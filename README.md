@@ -326,9 +326,11 @@ pipeline builds, runs unit tests, then runs the E2E suite against a PostgreSQL s
 **Frontend (Vercel)** — framework preset Vite, build `npm run build`, output `dist`.
 Auto-deploys on push to `main` with preview URLs for pull requests.
 
-**Backend (Render)** — runtime Node, build `npm install`, start `node server.js`. The
-`DATABASE_URL` must point at the Supabase pooler host; the direct host is not reachable from
-external services.
+**Backend (Render)** — runtime Node. The Render build installs GitHub CLI for
+native bug-report attachments during `npm install`. Set `DATABASE_URL` to the Supabase pooler host. To enable
+GitHub issues with screenshots, configure `GITHUB_TOKEN_SUBMIT_BUG` with a classic personal
+access token or OAuth token with push access to the repository. For local testing, use GitHub
+CLI 2.99 or later on `PATH` or set `GITHUB_CLI_PATH` to its executable.
 
 ## Project Structure
 

@@ -21,6 +21,7 @@ services:
       # - DATABASE_URL (from .env)
       # - SUPABASE_PROJECT_URL (optional, for direct Supabase API access)
       # - SUPABASE_SECRET_KEY (optional, for direct Supabase API access)
+      # - GITHUB_TOKEN_SUBMIT_BUG (optional, classic PAT or OAuth token with push access for attachments)
 
   # Staging backend — tracks the `staging` branch so PRs that change server.js
   # or add migrations can be verified end to end before they reach production.
@@ -61,4 +62,4 @@ services:
       #
       # Optional, only if the PR under test exercises those paths:
       # - GEMINI_API_KEY (AI mode / TTS proxy)
-      # - GITHUB_TOKEN_SUBMIT_BUG (bug-report → GitHub issue)
+      # - GITHUB_TOKEN_SUBMIT_BUG (classic PAT or OAuth token with push access for attachments)

@@ -1,7 +1,8 @@
 import { Link, useLocation } from 'wouter';
 import { Bookmark, Compass, Mark, Person } from '@ds/icons';
 import { useLongPress } from './useLongPress';
-import { DEV_PANEL_ENABLED, useDevPanel } from '../features/shell/devPanelState';
+import { DEV_PANEL_ENABLED } from '@components/devlog';
+import { useDevPanel } from '../features/shell/devPanelState';
 
 const TABS = [
   { href: '/journey', label: 'Journey', match: ['/journey', '/welcome'], icon: (on: boolean) => <Mark size={22} colour={on ? '#17140D' : 'currentColor'} weight={1.1} /> },
@@ -16,9 +17,9 @@ export function TabBar({ readerVisible }: { readerVisible?: boolean } = {}) {
   const inert = readerVisible === false ? { inert: '' } : {};
   const [loc] = useLocation();
   const toggle = useDevPanel((s) => s.toggleTab);
-  const press = useLongPress(() => DEV_PANEL_ENABLED && toggle());
+  const press = useLongPress(toggle, 800);
   return (
-    <nav aria-label="Main" aria-hidden={readerVisible === false || undefined} className={classes.filter(Boolean).join(' ')} {...inert} {...press} data-testid="tabbar">
+    <nav aria-label="Main" aria-hidden={readerVisible === false || undefined} className={classes.filter(Boolean).join(' ')} {...inert} {...(DEV_PANEL_ENABLED ? press : undefined)} data-testid="tabbar">
       {TABS.map((t) => {
         const on = inReader
           ? t.href === '/explore'

@@ -1,5 +1,5 @@
 {
-  "$comment": "Each App flow frame mapped to the app state that should match it. steps: click/fill/scroll/wait/storage. Frames live in design-review/design-refresh/canvas/.",
+  "$comment": "Each App flow frame mapped to the app state that should match it. steps: click/fill/scroll/wait/storage/api. Frames live in design-review/design-refresh/canvas/.",
   "frames": [
     {
       "frame": "1.1",
@@ -11,18 +11,29 @@
         { "wait": 200 }
       ]
     },
-    { "frame": "1.2", "file": "FRDevEdgeQuiet", "route": "/explore" },
+    { "frame": "1.2", "file": "FRDevEdgeQuiet", "route": "/p/amurru" },
     {
       "frame": "1.4",
       "file": "FRDevEvents",
-      "route": "/explore",
-      "steps": [{ "click": "[data-testid=edge-tab]" }]
+      "route": "/p/amurru",
+      "steps": [
+        { "api": { "path": "/api/v2/poems/87201" } },
+        { "click": "button:has-text(\"INSIGHTS\")" },
+        { "api": { "path": "/api/ai/live-tts", "method": "POST" } },
+        { "api": { "path": "/api/ai/gemini-2.5-flash/generateContent", "method": "POST", "status": 503 } },
+        { "api": { "path": "/api/ai/gemini-2.5-flash/generateContent", "method": "POST" } },
+        { "click": "[data-testid=edge-tab]" }
+      ]
     },
     {
       "frame": "1.5",
       "file": "FRDevReport",
-      "route": "/explore",
-      "steps": [{ "click": "[data-testid=edge-tab]" }, { "click": "text=REPORT A BUG" }]
+      "route": "/p/amurru",
+      "steps": [
+        { "click": "[data-testid=edge-tab]" },
+        { "click": "text=REPORT A BUG" },
+        { "fill": ["textarea[name=description]", "Recitation froze on line 3 after Insights opened, then resumed on its own."] }
+      ]
     },
     { "frame": "2.1", "file": "NReading", "route": "/p/amurru" },
     { "frame": "2.2", "file": "NImmersed", "route": "/p/amurru", "steps": [{ "scroll": 400 }] },

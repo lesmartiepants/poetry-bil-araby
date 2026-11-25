@@ -104,9 +104,9 @@ Everything else in today's `src/` is left behind and retired at cut-over, includ
 ### V1.1 · Foundations and developer panel · 1.1–1.7
 
 - **Build:** the `web/` app with its folder layers and lint rules; the `core/` package; the typed API client; tokens from one JSON file; the design-system primitives with stories; the four-tab shell and splash (1.1).
-- **Developer panel (dev builds only):** an edge tab on every screen, quiet grey (1.2), red with a count after an error (1.3). It opens one timeline of front-end and server events and errors (1.4) and a Report a bug form that files a GitHub issue through today's bug-report endpoint (1.5). Long-press the tab bar (1.6), or the dock or mark while reading (1.7), to hide or show the edge tab. Old fonts, effects, the TTS engine and temperature switches live here, not in the app.
+- **Developer panel (dev builds only):** an edge tab on every screen, quiet grey (1.2), red with a count after an error (1.3). It opens a relative timeline of front-end events and API exchanges (1.4). Requests and replies share a card and one HTTP path, with source and error filters. It also opens a Report a bug form that files a GitHub issue through today's bug-report endpoint (1.5). Long-press the tab bar (1.6), or the dock or mark while reading (1.7), to hide or show the edge tab. Old fonts, effects, the TTS engine and temperature switches live here, not in the app.
 - **Data:** `settings_defaults` (one row of default prefs); `user_settings.prefs` (jsonb).
-- **API:** `GET /api/dev/events` behind `ENABLE_DEV_LAB`.
+- **API:** The browser logs requests and replies from its own session. The build line checks `GET /api/health`.
 - **Done when:** every primitive passes its stories in Night and Parchment at sizes 1 and 5; forcing a server error turns the edge tab red with a count.
 
 ### V1.2 · Reader and Appearance · 2.1–2.5, 2.7–2.16, 12.1–12.2

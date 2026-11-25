@@ -206,6 +206,12 @@ export function TranslationScreen() {
       <Header onBack={() => nav('/you')} label="Back to You" />
       <TitleRow en="Translation" ar="الترجمة" />
       <div className="pad stack gap-16 mt-12">
+        {/* The choice previewed on a real opening line (12.7). */}
+        <div className="card under-preview" aria-label="Preview">
+          <p lang="ar" dir="rtl" className="under-preview__ar">أَمُرُّ عَلى الدِيارِ دِيارِ لَيلى</p>
+          {p.under === 'sounds' && <p className="under-preview__sounds">amurru ʿala d-diyāri diyāri laylā</p>}
+          {p.under !== 'nothing' && <p className="under-preview__en">I pass by the dwellings, Layla’s dwellings,</p>}
+        </div>
         <p className="t-eyebrow">SHOW UNDER THE ARABIC</p>
         <Segmented label="Show under the Arabic" value={p.under} onChange={(under) => set.mutate({ under })} options={[{ value: 'english', label: 'ENGLISH' }, { value: 'sounds', label: 'SOUNDS' }, { value: 'nothing', label: 'NOTHING' }]} />
         <div className="card row between" style={{ padding: 14, gap: 14 }}>

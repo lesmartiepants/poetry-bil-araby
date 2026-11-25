@@ -2,7 +2,7 @@
 import { Link } from 'wouter';
 import type { Collection, Door, Line, PoemSummary, Poet } from '@core/types';
 import { stripMarks, words } from '@core/logic/arabic';
-import { Chevron, Mark, Play } from '@ds/icons';
+import { Bookmark, Chevron, Mark, Play } from '@ds/icons';
 import { isPatternName, Pattern, type PatternName, type Tone } from '@ds/Pattern';
 
 const ERA_INK: Record<string, string> = {
@@ -137,12 +137,13 @@ export function BrandLogo() {
 }
 
 /** A collection or journey as a pattern card; with `progress` it shows how far the reader is. */
-export function CollectionCard({ c, href, progress }: { c: Collection; href?: string; progress?: number }) {
+export function CollectionCard({ c, href, progress, saved }: { c: Collection; href?: string; progress?: number; saved?: boolean }) {
   const art = collectionArt(c);
   const of = c.poemIds.length;
   return (
     <Link href={href ?? `/collection/${c.slug}`} className={`coll-card panel${progress !== undefined ? ' coll-card--progress' : ''}`} style={{ background: c.colour }}>
       <Pattern {...art} scale={progress !== undefined ? 0.7 : 0.8} scrim="fade" />
+      {saved && <span className="coll-card__saved" aria-label="Saved"><Bookmark size={14} fill="currentColor" /></span>}
       <div>
         <p lang="ar" className="coll-card__ar">{c.titleAr}</p>
         <p className="coll-card__en">{c.titleEn}</p>

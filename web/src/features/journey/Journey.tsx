@@ -1,9 +1,9 @@
 // Area 9 · Journey and first run (9.1–9.10).
 import { useRef, useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useSearch } from 'wouter';
 import { useQueries } from '@tanstack/react-query';
 import { api } from '@core/api';
-import { useCollection, useCollections, useDoors, useEras, useLastRead, usePoem, useProgress, useSetPrefs, useSetProgress, useTonight } from '@core/hooks';
+import { useCollection, useCollections, useDoors, useEras, useLastRead, usePoem, usePrefs, useProgress, useSetPrefs, useSetProgress, useTonight } from '@core/hooks';
 import type { Collection } from '@core/types';
 import { Header, Segmented, Skeleton } from '@ds/primitives';
 import { Back, Bookmark, Chevron, Mark } from '@ds/icons';
@@ -38,12 +38,18 @@ export function TonightScreen() {
   const [tab, setTab] = useState<'tonight' | 'pathways'>('tonight');
   const [, nav] = useLocation();
   const startY = useRef<number | null>(null);
+  // Straight from the welcome (9.3): the first poem greets the reader by name.
+  const welcome = new URLSearchParams(useSearch()).has('welcome');
+  const name = usePrefs().data?.displayName?.trim();
   if (tab === 'pathways') return <Pathways onTonight={() => setTab('tonight')} />;
   const step = t.data?.journeyStep;
   // A journey step opens as that step (its end completes it, 9.7); otherwise its end is You finished (2.18).
   const href = !t.data ? '/' : step ? `/p/${t.data.poem.slug}?journey=${step.slug}&step=${step.index}` : `/p/${t.data.poem.slug}?from=tonight`;
   const era = eras?.find((e) => e.slug === t.data?.poem.eraKey);
   const minutes = poem ? Math.max(1, Math.round(poem.lines.length / 4)) : 0;
+  const eyebrow = welcome
+    ? `WELCOME${name ? `, ${name.toUpperCase()}` : ''} · YOUR FIRST POEM`
+    : step ? `CHOSEN FOR YOU · ${step.stepEn.toUpperCase()} ${step.index} OF ${step.titleEn.toUpperCase()}` : 'CHOSEN FOR TONIGHT';
   return (
     <div className="screen journey tonight"
       onTouchStart={(e) => { startY.current = e.touches[0].clientY; }}
@@ -56,7 +62,7 @@ export function TonightScreen() {
         </div>
         {t.data && (
           <div className="tonight__title">
-            <p className="tonight__eyebrow">{step ? `CHOSEN FOR YOU · ${step.stepEn.toUpperCase()} ${step.index} OF ${step.titleEn.toUpperCase()}` : 'CHOSEN FOR TONIGHT'}</p>
+            <p className="tonight__eyebrow">{eyebrow}</p>
             <h1 lang="ar" dir="rtl" className="tonight__ar">{t.data.poem.titleAr}</h1>
             <p className="tonight__en">{t.data.poem.titleEn.toUpperCase()}</p>
           </div>
@@ -95,18 +101,35 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
   const lastId = useLastRead().data;
   const last = usePoem(lastId ?? '').data;
   const doors = useDoors(lastId).data;
+  const tonight = useTonight().data;
   return (
     <div className="screen journey">
       <header className="hub-hdr"><BrandMark /></header>
       <div className="journey__top journey-tabs"><Segmented pill label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={TABS} /></div>
       <main className="pad stack gap-12" style={{ paddingTop: 20 }}>
         <p className="t-eyebrow t-eyebrow--accent">JOURNEYS</p>
-        {journeys?.map((j) => {
-          const p = prog?.find((x) => x.slug === j.slug);
+        {journeys?.map((j, i) => {
+          const read = prog?.find((x) => x.slug === j.slug)?.position ?? 0;
+          const of = j.poemIds.length;
+          if (i > 0) {
+            return (
+              <Link key={j.slug} href={`/journey/${j.slug}`} className="journey-row">
+                <span className="journey-row__count">{read}/{of}</span>
+                <span className="journey-row__text"><span className="journey-row__title">{j.titleEn}</span>{j.span && <span className="journey-row__sub">{j.span}</span>}</span>
+                <Chevron size={16} />
+              </Link>
+            );
+          }
+          // The first journey is suggested, never required (9.5).
+          const step = tonight?.journeyStep?.slug === j.slug ? tonight.journeyStep : undefined;
           return (
-            <Link key={j.slug} href={`/journey/${j.slug}`} className="journey-card" style={{ background: j.colour }}>
-              <span className="journey-card__titles"><span className="journey-card__en">{j.titleEn}</span><span lang="ar" dir="rtl" className="journey-card__ar">{j.titleAr}</span></span>
-              <span className="journey-card__meta">{j.poemIds.length} {j.stepEn.toUpperCase()}S{p ? ` · ${p.position} DONE` : ''}</span>
+            <Link key={j.slug} href={`/journey/${j.slug}`} className="journey-start">
+              <span className="journey-start__head">
+                <StartPath read={read} of={of} />
+                <span className="journey-start__titles"><span className="journey-start__eyebrow">START HERE · NOT REQUIRED</span><span className="journey-start__title">{j.titleEn}</span></span>
+                <span className="journey-start__count">{read} / {of}</span>
+              </span>
+              <span className="journey-start__intro">{j.intro}{step && ` Tonight’s poem is ${j.stepEn.toLowerCase()} ${step.index}.`}</span>
             </Link>
           );
         })}
@@ -118,6 +141,18 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
         ) : null}
       </main>
     </div>
+  );
+}
+
+/** Seven stones along a path, lit as far as the reader has come. */
+function StartPath({ read, of }: { read: number; of: number }) {
+  const lit = of ? Math.round((Math.min(read, of) / of) * 7) : 0;
+  const stones: [number, number][] = [[10, 90], [22, 70], [38, 58], [56, 62], [72, 48], [86, 30], [104, 22]];
+  return (
+    <svg aria-hidden="true" width="40" height="40" viewBox="0 0 120 120">
+      <path d="M10 90 L22 70 L38 58 L56 62 L72 48 L86 30 L104 22" fill="none" stroke="#5C4C2A" strokeWidth="3" strokeDasharray="2 6" />
+      {stones.map(([x, y], k) => <circle key={k} cx={x} cy={y} r={k < lit ? 7 : 6} fill={k < lit ? '#D4B36A' : '#0A0A0D'} stroke="#D4B36A" strokeWidth="3" />)}
+    </svg>
   );
 }
 
@@ -198,6 +233,7 @@ export function StepDone({ slug, step }: { slug: string; step: number }) {
   const theme = j.themes?.[step - 1];
   const nextTheme = j.themes?.[step];
   const art = collectionArt(j);
+  if (finished) return <JourneyDone j={j} />;
   return (
     <div className="screen journey">
       <header className="step-done__top">
@@ -234,6 +270,52 @@ export function StepDone({ slug, step }: { slug: string; step: number }) {
     </div>
   );
 }
+/** 9.8 The last step read: the whole journey complete, and where to go next. */
+function JourneyDone({ j }: { j: Collection }) {
+  const others = useCollections('journey').data?.filter((x) => x.slug !== j.slug).slice(0, 2) ?? [];
+  const prog = useProgress().data;
+  const first = usePoem(j.poemIds[0] ?? '').data;
+  const last = usePoem(j.poemIds[j.poemIds.length - 1] ?? '').data;
+  const of = j.poemIds.length;
+  const themes = (j.themes ?? []).filter((t): t is string => !!t).map((t) => t.toUpperCase());
+  const half = Math.ceil(themes.length / 2);
+  const [t0, tN] = [j.themes?.[0]?.toLowerCase(), j.themes?.[of - 1]?.toLowerCase()];
+  const from = first && last && first.poetEn !== last.poetEn
+    ? `From ${first.poetEn}’s ${t0 ?? 'first poem'} to ${last.poetEn}’s ${tN ?? 'last'}: `
+    : '';
+  return (
+    <div className="screen journey">
+      <header className="step-done__top">
+        <button className="icon-btn" aria-label="Back to the poem" onClick={() => history.back()}><Back /></button>
+        <span className="t-eyebrow">{j.titleEn.toUpperCase()}</span>
+        <span className="hdr__spacer" />
+      </header>
+      <main className="journey-done">
+        <div className="journey-done__mark"><Mark size={120} colour="var(--c-accent)" /></div>
+        <div className="journey-done__head">
+          <p lang="ar" className="journey-done__ar">{j.titleAr}</p>
+          <h1 className="journey-done__title">All {word(of)}, complete.</h1>
+          <p className="journey-done__body">{from}{word(of)[0].toUpperCase() + word(of).slice(1)} poems, read to the end. The journey stays in your Library.</p>
+        </div>
+        <div className="journey-done__marks" aria-label={`All ${of} read`}>{j.poemIds.map((id) => <span key={id} className="journey-done__step"><Mark size={22} colour="var(--brand-old-gold)" /></span>)}</div>
+        {themes.length > 0 && <p className="journey-done__themes">{themes.slice(0, half).join(' · ')}<br />{themes.slice(half).join(' · ')}</p>}
+        {others.length > 0 && (
+          <>
+            <p className="t-eyebrow t-eyebrow--accent journey-done__next">YOUR NEXT JOURNEY</p>
+            {others.map((o) => (
+              <Link key={o.slug} href={`/journey/${o.slug}`} className="journey-row">
+                <span className="journey-row__count">{prog?.find((x) => x.slug === o.slug)?.position ?? 0}/{o.poemIds.length}</span>
+                <span className="journey-row__text"><span className="journey-row__title">{o.titleEn}</span>{o.span && <span className="journey-row__sub">{o.span}</span>}</span>
+                <Chevron size={16} />
+              </Link>
+            ))}
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
 /** 2.18 You finished Tonight's poem: three doors with their reasons, or enough for tonight. */
 export function FinishedScreen({ id }: { id: string }) {
   const poem = usePoem(id).data;
@@ -256,6 +338,12 @@ export function FinishedScreen({ id }: { id: string }) {
     </div>
   );
 }
+
+const READ_OPTS = [
+  { under: 'nothing', en: 'Arabic only', desc: 'The poem as it was written.', ar: 'عربي فقط' },
+  { under: 'english', en: 'With translation', desc: 'English under every line.', ar: 'مع الترجمة' },
+  { under: 'sounds', en: 'With sounds', desc: 'How it sounds in Latin letters, plus the English.', ar: 'مع النطق' },
+] as const;
 
 export function WelcomeFlow({ onDone }: { onDone: (firstPoemSlug: string) => void }) {
   const tonight = useTonight().data;
@@ -288,20 +376,34 @@ export function WelcomeFlow({ onDone }: { onDone: (firstPoemSlug: string) => voi
       </div>
     );
   }
+  const who = name.trim() ? `${name.trim().toUpperCase()}, ` : '';
   return (
-    <div className="screen screen--bare journey welcome">
-      <p className="t-eyebrow t-eyebrow--accent">HOW YOU’D LIKE TO READ</p>
-      <div className="stack gap-10" style={{ width: '100%' }}>
-        {(['nothing', 'english', 'sounds'] as const).map((u) => (
-          <button key={u} role="radio" aria-checked={under === u} className={`read-opt${under === u ? ' read-opt--on' : ''}`} onClick={() => setUnder(u)}>
-            <span lang="ar" className="ar" style={{ fontSize: 22 }}>أَمُرُّ عَلى الدِيارِ دِيارِ لَيلى</span>
-            {u === 'english' && <span className="read-opt__en">I pass by the dwellings, Layla’s dwellings,</span>}
-            {u === 'sounds' && <span className="read-opt__en">amurru ʿala d-diyari diyari layla</span>}
-            <span className="t-count">{u === 'nothing' ? 'ARABIC ONLY' : u === 'english' ? 'WITH TRANSLATION' : 'WITH SOUNDS'}</span>
+    <div className="screen screen--bare journey welcome welcome--read">
+      <div className="welcome__mark-sm"><Mark size={40} colour="var(--c-accent)" /></div>
+      <div className="welcome__read-head">
+        <p className="t-eyebrow t-eyebrow--accent">{who ? `${who}HOW WOULD YOU LIKE TO READ?` : 'HOW WOULD YOU LIKE TO READ?'}</p>
+        <div className="welcome__read-title"><h1>Your reading</h1><span lang="ar">كيف تقرأ</span></div>
+      </div>
+      <div role="radiogroup" aria-label="Your reading" className="stack gap-10 welcome__opts">
+        {READ_OPTS.map((o) => (
+          <button key={o.under} role="radio" aria-checked={under === o.under} className={`read-opt${under === o.under ? ' read-opt--on' : ''}`} onClick={() => setUnder(o.under)}>
+            <span className="read-opt__head">
+              <span className="read-opt__dot" aria-hidden />
+              <span className="read-opt__label"><span className="read-opt__name">{o.en}</span><span className="read-opt__desc">{o.desc}</span></span>
+              <span lang="ar" className="read-opt__ar">{o.ar}</span>
+            </span>
+            <span className="read-opt__sample">
+              <span lang="ar" dir="rtl" className="read-opt__verse">قِفا نَبكِ مِن ذِكرى حَبيبٍ ومَنزِلِ</span>
+              {o.under === 'sounds' && <span className="read-opt__sounds">qifā nabki min dhikrā ḥabībin wa-manzili</span>}
+              {o.under !== 'nothing' && <span className="read-opt__en">Stop, let us weep for a beloved and a dwelling</span>}
+            </span>
           </button>
         ))}
       </div>
-      <button className="btn btn--primary btn--block" onClick={() => { set.mutate({ under }); onDone(tonight?.poem.slug ?? ''); }}>Read my first poem</button>
+      <p className="welcome__later">Change it anytime in You · Translation and sounds.</p>
+      <div style={{ flex: 1 }} />
+      {dots}
+      <button className="btn btn--primary btn--block welcome__go" onClick={() => { set.mutate({ under }); onDone(tonight?.poem.slug ?? ''); }}>BEGIN WITH TONIGHT’S POEM</button>
     </div>
   );
 }

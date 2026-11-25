@@ -230,6 +230,26 @@
       ]
     },
     { "frame": "9.1", "file": "NWelcome", "route": "/welcome" },
+    {
+      "frame": "9.2",
+      "file": "NWelcomeRead",
+      "route": "/welcome",
+      "steps": [
+        { "fill": ["[aria-label='Your name']", "Nour"] },
+        { "click": "text=Continue" },
+        { "wait": 400 }
+      ]
+    },
+    {
+      "frame": "9.3",
+      "file": "NWelcomeFirst",
+      "route": "/journey?welcome=1",
+      "steps": [
+        { "storage": { "local": { "mock.prefs": "{\"displayName\":\"Nour\"}" } } },
+        { "reload": true },
+        { "wait": 500 }
+      ]
+    },
     { "frame": "9.4", "file": "NTonight", "route": "/journey" },
     {
       "frame": "9.5",
@@ -243,17 +263,27 @@
       ]
     },
     { "frame": "9.6", "file": "NJourney", "route": "/journey/your-first-seven" },
+    { "frame": "9.8", "file": "NJourneyDone", "route": "/journey/your-first-seven/done/7" },
+    { "frame": "10.1", "file": "NCollectionsAll", "route": "/explore/collections" },
     { "frame": "10.2", "file": "NCollection", "route": "/collection/women-who-wrote-the-canon" },
     { "frame": "11.1", "file": "NLibrarySearch", "route": "/search" },
+    {
+      "frame": "11.2",
+      "file": "NLibraryResults",
+      "route": "/search",
+      "steps": [{ "fill": ["input", "ليلى"] }, { "wait": 600 }]
+    },
     {
       "frame": "11.3",
       "file": "NSearchEmpty",
       "route": "/search",
       "steps": [{ "fill": ["input", "zzzz"] }, { "wait": 600 }]
     },
-    { "frame": "12.1", "file": "NYou", "route": "/you" },
+    { "frame": "12.3", "file": "NYou", "route": "/you" },
+    { "frame": "12.4", "file": "NYouMoves", "route": "/you/moves" },
     { "frame": "12.2", "file": "FRYouAppearance", "route": "/you/appearance" },
     { "frame": "12.5", "file": "FRYouGuide", "route": "/you/guide" },
-    { "frame": "12.6", "file": "NYouReciter", "route": "/you/reciter" }
+    { "frame": "12.6", "file": "NYouReciter", "route": "/you/reciter" },
+    { "frame": "12.7", "file": "NYouTranslation", "route": "/you/translation" }
   ]
 }

@@ -459,8 +459,15 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     pattern: r.pattern_key ?? undefined,
     poemIds: (r.poem_ids ?? []).map(String),
     themes: r.themes ?? [],
+    // "Al-Khansa to Fadwa Tuqan": the first and last poets, for the Pathways rows (9.5).
+    span:
+      r.first_poet && r.last_poet && r.first_poet !== r.last_poet
+        ? `${r.first_poet} to ${r.last_poet}`
+        : (r.first_poet ?? undefined),
   });
-  const COLL_SELECT = `SELECT c.*,
+  const POET_AT = (dir) =>
+    `(SELECT COALESCE(po.name_en, po.name) FROM collection_poems cp JOIN poems p ON p.id = cp.poem_id JOIN poets po ON po.id = p.poet_id WHERE cp.collection_id = c.id ORDER BY cp.position ${dir} LIMIT 1)`;
+  const COLL_SELECT = `SELECT c.*, ${POET_AT('ASC')} AS first_poet, ${POET_AT('DESC')} AS last_poet,
     COALESCE((SELECT array_agg(cp.poem_id ORDER BY cp.position) FROM collection_poems cp WHERE cp.collection_id = c.id), '{}') AS poem_ids,
     COALESCE((SELECT array_agg(cp.theme ORDER BY cp.position) FROM collection_poems cp WHERE cp.collection_id = c.id), '{}') AS themes
     FROM collections c WHERE c.published`;

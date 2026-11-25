@@ -83,3 +83,40 @@
   color: var(--c-accent);
   white-space: nowrap;
 }
+
+/* 10.1 All collections: a two-column grid under a count and filters. */
+.colls__meta {
+  display: flex;
+  justify-content: space-between;
+  margin: 4px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--c-text-3);
+}
+.colls__filters {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.colls__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 14px;
+  padding-bottom: 120px;
+}
+.colls__grid .coll-card {
+  width: auto;
+  height: 132px;
+}
+.coll-more {
+  display: block;
+  width: 100%;
+  padding: 14px 0 4px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 12px;
+  color: var(--c-text-3);
+  text-align: center;
+}

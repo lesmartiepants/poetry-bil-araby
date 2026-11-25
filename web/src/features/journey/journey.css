@@ -7,40 +7,80 @@
   background: rgba(10, 10, 13, 0.55);
   border-color: rgba(232, 204, 138, 0.35);
 }
-.journey-card {
-  border-radius: 16px;
-  padding: 16px;
+/* Pathways (9.5): the first journey as a suggestion, the rest as rows. */
+.journey-start {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 16px;
+  background: #14120c;
+  border: 1px solid #8a7442;
   text-decoration: none;
-  color: #ede3cf;
 }
-/* Two titles side by side, each wrapping in its own column with a gutter between. */
-.journey-card__titles {
+.journey-start__head {
   display: flex;
-  align-items: flex-start;
-  gap: 20px;
+  align-items: center;
+  gap: 12px;
 }
-.journey-card__en {
-  flex: 1 1 0;
-  min-width: 0;
-  font-family: var(--font-serif);
-  font-size: 21px;
+.journey-start__titles {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
-.journey-card__ar {
-  flex: 1 1 0;
-  min-width: 0;
-  text-align: right;
-  font-family: var(--font-ruqaa);
-  font-size: 20px;
-  line-height: 1.5;
-  color: #e8cc8a;
-}
-.journey-card__meta {
+.journey-start__eyebrow {
   font-size: 10px;
-  letter-spacing: 0.16em;
-  color: #e8cc8a;
+  letter-spacing: 0.2em;
+  color: var(--c-accent);
+}
+.journey-start__title {
+  font-size: 16px;
+  color: var(--c-text);
+}
+.journey-start__count {
+  font-size: 12px;
+  color: var(--c-accent);
+}
+.journey-start__intro {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--c-text-3);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.journey-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #111015;
+  border: 1px solid #2a2722;
+  text-decoration: none;
+  color: var(--c-accent);
+}
+.journey-row__count {
+  flex: none;
+  width: 28px;
+  font-size: 11px;
+  color: var(--c-text-3);
+}
+.journey-row__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.journey-row__title {
+  font-size: 14px;
+  color: var(--c-text);
+}
+.journey-row__sub {
+  font-size: 11px;
+  color: var(--c-text-3);
 }
 .path__title--locked {
   color: var(--c-faint);
@@ -60,27 +100,128 @@
   font-size: 52px;
   color: var(--c-accent);
 }
-.read-opt {
+/* 9.2: three ways to read, each with a sample of the opening line. */
+.screen.welcome--read {
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 0;
+  padding: 64px 22px 40px;
+}
+.welcome__mark-sm {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-  align-items: flex-end;
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid var(--c-border-2);
-  background: var(--c-surface);
+  justify-content: center;
+}
+.welcome__read-head {
+  margin-top: 18px;
+}
+.welcome__read-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 6px;
+}
+.welcome__read-title h1 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 28px;
   color: var(--c-text);
-  text-align: right;
+}
+.welcome__read-title span {
+  font-family: var(--font-kufi);
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--c-accent);
+}
+.welcome__opts {
+  margin-top: 16px;
+}
+.read-opt {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid #2a2722;
+  background: #111015;
+  color: var(--c-text);
+  text-align: left;
 }
 .read-opt--on {
-  border: 1.5px solid var(--c-accent);
-  background: var(--c-accent-bg);
+  border-color: var(--c-accent);
+  background: #17150f;
 }
+.read-opt__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.read-opt__dot {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  border: 1.5px solid #5c564c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.read-opt--on .read-opt__dot {
+  border-color: var(--c-accent);
+}
+.read-opt--on .read-opt__dot::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--c-accent);
+}
+.read-opt__label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.read-opt__name {
+  font-size: 14px;
+}
+.read-opt__desc {
+  font-size: 11.5px;
+  color: var(--c-text-3);
+}
+.read-opt__ar {
+  font-family: var(--font-kufi);
+  font-size: 15px;
+  color: #e8cc8a;
+}
+.read-opt__sample {
+  display: block;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #24211d;
+  text-align: right;
+}
+.read-opt__verse {
+  display: block;
+  font-family: var(--font-amiri);
+  font-size: 19px;
+  line-height: 1.4;
+}
+.read-opt__sounds,
 .read-opt__en {
+  display: block;
+  margin-top: 2px;
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 16px;
-  color: var(--c-text-3);
+  font-size: 14.5px;
+  color: #bdb6a8;
+}
+.read-opt__sounds {
+  color: #d9c9a3;
+}
+.welcome__later {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #8e887c;
+  text-align: center;
 }
 .text-in {
   height: 48px;
@@ -581,4 +722,61 @@
   font-size: 11px;
   letter-spacing: 0.2em;
   color: var(--c-muted);
+}
+
+/* 9.8 Journey complete. */
+.journey-done {
+  padding: 18px 22px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.journey-done__mark {
+  display: flex;
+  justify-content: center;
+}
+.journey-done__head {
+  text-align: center;
+}
+.journey-done__ar {
+  margin: 0;
+  font-family: var(--font-kufi);
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--c-accent);
+}
+.journey-done__title {
+  margin: 2px 0 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.2;
+  color: var(--c-text);
+}
+.journey-done__body {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--c-text-3);
+}
+.journey-done__marks {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+.journey-done__step {
+  display: flex;
+  padding: 3px;
+}
+.journey-done__themes {
+  margin: 2px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: #8e887c;
+  text-align: center;
+}
+.t-eyebrow.journey-done__next {
+  margin: 6px 0 -6px;
 }

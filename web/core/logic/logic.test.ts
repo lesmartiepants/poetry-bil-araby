@@ -3,7 +3,7 @@ import { deriveBands } from './bands';
 import { autoIconLetter, iconLetterChoices, iconLetterOf } from './iconLetter';
 import { DEFAULT_PREFS, mergePrefs } from './prefs';
 import { cardSvg, splitForCards } from './shareCard';
-import { arabicInitial, arabicSortKey, normalizeArabic, stripMarks } from './arabic';
+import { arabicInitial, arabicSortKey, matchRange, normalizeArabic, stripMarks } from './arabic';
 import { initialPlayback, playbackReducer } from './playback';
 
 describe('difficulty bands', () => {
@@ -100,5 +100,21 @@ describe('share cards', () => {
   });
   it('is 1080 × 1350 for saved images', () => {
     expect(cardSvg(spec, { width: 1080 })).toMatch(/width="1080" height="1350"/);
+  });
+});
+
+describe('search match highlighting', () => {
+  const line = 'أَمُرُّ عَلى الدِيارِ دِيارِ لَيلى';
+  it('finds a bare word inside fully marked text, marks included', () => {
+    const [a, b] = matchRange(line, 'ليلي')!;
+    expect(line.slice(a, b)).toBe('لَيلى');
+  });
+  it('spans words, and folds hamza forms', () => {
+    const [a, b] = matchRange(line, 'امر علي')!;
+    expect(line.slice(a, b)).toBe('أَمُرُّ عَلى');
+  });
+  it('matches English case-insensitively and says when nothing matches', () => {
+    expect(matchRange('I pass by the dwellings', 'DWELL')).toEqual([14, 19]);
+    expect(matchRange(line, 'قمر')).toBeNull();
   });
 });

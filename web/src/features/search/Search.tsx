@@ -1,6 +1,6 @@
 // Area 11 · Search (11.1–11.3).
 import { useEffect, useRef, useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useSearch as useQueryString } from 'wouter';
 import { useSearch } from '@core/hooks';
 import { readJSON, writeJSON } from '@core/storage';
 import { MarginNote, Skeleton } from '@ds/primitives';
@@ -29,6 +29,7 @@ export function SearchScreen() {
   const [debounced, setDebounced] = useState('');
   const [recents, setRecents] = useState<string[]>(() => readJSON('search.recents', []));
   const [, nav] = useLocation();
+  const home = new URLSearchParams(useQueryString()).get('from') === 'library' ? '/library' : '/explore';
   const input = useRef<HTMLInputElement>(null);
   const r = useSearch(debounced);
   useEffect(() => {
@@ -48,7 +49,7 @@ export function SearchScreen() {
   const show = (k: Exclude<Kind, 'all'>) => !!d && d[k].length > 0 && (kind === 'all' || kind === k);
   const forget = (x: string) => { const next = recents.filter((y) => y !== x); setRecents(next); writeJSON('search.recents', next); };
   const arabic = (x: string) => /[\u0600-\u06FF]/.test(x);
-  const close = () => (history.length > 1 ? history.back() : nav('/explore'));
+  const close = () => (history.length > 1 ? history.back() : nav(home));
   return (
     <div className="screen">
       <header className="hub-hdr"><BrandLogo /></header>

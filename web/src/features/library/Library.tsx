@@ -57,7 +57,7 @@ export function LibraryHub({ ListIcon }: { ListIcon: ListIconT }) {
   const tabs = (
     <div className="row gap-8">
       <div style={{ flex: 1 }}><Segmented pill label="Library" value={tab} onChange={setTab} options={[{ value: 'hub', label: 'HUB' }, { value: 'poems', label: 'POEMS' }]} /></div>
-      {isAvailable('search') && <button className="icon-btn lib-search" aria-label="Search" onClick={() => nav('/search')}><Search /></button>}
+      {isAvailable('search') && <button className="icon-btn lib-search" aria-label="Search" onClick={() => nav('/search?from=library')}><Search /></button>}
     </div>
   );
   return (

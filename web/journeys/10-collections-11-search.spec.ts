@@ -81,4 +81,21 @@ test.describe('Areas 10–11 · Collections and search', () => {
     await page.getByRole('button', { name: 'Forget الخنساء' }).click();
     await expect(page.getByText('RECENT')).toHaveCount(0);
   });
+
+  test('11.1 search opens from Explore and from the Library, and Cancel goes back to where it began', async ({ page }) => {
+    await fresh(page, signedIn);
+    await page.goto('./explore');
+    await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page.locator('.tabbar [aria-current=page]')).toHaveAttribute('aria-label', 'Explore');
+    await page.getByRole('button', { name: 'CANCEL' }).click();
+    await expect(page).toHaveURL(/\/explore$/);
+    await page.goto('./library');
+    await page.getByRole('button', { name: 'Search' }).click();
+    await expect(page).toHaveURL(/\/search\?from=library/);
+    await expect(page.locator('.tabbar [aria-current=page]')).toHaveAttribute('aria-label', 'Library');
+    await page.getByRole('textbox', { name: /Search/ }).fill('الديار');
+    await expect(page.locator('.search-section', { hasText: 'LINES' })).toBeVisible();
+    await page.getByRole('button', { name: 'CANCEL' }).click();
+    await expect(page).toHaveURL(/\/library$/);
+  });
 });

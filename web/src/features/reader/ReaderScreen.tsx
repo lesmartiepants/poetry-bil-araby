@@ -1,5 +1,5 @@
 // Area 2 · Reading (2.1–2.18) and the reader side of listening (3.7).
-import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, NotFoundError } from '@core/api';
@@ -15,8 +15,8 @@ import './reader.css';
 
 export interface PlayerSlotProps { poem: Poem; compact: boolean; onMark: () => void; onExpand: () => void }
 
-export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
-  id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; onLongPressMark?: Record<string, unknown>;
+export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNavigation }: {
+  id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; onLongPressMark?: Record<string, unknown>; endNavigation: (visible: boolean) => ReactNode;
 }) {
   const poemQ = usePoem(id);
   const prefs = usePrefs().data;
@@ -25,6 +25,8 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
   const [sheet, setSheet] = useState<'none' | 'aa' | 'insights' | 'fan'>('none');
   const [gloss, setGloss] = useState<{ line: number; word: number } | null>(null);
   const [verseMenu, setVerseMenu] = useState<number | null>(null);
+  const poemEnd = useRef<HTMLDivElement>(null);
+  const [endInView, setEndInView] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
   const open = useOverlay((s) => s.open);
@@ -38,9 +40,20 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
       const max = document.documentElement.scrollHeight - window.innerHeight;
       setProgress(max > 0 ? Math.min(100, Math.round((window.scrollY / max) * 100)) : 0);
     };
+    on();
     window.addEventListener('scroll', on, { passive: true });
     return () => window.removeEventListener('scroll', on);
   }, []);
+  useEffect(() => {
+    const end = poemEnd.current;
+    if (!end) return;
+    // Reveal the tabs as the end of the reading comes into view above the controls.
+    const observer = new IntersectionObserver(([entry]) => {
+      setEndInView(entry.isIntersecting);
+    }, { rootMargin: '0px 0px -174px 0px' });
+    observer.observe(end);
+    return () => observer.disconnect();
+  }, [poemQ.data]);
   useEffect(() => () => pb.send({ type: 'STOP' }), [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (poemQ.isLoading) return <PoemLoading />;
@@ -57,6 +70,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
   const listening = pb.poemId === poem.id && pb.status !== 'idle';
   const marks = prefs?.vowelMarks ?? true;
   const under = prefs?.under ?? 'english';
+  const showEndNavigation = progress > 0 && endInView;
 
   const startListening = (fromLine = 0) => {
     pb.send({ type: 'PLAY', poemId: poem.id, lineCount: poem.lines.length, voice: pb.voice !== 'Zephyr' ? pb.voice : defaultVoice, fromLine });
@@ -81,7 +95,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
   };
 
   return (
-    <div className="screen reader" data-testid="reader">
+    <div className={`screen reader${showEndNavigation ? ' reader--end-navigation' : ''}`} data-testid="reader">
       <ReaderBackdrop />
       <header className="reader__top">
         <button className="icon-btn" aria-label="Back" onClick={() => history.length > 1 ? history.back() : nav('/explore')}><Back /></button>
@@ -101,7 +115,10 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
         ))}
         {listening && pb.status === 'error' && <MarginNote message="The recitation won’t load." onRetry={() => startListening(pb.line)} />}
       </main>
-      <EndOfPoem poem={poem} />
+      <div ref={poemEnd}>
+        <EndOfPoem poem={poem} />
+      </div>
+      {endNavigation(showEndNavigation)}
 
       {listening ? (
         <Player poem={poem} compact={scrolled} onMark={() => setSheet('fan')} onExpand={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />

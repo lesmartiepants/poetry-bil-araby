@@ -1,6 +1,9 @@
-.reader {
-  padding-bottom: 140px;
+.screen.reader {
+  padding-bottom: 186px;
   min-height: calc(100dvh + 160px);
+}
+.reader--end-navigation {
+  --reader-tab-lift: -76px;
 }
 .reader__top {
   display: flex;
@@ -42,7 +45,7 @@
 .reader__fold {
   position: fixed;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, var(--reader-tab-lift, 0px));
   bottom: 34px;
   display: flex;
   flex-direction: column;
@@ -80,7 +83,7 @@
 .dock {
   position: fixed;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, var(--reader-tab-lift, 0px));
   bottom: 30px;
   width: min(358px, calc(100vw - 32px));
   height: 64px;
@@ -133,12 +136,17 @@
 .fan {
   position: fixed;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, var(--reader-tab-lift, 0px));
   bottom: 0;
   width: 390px;
   height: 260px;
   z-index: 42;
   pointer-events: none;
+}
+.reader__fold,
+.dock,
+.fan {
+  transition: transform 310ms var(--motion-ease);
 }
 .fan__item {
   position: absolute;

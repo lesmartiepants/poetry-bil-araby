@@ -125,11 +125,20 @@
   height: 350px;
   background: #2f6b5a;
 }
+.tonight__hdr {
+  position: absolute !important;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+.brand-mark {
+  display: flex;
+}
 .tonight__tabs {
   position: absolute !important;
   left: 22px;
   right: 22px;
-  top: 52px;
+  top: 74px;
 }
 .tonight__title {
   position: absolute !important;

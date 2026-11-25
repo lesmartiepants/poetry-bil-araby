@@ -8,7 +8,7 @@ import type { Collection } from '@core/types';
 import { Header, Segmented, Skeleton } from '@ds/primitives';
 import { Back, Bookmark, Chevron, Mark } from '@ds/icons';
 import { Pattern } from '@ds/Pattern';
-import { BrandLogo, collectionArt, PathDock } from '@components/index';
+import { collectionArt, PathDock } from '@components/index';
 import './journey.css';
 
 /** The arched door at the foot of Tonight: tap, or swipe up, to enter the poem. */
@@ -49,6 +49,7 @@ export function TonightScreen() {
       onTouchEnd={(e) => { if (startY.current !== null && startY.current - e.changedTouches[0].clientY > 80) nav(href); startY.current = null; }}>
       <div className="tonight__hero panel">
         <Pattern name="pajarita" />
+        <header className="hub-hdr tonight__hdr"><BrandMark /></header>
         <div className="tonight__tabs journey-tabs">
           <Segmented pill label="Journey" value={tab} onChange={setTab} options={TABS} />
         </div>
@@ -80,6 +81,9 @@ export function TonightScreen() {
   );
 }
 
+/** The Journey tab is headed by the mark alone (the other tabs use the full logo). */
+const BrandMark = () => <span role="img" aria-label="poetry بالعربي" className="brand-mark"><Mark size={26} colour="var(--c-accent)" /></span>;
+
 /** Tonight and Pathways share one tab bar, in the same place on both. */
 const TABS: { value: 'tonight' | 'pathways'; label: string }[] = [{ value: 'tonight', label: 'TONIGHT’S POEM' }, { value: 'pathways', label: 'PATHWAYS' }];
 
@@ -90,7 +94,7 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
   const doors = useQueries({ queries: [{ queryKey: ['doors', tonight?.poem.id], queryFn: () => api.ai.doors(tonight!.poem.id), enabled: !!tonight }] })[0].data;
   return (
     <div className="screen journey">
-      <header className="hub-hdr"><BrandLogo /></header>
+      <header className="hub-hdr"><BrandMark /></header>
       <div className="journey__top journey-tabs"><Segmented pill label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={TABS} /></div>
       <main className="pad stack gap-12" style={{ paddingTop: 20 }}>
         <p className="t-eyebrow t-eyebrow--accent">JOURNEYS</p>

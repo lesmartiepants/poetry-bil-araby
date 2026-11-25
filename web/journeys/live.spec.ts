@@ -73,6 +73,9 @@ test.describe('@live V3 against the real API', () => {
   test('@live 9.5–9.6 Pathways lists the published journeys and opens one', async ({ page }) => {
     await fresh(page);
     await page.goto('./journey');
+    // Tonight swaps its loading state for content and re-renders the tabs; a click before that
+    // lands on a detached radio (flaked on main CI). Wait for Tonight's content first.
+    await expect(page.getByText('A fixture reason for tonight.')).toBeVisible();
     await page.getByRole('radio', { name: 'PATHWAYS' }).click();
     await page.getByRole('link', { name: /Fixture journey/ }).click();
     await expect(page.getByRole('heading', { name: 'Fixture journey' })).toBeVisible();

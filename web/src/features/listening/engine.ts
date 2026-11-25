@@ -1,6 +1,6 @@
 // Turns playback state into sound. Mock source: a timer walks the words.
 // Live source (V1.4): /api/ai/live-tts with word timings.
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePlayback } from '@components/playback';
 import { sourceOf } from '@core/sources';
 import { words } from '@core/logic/arabic';
@@ -28,8 +28,15 @@ export function useEngine(poem: Poem | undefined) {
   }, [status, poem, poemId, voice, send]);
 
   // playing: advance word by word, line by line.
+  // 'mock.stall' in localStorage stalls once on reaching line 2, to show 3.9.
+  const stalled = useRef(false);
   useEffect(() => {
     if (status !== 'playing' || !poem || poemId !== poem.id) return;
+    if (sourceOf('tts') === 'mock' && line === 1 && !stalled.current && localStorage.getItem('mock.stall') === '1') {
+      stalled.current = true;
+      send({ type: 'STALL' });
+      return;
+    }
     const count = words(poem.lines[line]?.ar ?? '').length;
     if (!hasTimings) {
       // Verse fallback (3.10): no word timing, so move a line at a time.

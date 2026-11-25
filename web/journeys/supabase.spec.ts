@@ -2,6 +2,7 @@
 // triggers). Needs `supabase start` and the API on the same database:
 //   scripts/live-supabase.sh   (sets it all up and runs these)
 import { expect, test, type Browser, type Page } from '@playwright/test';
+import { openYourPoems } from './helpers';
 
 const URL = process.env.VITE_SUPABASE_URL ?? '';
 const KEY = process.env.VITE_SUPABASE_ANON_KEY ?? '';
@@ -114,7 +115,7 @@ test.describe('@live @supabase per-user data', () => {
     await stranger.goto('./library');
     await expect(stranger.getByText('Nothing kept yet')).toBeVisible();
     await page.goto('./library');
-    await page.getByRole('radio', { name: 'POEMS' }).click();
+    await openYourPoems(page);
     await page.getByRole('button', { name: 'SELECT' }).click();
     await page.locator('[role=checkbox]').first().click();
     await page.getByRole('button', { name: 'Remove' }).click();

@@ -20,5 +20,5 @@
       "@components/*": ["src/components/*"]
     }
   },
-  "include": ["src", "core", "vite.config.ts"]
+  "include": ["src", "core", "journeys", "vite.config.ts", "playwright.config.ts", "playwright.prod.config.ts"]
 }

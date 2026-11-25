@@ -29,6 +29,26 @@ test.describe('Area 1 · Shell and developer panel', () => {
     await expect(page.getByRole('dialog', { name: 'Developer panel' }).getByText('/api/definitely-missing-route')).toBeVisible();
   });
 
+  test('1.5 Report a bug sends the description and the timeline to the bug-report endpoint', async ({ page }) => {
+    let sent: { description?: string; logs?: unknown[]; appState?: { app?: string } } | null = null;
+    // Answered here, so no GitHub issue is ever filed from a test run.
+    await page.route('**/api/bug-reports', async (route) => {
+      sent = route.request().postDataJSON();
+      await route.fulfill({ status: 201, contentType: 'application/json', body: '{"ok":true}' });
+    });
+    await fresh(page);
+    await page.goto('./explore');
+    await page.getByTestId('edge-tab').click();
+    await page.getByRole('dialog', { name: 'Developer panel' }).getByRole('button', { name: 'REPORT A BUG' }).click();
+    const form = page.getByRole('dialog', { name: 'Report a bug' });
+    await expect(form.getByRole('button', { name: 'Send report' })).toBeDisabled();
+    await form.getByRole('textbox', { name: 'What happened' }).fill('The poet of the week did not load');
+    await form.getByRole('button', { name: 'Send report' }).click();
+    await expect(page.getByRole('status').filter({ hasText: 'Bug reported. Thank you.' })).toBeVisible();
+    expect(sent).toMatchObject({ description: 'The poet of the week did not load', appState: { app: 'web/new' } });
+    expect(Array.isArray(sent!.logs)).toBe(true);
+  });
+
   test('1.6 long-press the tab bar hides and shows the edge tab', async ({ page }) => {
     await fresh(page);
     await page.goto('./explore');

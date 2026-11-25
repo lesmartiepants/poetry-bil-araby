@@ -42,7 +42,7 @@ export function updateOGMetaTags(poem) {
  * Reset OG meta tags to site defaults.
  */
 export function resetOGMetaTags() {
-  const defaultTitle = 'شعر Bil Araby';
+  const defaultTitle = 'Poetry بالعربي';
   const defaultDesc =
     'Discover classical and modern Arabic poetry with AI-powered insights, audio recitation, and a curated collection of 9,073 poems.';
   const defaultUrl = window.location.origin;

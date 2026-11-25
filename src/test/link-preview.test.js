@@ -31,7 +31,7 @@ describe('shared links', () => {
       expect(result.headers.get('vary')).toBe('User-Agent');
       const html = await result.text();
       expect(html).toContain(
-        'property="og:title" content="Poetry Bil Araby: Read Qays ibn al-Mulawwah’s poem “I pass by the dwellings”"'
+        'property="og:title" content="Poetry بالعربي: Read Qays ibn al-Mulawwah’s poem “I pass by the dwellings”"'
       );
       expect(html).toContain('قيس &amp; ليلى · أمرّ على الديار ديار ليلى');
       expect(html).toContain(`property="og:image" content="${origin}/api/og/87201"`);
@@ -45,7 +45,7 @@ describe('shared links', () => {
     vi.stubGlobal('fetch', fetchPoem);
     const result = await middleware(request('/new/collection/women-who-wrote-the-canon'));
     const html = await result.text();
-    expect(html).toContain('property="og:title" content="شعر Bil Araby"');
+    expect(html).toContain('property="og:title" content="Poetry بالعربي"');
     expect(html).toContain(`property="og:image" content="${origin}/link-preview.png"`);
     expect(fetchPoem).not.toHaveBeenCalled();
   });

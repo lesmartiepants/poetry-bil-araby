@@ -13,8 +13,7 @@ export const config = {
 const previewAgent =
   /facebookexternalhit|facebot|twitterbot|slackbot|discordbot|whatsapp|telegrambot|linkedinbot|linkpresentation|skypeuripreview|redditbot|pinterest|embedly|applebot/i;
 const poemPath = /^\/(?:new\/p|poem)\/(\d{1,10})\/?$/;
-const siteName = 'Poetry Bil Araby';
-const siteTitle = 'شعر Bil Araby';
+const siteName = 'Poetry بالعربي';
 const siteDescription = 'Arabic poetry, read and heard.';
 
 const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -54,10 +53,10 @@ export default async function middleware(request) {
   const page = url.origin + url.pathname;
   const id = poemPath.exec(url.pathname)?.[1];
   const preview = (id && (await poemPreview(id, url.origin))) || {
-    title: siteTitle,
+    title: siteName,
     description: siteDescription,
     image: new URL('/link-preview.png', url.origin).href,
-    alt: 'Gold mark above Poetry Bil Araby',
+    alt: 'Gold mark above Poetry بالعربي',
     width: 1200,
     height: 630,
   };

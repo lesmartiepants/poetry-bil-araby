@@ -1,5 +1,5 @@
 // Area 2 · Reading (2.1–2.18) and the reader side of listening (3.7).
-import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ComponentType, type HTMLAttributes, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, NotFoundError } from '@core/api';
@@ -11,12 +11,13 @@ import { Back, Heart, Lamp, Mark, Pause, Play, Share } from '@ds/icons';
 import { DoorCard, Verse } from '@components/index';
 import { useOverlay } from '@components/overlays';
 import { usePlayback } from '@components/playback';
+import { logEvent } from '@components/devlog';
 import './reader.css';
 
-export interface PlayerSlotProps { poem: Poem; compact: boolean; onMark: () => void; onExpand: () => void }
+export interface PlayerSlotProps { poem: Poem; compact: boolean; onMark: () => void; onExpand: () => void; devLongPress?: HTMLAttributes<HTMLElement> }
 
-export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNavigation }: {
-  id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; onLongPressMark?: Record<string, unknown>; endNavigation: (visible: boolean) => ReactNode;
+export function ReaderScreen({ id, Player, defaultVoice, devLongPress, endNavigation }: {
+  id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; devLongPress?: HTMLAttributes<HTMLElement>; endNavigation: (visible: boolean) => ReactNode;
 }) {
   const poemQ = usePoem(id);
   const prefs = usePrefs().data;
@@ -56,6 +57,14 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
   }, [poemQ.data]);
   useEffect(() => () => pb.send({ type: 'STOP' }), [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const poemId = poemQ.data?.id;
+  const openedPoem = useRef<string>();
+  useEffect(() => {
+    if (!poemId || poemId === openedPoem.current) return;
+    openedPoem.current = poemId;
+    logEvent({ kind: 'event', source: 'app', label: 'Reader', text: `Opened poem ${poemId}` });
+  }, [poemId]);
+
   if (poemQ.isLoading) return <PoemLoading />;
   if (poemQ.error || !poemQ.data) {
     const notFound = poemQ.error instanceof NotFoundError || (poemQ.error as { status?: number })?.status === 404;
@@ -78,7 +87,10 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
   };
   const onWord = (line: number, word: number) => {
     if (listening) return setVerseMenu(line);
-    if (prefs?.tapWord !== false) setGloss({ line, word });
+    if (prefs?.tapWord !== false) {
+      logEvent({ kind: 'user', source: 'app', label: 'Gloss', text: `Tapped word ${word + 1} on line ${line + 1}` });
+      setGloss({ line, word });
+    }
   };
   const kept = keeps?.includes(poem.id) ?? false;
   const unkeep = async () => {
@@ -88,7 +100,10 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
   };
   const actions = {
     listen: () => (listening ? pb.send(pb.status === 'playing' ? { type: 'PAUSE' } : { type: 'RESUME' }) : startListening()),
-    insights: () => setSheet('insights'),
+    insights: () => {
+      logEvent({ kind: 'user', source: 'app', label: 'Insights', text: `Tapped Insights for poem ${poem.id}` });
+      setSheet('insights');
+    },
     keep: () => (kept ? unkeep() : open({ type: 'keep', poemId: poem.id })),
     share: () => open({ type: 'share', poemId: poem.id }),
     aa: () => setSheet('aa'),
@@ -121,14 +136,14 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
       {endNavigation(showEndNavigation)}
 
       {listening ? (
-        <Player poem={poem} compact={scrolled} onMark={() => setSheet('fan')} onExpand={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
+        <Player poem={poem} compact={scrolled} onMark={() => setSheet('fan')} onExpand={() => window.scrollTo({ top: 0, behavior: 'smooth' })} devLongPress={devLongPress} />
       ) : scrolled ? (
         <div className="reader__fold">
-          <button className="reader__mark" aria-label="Actions" onClick={() => setSheet('fan')} {...onLongPressMark}><Mark size={34} colour="var(--c-accent)" /></button>
+          <button className="reader__mark" aria-label="Actions" onClick={() => setSheet('fan')} {...devLongPress}><Mark size={34} colour="var(--c-accent)" /></button>
           <span className="reader__progress" aria-hidden><span style={{ width: `${progress}%` }} /></span>
         </div>
       ) : (
-        <Dock {...actions} listening={false} kept={kept} />
+        <Dock {...actions} listening={false} kept={kept} devLongPress={devLongPress} />
       )}
 
       {sheet === 'fan' && <Fan {...actions} kept={kept} listening={listening && pb.status === 'playing'} onClose={() => setSheet('none')} />}
@@ -167,9 +182,9 @@ function ReaderBackdrop() {
 
 type Actions = { listen: () => void; insights: () => void; keep: () => void; share: () => void; aa: () => void; listening: boolean; kept: boolean };
 
-function Dock({ listen, insights, keep, share, kept }: Actions) {
+function Dock({ listen, insights, keep, share, kept, devLongPress }: Actions & { devLongPress?: HTMLAttributes<HTMLElement> }) {
   return (
-    <nav aria-label="Poem actions" className="dock">
+    <nav aria-label="Poem actions" className="dock" {...devLongPress}>
       <button className="dock__btn" onClick={listen}><Play size={14} /> LISTEN</button>
       <button className="dock__btn dock__btn--main" onClick={insights}><Lamp size={18} /> INSIGHTS</button>
       <button className={`dock__btn${kept ? ' dock__btn--kept' : ''}`} aria-label={kept ? 'Kept. Tap to remove' : 'Keep'} onClick={keep}><Heart filled={kept} /></button>

@@ -28,7 +28,9 @@
       "name": "Foundations and developer panel",
       "version": "V1.1",
       "journeys": [
-        "01-shell.spec.ts › 1.3 a server error turns the edge tab red with a count; 1.4 the timeline shows it"
+        "01-shell.spec.ts › 1.3 a server error turns the edge tab red with a count; 1.4 the timeline shows it",
+        "01-shell.spec.ts › 1.4 filters by source and errors, and copies the whole timeline",
+        "01-shell.spec.ts › 1.4 pairs concurrent calls to the same path with their own replies"
       ]
     },
     {
@@ -36,7 +38,9 @@
       "name": "Foundations and developer panel",
       "version": "V1.1",
       "journeys": [
-        "01-shell.spec.ts › 1.5 Report a bug sends the description and the timeline to the bug-report endpoint"
+        "01-shell.spec.ts › 1.5 Report a bug sends the description and the timeline to the bug-report endpoint",
+        "01-shell.spec.ts › 1.5 keeps the report draft on failure and sends only selected attachments",
+        "01-shell.spec.ts › 1.5 the description grows, scrolls at its cap, and keeps Send visible"
       ]
     },
     {
@@ -51,7 +55,9 @@
       "id": "1.7",
       "name": "Foundations and developer panel",
       "version": "V1.1",
-      "gap": "no journey yet"
+      "journeys": [
+        "01-shell.spec.ts › 1.7 the reader dock and folded mark toggle the same saved edge tab"
+      ]
     },
     {
       "id": "2.1",

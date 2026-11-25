@@ -67,6 +67,7 @@ scripts/diacritize-data/
 scripts/__pycache__/
 poetry-splash-ci-fixes/
 .vercel
+.render-bin/
 .env*.local
 
 # Curation pipeline intermediate data (Parquet files, cached datasets, generated reports)

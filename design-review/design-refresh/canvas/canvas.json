@@ -2156,14 +2156,14 @@
       "w": 390,
       "x": 1410,
       "y": 3108,
-      "text": "Dev builds only (FEATURES.debug), from the edge tab (1.2, 1.3). One timeline of front-end events and back-end requests, errors in red. Filter by source; Copy log copies the visible list. Back-end entries come from GET /api/dev/events."
+      "text": "Dev and preview builds only, from the edge tab (1.2, 1.3). Requests and replies share a card and one HTTP path. The start time anchors the relative timeline. Filter by source or errors. Copy log includes all recent events and their exact times."
     },
     "frN13": {
       "page": "bottom",
       "w": 390,
       "x": 1880,
       "y": 3108,
-      "text": "From: REPORT A BUG on 1.4. Sends to the existing /api/bug-reports, which opens a GitHub issue with the last 200 events and the current poem attached."
+      "text": "From: REPORT A BUG on 1.4. What happened grows as you type, then scrolls at its height limit. Send report stays visible. Choose which context to send. The screenshot checkbox is off by default and attaches the image to the public GitHub issue when selected. The API can also save the report text and context."
     },
     "a1": {
       "kind": "title1",

@@ -126,7 +126,7 @@ pg_restore --clean --no-owner --no-acl \
 1. Click **"Create Web Service"**
 2. Render will:
    - Clone your repo
-   - Run `npm install`
+   - Run `npm install`, which also installs the pinned GitHub CLI on Render
    - Start `node server.js`
    - Assign a URL like: `https://your-service-name.onrender.com`
 3. Wait for deployment to complete (~2-3 minutes)
@@ -321,7 +321,7 @@ in the Render dashboard (**poetry-bil-araby-staging → Environment**):
   `/api/health` still returns ok, but `/api/health/full` and every poem route
   return 500.
 - `GEMINI_API_KEY` — only if the PR exercises AI mode or the TTS proxy.
-- `GITHUB_TOKEN_SUBMIT_BUG` — only if the PR exercises bug-report submission.
+- `GITHUB_TOKEN_SUBMIT_BUG` — for bug-report submission. Native screenshot attachments require a classic PAT or OAuth token with push access.
 
 **Which database?** Prefer a **separate** Supabase project for staging. The whole
 point of staging is to run unreviewed migrations, and a migration is exactly the

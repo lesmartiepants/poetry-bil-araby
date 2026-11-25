@@ -29,7 +29,13 @@ export const Clock = ({ size = 16, ...p }: P) => <svg {...base(size)} {...p}><ci
 export const Up = ({ size = 20, ...p }: P) => <svg {...base(size)} {...p}><path d="M6 14l6-6 6 6" /></svg>;
 export const Copy = ({ size = 18, ...p }: P) => <svg {...base(size)} {...p}><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3" /></svg>;
 export const Link = ({ size = 18, ...p }: P) => <svg {...base(size)} {...p}><path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1" /></svg>;
-export const Bug = ({ size = 16, ...p }: P) => <svg {...base(size)} {...p}><rect x="8" y="7" width="8" height="12" rx="4" /><path d="M12 7V4M4 13h4M16 13h4M5 8l3 2M19 8l-3 2M5 19l3-2M19 19l-3-2" /></svg>;
+export const Bug = ({ size = 21, ...p }: P) => (
+  <svg {...base(size)} strokeWidth={1.7} {...p}>
+    <path d="M9 9V7a3 3 0 0 1 6 0v2" />
+    <rect x="7" y="9" width="10" height="11" rx="5" />
+    <path d="M3 13h4M17 13h4M4 7l3 3M20 7l-3 3M4 19l3-3M20 19l-3-3" />
+  </svg>
+);
 
 /** The eight-point brand mark (khatam), drawn as nested squares. */
 export function Mark({ size = 28, colour = 'currentColor', weight = 1 }: { size?: number; colour?: string; weight?: number }) {

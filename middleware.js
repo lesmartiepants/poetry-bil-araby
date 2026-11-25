@@ -1,4 +1,4 @@
-/* global process */
+import { fetchPreviewPoem } from './server/link-preview.js';
 // Chat apps read the initial HTML. People continue to the normal app shell.
 export const config = {
   runtime: 'nodejs',
@@ -12,30 +12,30 @@ export const config = {
 // Apple Messages uses the Facebook/Twitter preview agent, as observed in Nemo.
 const previewAgent =
   /facebookexternalhit|facebot|twitterbot|slackbot|discordbot|whatsapp|telegrambot|linkedinbot|linkpresentation|skypeuripreview|redditbot|pinterest|embedly|applebot/i;
-const poemPath = /^\/(?:new\/p|poem)\/([1-9]\d{0,9})\/?$/;
+const poemPath = /^\/(?:new\/p|poem)\/(\d{1,10})\/?$/;
 const siteName = 'Poetry Bil Araby';
+const siteTitle = 'شعر Bil Araby';
 const siteDescription = 'Arabic poetry, read and heard.';
-const apiOrigin = process.env.VITE_API_URL || 'https://poetry-bil-araby-2mb0.onrender.com';
 
 const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const escape = (value) => value.replace(/[&<>"']/g, (char) => entities[char]);
 const meta = (attribute, name, value) =>
   `<meta ${attribute}="${name}" content="${escape(String(value))}">`;
 
-async function poemPreview(id) {
+async function poemPreview(id, origin) {
   try {
-    const poemUrl = new URL(`/api/v2/poems/${id}`, apiOrigin);
-    const response = await fetch(poemUrl, { signal: AbortSignal.timeout(4500) });
-    if (!response.ok) return null;
-    const poem = await response.json();
-    const title = poem.titleAr || poem.titleEn;
-    if (!title) return null;
-    const poet = poem.poetAr || poem.poetEn;
+    const poem = await fetchPreviewPoem(id);
+    const poemTitle = poem?.titleEn || poem?.titleAr;
+    if (!poemTitle) return null;
+    const poet = poem.poetEn || poem.poetAr;
+    const title = poet
+      ? `${siteName}: Read ${poet}’s poem “${poemTitle}”`
+      : `${siteName}: Read “${poemTitle}”`;
     return {
       title,
-      description: [poet, poem.firstLineAr].filter(Boolean).join(' · ') || siteDescription,
-      image: new URL(`${poemUrl.pathname}/card.png`, poemUrl).href,
-      alt: [title, poet].filter(Boolean).join(' · '),
+      description: [poem.poetAr, poem.firstLineAr].filter(Boolean).join(' · ') || siteDescription,
+      image: new URL(`/api/og/${id}`, origin).href,
+      alt: [poemTitle, poet].filter(Boolean).join(' · '),
       width: 1080,
       height: 1350,
     };
@@ -53,8 +53,8 @@ export default async function middleware(request) {
   // Reader state and private query parameters should stay out of preview metadata.
   const page = url.origin + url.pathname;
   const id = poemPath.exec(url.pathname)?.[1];
-  const preview = (id && (await poemPreview(id))) || {
-    title: siteName,
+  const preview = (id && (await poemPreview(id, url.origin))) || {
+    title: siteTitle,
     description: siteDescription,
     image: new URL('/link-preview.png', url.origin).href,
     alt: 'Gold mark above Poetry Bil Araby',

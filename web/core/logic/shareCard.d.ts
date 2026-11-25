@@ -30,5 +30,11 @@ export const CARD_H: number;
 export const EXPORT_W: number;
 export function splitForCards(lineCount: number): number[];
 export function cardsFor(lineIndexes: number[]): number[][];
-export function layoutCard(spec: CardSpec): { ar: number; en: number; long: boolean };
-export function cardSvg(spec: CardSpec, opts?: { width?: number; rounded?: boolean }): string;
+export function layoutCard(
+  spec: CardSpec,
+  opts?: { preview?: boolean }
+): { ar: number; en: number; long: boolean };
+export function cardSvg(
+  spec: CardSpec,
+  opts?: { width?: number; rounded?: boolean; preview?: boolean }
+): string;

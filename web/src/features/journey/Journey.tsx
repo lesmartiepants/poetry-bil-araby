@@ -234,6 +234,7 @@ export function StepDone({ slug, step }: { slug: string; step: number }) {
   const theme = j.themes?.[step - 1];
   const nextTheme = j.themes?.[step];
   const art = collectionArt(j);
+  if (finished) return <JourneyDone j={j} />;
   return (
     <div className="screen journey">
       <header className="step-done__top">
@@ -270,6 +271,52 @@ export function StepDone({ slug, step }: { slug: string; step: number }) {
     </div>
   );
 }
+/** 9.8 The last step read: the whole journey complete, and where to go next. */
+function JourneyDone({ j }: { j: Collection }) {
+  const others = useCollections('journey').data?.filter((x) => x.slug !== j.slug).slice(0, 2) ?? [];
+  const prog = useProgress().data;
+  const first = usePoem(j.poemIds[0] ?? '').data;
+  const last = usePoem(j.poemIds[j.poemIds.length - 1] ?? '').data;
+  const of = j.poemIds.length;
+  const themes = (j.themes ?? []).filter((t): t is string => !!t).map((t) => t.toUpperCase());
+  const half = Math.ceil(themes.length / 2);
+  const [t0, tN] = [j.themes?.[0]?.toLowerCase(), j.themes?.[of - 1]?.toLowerCase()];
+  const from = first && last && first.poetEn !== last.poetEn
+    ? `From ${first.poetEn}’s ${t0 ?? 'first poem'} to ${last.poetEn}’s ${tN ?? 'last'}: `
+    : '';
+  return (
+    <div className="screen journey">
+      <header className="step-done__top">
+        <button className="icon-btn" aria-label="Back to the poem" onClick={() => history.back()}><Back /></button>
+        <span className="t-eyebrow">{j.titleEn.toUpperCase()}</span>
+        <span className="hdr__spacer" />
+      </header>
+      <main className="journey-done">
+        <div className="journey-done__mark"><Mark size={120} colour="var(--c-accent)" /></div>
+        <div className="journey-done__head">
+          <p lang="ar" className="journey-done__ar">{j.titleAr}</p>
+          <h1 className="journey-done__title">All {word(of)}, complete.</h1>
+          <p className="journey-done__body">{from}{word(of)[0].toUpperCase() + word(of).slice(1)} poems, read to the end. The journey stays in your Library.</p>
+        </div>
+        <div className="journey-done__marks" aria-label={`All ${of} read`}>{j.poemIds.map((id) => <span key={id} className="journey-done__step"><Mark size={22} colour="var(--brand-old-gold)" /></span>)}</div>
+        {themes.length > 0 && <p className="journey-done__themes">{themes.slice(0, half).join(' · ')}<br />{themes.slice(half).join(' · ')}</p>}
+        {others.length > 0 && (
+          <>
+            <p className="t-eyebrow t-eyebrow--accent journey-done__next">YOUR NEXT JOURNEY</p>
+            {others.map((o) => (
+              <Link key={o.slug} href={`/journey/${o.slug}`} className="journey-row">
+                <span className="journey-row__count">{prog?.find((x) => x.slug === o.slug)?.position ?? 0}/{o.poemIds.length}</span>
+                <span className="journey-row__text"><span className="journey-row__title">{o.titleEn}</span>{o.span && <span className="journey-row__sub">{o.span}</span>}</span>
+                <Chevron size={16} />
+              </Link>
+            ))}
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
 /** 2.18 You finished Tonight's poem: three doors with their reasons, or enough for tonight. */
 export function FinishedScreen({ id }: { id: string }) {
   const poem = usePoem(id).data;

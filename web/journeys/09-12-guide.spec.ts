@@ -23,6 +23,19 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await expect(page.getByText(/HEAVEN 3 OF YOUR FIRST SEVEN/)).toBeVisible();
   });
 
+  test('9.8 reading the last step completes the journey and offers the next one', async ({ page }) => {
+    await fresh(page, { 'mock.progress': JSON.stringify([{ slug: 'your-first-seven', position: 6, saved: true }]) });
+    await page.goto('./journey/your-first-seven');
+    await expect(page.getByText('JOURNEY · 6 OF 7 READ')).toBeVisible();
+    await page.getByRole('link', { name: /HEAVEN 7/ }).last().click();
+    await page.getByTestId('read-sentinel').scrollIntoViewIfNeeded();
+    await page.getByRole('link', { name: 'Heaven 7 complete' }).click();
+    await expect(page.getByRole('heading', { name: 'All seven, complete.' })).toBeVisible();
+    await expect(page.getByText('YOUR NEXT JOURNEY')).toBeVisible();
+    await page.getByRole('link', { name: /Home/ }).click();
+    await expect(page).toHaveURL(/journey\/home/);
+  });
+
   test('9.6–9.7 reading a journey step to its end completes it and shows the next', async ({ page }) => {
     await fresh(page);
     await page.goto('./journey/your-first-seven');

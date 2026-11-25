@@ -723,3 +723,60 @@
   letter-spacing: 0.2em;
   color: var(--c-muted);
 }
+
+/* 9.8 Journey complete. */
+.journey-done {
+  padding: 18px 22px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.journey-done__mark {
+  display: flex;
+  justify-content: center;
+}
+.journey-done__head {
+  text-align: center;
+}
+.journey-done__ar {
+  margin: 0;
+  font-family: var(--font-kufi);
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--c-accent);
+}
+.journey-done__title {
+  margin: 2px 0 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.2;
+  color: var(--c-text);
+}
+.journey-done__body {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--c-text-3);
+}
+.journey-done__marks {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0;
+}
+.journey-done__step {
+  display: flex;
+  padding: 3px;
+}
+.journey-done__themes {
+  margin: 2px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: #8e887c;
+  text-align: center;
+}
+.t-eyebrow.journey-done__next {
+  margin: 6px 0 -6px;
+}

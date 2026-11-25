@@ -29,7 +29,7 @@ jobs:
   # Stage 0: Detect what changed to optimize CI execution
   detect-changes:
     name: Detect Changed Files
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       code-changed: ${{ steps.filter.outputs.code }}
       tests-changed: ${{ steps.filter.outputs.tests }}
@@ -63,7 +63,7 @@ jobs:
   # Stage 0b: Feature-manifest drift gate (fast, no deps — pure Node built-ins)
   manifest-check:
     name: Feature Manifest Drift
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -75,7 +75,7 @@ jobs:
   # Stage 1: Build and validate
   build:
     name: Build & Validate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: detect-changes
     if: |
       needs.detect-changes.outputs.code-changed == 'true' ||
@@ -106,7 +106,7 @@ jobs:
   # Stage 2: Unit tests
   test:
     name: Unit Tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [detect-changes, build]
     if: |
       needs.detect-changes.outputs.code-changed == 'true' ||
@@ -133,7 +133,7 @@ jobs:
   # Stage 3: Smoke Tests — user-flow E2E (all API calls mocked, no backend needed)
   smoke-tests:
     name: Smoke Tests (User Flows)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [detect-changes, build]
     if: |
       needs.detect-changes.outputs.code-changed == 'true' ||
@@ -199,7 +199,7 @@ jobs:
   # Stage 4: Deploy preview (Vercel, Netlify, or GitHub Pages)
   deploy-preview:
     name: Deploy Preview
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [detect-changes, build]
     if: |
       github.event_name == 'pull_request' &&
@@ -223,7 +223,7 @@ jobs:
   # Stage 5: Provide feedback on PR (upserts a single comment per PR)
   pr-feedback:
     name: PR Feedback Bot
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: [detect-changes, manifest-check, build, test, smoke-tests]
     if: always() && github.event_name == 'pull_request'
     steps:

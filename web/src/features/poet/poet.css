@@ -1,0 +1,188 @@
+.poet-hero {
+  height: 262px;
+}
+.poet-hero__text {
+  position: absolute !important;
+  left: 28px;
+  right: 28px;
+  bottom: 22px;
+  text-align: right;
+}
+.poet-hero__meta {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: #e8cc8a;
+}
+.poet-hero__ar {
+  margin: 6px 0 0;
+  font-family: var(--font-kufi);
+  font-weight: 700;
+  font-size: 52px;
+  line-height: 1.1;
+  color: var(--brand-ivory);
+}
+.poet-hero__en {
+  margin: 4px 0 0;
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  color: var(--brand-ivory);
+}
+/* Back and follow sit on the hero; past it they fold into a band with the name. */
+.poet-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  max-width: 430px;
+  margin: 0 auto;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 48px 12px 0;
+}
+.poet-bar--folded {
+  padding: 40px 12px 8px;
+  border-bottom: 1px solid var(--c-hairline);
+}
+.icon-btn.poet-bar__btn {
+  color: var(--brand-ivory);
+}
+.poet-bar__name {
+  flex: 1;
+  text-align: center;
+  font-family: var(--font-kufi);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--brand-ivory);
+}
+.poet-poem {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: var(--c-surface-2);
+  border: 1px solid #24211d;
+  text-decoration: none;
+}
+.poet-poem__side {
+  flex: none;
+  width: 46px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  color: #c4566b;
+}
+.poet-poem__read {
+  border: 1px solid #3a352c;
+  border-radius: 9px;
+  padding: 2px 7px 1px;
+  font-size: 8px;
+  letter-spacing: 0.16em;
+  color: var(--c-muted-2);
+}
+.poet-poem__num {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+}
+.poet-poem__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+.poet-poem__ar {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-amiri);
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--c-text);
+}
+.poet-poem__en {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 16px;
+  color: #dcd5c8;
+  text-align: right;
+}
+.poet-poems__count {
+  margin: 0;
+  padding-top: 14px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--c-muted-2);
+  text-align: center;
+}
+.poet-poems__count [lang='ar'] {
+  font-family: var(--font-amiri);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+.poet-bio__lead {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 19px;
+  line-height: 1.45;
+  color: #e4ded2;
+}
+.poet-bio {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 17px;
+  line-height: 1.45;
+  color: #bdb6a8;
+}
+.find-in {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+  border-radius: 14px;
+  background: var(--c-surface);
+  border: 1px solid #2a2722;
+  text-decoration: none;
+  color: var(--c-accent);
+}
+.find-in__art {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+}
+.find-in__main {
+  flex: 1;
+  min-width: 0;
+}
+.find-in__kind {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--c-accent);
+}
+.find-in__title {
+  display: block;
+  margin-top: 3px;
+  font-size: 14px;
+  color: var(--c-text);
+}

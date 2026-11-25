@@ -28,6 +28,7 @@ import { readFileSync } from 'fs';
 import WebSocket from 'ws';
 import { buildLiveWordTimings } from './src/utils/liveWordTiming.js';
 import { resolveProfile, curationSql } from './curation.js';
+import { registerRedesign2, devEventsMiddleware, geminiText } from './server/redesign2.js';
 
 const { Pool } = pg;
 const app = express();
@@ -822,11 +823,19 @@ app.use(
   })
 );
 app.use(express.json());
+app.use('/api', devEventsMiddleware); // ReDesign2 developer panel timeline
 // Larger body limit only for AI proxy endpoints
 app.use('/api/ai', express.json({ limit: '10mb' }));
 app.use(
   '/api/',
-  rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false })
+  // API_RATE_LIMIT_PER_MIN lets local test runs (many parallel browser sessions
+  // from one address) raise the limit; production keeps the default of 100.
+  rateLimit({
+    windowMs: 60_000,
+    max: Number(process.env.API_RATE_LIMIT_PER_MIN) || 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+  })
 );
 
 // API key authentication middleware for protected endpoints
@@ -3666,6 +3675,15 @@ app.post(
     }
   }
 );
+
+// ReDesign2 (web/ at /new): its own /api/v2 endpoints, see server/redesign2.js.
+registerRedesign2(app, {
+  pool,
+  log,
+  contentExpr: poemContentExpr,
+  servingFilters,
+  gemini: geminiText,
+});
 
 // Sentry Express error handler (must be after all routes)
 if (process.env.SENTRY_DSN) {

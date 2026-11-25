@@ -1,0 +1,89 @@
+name: web (ReDesign2)
+
+on:
+  push:
+    paths: ['web/**', 'server.js', 'server/**', 'supabase/**', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
+  pull_request:
+    paths: ['web/**', 'server.js', 'server/**', 'supabase/**', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: web
+
+jobs:
+  check:
+    name: Typecheck, lint, unit, build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - run: npm ci
+      - run: npm run tokens
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  journeys:
+    name: Journey tests (mock data)
+    runs-on: ubuntu-24.04
+    needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run tokens
+      - run: npm run test:journeys -- --trace off
+      - name: Mock QA contact sheet
+        if: always()
+        run: npm run qa:mocks
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mock-qa
+          path: web/qa/out
+          retention-days: 14
+
+  live-smoke:
+    name: Journey tests (live, local server + Postgres)
+    runs-on: ubuntu-24.04
+    needs: check
+    services:
+      postgres:
+        image: postgres:17
+        env: { POSTGRES_PASSWORD: postgres, POSTGRES_DB: qafiyah }
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      LOCAL_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/qafiyah
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/qafiyah?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Server deps
+        working-directory: .
+        run: npm ci
+      - name: Database schema and seed
+        working-directory: .
+        run: npm run db:setup && npm run db:seed && psql "$LOCAL_DATABASE_URL" -q -f web/journeys/live-seed.sql
+      - name: Database rules (keeps, lists, reads)
+        working-directory: .
+        run: psql "$LOCAL_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/redesign2_rules.sql
+      - name: Start API
+        working-directory: .
+        run: node server.js > /tmp/server.log 2>&1 &
+      - run: npm ci && npx playwright install --with-deps chromium && npm run tokens
+      - name: Live journeys (only domains already live)
+        run: npm run test:journeys:live -- --trace off --pass-with-no-tests

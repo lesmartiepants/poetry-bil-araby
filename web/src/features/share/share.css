@@ -1,0 +1,288 @@
+/* 7.1 Share: a full screen over the poem (ShR4F* frames). */
+.share-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 45;
+  max-width: 430px;
+  margin: 0 auto;
+  background: var(--c-bg);
+  overflow-y: auto;
+  padding-bottom: 120px;
+}
+.share__top {
+  display: flex;
+  align-items: center;
+  padding: 48px 12px 0;
+}
+.share__title {
+  padding: 4px 22px 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.share__to {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 2px 22px 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 20px;
+  line-height: 26px;
+  color: #bdb6a8;
+  white-space: nowrap;
+  text-align: left;
+}
+.share__who {
+  color: var(--c-accent);
+}
+.share__caret {
+  display: inline-block;
+  width: 1.5px;
+  height: 21px;
+  margin-left: 2px;
+  background: var(--c-accent);
+  animation: caret 1s steps(1) infinite;
+}
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+.share__to--edit {
+  gap: 8px;
+}
+.share__to--edit input {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  border-radius: 19px;
+  border: 1.5px solid var(--c-accent);
+  background: var(--c-surface-2);
+  padding: 0 14px;
+  font: inherit;
+  font-style: normal;
+  font-size: 19px;
+  color: var(--c-text);
+  outline: none;
+}
+.share__help {
+  margin: 6px 22px 0;
+  font-size: 11.5px;
+  color: var(--c-muted-2);
+}
+.share__cards {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+.share__cards--many {
+  justify-content: flex-start;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  padding: 0 22px;
+  scrollbar-width: none;
+}
+.share__cards--many::-webkit-scrollbar {
+  display: none;
+}
+.share__card {
+  flex: none;
+  scroll-snap-align: center;
+  line-height: 0;
+}
+.share__count {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--c-muted-2);
+}
+.share__controls {
+  padding: 14px 22px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.share__tabs .seg--pill {
+  height: 36px;
+}
+.share__tabs .seg__opt {
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+.share__swatches {
+  display: flex;
+  justify-content: space-between;
+}
+.share__swatch {
+  flex: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+.share__swatch-bar {
+  width: 22px;
+  height: 2px;
+  border-radius: 1px;
+  background: transparent;
+}
+.share__swatch[aria-checked='true'] .share__swatch-bar {
+  background: var(--c-accent);
+}
+.share__cw {
+  margin: 0;
+  text-align: center;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--brand-old-gold);
+}
+.share__dock {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 30px;
+  width: min(350px, calc(100vw - 40px));
+  height: 64px;
+  border-radius: 32px;
+  background: var(--c-nav);
+  border: 1px solid var(--c-border-2);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  z-index: 46;
+}
+.share__round {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 26px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--c-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.share__round[aria-pressed='true'] {
+  border-color: var(--c-accent);
+  background: #2a2416;
+}
+.share__en {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+}
+.share__send {
+  flex: 1;
+  height: 50px;
+  border-radius: 25px;
+  border: none;
+  background: var(--c-accent);
+  color: var(--c-on-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+}
+.share__send:disabled,
+.share__round:disabled {
+  opacity: 0.6;
+}
+.share__more {
+  position: relative;
+}
+.share__menu {
+  position: absolute;
+  right: 0;
+  bottom: 62px;
+  min-width: 170px;
+  border-radius: 14px;
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border-2);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+}
+.share__menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 12px;
+  border: none;
+  background: none;
+  border-radius: 10px;
+  color: var(--c-text);
+  font-size: 14px;
+  text-align: left;
+}
+.share__choose-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 24px;
+  color: var(--c-text);
+}
+.share__pick {
+  display: flex;
+  flex-direction: column;
+}
+.pick-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 0;
+  border: none;
+  border-top: 1px solid #1f1d22;
+  background: none;
+  text-align: right;
+}
+.pick-line__box {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 4px;
+  border-radius: 6px;
+  border: 1.5px solid #4a463e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--c-on-accent);
+}
+.pick-line__box.is-on {
+  background: var(--c-accent);
+  border-color: var(--c-accent);
+}
+.pick-line__text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pick-line__ar {
+  font-family: var(--font-amiri);
+  font-size: 19px;
+  line-height: 1.5;
+  color: var(--c-text);
+}
+.pick-line__en {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--c-muted);
+}

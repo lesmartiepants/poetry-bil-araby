@@ -67,6 +67,7 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     const last = page.getByRole('region', { name: 'From your last poem' });
     await expect(last.getByText('FROM YOUR LAST POEM · A MOTE IN YOUR EYE')).toBeVisible();
     await expect(last.locator('.door-card')).toHaveCount(3);
+    await expect(last.getByRole('link', { name: /Dry-eyed, I see Tears, from grief to love/ })).toBeVisible();
   });
 
   test('2.18 Tonight’s poem, read to the end, offers three doors with reasons, or enough for tonight', async ({ page }) => {
@@ -78,7 +79,12 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await expect(page.getByText('The guide would take you to one of these next.')).toBeVisible();
     const doors = page.locator('.door-card--finished');
     await expect(doors).toHaveCount(3);
-    await expect(doors.first().locator('.door-card__sub')).not.toBeEmpty();
+    const image = doors.filter({ hasText: 'Tears, from grief to love' });
+    await expect(image.locator('.door-card__text > span')).toHaveText([
+      'Dry-eyed, I see',
+      'Tears, from grief to love',
+      'Abu Firas',
+    ]);
     await page.getByRole('button', { name: 'ENOUGH FOR TONIGHT' }).click();
     await expect(page).toHaveURL(/\/journey$/);
   });

@@ -3,12 +3,10 @@ import { cardRequest, renderCardPng } from './share-card.js';
 import {
   byFit,
   chooseDoors,
-  cleanDoorText,
   doorPools,
   ERA_NAMES,
   guideScore,
   parseSteer,
-  sharedImage,
   uniqueHooks,
   wordDoors,
 } from '../web/core/logic/guide.js';
@@ -90,16 +88,6 @@ const PROMPTS = {
     `You are a guide to Arabic poetry for English readers. Poem by ${poet}:\n${arabic.join('\n')}\n\nReturn JSON {"meaning": string (one paragraph, plain English, what the poem says and how), "poet": string (two sentences on the poet)}.`,
   gloss: ({ arabic, line, word }) =>
     `Arabic verse line: ${arabic[line]}\nWord number ${word + 1} (counting from the right): ${(arabic[line] ?? '').split(/\s+/)[word]}\nReturn JSON {"word": the word with vowel marks, "translit": simple transliteration, "root": the three root letters separated by spaces, "partOfSpeech": short, e.g. "noun · object of kiss", "meaning": its meaning in this line, one sentence, "otherSenses": one sentence}.`,
-  doors: ({ from, to }) =>
-    `You are a guide to Arabic poetry for English readers. A reader just finished this poem:\n${describe(from)}\n\nThe guide offers these next poems as doors:\n${to.map(describeDoor).join('\n\n')}\n\nFor each door write a hook (under 8 words, specific to the pair; no quotation marks) and a reason (one plain sentence, under 16 words, saying why this poem follows the one just read). For an image door, name the shared image and hint at its new emotional role. Ground the connection in the supplied lines. No two hooks alike. Return JSON {"doors": [{"id": number, "hook": string, "reason": string}]}.`,
-};
-const describe = (p) =>
-  `"${p.title}" by ${p.poet}${p.era ? `, ${p.era} age` : ''}${p.mood ? `, feeling: ${p.mood}` : ''}\n${(p.arabic ?? []).slice(0, 4).join('\n')}`;
-const describeDoor = (door) => {
-  const poem = `id ${door.id} (${door.kind}): ${describe(door)}`;
-  const image = door.image;
-  if (!image) return poem;
-  return `${poem}\nShared image: ${image.label}\nSource line: ${image.fromLine}\nDestination line: ${image.toLine}`;
 };
 export async function geminiText(kind, input) {
   const key = process.env.GEMINI_API_KEY;
@@ -313,7 +301,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     const key =
       kind === 'gloss' ? `${Number(req.query.line) || 0}:${Number(req.query.word) || 0}` : '';
     try {
-      // Doors are a set, each pair's text stored on its own row (see doors() below).
+      // Older clients can still request recommendations through this route.
       if (kind === 'doors') return res.json(await doors(id, parseSteer(req.query)));
       const hit = await pool.query(
         'SELECT payload FROM poem_ai_text WHERE poem_id = $1 AND kind = $2 AND key = $3',
@@ -632,7 +620,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     }
   });
 
-  // The guide's doors: three poems of different kinds, each with a hook and a reason.
+  // The guide's doors: three poems of different kinds, with a catalog-backed connection.
   async function doors(id, steer = parseSteer()) {
     const [meQ, b] = await Promise.all([
       pool.query(`${POEM_SELECT(true)} WHERE p.id = $1`, [id]),
@@ -670,58 +658,11 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
       me,
       doorPools(me, fit(near.rows), fit(anywhere.rows), full?.rows[0], fit(images?.rows ?? []))
     );
-    const fallback = wordDoors(chosen, me, mood).map(({ row, hook, reason }) => ({
+    const recommendations = wordDoors(chosen, me, mood).map(({ row, ...copy }) => ({
       poem: summary(row),
-      hook,
-      reason,
+      ...copy,
     }));
-    const text = await doorText(me, chosen).catch((e) => {
-      log.error('V2', `doors text: ${e.message}`);
-      return {};
-    });
-    return uniqueHooks(fallback.map((d) => ({ ...d, ...(text[d.poem.id] ?? {}) })));
-  }
-
-  /** Store wording by pair and rule so one recommendation cannot inherit another rule's copy. */
-  async function doorText(me, chosen) {
-    if (!chosen.length) return {};
-    const picks = chosen.map((c) => ({
-      ...c,
-      key: `${c.kind}:${c.row.id}`,
-      image: c.kind === 'image' ? sharedImage(me, c.row) : null,
-    }));
-    const hit = await pool.query(
-      `SELECT key, payload FROM poem_ai_text WHERE poem_id = $1 AND kind = 'doors' AND key = ANY($2::text[])`,
-      [me.id, picks.map((c) => c.key)]
-    );
-    const stored = new Map(hit.rows.map((r) => [r.key, r.payload]));
-    const out = Object.fromEntries(
-      picks.filter((c) => stored.has(c.key)).map((c) => [c.row.id, stored.get(c.key)])
-    );
-    const missing = picks.filter((c) => !stored.has(c.key));
-    if (!missing.length || !gemini) return out;
-    const brief = (r) => ({
-      title: r.title_en || r.title,
-      poet: r.poet_en,
-      era: ERA_NAMES[r.era_key] ?? null,
-      mood: r.mood_label ?? r.mood_primary,
-      arabic: splitLines(r.arabic),
-    });
-    const res = await gemini('doors', {
-      from: brief(me),
-      to: missing.map((c) => ({ id: c.row.id, kind: c.kind, image: c.image, ...brief(c.row) })),
-    });
-    for (const d of res?.doors ?? []) {
-      const c = missing.find((x) => String(x.row.id) === String(d.id));
-      const clean = c && cleanDoorText(d);
-      if (!clean) continue;
-      out[String(c.row.id)] = clean;
-      await pool.query(
-        `INSERT INTO poem_ai_text (poem_id, kind, key, payload, model) VALUES ($1, 'doors', $2, $3, 'gemini') ON CONFLICT DO NOTHING`,
-        [me.id, c.key, clean]
-      );
-    }
-    return out;
+    return uniqueHooks(recommendations);
   }
   app.get('/api/v2/poems/:id/doors', async (req, res) => {
     const id = Number(req.params.id);

@@ -160,8 +160,15 @@ export interface Tonight {
   journeyStep?: { slug: string; stepEn: string; index: number; of: number; titleEn: string };
 }
 
+export interface DoorConnection {
+  kind: 'full' | 'feeling' | 'poet' | 'image' | 'new';
+  label: string;
+}
+
 export interface Door {
   poem: PoemSummary;
+  // Optional while the reader and API can be on different versions.
+  connection?: DoorConnection;
   hook: string;
   reason: string;
 }

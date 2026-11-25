@@ -1,6 +1,7 @@
 /* global process */
 // Chat apps read the initial HTML. People continue to the normal app shell.
 export const config = {
+  runtime: 'nodejs',
   matcher: [
     '/((?!api(?:/|$)|assets(?:/|$)|new/assets(?:/|$)|design-review(?:/|$)|.*\\.[^/]+$).*)',
     '/privacy.html',

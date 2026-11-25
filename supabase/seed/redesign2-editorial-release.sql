@@ -39,11 +39,12 @@ BEGIN
       AND (a.name_en ILIKE '%dunya%mikhail%' OR a.name LIKE '%دنيا%ميخ%')
       AND lower(btrim(p.title_en)) = 'i was in a hurry'
   ) THEN
-    RAISE EXCEPTION 'Heaven 7 requires Dunya Mikhail''s complete I Was in a Hurry';
+    RAISE EXCEPTION 'Question 12 requires Dunya Mikhail''s complete I Was in a Hurry';
   END IF;
   IF EXISTS (
     SELECT 1 FROM unnest(ARRAY[
-      89739, 48981, 89740, 88077, 89741, 85954, 86021, 89735, 89736, 88842,
+      83956, 27143, 89749, 85954, 46151, 89739, 41998, 89748, 89741, 89747,
+      48981, 88077, 86021, 89735, 89736, 88842,
       86660, 89572, 86612, 87922, launch.mersal_id, launch.tuqan_id, launch.malaika_id, launch.mikhail_id,
       85310, 20480, 27314, 6818, 86330, 84469, 87778, 89072, 87669, 87139, 85970,
       63382, 87183, 88933, 88871, 87530, 85509, 88474, 85579, 86226, 87373,
@@ -60,32 +61,38 @@ BEGIN
     RAISE EXCEPTION 'Every editorial poem needs aligned Arabic and English before release';
   END IF;
   IF (SELECT count(*) FROM public.poems p JOIN public.poems f ON f.id = p.full_poem_id
-      WHERE (p.id,f.id) IN ((89739,89738), (89740,27173), (89741,89737))
+      WHERE (p.id,f.id) IN ((89749,49023), (89739,89738), (89748,82417), (89741,89737), (89747,89746))
         AND f.full_poem_id IS NULL AND nullif(btrim(f.cached_translation),'') IS NOT NULL
         AND cardinality(string_to_array(coalesce(f.diacritized_content,f.content),'*'))
-            = cardinality(string_to_array(f.cached_translation,'*'))) <> 3 THEN
-    RAISE EXCEPTION 'All three excerpt links need complete bilingual poems';
+            = cardinality(string_to_array(f.cached_translation,'*'))) <> 5 THEN
+    RAISE EXCEPTION 'All five journey excerpt links need complete bilingual poems';
   END IF;
 END
 $$;
 
 INSERT INTO public.collections
-  (slug, kind, title_en, title_ar, intro, step_label_en, step_label_ar, colour, published)
+  (slug, kind, title_en, title_ar, intro, step_label_en, step_label_ar, colour, pattern_key, published)
 VALUES
-  ('your-first-seven', 'journey', 'Your First Seven', 'سبع سماوات',
-   'Seven readings, from an abandoned campsite to a poet searching for a lost country. Start anywhere, or follow the journey in order.',
-   'Heaven', 'سماء', '#22406E', true),
+  ('twelve-poems-centuries-of-arabic-verse', 'journey',
+   'Twelve Poems, Centuries of Arabic Verse', 'اثنتا عشرة قصيدة عبر قرون من الشعر العربي',
+   'Bread at dawn, a campsite after everyone has gone, a sound that changes each time it returns. Twelve poems take up questions about grief, desire, home, and what we owe each other. Start with whichever question stays with you.',
+   'Question', 'سؤال', '#22406E', NULL, true),
   ('women-who-wrote-the-canon', 'collection', 'Women Who Wrote the Canon', 'نساء كتبن الديوان',
-   'What have women poets made possible in Arabic verse? Listen for what grief, longing, and defiance make each poet do with a line.',
-   'Poem', 'قصيدة', '#4A1620', true);
+   'A bird calls a brother back to mind. A poet in Córdoba claims the right to give her own kiss. A poet in Baghdad makes the sound of an epidemic travel through the night. Read these twelve poems for the ways women have made grief, desire, faith, and public memory speak in Arabic.',
+   'Poem', 'قصيدة', '#4A1620', 'laceria', true);
 
 INSERT INTO public.collection_poems (collection_id, position, poem_id, theme)
 SELECT c.id, a.position::integer, a.poem_id, a.theme
 FROM editorial_launch l
-JOIN public.collections c ON c.slug = 'your-first-seven'
+JOIN public.collections c ON c.slug = 'twelve-poems-centuries-of-arabic-verse'
 CROSS JOIN LATERAL unnest(
-  ARRAY[89739,48981,89740,88077,89741,85954,l.mikhail_id],
-  ARRAY['The abandoned camp','Grief','Pride','Desire','Rain','Home','Home, again']
+  ARRAY[83956,27143,89749,85954,46151,89739,l.malaika_id,41998,89748,89741,89747,l.mikhail_id],
+  ARRAY[
+    'What makes life worth living?', 'How high should we aspire?', 'What does grief do to language?',
+    'What does home smell like?', 'Why do we desire forbidden things?', 'Can a place remember someone?',
+    'Can a poem make us hear death?', 'What remains when love ends?', 'What can we truly know?',
+    'Can rain mean grief and hope at once?', 'When is compromise a betrayal?', 'What is Arabic poetry becoming?'
+  ]
 ) WITH ORDINALITY AS a(poem_id,theme,position);
 
 INSERT INTO public.collection_poems (collection_id, position, poem_id)

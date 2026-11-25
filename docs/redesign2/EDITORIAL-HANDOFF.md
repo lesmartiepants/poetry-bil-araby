@@ -16,8 +16,13 @@
 
 ## Editorial and deployment state
 
-- The `editorial/redesign2-curation` branch contains the Markdown editorial workspace and `supabase/seed/redesign2-editorial-release.sql`. The seed prepares 49 nights plus the first journey and collection in one transaction. It requires a chosen launch date. The joint release slugs and upcoming opening picks were absent in the linked database at handoff.
-- Confirm Heaven 7 before running that seed. The checked-in draft still uses Mikhail. Siraj also selected Ibn ʿAbd Rabbih's `85330` as a replacement during review, and the subsequent discussion moved to Tonight and Favorites.
-- The redesigned app is served at `/new/`. For local review, start the API with `npm run dev:server` and run `npm --prefix web run dev`. The web dev server defaults to port 5180 and proxies API calls to port 3001. Point the API at the intended database and check `/api/health/full`. The local backend found on port 3001 during handoff was serving a 26-poem fixture.
-- No hosted deployment was made for the app changes in this handoff. The Vercel configuration builds the web app under `/new/`. A hosted rehearsal needs the updated Express API and the excerpt migration on the database it uses.
-- Verified web type-checking, 22 web unit tests, and the migration and excerpt endpoints on isolated Postgres. The 49-night seed was exercised against isolated fixtures. The editorial HTML review lives in Siraj's Downloads folder.
+- The [release seed](../../supabase/seed/redesign2-editorial-release.sql) loads the 49 Tonight picks, _Twelve Poems, Centuries of Arabic Verse_, and _Women Who Wrote the Canon_ together. It checks for aligned Arabic and English and all five journey excerpt links. Use the [Tonight queue](../../editorial/tonight.md) for the source roster and poem ID arguments.
+- The redesigned app is served at `/new/`. For local review, point `DATABASE_URL` at a preview database containing the editorial corpus, run the seed with the database’s current date as `launch_date`, start `npm run dev:server`, and run `npm --prefix web run dev`. Vite serves `http://localhost:5180/new/` and proxies API calls to port 3001. Check `/api/health/full` before reviewing the screens.
+- The localhost rehearsal used a separate database with 76 real poem records, including the five complete works reached from excerpts. It starts with Night 1, _I Pass by the Dwellings_. The seed takes a launch date in the target database’s calendar.
+- Hosted `/new/` needs the web and Express API deployed from the updated code, the excerpt migration on the serving database, and the release seed applied there for the chosen launch date. Apply the seed before opening Tonight on launch day so the automatic pick does not claim that date.
+
+## Editorial gaps after the preview
+
+- The `Home` journey and `Start here: Gibran to Darwish` shelf are mock concepts. Each needs a reading roster and introduction before it can appear in the live lists. _Your First Seven_ has a separate editorial card.
+- Explore’s Poet of the Week needs an editorial pick and note. Pathways and the reader’s ordinary doors use automatic recommendations with generic reasons. Curated pairings need a way to pin selections and display their reasons.
+- The professor’s notes and reading cues remain in the cards. Review which cues to use for Insights, along with translation credits and the attribution and era of _Two Loves_ (`88842`).

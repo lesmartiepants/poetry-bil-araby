@@ -46,9 +46,9 @@ export function makeSupabaseApi(sb: SupabaseClient, opts: { redirectTo?: () => s
         const d = await loadDefaults();
         const id = await uid();
         if (!id) return mergePrefs(d, readJSON<Partial<Prefs>>(LOCAL_PREFS, {})); // signed out: defaults + this device
-        const r = await sb.from('user_settings').select('prefs, display_name').eq('user_id', id).maybeSingle();
-        const p = mergePrefs(d, (r.data?.prefs as Partial<Prefs>) ?? {});
-        if (r.data?.display_name) p.displayName = r.data.display_name as string;
+        const { data } = await sb.from('user_settings').select('prefs, display_name').eq('user_id', id).maybeSingle().throwOnError();
+        const p = mergePrefs(d, (data?.prefs as Partial<Prefs>) ?? {});
+        if (data?.display_name) p.displayName = data.display_name as string;
         return p;
       },
       async set(patch) {
@@ -74,7 +74,8 @@ export function makeSupabaseApi(sb: SupabaseClient, opts: { redirectTo?: () => s
         if (r.error) throw new Error(`sign in: ${r.error.message}`);
       },
       async signOut() {
-        await sb.auth.signOut();
+        const { error } = await sb.auth.signOut();
+        if (error) throw error;
       },
     },
     keeps: {
@@ -153,15 +154,17 @@ export function makeSupabaseApi(sb: SupabaseClient, opts: { redirectTo?: () => s
         return Object.fromEntries(r.map((x) => [String(x.poem_id), x.read_count as number]));
       },
       async markRead(poemId) {
-        writeJSON(LOCAL_LAST_READ, poemId); // the device remembers the last poem, for Pathways
-        if (!(await uid())) return; // reads are only kept for signed-in readers
+        if (!(await uid())) {
+          writeJSON(LOCAL_LAST_READ, poemId);
+          return;
+        }
         check(await sb.rpc('mark_read', { p_poem_id: Number(poemId) }), 'read');
       },
       async lastRead() {
         const id = await uid();
         if (!id) return readJSON<string | null>(LOCAL_LAST_READ, null);
         const r = check(await sb.from('poem_reads').select('poem_id').eq('user_id', id).order('last_read_at', { ascending: false }).limit(1), 'last read');
-        return r[0] ? String(r[0].poem_id) : readJSON<string | null>(LOCAL_LAST_READ, null);
+        return r[0] ? String(r[0].poem_id) : null;
       },
     },
     progress: {

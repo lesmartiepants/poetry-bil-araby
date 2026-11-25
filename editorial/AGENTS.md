@@ -20,5 +20,4 @@ Keep reader cues and Why Tonight copy to one to three sentences. Use concrete ob
 ## Working with the app and corpus
 
 - Keep each card’s bilingual title, reader-facing intro, route and slug, artwork, step labels, and ordered corpus IDs together in its Markdown file. Each poem gets a teaching note and a reader cue. Journey rows also get a short step theme and any excerpt range and full-poem ID.
-- Verify the exact poem record, poet, Arabic and English alignment, attribution, and source credit before calling an entry ready. Cite the text or edition behind a consequential claim. Flag catalogue discrepancies and proposed companion doors in **App handoff** so the next person knows what needs attention.
 - Use the existing app fields documented in the template. Put authoring notes and proposed copy in the card. Synchronize release SQL and verify the intended data and app screens when the task calls for release work.

@@ -107,6 +107,18 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await expect(page.getByText(/gentle/)).toBeVisible();
   });
 
+  test('12.7 the translation choice is previewed on a real line', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./you/translation');
+    const preview = page.getByLabel('Preview');
+    await expect(preview).toContainText('I pass by the dwellings');
+    await page.getByRole('radio', { name: 'SOUNDS' }).click();
+    await expect(preview).toContainText('amurru');
+    await page.getByRole('radio', { name: 'NOTHING' }).click();
+    await expect(preview).not.toContainText('I pass by the dwellings');
+    await expect(preview).not.toContainText('amurru');
+  });
+
   test('12.8 deleting the account asks first', async ({ page }) => {
     await fresh(page, { 'mock.account': JSON.stringify({ signedIn: true, provider: 'apple' }) });
     await page.goto('./you');

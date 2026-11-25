@@ -18,11 +18,13 @@ test.describe('Area 3 · Listening', () => {
     await page.getByRole('button', { name: /LISTEN/ }).click();
     await page.getByRole('button', { name: /ZEPHYR/ }).click();
     const sheet = page.getByRole('dialog', { name: 'Choose a voice' });
-    await expect(sheet.getByRole('radiogroup', { name: 'Male voices', exact: true }).getByRole('radio')).toHaveCount(8);
+    await expect(sheet.getByRole('radiogroup', { name: 'Female voices', exact: true }).getByRole('radio')).toHaveText([/Zephyr/, /Autonoe/, /Sulafat/]);
+    await expect(sheet.getByRole('radiogroup', { name: 'Male voices', exact: true }).getByRole('radio')).toHaveText([/Orus/, /Enceladus/, /Iapetus/]);
     await sheet.getByRole('radio', { name: /Orus/ }).click();
     await page.keyboard.press('Escape');
     await expect(page.getByRole('button', { name: /ORUS/ })).toBeVisible();
     await page.goto('./you/reciter');
+    await expect(page.getByRole('radio')).toHaveCount(6);
     await expect(page.getByRole('radio', { name: /Orus/ })).toHaveAttribute('aria-checked', 'true');
   });
 
@@ -45,12 +47,12 @@ test.describe('Area 3 · Listening', () => {
   });
 
   test('3.11 a voice that fails keeps the current one and says so', async ({ page }) => {
-    await fresh(page, { 'mock.failVoice': 'Leda' });
+    await fresh(page, { 'mock.failVoice': 'Autonoe' });
     await page.goto('./p/amurru');
     await page.getByRole('button', { name: /LISTEN/ }).click();
     await page.getByRole('button', { name: /ZEPHYR/ }).click();
-    await page.getByRole('dialog', { name: 'Choose a voice' }).getByRole('radio', { name: /Leda/ }).click();
-    await expect(page.getByRole('alert').filter({ hasText: 'Leda isn’t available now. Still reciting in Zephyr.' })).toBeVisible();
+    await page.getByRole('dialog', { name: 'Choose a voice' }).getByRole('radio', { name: /Autonoe/ }).click();
+    await expect(page.getByRole('alert').filter({ hasText: 'Autonoe isn’t available now. Still reciting in Zephyr.' })).toBeVisible();
   });
 
   test('3.4–3.6 scrolling shrinks the player to a pill; the fan shows Pause and the recitation keeps going', async ({ page }) => {

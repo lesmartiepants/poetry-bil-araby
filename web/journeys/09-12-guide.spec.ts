@@ -2,16 +2,23 @@ import { expect, test } from '@playwright/test';
 import { fresh } from './helpers';
 
 test.describe('Areas 9–12 · First run, journeys, collections, search, You', () => {
-  test('9.1–9.4 a new reader goes from Welcome to a first poem, then Tonight', async ({ page }) => {
+  test('9.1–9.4 a new reader goes from Welcome to how they read, then Tonight greets them, then the poem', async ({ page }) => {
     await page.goto('./');
     await page.evaluate(() => { localStorage.clear(); sessionStorage.setItem('splashed', '1'); });
     await page.goto('./');
     await expect(page).toHaveURL(/welcome/);
     await page.getByRole('textbox', { name: 'Your name' }).fill('Siraj');
     await page.getByRole('button', { name: 'Continue' }).click();
-    await page.getByRole('radio', { name: /WITH SOUNDS/ }).click();
-    await page.getByRole('button', { name: 'Read my first poem' }).click();
+    // 9.2: the guide uses the name, and each way of reading shows a sample
+    await expect(page.getByText('SIRAJ, HOW WOULD YOU LIKE TO READ?')).toBeVisible();
+    await page.getByRole('radio', { name: /With sounds/ }).click();
+    await expect(page.getByRole('radio', { name: /With sounds/ })).toHaveAttribute('aria-checked', 'true');
+    await page.getByRole('button', { name: 'BEGIN WITH TONIGHT’S POEM' }).click();
+    // 9.3: Tonight greets the new reader, then opens their first poem
+    await expect(page.getByText('WELCOME, SIRAJ · YOUR FIRST POEM')).toBeVisible();
+    await page.getByRole('link', { name: 'Enter the poem' }).click();
     await expect(page.getByRole('heading', { name: 'أمرُّ على الديار' })).toBeVisible();
+    // Afterwards Tonight is the ordinary daily pick again
     await page.goto('./journey');
     await expect(page.getByText(/HEAVEN 3 OF YOUR FIRST SEVEN/)).toBeVisible();
   });

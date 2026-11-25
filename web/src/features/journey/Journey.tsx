@@ -1,9 +1,9 @@
 // Area 9 · Journey and first run (9.1–9.10).
 import { useRef, useState } from 'react';
-import { Link, useLocation } from 'wouter';
+import { Link, useLocation, useSearch } from 'wouter';
 import { useQueries } from '@tanstack/react-query';
 import { api } from '@core/api';
-import { useCollection, useCollections, useDoors, useEras, useInvalidate, useLastRead, usePoem, useProgress, useSetPrefs, useTonight } from '@core/hooks';
+import { useCollection, useCollections, useDoors, useEras, useInvalidate, useLastRead, usePoem, usePrefs, useProgress, useSetPrefs, useTonight } from '@core/hooks';
 import type { Collection } from '@core/types';
 import { Header, Segmented, Skeleton } from '@ds/primitives';
 import { Back, Bookmark, Chevron, Mark } from '@ds/icons';
@@ -38,12 +38,18 @@ export function TonightScreen() {
   const [tab, setTab] = useState<'tonight' | 'pathways'>('tonight');
   const [, nav] = useLocation();
   const startY = useRef<number | null>(null);
+  // Straight from the welcome (9.3): the first poem greets the reader by name.
+  const welcome = new URLSearchParams(useSearch()).has('welcome');
+  const name = usePrefs().data?.displayName?.trim();
   if (tab === 'pathways') return <Pathways onTonight={() => setTab('tonight')} />;
   const step = t.data?.journeyStep;
   // A journey step opens as that step (its end completes it, 9.7); otherwise its end is You finished (2.18).
   const href = !t.data ? '/' : step ? `/p/${t.data.poem.slug}?journey=${step.slug}&step=${step.index}` : `/p/${t.data.poem.slug}?from=tonight`;
   const era = eras?.find((e) => e.slug === t.data?.poem.eraKey);
   const minutes = poem ? Math.max(1, Math.round(poem.lines.length / 4)) : 0;
+  const eyebrow = welcome
+    ? `WELCOME${name ? `, ${name.toUpperCase()}` : ''} · YOUR FIRST POEM`
+    : step ? `CHOSEN FOR YOU · ${step.stepEn.toUpperCase()} ${step.index} OF ${step.titleEn.toUpperCase()}` : 'CHOSEN FOR TONIGHT';
   return (
     <div className="screen journey tonight"
       onTouchStart={(e) => { startY.current = e.touches[0].clientY; }}
@@ -56,7 +62,7 @@ export function TonightScreen() {
         </div>
         {t.data && (
           <div className="tonight__title">
-            <p className="tonight__eyebrow">{step ? `CHOSEN FOR YOU · ${step.stepEn.toUpperCase()} ${step.index} OF ${step.titleEn.toUpperCase()}` : 'CHOSEN FOR TONIGHT'}</p>
+            <p className="tonight__eyebrow">{eyebrow}</p>
             <h1 lang="ar" dir="rtl" className="tonight__ar">{t.data.poem.titleAr}</h1>
             <p className="tonight__en">{t.data.poem.titleEn.toUpperCase()}</p>
           </div>
@@ -287,6 +293,12 @@ export function FinishedScreen({ id }: { id: string }) {
   );
 }
 
+const READ_OPTS = [
+  { under: 'nothing', en: 'Arabic only', desc: 'The poem as it was written.', ar: 'عربي فقط' },
+  { under: 'english', en: 'With translation', desc: 'English under every line.', ar: 'مع الترجمة' },
+  { under: 'sounds', en: 'With sounds', desc: 'How it sounds in Latin letters, plus the English.', ar: 'مع النطق' },
+] as const;
+
 export function WelcomeFlow({ onDone }: { onDone: (firstPoemSlug: string) => void }) {
   const tonight = useTonight().data;
   const [step, setStep] = useState(0);
@@ -318,20 +330,34 @@ export function WelcomeFlow({ onDone }: { onDone: (firstPoemSlug: string) => voi
       </div>
     );
   }
+  const who = name.trim() ? `${name.trim().toUpperCase()}, ` : '';
   return (
-    <div className="screen screen--bare journey welcome">
-      <p className="t-eyebrow t-eyebrow--accent">HOW YOU’D LIKE TO READ</p>
-      <div className="stack gap-10" style={{ width: '100%' }}>
-        {(['nothing', 'english', 'sounds'] as const).map((u) => (
-          <button key={u} role="radio" aria-checked={under === u} className={`read-opt${under === u ? ' read-opt--on' : ''}`} onClick={() => setUnder(u)}>
-            <span lang="ar" className="ar" style={{ fontSize: 22 }}>أَمُرُّ عَلى الدِيارِ دِيارِ لَيلى</span>
-            {u === 'english' && <span className="read-opt__en">I pass by the dwellings, Layla’s dwellings,</span>}
-            {u === 'sounds' && <span className="read-opt__en">amurru ʿala d-diyari diyari layla</span>}
-            <span className="t-count">{u === 'nothing' ? 'ARABIC ONLY' : u === 'english' ? 'WITH TRANSLATION' : 'WITH SOUNDS'}</span>
+    <div className="screen screen--bare journey welcome welcome--read">
+      <div className="welcome__mark-sm"><Mark size={40} colour="var(--c-accent)" /></div>
+      <div className="welcome__read-head">
+        <p className="t-eyebrow t-eyebrow--accent">{who ? `${who}HOW WOULD YOU LIKE TO READ?` : 'HOW WOULD YOU LIKE TO READ?'}</p>
+        <div className="welcome__read-title"><h1>Your reading</h1><span lang="ar">كيف تقرأ</span></div>
+      </div>
+      <div role="radiogroup" aria-label="Your reading" className="stack gap-10 welcome__opts">
+        {READ_OPTS.map((o) => (
+          <button key={o.under} role="radio" aria-checked={under === o.under} className={`read-opt${under === o.under ? ' read-opt--on' : ''}`} onClick={() => setUnder(o.under)}>
+            <span className="read-opt__head">
+              <span className="read-opt__dot" aria-hidden />
+              <span className="read-opt__label"><span className="read-opt__name">{o.en}</span><span className="read-opt__desc">{o.desc}</span></span>
+              <span lang="ar" className="read-opt__ar">{o.ar}</span>
+            </span>
+            <span className="read-opt__sample">
+              <span lang="ar" dir="rtl" className="read-opt__verse">قِفا نَبكِ مِن ذِكرى حَبيبٍ ومَنزِلِ</span>
+              {o.under === 'sounds' && <span className="read-opt__sounds">qifā nabki min dhikrā ḥabībin wa-manzili</span>}
+              {o.under !== 'nothing' && <span className="read-opt__en">Stop, let us weep for a beloved and a dwelling</span>}
+            </span>
           </button>
         ))}
       </div>
-      <button className="btn btn--primary btn--block" onClick={() => { set.mutate({ under }); onDone(tonight?.poem.slug ?? ''); }}>Read my first poem</button>
+      <p className="welcome__later">Change it anytime in You · Translation and sounds.</p>
+      <div style={{ flex: 1 }} />
+      {dots}
+      <button className="btn btn--primary btn--block welcome__go" onClick={() => { set.mutate({ under }); onDone(tonight?.poem.slug ?? ''); }}>BEGIN WITH TONIGHT’S POEM</button>
     </div>
   );
 }

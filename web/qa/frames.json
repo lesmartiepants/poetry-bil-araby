@@ -230,6 +230,26 @@
       ]
     },
     { "frame": "9.1", "file": "NWelcome", "route": "/welcome" },
+    {
+      "frame": "9.2",
+      "file": "NWelcomeRead",
+      "route": "/welcome",
+      "steps": [
+        { "fill": ["[aria-label='Your name']", "Nour"] },
+        { "click": "text=Continue" },
+        { "wait": 400 }
+      ]
+    },
+    {
+      "frame": "9.3",
+      "file": "NWelcomeFirst",
+      "route": "/journey?welcome=1",
+      "steps": [
+        { "storage": { "local": { "mock.prefs": "{\"displayName\":\"Nour\"}" } } },
+        { "reload": true },
+        { "wait": 500 }
+      ]
+    },
     { "frame": "9.4", "file": "NTonight", "route": "/journey" },
     {
       "frame": "9.5",

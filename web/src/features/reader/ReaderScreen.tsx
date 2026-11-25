@@ -374,14 +374,17 @@ function EndOfPoem({ poem }: { poem: Poem }) {
   const feeling = poem.feelingKeys[0];
   if (journey) {
     return (
-      <section className="end" aria-label="End of poem">
-        <div ref={readRef} data-testid="read-sentinel" />
-        <p className="end__mark">END · <span lang="ar" className="ar" style={{ fontSize: 14, letterSpacing: 0 }}>تمّت</span></p>
-        <Link href={`/journey/${journey.slug}/done/${journey.step}`} className="btn btn--primary btn--block end__journey">{journey.label} {journey.step} complete</Link>
-      </section>
+      <>
+        <section className="end" aria-label="End of poem">
+          <div ref={readRef} data-testid="read-sentinel" />
+          <p className="end__mark">END · <span lang="ar" className="ar" style={{ fontSize: 14, letterSpacing: 0 }}>تمّت</span></p>
+          <Link href={`/journey/${journey.slug}/done/${journey.step}`} className="btn btn--primary btn--block end__journey">{journey.label} {journey.step} complete</Link>
+        </section>
+        {poem.fullPoemId ? <Doors poem={poem} /> : null}
+      </>
     );
   }
-  if (guide) return <><div ref={readRef} data-testid="read-sentinel" /><Doors poem={poem} /></>;
+  if (guide || poem.fullPoemId) return <><div ref={readRef} data-testid="read-sentinel" /><Doors poem={poem} /></>;
   return (
     <section className="end" aria-label="End of poem">
       <div ref={readRef} data-testid="read-sentinel" />
@@ -413,7 +416,7 @@ function Doors({ poem }: { poem: Poem }) {
         <Link key={door.poem.id} href={`/p/${door.poem.slug}`} className="door">
           <span className="door__hook">{door.hook}</span>
           <span lang="ar" className="door__ar">{door.poem.titleAr}</span>
-          <span className="door__meta">{door.poem.poetEn} · {door.reason}</span>
+          <span className="door__meta">{door.poem.poetEn}{door.reason ? ` · ${door.reason}` : ''}</span>
         </Link>
       ))}
     </section>

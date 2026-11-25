@@ -28,6 +28,7 @@ export interface Poem extends PoemSummary {
   feelingKeys: string[];
   band: BandKey;
   readingMinutes: number;
+  fullPoemId?: string;
 }
 
 export interface Poet {

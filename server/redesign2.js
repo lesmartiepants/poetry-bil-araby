@@ -111,7 +111,8 @@ export async function geminiText(kind, input) {
 }
 
 export function registerRedesign2(app, { pool, log, contentExpr, servingFilters, gemini }) {
-  const servable = () => `p.id IN (SELECT p.id FROM poems p WHERE TRUE ${servingFilters()})`;
+  const servable = (alias = 'p') =>
+    `${alias}.id IN (SELECT p.id FROM poems p WHERE p.full_poem_id IS NULL ${servingFilters()})`;
   let bandsCache = null;
 
   async function bands() {
@@ -134,7 +135,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
       : (b.find((x) => score <= x.max) ?? b[b.length - 1]).key;
 
   const POEM_SELECT = () => `
-    SELECT p.id, p.title, p.title_en, ${contentExpr()} AS arabic, p.cached_translation, p.accessibility_score,
+    SELECT p.id, p.title, p.title_en, p.full_poem_id, ${contentExpr()} AS arabic, p.cached_translation, p.accessibility_score,
            po.slug AS poet_slug, po.name AS poet_ar, COALESCE(po.name_en, po.name) AS poet_en, e.slug AS era_key,
            COALESCE((SELECT array_agg(v.key ORDER BY pc.confidence DESC) FROM poem_categories pc
                      JOIN category_values v ON v.id = pc.value_id JOIN category_dimensions d ON d.id = v.dimension_id
@@ -164,6 +165,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
       feelingKeys: r.feeling_keys ?? [],
       band: bandOf(r.accessibility_score, b),
       readingMinutes: Math.max(1, Math.ceil(ar.length / 8)),
+      ...(r.full_poem_id == null ? {} : { fullPoemId: String(r.full_poem_id) }),
     };
   };
   const fail = (res, label, err) => {
@@ -226,9 +228,12 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
 
   app.get('/api/v2/poems', async (req, res) => {
     try {
-      const where = [servable()];
-      const args = [];
       const { feeling, era, band, poet } = req.query;
+      // A poet page lists the catalogue for a chosen author. Discovery shelves
+      // still use the serving rules, including when narrowed to that author.
+      const authorOnly = Boolean(poet && !feeling && !era && !band);
+      const where = authorOnly ? ['p.full_poem_id IS NULL'] : [servable()];
+      const args = [];
       if (feeling) {
         args.push(feeling);
         where.push(
@@ -256,7 +261,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
         where.push(clause);
       }
       const { rows } = await pool.query(
-        `${POEM_SELECT()} WHERE ${where.join(' AND ')} ORDER BY p.id LIMIT 200`,
+        `${POEM_SELECT()} WHERE ${where.join(' AND ')} ORDER BY p.id${authorOnly ? '' : ' LIMIT 200'}`,
         args
       );
       res.json(rows.map(summary));
@@ -313,7 +318,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
   const POET_SELECT = `
     SELECT po.slug, po.name AS name_ar, COALESCE(po.name_en, po.name) AS name_en, e.slug AS era_key, po.region, po.bio,
            po.birth_year, po.death_year, po.active_year,
-           (SELECT COUNT(*)::int FROM poems p WHERE p.poet_id = po.id AND ${'TRUE'}) AS poem_count
+           (SELECT COUNT(*)::int FROM poems p WHERE p.poet_id = po.id AND p.full_poem_id IS NULL) AS poem_count
     FROM poets po LEFT JOIN eras e ON e.id = po.era_id`;
   const poet = (r) => ({
     slug: r.slug,
@@ -360,7 +365,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
         rows[0]?.slug ??
         (
           await pool.query(
-            `SELECT po.slug FROM poets po ORDER BY (SELECT COUNT(*) FROM poems p WHERE p.poet_id = po.id) DESC LIMIT 1`
+            `SELECT po.slug FROM poets po ORDER BY (SELECT COUNT(*) FROM poems p WHERE p.poet_id = po.id AND p.full_poem_id IS NULL) DESC LIMIT 1`
           )
         ).rows[0]?.slug;
       const p = await pool.query(`${POET_SELECT} WHERE po.slug = $1`, [slug]);
@@ -376,9 +381,9 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     try {
       const { rows } = await pool.query(`
         SELECT v.key, v.label_en AS en, v.label_ar AS ar, COALESCE(v.explore_line, '') AS line,
-               COUNT(DISTINCT pc.poem_id)::int AS poem_count, COUNT(DISTINCT p.poet_id)::int AS poet_count
+               COUNT(DISTINCT p.id)::int AS poem_count, COUNT(DISTINCT p.poet_id)::int AS poet_count
         FROM category_values v JOIN category_dimensions d ON d.id = v.dimension_id
-        LEFT JOIN poem_categories pc ON pc.value_id = v.id LEFT JOIN poems p ON p.id = pc.poem_id
+        LEFT JOIN poem_categories pc ON pc.value_id = v.id LEFT JOIN poems p ON p.id = pc.poem_id AND p.full_poem_id IS NULL
         WHERE d.key = 'mood' AND v.show_in_explore GROUP BY v.id ORDER BY v.sort_order`);
       res.json(
         rows.map((r) => ({
@@ -398,7 +403,7 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     try {
       const { rows } = await pool.query(`
         SELECT e.slug, e.name AS name_ar, e.name_en, e.years, e.place, e.line, e.colour,
-               (SELECT COUNT(*)::int FROM poems p JOIN poets po ON po.id = p.poet_id WHERE po.era_id = e.id) AS poem_count
+               (SELECT COUNT(*)::int FROM poems p JOIN poets po ON po.id = p.poet_id WHERE po.era_id = e.id AND p.full_poem_id IS NULL) AS poem_count
         FROM eras e ORDER BY e.id`);
       res.json(
         rows.map((r) => ({
@@ -593,14 +598,19 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
   async function doors(id) {
     const { rows } = await pool.query(
       `
-      WITH me AS (SELECT p.id, p.poet_id, po.era_id, p.mood_primary FROM poems p JOIN poets po ON po.id = p.poet_id WHERE p.id = $1)
-      SELECT q.*, CASE WHEN x.mood_primary IS NOT NULL AND x.mood_primary = me.mood_primary THEN 'feeling'
+      WITH me AS (SELECT p.id, p.poet_id, po.era_id, p.mood_primary, p.full_poem_id FROM poems p JOIN poets po ON po.id = p.poet_id WHERE p.id = $1)
+      SELECT q.*, CASE WHEN x.id = me.full_poem_id THEN 'full'
+                       WHEN x.mood_primary IS NOT NULL AND x.mood_primary = me.mood_primary THEN 'feeling'
                        WHEN x.poet_id = me.poet_id THEN 'poet' ELSE 'era' END AS why
       FROM me, poems x JOIN poets xp ON xp.id = x.poet_id
       JOIN LATERAL (${POEM_SELECT()} WHERE p.id = x.id) q ON TRUE
-      WHERE x.id <> me.id AND x.id IN (SELECT p.id FROM poems p WHERE TRUE ${servingFilters()})
-        AND (x.mood_primary = me.mood_primary OR x.poet_id = me.poet_id OR xp.era_id = me.era_id)
-      ORDER BY (x.mood_primary = me.mood_primary) DESC NULLS LAST, md5(x.id::text || CURRENT_DATE::text) LIMIT 3`,
+      WHERE x.id <> me.id AND (
+        x.id = me.full_poem_id OR (
+          ${servable('x')} AND (x.mood_primary = me.mood_primary OR x.poet_id = me.poet_id OR xp.era_id = me.era_id)
+        )
+      )
+      ORDER BY (x.id = me.full_poem_id) DESC NULLS LAST,
+        (x.mood_primary = me.mood_primary) DESC NULLS LAST, md5(x.id::text || CURRENT_DATE::text) LIMIT 3`,
       [id]
     );
     const hook = {
@@ -613,7 +623,12 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
       poet: 'The same hand, a different night',
       era: 'Written in the same world',
     };
-    const out = rows.map((r) => ({ poem: summary(r), hook: hook[r.why], reason: reason[r.why] }));
+    const out = rows.map((r) => {
+      const poem = summary(r);
+      return r.why === 'full'
+        ? { poem, hook: poem.titleEn, reason: '' }
+        : { poem, hook: hook[r.why], reason: reason[r.why] };
+    });
     if (out.length < 3) {
       // Always three doors: fill with poems the reader hasn't just seen.
       const taken = [id, ...rows.map((r) => r.id)];

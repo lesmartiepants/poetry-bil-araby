@@ -5,17 +5,18 @@ import { api } from '@core/api';
 import { qk, useAccount, useFeelings, useInvalidate, usePrefs, useSetPrefs } from '@core/hooks';
 import { isAvailable } from '@core/sources';
 import { FEMALE_VOICES, MALE_VOICES } from '@core/voices';
-import { GroupCard, Header, Segmented, Sheet, Skeleton, Slider, Switch, TitleRow } from '@ds/primitives';
+import { GroupCard, Header, LoadNote, Pending, Segmented, Sheet, Slider, Switch, TitleRow } from '@ds/primitives';
 import { Check, Chevron, Play } from '@ds/icons';
 import { BrandLogo, RowLink } from '@components/index';
 import './you.css';
 import { useOverlay } from '@components/overlays';
 
 function AccountCard({ onDelete }: { onDelete: () => void }) {
-  const acc = useAccount().data;
+  const accQ = useAccount();
+  const acc = accQ.data;
   const inv = useInvalidate();
   const open = useOverlay((s) => s.open);
-  if (!acc) return <Skeleton lines={2} />;
+  if (!acc) return <Pending of={accQ} lines={2} />;
   if (!acc.signedIn) return <GroupCard><button className="group-row" onClick={() => open({ type: 'signin' })}><div className="group-row__main"><p className="group-row__title">Sign in</p><p className="group-row__sub">Apple or Google · keeps your diwan on every device</p></div></button></GroupCard>;
   return (
     <GroupCard>
@@ -29,9 +30,11 @@ function AccountCard({ onDelete }: { onDelete: () => void }) {
 const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
 
 export function YouHub() {
-  const p = usePrefs().data;
+  const pq = usePrefs();
+  const p = pq.data;
   const set = useSetPrefs();
-  const feelings = useFeelings().data;
+  const fq = useFeelings();
+  const feelings = fq.data;
   const [deleting, setDeleting] = useState(false);
   const guide = isAvailable('profile', 'journey');
   const SIZES = ['Small', 'Medium', 'Large', 'Larger', 'Largest'];
@@ -41,6 +44,7 @@ export function YouHub() {
     <div className="screen">
       <header className="hub-hdr"><BrandLogo /></header>
       <main className="pad stack" style={{ paddingTop: 6 }}>
+        <LoadNote of={[pq, fq]} message="Your settings didn’t load." />
         {guide && (
           <>
             <p className="you-label">YOUR GUIDE</p>

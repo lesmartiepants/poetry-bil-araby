@@ -106,6 +106,24 @@ export function Skeleton({ lines = 3, width = ['90%', '70%', '80%'] }: { lines?:
   );
 }
 
+/** What a screen needs from a query to tell loading from failed. */
+type Q = { isError: boolean; data?: unknown; refetch: () => unknown };
+const failedOf = (of: Q | readonly Q[]) => (Array.isArray(of) ? (of as readonly Q[]) : [of as Q]).filter((q) => q.isError && q.data === undefined);
+const retryAll = (qs: readonly Q[]) => () => { qs.forEach((q) => q.refetch()); };
+
+/** The one loading state: a skeleton while data is on its way, a plain message with "Try again" when it failed. */
+export function Pending({ of, lines = 4, width }: { of: Q | readonly Q[]; lines?: number; width?: string[] }) {
+  const failed = failedOf(of);
+  if (failed.length) return <FullAreaError title="This didn’t load" body="Check your connection, then try again." action="Try again" onAction={retryAll(failed)} />;
+  return <Skeleton lines={lines} width={width} />;
+}
+
+/** For a screen that shows several queries: nothing while they are fine, one quiet note with "Try again" when any failed. */
+export function LoadNote({ of, message = 'Some of this didn’t load.' }: { of: readonly Q[]; message?: string }) {
+  const failed = failedOf(of);
+  return failed.length ? <MarginNote message={message} onRetry={retryAll(failed)} /> : null;
+}
+
 export function GroupCard({ children }: { children: ReactNode }) {
   return <div className="card">{children}</div>;
 }

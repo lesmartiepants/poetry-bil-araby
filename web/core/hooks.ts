@@ -13,7 +13,7 @@ export const qk = {
   lists: ['lists'] as const,
 };
 
-export const usePoem = (id: string) => useQuery({ queryKey: qk.poem(id), queryFn: () => api.poems.get(id), retry: false });
+export const usePoem = (id: string) => useQuery({ queryKey: qk.poem(id), queryFn: () => api.poems.get(id), enabled: !!id, retry: false });
 export const usePoems = (f: PoemFilter) => useQuery({ queryKey: qk.poems(f), queryFn: () => api.poems.list(f) });
 export const usePoets = () => useQuery({ queryKey: ['poets'], queryFn: () => api.poets.list() });
 export const usePoet = (slug: string) => useQuery({ queryKey: ['poet', slug], queryFn: () => api.poets.get(slug), retry: false });

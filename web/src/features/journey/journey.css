@@ -284,6 +284,8 @@
 }
 .tonight {
   min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
 }
 .tonight__hero {
   height: 350px;
@@ -372,10 +374,9 @@
   color: #e4ded2;
 }
 .tonight__enter {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 104px;
+  /* In the flow, pushed to the bottom when there is room: on a short phone it follows the text instead of covering it. */
+  margin-top: auto;
+  padding: 20px 0 104px;
   display: flex;
   flex-direction: column;
   align-items: center;

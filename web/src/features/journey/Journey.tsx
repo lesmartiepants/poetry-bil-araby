@@ -5,7 +5,7 @@ import { useQueries } from '@tanstack/react-query';
 import { api } from '@core/api';
 import { useCollection, useCollections, useDoors, useEras, useInvalidate, useLastRead, usePoem, usePrefs, useProgress, useSetPrefs, useTonight } from '@core/hooks';
 import type { Collection } from '@core/types';
-import { Header, Segmented, Skeleton } from '@ds/primitives';
+import { Header, Pending, Segmented } from '@ds/primitives';
 import { Back, Bookmark, Chevron, Mark } from '@ds/icons';
 import { Pattern } from '@ds/Pattern';
 import { BrandLogo, collectionArt, DoorCard, PathDock } from '@components/index';
@@ -68,7 +68,7 @@ export function TonightScreen() {
           </div>
         )}
       </div>
-      {!t.data ? <div className="pad" style={{ paddingTop: 24 }}><Skeleton lines={4} /></div> : (
+      {!t.data ? <div className="pad" style={{ paddingTop: 24 }}><Pending of={t} lines={4} /></div> : (
         <main className="tonight__body">
           <p className="tonight__poet"><span lang="ar">{t.data.poem.poetAr}</span> · {t.data.poem.poetEn}</p>
           <p className="tonight__meta">{[era?.nameEn, poem && `${poem.lines.length} lines`, poem && `about ${minutes} min`].filter(Boolean).join(' · ').toUpperCase()}</p>
@@ -95,7 +95,8 @@ const BrandMark = () => <span role="img" aria-label="poetry بالعربي" clas
 const TABS: { value: 'tonight' | 'pathways'; label: string }[] = [{ value: 'tonight', label: 'TONIGHT’S POEM' }, { value: 'pathways', label: 'PATHWAYS' }];
 
 function Pathways({ onTonight }: { onTonight: () => void }) {
-  const journeys = useCollections('journey').data;
+  const jq = useCollections('journey');
+  const journeys = jq.data;
   const prog = useProgress().data;
   // The doors of the last poem the reader finished; none until they have finished one.
   const lastId = useLastRead().data;
@@ -108,6 +109,7 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
       <div className="journey__top journey-tabs"><Segmented pill label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={TABS} /></div>
       <main className="pad stack gap-12" style={{ paddingTop: 20 }}>
         <p className="t-eyebrow t-eyebrow--accent">JOURNEYS</p>
+        {!journeys && <Pending of={jq} lines={4} />}
         {journeys?.map((j, i) => {
           const read = prog?.find((x) => x.slug === j.slug)?.position ?? 0;
           const of = j.poemIds.length;
@@ -171,12 +173,13 @@ function StepMark({ state }: { state: 'read' | 'next' | 'later' }) {
 }
 
 export function JourneyScreen({ slug }: { slug: string }) {
-  const j = useCollection(slug).data;
+  const jq = useCollection(slug);
+  const j = jq.data;
   const inv = useInvalidate();
   const prog = useProgress().data?.find((p) => p.slug === slug);
   const [, nav] = useLocation();
   const poems = useQueries({ queries: (j?.poemIds ?? []).map((id) => ({ queryKey: ['poem', id], queryFn: () => api.poems.get(id) })) });
-  if (!j) return <div className="screen pad" style={{ paddingTop: 120 }} aria-busy="true"><Skeleton lines={7} /></div>;
+  if (!j) return <div className="screen pad" style={{ paddingTop: 120 }} aria-busy="true"><Pending of={jq} lines={7} /></div>;
   const of = j.poemIds.length;
   const pos = Math.min(prog?.position ?? 0, of);
   const step = j.stepEn.toUpperCase();
@@ -224,11 +227,12 @@ export function JourneyScreen({ slug }: { slug: string }) {
 
 /** 9.7 A step complete: the path so far, and the next step's opening line. 9.8 when it was the last. */
 export function StepDone({ slug, step }: { slug: string; step: number }) {
-  const j = useCollection(slug).data;
+  const jq = useCollection(slug);
+  const j = jq.data;
   const done = usePoem(j?.poemIds[step - 1] ?? '').data;
   const next = usePoem(j?.poemIds[step] ?? '').data;
   const [, nav] = useLocation();
-  if (!j) return <div className="screen pad" style={{ paddingTop: 120 }} aria-busy="true"><Skeleton lines={5} /></div>;
+  if (!j) return <div className="screen pad" style={{ paddingTop: 120 }} aria-busy="true"><Pending of={jq} lines={5} /></div>;
   const of = j.poemIds.length;
   const finished = step >= of;
   const theme = j.themes?.[step - 1];
@@ -298,7 +302,7 @@ function JourneyDone({ j }: { j: Collection }) {
           <h1 className="journey-done__title">All {word(of)}, complete.</h1>
           <p className="journey-done__body">{from}{word(of)[0].toUpperCase() + word(of).slice(1)} poems, read to the end. The journey stays in your Library.</p>
         </div>
-        <div className="journey-done__marks" aria-label={`All ${of} read`}>{j.poemIds.map((id) => <span key={id} className="journey-done__step"><Mark size={22} colour="var(--brand-old-gold)" /></span>)}</div>
+        <div className="journey-done__marks" aria-label={`All ${of} read`}>{j.poemIds.map((id, i) => <span key={`${id}-${i}`} className="journey-done__step"><Mark size={22} colour="var(--brand-old-gold)" /></span>)}</div>
         {themes.length > 0 && <p className="journey-done__themes">{themes.slice(0, half).join(' · ')}<br />{themes.slice(half).join(' · ')}</p>}
         {others.length > 0 && (
           <>
@@ -333,7 +337,7 @@ export function FinishedScreen({ id }: { id: string }) {
           <h1 className="finished__title">{poem ? `You finished ${poem.titleEn}.` : 'You finished.'}</h1>
           <p className="finished__body">The guide would take you to one of these next.</p>
         </div>
-        {doors.data ? doors.data.map((d) => <DoorCard key={d.poem.id} door={d} size="finished" />) : <Skeleton lines={4} />}
+        {doors.data ? doors.data.map((d) => <DoorCard key={d.poem.id} door={d} size="finished" />) : <Pending of={doors} lines={4} />}
         <button className="finished__enough" onClick={() => nav('/journey')}>ENOUGH FOR TONIGHT</button>
       </main>
     </div>

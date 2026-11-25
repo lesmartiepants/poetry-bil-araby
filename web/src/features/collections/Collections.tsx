@@ -2,16 +2,17 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQueries } from '@tanstack/react-query';
-import { api } from '@core/api';
+import { api, NotFoundError } from '@core/api';
 import { useCollection, useCollections, useEras, useInvalidate, useProgress } from '@core/hooks';
-import { Header, Skeleton, TitleRow } from '@ds/primitives';
+import { FullAreaError, Header, Pending, TitleRow } from '@ds/primitives';
 import { Back, Bookmark, Search } from '@ds/icons';
 import { Pattern } from '@ds/Pattern';
 import { CollectionCard, collectionArt, PathDock } from '@components/index';
 import './collections.css';
 
 export function AllCollections() {
-  const c = useCollections('collection').data;
+  const cq = useCollections('collection');
+  const c = cq.data;
   const prog = useProgress().data;
   const [, nav] = useLocation();
   const [only, setOnly] = useState<'all' | 'saved'>('all');
@@ -28,7 +29,8 @@ export function AllCollections() {
         <button role="radio" aria-checked={only === 'saved'} className="chip chip--sm" onClick={() => setOnly('saved')}>SAVED · {savedCount}</button>
       </div>
       <div className="pad colls__grid">
-        {shown?.map((x) => <CollectionCard key={x.slug} c={x} saved={saved(x.slug)} />)}
+        {shown ? shown.map((x) => <CollectionCard key={x.slug} c={x} saved={saved(x.slug)} />) : <Pending of={cq} lines={6} />}
+        {shown && shown.length === 0 && <p className="t-note">{only === 'saved' ? 'Nothing saved yet. Save a collection to find it here.' : 'No collections yet.'}</p>}
       </div>
     </div>
   );
@@ -42,8 +44,9 @@ export function CollectionScreen({ slug }: { slug: string }) {
   const inv = useInvalidate();
   const [, nav] = useLocation();
   const poems = useQueries({ queries: (c.data?.poemIds ?? []).map((id) => ({ queryKey: ['poem', id], queryFn: () => api.poems.get(id) })) });
-  if (c.isLoading) return <div className="screen pad" style={{ paddingTop: 120 }} aria-busy="true"><Skeleton lines={6} /></div>;
-  if (!c.data) return null;
+  if (c.isLoading) return <div className="screen pad" style={{ paddingTop: 120 }} aria-busy="true"><Pending of={c} lines={6} /></div>;
+  if (c.isError && !(c.error instanceof NotFoundError)) return <div className="screen pad" style={{ paddingTop: 120 }}><Pending of={c} /></div>;
+  if (!c.data) return <div className="screen"><FullAreaError title="This collection isn’t here" body="The link may be old. Explore has the rest." action="Go to Explore" onAction={() => nav('/explore')} /></div>;
   const col = c.data;
   const of = col.poemIds.length;
   const pos = Math.min(prog?.position ?? 0, of);

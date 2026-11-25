@@ -185,7 +185,12 @@ export function doorWords(kind, me, r, mood, nth = 0) {
       ];
       return {
         hook: hooks[Math.min(nth, 2)],
-        reason: `A change of voice: ${r.poet_en}${era ? `, from the ${era} age` : ''}.`,
+        // Reasons vary down the set too, so several "somewhere new" doors never read the same.
+        reason: [
+          `A change of voice: ${r.poet_en}${era ? `, from the ${era} age` : ''}.`,
+          `${r.poet_en}, in ${title}: another way of seeing.`,
+          `Unlike what you just read: ${title}.`,
+        ][Math.min(nth, 2)],
       };
     }
   }

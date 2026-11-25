@@ -6,7 +6,7 @@ import { api } from '@core/api';
 import { qk, useAccount, useCollections, useFollows, useInvalidate, useKeeps, useLists, usePoems, usePoets, useProgress, useReads } from '@core/hooks';
 import { isAvailable } from '@core/sources';
 import type { Poem, Poet, UserList } from '@core/types';
-import { Header, SectionLabel, Segmented, Sheet, Skeleton, TitleRow } from '@ds/primitives';
+import { FullAreaError, Header, LoadNote, Pending, SectionLabel, Segmented, Sheet, TitleRow } from '@ds/primitives';
 import { Compass, Dots, Lock, Mark, Search } from '@ds/icons';
 import { BrandLogo, CollectionCard, PoemRow, PoemTile, PoetAvatar, PoetRow } from '@components/index';
 import { useOverlay } from '@components/overlays';
@@ -22,13 +22,9 @@ function useKeptPoems() {
 }
 
 export function LibraryHub({ ListIcon }: { ListIcon: ListIconT }) {
-  const account = useAccount().data;
-  const lists = useLists().data;
-  const follows = useFollows().data;
-  const poets = usePoets().data;
+  const aq = useAccount(), lq = useLists(), fq = useFollows(), pq = usePoets(), cq = useCollections(), gq = useProgress();
+  const [account, lists, follows, poets, colls, prog] = [aq.data, lq.data, fq.data, pq.data, cq.data, gq.data];
   const { poems } = useKeptPoems();
-  const colls = useCollections().data;
-  const prog = useProgress().data;
   const [, nav] = useLocation();
   const open = useOverlay((s) => s.open);
   const [tab, setTab] = useState<'hub' | 'poems'>('hub');
@@ -48,6 +44,7 @@ export function LibraryHub({ ListIcon }: { ListIcon: ListIconT }) {
       <header className="hub-hdr"><BrandLogo /></header>
       <main className="pad stack gap-12" style={{ paddingTop: 14 }}>
         <TitleRow en="Your diwan" ar="ديواني" bare />
+        <LoadNote of={[aq, lq, fq, pq, cq, gq]} message="Your diwan didn’t fully load." />
         <p className="t-count lib-count">{empty ? 'NOTHING KEPT YET' : `${poems.length} ${poems.length === 1 ? 'POEM' : 'POEMS'} · ${keptPoets} ${keptPoets === 1 ? 'POET' : 'POETS'}`}</p>
         {tabs}
         {empty ? (
@@ -208,10 +205,12 @@ export function AllLists({ ListIcon, ListEditor }: { ListIcon: ListIconT; ListEd
 }
 
 export function ListScreen({ id, ListIcon }: { id: string; ListIcon: ListIconT }) {
-  const list = useLists().data?.find((l) => l.id === id);
+  const lq = useLists();
+  const list = lq.data?.find((l) => l.id === id);
   const [, nav] = useLocation();
   const qs = useQueries({ queries: (list?.poemIds ?? []).map((pid) => ({ queryKey: ['poem', pid], queryFn: () => api.poems.get(pid) })) });
-  if (!list) return <div className="screen pad" style={{ paddingTop: 120 }}><Skeleton /></div>;
+  if (lq.data && !list) return <div className="screen"><Header onBack={() => nav('/library')} /><FullAreaError title="This list isn’t here" body="It may have been deleted." action="Back to your diwan" onAction={() => nav('/library')} /></div>;
+  if (!list) return <div className="screen pad" style={{ paddingTop: 120 }}><Pending of={lq} /></div>;
   return (
     <div className="screen">
       <Header onBack={() => nav('/library')} />

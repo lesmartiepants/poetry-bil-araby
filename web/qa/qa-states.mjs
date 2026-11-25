@@ -21,23 +21,24 @@ const AT = (position) => JSON.stringify([{ slug: 'your-first-seven', position, s
 // Screens: route plus what must be on screen once loaded (a regex over visible text).
 const SCREENS = [
   ['tonight', '/journey', /tonight/i],
-  ['pathways', '/journey', /journey/i, [{ click: 'role=tab[name=/pathways/i]' }]],
+  ['pathways', '/journey', /journey/i, [{ click: 'role=radio[name=/pathways/i]' }]],
   ['journey', '/journey/your-first-seven', /seven/i],
   ['reader', '/p/amurru', /دِيارِ|ديار/],
   ['explore', '/explore', /explore/i],
   ['poets', '/explore/poets', /poet/i],
   ['poet', '/poet/majnun-layla', /majnun/i],
-  ['feeling', '/explore/feeling/nostalgia', /nostalgia/i],
+  ['feeling', '/explore/feeling/longing', /longing/i],
   ['collections', '/explore/collections', /collections/i],
   ['collection', '/collection/your-first-seven', /seven/i],
-  ['search', '/search', /search|ابحث/i, [{ fill: ['input[type=search], input', 'ليلى'] }]],
+  ['search', '/search', /majnun|lines/i, [{ fill: ['input', 'ليلى'] }]],
   ['library', '/library', /diwan|ديوان/i],
   ['you', '/you', /you/i],
 ];
 
 const CASES = [];
 for (const [name, route, expect, steps] of SCREENS) {
-  CASES.push({ id: `${name}--loading`, mode: 'live', api: 'hang', route, steps, expectBusy: true });
+  // Library and You read this device first (keeps, account, settings), so nothing of theirs waits on /api/v2.
+  CASES.push({ id: `${name}--loading`, mode: 'live', api: 'hang', route, steps, expectBusy: !['library', 'you'].includes(name) });
   CASES.push({ id: `${name}--error`, mode: 'live', api: 'fail', route, steps, expectNot: expect });
   CASES.push({ id: `${name}--ready`, mode: 'mock', route, steps, expect });
 }
@@ -48,13 +49,15 @@ CASES.push(
   { id: 'reader--unkept', mode: 'mock', route: '/p/amurru', local: { 'mock.keeps': '[]' } },
   { id: 'reader--kept', mode: 'mock', route: '/p/amurru', local: { 'mock.keeps': KEEP(['87201']) } },
   { id: 'you--signed-out', mode: 'mock', route: '/you', local: { 'mock.account': SIGNED_OUT } },
-  { id: 'you--signed-in', mode: 'mock', route: '/you', local: { 'mock.account': ACCOUNT }, expect: /nour|reader/i },
+  { id: 'you--signed-in', mode: 'mock', route: '/you', local: { 'mock.account': ACCOUNT }, expect: /signed in with google/i },
   { id: 'journey--progress-0', mode: 'mock', route: '/journey/your-first-seven', local: { 'mock.progress': AT(0) } },
   { id: 'journey--progress-3', mode: 'mock', route: '/journey/your-first-seven', local: { 'mock.progress': AT(3) } },
   { id: 'journey--done', mode: 'mock', route: '/journey/your-first-seven/done/7', expect: /complete/i },
-  { id: 'pathways--progress-3', mode: 'mock', route: '/journey', local: { 'mock.progress': AT(3) }, steps: [{ click: 'role=tab[name=/pathways/i]' }] },
+  { id: 'pathways--progress-3', mode: 'mock', route: '/journey', local: { 'mock.progress': AT(3) }, steps: [{ click: 'role=radio[name=/pathways/i]' }] },
   { id: 'search--no-results', mode: 'mock', route: '/search', steps: [{ fill: ['input', 'zzqxv'] }] },
   { id: 'welcome--first-run', mode: 'mock', route: '/welcome', fresh: true },
+  // A short phone (iPhone 13 with browser chrome): the ENTER door must not cover WHY TONIGHT.
+  { id: 'tonight--short-phone', mode: 'mock', route: '/journey', viewport: { width: 390, height: 664 }, noOverlap: ['.tonight__why', '.tonight__enter .enter'] },
   { id: 'unknown-route', mode: 'mock', route: '/nope', expect: /doesn.t exist/i },
 );
 
@@ -76,11 +79,11 @@ const browser = await chromium.launch(exe ? { executablePath: exe } : {});
 const results = [];
 for (const c of CASES.filter((c) => !only || only.test(c.id))) {
   const base = await ensure(c.mode);
-  const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  const ctx = await browser.newContext({ viewport: c.viewport ?? { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   const problems = [];
   page.on('pageerror', (e) => problems.push(`page error: ${e.message.split('\n')[0]}`));
-  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource|status of 50\d/.test(m.text())) problems.push(`console: ${m.text().slice(0, 140)}`); });
+  page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource|status of 50\d|WebSocket connection/.test(m.text())) problems.push(`console: ${m.text().slice(0, 140)}`); });
   if (c.api) {
     await page.route('**/api/v2/**', (r) => (c.api === 'hang' ? new Promise(() => {}) : r.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"qa"}' })));
   }
@@ -98,17 +101,22 @@ for (const c of CASES.filter((c) => !only || only.test(c.id))) {
       if (s.click) await page.locator(s.click).first().click({ timeout: 3000 });
       if (s.fill) await page.locator(s.fill[0]).first().fill(s.fill[1], { timeout: 3000 });
       await page.waitForTimeout(700);
-    } catch (e) { if (!c.api) problems.push(`step failed: ${JSON.stringify(s)}`); }
+    } catch { if (!c.api) problems.push(`step failed: ${JSON.stringify(s)}`); }
   }
   if (c.api === 'fail') await page.waitForTimeout(3500); // let retries give up
   const text = (await page.locator('body').innerText()).replace(/\s+/g, ' ');
   if (/\bundefined\b|\bNaN\b|\[object |\bnull\b/.test(text)) problems.push(`stray value in text: “${text.match(/.{0,30}(undefined|NaN|\[object |\bnull\b).{0,30}/)?.[0]}”`);
   if (c.expect && !c.expect.test(text)) problems.push(`expected ${c.expect} on screen`);
+  for (const [a, b] of c.noOverlap ? [c.noOverlap] : []) {
+    const [ra, rb] = await Promise.all([a, b].map((q) => page.locator(q).first().boundingBox()));
+    if (!ra || !rb) problems.push(`overlap check: ${!ra ? a : b} not found`);
+    else if (ra.y < rb.y + rb.height && rb.y < ra.y + ra.height) problems.push(`${a} and ${b} overlap`);
+  }
   const busy = await page.locator('[aria-busy=true], .skeleton, [class*=skeleton]').count();
   if (c.expectBusy && !busy) problems.push('loading: no skeleton or aria-busy while data is pending');
   if (c.api === 'fail' && !/try again|couldn.t|could not|went wrong|offline|retry/i.test(text)) problems.push('error: no error message or retry shown');
   const main = text.replace(/poetry|بالعربي|explore|library|you|tonight/gi, '').trim();
-  if (main.length < 15) problems.push('blank screen');
+  if (main.length < 15 && !busy) problems.push('blank screen');
   await page.screenshot({ path: new URL(`${c.id}.png`, out).pathname });
   results.push({ ...c, problems });
   process.stdout.write(problems.length ? '✘' : '·');

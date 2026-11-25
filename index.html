@@ -2,6 +2,26 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // The hosted OAuth callback returns to the root. Send new-app attempts
+      // back before the legacy Supabase client can exchange the PKCE code.
+      if (location.pathname === '/') {
+        try {
+          const attempt = JSON.parse(sessionStorage.getItem('pba.sign-in-intent'));
+          const params = new URLSearchParams(location.search);
+          const hash = new URLSearchParams(location.hash.slice(1));
+          if (
+            attempt &&
+            Date.now() - attempt.startedAt <= 15 * 60 * 1000 &&
+            (params.has('code') || params.has('error') || hash.has('error'))
+          ) {
+            location.replace('/new/' + location.search + location.hash);
+          }
+        } catch {
+          // Legacy sign-in still works when storage is unavailable.
+        }
+      }
+    </script>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.json" />

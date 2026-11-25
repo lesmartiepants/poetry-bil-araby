@@ -5,23 +5,39 @@ import { api } from '@core/api';
 import { qk, useAccount, useFeelings, useInvalidate, usePrefs, useSetPrefs } from '@core/hooks';
 import { isAvailable } from '@core/sources';
 import { FEMALE_VOICES, MALE_VOICES } from '@core/voices';
-import { GroupCard, Header, Segmented, Sheet, Skeleton, Slider, Switch, TitleRow } from '@ds/primitives';
+import { GroupCard, Header, Segmented, Skeleton, Slider, Switch, TitleRow } from '@ds/primitives';
 import { Check, Chevron, Play } from '@ds/icons';
 import { BrandLogo, RowLink } from '@components/index';
 import './you.css';
 import { useOverlay } from '@components/overlays';
 
-function AccountCard({ onDelete }: { onDelete: () => void }) {
-  const acc = useAccount().data;
+function AccountCard() {
+  const account = useAccount();
+  const acc = account.data;
   const inv = useInvalidate();
-  const open = useOverlay((s) => s.open);
+  const { open, showToast } = useOverlay();
+  const [signingOut, setSigningOut] = useState(false);
+  const signOut = async () => {
+    setSigningOut(true);
+    try {
+      await api.profile.signOut();
+      await inv(qk.account);
+    } catch {
+      showToast({ text: 'Couldn’t sign out. Try again.', alert: true });
+    } finally {
+      setSigningOut(false);
+    }
+  };
+  if (account.isError) return <GroupCard>
+    <p className="group-row" role="alert">Couldn’t load your account.</p>
+    <button className="group-row" onClick={() => void account.refetch()}>Try again</button>
+  </GroupCard>;
   if (!acc) return <Skeleton lines={2} />;
   if (!acc.signedIn) return <GroupCard><button className="group-row" onClick={() => open({ type: 'signin' })}><div className="group-row__main"><p className="group-row__title">Sign in</p><p className="group-row__sub">Apple or Google · keeps your diwan on every device</p></div></button></GroupCard>;
   return (
     <GroupCard>
       <div className="group-row"><div className="group-row__main"><p className="group-row__title">Signed in with {acc.provider === 'google' ? 'Google' : 'Apple'}</p><p className="group-row__sub">Your diwan is kept on every device</p></div></div>
-      <button className="group-row group-row--danger" onClick={async () => { await api.profile.signOut(); inv(qk.account); }}><div className="group-row__main"><p className="group-row__title">Sign out</p></div></button>
-      <button className="group-row group-row--danger" onClick={onDelete}><div className="group-row__main"><p className="group-row__title">Delete account</p></div></button>
+      <button className="group-row group-row--danger" disabled={signingOut} onClick={signOut}><div className="group-row__main"><p className="group-row__title">Sign out</p></div></button>
     </GroupCard>
   );
 }
@@ -32,7 +48,6 @@ export function YouHub() {
   const p = usePrefs().data;
   const set = useSetPrefs();
   const feelings = useFeelings().data;
-  const [deleting, setDeleting] = useState(false);
   const guide = isAvailable('profile', 'journey');
   const SIZES = ['Small', 'Medium', 'Large', 'Larger', 'Largest'];
   const leaning = (x: number) => (x < 0.2 ? 'Classical' : x < 0.45 ? 'Mostly classical, some modern' : x <= 0.55 ? 'Classical and modern' : x <= 0.8 ? 'Mostly modern, some classical' : 'Modern');
@@ -66,27 +81,10 @@ export function YouHub() {
           {guide && <RowLink href="/you/translation" title="Translation and sounds" sub={p ? { english: 'English under the Arabic', sounds: 'Sounds under the Arabic', nothing: 'Arabic only' }[p.under] : ''} />}
         </GroupCard>
         <p className="you-label">ACCOUNT</p>
-        <AccountCard onDelete={() => setDeleting(true)} />
+        <AccountCard />
         {!guide && <p className="t-note mt-12">Your voice is the last one you picked while listening. The guide’s settings arrive with the guide.</p>}
       </main>
-      {deleting && <DeleteAccount onClose={() => setDeleting(false)} />}
     </div>
-  );
-}
-
-function DeleteAccount({ onClose }: { onClose: () => void }) {
-  const inv = useInvalidate();
-  const showToast = useOverlay((s) => s.showToast);
-  return (
-    <Sheet label="Delete account" onClose={onClose}>
-      <div className="stack gap-12" style={{ alignItems: 'center', textAlign: 'center' }}>
-        <h2 className="t-title" style={{ fontSize: 26 }}>Delete your account?</h2>
-        <p className="t-body">This erases your kept poems, lists, the poets you follow, your reading history and your settings, on every device. It can’t be undone.</p>
-        <p className="t-note">Shared images and links you sent stay with the people who have them.</p>
-      </div>
-      <button className="btn btn--danger btn--block" onClick={async () => { await api.profile.signOut(); localStorage.clear(); inv(qk.account, qk.keeps, qk.lists); onClose(); showToast({ text: 'Your account was deleted.' }); }}>DELETE ACCOUNT</button>
-      <button className="btn btn--ghost btn--block" onClick={onClose}>KEEP MY ACCOUNT</button>
-    </Sheet>
   );
 }
 

@@ -1,21 +1,22 @@
 // The app shell: routes, providers, overlays and reading prefs on the page.
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Redirect, Route, Router, Switch, useLocation } from 'wouter';
 import { useHashLocation } from 'wouter/use-hash-location';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { usePrefs } from '@core/hooks';
+import { accountQueryKeys, usePrefs } from '@core/hooks';
 import { isAvailable, type Domain } from '@core/sources';
 import { readJSON, writeJSON } from '@core/storage';
 import { Coming, Toast } from '@ds/primitives';
 import { useOverlay } from '@components/overlays';
+import { forgetSignIn, readSignIn } from '@components/signInIntent';
 import { TabBar } from './TabBar';
 import { DevPanel } from '../features/shell/DevPanel';
 import { Splash } from '../features/shell/Splash';
 import { AppearanceControls, ReaderScreen } from '../features/reader/ReaderScreen';
 import { Player, useDefaultVoice } from '../features/listening/Player';
 import { AllPoets, EraShelves, ExploreHub, FeelingShelves, OneShelf } from '../features/explore/Explore';
-import { PoetScreen } from '../features/poet/PoetScreen';
+import { FollowAfterSignIn, PoetScreen } from '../features/poet/PoetScreen';
 import { KeepFlow, KeepListsSheet, ListIcon, NewListSheet, SignInSheet } from '../features/keep/Keep';
 import { ShareScreen } from '../features/share/Share';
 import { AllLists, FollowedPoets, LibraryHub, ListScreen } from '../features/library/Library';
@@ -43,10 +44,11 @@ function Overlays() {
   const { overlay, toast } = useOverlay();
   return (
     <>
-      {overlay?.type === 'keep' && <KeepFlow poemId={overlay.poemId} />}
+      {overlay?.type === 'keep' && <KeepFlow key={overlay.poemId} poemId={overlay.poemId} />}
+      {overlay?.type === 'follow' && <FollowAfterSignIn key={overlay.poetSlug} poetSlug={overlay.poetSlug} />}
       {overlay?.type === 'keep-lists' && <KeepListsSheet poemId={overlay.poemId} />}
       {overlay?.type === 'share' && <ShareScreen poemId={overlay.poemId} />}
-      {overlay?.type === 'signin' && <SignInSheet then={overlay.then} />}
+      {overlay?.type === 'signin' && <SignInSheet then={overlay.then} error={overlay.error} />}
       {toast && (
         <Toast action={toast.action} alert={toast.alert} mark={toast.mark}
           onAction={() => { toast.onAction?.(); useOverlay.getState().showToast(null); }}
@@ -113,14 +115,47 @@ function Routes() {
   );
 }
 
-/** When the signed-in user changes, every per-user query refetches. */
-function AuthSync({ supabase }: { supabase: SupabaseClient | null }) {
+function AuthSync({ supabase, children }: { supabase: SupabaseClient | null; children: ReactNode }) {
+  const [intent, setIntent] = useState(() => supabase ? readSignIn() : null);
+
   useEffect(() => {
     if (!supabase) return;
-    const { data } = supabase.auth.onAuthStateChange(() => { queryClient.invalidateQueries(); });
-    return () => data.subscription.unsubscribe();
+    let previousUser: string | null | undefined;
+    let reset: number | undefined;
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user.id ?? null;
+      if (user === previousUser) return;
+      previousUser = user;
+      window.clearTimeout(reset);
+      // Let Supabase finish its auth callback before queries request a session.
+      reset = window.setTimeout(() => {
+        for (const queryKey of accountQueryKeys) void queryClient.resetQueries({ queryKey, exact: true });
+      }, 0);
+    });
+    return () => { window.clearTimeout(reset); data.subscription.unsubscribe(); };
   }, [supabase]);
-  return null;
+
+  useEffect(() => {
+    if (!supabase || !intent) return;
+    let active = true;
+    const finish = (signedIn: boolean) => {
+      if (!active) return;
+      forgetSignIn();
+      window.history.replaceState(window.history.state, '', intent.returnTo);
+      const open = useOverlay.getState().open;
+      if (!signedIn) open({ type: 'signin', then: intent.then, error: 'Sign-in didn’t finish. Try again.' });
+      else if (intent.then) open(intent.then);
+      setIntent(null);
+    };
+    void supabase.auth.getSession().then(
+      ({ data, error }) => finish(!error && !!data.session),
+      () => finish(false),
+    );
+    return () => { active = false; };
+  }, [supabase, intent]);
+
+  if (intent) return <main className="screen pad" aria-busy="true">Signing in…</main>;
+  return <>{children}</>;
 }
 
 export function App({ supabase = null }: { supabase?: SupabaseClient | null }) {
@@ -133,15 +168,16 @@ export function App({ supabase = null }: { supabase?: SupabaseClient | null }) {
   const hash = import.meta.env.VITE_HASH_ROUTER === '1';
   return (
     <QueryClientProvider client={queryClient}>
-      <PrefsOnPage />
-      <AuthSync supabase={supabase} />
-      <Router base={hash ? '' : import.meta.env.BASE_URL.replace(/\/$/, '')} hook={hash ? useHashLocation : undefined}>
-        <div className="app-frame">
-          <Routes />
-          <Overlays />
-          <DevPanel />
-        </div>
-      </Router>
+      <AuthSync supabase={supabase}>
+        <PrefsOnPage />
+        <Router base={hash ? '' : import.meta.env.BASE_URL.replace(/\/$/, '')} hook={hash ? useHashLocation : undefined}>
+          <div className="app-frame">
+            <Routes />
+            <Overlays />
+            <DevPanel />
+          </div>
+        </Router>
+      </AuthSync>
       {splash && <Splash />}
     </QueryClientProvider>
   );

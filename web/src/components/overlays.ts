@@ -3,11 +3,13 @@
 import type { ReactNode } from 'react';
 import { create } from 'zustand';
 
+export type SignInAction = { type: 'keep'; poemId: string } | { type: 'follow'; poetSlug: string };
+
 export type Overlay =
-  | { type: 'keep'; poemId: string }
+  | SignInAction
   | { type: 'keep-lists'; poemId: string }
   | { type: 'share'; poemId: string }
-  | { type: 'signin'; then?: Overlay }
+  | { type: 'signin'; then?: SignInAction; error?: string }
   | null;
 
 export interface ToastSpec {

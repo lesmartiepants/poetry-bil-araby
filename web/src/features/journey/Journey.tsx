@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQueries } from '@tanstack/react-query';
 import { api } from '@core/api';
-import { useCollection, useCollections, useDoors, useEras, useInvalidate, useLastRead, usePoem, useProgress, useSetPrefs, useTonight } from '@core/hooks';
+import { useCollection, useCollections, useDoors, useEras, useLastRead, usePoem, useProgress, useSetPrefs, useSetProgress, useTonight } from '@core/hooks';
 import type { Collection } from '@core/types';
 import { Header, Segmented, Skeleton } from '@ds/primitives';
 import { Back, Bookmark, Chevron, Mark } from '@ds/icons';
@@ -137,8 +137,9 @@ function StepMark({ state }: { state: 'read' | 'next' | 'later' }) {
 
 export function JourneyScreen({ slug }: { slug: string }) {
   const j = useCollection(slug).data;
-  const inv = useInvalidate();
-  const prog = useProgress().data?.find((p) => p.slug === slug);
+  const progress = useProgress();
+  const prog = progress.data?.find((p) => p.slug === slug);
+  const saveProgress = useSetProgress();
   const [, nav] = useLocation();
   const poems = useQueries({ queries: (j?.poemIds ?? []).map((id) => ({ queryKey: ['poem', id], queryFn: () => api.poems.get(id) })) });
   if (!j) return <div className="screen pad" style={{ paddingTop: 120 }} aria-busy="true"><Skeleton lines={7} /></div>;
@@ -147,16 +148,14 @@ export function JourneyScreen({ slug }: { slug: string }) {
   const step = j.stepEn.toUpperCase();
   const nextPoem = poems[pos]?.data;
   const saved = prog?.saved ?? false;
-  const toggleSave = async () => {
-    await api.collections.setProgress({ slug, position: pos, saved: !saved, completedAt: prog?.completedAt });
-    inv(['progress']);
-  };
+  const toggleSave = () => saveProgress.mutate({ slug, position: pos, saved: !saved, completedAt: prog?.completedAt });
   return (
     <div className="screen journey">
       <Header onBack={() => nav('/journey')} right={
-        <button className="icon-btn" aria-pressed={saved} aria-label={saved ? 'Saved' : 'Save'} onClick={toggleSave}><Bookmark style={saved ? { fill: 'currentColor' } : undefined} /></button>
+        <button className="icon-btn" disabled={progress.isPending || saveProgress.isPending} aria-pressed={saved} aria-label={saved ? 'Saved' : 'Save'} onClick={toggleSave}><Bookmark style={saved ? { fill: 'currentColor' } : undefined} /></button>
       } />
       <main className="journey__main">
+        {saveProgress.isError && <p role="alert">Couldn’t update this journey. Try again.</p>}
         <div className="row between" style={{ alignItems: 'baseline' }}>
           <p className="t-eyebrow t-eyebrow--accent">JOURNEY · {pos} OF {of} READ</p>
           <span lang="ar" className="journey__ar">{j.titleAr}</span>

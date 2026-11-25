@@ -6,7 +6,7 @@ import { api } from '@core/api';
 import { qk, useAccount, useCollections, useFollows, useInvalidate, useKeeps, useLists, usePoems, usePoets, useProgress, useReads } from '@core/hooks';
 import { isAvailable } from '@core/sources';
 import type { Poem, Poet, UserList } from '@core/types';
-import { Header, SectionLabel, Segmented, Sheet, Skeleton, TitleRow } from '@ds/primitives';
+import { FullAreaError, Header, SectionLabel, Segmented, Sheet, Skeleton, TitleRow } from '@ds/primitives';
 import { Compass, Dots, Lock, Mark, Search } from '@ds/icons';
 import { BrandLogo, CollectionCard, PoemRow, PoemTile, PoetAvatar, PoetRow } from '@components/index';
 import { useOverlay } from '@components/overlays';
@@ -16,24 +16,40 @@ type ListIconT = ComponentType<{ list: Pick<UserList, 'name' | 'iconLetter' | 'c
 type ListEditorT = ComponentType<{ onCancel: () => void; onCreated: (l: UserList) => void; edit?: UserList }>;
 
 function useKeptPoems() {
-  const keeps = useKeeps().data ?? [];
+  const keepsQuery = useKeeps();
+  const keeps = keepsQuery.data ?? [];
   const qs = useQueries({ queries: keeps.map((id) => ({ queryKey: ['poem', id], queryFn: () => api.poems.get(id) })) });
-  return { ids: keeps, poems: qs.map((q) => q.data).filter(Boolean) as Poem[], loading: qs.some((q) => q.isLoading) };
+  return { keepsQuery, ids: keeps, poems: qs.map((q) => q.data).filter(Boolean) as Poem[], loading: qs.some((q) => q.isLoading) };
 }
 
 export function LibraryHub({ ListIcon }: { ListIcon: ListIconT }) {
-  const account = useAccount().data;
-  const lists = useLists().data;
-  const follows = useFollows().data;
+  const accountQuery = useAccount();
+  const listsQuery = useLists();
+  const followsQuery = useFollows();
+  const { data: account } = accountQuery;
+  const { data: lists } = listsQuery;
+  const { data: follows } = followsQuery;
   const poets = usePoets().data;
-  const { poems } = useKeptPoems();
+  const { keepsQuery, ids, poems } = useKeptPoems();
   const colls = useCollections().data;
-  const prog = useProgress().data;
+  const progressQuery = useProgress();
+  const prog = progressQuery.data;
   const [, nav] = useLocation();
   const open = useOverlay((s) => s.open);
   const [tab, setTab] = useState<'hub' | 'poems'>('hub');
   const signedOut = account && !account.signedIn;
-  const empty = signedOut || (lists && poems.length === 0 && lists.every((l) => l.poemIds.length === 0));
+  const ownQueries = [accountQuery, keepsQuery, listsQuery, followsQuery, progressQuery];
+  if (ownQueries.some((q) => q.isError)) return (
+    <div className="screen">
+      <FullAreaError title="Your diwan didn’t open" body="Check your connection, then try again." action="Try again"
+        onAction={() => { for (const q of ownQueries) if (q.isError) void q.refetch(); }} />
+    </div>
+  );
+  if (!signedOut && ownQueries.some((q) => q.isPending)) return (
+    <div className="screen pad mt-12" aria-busy="true"><Skeleton lines={5} /></div>
+  );
+  const empty = signedOut || (ids.length === 0 && !follows?.length &&
+    !prog?.some((p) => p.saved) && !lists?.some((l) => !l.isDefault || l.poemIds.length > 0));
   const followed = poets?.filter((p) => follows?.includes(p.slug)) ?? [];
   const saved = colls?.filter((c) => prog?.some((p) => p.slug === c.slug && p.saved)) ?? [];
   const keptPoets = new Set(poems.map((p) => p.poetSlug)).size;
@@ -61,7 +77,7 @@ export function LibraryHub({ ListIcon }: { ListIcon: ListIconT }) {
               <Link href="/explore/collections" className="btn btn--block lib-empty__btn"><Compass size={16} /> Browse collections</Link>
             </div>
           </div>
-        ) : tab === 'poems' ? <YourPoems /> : (
+        ) : tab === 'poems' ? (ids.length ? <YourPoems /> : <p className="t-note">Nothing kept yet</p>) : (
           <>
             <SectionLabel action={<Link href="/library/lists" className="see-all">SEE ALL</Link>}>YOUR LISTS · {lists?.length ?? 0}</SectionLabel>
             <div className="chips" style={{ gap: 10 }}>
@@ -90,8 +106,10 @@ export function LibraryHub({ ListIcon }: { ListIcon: ListIconT }) {
                 </div>
               </>
             )}
-            <SectionLabel action={<button className="see-all" onClick={() => setTab('poems')}>SEE ALL</button>}>RECENTLY KEPT</SectionLabel>
-            <div className="chips">{poems.slice(0, 8).map((p) => <PoemTile key={p.id} poem={p} small />)}</div>
+            {poems.length > 0 && <>
+              <SectionLabel action={<button className="see-all" onClick={() => setTab('poems')}>SEE ALL</button>}>RECENTLY KEPT</SectionLabel>
+              <div className="chips">{poems.slice(0, 8).map((p) => <PoemTile key={p.id} poem={p} small />)}</div>
+            </>}
           </>
         )}
       </main>

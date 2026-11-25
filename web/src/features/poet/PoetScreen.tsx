@@ -1,20 +1,43 @@
 // Area 5 · Poet pages (5.1–5.4).
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { useAppearsIn, useFollows, useInvalidate, useKeeps, usePoems, usePoet, useReads } from '@core/hooks';
+import { qk, useAccount, useAppearsIn, useFollows, useInvalidate, useKeeps, usePoems, usePoet, useReads } from '@core/hooks';
 import { api } from '@core/api';
 import { isAvailable } from '@core/sources';
 import { FullAreaError, Segmented, Skeleton } from '@ds/primitives';
 import { Back, Bookmark, Chevron, Heart } from '@ds/icons';
 import { Pattern, patternGround } from '@ds/Pattern';
 import { collectionArt, poetArt } from '@components/index';
+import { useOverlay } from '@components/overlays';
 import './poet.css';
+
+/** Resumes a follow after the OAuth redirect. Setting a follow is idempotent. */
+export function FollowAfterSignIn({ poetSlug }: { poetSlug: string }) {
+  const started = useRef(false);
+  const inv = useInvalidate();
+  const { open, close, showToast } = useOverlay();
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    void api.library.follow(poetSlug, true).then(() => inv(qk.follows)).then(close, () => {
+      close();
+      showToast({
+        text: 'Couldn’t follow this poet. Try again.', alert: true, action: 'RETRY',
+        onAction: () => open({ type: 'follow', poetSlug }),
+      });
+    });
+  }, [close, inv, open, poetSlug, showToast]);
+  return null;
+}
 
 export function PoetScreen({ slug, tab: initialTab }: { slug: string; tab: 'poems' | 'about' }) {
   const poetQ = usePoet(slug);
   const poems = usePoems({ poet: slug }).data;
   const appears = useAppearsIn(slug).data;
-  const follows = useFollows().data;
+  const follows = useFollows();
+  const account = useAccount().data;
+  const { open, showToast } = useOverlay();
+  const [savingFollow, setSavingFollow] = useState(false);
   const reads = useReads().data;
   const kept = new Set(useKeeps().data ?? []);
   const inv = useInvalidate();
@@ -30,9 +53,23 @@ export function PoetScreen({ slug, tab: initialTab }: { slug: string; tab: 'poem
   if (!poetQ.data) return <div className="screen"><FullAreaError title="This poet didn’t open" body="Try again in a moment." action="Back to Explore" onAction={() => nav('/explore')} /></div>;
   const p = poetQ.data;
   const art = poetArt(p.region, p.eraKey);
-  const following = follows?.includes(p.slug) ?? false;
+  const following = follows.data?.includes(p.slug) ?? false;
   const canFollow = isAvailable('library');
-  const toggleFollow = async () => { await api.library.follow(p.slug, !following); inv(['follows']); };
+  const toggleFollow = async () => {
+    if (!account?.signedIn) {
+      open({ type: 'signin', then: { type: 'follow', poetSlug: p.slug } });
+      return;
+    }
+    setSavingFollow(true);
+    try {
+      await api.library.follow(p.slug, !following);
+      await inv(qk.follows);
+    } catch {
+      showToast({ text: 'Couldn’t update this follow. Try again.', alert: true });
+    } finally {
+      setSavingFollow(false);
+    }
+  };
   const [lead, ...rest] = p.bio.split(/(?<=\.)\s+/);
   return (
     <div className="screen">
@@ -48,7 +85,7 @@ export function PoetScreen({ slug, tab: initialTab }: { slug: string; tab: 'poem
         {folded && <Pattern {...art} scale={0.6} scrim={0.6} />}
         <button className="icon-btn poet-bar__btn" aria-label="Back" onClick={() => (history.length > 1 ? history.back() : nav('/explore'))}><Back /></button>
         {folded && <span lang="ar" className="poet-bar__name">{p.nameAr}</span>}
-        {canFollow ? <button className="icon-btn poet-bar__btn" aria-pressed={following} aria-label={following ? 'Following' : 'Follow'} onClick={toggleFollow}><Bookmark style={following ? { fill: 'currentColor' } : undefined} /></button> : <span className="hdr__spacer" />}
+        {canFollow ? <button className="icon-btn poet-bar__btn" disabled={!account || savingFollow || (account.signedIn && follows.isPending)} aria-pressed={following} aria-label={following ? 'Following' : 'Follow'} onClick={toggleFollow}><Bookmark style={following ? { fill: 'currentColor' } : undefined} /></button> : <span className="hdr__spacer" />}
       </header>
       <div className="pad stack gap-10" style={{ paddingTop: 16 }}>
         <Segmented pill label="Poet" value={tab} onChange={setTab} options={[{ value: 'poems', label: 'POEMS' }, { value: 'about', label: 'THE POET' }]} />

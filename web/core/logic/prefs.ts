@@ -1,4 +1,5 @@
 import type { Prefs } from '../types';
+import { VOICES } from '../voices';
 
 export const DEFAULT_PREFS: Prefs = {
   page: 'night',
@@ -23,6 +24,7 @@ export function mergePrefs(defaults: Prefs, mine: Partial<Prefs> | null | undefi
   if (!mine) return out;
   for (const k of Object.keys(defaults) as (keyof Prefs)[]) {
     const v = mine[k];
+    if (k === 'voice' && !VOICES.some(({ name }) => name === v)) continue;
     if (v !== undefined && v !== null && typeof v === typeof defaults[k]) (out as Record<string, unknown>)[k] = v;
   }
   if (mine.displayName) out.displayName = mine.displayName;

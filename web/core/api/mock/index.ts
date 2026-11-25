@@ -96,7 +96,8 @@ export const mockApi: Api = {
       const otherPoets = fit(others.filter((r) => r.poet_id !== me.poet_id));
       const chosen = chooseDoors(me, doorPools(me, fit(near), otherPoets, full ? guideRow(full) : null, otherPoets));
       const mood = me.mood_label ?? me.mood_primary ?? null;
-      return wait(uniqueHooks(wordDoors(chosen, me, mood).map(({ row, hook, reason }) => ({ poem: summary(row.poem), hook, reason }))), 150);
+      const doors = wordDoors(chosen, me, mood).map(({ row, ...copy }) => ({ poem: summary(row.poem), ...copy }));
+      return wait(uniqueHooks(doors), 150);
     },
   },
   poets: {

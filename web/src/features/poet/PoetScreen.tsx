@@ -70,7 +70,9 @@ export function PoetScreen({ slug, tab: initialTab }: { slug: string; tab: 'poem
       setSavingFollow(false);
     }
   };
-  const [lead, ...rest] = p.bio.split(/(?<=\.)\s+/);
+  // Most poets have no bio or region yet, and many bios are in Arabic: show what the data has, set the way it reads.
+  const [lead, ...rest] = p.bio.split(/(?<=[.؟!])\s+/);
+  const bioProps = /[\u0600-\u06FF]/.test(p.bio) ? { lang: 'ar', dir: 'rtl' as const } : {};
   return (
     <div className="screen">
       <div className="poet-hero panel" style={{ background: patternGround(art.name, art.tone) }}>
@@ -107,8 +109,8 @@ export function PoetScreen({ slug, tab: initialTab }: { slug: string; tab: 'poem
           </div>
         ) : (
           <div className="stack gap-10">
-            <p className="poet-bio__lead">{lead}</p>
-            {rest.length > 0 && <p className="poet-bio">{rest.join(' ')}</p>}
+            {p.bio ? <p className="poet-bio__lead" {...bioProps}>{lead}</p> : <p className="poet-bio" data-testid="no-bio">Nothing has been written about {p.nameEn} here yet.</p>}
+            {rest.length > 0 && <p className="poet-bio" {...bioProps}>{rest.join(' ')}</p>}
             {isAvailable('collections') && appears && appears.length > 0 && (
               <>
                 <p className="t-eyebrow" style={{ marginTop: 4 }}>FIND {p.nameEn.toUpperCase()} IN</p>

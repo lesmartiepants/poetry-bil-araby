@@ -225,6 +225,57 @@
       ]
     },
     {
+      "frame": "8.5",
+      "file": "NLibraryPoets",
+      "route": "/library/poets",
+      "steps": [
+        {
+          "storage": {
+            "local": {
+              "mock.account": "{\"signedIn\":true,\"provider\":\"apple\"}",
+              "mock.follows": "[\"al-khansa\",\"imru-al-qais\",\"abu-firas\",\"gibran\",\"al-sayyab\"]"
+            }
+          }
+        },
+        { "reload": true }
+      ]
+    },
+    {
+      "frame": "8.6",
+      "file": "NLibraryPoems",
+      "route": "/library",
+      "steps": [
+        {
+          "storage": {
+            "local": {
+              "mock.account": "{\"signedIn\":true,\"provider\":\"apple\"}",
+              "mock.keeps": "[\"87201\",\"1001\",\"1002\",\"1003\",\"1004\",\"1006\"]"
+            }
+          }
+        },
+        { "reload": true },
+        { "click": "role=radio[name='POEMS']" }
+      ]
+    },
+    {
+      "frame": "8.7",
+      "file": "NLibraryPoemsEn",
+      "route": "/library",
+      "steps": [
+        {
+          "storage": {
+            "local": {
+              "mock.account": "{\"signedIn\":true,\"provider\":\"apple\"}",
+              "mock.keeps": "[\"87201\",\"1001\",\"1002\",\"1003\",\"1004\",\"1006\"]"
+            }
+          }
+        },
+        { "reload": true },
+        { "click": "role=radio[name='POEMS']" },
+        { "click": "text=ARABIC A–Z" }
+      ]
+    },
+    {
       "frame": "8.12",
       "file": "NLibraryEmpty",
       "route": "/library",

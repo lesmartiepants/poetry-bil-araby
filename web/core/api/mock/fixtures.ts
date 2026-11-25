@@ -11,8 +11,8 @@ export const POETS: Poet[] = [
     bio: 'Tumadir bint Amr, the greatest elegist in Arabic. Her laments for her brothers Sakhr and Mu‘awiya were recited for centuries.' },
   { slug: 'abu-firas', nameAr: 'أبو فراس الحمداني', nameEn: 'Abu Firas', eraKey: 'abbasid', region: 'Levant', years: '932–968', initial: 'ف', poemCount: 22,
     bio: 'A Hamdanid prince and knight who wrote his finest poems as a prisoner of Byzantium, the Rumiyyat.' },
-  { slug: 'kab-ibn-zuhayr', nameAr: 'كعب بن زهير', nameEn: 'Kaʿb ibn Zuhayr', eraKey: 'pre-islamic', region: 'Hijaz', years: 'd. c. 662', initial: 'ك', poemCount: 6,
-    bio: 'Son of the poet Zuhayr, remembered for “Su‘ad has gone”, the ode he recited before the Prophet, who gave him his mantle.' },
+  { slug: 'kab-ibn-zuhayr', nameAr: 'كعب بن زهير', nameEn: 'Kaʿb ibn Zuhayr', eraKey: 'pre-islamic', region: '', years: 'd. c. 662', initial: 'ك', poemCount: 6,
+    bio: '' }, // like most poets in the data: no region, no bio yet
   { slug: 'al-mutanabbi', nameAr: 'المتنبي', nameEn: 'Al-Mutanabbi', eraKey: 'abbasid', region: 'Iraq', years: '915–965', initial: 'م', poemCount: 41,
     bio: 'The proudest voice in Arabic poetry. His lines on courage, fate and himself are still quoted daily.' },
   { slug: 'al-sayyab', nameAr: 'بدر شاكر السياب', nameEn: 'Al-Sayyab', eraKey: 'modern', region: 'Iraq', years: '1926–1964', initial: 'س', poemCount: 12,

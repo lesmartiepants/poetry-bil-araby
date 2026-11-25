@@ -105,3 +105,21 @@
 .under-preview__sounds {
   color: #d9c9a3;
 }
+
+/* 12.6: the sample button and the pick sit side by side in one row. */
+.voice-row--sample .voice-row__pick {
+  flex: 1;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: none;
+  background: none;
+  padding: 0;
+  text-align: left;
+  color: inherit;
+}
+.voice-row__play[aria-pressed='true'] {
+  background: var(--c-accent);
+  color: #17140d;
+}

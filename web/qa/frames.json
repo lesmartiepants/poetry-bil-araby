@@ -24,6 +24,12 @@
       "route": "/explore",
       "steps": [{ "click": "[data-testid=edge-tab]" }, { "click": "text=REPORT A BUG" }]
     },
+    {
+      "frame": "1.7",
+      "file": "FRDevToggleRead",
+      "route": "/p/amurru",
+      "steps": [{ "hold": ["[aria-label='Poem actions']", 800] }, { "wait": 100 }]
+    },
     { "frame": "2.1", "file": "NReading", "route": "/p/amurru" },
     { "frame": "2.2", "file": "NImmersed", "route": "/p/amurru", "steps": [{ "scroll": 400 }] },
     {

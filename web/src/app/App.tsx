@@ -12,6 +12,7 @@ import { useOverlay } from '@components/overlays';
 import { forgetSignIn, readSignIn } from '@components/signInIntent';
 import { TabBar } from './TabBar';
 import { DevPanel } from '../features/shell/DevPanel';
+import { useDevTabHold } from '../features/shell/useDevTabHold';
 import { Splash } from '../features/shell/Splash';
 import { AppearanceControls, ReaderScreen } from '../features/reader/ReaderScreen';
 import { Player, useDefaultVoice } from '../features/listening/Player';
@@ -77,6 +78,7 @@ function Routes() {
   const voice = useDefaultVoice();
   const [, nav] = useLocation();
   const [loc] = useLocation();
+  const hold = useDevTabHold();
   const hideTabs = loc.startsWith('/p/') || loc === '/welcome';
   return (
     <>
@@ -87,7 +89,7 @@ function Routes() {
         <Route path="/journey/finished/:id">{(p) => <Gate domains={['journey', 'ai']} title="Tonight’s poem"><FinishedScreen id={p.id} /></Gate>}</Route>
         <Route path="/journey/:slug/done/:step">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><StepDone slug={p.slug} step={Number(p.step)} /></Gate>}</Route>
         <Route path="/journey/:slug">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><JourneyScreen slug={p.slug} /></Gate>}</Route>
-        <Route path="/p/:id">{(p) => <Gate domains={['poems']} title="The reader"><ReaderScreen key={p.id} id={p.id} Player={Player} defaultVoice={voice} /></Gate>}</Route>
+        <Route path="/p/:id">{(p) => <Gate domains={['poems']} title="The reader"><ReaderScreen key={p.id} id={p.id} Player={Player} defaultVoice={voice} onLongPressMark={hold.handlers} holding={hold.holding} /></Gate>}</Route>
         <Route path="/explore">{() => <Gate domains={['explore', 'poets']} title="Explore"><ExploreHub /></Gate>}</Route>
         <Route path="/explore/poets">{() => <Gate domains={['poets']} title="All poets"><AllPoets /></Gate>}</Route>
         <Route path="/explore/feelings">{() => <Gate domains={['explore']} title="Feelings"><FeelingShelves /></Gate>}</Route>

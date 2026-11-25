@@ -1,12 +1,12 @@
 // Area 12 · You (12.1–12.8).
-import { useState, type ComponentType, type ReactNode } from 'react';
+import { useEffect, useState, type ComponentType, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { api } from '@core/api';
 import { qk, useAccount, useFeelings, useInvalidate, usePrefs, useSetPrefs } from '@core/hooks';
 import { isAvailable } from '@core/sources';
 import { FEMALE_VOICES, MALE_VOICES } from '@core/voices';
 import { GroupCard, Header, LoadNote, Segmented, Skeleton, Slider, Switch, TitleRow } from '@ds/primitives';
-import { Check, Chevron, Play } from '@ds/icons';
+import { Check, Chevron, Pause, Play } from '@ds/icons';
 import { BrandLogo, RowLink } from '@components/index';
 import './you.css';
 import { useOverlay } from '@components/overlays';
@@ -42,6 +42,7 @@ function AccountCard() {
   );
 }
 
+const SAMPLE_MS = 2500;
 const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
 
 export function YouHub() {
@@ -159,6 +160,13 @@ export function ReciterScreen() {
   const p = usePrefs().data;
   const set = useSetPrefs();
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  // Each voice has a sample (12.6); one plays at a time and stops by itself.
+  const [sampling, setSampling] = useState<string | null>(null);
+  useEffect(() => {
+    if (!sampling) return;
+    const t = window.setTimeout(() => setSampling(null), SAMPLE_MS);
+    return () => window.clearTimeout(t);
+  }, [sampling]);
   if (!p) return null;
   const group = (key: string, title: ReactNode, list: typeof FEMALE_VOICES) => {
     // Three show at first, with the chosen voice always among them.
@@ -170,11 +178,15 @@ export function ReciterScreen() {
         <div className="row between you-voices__head"><p className="t-eyebrow">{title}</p><span className="t-eyebrow">{list.length}</span></div>
         <div className="reciter-group" role="radiogroup" aria-label={key}>
           {shown.map((v) => (
-            <button key={v.name} role="radio" aria-checked={p.voice === v.name} className="voice-row" onClick={() => set.mutate({ voice: v.name })}>
-              <span className="voice-row__play" aria-hidden><Play size={12} /></span>
-              <span className="voice-row__name">{v.name} <span className="voice-row__desc">{v.descriptor}</span></span>
-              {p.voice === v.name && <Check size={16} className="voice-row__check" />}
-            </button>
+            <div key={v.name} className="voice-row voice-row--sample">
+              <button className="voice-row__play" aria-label={sampling === v.name ? `Stop the ${v.name} sample` : `Play a sample of ${v.name}`} aria-pressed={sampling === v.name} onClick={() => setSampling(sampling === v.name ? null : v.name)}>
+                {sampling === v.name ? <Pause size={12} /> : <Play size={12} />}
+              </button>
+              <button role="radio" aria-checked={p.voice === v.name} className="voice-row__pick" onClick={() => set.mutate({ voice: v.name })}>
+                <span className="voice-row__name">{v.name} <span className="voice-row__desc">{v.descriptor}</span></span>
+                {p.voice === v.name && <Check size={16} className="voice-row__check" />}
+              </button>
+            </div>
           ))}
           {!open[key] && list.length > shown.length && (
             <button className="voice-more" onClick={() => setOpen({ ...open, [key]: true })}>{list.length - shown.length} MORE <Chevron size={16} /></button>

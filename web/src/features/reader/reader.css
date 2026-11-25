@@ -302,3 +302,10 @@
   letter-spacing: 0.16em;
   line-height: 1;
 }
+
+/* 1.7: held, the dock or the mark glows gold until the dev tab flips. */
+.dock--holding,
+.reader__mark--holding {
+  border: 2px solid var(--c-accent);
+  box-shadow: 0 0 0 6px rgba(212, 179, 106, 0.18), 0 0 32px rgba(212, 179, 106, 0.35);
+}

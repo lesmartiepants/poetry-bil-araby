@@ -1,7 +1,6 @@
 import { Link, useLocation } from 'wouter';
 import { Bookmark, Compass, Mark, Person } from '@ds/icons';
-import { useLongPress } from './useLongPress';
-import { DEV_PANEL_ENABLED, useDevPanel } from '../features/shell/devPanelState';
+import { useDevTabHold } from '../features/shell/useDevTabHold';
 
 const TABS = [
   { href: '/journey', label: 'Journey', match: ['/journey', '/welcome'], icon: (on: boolean) => <Mark size={22} colour={on ? '#17140D' : 'currentColor'} weight={1.1} /> },
@@ -12,8 +11,7 @@ const TABS = [
 
 export function TabBar() {
   const [loc] = useLocation();
-  const toggle = useDevPanel((s) => s.toggleTab);
-  const press = useLongPress(() => DEV_PANEL_ENABLED && toggle());
+  const press = useDevTabHold().handlers;
   return (
     <nav aria-label="Main" className="tabbar" {...press} data-testid="tabbar">
       {TABS.map((t) => {

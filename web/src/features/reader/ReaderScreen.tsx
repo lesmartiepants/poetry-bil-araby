@@ -15,8 +15,8 @@ import './reader.css';
 
 export interface PlayerSlotProps { poem: Poem; compact: boolean; onMark: () => void; onExpand: () => void }
 
-export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
-  id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; onLongPressMark?: Record<string, unknown>;
+export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, holding }: {
+  id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; onLongPressMark?: Record<string, unknown>; holding?: boolean;
 }) {
   const poemQ = usePoem(id);
   const prefs = usePrefs().data;
@@ -107,11 +107,11 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark }: {
         <Player poem={poem} compact={scrolled} onMark={() => setSheet('fan')} onExpand={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
       ) : scrolled ? (
         <div className="reader__fold">
-          <button className="reader__mark" aria-label="Actions" onClick={() => setSheet('fan')} {...onLongPressMark}><Mark size={34} colour="var(--c-accent)" /></button>
+          <button className={`reader__mark${holding ? ' reader__mark--holding' : ''}`} aria-label="Actions" onClick={() => setSheet('fan')} {...onLongPressMark}><Mark size={34} colour="var(--c-accent)" /></button>
           <span className="reader__progress" aria-hidden><span style={{ width: `${progress}%` }} /></span>
         </div>
       ) : (
-        <Dock {...actions} listening={false} kept={kept} />
+        <Dock {...actions} listening={false} kept={kept} hold={onLongPressMark} holding={holding} />
       )}
 
       {sheet === 'fan' && <Fan {...actions} kept={kept} listening={listening && pb.status === 'playing'} onClose={() => setSheet('none')} />}
@@ -150,9 +150,9 @@ function ReaderBackdrop() {
 
 type Actions = { listen: () => void; insights: () => void; keep: () => void; share: () => void; aa: () => void; listening: boolean; kept: boolean };
 
-function Dock({ listen, insights, keep, share, kept }: Actions) {
+function Dock({ listen, insights, keep, share, kept, hold, holding }: Actions & { hold?: Record<string, unknown>; holding?: boolean }) {
   return (
-    <nav aria-label="Poem actions" className="dock">
+    <nav aria-label="Poem actions" className={`dock${holding ? ' dock--holding' : ''}`} {...hold}>
       <button className="dock__btn" onClick={listen}><Play size={14} /> LISTEN</button>
       <button className="dock__btn dock__btn--main" onClick={insights}><Lamp size={18} /> INSIGHTS</button>
       <button className={`dock__btn${kept ? ' dock__btn--kept' : ''}`} aria-label={kept ? 'Kept. Tap to remove' : 'Keep'} onClick={keep}><Heart filled={kept} /></button>

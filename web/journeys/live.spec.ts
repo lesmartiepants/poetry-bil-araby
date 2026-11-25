@@ -3,6 +3,8 @@
 import { expect, test } from '@playwright/test';
 import { fresh } from './helpers';
 
+const API = process.env.API_PROXY ?? 'http://localhost:3001';
+
 test.describe('@live V1 against the real API', () => {
   test('@live 4.1 Explore shows the poet of the week, feelings and difficulty bands from the database', async ({ page }) => {
     await fresh(page);
@@ -107,12 +109,12 @@ test.describe('@live V3 against the real API', () => {
   });
 
   test('@live 7.11 a saved card is a 1080 × 1350 PNG from the server', async ({ request }) => {
-    const res = await request.get('http://localhost:3001/api/v2/poems/24/card.png?en=1&cw=cobalt&for=Nour');
+    const res = await request.get(`${API}/api/v2/poems/24/card.png?en=1&cw=cobalt&for=Nour`);
     expect(res.status()).toBe(200);
     expect(res.headers()['content-type']).toBe('image/png');
     const png = await res.body();
     expect(png.readUInt32BE(16)).toBe(1080);
     expect(png.readUInt32BE(20)).toBe(1350);
-    expect((await request.get('http://localhost:3001/api/v2/poems/24/card.png?lines=99')).status()).toBe(400);
+    expect((await request.get(`${API}/api/v2/poems/24/card.png?lines=99`)).status()).toBe(400);
   });
 });

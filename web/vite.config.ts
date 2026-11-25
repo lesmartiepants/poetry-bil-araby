@@ -17,7 +17,8 @@ export default defineConfig({
   },
   server: {
     port: 5180,
-    proxy: { '/api': process.env.VITE_API_URL || 'http://localhost:3001' },
+    // API_PROXY points the dev proxy elsewhere without changing the app's own API base.
+    proxy: { '/api': process.env.API_PROXY || process.env.VITE_API_URL || 'http://localhost:3001' },
   },
   build: {
     outDir: '../dist/new',

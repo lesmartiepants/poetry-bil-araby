@@ -15,7 +15,8 @@ jobs:
       - name: Setup Supabase CLI
         uses: supabase/setup-cli@v1
         with:
-          version: latest
+          # Pinned: CLI 3 changed which database `db push` targets by default.
+          version: 2.109.1
 
       - name: Link Supabase project
         run: supabase link --project-ref $SUPABASE_PROJECT_REF

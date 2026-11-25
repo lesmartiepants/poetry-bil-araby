@@ -142,6 +142,8 @@ export interface Collection {
   poemIds: string[];
   /** Each step's theme (Pride, Longing…), aligned with poemIds; null where unnamed. */
   themes?: (string | null)[];
+  /** The first and last poets, "Al-Khansa to Fadwa Tuqan"; one name when they're the same. */
+  span?: string;
 }
 
 export interface Progress {

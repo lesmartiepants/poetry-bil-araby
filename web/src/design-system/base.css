@@ -290,6 +290,7 @@ a {
   color: var(--c-text-3);
 }
 .chip[aria-pressed='true'],
+.chip[aria-checked='true'],
 .chip[aria-current='true'] {
   background: var(--c-accent);
   border-color: var(--c-accent);

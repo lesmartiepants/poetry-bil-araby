@@ -106,7 +106,7 @@ test.describe('@live V3 against the real API', () => {
     await fresh(page);
     await page.goto('./search');
     await page.getByRole('textbox', { name: /Search/ }).fill('الحنين');
-    await expect(page.getByText('LINES')).toBeVisible();
+    await expect(page.locator('.search-section', { hasText: 'LINES' })).toBeVisible();
     await page.getByRole('textbox', { name: /Search/ }).fill('zzzz');
     await expect(page.getByText('CLOSEST MATCHES:')).toBeVisible();
   });

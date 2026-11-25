@@ -12,6 +12,11 @@ import { readJSON, writeJSON } from '../../storage';
 const wait = <T>(v: T, ms = 60): Promise<T> => new Promise((r) => setTimeout(() => r(v), ms));
 const summary = ({ lines: _l, feelingKeys: _f, band: _b, readingMinutes: _r, ...s }: Poem): PoemSummary => s;
 const findPoem = (idOrSlug: string) => POEMS.find((p) => p.id === idOrSlug || p.slug === idOrSlug);
+/** The server's span: first and last poets of a collection. */
+const withSpan = (c: (typeof COLLECTIONS)[number]) => {
+  const [a, b] = [findPoem(c.poemIds[0] ?? '')?.poetEn, findPoem(c.poemIds[c.poemIds.length - 1] ?? '')?.poetEn];
+  return { ...c, span: a && b && a !== b ? `${a} to ${b}` : a };
+};
 const K = { prefs: 'mock.prefs', account: 'mock.account', keeps: 'mock.keeps', lists: 'mock.lists', follows: 'mock.follows', reads: 'mock.reads', lastRead: 'mock.lastRead', progress: 'mock.progress' };
 
 // The guide runs the same rules as the server (core/logic/guide.js) over the fixtures.
@@ -215,11 +220,11 @@ export const mockApi: Api = {
     journeys: async () => wait(COLLECTIONS.filter((c) => c.kind === 'journey')),
   },
   collections: {
-    all: async (kind) => wait(COLLECTIONS.filter((c) => !kind || c.kind === kind)),
+    all: async (kind) => wait(COLLECTIONS.filter((c) => !kind || c.kind === kind).map(withSpan)),
     async get(slug) {
       const c = COLLECTIONS.find((x) => x.slug === slug);
       if (!c) throw new NotFoundError('collection');
-      return wait(c);
+      return wait(withSpan(c));
     },
     progress: async () => wait(readJSON<Progress[]>(K.progress, [{ slug: 'your-first-seven', position: 2, saved: true }]), 20),
     async setProgress(p) {

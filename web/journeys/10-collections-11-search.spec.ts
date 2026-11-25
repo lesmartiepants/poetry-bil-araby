@@ -3,6 +3,14 @@ import { fresh, signedIn } from './helpers';
 
 test.describe('Areas 10–11 · Collections and search', () => {
   // V3.3 done when: a saved collection resumes where it left off.
+  test('10.2 a long collection lists five, then names who the rest reach', async ({ page }) => {
+    await fresh(page, { 'mock.progress': '[]' });
+    await page.goto('./collection/your-first-seven');
+    await expect(page.locator('.coll-row')).toHaveCount(5);
+    await page.getByRole('button', { name: /^and 2 more/ }).click();
+    await expect(page.locator('.coll-row')).toHaveCount(7);
+  });
+
   test('10.2 a saved collection resumes at the next unread poem, after a reload; 8.15 it shows in the Library', async ({ page }) => {
     await fresh(page, signedIn);
     await page.goto('./collection/women-who-wrote-the-canon');
@@ -54,8 +62,8 @@ test.describe('Areas 10–11 · Collections and search', () => {
     await fresh(page);
     await page.goto('./search');
     await page.getByRole('textbox', { name: /Search/ }).fill('ديار ليلى');
-    await expect(page.getByText('LINES')).toBeVisible();
-    await page.locator('a.list-row').filter({ hasText: 'I pass by the dwellings' }).first().click();
+    await expect(page.locator('.search-section', { hasText: 'LINES' })).toBeVisible();
+    await page.locator('a.line-hit').filter({ hasText: 'I pass by the dwellings' }).first().click();
     await expect(page.getByRole('heading', { name: 'أمرُّ على الديار' })).toBeVisible();
   });
 
@@ -64,7 +72,7 @@ test.describe('Areas 10–11 · Collections and search', () => {
     await page.goto('./search');
     const box = page.getByRole('textbox', { name: /Search/ });
     await box.fill('الخنساء');
-    await expect(page.getByText('POETS')).toBeVisible();
+    await expect(page.locator('.search-section', { hasText: 'POETS' })).toBeVisible();
     await page.reload();
     await expect(page.getByText('RECENT')).toBeVisible();
     await page.locator('.recent__q').filter({ hasText: 'الخنساء' }).click();

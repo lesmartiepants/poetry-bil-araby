@@ -62,6 +62,11 @@ export const mockApi: Api = {
       return wait(filterPoems(f).map(summary));
     },
   },
+  tts: {
+    async recitation() {
+      return wait({ url: null, lineStarts: [], duration: 0 });
+    },
+  },
   ai: {
     async explanation(poemId) {
       const p = findPoem(poemId);

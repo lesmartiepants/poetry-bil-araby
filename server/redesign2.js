@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer';
 import process from 'node:process';
 import { cardRequest, renderCardPng } from './share-card.js';
 import {
@@ -114,7 +115,101 @@ export async function geminiText(kind, input) {
   return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'null');
 }
 
-export function registerRedesign2(app, { pool, log, contentExpr, servingFilters, gemini }) {
+// ── Recitation: Gemini TTS, server-side only ───────────────────────────────
+// Voices the player offers (web/core/voices.ts); anything else is a 400.
+export const TTS_VOICES = [
+  'Zephyr',
+  'Leda',
+  'Aoede',
+  'Autonoe',
+  'Laomedeia',
+  'Pulcherrima',
+  'Vindemiatrix',
+  'Sulafat',
+  'Orus',
+  'Charon',
+  'Enceladus',
+  'Iapetus',
+  'Algieba',
+  'Algenib',
+  'Alnilam',
+  'Zubenelgenubi',
+];
+const TTS_MODELS = ['gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts']; // second is the 429 fallback
+const TTS_DELIVERY =
+  'اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية. النص للتلاوة:';
+const PCM_RATE = 24000;
+
+/** 16-bit mono PCM to a WAV file. */
+export function pcmToWav(pcm, rate = PCM_RATE) {
+  const head = Buffer.alloc(44);
+  head.write('RIFF', 0);
+  head.writeUInt32LE(36 + pcm.length, 4);
+  head.write('WAVEfmt ', 8);
+  head.writeUInt32LE(16, 16);
+  head.writeUInt16LE(1, 20);
+  head.writeUInt16LE(1, 22);
+  head.writeUInt32LE(rate, 24);
+  head.writeUInt32LE(rate * 2, 28);
+  head.writeUInt16LE(2, 32);
+  head.writeUInt16LE(16, 34);
+  head.write('data', 36);
+  head.writeUInt32LE(pcm.length, 40);
+  return Buffer.concat([head, pcm]);
+}
+
+/** Where each line starts, in seconds: the total length shared out by letters per line (REST TTS returns no timings). */
+export function lineStartsFor(lines, seconds) {
+  const weight = lines.map((l) => Math.max(1, l.replace(/[\sً-ٰٟـ]/g, '').length));
+  const total = weight.reduce((a, b) => a + b, 0);
+  let at = 0;
+  return weight.map((w) => {
+    const start = Math.round(at * 100) / 100;
+    at += (w / total) * seconds;
+    return start;
+  });
+}
+
+/** Raw PCM for the lines in one voice. TTS_FAKE=1 returns a quiet tone instead (CI and local runs without a key). */
+export async function geminiTts({ lines, voice }) {
+  if (process.env.TTS_FAKE === '1') {
+    const seconds = Math.max(2, lines.length * 2);
+    const pcm = Buffer.alloc(Math.round(seconds * PCM_RATE) * 2);
+    for (let i = 0; i < pcm.length / 2; i++)
+      pcm.writeInt16LE(Math.round(Math.sin((i / PCM_RATE) * 2 * Math.PI * 220) * 600), i * 2);
+    return { pcm, model: 'fake' };
+  }
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return null;
+  let lastStatus = 0;
+  for (const model of TTS_MODELS) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${TTS_DELIVERY}\n${lines.join('\n')}` }] }],
+          generationConfig: {
+            responseModalities: ['AUDIO'],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
+          },
+        }),
+        signal: AbortSignal.timeout(90_000),
+      }
+    );
+    lastStatus = res.status;
+    if (res.status === 429) continue; // this model's daily quota is gone: try the other one
+    if (!res.ok) throw new Error(`Gemini TTS ${res.status}`);
+    const data = await res.json();
+    const b64 = data.candidates?.[0]?.content?.parts?.find((p) => p.inlineData)?.inlineData?.data;
+    if (!b64) throw new Error('Gemini TTS returned no audio');
+    return { pcm: Buffer.from(b64, 'base64'), model };
+  }
+  throw new Error(`Gemini TTS ${lastStatus}`);
+}
+
+export function registerRedesign2(app, { pool, log, contentExpr, servingFilters, gemini, tts }) {
   const servable = (alias = 'p') =>
     `${alias}.id IN (SELECT p.id FROM poems p WHERE p.full_poem_id IS NULL ${servingFilters()})`;
   let bandsCache = null;
@@ -328,6 +423,108 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
       res.json(payload);
     } catch (e) {
       fail(res, 'ai', e);
+    }
+  });
+
+  // ── Recitation: one audio file per poem and voice, generated once ───────────
+  // GET /api/v2/poems/:id/recitation?voice=      -> { url, lineStarts, duration } (generates on a miss)
+  // GET /api/v2/poems/:id/recitation.wav?voice=  -> the audio itself (immutable, so browsers keep it)
+  const ttsIp = new Map(); // ip -> recent generation times (only cache misses count)
+  const ttsDay = { day: '', n: 0 };
+  const TTS_PER_IP = Number(process.env.TTS_PER_IP_HOUR) || 6;
+  const TTS_PER_DAY = Number(process.env.TTS_DAILY_CAP) || 200;
+  const ttsAllowed = (ip) => {
+    const today = new Date().toISOString().slice(0, 10);
+    if (ttsDay.day !== today) Object.assign(ttsDay, { day: today, n: 0 });
+    if (ttsDay.n >= TTS_PER_DAY) return false;
+    const recent = (ttsIp.get(ip) ?? []).filter((t) => Date.now() - t < 3_600_000);
+    if (recent.length >= TTS_PER_IP) return false;
+    ttsIp.set(ip, [...recent, Date.now()]);
+    ttsDay.n++;
+    return true;
+  };
+  const ttsInflight = new Map(); // "poem:voice" -> promise, so a double tap generates once
+  const ttsRow = async (id, voice, withAudio) => {
+    const { rows } = await pool.query(
+      `SELECT ${withAudio ? 'audio,' : ''} line_starts, duration, model FROM poem_audio WHERE poem_id = $1 AND voice = $2`,
+      [id, voice]
+    );
+    const r = rows[0];
+    // A tone stored by a fake run never stands in for a real recitation.
+    return r && (r.model !== 'fake' || process.env.TTS_FAKE === '1') ? r : null;
+  };
+  const ttsParse = (req) => {
+    const id = Number(req.params.id);
+    const voice = String(req.query.voice ?? 'Zephyr');
+    return Number.isInteger(id) && TTS_VOICES.includes(voice) ? { id, voice } : null;
+  };
+  app.get('/api/v2/poems/:id/recitation', async (req, res) => {
+    const q = ttsParse(req);
+    if (!q) return res.status(400).json({ error: 'Bad request' });
+    const { id, voice } = q;
+    const url = `/api/v2/poems/${id}/recitation.wav?voice=${voice}`;
+    try {
+      const hit = await ttsRow(id, voice, false);
+      if (hit)
+        return res.json({
+          url,
+          lineStarts: hit.line_starts,
+          duration: Number(hit.duration),
+          cached: true,
+        });
+      if (!tts) return res.status(503).json({ error: 'Recitation unavailable' });
+      const { rows } = await pool.query(
+        `SELECT ${contentExpr()} AS arabic FROM poems p WHERE p.id = $1 AND ${servable('p')}`,
+        [id]
+      );
+      if (!rows.length) return res.status(404).json({ error: 'Poem not found' });
+      const lines = splitLines(rows[0].arabic);
+      const k = `${id}:${voice}`;
+      if (!ttsInflight.has(k)) {
+        if (!ttsAllowed(req.ip))
+          return res.status(429).json({ error: 'Too many recitations. Try again later.' });
+        ttsInflight.set(
+          k,
+          (async () => {
+            const out = await tts({ lines, voice });
+            if (!out) return null;
+            const duration = Math.round((out.pcm.length / 2 / PCM_RATE) * 100) / 100;
+            const row = {
+              audio: pcmToWav(out.pcm),
+              lineStarts: lineStartsFor(lines, duration),
+              duration,
+              model: out.model,
+            };
+            await pool.query(
+              `INSERT INTO poem_audio (poem_id, voice, audio, line_starts, duration, model) VALUES ($1, $2, $3, $4, $5, $6)
+               ON CONFLICT (poem_id, voice) DO UPDATE SET audio = EXCLUDED.audio, line_starts = EXCLUDED.line_starts,
+                 duration = EXCLUDED.duration, model = EXCLUDED.model WHERE poem_audio.model = 'fake'`,
+              [id, voice, row.audio, JSON.stringify(row.lineStarts), row.duration, row.model]
+            );
+            return row;
+          })().finally(() => ttsInflight.delete(k))
+        );
+      }
+      const made = await ttsInflight.get(k);
+      if (!made) return res.status(503).json({ error: 'Recitation unavailable' });
+      res.json({ url, lineStarts: made.lineStarts, duration: made.duration });
+    } catch (e) {
+      fail(res, 'recitation', e);
+    }
+  });
+  app.get('/api/v2/poems/:id/recitation.wav', async (req, res) => {
+    const q = ttsParse(req);
+    if (!q) return res.status(400).json({ error: 'Bad request' });
+    try {
+      const hit = await ttsRow(q.id, q.voice, true);
+      if (!hit) return res.status(404).json({ error: 'Not generated yet' });
+      res.set({
+        'Content-Type': 'audio/wav',
+        'Cache-Control': 'public, max-age=31536000, immutable',
+      });
+      res.send(hit.audio);
+    } catch (e) {
+      fail(res, 'recitation.wav', e);
     }
   });
 

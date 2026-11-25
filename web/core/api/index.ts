@@ -16,6 +16,7 @@ function route<K extends keyof Api>(key: K, domain: Domain): Api[K] {
 export const api: Api = {
   poems: route('poems', 'poems'),
   ai: route('ai', 'ai'),
+  tts: route('tts', 'tts'),
   poets: route('poets', 'poets'),
   explore: route('explore', 'explore'),
   profile: route('profile', 'profile'),

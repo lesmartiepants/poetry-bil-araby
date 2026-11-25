@@ -93,6 +93,7 @@ jobs:
         run: psql "$LOCAL_DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/redesign2_rules.sql
       - name: Start API
         working-directory: .
+        env: { TTS_FAKE: '1' } # recitation returns a quiet tone: no Gemini key in CI
         run: node server.js > /tmp/server.log 2>&1 &
       - run: npm ci && npx playwright install --with-deps chromium && npm run tokens
       - name: Live journeys (only domains already live)

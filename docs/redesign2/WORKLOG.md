@@ -32,7 +32,7 @@ Standing instructions from the user (2026-11-24). Re-read this before each step.
 
 ## Still needed for a complete app (not covered by steps 1–6)
 
-- [ ] 7. Recitation live: flip `tts` to live, verify the player against real Gemini audio in production.
+- [~] 7. Recitation live (branch claude/redesign2-tts-live): `tts` is live; server generates Gemini TTS once per poem and voice (`poem_audio`), `pauseLines` honoured. Needs in production: migration 20261125000001, `GEMINI_API_KEY` on Render, then a real listen.
 - [ ] 8. Rest of V3: the full first-run flow (only step 0 exists), "the rest of You", settings steering doors and Next poem.
 - [ ] 9. Editorial content complete in production: 4 journeys, 24 collections, a featured poem a day, step names, poet regions.
 - [ ] 10. Short share links (`share_slug`, `/p/<slug>`): production data write, ask first.
@@ -40,4 +40,4 @@ Standing instructions from the user (2026-11-24). Re-read this before each step.
 - [ ] 12. Production smoke tests: a `@prod` journey run against the deployed `/new` (read, keep signed in, share image, journey step).
 - [ ] 13. Real-phone pass: iOS Safari and Android Chrome (safe areas, share sheet, audio autoplay, keyboard).
 - [ ] 14. Cut-over: the new app at `/`, old app retired, once every V3 "done when" passes.
-- [ ] Minor: QA 2.5 click selector, `pauseLines` honoured by playback.
+- [ ] Minor: QA 2.5 click selector.

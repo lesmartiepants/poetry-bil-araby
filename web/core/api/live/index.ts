@@ -1,6 +1,6 @@
 // Live implementations, filled in slice by slice. A domain flips to 'live' in
 // core/sources.ts only once its methods here are real.
-import type { Api } from '../contract';
+import type { Api, Recitation } from '../contract';
 import { NotFoundError } from '../contract';
 import { mockApi } from '../mock';
 import { steerQuery } from '../../logic/guide';
@@ -39,6 +39,12 @@ export const liveApi: Api = {
     get: (id) => getJSON<Poem>(`/api/v2/poems/${encodeURIComponent(id)}`, 'poem'),
     next: (exclude, prefs) => getJSON<PoemSummary>(`/api/v2/poems/next?${new URLSearchParams([['exclude', exclude.join(',')], ...new URLSearchParams(steerQuery(prefs))])}`, 'poem'),
     list: (f) => getJSON<PoemSummary[]>(`/api/v2/poems${qs({ feeling: f.feeling, era: f.era, band: f.band, poet: f.poet })}`),
+  },
+  tts: {
+    async recitation(poemId, voice) {
+      const r = await getJSON<Recitation>(`/api/v2/poems/${encodeURIComponent(poemId)}/recitation?voice=${encodeURIComponent(voice)}`, 'recitation');
+      return { ...r, url: r.url ? `${base}${r.url}` : null };
+    },
   },
   ai: {
     ...mockApi.ai,

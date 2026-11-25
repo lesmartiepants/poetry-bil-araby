@@ -43,6 +43,28 @@ describe('image doors', () => {
     expect(chosen.map(({ kind, row }) => [kind, row.id])).toEqual([
       ['feeling', 3], ['image', 2], ['new', 4],
     ]);
-    expect(wordDoors(chosen, source, 'contemplation')[1].hook).toBe('Stars, this time with pride');
+    expect(wordDoors(chosen, source, 'contemplation').map(({ connection }) => connection)).toEqual([
+      { kind: 'feeling', label: 'Contemplation, in another poet’s voice' },
+      { kind: 'image', label: 'Stars, from contemplation to pride' },
+      { kind: 'new', label: 'A new voice from the Modern era' },
+    ]);
+  });
+
+  it('uses the selected rule and available catalog labels for factual connections', () => {
+    const picks = wordDoors([
+      { kind: 'full', row: source },
+      { kind: 'poet', row: source },
+      { kind: 'poet', row: { ...source, poet_en: '', poet_ar: 'أبو البقاء الرندي' } },
+      { kind: 'image', row: { ...target, mood_primary: 'amorous', mood_label: 'amorous' } },
+      { kind: 'new', row: { ...target, era_key: 'unspecified' } },
+    ], source, 'contemplation');
+
+    expect(picks.map(({ connection }) => connection.label)).toEqual([
+      'The full poem behind this excerpt',
+      'Another poem by Al-Rundī',
+      'Another poem by أبو البقاء الرندي',
+      'Stars, from contemplation to desire',
+      'A different voice',
+    ]);
   });
 });

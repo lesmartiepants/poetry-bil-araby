@@ -200,11 +200,10 @@ export function chooseDoors(me, pools, n = 3) {
 /** The guide's own words for a set of chosen doors; "somewhere new" varies its wording down the set. */
 export function wordDoors(chosen, me, mood) {
   let nth = 0;
-  return chosen.map(({ kind, row }) => ({
-    kind,
-    row,
-    ...doorWords(kind, me, row, mood, kind === 'new' ? nth++ : 0),
-  }));
+  return chosen.map(({ kind, row }) => {
+    const { label, hook, reason } = doorWords(kind, me, row, mood, kind === 'new' ? nth++ : 0);
+    return { row, connection: { kind, label }, hook, reason };
+  });
 }
 
 /** The guide's own words for a door. */
@@ -213,9 +212,17 @@ export function doorWords(kind, me, r, mood, nth = 0) {
   const title = r.title_en || r.title;
   switch (kind) {
     case 'full':
-      return { hook: 'The whole poem', reason: `You read an excerpt; here is all of ${title}.` };
-    case 'feeling':
       return {
+        label: 'The full poem behind this excerpt',
+        hook: 'The whole poem',
+        reason: `You read an excerpt; here is all of ${title}.`,
+      };
+    case 'feeling': {
+      const feeling = feelingName(me);
+      return {
+        label: feeling
+          ? `${feeling[0].toUpperCase()}${feeling.slice(1)}, in another poet’s voice`
+          : 'Same feeling, another poet',
         hook: mood
           ? era
             ? `Also ${mood}, from the ${era} age`
@@ -223,14 +230,23 @@ export function doorWords(kind, me, r, mood, nth = 0) {
           : `Another voice: ${r.poet_en}`,
         reason: `${r.poet_en} on ${mood ? `the same ${mood}` : 'what you just read'}.`,
       };
-    case 'poet':
-      return { hook: `More from ${r.poet_en}`, reason: `The same hand, in ${title}.` };
+    }
+    case 'poet': {
+      const poet = r.poet_en || r.poet_ar;
+      return {
+        label: poet ? `Another poem by ${poet}` : 'Another poem by this poet',
+        hook: `More from ${r.poet_en}`,
+        reason: `The same hand, in ${title}.`,
+      };
+    }
     case 'image': {
       const image = sharedImage(me, r);
+      const originalFeeling = feelingName(me);
       const feeling = feelingName(r);
       return {
+        label: `${image.label}, from ${originalFeeling} to ${feeling}`,
         hook: `${image.label}, this time with ${feeling}`,
-        reason: `The image carries a different feeling, from ${feelingName(me)} to ${feeling}.`,
+        reason: `The image carries a different feeling, from ${originalFeeling} to ${feeling}.`,
       };
     }
     default: {
@@ -240,6 +256,7 @@ export function doorWords(kind, me, r, mood, nth = 0) {
         `Or try ${r.poet_en}`,
       ];
       return {
+        label: era ? `A new voice from the ${era} era` : 'A different voice',
         hook: hooks[Math.min(nth, 2)],
         // Reasons vary down the set too, so several "somewhere new" doors never read the same.
         reason: [
@@ -262,13 +279,4 @@ export function uniqueHooks(doors) {
     seen.add(hook.toLowerCase());
     return { ...d, hook };
   });
-}
-
-/** Gemini's door text, kept only when it follows the brief: a hook under 8 words and a one-line reason. */
-export function cleanDoorText(x) {
-  if (!x || typeof x.hook !== 'string' || typeof x.reason !== 'string') return null;
-  const hook = x.hook.replace(/["“”]/g, '').trim();
-  const reason = x.reason.replace(/\s+/g, ' ').trim();
-  if (!hook || hook.split(/\s+/).length >= 8 || !reason || reason.length > 160) return null;
-  return { hook, reason };
 }

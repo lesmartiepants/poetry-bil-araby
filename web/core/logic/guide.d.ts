@@ -1,5 +1,5 @@
 // Types for guide.js (plain JavaScript so the server can import it).
-import type { Prefs } from '../types';
+import type { DoorConnection, Prefs } from '../types';
 
 /** A poem as the server reads it; the mock maps its fixtures to the same shape. */
 export interface GuideRow {
@@ -8,6 +8,7 @@ export interface GuideRow {
   title_en?: string;
   poet_id: string | number;
   poet_en: string;
+  poet_ar?: string;
   era_id?: string | number | null;
   era_key?: string | null;
   mood_primary?: string | null;
@@ -23,7 +24,7 @@ export interface Steer {
   length: 'any' | 'short' | 'long';
   feelings: string[];
 }
-export type DoorKind = 'full' | 'feeling' | 'poet' | 'image' | 'new';
+export type DoorKind = DoorConnection['kind'];
 type BandOf = (score: number | null | undefined, row: GuideRow) => string;
 
 export const ERA_NAMES: Record<string, string>;
@@ -34,7 +35,6 @@ export function guideScore(r: GuideRow, steer: Steer, bandOf?: BandOf): number;
 export function byFit<T extends GuideRow>(rows: T[], steer: Steer, bandOf?: BandOf): T[];
 export function doorPools<T extends GuideRow>(me: T, near: T[], anywhere: T[], full?: T | null, images?: T[]): Record<DoorKind, T[] | T | null>;
 export function chooseDoors<T extends GuideRow>(me: T, pools: Partial<Record<DoorKind, T[] | T | null>>, n?: number): { kind: DoorKind; row: T }[];
-export function doorWords(kind: DoorKind, me: GuideRow, r: GuideRow, mood: string | null, nth?: number): { hook: string; reason: string };
-export function wordDoors<T extends GuideRow>(chosen: { kind: DoorKind; row: T }[], me: GuideRow, mood: string | null): { kind: DoorKind; row: T; hook: string; reason: string }[];
+export function doorWords(kind: DoorKind, me: GuideRow, r: GuideRow, mood: string | null, nth?: number): { label: string; hook: string; reason: string };
+export function wordDoors<T extends GuideRow>(chosen: { kind: DoorKind; row: T }[], me: GuideRow, mood: string | null): { row: T; connection: DoorConnection; hook: string; reason: string }[];
 export function uniqueHooks<D extends { hook: string; poem: { poetEn: string; titleEn: string } }>(doors: D[]): D[];
-export function cleanDoorText(x: unknown): { hook: string; reason: string } | null;

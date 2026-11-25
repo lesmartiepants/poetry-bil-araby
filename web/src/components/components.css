@@ -395,13 +395,22 @@ button.see-all {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  overflow-wrap: anywhere;
 }
-.door-card__hook {
+.door-card__title {
   font-size: 14px;
+  font-weight: 600;
   color: var(--c-text);
 }
-.door-card__sub {
+.door-card__connection,
+.door-card__poet {
   font-size: 12px;
+  line-height: 1.4;
+}
+.door-card__connection {
+  color: var(--c-accent);
+}
+.door-card__poet {
   color: var(--c-muted);
 }
 .door-card--path {
@@ -412,7 +421,7 @@ button.see-all {
   height: 38px;
   border-radius: 9px;
 }
-.door-card--path .door-card__sub {
+.door-card--path .door-card__poet {
   font-size: 11px;
 }
 .door-card--finished {
@@ -425,19 +434,12 @@ button.see-all {
   height: 64px;
   border-radius: 12px;
 }
-.door-card--finished .door-card__hook {
+.door-card--finished .door-card__title {
   font-size: 15px;
 }
 .door-card--finished .door-card__text {
   gap: 4px;
 }
-.door-card--finished .door-card__sub {
+.door-card--finished .door-card__connection {
   font-size: 13px;
-  line-height: 1.4;
-}
-.door-card__ar {
-  flex: none;
-  font-family: var(--font-amiri);
-  font-size: 15px;
-  color: var(--c-accent);
 }

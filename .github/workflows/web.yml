@@ -2,9 +2,9 @@ name: web (ReDesign2)
 
 on:
   push:
-    paths: ['web/**', 'server.js', 'server/**', 'supabase/**', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
+    paths: ['web/**', 'server.js', 'server/**', 'supabase/**', 'scripts/db-*.sh', 'package.json', 'package-lock.json', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
   pull_request:
-    paths: ['web/**', 'server.js', 'server/**', 'supabase/**', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
+    paths: ['web/**', 'server.js', 'server/**', 'supabase/**', 'scripts/db-*.sh', 'package.json', 'package-lock.json', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
 
 permissions:
   contents: read
@@ -21,6 +21,7 @@ jobs:
   check:
     name: Typecheck, lint, unit, build
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -35,6 +36,7 @@ jobs:
   journeys:
     name: Journey tests (mock data)
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     needs: check
     steps:
       - uses: actions/checkout@v4
@@ -44,8 +46,10 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run tokens
       - run: npm run test:journeys -- --trace off
+      # Advisory, never gating: fonts and data differ from the frames. Review the contact sheet per slice.
       - name: Mock QA contact sheet
         if: always()
+        continue-on-error: true
         run: npm run qa:mocks
       - uses: actions/upload-artifact@v4
         if: always()
@@ -57,6 +61,7 @@ jobs:
   live-smoke:
     name: Journey tests (live, local server + Postgres)
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     needs: check
     services:
       postgres:
@@ -86,4 +91,34 @@ jobs:
         run: node server.js > /tmp/server.log 2>&1 &
       - run: npm ci && npx playwright install --with-deps chromium && npm run tokens
       - name: Live journeys (only domains already live)
-        run: npm run test:journeys:live -- --trace off --pass-with-no-tests
+        # No --pass-with-no-tests: a grep that matches nothing must fail, not pass silently.
+        run: npm run test:journeys:live -- --trace off
+
+  live-supabase:
+    # The @live @supabase journeys: per-user data through real Supabase auth, RLS and triggers
+    # (keeps and lists across devices, settings, follows and reads, journey progress, isolation).
+    # Advisory until it has been green on a few runs; then drop continue-on-error.
+    name: Journey tests (live, local Supabase auth + RLS)
+    runs-on: ubuntu-24.04
+    needs: check
+    timeout-minutes: 20
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.109.1 # same pin as deploy.yml
+      - name: Start local Supabase (applies supabase/migrations)
+        working-directory: .
+        run: supabase start -x studio,imgproxy,edge-runtime,functions,analytics,vector,realtime,storage,inbucket
+      - name: Server deps
+        working-directory: .
+        run: npm ci
+      - run: npm ci && npx playwright install --with-deps chromium && npm run tokens
+      - name: Supabase journeys
+        run: scripts/live-supabase.sh --grep @supabase --trace off
+      - name: API log
+        if: failure()
+        run: tail -n 200 /tmp/redesign2-api.log || true

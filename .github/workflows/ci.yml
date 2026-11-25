@@ -31,12 +31,14 @@ jobs:
     name: Detect Changed Files
     runs-on: ubuntu-24.04
     outputs:
-      code-changed: ${{ steps.filter.outputs.code }}
+      code-changed: ${{ steps.filter.outputs.code == 'true' || steps.design.outputs.design == 'true' }}
       tests-changed: ${{ steps.filter.outputs.tests }}
       config-changed: ${{ steps.filter.outputs.config }}
     steps:
       - uses: actions/checkout@v4
 
+      # The old app only. ReDesign2 (web/, server/, its canvas export) has its own workflow,
+      # web.yml; server.js is shared, so it triggers both.
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -45,11 +47,9 @@ jobs:
               - 'src/**'
               - 'index.html'
               - 'server.js'
-              - 'design-review/**'
             tests:
               - 'src/test/**'
               - 'e2e/**'
-              - '**/*.test.{js,jsx,ts,tsx}'
               - 'vitest.config.js'
               - 'playwright.config.js'
               - 'playwright.config.full.js'
@@ -58,7 +58,17 @@ jobs:
               - 'vite.config.js'
               - 'tailwind.config.js'
               - 'postcss.config.js'
-              - '.github/workflows/**'
+              - '.github/workflows/ci.yml'
+
+      # design-review/ prototypes, except the ReDesign2 canvas export (design-refresh/).
+      - uses: dorny/paths-filter@v3
+        id: design
+        with:
+          predicate-quantifier: every
+          filters: |
+            design:
+              - 'design-review/**'
+              - '!design-review/design-refresh/**'
 
   # Stage 0b: Feature-manifest drift gate (fast, no deps — pure Node built-ins)
   manifest-check:

@@ -23,6 +23,16 @@ export interface AiApi {
   /** 2.17 The guide's three doors, steered by the guide's settings. */
   doors(poemId: string, prefs?: Prefs): Promise<Door[]>;
 }
+/** A recitation: one audio file for the whole poem, with the second each verse line begins. */
+export interface Recitation {
+  /** Absolute URL of the audio; null where nothing is generated (mocks), so the player keeps time itself. */
+  url: string | null;
+  lineStarts: number[];
+  duration: number;
+}
+export interface TtsApi {
+  recitation(poemId: string, voice: string): Promise<Recitation>;
+}
 export interface PoetsApi {
   list(): Promise<Poet[]>;
   get(slug: string): Promise<Poet>;
@@ -83,6 +93,7 @@ export interface ShareApi {
 export interface Api {
   poems: PoemsApi;
   ai: AiApi;
+  tts: TtsApi;
   poets: PoetsApi;
   explore: ExploreApi;
   profile: ProfileApi;

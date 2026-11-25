@@ -28,7 +28,12 @@ import { readFileSync } from 'fs';
 import WebSocket from 'ws';
 import { buildLiveWordTimings } from './src/utils/liveWordTiming.js';
 import { resolveProfile, curationSql } from './curation.js';
-import { registerRedesign2, devEventsMiddleware, geminiText } from './server/redesign2.js';
+import {
+  registerRedesign2,
+  devEventsMiddleware,
+  geminiText,
+  geminiTts,
+} from './server/redesign2.js';
 
 const { Pool } = pg;
 const app = express();
@@ -3683,6 +3688,7 @@ registerRedesign2(app, {
   contentExpr: poemContentExpr,
   servingFilters,
   gemini: geminiText,
+  tts: geminiTts,
 });
 
 // Sentry Express error handler (must be after all routes)

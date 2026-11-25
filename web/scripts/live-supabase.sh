@@ -11,7 +11,7 @@ eval "$(supabase status -o env | grep -E '^(API_URL|ANON_KEY|DB_URL)=')"
 psql "$DB_URL" -q -v ON_ERROR_STOP=1 -f supabase/seed/fixtures.sql 2>/dev/null || true
 psql "$DB_URL" -q -f web/journeys/live-seed.sql
 psql "$DB_URL" -q -v ON_ERROR_STOP=1 -c "update auth.users set email_confirmed_at = coalesce(email_confirmed_at, now())" >/dev/null
-API_RATE_LIMIT_PER_MIN=100000 DATABASE_URL="$DB_URL?sslmode=disable" PORT=$API_PORT node server.js > /tmp/redesign2-api.log 2>&1 &
+TTS_FAKE=1 API_RATE_LIMIT_PER_MIN=100000 DATABASE_URL="$DB_URL?sslmode=disable" PORT=$API_PORT node server.js > /tmp/redesign2-api.log 2>&1 &
 API=$!
 trap 'kill $API 2>/dev/null' EXIT
 for _ in $(seq 1 30); do curl -sf localhost:$API_PORT/api/health >/dev/null && break; sleep 1; done

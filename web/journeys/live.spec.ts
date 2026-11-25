@@ -120,4 +120,61 @@ test.describe('@live V3 against the real API', () => {
     expect(png.readUInt32BE(20)).toBe(1350);
     expect((await request.get(`${API}/api/v2/poems/24/card.png?lines=99`)).status()).toBe(400);
   });
+  // V7 recitation. The server runs with TTS_FAKE=1 (a quiet tone), so no Gemini key is needed.
+  test('@live 3.1 a recitation is generated once, stored, and served as audio', async ({ request }) => {
+    const url = `${API}/api/v2/poems/24/recitation?voice=Orus`;
+    const first = await request.get(url);
+    expect(first.status()).toBe(200);
+    const r = await first.json();
+    expect(r.lineStarts).toHaveLength(3);
+    expect(r.duration).toBeGreaterThan(0);
+    expect((await (await request.get(url)).json()).cached).toBe(true);
+    const wav = await request.get(`${API}${r.url}`);
+    expect(wav.headers()['content-type']).toBe('audio/wav');
+    expect((await wav.body()).subarray(0, 4).toString()).toBe('RIFF');
+    expect((await request.get(`${API}/api/v2/poems/24/recitation?voice=Nobody`)).status()).toBe(400);
+    expect((await request.get(`${API}/api/v2/poems/999999/recitation?voice=Orus`)).status()).toBe(404);
+  });
+
+  test('@live 3.2 listening plays the real recitation line by line to the end', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./p/24');
+    const audio = page.waitForResponse((r) => r.url().includes('/recitation.wav'));
+    await page.getByRole('button', { name: /LISTEN/ }).click();
+    expect((await audio).status()).toBe(200);
+    const player = page.getByRole('navigation', { name: 'Now playing' });
+    await expect(player.getByText('LINE 1 OF 3')).toBeVisible();
+    await expect(player.getByText('LINE 2 OF 3')).toBeVisible({ timeout: 8000 });
+    await player.getByRole('button', { name: 'Pause' }).click();
+    await expect(player.getByRole('button', { name: 'Play' })).toBeVisible();
+    await player.getByRole('button', { name: 'Play' }).click();
+    await expect(player).toHaveCount(0, { timeout: 10_000 }); // the recitation ended
+  });
+
+  test('@live 3.8 a recitation that will not load offers Try again, and it recovers', async ({ page }) => {
+    await fresh(page);
+    await page.route('**/recitation?*', (route) => route.fulfill({ status: 500, json: { error: 'x' } }));
+    await page.goto('./p/24');
+    await page.getByRole('button', { name: /LISTEN/ }).click();
+    const note = page.getByRole('button', { name: /The recitation won’t load/ });
+    await expect(note).toBeVisible();
+    await page.unroute('**/recitation?*');
+    await note.click();
+    await expect(page.getByRole('navigation', { name: 'Now playing' })).toBeVisible();
+  });
+  test('@live 12.6 Pause between lines holds a breath after each bayt', async ({ page, request }) => {
+    const { lineStarts } = await (await request.get(`${API}/api/v2/poems/24/recitation?voice=Zephyr`)).json();
+    await fresh(page);
+    await page.goto('./you/reciter');
+    await page.getByRole('switch', { name: 'Pause between lines' }).click();
+    await page.evaluate(() => { history.pushState({}, '', '/new/p/24'); dispatchEvent(new PopStateEvent('popstate')); });
+    await page.getByRole('button', { name: /LISTEN/ }).click();
+    const player = page.getByRole('navigation', { name: 'Now playing' });
+    await expect(player.getByText('LINE 1 OF 3')).toBeVisible();
+    const t0 = Date.now();
+    // The audio clock in headless Chromium on a loaded runner can lag; the lower bound below is what the test is about.
+    await expect(player.getByText('LINE 3 OF 3')).toBeVisible({ timeout: 30_000 });
+    // Without breaths, line 3 begins lineStarts[2] seconds in; with one before it, about 0.9 s later.
+    expect((Date.now() - t0) / 1000).toBeGreaterThan(lineStarts[2] + 0.6);
+  });
 });

@@ -179,7 +179,8 @@ export function PoemTile({ poem, href, small }: { poem: PoemSummary; href?: stri
 export function DoorCard({ door, size = 'end' }: { door: Door; size?: 'end' | 'path' | 'finished' }) {
   const finished = size === 'finished';
   return (
-    <Link href={`/p/${door.poem.slug}`} className={`door-card door-card--${size}`}>
+    <Link href={`/p/${door.poem.slug}`} className={`door-card door-card--${size}`}
+      onClick={() => requestAnimationFrame(() => window.scrollTo(0, 0))}>
       <span className="door-card__art panel"><Pattern {...eraArt(door.poem.eraKey)} scale={finished ? 0.55 : 0.45} /></span>
       <span className="door-card__text">
         <span className="door-card__hook">{door.hook}</span>

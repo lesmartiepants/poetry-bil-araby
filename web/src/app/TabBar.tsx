@@ -10,17 +10,20 @@ const TABS = [
   { href: '/you', label: 'You', match: ['/you'], icon: () => <Person /> },
 ];
 
-export function TabBar() {
+export function TabBar({ inReader = false }: { inReader?: boolean } = {}) {
   const [loc] = useLocation();
   const toggle = useDevPanel((s) => s.toggleTab);
   const press = useLongPress(() => DEV_PANEL_ENABLED && toggle());
   return (
-    <nav aria-label="Main" className="tabbar" {...press} data-testid="tabbar">
+    <nav aria-label="Main" className={inReader ? 'tabbar tabbar--reader' : 'tabbar'} {...press} data-testid="tabbar">
       {TABS.map((t) => {
         const on = t.match.some((m) => loc === m || loc.startsWith(`${m}/`));
+        const home = inReader && t.href === '/journey';
+        const label = home ? 'Home' : t.label;
         return (
-          <Link key={t.href} href={t.href} className="tabbar__tab" aria-label={t.label} aria-current={on ? 'page' : undefined}>
-            {t.icon(on)}{on && t.label.toUpperCase()}
+          <Link key={t.href} href={home ? '/' : t.href} className="tabbar__tab" aria-label={label} aria-current={on ? 'page' : undefined}
+            onClick={inReader ? () => requestAnimationFrame(() => window.scrollTo(0, 0)) : undefined}>
+            {t.icon(on)}{inReader ? label : on && label.toUpperCase()}
           </Link>
         );
       })}

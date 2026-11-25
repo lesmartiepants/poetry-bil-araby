@@ -488,6 +488,14 @@ a {
   font-size: 12px;
   letter-spacing: 0.14em;
 }
+.tabbar--reader .tabbar__tab {
+  flex: 1;
+  width: auto;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
 .tabbar__tab[aria-current='page'] {
   width: auto;
   padding: 0 16px;

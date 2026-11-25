@@ -72,6 +72,41 @@ test.describe('Area 2 · Reading', () => {
     await expect(page).toHaveURL(/unshudat-al-matar/);
   });
 
+  test('the reader tabs offer Home after following the Guide through several poems', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./');
+    await expect(page).toHaveURL(/\/new\/journey$/);
+    await page.getByRole('link', { name: 'Explore', exact: true }).click();
+    await page.getByRole('link', { name: /Longing/ }).first().click();
+    await page.locator('a[href$="/p/amurru"]').first().click();
+    await expect(page).toHaveURL(/\/new\/p\/amurru$/);
+    const tabs = page.getByRole('navigation', { name: 'Main' });
+    const guide = page.getByRole('region', { name: 'Where the guide would take you next' });
+    const scrollTop = () => page.evaluate(() => window.scrollY);
+    const toBottom = () => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect(tabs).toHaveCount(0);
+
+    for (let step = 0; step < 2; step++) {
+      const doors = guide.getByRole('link');
+      await expect(doors).toHaveCount(3);
+      await toBottom();
+      await expect(tabs.getByRole('link', { name: 'Home' })).toBeInViewport();
+      const next = doors.nth(step);
+      const href = await next.getAttribute('href');
+      await next.click();
+      await expect(page).toHaveURL(new URL(href!, page.url()).href);
+      await expect.poll(scrollTop).toBe(0);
+      await expect(tabs).toHaveCount(0);
+    }
+
+    await expect(guide.getByRole('link')).toHaveCount(3);
+    await toBottom();
+    await tabs.getByRole('link', { name: 'Home' }).click();
+    await expect(page).toHaveURL(/\/new\/journey$/);
+    await expect.poll(scrollTop).toBe(0);
+    await expect(page.getByRole('link', { name: 'Enter the poem' })).toBeVisible();
+  });
+
   test('2.2–2.3 scrolling folds the dock into the mark, which opens the fan', async ({ page }) => {
     await fresh(page);
     await page.goto('./p/amurru');

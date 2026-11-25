@@ -1,6 +1,12 @@
-.reader {
-  padding-bottom: 140px;
+.screen.reader {
+  padding-bottom: 186px;
   min-height: calc(100dvh + 160px);
+}
+.reader--end-navigation {
+  --reader-tab-offset: 76px;
+}
+.reader__end-marker {
+  height: 1px;
 }
 .reader__top {
   display: flex;
@@ -43,7 +49,7 @@
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 34px;
+  bottom: calc(34px + var(--reader-tab-offset, 0px));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -81,7 +87,7 @@
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 30px;
+  bottom: calc(30px + var(--reader-tab-offset, 0px));
   width: min(358px, calc(100vw - 32px));
   height: 64px;
   border-radius: 32px;
@@ -134,7 +140,7 @@
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 0;
+  bottom: var(--reader-tab-offset, 0px);
   width: 390px;
   height: 260px;
   z-index: 42;

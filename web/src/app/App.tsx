@@ -87,7 +87,7 @@ function Routes() {
         <Route path="/journey/finished/:id">{(p) => <Gate domains={['journey', 'ai']} title="Tonight’s poem"><FinishedScreen id={p.id} /></Gate>}</Route>
         <Route path="/journey/:slug/done/:step">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><StepDone slug={p.slug} step={Number(p.step)} /></Gate>}</Route>
         <Route path="/journey/:slug">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><JourneyScreen slug={p.slug} /></Gate>}</Route>
-        <Route path="/p/:id">{(p) => <Gate domains={['poems']} title="The reader"><ReaderScreen key={p.id} id={p.id} Player={Player} defaultVoice={voice} /></Gate>}</Route>
+        <Route path="/p/:id">{(p) => <Gate domains={['poems']} title="The reader"><ReaderScreen key={p.id} id={p.id} Player={Player} defaultVoice={voice} endNavigation={<TabBar inReader />} /></Gate>}</Route>
         <Route path="/explore">{() => <Gate domains={['explore', 'poets']} title="Explore"><ExploreHub /></Gate>}</Route>
         <Route path="/explore/poets">{() => <Gate domains={['poets']} title="All poets"><AllPoets /></Gate>}</Route>
         <Route path="/explore/feelings">{() => <Gate domains={['explore']} title="Feelings"><FeelingShelves /></Gate>}</Route>

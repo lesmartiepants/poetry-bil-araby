@@ -7,7 +7,8 @@ const exe = process.env.PW_CHROMIUM ?? (existsSync('/opt/pw-browsers/chromium') 
 // Journey tests: real flows at phone size, on mock data by default.
 // Mock runs force all-mock data; `test:journeys:live` uses the real sources for live domains.
 const LIVE = process.env.VITE_SOURCES === 'live';
-const PORT = LIVE ? 5181 : 5180;
+// E2E_PORT lets the suite run while a dev server holds the default port.
+const PORT = Number(process.env.E2E_PORT) || (LIVE ? 5181 : 5180);
 export default defineConfig({
   testDir: './journeys',
   timeout: 30_000,

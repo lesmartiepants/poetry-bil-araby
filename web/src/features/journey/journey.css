@@ -1,12 +1,11 @@
+/* Same spot as the tab bar over Tonight's hero, so switching tabs doesn't move it. */
 .journey__top {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  padding: 20px 22px 0;
+  padding: 52px 22px 0;
 }
-.journey__top .seg {
-  width: 240px;
+.journey-tabs .seg--pill {
+  height: 42px;
+  background: rgba(10, 10, 13, 0.55);
+  border-color: rgba(232, 204, 138, 0.35);
 }
 .journey-card {
   border-radius: 16px;
@@ -17,13 +16,25 @@
   text-decoration: none;
   color: #ede3cf;
 }
+/* Two titles side by side, each wrapping in its own column with a gutter between. */
+.journey-card__titles {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
 .journey-card__en {
+  flex: 1 1 0;
+  min-width: 0;
   font-family: var(--font-serif);
   font-size: 21px;
 }
 .journey-card__ar {
+  flex: 1 1 0;
+  min-width: 0;
+  text-align: right;
   font-family: var(--font-ruqaa);
   font-size: 20px;
+  line-height: 1.5;
   color: #e8cc8a;
 }
 .journey-card__meta {
@@ -119,11 +130,6 @@
   left: 22px;
   right: 22px;
   top: 52px;
-}
-.tonight__tabs .seg--pill {
-  height: 42px;
-  background: rgba(10, 10, 13, 0.55);
-  border-color: rgba(232, 204, 138, 0.35);
 }
 .tonight__title {
   position: absolute !important;

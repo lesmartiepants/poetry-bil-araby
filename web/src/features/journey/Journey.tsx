@@ -49,8 +49,8 @@ export function TonightScreen() {
       onTouchEnd={(e) => { if (startY.current !== null && startY.current - e.changedTouches[0].clientY > 80) nav(href); startY.current = null; }}>
       <div className="tonight__hero panel">
         <Pattern name="pajarita" />
-        <div className="tonight__tabs">
-          <Segmented pill label="Journey" value={tab} onChange={setTab} options={[{ value: 'tonight', label: 'TONIGHT’S POEM' }, { value: 'pathways', label: 'PATHWAYS' }]} />
+        <div className="tonight__tabs journey-tabs">
+          <Segmented pill label="Journey" value={tab} onChange={setTab} options={TABS} />
         </div>
         {t.data && (
           <div className="tonight__title">
@@ -80,6 +80,9 @@ export function TonightScreen() {
   );
 }
 
+/** Tonight and Pathways share one tab bar, in the same place on both. */
+const TABS: { value: 'tonight' | 'pathways'; label: string }[] = [{ value: 'tonight', label: 'TONIGHT’S POEM' }, { value: 'pathways', label: 'PATHWAYS' }];
+
 function Pathways({ onTonight }: { onTonight: () => void }) {
   const journeys = useCollections('journey').data;
   const prog = useProgress().data;
@@ -87,24 +90,24 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
   const doors = useQueries({ queries: [{ queryKey: ['doors', tonight?.poem.id], queryFn: () => api.ai.doors(tonight!.poem.id), enabled: !!tonight }] })[0].data;
   return (
     <div className="screen journey">
-      <header className="journey__top"><Mark size={26} colour="var(--c-accent)" /><Segmented pill label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={[{ value: 'tonight', label: 'TONIGHT' }, { value: 'pathways', label: 'PATHWAYS' }]} /></header>
+      <header className="journey__top journey-tabs"><Segmented pill label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={TABS} /></header>
       <main className="pad stack gap-12" style={{ paddingTop: 20 }}>
-        <p className="t-eyebrow t-eyebrow--accent">THREE DOORS</p>
+        <p className="t-eyebrow t-eyebrow--accent">JOURNEYS</p>
+        {journeys?.map((j) => {
+          const p = prog?.find((x) => x.slug === j.slug);
+          return (
+            <Link key={j.slug} href={`/journey/${j.slug}`} className="journey-card" style={{ background: j.colour }}>
+              <span className="journey-card__titles"><span className="journey-card__en">{j.titleEn}</span><span lang="ar" dir="rtl" className="journey-card__ar">{j.titleAr}</span></span>
+              <span className="journey-card__meta">{j.poemIds.length} {j.stepEn.toUpperCase()}S{p ? ` · ${p.position} DONE` : ''}</span>
+            </Link>
+          );
+        })}
+        <p className="t-eyebrow t-eyebrow--accent mt-12">THREE DOORS</p>
         {doors?.map((d) => (
           <Link key={d.poem.id} href={`/p/${d.poem.slug}`} className="door">
             <span className="door__hook">{d.hook}</span><span lang="ar" className="door__ar">{d.poem.titleAr}</span><span className="door__meta">{d.poem.poetEn} · {d.reason}</span>
           </Link>
         ))}
-        <p className="t-eyebrow t-eyebrow--accent mt-12">JOURNEYS</p>
-        {journeys?.map((j) => {
-          const p = prog?.find((x) => x.slug === j.slug);
-          return (
-            <Link key={j.slug} href={`/journey/${j.slug}`} className="journey-card" style={{ background: j.colour }}>
-              <span className="row between"><span className="journey-card__en">{j.titleEn}</span><span lang="ar" className="journey-card__ar">{j.titleAr}</span></span>
-              <span className="journey-card__meta">{j.poemIds.length} {j.stepEn.toUpperCase()}S{p ? ` · ${p.position} DONE` : ''}</span>
-            </Link>
-          );
-        })}
       </main>
     </div>
   );

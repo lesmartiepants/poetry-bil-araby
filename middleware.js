@@ -54,7 +54,7 @@ export default async function middleware(request) {
     title: defaultShareTitle,
     description: siteDescription,
     image: new URL('/link-preview.png', url.origin).href,
-    alt: `Gold mark above ${shareBrand}`,
+    alt: 'Gold mark above شعر بالعربي and poetry in Arabic',
     width: 1200,
     height: 630,
   };

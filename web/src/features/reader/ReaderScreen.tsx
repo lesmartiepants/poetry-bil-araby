@@ -13,7 +13,7 @@ import { useOverlay } from '@components/overlays';
 import { usePlayback } from '@components/playback';
 import './reader.css';
 
-export interface PlayerSlotProps { poem: Poem; compact: boolean; onMark: () => void; onExpand: () => void }
+export interface PlayerSlotProps { poem: Poem; onMark: () => void }
 
 export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNavigation }: {
   id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; onLongPressMark?: Record<string, unknown>; endNavigation: (visible: boolean) => ReactNode;
@@ -28,6 +28,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
   const poemEnd = useRef<HTMLDivElement>(null);
   const [endInView, setEndInView] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [scrollingUp, setScrollingUp] = useState(false);
   const [progress, setProgress] = useState(0);
   const open = useOverlay((s) => s.open);
   const showToast = useOverlay((s) => s.showToast);
@@ -35,10 +36,18 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
   const inv = useInvalidate();
 
   useEffect(() => {
+    let previousY = window.scrollY;
+    let previousHeight = document.documentElement.scrollHeight;
     const on = () => {
-      setScrolled(window.scrollY > 80);
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(max > 0 ? Math.min(100, Math.round((window.scrollY / max) * 100)) : 0);
+      const height = document.documentElement.scrollHeight;
+      const max = Math.max(0, height - window.innerHeight);
+      const y = Math.min(max, Math.max(0, window.scrollY));
+      // Guide loading can move the scroll position. Only track direction on a stable layout.
+      if (height === previousHeight && y !== previousY) setScrollingUp(y < previousY);
+      previousY = y;
+      previousHeight = height;
+      setScrolled(y > 80);
+      setProgress(max > 0 ? Math.round((y / max) * 100) : 0);
     };
     on();
     window.addEventListener('scroll', on, { passive: true });
@@ -70,7 +79,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
   const listening = pb.poemId === poem.id && pb.status !== 'idle';
   const marks = prefs?.vowelMarks ?? true;
   const under = prefs?.under ?? 'english';
-  const showEndNavigation = progress > 0 && endInView;
+  const showEndNavigation = progress > 0 && endInView && !scrollingUp;
 
   const startListening = (fromLine = 0) => {
     pb.send({ type: 'PLAY', poemId: poem.id, lineCount: poem.lines.length, voice: pb.voice !== 'Zephyr' ? pb.voice : defaultVoice, fromLine });
@@ -121,8 +130,8 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
       {endNavigation(showEndNavigation)}
 
       {listening ? (
-        <Player poem={poem} compact={scrolled} onMark={() => setSheet('fan')} onExpand={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
-      ) : scrolled ? (
+        <Player poem={poem} onMark={() => setSheet('fan')} />
+      ) : showEndNavigation || (scrolled && !scrollingUp) ? (
         <div className="reader__fold">
           <button className="reader__mark" aria-label="Actions" onClick={() => setSheet('fan')} {...onLongPressMark}><Mark size={34} colour="var(--c-accent)" /></button>
           <span className="reader__progress" aria-hidden><span style={{ width: `${progress}%` }} /></span>

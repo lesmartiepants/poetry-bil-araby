@@ -55,19 +55,29 @@ test.describe('Area 3 · Listening', () => {
     await expect(page.getByRole('alert').filter({ hasText: 'Autonoe isn’t available now. Still reciting in Zephyr.' })).toBeVisible();
   });
 
-  test('3.4–3.6 scrolling shrinks the player to a pill; the fan shows Pause and the recitation keeps going', async ({ page }) => {
+  test('3.4–3.6 scrolling keeps the full listening bar and the recitation keeps going', async ({ page }) => {
     await fresh(page);
     await page.goto('./p/amurru');
     await page.getByRole('button', { name: /LISTEN/ }).click();
     await expect(page.locator('.word--now')).toHaveCount(1, { timeout: 3000 });
-    await page.evaluate(() => window.scrollTo(0, 600));
-    const pill = page.getByRole('navigation', { name: 'Now playing' });
-    await expect(pill).toHaveClass(/player--pill/);
-    await expect(pill.getByRole('button', { name: 'Pause' })).toBeVisible();
-    await pill.getByRole('button', { name: 'More actions' }).click();
+    const player = page.getByRole('navigation', { name: 'Now playing' });
+    const width = await player.evaluate((bar) => bar.getBoundingClientRect().width);
+    const tabs = page.getByRole('navigation', { name: 'Main' });
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect(tabs).toBeVisible();
+    await expect(player.getByRole('button', { name: /ZEPHYR/ })).toBeVisible();
+    expect(await player.evaluate((bar) => bar.getBoundingClientRect().width)).toBe(width);
+    await expect(player.getByRole('button', { name: 'Pause' })).toBeVisible();
+
+    await page.evaluate(() => window.scrollBy(0, -24));
+    await expect(tabs).toHaveCount(0);
+    await expect(player.getByRole('button', { name: /ZEPHYR/ })).toBeVisible();
+    expect(await player.evaluate((bar) => bar.getBoundingClientRect().width)).toBe(width);
+
+    await player.getByRole('button', { name: 'More actions' }).click();
     await expect(page.getByRole('menu', { name: 'Actions' }).getByRole('menuitem', { name: 'Pause' })).toBeVisible();
     await page.getByRole('button', { name: 'Close actions' }).click();
-    await expect(pill.getByText(/LINE 2 OF 4/)).toBeVisible({ timeout: 6000 });
+    await expect(player.getByText(/LINE [2-4] OF 4/)).toBeVisible({ timeout: 6000 });
   });
 
   test('3.9 a recitation that stalls says where it stopped and resumes from there', async ({ page }) => {

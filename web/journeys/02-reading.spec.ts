@@ -148,6 +148,41 @@ test.describe('Area 2 · Reading', () => {
     await expect(page.getByRole('menu', { name: 'Actions' }).getByRole('menuitem', { name: 'Insights' })).toBeVisible();
   });
 
+  test('scrolling up restores the action bar and hides the bottom tabs', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 550 });
+    await fresh(page);
+    await page.goto('./p/amurru');
+    const actions = page.getByRole('navigation', { name: 'Poem actions' });
+    const mark = page.getByRole('button', { name: 'Actions', exact: true });
+    const tabs = page.getByRole('navigation', { name: 'Main' });
+    await expect(actions).toBeVisible();
+    const guide = page.getByRole('region', { name: 'Where the guide would take you next' });
+    await expect(guide.getByRole('link')).toHaveCount(3);
+    await page.evaluate(() => document.fonts.ready);
+    await page.evaluate(() => window.scrollTo(0, 130));
+    await expect(mark).toBeVisible();
+    await expect(tabs).toHaveCount(0);
+    await expect(actions).toHaveCount(0);
+    await page.evaluate(() => window.scrollTo(0, 100));
+    await expect(actions.getByRole('button', { name: /Insights/i })).toBeVisible();
+    await expect(mark).toHaveCount(0);
+
+    const toEnd = () => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await toEnd();
+    await expect(tabs.getByRole('link', { name: 'Explore' })).toBeInViewport();
+    await expect(actions).toHaveCount(0);
+    await page.evaluate(() => window.scrollBy(0, -24));
+    await expect(actions.getByRole('button', { name: /Listen/i })).toBeInViewport();
+    await expect(actions.getByRole('button', { name: /Insights/i })).toBeVisible();
+    await expect(actions.getByRole('button', { name: 'Keep', exact: true })).toBeVisible();
+    await expect(actions.getByRole('button', { name: 'Share', exact: true })).toBeVisible();
+    await expect(tabs).toHaveCount(0);
+    await expect(mark).toHaveCount(0);
+    await toEnd();
+    await expect(tabs.getByRole('link', { name: 'Journey' })).toBeInViewport();
+    await expect(actions).toHaveCount(0);
+  });
+
   test('2.11 a broken link says so and offers Explore', async ({ page }) => {
     await fresh(page);
     await page.goto('./p/no-such-poem');

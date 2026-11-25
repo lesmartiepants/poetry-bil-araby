@@ -9,9 +9,9 @@ import type { Poem, Voice } from '@core/types';
 import { useEngine } from './engine';
 import './listening.css';
 
-export interface PlayerProps { poem: Poem; compact: boolean; onMark: () => void; onExpand: () => void }
+export interface PlayerProps { poem: Poem; onMark: () => void }
 
-export function Player({ poem, compact, onMark, onExpand }: PlayerProps) {
+export function Player({ poem, onMark }: PlayerProps) {
   useEngine(poem);
   const pb = usePlayback();
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -19,15 +19,6 @@ export function Player({ poem, compact, onMark, onExpand }: PlayerProps) {
   const toggle = () => pb.send(pb.status === 'playing' ? { type: 'PAUSE' } : { type: 'RESUME' });
   const segs = poem.lines.length;
 
-  if (compact) {
-    return (
-      <nav aria-label="Now playing" className="player player--pill">
-        <button className="player__mark" aria-label="More actions" onClick={onMark}><Mark size={28} colour="var(--c-accent)" /></button>
-        <button className="player__line" onClick={onExpand} aria-label="Show the player">LINE {pb.line + 1} OF {segs} ⌃</button>
-        <button className="player__pp" aria-label={playing ? 'Pause' : 'Play'} onClick={toggle}>{playing ? <Pause /> : <Play />}</button>
-      </nav>
-    );
-  }
   return (
     <>
       <nav aria-label="Now playing" className="player">

@@ -55,6 +55,8 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await expect(page.getByText(/A poem about loving a place/)).toBeVisible(); // Tonight settled: an earlier click hits a detached tab
     await page.getByRole('radio', { name: 'PATHWAYS' }).click();
     await expect(page.getByRole('link', { name: /Your first seven/ })).toBeVisible();
+    // The editorial subtitle sits under the journey title (it replaced the derived first-to-last-poet span).
+    await expect(page.locator('.journey-row', { hasText: 'Home' })).toContainText('The desert camp to Palestine');
     await expect(page.getByText(/FROM YOUR LAST POEM/)).toHaveCount(0);
     await page.goto('./p/qadhan');
     await page.getByTestId('read-sentinel').scrollIntoViewIfNeeded();
@@ -119,12 +121,12 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await expect(preview).not.toContainText('amurru');
   });
 
-  test('12.8 deleting the account asks first', async ({ page }) => {
+  test('12.8 account only offers supported actions', async ({ page }) => {
     await fresh(page, { 'mock.account': JSON.stringify({ signedIn: true, provider: 'apple' }) });
     await page.goto('./you');
-    await page.getByRole('button', { name: 'Delete account' }).click();
-    await expect(page.getByRole('dialog', { name: 'Delete account' })).toContainText('can’t be undone');
-    await page.getByRole('button', { name: 'KEEP MY ACCOUNT' }).click();
     await expect(page.getByText('Signed in with Apple')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Delete account' })).toHaveCount(0);
+    await page.getByRole('button', { name: 'Sign out' }).click();
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
   });
 });

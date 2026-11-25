@@ -1,12 +1,14 @@
 // Area 6 · Keep and lists (6.1–6.8), opened as overlays from the reader.
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '@core/api';
 import { qk, useAccount, useFeelings, useInvalidate, useLists, usePoem } from '@core/hooks';
 import { ARABIC_LETTERS, autoIconLetter, iconLetterChoices, iconLetterOf } from '@core/logic/iconLetter';
 import type { UserList } from '@core/types';
 import { Sheet } from '@ds/primitives';
 import { Check, Heart, Mark } from '@ds/icons';
-import { useOverlay } from '@components/overlays';
+import { useOverlay, type SignInAction } from '@components/overlays';
+import { forgetSignIn, rememberSignIn } from '@components/signInIntent';
+import { sourceOf } from '@core/sources';
 import './keep.css';
 
 export const LIST_COLOURS = [
@@ -27,8 +29,10 @@ export function KeepFlow({ poemId }: { poemId: string }) {
   const account = useAccount();
   const { open, close, showToast } = useOverlay();
   const inv = useInvalidate();
+  const started = useRef(false);
   useEffect(() => {
-    if (account.isLoading) return;
+    if (account.isLoading || started.current) return;
+    started.current = true;
     if (!account.data?.signedIn) return open({ type: 'signin', then: { type: 'keep', poemId } });
     (async () => {
       try {
@@ -50,23 +54,39 @@ export function KeepFlow({ poemId }: { poemId: string }) {
 }
 
 /** 6.2 Sign in on save. */
-export function SignInSheet({ then }: { then?: Parameters<ReturnType<typeof useOverlay.getState>['open']>[0] }) {
+export function SignInSheet({ then, error: initialError }: { then?: SignInAction; error?: string }) {
   const { open, close } = useOverlay();
   const inv = useInvalidate();
+  const [error, setError] = useState(initialError);
+  const [pending, setPending] = useState(false);
+  const title = then?.type === 'keep' ? 'Keep this poem everywhere'
+    : then?.type === 'follow' ? 'Follow this poet everywhere' : 'Sign in to your diwan';
   const go = async (provider: 'apple' | 'google') => {
-    await api.profile.signIn(provider);
-    await inv(qk.account);
-    if (then) open(then); else close();
+    setError(undefined);
+    setPending(true);
+    const oauth = sourceOf('profile') === 'live';
+    try {
+      if (oauth) rememberSignIn(then);
+      await api.profile.signIn(provider);
+      if (oauth) return; // The callback resumes the action in a fresh page.
+      await inv(qk.account);
+      if (then) open(then); else close();
+    } catch {
+      if (oauth) forgetSignIn();
+      setError('Sign-in didn’t open. Try again.');
+      setPending(false);
+    }
   };
   return (
     <Sheet label="Sign in" onClose={close}>
       <div className="signin__head">
         <Mark size={48} colour="var(--c-accent)" />
-        <h2 className="signin__title">Keep this poem everywhere</h2>
+        <h2 className="signin__title">{title}</h2>
         <p className="signin__body">Your diwan follows you to every device. Sign in once, with Apple or Google.</p>
       </div>
-      <button className="signin__btn signin__btn--apple" onClick={() => go('apple')}>Continue with Apple</button>
-      <button className="signin__btn" onClick={() => go('google')}>Continue with Google</button>
+      {error && <p className="signin__body" role="alert">{error}</p>}
+      <button className="signin__btn signin__btn--apple" disabled={pending} onClick={() => go('apple')}>Continue with Apple</button>
+      <button className="signin__btn" disabled={pending} onClick={() => go('google')}>Continue with Google</button>
       <button className="signin__later" onClick={close}>NOT NOW</button>
     </Sheet>
   );

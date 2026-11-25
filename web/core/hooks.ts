@@ -1,7 +1,7 @@
 // Query hooks over `api`, shared by features. React, but no DOM.
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, type PoemFilter } from './api';
-import type { Prefs } from './types';
+import type { Prefs, Progress } from './types';
 import { steerQuery } from './logic/guide';
 
 export const qk = {
@@ -11,7 +11,13 @@ export const qk = {
   account: ['account'] as const,
   keeps: ['keeps'] as const,
   lists: ['lists'] as const,
+  follows: ['follows'] as const,
+  reads: ['reads'] as const,
+  progress: ['progress'] as const,
+  lastRead: ['last-read'] as const,
 };
+
+export const accountQueryKeys = [qk.account, qk.prefs, qk.keeps, qk.lists, qk.follows, qk.reads, qk.progress, qk.lastRead];
 
 export const usePoem = (id: string) => useQuery({ queryKey: qk.poem(id), queryFn: () => api.poems.get(id), enabled: !!id, retry: false });
 export const usePoems = (f: PoemFilter) => useQuery({ queryKey: qk.poems(f), queryFn: () => api.poems.list(f) });
@@ -30,17 +36,17 @@ export function useDoors(id: string | null | undefined) {
   const prefs = usePrefs().data;
   return useQuery({ queryKey: ['doors', id, steerQuery(prefs)], queryFn: () => api.ai.doors(id!, prefs), enabled: !!id && !!prefs, retry: false });
 }
-export const useLastRead = () => useQuery({ queryKey: ['last-read'], queryFn: () => api.library.lastRead() });
+export const useLastRead = () => useQuery({ queryKey: qk.lastRead, queryFn: () => api.library.lastRead() });
 export const useTonight = () => useQuery({ queryKey: ['tonight'], queryFn: () => api.journey.tonight() });
 export const useCollections = (kind?: 'collection' | 'journey') => useQuery({ queryKey: ['collections', kind], queryFn: () => api.collections.all(kind) });
 export const useCollection = (slug: string) => useQuery({ queryKey: ['collection', slug], queryFn: () => api.collections.get(slug), retry: false });
-export const useProgress = () => useQuery({ queryKey: ['progress'], queryFn: () => api.collections.progress() });
+export const useProgress = () => useQuery({ queryKey: qk.progress, queryFn: () => api.collections.progress() });
 export const useSearch = (q: string) => useQuery({ queryKey: ['search', q], queryFn: () => api.search.search(q), enabled: q.trim().length > 1 });
 export const useAccount = () => useQuery({ queryKey: qk.account, queryFn: () => api.profile.account() });
 export const useKeeps = () => useQuery({ queryKey: qk.keeps, queryFn: () => api.keeps.list() });
 export const useLists = () => useQuery({ queryKey: qk.lists, queryFn: () => api.lists.all() });
-export const useFollows = () => useQuery({ queryKey: ['follows'], queryFn: () => api.library.follows() });
-export const useReads = () => useQuery({ queryKey: ['reads'], queryFn: () => api.library.reads() });
+export const useFollows = () => useQuery({ queryKey: qk.follows, queryFn: () => api.library.follows() });
+export const useReads = () => useQuery({ queryKey: qk.reads, queryFn: () => api.library.reads() });
 
 export function usePrefs() {
   return useQuery({ queryKey: qk.prefs, queryFn: () => api.profile.get(), staleTime: Infinity });
@@ -49,13 +55,23 @@ export function useSetPrefs() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (patch: Partial<Prefs>) => api.profile.set(patch),
+    scope: { id: 'reading-preferences' },
     onMutate: (patch) => {
       const prev = qc.getQueryData<Prefs>(qk.prefs);
       if (prev) qc.setQueryData(qk.prefs, { ...prev, ...patch });
     },
     onSuccess: (p) => qc.setQueryData(qk.prefs, p),
+    onError: () => qc.invalidateQueries({ queryKey: qk.prefs }),
   });
 }
+export function useSetProgress() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (progress: Progress) => api.collections.setProgress(progress),
+    onSuccess: () => qc.invalidateQueries({ queryKey: qk.progress }),
+  });
+}
+
 export function useInvalidate() {
   const qc = useQueryClient();
   // refetchType 'all' so a screen that mounts next (e.g. keep after sign-in) never reads stale data.

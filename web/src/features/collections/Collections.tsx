@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQueries } from '@tanstack/react-query';
 import { api, NotFoundError } from '@core/api';
-import { useCollection, useCollections, useEras, useInvalidate, useProgress } from '@core/hooks';
+import { useCollection, useCollections, useEras, useProgress, useSetProgress } from '@core/hooks';
 import { FullAreaError, Header, Pending, TitleRow } from '@ds/primitives';
 import { Back, Bookmark, Search } from '@ds/icons';
 import { Pattern } from '@ds/Pattern';
@@ -39,9 +39,10 @@ export function AllCollections() {
 export function CollectionScreen({ slug }: { slug: string }) {
   const c = useCollection(slug);
   const [all, setAll] = useState(false);
-  const prog = useProgress().data?.find((p) => p.slug === slug);
+  const progress = useProgress();
+  const prog = progress.data?.find((p) => p.slug === slug);
+  const saveProgress = useSetProgress();
   const eras = useEras().data;
-  const inv = useInvalidate();
   const [, nav] = useLocation();
   const poems = useQueries({ queries: (c.data?.poemIds ?? []).map((id) => ({ queryKey: ['poem', id], queryFn: () => api.poems.get(id) })) });
   if (c.isLoading) return <div className="screen pad" style={{ paddingTop: 120 }} aria-busy="true"><Pending of={c} lines={6} /></div>;
@@ -53,7 +54,7 @@ export function CollectionScreen({ slug }: { slug: string }) {
   const saved = prog?.saved ?? false;
   const lines = poems.reduce((n, q) => n + (q.data?.lines.length ?? 0), 0);
   const href = (i: number) => `/p/${poems[i]?.data?.slug ?? col.poemIds[i]}?journey=${slug}&step=${i + 1}`;
-  const save = async () => { await api.collections.setProgress({ slug, position: pos, saved: !saved, completedAt: prog?.completedAt }); inv(['progress']); };
+  const save = () => saveProgress.mutate({ slug, position: pos, saved: !saved, completedAt: prog?.completedAt });
   const eraName = (key: string) => eras?.find((e) => e.slug === key)?.nameEn;
   // Long collections show five (or up to the next unread) and name the poets the rest reach (10.2).
   const shown = all ? of : Math.min(of, Math.max(5, pos + 1));
@@ -64,7 +65,7 @@ export function CollectionScreen({ slug }: { slug: string }) {
         <Pattern {...collectionArt(col)} scrim={0.45} />
         <header className="coll-hero__bar">
           <button className="icon-btn" aria-label="Back" onClick={() => (history.length > 1 ? history.back() : nav('/explore'))}><Back /></button>
-          <button className="icon-btn" aria-pressed={saved} aria-label={saved ? 'Saved' : 'Save'} onClick={save}><Bookmark style={saved ? { fill: 'currentColor' } : undefined} /></button>
+          <button className="icon-btn" disabled={progress.isPending || saveProgress.isPending} aria-pressed={saved} aria-label={saved ? 'Saved' : 'Save'} onClick={save}><Bookmark style={saved ? { fill: 'currentColor' } : undefined} /></button>
         </header>
         <div className="coll-hero__title">
           <p lang="ar" dir="rtl" className="coll-hero__ar">{col.titleAr}</p>
@@ -72,6 +73,7 @@ export function CollectionScreen({ slug }: { slug: string }) {
         </div>
       </div>
       <main className="coll-body">
+        {saveProgress.isError && <p role="alert">Couldn’t update this collection. Try again.</p>}
         <p className="coll-body__intro">{col.intro}</p>
         <p className="t-count">{of} {of === 1 ? 'POEM' : 'POEMS'}{lines ? ` · ABOUT ${Math.max(1, Math.round(lines / 4))} MIN` : ''}</p>
         <div>

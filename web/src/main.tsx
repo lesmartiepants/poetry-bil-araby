@@ -6,6 +6,7 @@ import { setApiBase, setAppUrl, setPerUser } from '@core/api/live';
 import { makeSupabaseApi } from '@core/api/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { App } from './app/App';
+import { authReturnUrl, moveSavedSessionToSharedKey } from './components/signInIntent';
 import { installDevLog } from './features/shell/devlog';
 import './design-system/base.css';
 import './components/components.css';
@@ -25,9 +26,12 @@ setAppUrl(location.origin + import.meta.env.BASE_URL);
 // Per-user data goes live when Supabase is configured; otherwise those domains stay on mocks.
 const sbUrl = import.meta.env.VITE_SUPABASE_URL;
 const sbKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-export const supabase = sbUrl && sbKey ? createClient(sbUrl, sbKey, { auth: { storageKey: 'pba-auth', persistSession: true, detectSessionInUrl: true } }) : null;
+if (sbUrl && sbKey) moveSavedSessionToSharedKey(sbUrl);
+export const supabase = sbUrl && sbKey ? createClient(sbUrl, sbKey, {
+  auth: { flowType: 'pkce', persistSession: true, detectSessionInUrl: true },
+}) : null;
 if (supabase) {
-  setPerUser(makeSupabaseApi(supabase, { redirectTo: () => location.href }));
+  setPerUser(makeSupabaseApi(supabase, { redirectTo: authReturnUrl }));
   configureSources({ profile: 'live', keeps: 'live', lists: 'live', library: 'live' });
 }
 // VITE_SOURCES=mock forces every domain onto mocks (journey tests on mock data).

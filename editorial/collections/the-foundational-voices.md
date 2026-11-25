@@ -24,6 +24,11 @@ The Muʿallaqāt (المعلّقات), the pre-Islamic odes traditionally taught
 
 > A lover tastes rain and honey in a kiss. A sister hears her brother in a dove’s call. In these early Arabic poems, a place can remember the people who left it, and a borrowed day can change how you choose to live.
 
+**Subtitle**
+
+- subtitle_en: The originals. Everyone else is a cover band.
+- subtitle_ar: الأصوات الأولى، والباقون صدى
+
 ## Reading order
 
 | Position | Poet                                      | English title                                     | Arabic title               | Corpus ID |

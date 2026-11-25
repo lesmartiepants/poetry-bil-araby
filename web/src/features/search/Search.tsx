@@ -106,7 +106,7 @@ export function SearchScreen() {
             {show('collections') && <><Section label="COLLECTIONS" n={d.collections.length} /><div className="list">{d.collections.map((c) => (
               <Link key={c.slug} href={`/collection/${c.slug}`} className="coll-hit">
                 <span className="coll-hit__art panel" style={{ background: c.colour }}><Pattern {...collectionArt(c)} scale={0.4} /></span>
-                <span className="coll-hit__text"><span className="coll-hit__title">{c.titleEn}</span><span className="coll-hit__sub">{c.poemIds.length} poems{c.span ? ` · ${c.span}` : ''}</span></span>
+                <span className="coll-hit__text"><span className="coll-hit__title">{c.titleEn}</span><span className="coll-hit__sub">{c.poemIds.length} poems{c.subtitle ? ` · ${c.subtitle}` : ''}</span></span>
                 <Chevron size={16} />
               </Link>
             ))}</div></>}

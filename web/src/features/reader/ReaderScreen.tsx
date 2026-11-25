@@ -3,13 +3,12 @@ import { useEffect, useMemo, useRef, useState, type ComponentType } from 'react'
 import { Link, useLocation } from 'wouter';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api, NotFoundError } from '@core/api';
-import { qk, useDoors, useExplanation, useGloss, useInvalidate, useKeeps, usePoem, usePoet, usePrefs, useSetPrefs } from '@core/hooks';
-import { sourceOf } from '@core/sources';
+import { qk, useDoors, useExplanation, useGloss, useInvalidate, useKeeps, usePoem, usePrefs, useSetPrefs } from '@core/hooks';
 import { transliterate } from '@core/logic/transliterate';
 import type { Poem } from '@core/types';
 import { FullAreaError, MarginNote, Segmented, Sheet, Skeleton, Slider, Switch } from '@ds/primitives';
-import { Back, Heart, Lamp, Mark, Pause, Play, Share, Up } from '@ds/icons';
-import { PoetAvatar, Verse } from '@components/index';
+import { Back, Heart, Lamp, Mark, Pause, Play, Share } from '@ds/icons';
+import { DoorCard, Verse } from '@components/index';
 import { useOverlay } from '@components/overlays';
 import { usePlayback } from '@components/playback';
 import './reader.css';
@@ -310,7 +309,6 @@ function GlossSheet({ poem, at, onClose }: { poem: Poem; at: { line: number; wor
   );
 }
 
-/** 2.7 (V1) End of poem: next poem, more by the poet, more of the feeling. V3 swaps in the doors (2.17). */
 /** A poem counts as read once the reader passes its last line (V2.3). */
 function useMarkReadAtEnd(poemId: string, onEnd?: () => void) {
   const ref = useRef<HTMLDivElement>(null);
@@ -325,7 +323,7 @@ function useMarkReadAtEnd(poemId: string, onEnd?: () => void) {
       if (done || !entries.some((e) => e.isIntersecting)) return;
       done = true;
       endRef.current?.();
-      api.library.markRead(poemId).then(() => qc.invalidateQueries({ queryKey: ['reads'] })).catch(() => {});
+      api.library.markRead(poemId).then(() => Promise.all([qc.invalidateQueries({ queryKey: ['reads'] }), qc.invalidateQueries({ queryKey: ['last-read'] })])).catch(() => {});
     });
     io.observe(el);
     return () => io.disconnect();
@@ -356,69 +354,42 @@ function EndOfPoem({ poem }: { poem: Poem }) {
   const [atEnd, setAtEnd] = useState(false);
   const readRef = useMarkReadAtEnd(poem.id, () => setAtEnd(true));
   const journey = useJourneyStep(atEnd);
-  const guide = sourceOf('journey') === 'live' || new URLSearchParams(location.search).get('end') === 'doors';
-  const poet = usePoet(poem.poetSlug).data;
-  const [, nav] = useLocation();
-  const qc = useQueryClient();
-  const [err, setErr] = useState(false);
-  const next = async () => {
-    try {
-      setErr(false);
-      const n = await qc.fetchQuery({ queryKey: ['next', poem.id], queryFn: () => api.poems.next([poem.id]) });
-      nav(`/p/${n.slug}`);
-      window.scrollTo(0, 0);
-    } catch {
-      setErr(true);
-    }
-  };
-  const feeling = poem.feelingKeys[0];
+  const end = <p className="end__mark">END · <span lang="ar" className="ar" style={{ fontSize: 14, letterSpacing: 0 }}>تمّت</span></p>;
+  // A journey step ends in step complete (9.7); Tonight's poem in You finished (2.18).
   if (journey) {
     return (
       <>
         <section className="end" aria-label="End of poem">
           <div ref={readRef} data-testid="read-sentinel" />
-          <p className="end__mark">END · <span lang="ar" className="ar" style={{ fontSize: 14, letterSpacing: 0 }}>تمّت</span></p>
+          {end}
           <Link href={`/journey/${journey.slug}/done/${journey.step}`} className="btn btn--primary btn--block end__journey">{journey.label} {journey.step} complete</Link>
         </section>
-        {poem.fullPoemId ? <Doors poem={poem} /> : null}
+        {poem.fullPoemId ? <GuideDoors poem={poem} /> : null}
       </>
     );
   }
-  if (guide || poem.fullPoemId) return <><div ref={readRef} data-testid="read-sentinel" /><Doors poem={poem} /></>;
-  return (
-    <section className="end" aria-label="End of poem">
-      <div ref={readRef} data-testid="read-sentinel" />
-      <p className="end__mark">END · <span lang="ar" className="ar" style={{ fontSize: 14, letterSpacing: 0 }}>تمّت</span></p>
-      <button className="end__next" onClick={next}><span className="end__up"><Up /></span><span><span className="end__next-t">Next poem</span><span className="end__next-s">Swipe up, or tap · chosen from what you read</span></span></button>
-      {err && <MarginNote message="The next poem didn’t arrive." onRetry={next} />}
-      <Link href={`/poet/${poem.poetSlug}`} className="end__row">
-        <PoetAvatar initial={poet?.initial ?? 'ش'} eraKey={poem.eraKey} size={44} />
-        <span className="end__row-main"><span className="group-row__title">More by {poem.poetEn}</span><span className="group-row__sub"><span lang="ar" className="ar">{poem.poetAr}</span>{poet && ` · ${poet.poemCount} poems`}</span></span>
-      </Link>
-      {feeling && (
-        <Link href={`/explore/feeling/${feeling}`} className="end__row">
-          <span className="end__feel" aria-hidden>{feeling === 'longing' ? 'حنين' : feeling}</span>
-          <span className="end__row-main"><span className="group-row__title">More {feeling}</span><span className="group-row__sub">From the feeling shelf</span></span>
-        </Link>
-      )}
-    </section>
-  );
+  if (new URLSearchParams(location.search).get('from') === 'tonight') {
+    return (
+      <section className="end" aria-label="End of poem">
+        <div ref={readRef} data-testid="read-sentinel" />
+        {end}
+        <Link href={`/journey/finished/${poem.slug}`} className="btn btn--primary btn--block end__journey">Tonight’s poem, finished</Link>
+      </section>
+    );
+  }
+  return <><div ref={readRef} data-testid="read-sentinel" /><GuideDoors poem={poem} /></>;
 }
 
-/** 2.17 The guide's doors (V3). */
-function Doors({ poem }: { poem: Poem }) {
+/** 2.17 Every other poem ends with the guide's three doors (V3, replacing V1's Next poem). */
+function GuideDoors({ poem }: { poem: Poem }) {
   const d = useDoors(poem.id);
   return (
-    <section className="end" aria-label="Where the guide goes next">
-      <p className="end__mark">WHERE THE GUIDE GOES NEXT</p>
-      {d.isLoading && <Skeleton lines={3} />}
-      {d.data?.map((door) => (
-        <Link key={door.poem.id} href={`/p/${door.poem.slug}`} className="door">
-          <span className="door__hook">{door.hook}</span>
-          <span lang="ar" className="door__ar">{door.poem.titleAr}</span>
-          <span className="door__meta">{door.poem.poetEn}{door.reason ? ` · ${door.reason}` : ''}</span>
-        </Link>
-      ))}
+    <section className="end end--doors" aria-label="Where the guide would take you next">
+      <div className="end__rule" aria-hidden><span /><Mark size={22} colour="var(--c-accent-line)" /><span /></div>
+      <p className="end__mark">WHERE THE GUIDE WOULD TAKE YOU NEXT</p>
+      {d.error ? <MarginNote message="The guide’s doors didn’t open." onRetry={() => d.refetch()} />
+        : d.data ? d.data.map((door) => <DoorCard key={door.poem.id} door={door} />)
+        : <div className="end__doors-wait"><Skeleton lines={3} /></div>}
     </section>
   );
 }

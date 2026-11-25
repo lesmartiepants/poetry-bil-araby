@@ -74,6 +74,14 @@ export const POEMS: Poem[] = [
       L('وَالسَيفُ وَالرُمحُ وَالقِرطاسُ وَالقَلَمُ', 'and the sword, the spear, the page and the pen.'),
     ],
   },
+  {
+    id: '1006', slug: 'unshudat-al-matar', titleAr: 'أنشودة المطر', titleEn: 'Rain Song', firstLineAr: 'عيناك غابتا نخيل ساعة السحر',
+    poetSlug: 'al-sayyab', poetAr: 'بدر شاكر السياب', poetEn: 'Al-Sayyab', eraKey: 'modern', feelingKeys: ['longing', 'grief'], band: 'gentle', readingMinutes: 1,
+    lines: [
+      L('عَيناكِ غابَتا نَخيلٍ ساعَةَ السَحَر', 'Your eyes are two palm groves at the hour before dawn,'),
+      L('أَو شُرفَتانِ راحَ يَنأى عَنهُما القَمَر', 'or two balconies the moon is drifting away from.'),
+    ],
+  },
 ];
 
 export const FEELINGS: Feeling[] = [

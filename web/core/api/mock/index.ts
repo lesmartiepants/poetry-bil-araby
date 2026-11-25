@@ -6,12 +6,26 @@ import type { Poem, PoemSummary, Prefs, Progress, UserList } from '../../types';
 import { BANDS, COLLECTIONS, ERAS, FEATURED_NOTE, FEELINGS, POEMS, POETS } from './fixtures';
 import { DEFAULT_PREFS, mergePrefs } from '../../logic/prefs';
 import { normalizeArabic, stripMarks } from '../../logic/arabic';
+import { byFit, chooseDoors, doorPools, parseSteer, wordDoors, steerQuery, uniqueHooks, type GuideRow } from '../../logic/guide';
 import { readJSON, writeJSON } from '../../storage';
 
 const wait = <T>(v: T, ms = 60): Promise<T> => new Promise((r) => setTimeout(() => r(v), ms));
 const summary = ({ lines: _l, feelingKeys: _f, band: _b, readingMinutes: _r, ...s }: Poem): PoemSummary => s;
 const findPoem = (idOrSlug: string) => POEMS.find((p) => p.id === idOrSlug || p.slug === idOrSlug);
-const K = { prefs: 'mock.prefs', account: 'mock.account', keeps: 'mock.keeps', lists: 'mock.lists', follows: 'mock.follows', reads: 'mock.reads', progress: 'mock.progress' };
+const K = { prefs: 'mock.prefs', account: 'mock.account', keeps: 'mock.keeps', lists: 'mock.lists', follows: 'mock.follows', reads: 'mock.reads', lastRead: 'mock.lastRead', progress: 'mock.progress' };
+
+// The guide runs the same rules as the server (core/logic/guide.js) over the fixtures.
+type MockRow = GuideRow & { poem: Poem };
+function guideRow(p: Poem): MockRow {
+  const years = POETS.find((x) => x.slug === p.poetSlug)?.years.match(/\d{3,4}/g);
+  return {
+    poem: p, id: p.id, title: p.titleAr, title_en: p.titleEn, poet_id: p.poetSlug, poet_en: p.poetEn, era_id: p.eraKey, era_key: p.eraKey,
+    mood_primary: p.feelingKeys[0] ?? null, feeling_keys: p.feelingKeys, arabic: p.lines.map((l) => l.ar).join(' * '),
+    death_year: years ? Number(years[years.length - 1]) : null,
+  };
+}
+const steerOf = (prefs?: Prefs) => parseSteer(Object.fromEntries(new URLSearchParams(steerQuery(prefs))));
+const bandOfRow = (_s: unknown, r: GuideRow) => (r as MockRow).poem.band;
 
 function lists(): UserList[] {
   return readJSON<UserList[]>(K.lists, []);
@@ -40,9 +54,9 @@ export const mockApi: Api = {
       if (!p) throw new NotFoundError('poem');
       return wait(p);
     },
-    async next(exclude) {
-      const pool = POEMS.filter((p) => !exclude.includes(p.id));
-      return wait(summary(pool[0] ?? POEMS[0]));
+    async next(exclude, prefs) {
+      const pool = byFit(POEMS.filter((p) => !exclude.includes(p.id)).map(guideRow), steerOf(prefs), bandOfRow);
+      return wait(summary(pool[0]?.poem ?? POEMS[0]));
     },
     async list(f) {
       return wait(filterPoems(f).map(summary));
@@ -67,12 +81,17 @@ export const mockApi: Api = {
         otherSenses: 'an enclosure; a partition. From the same root, جدير: worthy, fit for.',
       }, 150);
     },
-    async doors(poemId) {
-      return wait(POEMS.filter((p) => p.id !== poemId).slice(0, 3).map((p, i) => ({
-        poem: summary(p),
-        hook: ['Another lover at a ruined house', 'Grief that will not stop', 'Pride in the face of fate'][i],
-        reason: ['Because you stayed with longing', 'The same desert, a sister’s voice', 'Shorter, and fiercer'][i],
-      })), 150);
+    async doors(poemId, prefs) {
+      const p = findPoem(poemId);
+      if (!p) throw new NotFoundError('poem');
+      const me = guideRow(p);
+      const fit = (rows: MockRow[]) => byFit(rows, steerOf(prefs), bandOfRow);
+      const others = POEMS.filter((x) => x.id !== p.id).map(guideRow);
+      const near = others.filter((r) => r.mood_primary === me.mood_primary || r.poet_id === me.poet_id);
+      const full = p.fullPoemId ? findPoem(p.fullPoemId) : undefined;
+      const chosen = chooseDoors(me, doorPools(me, fit(near), fit(others.filter((r) => r.poet_id !== me.poet_id)), full ? guideRow(full) : null));
+      const mood = FEELINGS.find((f) => f.key === me.mood_primary)?.en.toLowerCase() ?? null;
+      return wait(uniqueHooks(wordDoors(chosen, me, mood).map(({ row, hook, reason }) => ({ poem: summary(row.poem), hook, reason }))), 150);
     },
   },
   poets: {
@@ -180,7 +199,9 @@ export const mockApi: Api = {
       const r = readJSON<Record<string, number>>(K.reads, {});
       r[poemId] = (r[poemId] ?? 0) + 1;
       writeJSON(K.reads, r);
+      writeJSON(K.lastRead, poemId);
     },
+    lastRead: async () => wait(readJSON<string | null>(K.lastRead, null), 20),
   },
   journey: {
     async tonight() {

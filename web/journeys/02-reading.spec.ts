@@ -54,17 +54,22 @@ test.describe('Area 2 · Reading', () => {
     await expect(page.locator('.word--selected')).toHaveCount(1);
   });
 
-  test('2.7 the end of the poem offers next poem, more by the poet and more of the feeling', async ({ page }) => {
+  test('2.17 the end of the poem offers three different doors, and the guide’s settings change them', async ({ page }) => {
     await fresh(page);
     await page.goto('./p/amurru');
-    const end = page.getByRole('region', { name: 'End of poem' });
-    await expect(end.getByText('More by Majnun Layla')).toBeVisible();
-    await end.getByRole('button', { name: /Next poem/ }).click();
-    await expect(page).not.toHaveURL(/amurru/);
-    await expect(page.getByRole('navigation', { name: 'Poem actions' })).toBeVisible();
-    await page.goto('./p/amurru');
-    await page.getByRole('link', { name: /More by Majnun Layla/ }).click();
-    await expect(page).toHaveURL(/poet\/majnun-layla/);
+    const end = page.getByRole('region', { name: 'Where the guide would take you next' });
+    await expect(end.getByText('WHERE THE GUIDE WOULD TAKE YOU NEXT')).toBeVisible();
+    const doors = end.locator('.door-card');
+    await expect(doors).toHaveCount(3);
+    await expect(doors.nth(0)).toContainText('Also longing, from the Pre-Islamic age');
+    await expect(doors.nth(1)).toContainText('Same longing, 1,300 years on');
+    await expect(doors.nth(2)).toContainText('Somewhere new: the Abbasid age');
+    // Leaning modern (12.5) brings the modern poem to the first door.
+    await page.evaluate(() => localStorage.setItem('mock.prefs', JSON.stringify({ classicalModern: 1 })));
+    await page.reload();
+    await expect(end.locator('.door-card').first()).toContainText('Also longing, from the Modern age');
+    await end.locator('.door-card').first().click();
+    await expect(page).toHaveURL(/unshudat-al-matar/);
   });
 
   test('2.2–2.3 scrolling folds the dock into the mark, which opens the fan', async ({ page }) => {

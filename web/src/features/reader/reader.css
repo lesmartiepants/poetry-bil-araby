@@ -204,92 +204,23 @@
   letter-spacing: 0.2em;
   color: var(--c-accent);
 }
-.end__next {
+/* 2.17 The guide's doors under the last verse: a rule with the mark, then three doors. */
+.end--doors {
+  padding-top: 40px;
+}
+/* Holds the three doors' height while they load, so the page doesn't jump. */
+.end__doors-wait {
+  min-height: 216px;
+}
+.end__rule {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px;
-  border-radius: 16px;
-  background: var(--c-accent-bg);
-  border: 1px solid var(--c-accent-deep);
-  text-align: left;
-  color: inherit;
+  gap: 10px;
 }
-.end__up {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 22px;
-  background: var(--c-accent);
-  color: var(--c-on-accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.end__next-t {
-  display: block;
-  font-size: 15px;
-  color: var(--c-text);
-}
-.end__next-s {
-  display: block;
-  margin-top: 2px;
-  font-size: 12px;
-  color: var(--c-muted);
-}
-.end__row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  padding: 12px;
-  border-radius: 14px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  text-decoration: none;
-}
-.end__row-main {
+.end__rule > span {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-}
-.end__feel {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  background: #1b2f52;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-amiri);
-  font-size: 17px;
-  color: #e8cc8a;
-}
-.door {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 16px;
-  border-radius: 16px;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  text-decoration: none;
-}
-.door__hook {
-  font-family: var(--font-serif);
-  font-size: 19px;
-  color: var(--c-text);
-}
-.door__ar {
-  font-family: var(--font-ruqaa);
-  font-size: 20px;
-  color: var(--c-accent);
-  text-align: right;
-  direction: rtl;
-}
-.door__meta {
-  font-size: 12px;
-  color: var(--c-muted);
+  height: 1px;
+  background: var(--c-border-2);
 }
 .reader {
   position: relative;

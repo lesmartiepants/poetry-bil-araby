@@ -154,11 +154,26 @@ function text(
   return `<text ${attrs}>${esc(str)}</text>`;
 }
 
+function wrapTranslation(line) {
+  const rows = [];
+  let row = '';
+  for (const word of line.trim().split(/\s+/)) {
+    if (row && row.length + 1 + word.length > 37) {
+      rows.push(row);
+      row = word;
+    } else {
+      row = row ? `${row} ${word}` : word;
+    }
+  }
+  if (row) rows.push(row);
+  return rows;
+}
+
 /**
  * The card's layout at 340 × 425: text sizes come down until every line fits
  * the frame, the way the frames scale an 8- or 10-line card.
  */
-export function layoutCard(spec) {
+export function layoutCard(spec, { preview = false } = {}) {
   const n = spec.lines.length;
   // A whole short poem gets the large title; a card from a longer poem the compact one.
   const long = n > 4 || (spec.card?.of ?? 1) > 1;
@@ -177,10 +192,10 @@ export function layoutCard(spec) {
         sepGap: 4,
       }
     : {
-        title: 32,
-        titleEn: 16,
-        meta: 10.5,
-        poetAr: 14,
+        title: preview ? 36 : 32,
+        titleEn: preview ? 18 : 16,
+        meta: preview ? 12 : 10.5,
+        poetAr: preview ? 16 : 14,
         ded: 16,
         rule: 50,
         ruleGap: 8,
@@ -212,28 +227,49 @@ export function layoutCard(spec) {
   const pairs = Math.ceil(n / 2);
   const sepH = long ? 2 + 8 + 5 : 3 + 8 + 8;
   const widest = Math.max(1, ...spec.lines.map((l) => letters(l.ar)));
-  const widestEn = Math.max(1, ...spec.lines.map((l) => (l.en ?? '').length));
-  const enLh = long ? 1.2 : 1.3;
+  const english = spec.lines.map((line) =>
+    preview ? wrapTranslation(line.en ?? '') : [line.en ?? '']
+  );
+  const widestEn = Math.max(1, ...english.flat().map((row) => row.length));
+  const enRows = english.reduce((count, rows) => count + rows.length, 0);
+  const arLh = preview ? 1.52 : 1.38;
+  const enLh = preview ? 1.1 : long ? 1.2 : 1.3;
   const enGap = long ? 4 : 8;
-  let ar = long ? 17 : 21;
-  let en = 13.5;
+  const maxEn = preview ? 19 : long ? 12.6 : 13.5;
+  const bodyHeight = (ar, en) =>
+    n * ar * arLh + (spec.showEn ? enRows * en * enLh + n * enGap : 0) + (pairs - 1) * sepH;
+  let ar = preview ? 29 : long ? 17 : 21;
+  let en = maxEn;
   for (; ar > 10; ar -= 0.1) {
-    en = Math.min(long ? 12.6 : 13.5, Math.max(9.8, ar * 0.643), inner.w / (0.44 * widestEn));
-    const lineH = ar * 1.38 + (spec.showEn ? en * enLh + enGap : 0);
-    const body = n * lineH + (pairs - 1) * sepH;
+    en = Math.min(maxEn, Math.max(9.8, ar * (preview ? 0.68 : 0.643)), inner.w / (0.44 * widestEn));
     // The frames let the block run a few pixels into the padding.
-    if (body <= room + 4 && ar * 0.5 * widest <= inner.w) break;
+    if (bodyHeight(ar, en) <= room + 4 && ar * (preview ? 0.42 : 0.5) * widest <= inner.w) break;
   }
-  return { sz: t, inner, footer, head, rule, ar: r1(ar), en: r1(en), enLh, enGap, sepH, long };
+  return {
+    sz: t,
+    inner,
+    footer,
+    head,
+    rule,
+    ar: r1(ar),
+    en: r1(en),
+    arLh,
+    enLh,
+    enGap,
+    sepH,
+    long,
+    english,
+    body: bodyHeight(r1(ar), r1(en)),
+  };
 }
 
 /**
  * The card as SVG markup. `width` scales the 340-wide layout (1080 for the
  * saved image); `link` is printed in the footer on saved images.
  */
-export function cardSvg(spec, { width = CARD_W, rounded = true } = {}) {
+export function cardSvg(spec, { width = CARD_W, rounded = true, preview = false } = {}) {
   const cw = COLOURWAYS.find((c) => c.key === spec.colourway) ?? COLOURWAYS[0];
-  const L = layoutCard(spec);
+  const L = layoutCard(spec, { preview });
   const { sz, inner } = L;
   const cx = CARD_W / 2;
   const out = [];
@@ -255,9 +291,7 @@ export function cardSvg(spec, { width = CARD_W, rounded = true } = {}) {
 
   // Everything but the footer sits centred in the frame.
   const n = spec.lines.length;
-  const lineH = L.ar * 1.38 + (spec.showEn ? L.en * L.enLh + L.enGap : 0);
-  const body = n * lineH + (Math.ceil(n / 2) - 1) * L.sepH;
-  let y = inner.y + Math.max(0, (inner.h - L.footer - (L.head + L.rule + body)) / 2);
+  let y = inner.y + Math.max(0, (inner.h - L.footer - (L.head + L.rule + L.body)) / 2);
   if (spec.dedication) {
     out.push(
       text(`for ${spec.dedication}`, {
@@ -323,27 +357,31 @@ export function cardSvg(spec, { width = CARD_W, rounded = true } = {}) {
         x: cx,
         top: y,
         size: L.ar,
-        lh: 1.38,
+        lh: L.arLh,
         family: FONT.amiri,
         colour: cw.ink,
         rtl: true,
       })
     );
-    y += L.ar * 1.38;
+    y += L.ar * L.arLh;
     if (spec.showEn) {
-      if (l.en)
-        out.push(
-          text(l.en, {
-            x: cx,
-            top: y,
-            size: L.en,
-            lh: L.enLh,
-            family: FONT.serif,
-            italic: true,
-            colour: cw.frame,
-          })
-        );
-      y += L.en * L.enLh + L.enGap;
+      for (const row of L.english[i]) {
+        if (row) {
+          out.push(
+            text(row, {
+              x: cx,
+              top: y,
+              size: L.en,
+              lh: L.enLh,
+              family: FONT.serif,
+              italic: true,
+              colour: preview ? cw.title : cw.frame,
+            })
+          );
+        }
+        y += L.en * L.enLh;
+      }
+      y += L.enGap;
     }
     if (i % 2 === 1 && i < n - 1) {
       const sy = y + (L.long ? 2 : 3) + 4;

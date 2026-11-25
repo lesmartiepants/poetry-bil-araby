@@ -43,9 +43,9 @@ test.describe('@live V1 against the real API', () => {
     await page.goto('./p/24');
     const doors = page.getByRole('region', { name: 'Where the guide would take you next' }).locator('.door-card');
     await expect(doors).toHaveCount(3);
-    // Each door has its own hook, in specific words (the local server has no Gemini key).
-    const hooks = await doors.locator('.door-card__hook').allTextContents();
-    expect(new Set(hooks).size).toBe(3);
+    await expect(doors.locator('.door-card__title')).toHaveCount(3);
+    await expect(doors.locator('.door-card__connection')).toHaveCount(3);
+    await expect(doors.locator('.door-card__poet')).toHaveCount(3);
     await doors.first().click();
     await expect(page).not.toHaveURL(/\/p\/24$/);
   });

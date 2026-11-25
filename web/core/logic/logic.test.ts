@@ -42,6 +42,10 @@ describe('settings merge', () => {
     expect(p.voice).toBe(DEFAULT_PREFS.voice);
     expect('bogus' in p).toBe(false);
   });
+
+  it('uses the default when a saved reciter is no longer offered', () => {
+    expect(mergePrefs(DEFAULT_PREFS, { voice: 'Leda' }).voice).toBe(DEFAULT_PREFS.voice);
+  });
 });
 
 describe('share card splitting', () => {

@@ -61,15 +61,32 @@ test.describe('Area 2 · Reading', () => {
     await expect(end.getByText('WHERE THE GUIDE WOULD TAKE YOU NEXT')).toBeVisible();
     const doors = end.locator('.door-card');
     await expect(doors).toHaveCount(3);
-    await expect(doors.nth(0)).toContainText('Also longing, from the Pre-Islamic age');
-    await expect(doors.nth(1)).toContainText('Same longing, 1,300 years on');
-    await expect(doors.nth(2)).toContainText('Somewhere new: the Abbasid age');
+    await expect(doors.nth(0).locator('.door-card__title')).toHaveText('Stop, let us weep');
+    await expect(doors.nth(0).locator('.door-card__connection')).toHaveText('Longing, in another poet’s voice');
+    await expect(doors.nth(1).locator('.door-card__connection')).toHaveText('A new voice from the Abbasid era');
+    await expect(doors.nth(2).locator('.door-card__connection')).toHaveText('A new voice from the Modern era');
     // Leaning modern (12.5) brings the modern poem to the first door.
     await page.evaluate(() => localStorage.setItem('mock.prefs', JSON.stringify({ classicalModern: 1 })));
     await page.reload();
-    await expect(end.locator('.door-card').first()).toContainText('Also longing, from the Modern age');
-    await end.locator('.door-card').first().click();
+    await expect(doors.first().locator('.door-card__title')).toHaveText('Rain Song');
+    await expect(doors.first().locator('.door-card__connection')).toHaveText('Longing, in another poet’s voice');
+    await doors.first().click();
     await expect(page).toHaveURL(/unshudat-al-matar/);
+  });
+
+  test('2.17 a shared image connects poems with different feelings', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./p/qadhan');
+    const end = page.getByRole('region', { name: 'Where the guide would take you next' });
+    const image = end.getByRole('link', { name: 'Dry-eyed, I see Tears, from grief to love Abu Firas' });
+    await expect(image.locator('.door-card__text > span')).toHaveText([
+      'Dry-eyed, I see',
+      'Tears, from grief to love',
+      'Abu Firas',
+    ]);
+    await image.focus();
+    await image.press('Enter');
+    await expect(page).toHaveURL(/\/p\/araka$/);
   });
 
   test('2.2–2.3 scrolling folds the dock into the mark, which opens the fan', async ({ page }) => {

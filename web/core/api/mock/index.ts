@@ -16,12 +16,16 @@ const K = { prefs: 'mock.prefs', account: 'mock.account', keeps: 'mock.keeps', l
 
 // The guide runs the same rules as the server (core/logic/guide.js) over the fixtures.
 type MockRow = GuideRow & { poem: Poem };
+const fixtureMotifs: Record<string, string[]> = {
+  qadhan: ['tears'],
+  araka: ['tears'],
+};
 function guideRow(p: Poem): MockRow {
-  const years = POETS.find((x) => x.slug === p.poetSlug)?.years.match(/\d{3,4}/g);
+  const mood = p.feelingKeys[0] ?? null;
   return {
     poem: p, id: p.id, title: p.titleAr, title_en: p.titleEn, poet_id: p.poetSlug, poet_en: p.poetEn, era_id: p.eraKey, era_key: p.eraKey,
-    mood_primary: p.feelingKeys[0] ?? null, feeling_keys: p.feelingKeys, arabic: p.lines.map((l) => l.ar).join(' * '),
-    death_year: years ? Number(years[years.length - 1]) : null,
+    mood_primary: mood, mood_label: FEELINGS.find((f) => f.key === mood)?.en.toLowerCase(),
+    feeling_keys: p.feelingKeys, motif_keys: fixtureMotifs[p.slug], arabic: p.lines.map((l) => l.ar).join(' * '),
   };
 }
 const steerOf = (prefs?: Prefs) => parseSteer(Object.fromEntries(new URLSearchParams(steerQuery(prefs))));
@@ -94,9 +98,11 @@ export const mockApi: Api = {
       const others = POEMS.filter((x) => x.id !== p.id).map(guideRow);
       const near = others.filter((r) => r.mood_primary === me.mood_primary || r.poet_id === me.poet_id);
       const full = p.fullPoemId ? findPoem(p.fullPoemId) : undefined;
-      const chosen = chooseDoors(me, doorPools(me, fit(near), fit(others.filter((r) => r.poet_id !== me.poet_id)), full ? guideRow(full) : null));
-      const mood = FEELINGS.find((f) => f.key === me.mood_primary)?.en.toLowerCase() ?? null;
-      return wait(uniqueHooks(wordDoors(chosen, me, mood).map(({ row, hook, reason }) => ({ poem: summary(row.poem), hook, reason }))), 150);
+      const otherPoets = fit(others.filter((r) => r.poet_id !== me.poet_id));
+      const chosen = chooseDoors(me, doorPools(me, fit(near), otherPoets, full ? guideRow(full) : null, otherPoets));
+      const mood = me.mood_label ?? me.mood_primary ?? null;
+      const doors = wordDoors(chosen, me, mood).map(({ row, ...copy }) => ({ poem: summary(row.poem), ...copy }));
+      return wait(uniqueHooks(doors), 150);
     },
   },
   poets: {

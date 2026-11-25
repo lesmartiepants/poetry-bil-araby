@@ -37,7 +37,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, holdin
     const on = () => {
       setScrolled(window.scrollY > 80);
       const max = document.documentElement.scrollHeight - window.innerHeight;
-      setBottom(max > 120 && window.scrollY >= max - 2);
+      setBottom(max > 0 && window.scrollY >= max - 2);
       setProgress(max > 0 ? Math.min(100, Math.round((window.scrollY / max) * 100)) : 0);
     };
     window.addEventListener('scroll', on, { passive: true });

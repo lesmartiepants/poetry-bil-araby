@@ -164,16 +164,18 @@
 .letter-rail {
   position: fixed;
   right: 2px;
-  top: 50%;
-  transform: translateY(-50%);
+  top: 8px;
+  bottom: 8px;
   z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: space-between;
   touch-action: none;
 }
 .letter-rail__key {
-  height: 19px;
+  flex: 0 1 19px;
+  min-height: 11px;
   width: 22px;
   padding: 0;
   border: none;

@@ -49,7 +49,7 @@ export function SearchScreen() {
   const show = (k: Exclude<Kind, 'all'>) => !!d && d[k].length > 0 && (kind === 'all' || kind === k);
   const forget = (x: string) => { const next = recents.filter((y) => y !== x); setRecents(next); writeJSON('search.recents', next); };
   const arabic = (x: string) => /[\u0600-\u06FF]/.test(x);
-  const close = () => (history.length > 1 ? history.back() : nav(home));
+  const close = () => nav(home);
   return (
     <div className="screen">
       <header className="hub-hdr"><BrandLogo /></header>

@@ -26,5 +26,5 @@ export function useDevTabHold() {
     onPointerLeave: () => { setHolding(false); press.onPointerLeave(); },
     onPointerCancel: () => { setHolding(false); press.onPointerCancel(); },
   };
-  return { handlers, holding };
+  return DEV_PANEL_ENABLED ? { handlers, holding } : { handlers: {}, holding: false };
 }

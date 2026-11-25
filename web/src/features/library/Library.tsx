@@ -129,7 +129,9 @@ function YourPoems() {
   const showToast = useOverlay((s) => s.showToast);
   // By poet files poets the way a dictionary does: Arabic order ignores "ال" and the vowel marks (8.6); English order is plain A–Z (8.7).
   const keyOf = (p: Poem) => (group === 'poet' ? p.poetSlug : group === 'feeling' ? p.feelingKeys[0] ?? '—' : p.eraKey);
-  const poetOf = (slug: string) => poems.find((p) => p.poetSlug === slug)!;
+  const poetBySlug = new Map<string, Poem>();
+  for (const poem of poems) if (!poetBySlug.has(poem.poetSlug)) poetBySlug.set(poem.poetSlug, poem);
+  const poetOf = (slug: string) => poetBySlug.get(slug)!;
   const sortKey = (k: string) => (group !== 'poet' ? k : order === 'ar' ? arabicSortKey(poetOf(k).poetAr) : poetOf(k).poetEn);
   const groups = [...new Set(poems.map(keyOf))].sort((a, b) => sortKey(a).localeCompare(sortKey(b), group === 'poet' && order === 'ar' ? 'ar' : 'en'));
   const letterOf = (k: string) => (order === 'ar' ? arabicInitial(poetOf(k).poetAr) : poetOf(k).poetEn[0].toUpperCase());

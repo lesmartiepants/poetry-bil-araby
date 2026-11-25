@@ -85,6 +85,11 @@ test.describe('Areas 10–11 · Collections and search', () => {
   test('11.1 search opens from Explore and from the Library, and Cancel goes back to where it began', async ({ page }) => {
     await fresh(page, signedIn);
     await page.goto('./explore');
+    await page.goto('./search?from=library');
+    await page.getByRole('button', { name: 'CANCEL' }).click();
+    await expect(page).toHaveURL(/\/library$/);
+
+    await page.goto('./explore');
     await page.getByRole('button', { name: 'Search' }).click();
     await expect(page.locator('.tabbar [aria-current=page]')).toHaveAttribute('aria-label', 'Explore');
     await page.getByRole('button', { name: 'CANCEL' }).click();

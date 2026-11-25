@@ -193,14 +193,17 @@
       "name": "Listening",
       "version": "V1.4",
       "journeys": [
-        "03-listening.spec.ts › 3.1 Listen turns the dock into the player and the glow advances"
+        "03-listening.spec.ts › 3.1 Listen turns the dock into the player and the glow advances",
+        "live.spec.ts › 3.1 a recitation is generated once, stored, and served as audio"
       ]
     },
     {
       "id": "3.2",
       "name": "Listening",
       "version": "V1.4",
-      "gap": "no journey yet"
+      "journeys": [
+        "live.spec.ts › 3.2 listening plays the real recitation line by line to the end"
+      ]
     },
     {
       "id": "3.3",
@@ -247,7 +250,8 @@
       "name": "Listening",
       "version": "V1.4",
       "journeys": [
-        "03-listening.spec.ts › 3.8 a recitation that won’t load offers Try again"
+        "03-listening.spec.ts › 3.8 a recitation that won’t load offers Try again",
+        "live.spec.ts › 3.8 a recitation that will not load offers Try again, and it recovers"
       ]
     },
     {
@@ -825,7 +829,9 @@
       "id": "12.6",
       "name": "Reciter",
       "version": "V3.5",
-      "gap": "no journey yet"
+      "journeys": [
+        "live.spec.ts › 12.6 Pause between lines holds a breath after each bayt"
+      ]
     },
     {
       "id": "12.7",

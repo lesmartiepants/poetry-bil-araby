@@ -10,12 +10,15 @@ const TABS = [
   { href: '/you', label: 'You', match: ['/you'], icon: () => <Person /> },
 ];
 
-export function TabBar({ inReader = false }: { inReader?: boolean } = {}) {
+export function TabBar({ readerVisible }: { readerVisible?: boolean } = {}) {
+  const inReader = readerVisible !== undefined;
+  const classes = ['tabbar', inReader && 'tabbar--reader', readerVisible && 'tabbar--reader-visible'];
+  const inert = readerVisible === false ? { inert: '' } : {};
   const [loc] = useLocation();
   const toggle = useDevPanel((s) => s.toggleTab);
   const press = useLongPress(() => DEV_PANEL_ENABLED && toggle());
   return (
-    <nav aria-label="Main" className={inReader ? 'tabbar tabbar--reader' : 'tabbar'} {...press} data-testid="tabbar">
+    <nav aria-label="Main" className={classes.filter(Boolean).join(' ')} {...inert} {...press} data-testid="tabbar">
       {TABS.map((t) => {
         const on = t.match.some((m) => loc === m || loc.startsWith(`${m}/`));
         const home = inReader && t.href === '/journey';

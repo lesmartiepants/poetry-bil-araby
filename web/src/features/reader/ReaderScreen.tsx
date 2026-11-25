@@ -16,7 +16,7 @@ import './reader.css';
 export interface PlayerSlotProps { poem: Poem; compact: boolean; onMark: () => void; onExpand: () => void }
 
 export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNavigation }: {
-  id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; onLongPressMark?: Record<string, unknown>; endNavigation: ReactNode;
+  id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; onLongPressMark?: Record<string, unknown>; endNavigation: (visible: boolean) => ReactNode;
 }) {
   const poemQ = usePoem(id);
   const prefs = usePrefs().data;
@@ -117,7 +117,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
       </main>
       <EndOfPoem poem={poem} />
       <div ref={endMarker} className="reader__end-marker" aria-hidden />
-      {showEndNavigation && endNavigation}
+      {endNavigation(showEndNavigation)}
 
       {listening ? (
         <Player poem={poem} compact={scrolled} onMark={() => setSheet('fan')} onExpand={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />

@@ -18,7 +18,7 @@ export function TabBar({ readerVisible }: { readerVisible?: boolean } = {}) {
   const toggle = useDevPanel((s) => s.toggleTab);
   const press = useLongPress(() => DEV_PANEL_ENABLED && toggle());
   return (
-    <nav aria-label="Main" className={classes.filter(Boolean).join(' ')} {...inert} {...press} data-testid="tabbar">
+    <nav aria-label="Main" aria-hidden={readerVisible === false || undefined} className={classes.filter(Boolean).join(' ')} {...inert} {...press} data-testid="tabbar">
       {TABS.map((t) => {
         const on = t.match.some((m) => loc === m || loc.startsWith(`${m}/`));
         const home = inReader && t.href === '/journey';

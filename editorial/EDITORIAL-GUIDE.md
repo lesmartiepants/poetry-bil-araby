@@ -1,5 +1,21 @@
 # Editorial guide for Poetry بالعربي
 
+## Our ambitions
+
+1. **Make Arabic poetry accessible.** Remove the linguistic, technical, and educational barriers to reading it.
+2. **Make Arabic poetry desirable.** Create an experience that inspires people to seek out another poem, another poet, another voice.
+3. **Make Arabic poetry part of the world’s shared literary imagination.** Let someone with no connection to the Arab world discover that al-Mutanabbi, al-Khansa, or al-Sayyab can articulate something about their own life.
+
+The third ambition defines the project. We want a 22-year-old in Montreal, Tokyo, Mexico City, or San Diego to encounter al-Ma’arri and be astonished that someone living a thousand years ago was wrestling with questions they have today.
+
+We want someone going through heartbreak to discover Ibn Zaydun. Someone questioning the meaning of ambition to discover al-Mutanabbi. Someone struggling with grief to discover al-Khansa. Someone trying to understand where they belong to discover Darwish.
+
+And we would want them to discover those poets not primarily because they are Arabic, but because they are extraordinary.
+
+**The ultimate measure of success is whether a reader leaves with an Arabic poem that now belongs to them, too.**
+
+## How we choose poems
+
 We want readers who are new to Arabic literature to leave their first poem curious about the next one. **Give them something to notice before giving them something to know.** Start with an image, a sound, or a turn in a line. Bring in history and form when it changes what they hear on a second reading.
 
 Build around poems that have mattered to generations of readers and poems that make people want to read aloud. Put famous works beside discoveries and classical voices beside living ones. Across the catalogue, vary place, period, form, difficulty, and mood. Let women shape the main reading path as well as the collections. Keep the Arabic central, with a readable English translation and a way to hear the original.
@@ -27,9 +43,13 @@ Use the same observation at three scales. **Tonight** offers the gesture and lea
 
 ## Editorial files
 
+- [Card template and examples](CARD-TEMPLATE.md)
 - [Tonight](tonight.md)
 - [Your First Seven](journeys/your-first-seven.md)
+- [Twelve Questions for Arabic Poetry](journeys/twelve-questions-for-arabic-poetry.md)
 - [Women Who Wrote the Canon](collections/women-who-wrote-the-canon.md)
+- [The Foundational Voices](collections/the-foundational-voices.md)
+- [The Canon That Exists Through Music](collections/the-canon-that-exists-through-music.md)
 
 ## Before a selection goes live
 

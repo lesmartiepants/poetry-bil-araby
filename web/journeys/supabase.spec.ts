@@ -77,7 +77,11 @@ test.describe('@live @supabase per-user data', () => {
   test('@live @supabase 8.5 following a poet shows in the Library, with poems read', async ({ browser }) => {
     const user = await newUser();
     const page = await as(browser, user);
+    // Act once the reader's follows have loaded from Supabase; a click before that raced the
+    // session and the follows refetch (flaked once in CI).
+    const follows = page.waitForResponse((r) => r.url().includes('/rpc/followed_poet_slugs') && r.ok());
     await page.goto('./poet/test-poet-eight');
+    await follows;
     await page.getByRole('button', { name: 'Follow' }).click();
     await expect(page.getByRole('button', { name: 'Following' })).toBeVisible();
     await page.goto('./p/24');

@@ -74,7 +74,7 @@ describe('recitation', () => {
     const again = await h.recitation(7, { voice: 'Orus' });
     expect(again.body.cached).toBe(true);
     expect(tts).toHaveBeenCalledTimes(1);
-    await h.recitation(7, { voice: 'Leda' });
+    await h.recitation(7, { voice: 'Iapetus' });
     expect(tts).toHaveBeenCalledTimes(2); // another voice is another recitation
     const wav = await h.wav(7, { voice: 'Orus' });
     expect(wav.headers['Content-Type']).toBe('audio/wav');
@@ -95,6 +95,7 @@ describe('recitation', () => {
     const tts = stub();
     const h = harness({ tts });
     expect((await h.recitation(7, { voice: 'Nobody' })).status).toBe(400);
+    expect((await h.recitation(7, { voice: 'Leda' })).status).toBe(400); // shortlisted out (#769)
     expect((await h.recitation('x', { voice: 'Orus' })).status).toBe(400);
     expect((await h.recitation(99, { voice: 'Orus' })).status).toBe(404);
     expect((await h.wav(7, { voice: 'Orus' })).status).toBe(404);

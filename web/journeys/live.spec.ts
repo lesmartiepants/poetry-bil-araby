@@ -172,7 +172,8 @@ test.describe('@live V3 against the real API', () => {
     const player = page.getByRole('navigation', { name: 'Now playing' });
     await expect(player.getByText('LINE 1 OF 3')).toBeVisible();
     const t0 = Date.now();
-    await expect(player.getByText('LINE 3 OF 3')).toBeVisible({ timeout: 12_000 });
+    // The audio clock in headless Chromium on a loaded runner can lag; the lower bound below is what the test is about.
+    await expect(player.getByText('LINE 3 OF 3')).toBeVisible({ timeout: 30_000 });
     // Without breaths, line 3 begins lineStarts[2] seconds in; with one before it, about 0.9 s later.
     expect((Date.now() - t0) / 1000).toBeGreaterThan(lineStarts[2] + 0.6);
   });

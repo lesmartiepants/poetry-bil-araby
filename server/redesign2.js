@@ -111,25 +111,9 @@ export async function geminiText(kind, input) {
 }
 
 // ── Recitation: Gemini TTS, server-side only ───────────────────────────────
-// Voices the player offers (web/core/voices.ts); anything else is a 400.
-export const TTS_VOICES = [
-  'Zephyr',
-  'Leda',
-  'Aoede',
-  'Autonoe',
-  'Laomedeia',
-  'Pulcherrima',
-  'Vindemiatrix',
-  'Sulafat',
-  'Orus',
-  'Charon',
-  'Enceladus',
-  'Iapetus',
-  'Algieba',
-  'Algenib',
-  'Alnilam',
-  'Zubenelgenubi',
-];
+// The six shortlisted voices the player offers (web/core/voices.ts, #769); anything else is a 400.
+// Keep in step with that list: the others stay commented out there until they are re-auditioned.
+export const TTS_VOICES = ['Zephyr', 'Autonoe', 'Sulafat', 'Orus', 'Enceladus', 'Iapetus'];
 const TTS_MODELS = ['gemini-2.5-flash-preview-tts', 'gemini-2.5-pro-preview-tts']; // second is the 429 fallback
 const TTS_DELIVERY =
   'اقرأ هذه القصيدة العربية الكلاسيكية بصوت شاعر عربي قديم — بنبرة ملكية رزينة، وإيقاع المقاطع الشعرية، وعاطفة صادقة. أسلوب الإلقاء: تمهّل عند الوقفات، وارفع الصوت عند المشاعر القوية. النص للتلاوة:';

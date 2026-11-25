@@ -511,7 +511,7 @@ a {
   opacity: 1;
   transition-delay: 160ms;
 }
-.tabbar__tab[aria-current='page'] {
+.tabbar__tab[aria-current] {
   width: auto;
   padding: 0 16px;
   background: var(--c-accent);

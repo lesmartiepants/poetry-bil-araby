@@ -108,6 +108,8 @@ test.describe('Area 2 · Reading', () => {
     await expect(tabs.getByRole('link', { name: 'Journey' })).toBeInViewport();
     await expect(guide.getByRole('link').last()).not.toBeInViewport();
     expect(await tabLinks()).toEqual(standardLinks);
+    await expect(tabs.getByRole('link', { name: 'Explore' })).toHaveAttribute('aria-current', 'location');
+    await expect(tabs.locator('[aria-current]')).toHaveCount(1);
 
     for (let step = 0; step < 2; step++) {
       const doors = guide.getByRole('link');

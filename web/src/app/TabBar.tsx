@@ -20,9 +20,12 @@ export function TabBar({ readerVisible }: { readerVisible?: boolean } = {}) {
   return (
     <nav aria-label="Main" aria-hidden={readerVisible === false || undefined} className={classes.filter(Boolean).join(' ')} {...inert} {...press} data-testid="tabbar">
       {TABS.map((t) => {
-        const on = t.match.some((m) => loc === m || loc.startsWith(`${m}/`));
+        const on = inReader
+          ? t.href === '/explore'
+          : t.match.some((m) => loc === m || loc.startsWith(`${m}/`));
+        const current = on ? (inReader ? 'location' : 'page') : undefined;
         return (
-          <Link key={t.href} href={t.href} className="tabbar__tab" aria-label={t.label} aria-current={on ? 'page' : undefined}
+          <Link key={t.href} href={t.href} className="tabbar__tab" aria-label={t.label} aria-current={current}
             onClick={inReader ? () => requestAnimationFrame(() => window.scrollTo(0, 0)) : undefined}>
             {t.icon(on)}{on && t.label.toUpperCase()}
           </Link>

@@ -3,6 +3,14 @@ import { fresh, signedIn } from './helpers';
 
 test.describe('Areas 10–11 · Collections and search', () => {
   // V3.3 done when: a saved collection resumes where it left off.
+  test('10.2 a long collection lists five, then names who the rest reach', async ({ page }) => {
+    await fresh(page, { 'mock.progress': '[]' });
+    await page.goto('./collection/your-first-seven');
+    await expect(page.locator('.coll-row')).toHaveCount(5);
+    await page.getByRole('button', { name: /^and 2 more/ }).click();
+    await expect(page.locator('.coll-row')).toHaveCount(7);
+  });
+
   test('10.2 a saved collection resumes at the next unread poem, after a reload; 8.15 it shows in the Library', async ({ page }) => {
     await fresh(page, signedIn);
     await page.goto('./collection/women-who-wrote-the-canon');

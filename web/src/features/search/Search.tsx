@@ -83,13 +83,14 @@ export function SearchScreen() {
               <p className="nothing__sub">Closest matches:</p>
             </div>
             <div className="nearest">
-              {d.nearest.poets.map((p) => (
+              {/* The three closest, as in 11.3: two poets and a feeling when both are near. */}
+              {d.nearest.poets.slice(0, d.nearest.feelings.length ? 2 : 3).map((p) => (
                 <Link key={p.slug} href={`/poet/${p.slug}`} className="nearest__row">
                   <span className="nearest__main"><span className="nearest__name">{p.nameEn}</span><span className="nearest__sub">Poet · {p.years} · {p.poemCount} poems</span></span>
                   <span lang="ar" className="nearest__ar">{p.nameAr}</span><Chevron />
                 </Link>
               ))}
-              {d.nearest.feelings.map((f) => (
+              {d.nearest.feelings.slice(0, d.nearest.poets.length ? 1 : 3).map((f) => (
                 <Link key={f.key} href={`/explore/feeling/${f.key}`} className="nearest__row">
                   <span className="nearest__main"><span className="nearest__name">{f.en}</span><span className="nearest__sub">Feeling · {f.poemCount} poems</span></span>
                   <span lang="ar" className="nearest__ar">{f.ar}</span><Chevron />

@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useSearch } from '@core/hooks';
 import { readJSON, writeJSON } from '@core/storage';
-import { Skeleton } from '@ds/primitives';
+import { MarginNote, Skeleton } from '@ds/primitives';
 import { Chevron, Clock, Close, Search as SearchIcon } from '@ds/icons';
 import { BrandLogo, collectionArt, PoemRow, PoetRow } from '@components/index';
 import { matchRange } from '@core/logic/arabic';
@@ -85,6 +85,7 @@ export function SearchScreen() {
           </>
         )}
         {r.isFetching && <Skeleton lines={4} />}
+        {r.isError && !r.isFetching && <MarginNote message="Search didn’t load." onRetry={() => r.refetch()} />}
         {d && !d.nearest && (
           <>
             <div role="radiogroup" aria-label="Show" className="search-kinds">

@@ -5,7 +5,7 @@ import { api } from '@core/api';
 import { qk, useAccount, useFeelings, useInvalidate, usePrefs, useSetPrefs } from '@core/hooks';
 import { isAvailable } from '@core/sources';
 import { FEMALE_VOICES, MALE_VOICES } from '@core/voices';
-import { GroupCard, Header, Segmented, Skeleton, Slider, Switch, TitleRow } from '@ds/primitives';
+import { GroupCard, Header, LoadNote, Segmented, Skeleton, Slider, Switch, TitleRow } from '@ds/primitives';
 import { Check, Chevron, Play } from '@ds/icons';
 import { BrandLogo, RowLink } from '@components/index';
 import './you.css';
@@ -45,9 +45,11 @@ function AccountCard() {
 const cap = (x: string) => x[0].toUpperCase() + x.slice(1);
 
 export function YouHub() {
-  const p = usePrefs().data;
+  const pq = usePrefs();
+  const p = pq.data;
   const set = useSetPrefs();
-  const feelings = useFeelings().data;
+  const fq = useFeelings();
+  const feelings = fq.data;
   const guide = isAvailable('profile', 'journey');
   const SIZES = ['Small', 'Medium', 'Large', 'Larger', 'Largest'];
   const leaning = (x: number) => (x < 0.2 ? 'Classical' : x < 0.45 ? 'Mostly classical, some modern' : x <= 0.55 ? 'Classical and modern' : x <= 0.8 ? 'Mostly modern, some classical' : 'Modern');
@@ -56,6 +58,7 @@ export function YouHub() {
     <div className="screen">
       <header className="hub-hdr"><BrandLogo /></header>
       <main className="pad stack" style={{ paddingTop: 6 }}>
+        <LoadNote of={[pq, fq]} message="Your settings didn’t load." />
         {guide && (
           <>
             <p className="you-label">YOUR GUIDE</p>

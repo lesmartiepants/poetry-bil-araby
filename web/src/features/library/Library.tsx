@@ -6,7 +6,7 @@ import { api } from '@core/api';
 import { qk, useAccount, useCollections, useFollows, useInvalidate, useKeeps, useLists, usePoems, usePoets, useProgress, useReads } from '@core/hooks';
 import { isAvailable } from '@core/sources';
 import type { Poem, Poet, UserList } from '@core/types';
-import { FullAreaError, Header, SectionLabel, Segmented, Sheet, Skeleton, TitleRow } from '@ds/primitives';
+import { FullAreaError, Header, Pending, SectionLabel, Segmented, Sheet, Skeleton, TitleRow } from '@ds/primitives';
 import { Compass, Dots, Lock, Mark, Search } from '@ds/icons';
 import { BrandLogo, CollectionCard, PoemRow, PoemTile, PoetAvatar, PoetRow } from '@components/index';
 import { useOverlay } from '@components/overlays';
@@ -226,10 +226,12 @@ export function AllLists({ ListIcon, ListEditor }: { ListIcon: ListIconT; ListEd
 }
 
 export function ListScreen({ id, ListIcon }: { id: string; ListIcon: ListIconT }) {
-  const list = useLists().data?.find((l) => l.id === id);
+  const lq = useLists();
+  const list = lq.data?.find((l) => l.id === id);
   const [, nav] = useLocation();
   const qs = useQueries({ queries: (list?.poemIds ?? []).map((pid) => ({ queryKey: ['poem', pid], queryFn: () => api.poems.get(pid) })) });
-  if (!list) return <div className="screen pad" style={{ paddingTop: 120 }}><Skeleton /></div>;
+  if (lq.data && !list) return <div className="screen"><Header onBack={() => nav('/library')} /><FullAreaError title="This list isn’t here" body="It may have been deleted." action="Back to your diwan" onAction={() => nav('/library')} /></div>;
+  if (!list) return <div className="screen pad" style={{ paddingTop: 120 }}><Pending of={lq} /></div>;
   return (
     <div className="screen">
       <Header onBack={() => nav('/library')} />

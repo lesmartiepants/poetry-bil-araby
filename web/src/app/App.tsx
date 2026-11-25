@@ -25,7 +25,7 @@ import { AllCollections, CollectionScreen } from '../features/collections/Collec
 import { SearchScreen } from '../features/search/Search';
 import { AppearanceScreen, GuideScreen, MovesScreen, ReciterScreen, TranslationScreen, YouHub } from '../features/you/You';
 
-const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false } } });
+const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 60_000, refetchOnWindowFocus: false, retry: 1, retryDelay: 500 } } });
 const FONT_VAR = { amiri: 'var(--font-amiri)', naskh: 'var(--font-naskh)', scheherazade: 'var(--font-scheherazade)' };
 
 function PrefsOnPage() {

@@ -32,6 +32,7 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
   test('9.5 Pathways shows the doors of the last poem finished, and none before the first', async ({ page }) => {
     await fresh(page);
     await page.goto('./journey');
+    await expect(page.getByText(/A poem about loving a place/)).toBeVisible(); // Tonight settled: an earlier click hits a detached tab
     await page.getByRole('radio', { name: 'PATHWAYS' }).click();
     await expect(page.getByRole('link', { name: /Your first seven/ })).toBeVisible();
     await expect(page.getByText(/FROM YOUR LAST POEM/)).toHaveCount(0);
@@ -39,6 +40,7 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await page.getByTestId('read-sentinel').scrollIntoViewIfNeeded();
     await expect(page.locator('.door-card')).toHaveCount(3);
     await page.goto('./journey');
+    await expect(page.getByText(/A poem about loving a place/)).toBeVisible(); // Tonight settled: an earlier click hits a detached tab
     await page.getByRole('radio', { name: 'PATHWAYS' }).click();
     const last = page.getByRole('region', { name: 'From your last poem' });
     await expect(last.getByText('FROM YOUR LAST POEM · A MOTE IN YOUR EYE')).toBeVisible();

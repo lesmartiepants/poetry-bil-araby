@@ -31,7 +31,7 @@ describe('shared links', () => {
       expect(result.headers.get('vary')).toBe('User-Agent');
       const html = await result.text();
       expect(html).toContain(
-        'property="og:title" content="Poetry بالعربي: Read Qays ibn al-Mulawwah’s poem “I pass by the dwellings”"'
+        'property="og:title" content="poetry بالعربي: Read Qays ibn al-Mulawwah’s poem “I pass by the dwellings”"'
       );
       expect(html).toContain('قيس &amp; ليلى · أمرّ على الديار ديار ليلى');
       expect(html).toContain(`property="og:image" content="${origin}/api/og/87201"`);
@@ -40,14 +40,68 @@ describe('shared links', () => {
     }
   );
 
-  it('uses the brand image for non-poem pages without querying the API', async () => {
+  it('uses the general title and brand image without querying the API', async () => {
     const fetchPoem = vi.fn();
     vi.stubGlobal('fetch', fetchPoem);
-    const result = await middleware(request('/new/collection/women-who-wrote-the-canon'));
+    const result = await middleware(request('/new/explore'));
     const html = await result.text();
-    expect(html).toContain('property="og:title" content="Poetry بالعربي"');
+    expect(html).toContain(
+      'property="og:title" content="poetry بالعربي: Experience Arabic Poetry"'
+    );
     expect(html).toContain(`property="og:image" content="${origin}/link-preview.png"`);
     expect(fetchPoem).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [
+      '/new/collection/women-who-wrote-the-canon',
+      'collections/women-who-wrote-the-canon',
+      { titleEn: 'Women who wrote the canon' },
+      'Read the Collection Women who wrote the canon',
+    ],
+    ['/new/journey/home/', 'collections/home', { titleEn: 'Home' }, 'Take the Journey Home'],
+    ['/new/poet/al-khansa', 'poets/al-khansa', { nameEn: 'Al-Khansa' }, 'Read Poems by Al-Khansa'],
+    [
+      '/new/poet/al-khansa/about',
+      'poets/al-khansa',
+      { nameEn: 'Al-Khansa' },
+      'Meet the Poet Al-Khansa',
+    ],
+    [
+      '/new/explore/era/abbasid',
+      'explore/eras',
+      [{ slug: 'abbasid', nameEn: 'Abbasid' }],
+      'Explore the Era Abbasid',
+    ],
+    [
+      '/new/explore/feeling/longing',
+      'explore/feelings',
+      [{ key: 'longing', en: 'Longing' }],
+      'Explore Poems About Longing',
+    ],
+    [
+      '/new/explore/difficulty/gentle',
+      'explore/bands',
+      [{ key: 'gentle', en: 'Gentle' }],
+      'Explore Gentle Poems',
+    ],
+  ])('uses a content title for %s', async (path, endpoint, data, title) => {
+    const fetchContent = vi.fn().mockResolvedValue(Response.json(data));
+    vi.stubGlobal('fetch', fetchContent);
+    const result = await middleware(request(path));
+    const html = await result.text();
+    expect(html).toContain(`property="og:title" content="poetry بالعربي: ${title}"`);
+    expect(html).toContain(`property="og:image" content="${origin}/link-preview.png"`);
+    expect(fetchContent).toHaveBeenCalledOnce();
+    expect(fetchContent.mock.calls[0][0].pathname).toBe(`/api/v2/${endpoint}`);
+  });
+
+  it('uses the general title for a missing collection', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, { status: 404 })));
+    const result = await middleware(request('/new/collection/missing'));
+    expect(await result.text()).toContain(
+      'property="og:title" content="poetry بالعربي: Experience Arabic Poetry"'
+    );
   });
 
   it('falls back to the brand image when a poem fails to load', async () => {

@@ -4,6 +4,7 @@
  * Social media crawlers (Facebook, Twitter, iMessage) need server-side rendering —
  * handled by Vercel routing middleware.
  */
+import { defaultShareTitle, poemShareTitle } from './linkTitles.js';
 
 /**
  * Update OG meta tags in the document head for a specific poem.
@@ -13,6 +14,10 @@ export function updateOGMetaTags(poem) {
   if (!poem) return;
 
   const title = `${poem.titleArabic || poem.title || 'Arabic Poetry'} — ${poem.poetArabic || poem.poet || ''}`;
+  const shareTitle = poemShareTitle(
+    poem.titleEn || poem.title || poem.titleArabic,
+    poem.poetEn || poem.poet || poem.poetArabic
+  );
   const description = poem.arabic
     ? poem.arabic.split('\n').slice(0, 2).join(' ')
     : 'Discover classical and modern Arabic poetry';
@@ -24,11 +29,11 @@ export function updateOGMetaTags(poem) {
     ? `${window.location.origin}/api/og/${poem.id}`
     : `${window.location.origin}/link-preview.png`;
 
-  setMeta('og:title', title);
+  setMeta('og:title', shareTitle);
   setMeta('og:description', description);
   setMeta('og:url', url);
   setMeta('og:image', ogImage);
-  setMeta('twitter:title', title);
+  setMeta('twitter:title', shareTitle);
   setMeta('twitter:description', description);
   setMeta('twitter:url', url);
   setMeta('twitter:image', ogImage);
@@ -42,17 +47,16 @@ export function updateOGMetaTags(poem) {
  * Reset OG meta tags to site defaults.
  */
 export function resetOGMetaTags() {
-  const defaultTitle = 'Poetry بالعربي';
   const defaultDesc =
     'Discover classical and modern Arabic poetry with AI-powered insights, audio recitation, and a curated collection of 9,073 poems.';
   const defaultUrl = window.location.origin;
   const defaultImage = `${window.location.origin}/link-preview.png`;
 
-  setMeta('og:title', defaultTitle);
+  setMeta('og:title', defaultShareTitle);
   setMeta('og:description', defaultDesc);
   setMeta('og:url', defaultUrl);
   setMeta('og:image', defaultImage);
-  setMeta('twitter:title', defaultTitle);
+  setMeta('twitter:title', defaultShareTitle);
   setMeta('twitter:description', defaultDesc);
   setMeta('twitter:url', defaultUrl);
   setMeta('twitter:image', defaultImage);

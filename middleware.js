@@ -1,4 +1,6 @@
-import { fetchPreviewPoem } from './server/link-preview.js';
+import { fetchNamedPreview, fetchPreviewPoem } from './server/link-preview.js';
+import { defaultShareTitle, poemShareTitle, shareBrand } from './src/utils/linkTitles.js';
+
 // Chat apps read the initial HTML. People continue to the normal app shell.
 export const config = {
   runtime: 'nodejs',
@@ -13,7 +15,6 @@ export const config = {
 const previewAgent =
   /facebookexternalhit|facebot|twitterbot|slackbot|discordbot|whatsapp|telegrambot|linkedinbot|linkpresentation|skypeuripreview|redditbot|pinterest|embedly|applebot/i;
 const poemPath = /^\/(?:new\/p|poem)\/(\d{1,10})\/?$/;
-const siteName = 'Poetry بالعربي';
 const siteDescription = 'Arabic poetry, read and heard.';
 
 const entities = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
@@ -27,11 +28,8 @@ async function poemPreview(id, origin) {
     const poemTitle = poem?.titleEn || poem?.titleAr;
     if (!poemTitle) return null;
     const poet = poem.poetEn || poem.poetAr;
-    const title = poet
-      ? `${siteName}: Read ${poet}’s poem “${poemTitle}”`
-      : `${siteName}: Read “${poemTitle}”`;
     return {
-      title,
+      title: poemShareTitle(poemTitle, poet),
       description: [poem.poetAr, poem.firstLineAr].filter(Boolean).join(' · ') || siteDescription,
       image: new URL(`/api/og/${id}`, origin).href,
       alt: [poemTitle, poet].filter(Boolean).join(' · '),
@@ -52,18 +50,31 @@ export default async function middleware(request) {
   // Reader state and private query parameters should stay out of preview metadata.
   const page = url.origin + url.pathname;
   const id = poemPath.exec(url.pathname)?.[1];
-  const preview = (id && (await poemPreview(id, url.origin))) || {
-    title: siteName,
+  const branded = {
+    title: defaultShareTitle,
     description: siteDescription,
     image: new URL('/link-preview.png', url.origin).href,
-    alt: 'Gold mark above Poetry بالعربي',
+    alt: `Gold mark above ${shareBrand}`,
     width: 1200,
     height: 630,
   };
+  let preview = branded;
+  if (id) {
+    preview = (await poemPreview(id, url.origin)) || branded;
+  } else {
+    const content = await fetchNamedPreview(url.pathname).catch(() => null);
+    if (content) {
+      preview = {
+        ...branded,
+        title: `${shareBrand}: ${content.title}`,
+        description: content.description || siteDescription,
+      };
+    }
+  }
   const { title, description, image, alt, width, height } = preview;
   const properties = {
     type: 'website',
-    site_name: siteName,
+    site_name: shareBrand,
     url: page,
     title,
     description,

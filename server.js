@@ -3498,7 +3498,7 @@ app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, 
 // ═══════════════════════════════════════════════════════════════
 
 const execFileAsync = promisify(execFile);
-const renderGitHubCli = fileURLToPath(new URL('.render-bin/gh', import.meta.url));
+const renderGitHubCli = resolve('.render-bin/gh');
 
 async function createGitHubIssue(report, truncatedLogs, reportId) {
   const token = process.env.GITHUB_TOKEN_SUBMIT_BUG;

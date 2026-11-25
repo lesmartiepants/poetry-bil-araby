@@ -2,7 +2,7 @@
  * Update Open Graph meta tags dynamically for poem deep links.
  * Helps with SEO crawlers that execute JavaScript (e.g. Google, Bing).
  * Social media crawlers (Facebook, Twitter, iMessage) need server-side rendering —
- * handled by the Vercel API route.
+ * handled by Vercel routing middleware.
  */
 
 /**
@@ -22,7 +22,7 @@ export function updateOGMetaTags(poem) {
     : `${window.location.origin}${qs}`;
   const ogImage = poem.id
     ? `${window.location.origin}/api/og/${poem.id}`
-    : `${window.location.origin}/favicon.svg`;
+    : `${window.location.origin}/link-preview.png`;
 
   setMeta('og:title', title);
   setMeta('og:description', description);
@@ -46,7 +46,7 @@ export function resetOGMetaTags() {
   const defaultDesc =
     'Discover classical and modern Arabic poetry with AI-powered insights, audio recitation, and a curated collection of 9,073 poems.';
   const defaultUrl = window.location.origin;
-  const defaultImage = `${window.location.origin}/favicon.svg`;
+  const defaultImage = `${window.location.origin}/link-preview.png`;
 
   setMeta('og:title', defaultTitle);
   setMeta('og:description', defaultDesc);
@@ -56,7 +56,7 @@ export function resetOGMetaTags() {
   setMeta('twitter:description', defaultDesc);
   setMeta('twitter:url', defaultUrl);
   setMeta('twitter:image', defaultImage);
-  setMeta('twitter:card', 'summary');
+  setMeta('twitter:card', 'summary_large_image');
 
   document.title = 'بالعربي | Poetry Bil-Araby';
 }

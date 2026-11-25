@@ -1,14 +1,15 @@
 // State QA: every main screen in its reactive states, at 390×844.
 // Loading and error run the app on live sources with /api/v2 held open or failing (no server needed);
 // empty / signed in / kept / progress run on mock data with the mock store preset.
-// Usage: npm run qa:states -- [--only <regex>]
+// Usage: npm run qa:states -- [--only <text>]
 // Writes qa/out/states/<case>.png, qa/out/states/index.html, and lists problems. Exits 1 if any check fails.
 import { chromium } from 'playwright';
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { spawn } from 'node:child_process';
 
 const arg = (k) => { const i = process.argv.indexOf(`--${k}`); return i > 0 ? process.argv[i + 1] : undefined; };
-const only = arg('only') ? new RegExp(arg('only')) : null;
+// A plain substring of the case id (no regular expression built from the command line).
+const only = arg('only') ? { test: (id) => id.toLowerCase().includes(arg('only').toLowerCase()) } : null;
 const out = new URL('./out/states/', import.meta.url);
 mkdirSync(out, { recursive: true });
 

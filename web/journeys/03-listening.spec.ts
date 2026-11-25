@@ -53,6 +53,32 @@ test.describe('Area 3 · Listening', () => {
     await expect(page.getByRole('alert').filter({ hasText: 'Leda isn’t available now. Still reciting in Zephyr.' })).toBeVisible();
   });
 
+  test('3.4–3.6 scrolling shrinks the player to a pill; the fan shows Pause and the recitation keeps going', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./p/amurru');
+    await page.getByRole('button', { name: /LISTEN/ }).click();
+    await expect(page.locator('.word--now')).toHaveCount(1, { timeout: 3000 });
+    await page.evaluate(() => window.scrollTo(0, 600));
+    const pill = page.getByRole('navigation', { name: 'Now playing' });
+    await expect(pill).toHaveClass(/player--pill/);
+    await expect(pill.getByRole('button', { name: 'Pause' })).toBeVisible();
+    await pill.getByRole('button', { name: 'More actions' }).click();
+    await expect(page.getByRole('menu', { name: 'Actions' }).getByRole('menuitem', { name: 'Pause' })).toBeVisible();
+    await page.getByRole('button', { name: 'Close actions' }).click();
+    await expect(pill.getByText(/LINE 2 OF 4/)).toBeVisible({ timeout: 6000 });
+  });
+
+  test('3.9 a recitation that stalls says where it stopped and resumes from there', async ({ page }) => {
+    await fresh(page, { 'mock.stall': '1' });
+    await page.goto('./p/amurru');
+    await page.getByRole('button', { name: /LISTEN/ }).click();
+    const notice = page.getByRole('alert').filter({ hasText: 'The recitation stopped. Resume from line 2.' });
+    await expect(notice).toBeVisible({ timeout: 6000 });
+    await notice.getByRole('button', { name: 'RESUME' }).click();
+    await expect(notice).toHaveCount(0);
+    await expect(page.getByRole('navigation', { name: 'Now playing' }).getByText('LINE 3 OF 4')).toBeVisible({ timeout: 6000 });
+  });
+
   test('3.8 a recitation that won’t load offers Try again', async ({ page }) => {
     await fresh(page, { 'mock.ttsFail': '1' });
     await page.goto('./p/amurru');

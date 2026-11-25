@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { fresh, signedIn } from './helpers';
+import { fresh, openYourPoems, signedIn } from './helpers';
 
 test.describe('Areas 6–8 · Keep, share and the Library', () => {
   test('6.2 keeping while signed out asks to sign in, then keeps', async ({ page }) => {
@@ -32,6 +32,82 @@ test.describe('Areas 6–8 · Keep, share and the Library', () => {
     await expect(page.getByRole('link', { name: /I pass by the dwellings/ })).toBeVisible();
   });
 
+  // V2.1 done when: a poem kept in two lists shows in both; deleting one list leaves it in the other;
+  // taking it out of Favorites leaves it kept.
+  test('6.4 a poem in two lists shows in both; out of Favorites it stays kept; deleting a list leaves it kept', async ({ page }) => {
+    await fresh(page, signedIn);
+    await page.goto('./p/amurru');
+    await page.getByRole('button', { name: 'Keep' }).click();
+    await page.getByRole('button', { name: 'CHANGE' }).click();
+    await page.getByRole('button', { name: 'New list' }).click();
+    await page.getByRole('textbox', { name: 'List name' }).fill('Longing for home');
+    await page.getByRole('button', { name: 'Create and add this poem' }).click();
+    await expect(page.getByRole('button', { name: 'Done · in 2 lists' })).toBeVisible();
+
+    const poemIn = async (list: string) => {
+      await page.goto('./library/lists');
+      await page.getByRole('link', { name: new RegExp(list) }).click();
+      await expect(page.getByRole('heading', { name: list })).toBeVisible();
+      return page.getByRole('link', { name: /I pass by the dwellings/ });
+    };
+    await expect(await poemIn('Longing for home')).toBeVisible();
+    await expect(await poemIn('Favorites')).toBeVisible();
+
+    // Out of Favorites: the lists sheet opens from CHANGE on the Kept toast.
+    await page.goto('./p/qadhan');
+    await page.getByRole('button', { name: 'Keep' }).click();
+    await page.getByRole('button', { name: 'CHANGE' }).click();
+    await page.getByRole('checkbox', { name: /Favorites/ }).click();
+    await expect(page.getByRole('checkbox', { name: /Favorites/ })).toHaveAttribute('aria-checked', 'false');
+    await page.getByRole('button', { name: /^Done · in 0 lists/ }).click();
+    await expect(await poemIn('Favorites')).toBeVisible(); // amurru is still there
+    await expect(page.getByRole('link', { name: /A mote in your eye/ })).toHaveCount(0);
+    await page.goto('./library');
+    await openYourPoems(page);
+    await expect(page.getByRole('link', { name: /A mote in your eye/ })).toBeVisible();
+
+    await page.goto('./library/lists');
+    await page.getByRole('button', { name: 'Options for Longing for home' }).click();
+    await page.getByRole('button', { name: 'Delete list' }).click();
+    await page.getByRole('button', { name: 'DELETE LIST' }).click();
+    await expect(await poemIn('Favorites')).toBeVisible();
+  });
+
+  test('8.4 List deleted · UNDO brings the list back with its poems', async ({ page }) => {
+    await fresh(page, signedIn);
+    await page.goto('./p/amurru');
+    await page.getByRole('button', { name: 'Keep' }).click();
+    await page.getByRole('button', { name: 'CHANGE' }).click();
+    await page.getByRole('button', { name: 'New list' }).click();
+    await page.getByRole('textbox', { name: 'List name' }).fill('To read aloud');
+    await page.getByRole('button', { name: 'Create and add this poem' }).click();
+    await page.goto('./library/lists');
+    await page.getByRole('button', { name: 'Options for To read aloud' }).click();
+    await page.getByRole('button', { name: 'Delete list' }).click();
+    await page.getByRole('button', { name: 'DELETE LIST' }).click();
+    const toast = page.getByRole('status').filter({ hasText: 'List deleted' });
+    await expect(toast).toBeVisible();
+    await toast.getByRole('button', { name: 'UNDO' }).click();
+    await page.getByRole('link', { name: /To read aloud/ }).click();
+    await expect(page.getByRole('link', { name: /I pass by the dwellings/ })).toBeVisible();
+  });
+
+  test('8.6–8.9 your poems group by poet, feeling and era; the sort label switches to English order', async ({ page }) => {
+    await fresh(page, signedIn);
+    for (const p of ['amurru', 'qadhan', 'al-khayl']) { await page.goto(`./p/${p}`); await page.getByRole('button', { name: 'Keep' }).click(); await page.waitForTimeout(300); }
+    await page.goto('./library');
+    await openYourPoems(page);
+    const heads = page.locator('.t-eyebrow.mt-8');
+    await expect(heads).toHaveCount(3);
+    await page.getByRole('button', { name: 'ARABIC A–Z' }).click();
+    await expect(heads).toHaveText(['Al-Khansa', 'Al-Mutanabbi', 'Majnun Layla']);
+    await page.getByRole('button', { name: 'BY FEELING' }).click();
+    await expect(heads).toHaveText(['grief', 'longing', 'pride']);
+    await page.getByRole('button', { name: 'BY ERA' }).click();
+    await expect(heads).toHaveText(['abbasid', 'pre-islamic', 'umayyad']);
+    await expect(page.getByRole('link', { name: /The horses and the night/ })).toBeVisible();
+  });
+
   test('8.2 Favorites can’t be renamed or deleted', async ({ page }) => {
     await fresh(page, signedIn);
     await page.goto('./p/amurru');
@@ -45,7 +121,7 @@ test.describe('Areas 6–8 · Keep, share and the Library', () => {
     await fresh(page, signedIn);
     for (const p of ['amurru', 'qadhan']) { await page.goto(`./p/${p}`); await page.getByRole('button', { name: 'Keep' }).click(); await page.waitForTimeout(300); }
     await page.goto('./library');
-    await page.getByRole('radio', { name: 'POEMS' }).click();
+    await openYourPoems(page);
     await page.getByRole('button', { name: 'SELECT' }).click();
     await page.getByRole('checkbox', { name: /A mote in your eye/ }).click();
     await page.getByRole('button', { name: 'Remove' }).click();

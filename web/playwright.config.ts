@@ -22,7 +22,8 @@ export default defineConfig({
     launchOptions: exe ? { executablePath: exe } : {},
   },
   grep: LIVE ? /@live/ : undefined,
-  grepInvert: LIVE ? undefined : /@live/,
+  // @prod runs only through playwright.prod.config.ts, against the deployed app.
+  grepInvert: LIVE ? /@prod/ : /@live|@prod/,
   projects: [{ name: 'phone', use: { browserName: 'chromium' } }],
   webServer: {
     command: `${LIVE ? '' : 'VITE_SOURCES=mock '}npx vite --port ${PORT} --strictPort`,

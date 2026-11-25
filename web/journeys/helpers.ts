@@ -12,6 +12,15 @@ export async function fresh(page: Page, local: Record<string, string> = {}) {
 }
 export const signedIn = { 'mock.account': JSON.stringify({ signedIn: true, provider: 'apple' }) };
 
+/**
+ * The Library's POEMS tab. The hub re-renders as keeps and lists arrive (empty state → content),
+ * which detaches a tab clicked too early; wait for the loaded hub first.
+ */
+export async function openYourPoems(page: Page) {
+  await page.getByText('RECENTLY KEPT').waitFor();
+  await page.getByRole('radio', { name: 'POEMS' }).click();
+}
+
 /** Aa lives in the fan (2.3): scroll so the dock folds, open the mark, choose Text. */
 export async function openAa(page: Page) {
   await page.getByRole('navigation', { name: 'Poem actions' }).waitFor();

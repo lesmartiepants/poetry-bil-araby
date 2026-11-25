@@ -36,6 +36,56 @@ test.describe('Areas 4–5 · Explore and poet pages', () => {
     await expect(page.getByRole('heading', { name: 'Abbasid' })).toBeVisible();
   });
 
+  // V1.5 done when: every browse path reaches a poem.
+  const paths: [string, (p: import('@playwright/test').Page) => Promise<void>][] = [
+    ['4.1 → 4.4 a feeling chip', async (p) => { await p.getByRole('link', { name: /Longing/ }).first().click(); }],
+    ['4.3 → 4.4 the feeling shelves', async (p) => {
+      await p.locator('a[href$="/explore/feelings"]').click();
+      await p.locator('.shelf-head').filter({ hasText: /Longing/ }).click();
+    }],
+    ['4.5 → 4.6 the era shelves', async (p) => {
+      await p.locator('a[href$="/explore/eras"]').click();
+      await p.locator('.shelf-head').filter({ hasText: /Abbasid/ }).click();
+    }],
+    ['4.6 an era card', async (p) => { await p.locator('.era-card').filter({ hasText: /Abbasid/ }).click(); }],
+    ['4.7 a difficulty band', async (p) => { await p.getByRole('link', { name: /Measured/ }).click(); }],
+    ['4.2 → 5.1 all poets', async (p) => {
+      await p.locator('a[href$="/explore/poets"]').click();
+      await p.locator('.poet-line').filter({ hasText: 'Al-Mutanabbi' }).click();
+    }],
+    ['4.1 → 5.1 the poet of the week', async (p) => { await p.locator('.potw').click(); }],
+  ];
+  for (const [name, go] of paths) {
+    test(`${name} reaches a poem`, async ({ page }) => {
+      await fresh(page);
+      await page.goto('./explore');
+      await go(page);
+      await page.locator('.list-row, .poet-poem').first().click();
+      await expect(page).toHaveURL(/\/p\//);
+      await expect(page.getByRole('navigation', { name: 'Poem actions' })).toBeVisible();
+    });
+  }
+
+  test('5.1 every poet in All poets opens their page, listing as many poems as it counts', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./explore/poets');
+    const rows = page.locator('.poet-line');
+    await expect(rows.first()).toBeVisible();
+    const n = await rows.count();
+    expect(n).toBeGreaterThan(1);
+    for (let i = 0; i < n; i++) {
+      const nameAr = (await rows.nth(i).locator('.poet-line__ar').textContent())!;
+      await rows.nth(i).click();
+      await expect(page.getByRole('heading', { name: nameAr })).toBeVisible();
+      const count = page.locator('.poet-poems__count');
+      await expect(count).toBeVisible();
+      const listed = await page.locator('.poet-poem').count();
+      await expect(count).toContainText(`${listed} ${listed === 1 ? 'POEM' : 'POEMS'}`);
+      await page.goBack();
+      await expect(rows.first()).toBeVisible();
+    }
+  });
+
   test('5.1 every poet in Explore opens a page of their poems; 5.3 the poet tab shows the bio', async ({ page }) => {
     await fresh(page);
     await page.goto('./explore');

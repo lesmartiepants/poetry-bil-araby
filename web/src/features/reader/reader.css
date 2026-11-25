@@ -207,6 +207,7 @@
 /* 2.17 The guide's doors under the last verse: a rule with the mark, then three doors. */
 .end--doors {
   padding-top: 40px;
+  padding-bottom: 120px; /* clear of the dock */
 }
 /* Holds the three doors' height while they load, so the page doesn't jump. */
 .end__doors-wait {

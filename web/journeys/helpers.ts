@@ -24,7 +24,7 @@ export async function openYourPoems(page: Page) {
 /** Aa lives in the fan (2.3): scroll so the dock folds, open the mark, choose Text. */
 export async function openAa(page: Page) {
   await page.getByRole('navigation', { name: 'Poem actions' }).waitFor();
-  await page.evaluate(() => window.scrollTo(0, 400));
+  await page.evaluate(() => window.scrollTo(0, (document.documentElement.scrollHeight - innerHeight) / 2));
   await page.getByRole('button', { name: 'Actions' }).click();
   await page.getByRole('menuitem', { name: 'Text' }).click();
 }

@@ -71,12 +71,13 @@ test.describe('Area 1 · Shell and developer panel', () => {
       await page.waitForTimeout(800);
       await page.mouse.up();
     };
+    await expect(page.locator('.door-card')).toHaveCount(3); // the page has its full height
     await expect(page.getByTestId('edge-tab')).toBeVisible();
     await hold('Poem actions');
     await expect(page.getByTestId('edge-tab')).toHaveCount(0);
     await expect(page.getByRole('status')).toContainText('Developer tab hidden');
     // Scrolled, the dock folds into the mark; it does the same.
-    await page.evaluate(() => window.scrollTo(0, 400));
+    await page.evaluate(() => window.scrollTo(0, (document.documentElement.scrollHeight - innerHeight) / 2));
     await hold('Actions');
     await expect(page.getByTestId('edge-tab')).toBeVisible();
     await expect(page.getByRole('status')).toContainText('Developer tab shown');

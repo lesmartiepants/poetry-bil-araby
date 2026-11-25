@@ -93,7 +93,7 @@ test.describe('Area 2 · Reading', () => {
     await fresh(page);
     await page.goto('./p/amurru');
     await expect(page.getByRole('navigation', { name: 'Poem actions' })).toBeVisible();
-    await page.evaluate(() => window.scrollTo(0, 600));
+    await page.evaluate(() => window.scrollTo(0, (document.documentElement.scrollHeight - innerHeight) / 2));
     await page.getByRole('button', { name: 'Actions' }).click();
     await expect(page.getByRole('menu', { name: 'Actions' }).getByRole('menuitem', { name: 'Insights' })).toBeVisible();
   });
@@ -104,5 +104,20 @@ test.describe('Area 2 · Reading', () => {
     await expect(page.getByRole('alert')).toContainText('This link leads nowhere');
     await page.getByRole('button', { name: 'Go to Explore' }).click();
     await expect(page.getByText('POET OF THE WEEK')).toBeVisible();
+  });
+
+  test('2.17 at the end of the poem the dock is back under the doors; mid-poem it is the mark', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./p/amurru');
+    await expect(page.getByRole('region', { name: 'Where the guide would take you next' }).locator('.door-card')).toHaveCount(3);
+    await page.evaluate(() => window.scrollTo(0, (document.documentElement.scrollHeight - innerHeight) / 2));
+    await expect(page.getByRole('button', { name: 'Actions' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Poem actions' })).toHaveCount(0);
+    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    const dock = page.getByRole('navigation', { name: 'Poem actions' });
+    await expect(dock).toBeVisible();
+    await expect(dock.getByRole('button', { name: /INSIGHTS/ })).toBeVisible();
+    await expect(dock.getByRole('button', { name: 'Keep' })).toBeVisible();
+    await expect(dock.getByRole('button', { name: 'Share' })).toBeVisible();
   });
 });

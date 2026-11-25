@@ -26,6 +26,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, holdin
   const [gloss, setGloss] = useState<{ line: number; word: number } | null>(null);
   const [verseMenu, setVerseMenu] = useState<number | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  const [bottom, setBottom] = useState(false); // at the end of the page the dock is back (2.17)
   const [progress, setProgress] = useState(0);
   const open = useOverlay((s) => s.open);
   const showToast = useOverlay((s) => s.showToast);
@@ -36,6 +37,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, holdin
     const on = () => {
       setScrolled(window.scrollY > 80);
       const max = document.documentElement.scrollHeight - window.innerHeight;
+      setBottom(max > 120 && window.scrollY >= max - 2);
       setProgress(max > 0 ? Math.min(100, Math.round((window.scrollY / max) * 100)) : 0);
     };
     window.addEventListener('scroll', on, { passive: true });
@@ -105,7 +107,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, holdin
 
       {listening ? (
         <Player poem={poem} compact={scrolled} onMark={() => setSheet('fan')} onExpand={() => window.scrollTo({ top: 0, behavior: 'smooth' })} />
-      ) : scrolled ? (
+      ) : scrolled && !bottom ? (
         <div className="reader__fold">
           <button className={`reader__mark${holding ? ' reader__mark--holding' : ''}`} aria-label="Actions" onClick={() => setSheet('fan')} {...onLongPressMark}><Mark size={34} colour="var(--c-accent)" /></button>
           <span className="reader__progress" aria-hidden><span style={{ width: `${progress}%` }} /></span>

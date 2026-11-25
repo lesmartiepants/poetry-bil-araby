@@ -4,9 +4,9 @@ UPDATE poems SET cached_translation = 'This is an invented test text * A second 
 INSERT INTO featured_poets (week_start, poet_id, note) VALUES (CURRENT_DATE - 1, 5, 'A fixture poet of the week.') ON CONFLICT (week_start) DO NOTHING;
 UPDATE poets SET region = 'Najd', gender = 'f' WHERE id = 5;
 -- V3: a published journey and collection, and tonight's pick (a journey step).
-INSERT INTO collections (slug, kind, title_en, title_ar, intro, step_label_en, step_label_ar, colour, published) VALUES
-  ('fixture-journey', 'journey', 'Fixture journey', 'رحلة الاختبار', 'Three fixture poems, one step at a time.', 'Heaven', 'سماء', '#22406E', true),
-  ('fixture-collection', 'collection', 'Fixture collection', 'مختارات الاختبار', 'Fixture poems by fixture poets.', 'Poem', 'قصيدة', '#4A1620', true)
+INSERT INTO collections (slug, kind, title_en, title_ar, subtitle_en, subtitle_ar, intro, step_label_en, step_label_ar, colour, published) VALUES
+  ('fixture-journey', 'journey', 'Fixture journey', 'رحلة الاختبار', 'A fixture arc, start to finish', 'قوس الاختبار من أوله إلى آخره', 'Three fixture poems, one step at a time.', 'Heaven', 'سماء', '#22406E', true),
+  ('fixture-collection', 'collection', 'Fixture collection', 'مختارات الاختبار', 'Poems for the fixture shelf', 'قصائد لرف الاختبار', 'Fixture poems by fixture poets.', 'Poem', 'قصيدة', '#4A1620', true)
 ON CONFLICT (slug) DO NOTHING;
 INSERT INTO collection_poems (collection_id, position, poem_id)
 SELECT c.id, x.pos, x.poem FROM collections c, (VALUES ('fixture-journey', 1, 24), ('fixture-journey', 2, 9), ('fixture-journey', 3, 3),

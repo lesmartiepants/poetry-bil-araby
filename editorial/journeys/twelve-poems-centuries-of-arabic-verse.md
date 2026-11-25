@@ -22,6 +22,11 @@ From there, each poem makes an earlier one sound different. The bread of the ope
 
 > Bread at dawn, a campsite after everyone has gone, a sound that changes each time it returns. Twelve poems take up questions about grief, desire, home, and what we owe each other. Start with whichever question stays with you.
 
+**Subtitle**
+
+- subtitle_en: Twelve poems, twelve centuries, no quiz after
+- subtitle_ar: اثنتا عشرة قصيدة، اثنا عشر قرنًا، بلا امتحان
+
 ## Reading order
 
 | Position | Step theme                            | Poem                                                                                                  | Poem ID | Reading                                                                              |

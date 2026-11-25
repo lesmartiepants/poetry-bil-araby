@@ -55,6 +55,8 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await expect(page.getByText(/A poem about loving a place/)).toBeVisible(); // Tonight settled: an earlier click hits a detached tab
     await page.getByRole('radio', { name: 'PATHWAYS' }).click();
     await expect(page.getByRole('link', { name: /Your first seven/ })).toBeVisible();
+    // The editorial subtitle sits under the journey title (it replaced the derived first-to-last-poet span).
+    await expect(page.locator('.journey-row', { hasText: 'Home' })).toContainText('The desert camp to Palestine');
     await expect(page.getByText(/FROM YOUR LAST POEM/)).toHaveCount(0);
     await page.goto('./p/qadhan');
     await page.getByTestId('read-sentinel').scrollIntoViewIfNeeded();

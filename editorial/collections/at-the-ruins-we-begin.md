@@ -22,6 +22,11 @@ Imruʾ al-Qays begins by asking two companions to stop and weep with him. Antara
 
 > Two companions are asked to stop at an abandoned campsite. A poet calls on horses, night, and the desert to say who he is. These seventeen readings open up classical Arabic poetry through lines that have stayed with readers for centuries.
 
+**Subtitle**
+
+- subtitle_en: Every great poem starts by stopping the camel
+- subtitle_ar: كل قصيدة عظيمة تبدأ بإيقاف الناقة
+
 ## Reading order
 
 | Position | Poet                                                         | English title                                     | Arabic title              | Poem or line to start from     | Corpus ID |

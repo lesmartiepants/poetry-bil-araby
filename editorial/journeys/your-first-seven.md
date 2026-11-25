@@ -22,6 +22,11 @@ The journey gives a newcomer seven experiences worth remembering in their own ri
 
 > Seven poems begin with a plea to stop and weep and end with a poet caught between two places. Along the way, hear what happens when a bird, a cup of coffee, or the sound of rain carries more than a person can say outright. Start anywhere, or follow the seven in order.
 
+**Subtitle**
+
+- subtitle_en: From a plea to stop and weep to a poet between two homes
+- subtitle_ar: من نداء الوقوف والبكاء إلى شاعر بين وطنين
+
 ## Reading order
 
 | Position | Step theme         | Poem                                                                                                   | Corpus ID | Reading                                                             |

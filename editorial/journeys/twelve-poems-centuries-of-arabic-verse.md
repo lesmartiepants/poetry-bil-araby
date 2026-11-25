@@ -22,6 +22,11 @@ From there, each poem makes an earlier one sound different. The bread of the ope
 
 > Bread at dawn, a campsite after everyone has gone, a sound that changes each time it returns. Twelve poems take up questions about grief, desire, home, and what we owe each other. Start with whichever question stays with you.
 
+**Subtitle**
+
+- subtitle_en: Twelve questions about grief, desire, and home
+- subtitle_ar: اثنا عشر سؤالًا عن الفقد والرغبة والوطن
+
 ## Reading order
 
 | Position | Step theme                            | Poem                                                                                                  | Poem ID | Reading                                                                              |

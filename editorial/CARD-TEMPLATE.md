@@ -42,6 +42,11 @@ For a collection, give the shelf one editorial question and explain the link or 
 
 > <Reader-facing description in two or three sentences. Give the reader a reason to open the card.>
 
+**Subtitle**
+
+- subtitle_en: <one short line>
+- subtitle_ar: <السطر نفسه بالعربية>
+
 ## Reading order
 
 <Use the appropriate table below and put one row per poem in display order.>
@@ -78,9 +83,13 @@ Use catalogue titles and poet names after checking them against the chosen editi
 | -------- | ------ | ------------- | ------------ | --------- |
 | 1        | <poet> | <title>       | <عنوان>      | <poem ID> |
 
+### Writing the subtitle
+
+The subtitle is the one line under the title on Pathways, in search results, and in the next-journey rows. Write one short line, about eight to ten words, that gives the journey's arc or promise: where the reader starts and where they end up, or the question the shelf asks. Do not list poets ("Al-Khansa to Fadwa Tuqan") and do not repeat the title. Write the Arabic line as its own sentence, not a word-for-word translation. A card with no subtitle shows nothing under its title.
+
 ### Where the fields go
 
-- The app reads the slug, kind, titles, intro, step labels, colour, and optional `pattern_key` from `collections`. Keep the card count derived from the roster. User progress comes from the app.
+- The app reads the slug, kind, titles, `subtitle_en`, `subtitle_ar`, intro, step labels, colour, and optional `pattern_key` from `collections`. Keep the card count derived from the roster. User progress comes from the app.
 - The ordered IDs go in `collection_poems.poem_id` with one-based `position`. Journey `theme` is the compact step title. Collections can leave it empty.
 - The existing reader uses `poems.full_poem_id` to put the complete work first in the doors for an excerpt. Mark an excerpt in the catalogue title in both languages. Record any other proposed door with its target ID and say if it still needs wiring.
 - A reader cue is draft copy for Insights. The app’s reading order carries IDs and step themes. Keep the longer teaching notes in the Markdown card.

@@ -71,13 +71,15 @@ END
 $$;
 
 INSERT INTO public.collections
-  (slug, kind, title_en, title_ar, intro, step_label_en, step_label_ar, colour, pattern_key, published)
+  (slug, kind, title_en, title_ar, subtitle_en, subtitle_ar, intro, step_label_en, step_label_ar, colour, pattern_key, published)
 VALUES
   ('twelve-poems-centuries-of-arabic-verse', 'journey',
    'Twelve Poems, Centuries of Arabic Verse', 'اثنتا عشرة قصيدة عبر قرون من الشعر العربي',
+   'Twelve questions about grief, desire, and home', 'اثنا عشر سؤالًا عن الفقد والرغبة والوطن',
    'Bread at dawn, a campsite after everyone has gone, a sound that changes each time it returns. Twelve poems take up questions about grief, desire, home, and what we owe each other. Start with whichever question stays with you.',
    'Question', 'سؤال', '#22406E', NULL, true),
   ('women-who-wrote-the-canon', 'collection', 'Women Who Wrote the Canon', 'نساء كتبن الديوان',
+   'How women made grief, desire, and memory speak in Arabic', 'كيف أنطقت النساءُ الفقدَ والرغبة والذاكرة بالعربية',
    'A bird calls a brother back to mind. A poet in Córdoba claims the right to give her own kiss. A poet in Baghdad makes the sound of an epidemic travel through the night. Read these twelve poems for the ways women have made grief, desire, faith, and public memory speak in Arabic.',
    'Poem', 'قصيدة', '#4A1620', 'laceria', true);
 

@@ -115,7 +115,7 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
             return (
               <Link key={j.slug} href={`/journey/${j.slug}`} className="journey-row">
                 <span className="journey-row__count">{read}/{of}</span>
-                <span className="journey-row__text"><span className="journey-row__title">{j.titleEn}</span>{j.span && <span className="journey-row__sub">{j.span}</span>}</span>
+                <span className="journey-row__text"><span className="journey-row__title">{j.titleEn}</span>{j.subtitle && <span className="journey-row__sub">{j.subtitle}</span>}</span>
                 <Chevron size={16} />
               </Link>
             );
@@ -306,7 +306,7 @@ function JourneyDone({ j }: { j: Collection }) {
             {others.map((o) => (
               <Link key={o.slug} href={`/journey/${o.slug}`} className="journey-row">
                 <span className="journey-row__count">{prog?.find((x) => x.slug === o.slug)?.position ?? 0}/{o.poemIds.length}</span>
-                <span className="journey-row__text"><span className="journey-row__title">{o.titleEn}</span>{o.span && <span className="journey-row__sub">{o.span}</span>}</span>
+                <span className="journey-row__text"><span className="journey-row__title">{o.titleEn}</span>{o.subtitle && <span className="journey-row__sub">{o.subtitle}</span>}</span>
                 <Chevron size={16} />
               </Link>
             ))}

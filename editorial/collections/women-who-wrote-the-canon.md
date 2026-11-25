@@ -22,6 +22,11 @@ The collection asks **what have women poets made possible in Arabic verse?** Let
 
 > A bird calls a brother back to mind. A poet in Córdoba claims the right to give her own kiss. A poet in Baghdad makes the sound of an epidemic travel through the night. Read these twelve poems for the ways women have made grief, desire, faith, and public memory speak in Arabic.
 
+**Subtitle**
+
+- subtitle_en: How women made grief, desire, and memory speak in Arabic
+- subtitle_ar: كيف أنطقت النساءُ الفقدَ والرغبة والذاكرة بالعربية
+
 ## Reading order
 
 | Position | Poet                             | English title                                | Arabic title                 | Corpus ID |

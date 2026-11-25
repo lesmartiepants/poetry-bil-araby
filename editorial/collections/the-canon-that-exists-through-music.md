@@ -20,6 +20,11 @@ I’d start with the upside-down coffee cup in Nizar Qabbani’s _The Fortune Te
 
 > A fortune teller turns over a cup. A son misses his mother’s bread. These poems reached readers through the voices of Umm Kulthum, Abdel Halim Hafez, Fairuz, Marcel Khalife, and Kazem al-Saher, and found a place in the way people speak about love, faith, and home.
 
+**Subtitle**
+
+- subtitle_en: Poems that live on in song and in everyday speech
+- subtitle_ar: قصائد حيّة في الغناء وفي كلام الناس
+
 ## Reading order
 
 | Position | Poet                                                       | English title                     | Arabic title              | Musical association                 | Corpus ID |

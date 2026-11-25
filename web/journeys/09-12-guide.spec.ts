@@ -94,7 +94,7 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await fresh(page);
     await page.goto('./search');
     await page.getByRole('textbox', { name: /Search/ }).fill('الديار');
-    await expect(page.getByText('LINES')).toBeVisible();
+    await expect(page.locator('.search-section', { hasText: 'LINES' })).toBeVisible();
     await page.getByRole('textbox', { name: /Search/ }).fill('zzzz');
     await expect(page.getByText('CLOSEST MATCHES:')).toBeVisible();
   });

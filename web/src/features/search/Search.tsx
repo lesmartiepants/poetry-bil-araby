@@ -5,8 +5,24 @@ import { useSearch } from '@core/hooks';
 import { readJSON, writeJSON } from '@core/storage';
 import { Skeleton } from '@ds/primitives';
 import { Chevron, Clock, Close, Search as SearchIcon } from '@ds/icons';
-import { BrandLogo, CollectionCard, PoemRow, PoetRow } from '@components/index';
+import { BrandLogo, collectionArt, PoemRow, PoetRow } from '@components/index';
+import { matchRange } from '@core/logic/arabic';
+import { Pattern } from '@ds/Pattern';
 import './search.css';
+
+type Kind = 'all' | 'poets' | 'poems' | 'lines' | 'collections';
+const KINDS: [Kind, string][] = [['all', 'ALL'], ['poets', 'POETS'], ['poems', 'POEMS'], ['lines', 'LINES'], ['collections', 'COLLECTIONS']];
+
+const Section = ({ label, n }: { label: string; n: number }) => (
+  <p className="t-eyebrow t-eyebrow--accent search-section"><span>{label}</span><span className="search-section__n">{n}</span></p>
+);
+
+/** The matched part of a line, found the way search finds it (vowel marks ignored). */
+function Marked({ text, q }: { text: string; q: string }) {
+  const at = matchRange(text, q);
+  if (!at) return <>{text}</>;
+  return <>{text.slice(0, at[0])}<mark className="hit">{text.slice(at[0], at[1])}</mark>{text.slice(at[1])}</>;
+}
 
 export function SearchScreen() {
   const [q, setQ] = useState('');
@@ -27,6 +43,9 @@ export function SearchScreen() {
     }
   }, [r.data]); // eslint-disable-line react-hooks/exhaustive-deps
   const d = r.data;
+  const [kind, setKind] = useState<Kind>('all');
+  const total = d ? d.poets.length + d.poems.length + d.lines.length + d.collections.length : 0;
+  const show = (k: Exclude<Kind, 'all'>) => !!d && d[k].length > 0 && (kind === 'all' || kind === k);
   const forget = (x: string) => { const next = recents.filter((y) => y !== x); setRecents(next); writeJSON('search.recents', next); };
   const arabic = (x: string) => /[\u0600-\u06FF]/.test(x);
   const close = () => (history.length > 1 ? history.back() : nav('/explore'));
@@ -68,12 +87,28 @@ export function SearchScreen() {
         {r.isFetching && <Skeleton lines={4} />}
         {d && !d.nearest && (
           <>
-            {d.poets.length > 0 && <><p className="t-eyebrow t-eyebrow--accent">POETS</p><div className="list">{d.poets.map((p) => <PoetRow key={p.slug} poet={p} />)}</div></>}
-            {d.poems.length > 0 && <><p className="t-eyebrow t-eyebrow--accent">POEMS</p><div className="list">{d.poems.map((p) => <PoemRow key={p.id} poem={p} />)}</div></>}
-            {d.lines.length > 0 && <><p className="t-eyebrow t-eyebrow--accent">LINES</p><div className="list">{d.lines.map((l) => (
-              <Link key={`${l.poem.id}-${l.lineIndex}`} href={`/p/${l.poem.slug}`} className="list-row"><span className="list-row__main"><span lang="ar" className="ar" style={{ fontSize: 18, display: 'block', textAlign: 'right' }}>{l.line}</span><span className="list-row__sub">{l.poem.titleEn} · {l.poem.poetEn}</span></span></Link>
+            <div role="radiogroup" aria-label="Show" className="search-kinds">
+              {KINDS.map(([k, label]) => {
+                const n = k === 'all' ? total : d[k].length;
+                if (k !== 'all' && !n) return null;
+                return <button key={k} role="radio" aria-checked={kind === k} className="chip chip--sm" onClick={() => setKind(k)}>{k === 'all' ? `ALL · ${n}` : label}</button>;
+              })}
+            </div>
+            {show('poets') && <><Section label="POETS" n={d.poets.length} /><div className="list">{d.poets.map((p) => <PoetRow key={p.slug} poet={p} />)}</div></>}
+            {show('poems') && <><Section label="POEMS" n={d.poems.length} /><div className="list">{d.poems.map((p) => <PoemRow key={p.id} poem={p} />)}</div></>}
+            {show('lines') && <><Section label="LINES" n={d.lines.length} /><div className="stack gap-8">{d.lines.map((l) => (
+              <Link key={`${l.poem.id}-${l.lineIndex}`} href={`/p/${l.poem.slug}`} className="line-hit">
+                <span lang="ar" dir="rtl" className="line-hit__ar"><Marked text={l.line} q={debounced} /></span>
+                <span className="line-hit__sub">{l.poem.poetEn} · {l.poem.titleEn}</span>
+              </Link>
             ))}</div></>}
-            {d.collections.length > 0 && <><p className="t-eyebrow t-eyebrow--accent">COLLECTIONS</p><div className="chips">{d.collections.map((c) => <CollectionCard key={c.slug} c={c} />)}</div></>}
+            {show('collections') && <><Section label="COLLECTIONS" n={d.collections.length} /><div className="list">{d.collections.map((c) => (
+              <Link key={c.slug} href={`/collection/${c.slug}`} className="coll-hit">
+                <span className="coll-hit__art panel" style={{ background: c.colour }}><Pattern {...collectionArt(c)} scale={0.4} /></span>
+                <span className="coll-hit__text"><span className="coll-hit__title">{c.titleEn}</span><span className="coll-hit__sub">{c.poemIds.length} poems{c.span ? ` · ${c.span}` : ''}</span></span>
+                <Chevron size={16} />
+              </Link>
+            ))}</div></>}
           </>
         )}
         {d?.nearest && (

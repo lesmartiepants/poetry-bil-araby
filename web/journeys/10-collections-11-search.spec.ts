@@ -62,8 +62,8 @@ test.describe('Areas 10–11 · Collections and search', () => {
     await fresh(page);
     await page.goto('./search');
     await page.getByRole('textbox', { name: /Search/ }).fill('ديار ليلى');
-    await expect(page.getByText('LINES')).toBeVisible();
-    await page.locator('a.list-row').filter({ hasText: 'I pass by the dwellings' }).first().click();
+    await expect(page.locator('.search-section', { hasText: 'LINES' })).toBeVisible();
+    await page.locator('a.line-hit').filter({ hasText: 'I pass by the dwellings' }).first().click();
     await expect(page.getByRole('heading', { name: 'أمرُّ على الديار' })).toBeVisible();
   });
 
@@ -72,7 +72,7 @@ test.describe('Areas 10–11 · Collections and search', () => {
     await page.goto('./search');
     const box = page.getByRole('textbox', { name: /Search/ });
     await box.fill('الخنساء');
-    await expect(page.getByText('POETS')).toBeVisible();
+    await expect(page.locator('.search-section', { hasText: 'POETS' })).toBeVisible();
     await page.reload();
     await expect(page.getByText('RECENT')).toBeVisible();
     await page.locator('.recent__q').filter({ hasText: 'الخنساء' }).click();

@@ -1,0 +1,49 @@
+name: web prod smoke (ReDesign2)
+
+# Read-only @prod journeys against a deployed /new (web/journeys/prod.spec.ts).
+# The spec aborts every non-GET request and the two GETs that can fill a cache row
+# (/api/v2/poems/:id/ai, /api/v2/tonight), so it never writes to production.
+# Runs after each successful Vercel Production deployment, or by hand for any URL.
+
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'Site origin to test (its /new/ is opened)'
+        required: false
+        default: 'https://poetry-bil-araby.vercel.app'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-prod-smoke-${{ github.event.deployment.environment || 'manual' }}
+  cancel-in-progress: true
+
+jobs:
+  prod-smoke:
+    name: Prod smoke (read-only)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: web
+    env:
+      PROD_URL: ${{ github.event.inputs.url || 'https://poetry-bil-araby.vercel.app' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:prod
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: prod-smoke-traces
+          path: web/test-results
+          retention-days: 7

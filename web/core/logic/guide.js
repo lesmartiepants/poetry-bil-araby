@@ -14,25 +14,96 @@ export const ERA_NAMES = {
   ottoman: 'Ottoman',
   modern: 'Modern',
 };
-// A rough year per era, for "1,300 years on" when a poet has no dates.
-const ERA_YEAR = {
-  'pre-islamic': 560,
-  islamic: 640,
-  umayyad: 700,
-  abbasid: 900,
-  andalusian: 1100,
-  ayyubid: 1200,
-  mamluk: 1350,
-  ottoman: 1700,
-  modern: 1950,
+// A broad catalog tag supplies candidates. Both poems must also contain words for the same
+// concrete image, so (for example) a reference to sand alone cannot match abandoned dwellings.
+const MOTIF_IMAGES = {
+  night: [['Night', 'ليل|ليله|ليالي']],
+  'desert-ruins': [
+    ['The abandoned dwellings', 'اطلال|طلل|ديار|دمن'],
+    ['Sand', 'رمل|رمال'],
+  ],
+  'moon-stars': [
+    ['Stars', 'نجم|نجوم|كوكب|كواكب|شهاب|شهب'],
+    ['The moon', 'قمر|اقمار|بدر|بدور'],
+  ],
+  'sea-water': [
+    ['The sea', 'بحر|بحار'],
+    ['Rivers', 'نهر|انهار|جدول|جداول'],
+    ['Water', 'ماء|مياه'],
+  ],
+  'garden-flowers': [
+    ['Flowers', 'زهر|زهور|ازهار|ورد|ورود|اقاح|اقحوان'],
+    ['Gardens', 'روض|رياض|حديقه|حدائق|بستان|بساتين'],
+  ],
+  'wine-cup': [
+    ['The wine vessel', 'كاس|كؤوس|اكواب|كوب|ابريق|اباريق'],
+    ['Wine', 'خمر|خمور|راح|مدام'],
+  ],
+  'sword-battle': [
+    ['Swords', 'سيف|سيوف|حسام|حسامه'],
+    ['Battle', 'حرب|حروب|معركه|معارك'],
+  ],
+  birds: [
+    ['Doves', 'حمام|حمامه|يمام|يمامه|ورقاء'],
+    ['Birds', 'طير|طيور|طائر|عصفور|عصافير'],
+  ],
+  'fire-light': [
+    ['Fire', 'نار|نيران|لهب|جمر'],
+    ['Light', 'نور|انوار|ضوء|اضواء|ضياء'],
+  ],
+  tears: [['Tears', 'دمع|دمعه|دموع|ذرفت|تذرف']],
+  journey: [
+    ['The mount', 'ناقه|نوق|راحله|رواحل|بعير|ابل'],
+    ['The caravan', 'قافله|قوافل|ركب'],
+  ],
+  dawn: [['Dawn', 'فجر|صباح|صبح']],
 };
-export const yearOf = (r) =>
-  r.death_year ??
-  r.active_year ??
-  (r.birth_year ? r.birth_year + 40 : (ERA_YEAR[r.era_key] ?? null));
+const imagePatterns = Object.fromEntries(
+  Object.entries(MOTIF_IMAGES).map(([key, images]) => [
+    key,
+    images.map(([label, words]) => ({
+      label,
+      pattern: new RegExp(`^(?:[وف]?(?:[بكل]?(?:ال)?|لل))?(?:${words})(?:ها|هم|نا|ك|ي|ه)?$`),
+    })),
+  ])
+);
+const verseLines = (arabic) => arabic?.split(/\s*\*\s*|\n+/).filter((line) => line.trim()) ?? [];
+const imageWords = (line) =>
+  line
+    .replace(/[\p{M}\u0640]/gu, '')
+    .replace(/[إأآٱ]/g, 'ا')
+    .replace(/ى/g, 'ي')
+    .replace(/ة/g, 'ه')
+    .match(/\p{L}+/gu) ?? [];
+
+export function sharedImage(me, candidate) {
+  if (
+    me.poet_id === candidate.poet_id ||
+    !me.mood_primary ||
+    !candidate.mood_primary ||
+    me.mood_primary === candidate.mood_primary
+  )
+    return null;
+  const motifs = me.motif_keys?.filter((key) => candidate.motif_keys?.includes(key));
+  if (!motifs?.length) return null;
+  const evidence = (row) =>
+    verseLines(row.arabic).map((line) => ({ line, words: imageWords(line) }));
+  const source = evidence(me);
+  const target = evidence(candidate);
+  for (const key of motifs) {
+    for (const { label, pattern } of imagePatterns[key] ?? []) {
+      const from = source.find(({ words }) => words.some((word) => pattern.test(word)));
+      if (!from) continue;
+      const to = target.find(({ words }) => words.some((word) => pattern.test(word)));
+      if (to) return { label, fromLine: from.line, toLine: to.line };
+    }
+  }
+  return null;
+}
 const eraName = (slug) => (slug && slug !== 'unspecified' ? (ERA_NAMES[slug] ?? null) : null);
-const lineCount = (arabic) =>
-  arabic ? arabic.split(/\s*\*\s*|\n+/).filter((x) => x.trim()).length : 0;
+const feelingNouns = { amorous: 'desire', bittersweet: 'bittersweetness' };
+const feelingName = (row) =>
+  feelingNouns[row.mood_primary] ?? row.mood_label ?? row.mood_primary?.replaceAll('-', ' ');
 
 /** The guide's settings as a query string, so doors and Next poem follow them. */
 export function steerQuery(prefs) {
@@ -70,7 +141,7 @@ export function guideScore(r, steer, bandOf = () => 'measured') {
   if (steer.difficulty !== 'any')
     s += bandOf(r.accessibility_score, r) === steer.difficulty ? 1 : 0;
   if (steer.length !== 'any') {
-    const n = lineCount(r.arabic);
+    const n = verseLines(r.arabic).length;
     s += steer.length === 'short' ? (n <= 8 ? 1 : 0) : n >= 14 ? 1 : 0;
   }
   if (steer.feelings.length) {
@@ -89,31 +160,24 @@ export function byFit(rows, steer, bandOf) {
 }
 
 /**
- * The candidate pools for a poem's doors, from poems related to it (`near`:
- * same feeling or poet) and poems from anywhere, each already in fit order.
+ * The candidate pools for a poem's doors, each already in fit order.
  */
-export function doorPools(me, near, anywhere, full) {
+export function doorPools(me, near, anywhere, full, images = []) {
   const otherPoet = near.filter((r) => r.poet_id !== me.poet_id);
   const sameMood = (r) => Boolean(me.mood_primary) && r.mood_primary === me.mood_primary;
-  const gap = (r) => Math.abs((yearOf(r) ?? 0) - (yearOf(me) ?? 0));
   return {
     full: full ?? null,
     feeling: otherPoet.filter(sameMood),
     poet: near.filter((r) => r.poet_id === me.poet_id),
-    // The same feeling from another age, the farther the better; with no feeling, the same age.
-    era: me.mood_primary
-      ? otherPoet
-          .filter((r) => sameMood(r) && r.era_id !== me.era_id)
-          .sort((x, y) => gap(y) - gap(x))
-      : anywhere.filter((r) => r.era_id === me.era_id),
+    image: images.filter((row) => sharedImage(me, row)),
     new: anywhere,
   };
 }
 
 /**
  * At most one door of each kind: the complete poem when this is an excerpt,
- * then the same feeling in another poet, more from this poet, the same
- * feeling from another age; "somewhere new" tops up to three.
+ * then the same feeling in another poet, more from this poet, or the same
+ * image with a different feeling. "Somewhere new" tops up to three.
  */
 export function chooseDoors(me, pools, n = 3) {
   const out = [];
@@ -126,34 +190,39 @@ export function chooseDoors(me, pools, n = 3) {
     return true;
   };
   if (pools.full) take('full', [pools.full]);
-  for (const k of ['feeling', 'poet', 'era']) if (out.length < n) take(k, pools[k]);
+  for (const k of ['feeling', 'poet', 'image']) if (out.length < n) take(k, pools[k]);
   // Somewhere new means a poet and an age not already on offer, when there is one.
   const fresh = (r) => !out.some((d) => d.row.poet_id === r.poet_id || d.row.era_key === r.era_key);
   while (out.length < n && take('new', [...(pools.new ?? []).filter(fresh), ...(pools.new ?? [])]));
   return out.slice(0, n);
 }
 
-const fmtYears = (n) => (Math.round(n / 100) * 100).toLocaleString('en-US');
-
 /** The guide's own words for a set of chosen doors; "somewhere new" varies its wording down the set. */
 export function wordDoors(chosen, me, mood) {
   let nth = 0;
-  return chosen.map(({ kind, row }) => ({
-    kind,
-    row,
-    ...doorWords(kind, me, row, mood, kind === 'new' ? nth++ : 0),
-  }));
+  return chosen.map(({ kind, row }) => {
+    const { label, hook, reason } = doorWords(kind, me, row, mood, kind === 'new' ? nth++ : 0);
+    return { row, connection: { kind, label }, hook, reason };
+  });
 }
 
-/** The guide's own words for a door: real names, feelings and ages. */
+/** The guide's own words for a door. */
 export function doorWords(kind, me, r, mood, nth = 0) {
   const era = eraName(r.era_key);
   const title = r.title_en || r.title;
   switch (kind) {
     case 'full':
-      return { hook: 'The whole poem', reason: `You read an excerpt; here is all of ${title}.` };
-    case 'feeling':
       return {
+        label: 'The full poem behind this excerpt',
+        hook: 'The whole poem',
+        reason: `You read an excerpt; here is all of ${title}.`,
+      };
+    case 'feeling': {
+      const feeling = feelingName(me);
+      return {
+        label: feeling
+          ? `${feeling[0].toUpperCase()}${feeling.slice(1)}, in another poet’s voice`
+          : 'Same feeling, another poet',
         hook: mood
           ? era
             ? `Also ${mood}, from the ${era} age`
@@ -161,20 +230,21 @@ export function doorWords(kind, me, r, mood, nth = 0) {
           : `Another voice: ${r.poet_en}`,
         reason: `${r.poet_en} on ${mood ? `the same ${mood}` : 'what you just read'}.`,
       };
+    }
     case 'poet':
-      return { hook: `More from ${r.poet_en}`, reason: `The same hand, in ${title}.` };
-    case 'era': {
-      const a = yearOf(me);
-      const b = yearOf(r);
-      const gap = a !== null && b !== null ? b - a : 0;
-      if (mood && Math.abs(gap) >= 150)
-        return {
-          hook: `Same ${mood}, ${fmtYears(Math.abs(gap))} years ${gap > 0 ? 'on' : 'earlier'}`,
-          reason: `${r.poet_en}${era ? `, writing in the ${era} age` : ''}.`,
-        };
       return {
-        hook: era ? `Also from the ${era} age` : 'Written in the same world',
-        reason: `${r.poet_en}, a contemporary in spirit.`,
+        label: 'More from this poet',
+        hook: `More from ${r.poet_en}`,
+        reason: `The same hand, in ${title}.`,
+      };
+    case 'image': {
+      const image = sharedImage(me, r);
+      const originalFeeling = feelingName(me);
+      const feeling = feelingName(r);
+      return {
+        label: `${image.label}, from ${originalFeeling} to ${feeling}`,
+        hook: `${image.label}, this time with ${feeling}`,
+        reason: `The image carries a different feeling, from ${originalFeeling} to ${feeling}.`,
       };
     }
     default: {
@@ -184,6 +254,7 @@ export function doorWords(kind, me, r, mood, nth = 0) {
         `Or try ${r.poet_en}`,
       ];
       return {
+        label: era ? `A new voice from the ${era} era` : 'A different voice',
         hook: hooks[Math.min(nth, 2)],
         // Reasons vary down the set too, so several "somewhere new" doors never read the same.
         reason: [
@@ -206,13 +277,4 @@ export function uniqueHooks(doors) {
     seen.add(hook.toLowerCase());
     return { ...d, hook };
   });
-}
-
-/** Gemini's door text, kept only when it follows the brief: a hook under 8 words and a one-line reason. */
-export function cleanDoorText(x) {
-  if (!x || typeof x.hook !== 'string' || typeof x.reason !== 'string') return null;
-  const hook = x.hook.replace(/["“”]/g, '').trim();
-  const reason = x.reason.replace(/\s+/g, ' ').trim();
-  if (!hook || hook.split(/\s+/).length >= 8 || !reason || reason.length > 160) return null;
-  return { hook, reason };
 }

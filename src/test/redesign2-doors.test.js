@@ -1,8 +1,7 @@
 // ReDesign2 V3.2: the guide's doors from GET /api/v2/poems/:id/doors, driven
-// through the real route handler with an in-memory pool. Gemini is reached by
-// stubbing fetch, never with a real key.
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { geminiText, registerRedesign2 } from '../../server/redesign2.js';
+// through the real route handlers with an in-memory pool.
+import { describe, expect, it, vi } from 'vitest';
+import { registerRedesign2 } from '../../server/redesign2.js';
 
 const P = (id, poet, era, mood, extra = {}) => ({
   id,
@@ -23,6 +22,7 @@ const P = (id, poet, era, mood, extra = {}) => ({
   active_year: null,
   full_poem_id: null,
   feeling_keys: mood ? [mood] : [],
+  motif_keys: [],
   ...extra,
 });
 const KHANSA = { id: 1, slug: 'al-khansa', name: 'Al-Khansa', died: 646 };
@@ -35,30 +35,22 @@ const MOD = { id: 9, slug: 'modern' };
 const ABB = { id: 4, slug: 'abbasid' };
 
 const POEMS = [
-  P(10, KHANSA, PRE, 'grief'), // the poem just read
+  P(10, KHANSA, PRE, 'grief', { arabic: 'يَا عَيْنُ جُودِي بِدَمْعٍ', motif_keys: ['tears'] }),
   P(11, KHANSA, PRE, 'pride'),
   P(12, LAYLA, UMA, 'grief'),
   P(13, SAYYAB, MOD, 'grief'),
-  P(14, MUTANABBI, ABB, 'pride'),
+  P(14, MUTANABBI, ABB, 'pride', { arabic: 'حَبَسْتُ الدَّمْعَ', motif_keys: ['tears'] }),
   P(15, KHANSA, PRE, 'grief', { full_poem_id: 11 }), // an excerpt of 11
 ];
 
 function harness() {
   const routes = {};
-  const stored = [];
+  const gemini = vi.fn().mockRejectedValue(new Error('Recommendations do not call Gemini'));
   const app = { get: (path, fn) => (routes[path] = fn) };
   const byId = (id) => POEMS.filter((p) => p.id === Number(id));
   const pool = {
-    query: async (sql, args = []) => {
+    query: vi.fn(async (sql, args = []) => {
       if (sql.includes('width_bucket')) return { rows: [] };
-      if (sql.includes('category_values') && sql.includes('label_en'))
-        return { rows: [{ label: String(args[0]) }] };
-      if (sql.includes('FROM poem_ai_text'))
-        return { rows: stored.filter((r) => r.poem_id === args[0] && args[1].includes(r.key)) };
-      if (sql.includes('INSERT INTO poem_ai_text')) {
-        stored.push({ poem_id: args[0], key: args[1], payload: args[2] });
-        return { rows: [] };
-      }
       if (sql.includes('p.mood_primary = $2 OR p.poet_id = $3'))
         return {
           rows: POEMS.filter(
@@ -68,92 +60,87 @@ function harness() {
               (p.mood_primary === args[1] || p.poet_id === args[2])
           ),
         };
+      if (sql.includes('tags.key = ANY'))
+        return {
+          rows: POEMS.filter(
+            (p) =>
+              p.id !== args[0] &&
+              !p.full_poem_id &&
+              p.poet_id !== args[1] &&
+              p.mood_primary !== args[2] &&
+              p.motif_keys.some((key) => args[3].includes(key))
+          ),
+        };
       if (sql.includes('p.poet_id <> $2'))
         return {
           rows: POEMS.filter((p) => p.id !== args[0] && !p.full_poem_id && p.poet_id !== args[1]),
         };
       if (sql.includes('WHERE p.id = $1')) return { rows: byId(args[0]) };
       throw new Error(`unexpected query: ${sql.slice(0, 80)}`);
-    },
+    }),
   };
   registerRedesign2(app, {
     pool,
     log: { error: () => {} },
     contentExpr: () => 'p.content',
     servingFilters: () => '',
-    gemini: geminiText,
+    gemini,
   });
-  const doors = async (id, query = {}) => {
+  const doors = async (id, query = {}, route = 'doors') => {
     let body;
     let status = 200;
     const res = { json: (b) => (body = b), status: (s) => ((status = s), res) };
-    await routes['/api/v2/poems/:id/doors']({ params: { id: String(id) }, query }, res);
+    await routes[`/api/v2/poems/:id/${route}`]({ params: { id: String(id) }, query }, res);
     return { status, body };
   };
-  return { doors, stored };
+  return { doors, gemini, pool };
 }
 
 describe('the guide’s doors', () => {
-  beforeEach(() => vi.stubEnv('GEMINI_API_KEY', ''));
-  afterEach(() => {
-    vi.unstubAllEnvs();
-    vi.unstubAllGlobals();
-  });
-
-  it('uses Gemini’s hook and reason for each pair, stores them, and reads them back', async () => {
-    vi.stubEnv('GEMINI_API_KEY', 'test-key');
-    const fetch = vi.fn(async (_url, init) => {
-      const prompt = JSON.parse(init.body).contents[0].parts[0].text;
-      expect(prompt).toContain('Al-Khansa');
-      const reply = {
-        doors: [
-          {
-            id: 12,
-            hook: 'Another woman of the desert',
-            reason: 'Layla answered grief with defiance.',
-          },
-          { id: 11, hook: 'Her pride, not her tears', reason: 'Al-Khansa before the elegies.' },
-          {
-            id: 13,
-            hook: 'a hook that runs on far past the eight word limit',
-            reason: 'Too long a hook.',
-          },
-        ],
-      };
-      return {
-        ok: true,
-        json: async () => ({
-          candidates: [{ content: { parts: [{ text: JSON.stringify(reply) }] } }],
-        }),
-      };
-    });
-    vi.stubGlobal('fetch', fetch);
-    const { doors, stored } = harness();
-    const { body } = await doors(10);
-    expect(body.map((d) => d.hook)).toEqual([
-      'Another woman of the desert',
-      'Her pride, not her tears',
-      'Same grief, 1,300 years on', // Gemini broke the brief here, so the guide's own words stand
-    ]);
-    expect(body[0].reason).toBe('Layla answered grief with defiance.');
-    expect(stored.map((r) => r.key)).toEqual(['12', '11']);
-    // Second time: the stored pairs are read; only the missing one is asked for.
-    await doors(10);
-    expect(fetch).toHaveBeenCalledTimes(2);
-    expect(JSON.parse(fetch.mock.calls[1][1].body).contents[0].parts[0].text).not.toContain(
-      'id 12'
-    );
-  });
-
-  it('falls back to the guide’s own words when Gemini fails', async () => {
-    vi.stubEnv('GEMINI_API_KEY', 'test-key');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async () => ({ ok: false, status: 503 }))
-    );
+  it('names the connection for the same three picks and preserves the legacy copy', async () => {
     const { doors } = harness();
-    const { status, body } = await doors(10);
-    expect(status).toBe(200);
-    expect(body.map((d) => d.hook)).toContain('More from Al-Khansa');
+    const { body } = await doors(10);
+    expect(body.map((d) => d.poem.id)).toEqual(['12', '11', '14']);
+    expect(body.map((d) => d.connection)).toEqual([
+      { kind: 'feeling', label: 'Grief, in another poet’s voice' },
+      { kind: 'poet', label: 'More from this poet' },
+      { kind: 'image', label: 'Tears, from grief to pride' },
+    ]);
+    expect(body.map((d) => d.hook)).toEqual([
+      'Also grief, from the Umayyad age',
+      'More from Al-Khansa',
+      'Tears, this time with pride',
+    ]);
+    expect(body.every((d) => d.reason.length > 0)).toBe(true);
+    expect(new Set(body.map((d) => d.hook)).size).toBe(3);
+  });
+
+  it('puts the complete poem first when the poem is an excerpt', async () => {
+    const { doors } = harness();
+    const { body } = await doors(15);
+    expect(body[0]).toMatchObject({
+      poem: { id: '11' },
+      hook: 'The whole poem',
+      connection: { kind: 'full', label: 'The full poem behind this excerpt' },
+    });
+    expect(body).toHaveLength(3);
+  });
+
+  it('follows the guide’s settings: modern first when the reader leans modern', async () => {
+    const { doors } = harness();
+    const { body } = await doors(11, { cm: '1' });
+    const fresh = body.find((d) => d.connection.kind === 'new');
+    expect(fresh.poem.eraKey).toBe('modern');
+    expect(fresh.connection.label).toBe('A new voice from the Modern era');
+  });
+
+  it('serves both routes without calling Gemini or touching its cache', async () => {
+    const { doors, gemini, pool } = harness();
+    const result = await doors(10, { cm: '1' });
+    expect(result.status).toBe(200);
+    expect(result.body.map((d) => d.poem.id)).toEqual(['13', '11', '14']);
+    expect(await doors(10, { kind: 'doors', cm: '1' }, 'ai')).toEqual(result);
+    expect(gemini).not.toHaveBeenCalled();
+    expect(pool.query.mock.calls.every(([sql]) => !sql.includes('poem_ai_text'))).toBe(true);
   });
 });

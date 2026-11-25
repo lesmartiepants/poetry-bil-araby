@@ -172,20 +172,20 @@ export function PoemTile({ poem, href, small }: { poem: PoemSummary; href?: stri
   );
 }
 
-/**
- * One of the guide's doors (2.17, 2.18, 9.5): the poem's era art, the hook and,
- * beneath it, the poet (`end`, `path`) or the reason (`finished`, with the poet in Arabic).
- */
+/** A guide recommendation. The title names the destination and the connection explains the pick. */
 export function DoorCard({ door, size = 'end' }: { door: Door; size?: 'end' | 'path' | 'finished' }) {
-  const finished = size === 'finished';
+  const { poem, connection } = door;
+  const title = poem.titleEn || poem.titleAr;
+  const poet = poem.poetEn || poem.poetAr;
   return (
-    <Link href={`/p/${door.poem.slug}`} className={`door-card door-card--${size}`}>
-      <span className="door-card__art panel"><Pattern {...eraArt(door.poem.eraKey)} scale={finished ? 0.55 : 0.45} /></span>
+    <Link href={`/p/${poem.slug}`} className={`door-card door-card--${size}`}>
+      <span className="door-card__art panel" aria-hidden><Pattern {...eraArt(poem.eraKey)} scale={size === 'finished' ? 0.55 : 0.45} /></span>
       <span className="door-card__text">
-        <span className="door-card__hook">{door.hook}</span>
-        <span className="door-card__sub">{finished && door.reason ? door.reason : door.poem.poetEn}</span>
+        <span className="door-card__title" lang={title === poem.titleAr ? 'ar' : undefined} dir="auto">{title}</span>
+        {connection?.label && <span className="door-card__connection">{connection.label}</span>}
+        <span className="door-card__poet" lang={poet === poem.poetAr ? 'ar' : undefined} dir="auto">{poet}</span>
       </span>
-      {finished ? <span lang="ar" className="door-card__ar">{door.poem.poetAr}</span> : <Chevron size={18} />}
+      <Chevron size={18} />
     </Link>
   );
 }

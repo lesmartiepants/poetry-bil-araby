@@ -86,6 +86,8 @@ test.describe('@prod the deployed app, read-only', () => {
     await page.locator('.list-row').first().click();
     const doors = page.getByRole('region', { name: 'Where the guide would take you next' }).locator('.door-card');
     await expect(doors).toHaveCount(3);
+    await expect(doors.locator('.door-card__title')).toHaveCount(3);
+    await expect(doors.locator('.door-card__connection')).toHaveCount(3);
     const here = page.url();
     await doors.first().click();
     await expect(page).not.toHaveURL(here);

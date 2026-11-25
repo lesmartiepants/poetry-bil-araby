@@ -43,6 +43,10 @@ describe('settings merge', () => {
     expect(p.voice).toBe(DEFAULT_PREFS.voice);
     expect('bogus' in p).toBe(false);
   });
+
+  it('uses the default when a saved reciter is no longer offered', () => {
+    expect(mergePrefs(DEFAULT_PREFS, { voice: 'Leda' }).voice).toBe(DEFAULT_PREFS.voice);
+  });
 });
 
 describe('share card splitting', () => {
@@ -131,9 +135,9 @@ describe('the guide’s doors', () => {
 
   it('offers one door of each kind, in specific words, with no hook repeated', () => {
     const chosen = chooseDoors(me, doorPools(me, near, anywhere, null));
-    expect(chosen.map((d) => `${d.kind}:${d.row.id}`)).toEqual(['feeling:12', 'poet:11', 'era:13']);
+    expect(chosen.map((d) => `${d.kind}:${d.row.id}`)).toEqual(['feeling:12', 'poet:11', 'new:13']);
     const words = wordDoors(chosen, me, 'grief');
-    expect(words.map((d) => d.hook)).toEqual(['Also grief, from the Umayyad age', 'More from Al-Khansa', 'Same grief, 1,300 years on']);
+    expect(words.map((d) => d.hook)).toEqual(['Also grief, from the Umayyad age', 'More from Al-Khansa', 'Somewhere new: the Modern age']);
     expect(words.every((d) => d.reason.length > 0)).toBe(true);
   });
 

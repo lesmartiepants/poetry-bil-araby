@@ -23,6 +23,7 @@ const P = (id, poet, era, mood, extra = {}) => ({
   active_year: null,
   full_poem_id: null,
   feeling_keys: mood ? [mood] : [],
+  motif_keys: [],
   ...extra,
 });
 const KHANSA = { id: 1, slug: 'al-khansa', name: 'Al-Khansa', died: 646 };
@@ -35,11 +36,11 @@ const MOD = { id: 9, slug: 'modern' };
 const ABB = { id: 4, slug: 'abbasid' };
 
 const POEMS = [
-  P(10, KHANSA, PRE, 'grief'), // the poem just read
+  P(10, KHANSA, PRE, 'grief', { arabic: 'يَا عَيْنُ جُودِي بِدَمْعٍ', motif_keys: ['tears'] }),
   P(11, KHANSA, PRE, 'pride'),
   P(12, LAYLA, UMA, 'grief'),
   P(13, SAYYAB, MOD, 'grief'),
-  P(14, MUTANABBI, ABB, 'pride'),
+  P(14, MUTANABBI, ABB, 'pride', { arabic: 'حَبَسْتُ الدَّمْعَ', motif_keys: ['tears'] }),
   P(15, KHANSA, PRE, 'grief', { full_poem_id: 11 }), // an excerpt of 11
 ];
 
@@ -51,8 +52,6 @@ function harness() {
   const pool = {
     query: async (sql, args = []) => {
       if (sql.includes('width_bucket')) return { rows: [] };
-      if (sql.includes('category_values') && sql.includes('label_en'))
-        return { rows: [{ label: String(args[0]) }] };
       if (sql.includes('FROM poem_ai_text'))
         return { rows: stored.filter((r) => r.poem_id === args[0] && args[1].includes(r.key)) };
       if (sql.includes('INSERT INTO poem_ai_text')) {
@@ -66,6 +65,17 @@ function harness() {
               p.id !== args[0] &&
               !p.full_poem_id &&
               (p.mood_primary === args[1] || p.poet_id === args[2])
+          ),
+        };
+      if (sql.includes('tags.key = ANY'))
+        return {
+          rows: POEMS.filter(
+            (p) =>
+              p.id !== args[0] &&
+              !p.full_poem_id &&
+              p.poet_id !== args[1] &&
+              p.mood_primary !== args[2] &&
+              p.motif_keys.some((key) => args[3].includes(key))
           ),
         };
       if (sql.includes('p.poet_id <> $2'))
@@ -103,11 +113,11 @@ describe('the guide’s doors', () => {
   it('offers one door of each kind, in specific words, with no hook repeated', async () => {
     const { doors } = harness();
     const { body } = await doors(10);
-    expect(body.map((d) => d.poem.id)).toEqual(['12', '11', '13']);
+    expect(body.map((d) => d.poem.id)).toEqual(['12', '11', '14']);
     expect(body.map((d) => d.hook)).toEqual([
       'Also grief, from the Umayyad age',
       'More from Al-Khansa',
-      'Same grief, 1,300 years on',
+      'Tears, this time with pride',
     ]);
     expect(body.every((d) => d.reason.length > 0)).toBe(true);
     expect(new Set(body.map((d) => d.hook)).size).toBe(3);
@@ -122,7 +132,7 @@ describe('the guide’s doors', () => {
 
   it('follows the guide’s settings: modern first when the reader leans modern', async () => {
     const { doors } = harness();
-    const { body } = await doors(11, { cm: '1' }); // pride: no same-feeling poet, so "somewhere new" tops up
+    const { body } = await doors(11, { cm: '1' });
     const fresh = body.filter((d) => d.hook.startsWith('Somewhere new'));
     expect(fresh[0].poem.eraKey).toBe('modern');
   });
@@ -132,6 +142,8 @@ describe('the guide’s doors', () => {
     const fetch = vi.fn(async (_url, init) => {
       const prompt = JSON.parse(init.body).contents[0].parts[0].text;
       expect(prompt).toContain('Al-Khansa');
+      expect(prompt).toContain('Shared image: Tears');
+      expect(prompt).toContain('Destination line: حَبَسْتُ الدَّمْعَ');
       const reply = {
         doors: [
           {
@@ -141,7 +153,7 @@ describe('the guide’s doors', () => {
           },
           { id: 11, hook: 'Her pride, not her tears', reason: 'Al-Khansa before the elegies.' },
           {
-            id: 13,
+            id: 14,
             hook: 'a hook that runs on far past the eight word limit',
             reason: 'Too long a hook.',
           },
@@ -156,14 +168,19 @@ describe('the guide’s doors', () => {
     });
     vi.stubGlobal('fetch', fetch);
     const { doors, stored } = harness();
+    stored.push({
+      poem_id: 10,
+      key: '14',
+      payload: { hook: 'Old wording', reason: 'A different rule.' },
+    });
     const { body } = await doors(10);
     expect(body.map((d) => d.hook)).toEqual([
       'Another woman of the desert',
       'Her pride, not her tears',
-      'Same grief, 1,300 years on', // Gemini broke the brief here, so the guide's own words stand
+      'Tears, this time with pride', // Invalid Gemini copy falls back to the image wording.
     ]);
     expect(body[0].reason).toBe('Layla answered grief with defiance.');
-    expect(stored.map((r) => r.key)).toEqual(['12', '11']);
+    expect(stored.map((r) => r.key)).toEqual(['14', 'feeling:12', 'poet:11']);
     // Second time: the stored pairs are read; only the missing one is asked for.
     await doors(10);
     expect(fetch).toHaveBeenCalledTimes(2);

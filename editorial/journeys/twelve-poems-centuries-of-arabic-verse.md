@@ -1,4 +1,4 @@
-# Twelve Questions for Arabic Poetry · اثنا عشر سؤالًا في الشعر العربي
+# Twelve Poems, Centuries of Arabic Verse · اثنتا عشرة قصيدة عبر قرون من الشعر العربي
 
 ## The professor’s perspective
 
@@ -8,15 +8,15 @@ From there, each poem makes an earlier one sound different. The bread of the ope
 
 ## App card
 
-| Field                     | Value                                                                |
-| ------------------------- | -------------------------------------------------------------------- |
-| Kind and slug             | `journey` · `twelve-questions-for-arabic-poetry`                     |
-| English and Arabic titles | Twelve Questions for Arabic Poetry · اثنا عشر سؤالًا في الشعر العربي |
-| Step labels               | Question · سؤال                                                      |
-| Artwork                   | `#22406E` · app default pattern                                      |
-| Card count                | 12 intended stops                                                    |
-| Detail route              | `/new/journey/twelve-questions-for-arabic-poetry`                    |
-| Release                   | Draft, pending three corpus matches                                  |
+| Field                     | Value                                                                               |
+| ------------------------- | ----------------------------------------------------------------------------------- |
+| Kind and slug             | `journey` · `twelve-poems-centuries-of-arabic-verse`                                |
+| English and Arabic titles | Twelve Poems, Centuries of Arabic Verse · اثنتا عشرة قصيدة عبر قرون من الشعر العربي |
+| Step labels               | Question · سؤال                                                                     |
+| Artwork                   | `#22406E` · app default pattern                                                     |
+| Card count                | 12 intended stops                                                                   |
+| Detail route              | `/new/journey/twelve-poems-centuries-of-arabic-verse`                               |
+| Release                   | Draft, with all corpus records present and English review pending                   |
 
 **Journey intro**
 
@@ -28,15 +28,15 @@ From there, each poem makes an earlier one sound different. The bread of the ope
 | -------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------- | ------- | ------------------------------------------------------------------------------------ |
 | 1        | What makes life worth living?         | Mahmoud Darwish · On This Earth There Is What Makes Life Worth Living · على هذه الأرض ما يستحق الحياة | `83956` | Bilingual record. Review lineation against Arabic record `85971`                     |
 | 2        | How high should we aspire?            | Al-Mutanabbi · Beyond the Stars · إذا غامرت في شرف مروم                                               | `27143` | Complete bilingual record. Teach from the opening bayts                              |
-| 3        | What does grief do to language?       | Al-Khansa · قذى بعينك أم بالعين عوار                                                                  |         | Confirm the requested opening and edition                                            |
+| 3        | What does grief do to language?       | Al-Khansa · Tears for Sakhr, the House Emptied (Excerpt) · دمعٌ على صخرٍ، الدار خلت (مقتطف)           | `89749` | First eight bayts, reading lines 1–16. Full poem `49023`                             |
 | 4        | What does home smell like?            | Mahmoud Darwish · To My Mother · إلى أمي                                                              | `85954` | Complete bilingual record                                                            |
 | 5        | Why do we desire forbidden things?    | Abu Nuwas · The Wine of Solace · دع عنك لومي فإن اللوم إغراء                                          | `46151` | Complete bilingual record. The Arabic title here is the opening line                 |
 | 6        | Can a place remember someone?         | Imruʾ al-Qays · Stop, Let Us Weep (Excerpt) · قفا نبك (مقتطف)                                         | `89739` | First six bayts. Full ode `89738`                                                    |
 | 7        | Can a poem make us hear death?        | Nazik al-Malaika · Cholera · الكوليرا                                                                 | `89742` | Complete bilingual record with draft English                                         |
 | 8        | What remains when love ends?          | Ibn Zaydun · Poem in N · أضحى التنائي                                                                 | `41998` | Complete bilingual record. Consider an opening excerpt with a door to this full poem |
-| 9        | What can we truly know?               | Elia Abu Madi · The Talismans · الطلاسم                                                               |         | Review length and choose a reading range once the edition is available               |
+| 9        | What can we truly know?               | Elia Abu Madi · The Talismans (Excerpt) · الطلاسم (مقتطف)                                             | `89748` | First three stanzas, reading lines 1–12. Full poem `82417`                           |
 | 10       | Can rain mean grief and hope at once? | Badr Shakir al-Sayyab · Rain Song (Excerpt) · أنشودة المطر (مقتطف)                                    | `89741` | Reading lines 65–95. Full poem `89737`                                               |
-| 11       | When is compromise a betrayal?        | Amal Dunqul · Do Not Reconcile · لا تصالح                                                             |         | Choose a reading range once the edition is available                                 |
+| 11       | When is compromise a betrayal?        | Amal Dunqul · Do Not Reconcile (Excerpt) · لا تصالح (مقتطف)                                           | `89747` | First section, reading lines 5–30 after the epigraph. Full poem `89746`              |
 | 12       | What is Arabic poetry becoming?       | Dunya Mikhail · I Was in a Hurry · كنتُ مسرعةً                                                        | `89745` | Complete bilingual reading. English by Elizabeth Winslow                             |
 
 ## What to teach at each stop
@@ -55,9 +55,9 @@ From there, each poem makes an earlier one sound different. The bread of the ope
 
 ### Question 3 · What does grief do to language?
 
-**Professor’s note.** Begin Al-Khansa’s elegy with its question about what is troubling the eye. It sounds at first like a question about a physical irritation. Let the reader discover the personal loss that makes such a small bodily detail bear so much. This is an immediate way into _rithāʾ_, the Arabic elegy.
+**Professor’s note.** Al-Khansa’s opening asks what stirred her sorrow and whether something is hurting her eye. Let the reader discover the personal loss that makes such a small bodily detail bear so much. This is an immediate way into _rithāʾ_, the Arabic elegy. [Opening variants and commentary](https://alehyaa.pages.dev/2025/02/alkhansaa-poem)
 
-**Reader cue.** The first question could be asked of anyone whose eyes are watering. How long does it take for us to learn what those tears are carrying?
+**Reader cue.** At first a hurting eye might explain the tears. How long does it take for us to learn what they are carrying?
 
 ### Question 4 · What does home smell like?
 
@@ -91,7 +91,7 @@ From there, each poem makes an earlier one sound different. The bread of the ope
 
 ### Question 9 · What can we truly know?
 
-**Professor’s note.** Elia Abu Madi gives doubt the cadence of something a person can say again and again. The speaker finds themselves walking a road without knowing where they came from. Bring in the background of migration once the reader has felt what it is like to go on without a settled answer.
+**Professor’s note.** Elia Abu Madi gives doubt the cadence of something a person can say again and again. The speaker finds themselves walking a road without knowing where they came from. In the third stanza, even the road may be the thing that’s moving. [Arabic reading copy](https://poetsgate.com/poem.php?pm=14085)
 
 **Reader cue.** The speaker takes the next step and the question comes back. How does hearing the same uncertainty more than once change its weight?
 
@@ -103,7 +103,7 @@ From there, each poem makes an earlier one sound different. The bread of the ope
 
 ### Question 11 · When is compromise a betrayal?
 
-**Professor’s note.** Amal Dunqul borrows a demand from an old story of blood and kinship and gives it the force of a decision someone has to make now. Begin with the repeated refusal. A reader can feel the pressure it puts on whoever is being addressed before learning how the older story enters the contemporary poem.
+**Professor’s note.** Amal Dunqul borrows a demand from an old story of blood and kinship and gives it the force of a decision someone has to make now. In the opening section, the speaker imagines gold offered in exchange for someone’s eyes. A reader can feel the terms of that bargain before learning how the older story enters the contemporary poem. [Poem in AlDiwan](https://www.aldiwan.net/poem25085.html) · [Print collection record](https://www.nli.org.il/ar/books/NNL_ALEPH990027496190205171/NLI)
 
 **Reader cue.** The refusal returns as the reasons for it accumulate. What does the person being addressed stand to lose by agreeing?
 
@@ -115,7 +115,10 @@ From there, each poem makes an earlier one sound different. The bread of the ope
 
 ## App handoff
 
-- Blank **Poem ID** cells indicate selections with no verified match in the app corpus. Check the original poetry database when sourcing resumes. For Al-Khansa, the app has a candidate version with a different opening, `49023`, and Arabic text with English still to be added. Compare its edition before choosing it for Question 3.
+- Question 3 uses the original Qafiyah edition of Al-Khansa’s elegy, which begins ما هاج حزنك أم بالعين عوار. The attested قذى بعينك opening is a variant. The existing full record `49023` has 78 reading lines and supplies the opening excerpt `89749`. [Current Qafiyah JSON](https://api.qafiyah.com/v1/poems/skAr)
+- Question 9 uses the first three stanzas of the 284-line text from the original Qafiyah dump. The full record retains upstream ID `82417` and the excerpt is `89748`. The current API edition puts each refrain on its own line, so the same passage takes up entries 1–15 there. [Original Qafiyah dump](https://github.com/WTFoss/qafiyah/tree/7b0a544a7db3521447790d093a7d99ff0da1b23f/.db_dumps/0003_02_05_2025) · [Current Qafiyah JSON](https://api.qafiyah.com/v1/poems/Yiaq)
+- Question 11 uses the first of Dunqul’s ten sections, entries 7–32 in the current Qafiyah API. Full record `89746` has 197 reading lines and retains the prose epigraph. The app title uses the opening refrain, لا تصالح. The API titles the complete work مقتل كليب الوصايا العشر. [Current Qafiyah JSON](https://api.qafiyah.com/v1/poems/qLjh) · [Print collection record](https://www.nli.org.il/ar/books/NNL_ALEPH990027496190205171/NLI)
+- Questions 3, 9, and 11 have credited English drafts generated with Gemini 3.7 Flash. The excerpt English was reviewed and edited in the corresponding full text so the segment and full reading use the same translation. Review the rest of each English draft before release.
 - Use the questions as the ordered step themes. The current journey UI uses the theme beside the poet’s name and in the next-step preview. Use the short cues as draft Insights copy.
-- Steps 6 and 10 already have full-poem links. If any longer reading will use an excerpt, make a separate bilingual record with its own labelled title and a first door to the full work.
+- Steps 3, 6, 9, 10, and 11 link to their complete poems through the reader’s full-poem door.
 - Preserve Elizabeth Winslow’s credit for step 12. The app pairs the translation’s three lines asking for the country back with the corresponding single Arabic line.

@@ -46,9 +46,10 @@ Use the same observation at three scales. **Tonight** offers the gesture and lea
 - [Card template and examples](CARD-TEMPLATE.md)
 - [Tonight](tonight.md)
 - [Your First Seven](journeys/your-first-seven.md)
-- [Twelve Questions for Arabic Poetry](journeys/twelve-questions-for-arabic-poetry.md)
+- [Twelve Poems, Centuries of Arabic Verse](journeys/twelve-poems-centuries-of-arabic-verse.md)
 - [Women Who Wrote the Canon](collections/women-who-wrote-the-canon.md)
 - [The Foundational Voices](collections/the-foundational-voices.md)
+- [At the Ruins, We Begin](collections/at-the-ruins-we-begin.md)
 - [The Canon That Exists Through Music](collections/the-canon-that-exists-through-music.md)
 
 ## Before a selection goes live

@@ -95,18 +95,35 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
   const lastId = useLastRead().data;
   const last = usePoem(lastId ?? '').data;
   const doors = useDoors(lastId).data;
+  const tonight = useTonight().data;
   return (
     <div className="screen journey">
       <header className="hub-hdr"><BrandMark /></header>
       <div className="journey__top journey-tabs"><Segmented pill label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={TABS} /></div>
       <main className="pad stack gap-12" style={{ paddingTop: 20 }}>
         <p className="t-eyebrow t-eyebrow--accent">JOURNEYS</p>
-        {journeys?.map((j) => {
-          const p = prog?.find((x) => x.slug === j.slug);
+        {journeys?.map((j, i) => {
+          const read = prog?.find((x) => x.slug === j.slug)?.position ?? 0;
+          const of = j.poemIds.length;
+          if (i > 0) {
+            return (
+              <Link key={j.slug} href={`/journey/${j.slug}`} className="journey-row">
+                <span className="journey-row__count">{read}/{of}</span>
+                <span className="journey-row__text"><span className="journey-row__title">{j.titleEn}</span>{j.span && <span className="journey-row__sub">{j.span}</span>}</span>
+                <Chevron size={16} />
+              </Link>
+            );
+          }
+          // The first journey is suggested, never required (9.5).
+          const step = tonight?.journeyStep?.slug === j.slug ? tonight.journeyStep : undefined;
           return (
-            <Link key={j.slug} href={`/journey/${j.slug}`} className="journey-card" style={{ background: j.colour }}>
-              <span className="journey-card__titles"><span className="journey-card__en">{j.titleEn}</span><span lang="ar" dir="rtl" className="journey-card__ar">{j.titleAr}</span></span>
-              <span className="journey-card__meta">{j.poemIds.length} {j.stepEn.toUpperCase()}S{p ? ` · ${p.position} DONE` : ''}</span>
+            <Link key={j.slug} href={`/journey/${j.slug}`} className="journey-start">
+              <span className="journey-start__head">
+                <StartPath read={read} of={of} />
+                <span className="journey-start__titles"><span className="journey-start__eyebrow">START HERE · NOT REQUIRED</span><span className="journey-start__title">{j.titleEn}</span></span>
+                <span className="journey-start__count">{read} / {of}</span>
+              </span>
+              <span className="journey-start__intro">{j.intro}{step && ` Tonight’s poem is ${j.stepEn.toLowerCase()} ${step.index}.`}</span>
             </Link>
           );
         })}
@@ -118,6 +135,18 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
         ) : null}
       </main>
     </div>
+  );
+}
+
+/** Seven stones along a path, lit as far as the reader has come. */
+function StartPath({ read, of }: { read: number; of: number }) {
+  const lit = of ? Math.round((Math.min(read, of) / of) * 7) : 0;
+  const stones: [number, number][] = [[10, 90], [22, 70], [38, 58], [56, 62], [72, 48], [86, 30], [104, 22]];
+  return (
+    <svg aria-hidden="true" width="40" height="40" viewBox="0 0 120 120">
+      <path d="M10 90 L22 70 L38 58 L56 62 L72 48 L86 30 L104 22" fill="none" stroke="#5C4C2A" strokeWidth="3" strokeDasharray="2 6" />
+      {stones.map(([x, y], k) => <circle key={k} cx={x} cy={y} r={k < lit ? 7 : 6} fill={k < lit ? '#D4B36A' : '#0A0A0D'} stroke="#D4B36A" strokeWidth="3" />)}
+    </svg>
   );
 }
 

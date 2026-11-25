@@ -24,8 +24,8 @@ The collection asks **what have women poets made possible in Arabic verse?** Let
 
 **Subtitle**
 
-- subtitle_en: How women made grief, desire, and memory speak in Arabic
-- subtitle_ar: كيف أنطقت النساءُ الفقدَ والرغبة والذاكرة بالعربية
+- subtitle_en: The canon, as written by the women in it
+- subtitle_ar: الديوان كما كتبته نساؤه
 
 ## Reading order
 

@@ -24,8 +24,8 @@ Imruʾ al-Qays begins by asking two companions to stop and weep with him. Antara
 
 **Subtitle**
 
-- subtitle_en: Where classical Arabic poetry begins: a stop at the ruins
-- subtitle_ar: حيث يبدأ الشعر العربي القديم: وقفة عند الأطلال
+- subtitle_en: Every great poem starts by stopping the camel
+- subtitle_ar: كل قصيدة عظيمة تبدأ بإيقاف الناقة
 
 ## Reading order
 

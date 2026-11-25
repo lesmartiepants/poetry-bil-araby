@@ -44,7 +44,7 @@ For a collection, give the shelf one editorial question and explain the link or 
 
 **Subtitle**
 
-- subtitle_en: <one short line>
+- subtitle_en: <under nine words, with a wink>
 - subtitle_ar: <السطر نفسه بالعربية>
 
 ## Reading order
@@ -85,7 +85,7 @@ Use catalogue titles and poet names after checking them against the chosen editi
 
 ### Writing the subtitle
 
-The subtitle is the one line under the title on Pathways, in search results, and in the next-journey rows. Write one short line, about eight to ten words, that gives the journey's arc or promise: where the reader starts and where they end up, or the question the shelf asks. Do not list poets ("Al-Khansa to Fadwa Tuqan") and do not repeat the title. Write the Arabic line as its own sentence, not a word-for-word translation. A card with no subtitle shows nothing under its title.
+The subtitle is the one line under the title on Pathways, in search results, and in the next-journey rows. Write under nine words, in the voice of a fun poetry professor: a wink rather than a summary, never a list of poets. Do not repeat the title. Write the Arabic line as its own line with the same wink, not a word-for-word translation. A card with no subtitle shows nothing under its title.
 
 ### Where the fields go
 

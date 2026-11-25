@@ -22,8 +22,8 @@ I’d start with the upside-down coffee cup in Nizar Qabbani’s _The Fortune Te
 
 **Subtitle**
 
-- subtitle_en: Poems that live on in song and in everyday speech
-- subtitle_ar: قصائد حيّة في الغناء وفي كلام الناس
+- subtitle_en: Poems your grandmother can probably sing
+- subtitle_ar: قصائد قد تغنّيها جدّتك
 
 ## Reading order
 

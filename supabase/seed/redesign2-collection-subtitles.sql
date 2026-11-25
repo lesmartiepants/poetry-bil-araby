@@ -3,11 +3,11 @@
 UPDATE public.collections c
 SET subtitle_en = v.subtitle_en, subtitle_ar = v.subtitle_ar
 FROM (VALUES
-  ('your-first-seven', 'From a plea to stop and weep to a poet between two homes', 'من نداء الوقوف والبكاء إلى شاعر بين وطنين'),
-  ('twelve-poems-centuries-of-arabic-verse', 'Twelve questions about grief, desire, and home', 'اثنا عشر سؤالًا عن الفقد والرغبة والوطن'),
-  ('women-who-wrote-the-canon', 'How women made grief, desire, and memory speak in Arabic', 'كيف أنطقت النساءُ الفقدَ والرغبة والذاكرة بالعربية'),
-  ('at-the-ruins-we-begin', 'Where classical Arabic poetry begins: a stop at the ruins', 'حيث يبدأ الشعر العربي القديم: وقفة عند الأطلال'),
-  ('the-canon-that-exists-through-music', 'Poems that live on in song and in everyday speech', 'قصائد حيّة في الغناء وفي كلام الناس'),
-  ('the-foundational-voices', 'The first voices, where a place can remember', 'الأصوات الأولى، حيث يمكن للمكان أن يتذكر')
+  ('your-first-seven', 'Weep at the ruins, end in exile. Welcome.', 'ابكِ على الأطلال، وانتهِ في المنفى. أهلًا بك.'),
+  ('twelve-poems-centuries-of-arabic-verse', 'Twelve poems, twelve centuries, no quiz after', 'اثنتا عشرة قصيدة، اثنا عشر قرنًا، بلا امتحان'),
+  ('women-who-wrote-the-canon', 'The canon, as written by the women in it', 'الديوان كما كتبته نساؤه'),
+  ('at-the-ruins-we-begin', 'Every great poem starts by stopping the camel', 'كل قصيدة عظيمة تبدأ بإيقاف الناقة'),
+  ('the-canon-that-exists-through-music', 'Poems your grandmother can probably sing', 'قصائد قد تغنّيها جدّتك'),
+  ('the-foundational-voices', 'The originals. Everyone else is a cover band.', 'الأصوات الأولى، والباقون صدى')
 ) AS v(slug, subtitle_en, subtitle_ar)
 WHERE c.slug = v.slug;

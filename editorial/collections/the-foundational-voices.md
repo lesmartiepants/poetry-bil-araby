@@ -26,8 +26,8 @@ The Muʿallaqāt (المعلّقات), the pre-Islamic odes traditionally taught
 
 **Subtitle**
 
-- subtitle_en: The first voices, where a place can remember
-- subtitle_ar: الأصوات الأولى، حيث يمكن للمكان أن يتذكر
+- subtitle_en: The originals. Everyone else is a cover band.
+- subtitle_ar: الأصوات الأولى، والباقون صدى
 
 ## Reading order
 

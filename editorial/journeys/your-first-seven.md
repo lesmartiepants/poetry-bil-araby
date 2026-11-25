@@ -24,8 +24,8 @@ The journey gives a newcomer seven experiences worth remembering in their own ri
 
 **Subtitle**
 
-- subtitle_en: From a plea to stop and weep to a poet between two homes
-- subtitle_ar: من نداء الوقوف والبكاء إلى شاعر بين وطنين
+- subtitle_en: Weep at the ruins, end in exile. Welcome.
+- subtitle_ar: ابكِ على الأطلال، وانتهِ في المنفى. أهلًا بك.
 
 ## Reading order
 

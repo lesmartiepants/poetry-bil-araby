@@ -24,8 +24,8 @@ From there, each poem makes an earlier one sound different. The bread of the ope
 
 **Subtitle**
 
-- subtitle_en: Twelve questions about grief, desire, and home
-- subtitle_ar: اثنا عشر سؤالًا عن الفقد والرغبة والوطن
+- subtitle_en: Twelve poems, twelve centuries, no quiz after
+- subtitle_ar: اثنتا عشرة قصيدة، اثنا عشر قرنًا، بلا امتحان
 
 ## Reading order
 

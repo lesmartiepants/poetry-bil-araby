@@ -1,34 +1,34 @@
 // ReDesign2 V7: recitation from GET /api/v2/poems/:id/recitation(.wav), driven through the real
 // route handlers with an in-memory pool and a stubbed generator. No Gemini key is ever used.
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { geminiTts, lineStartsFor, pcmToWav, registerRedesign2 } from '../../server/redesign2.js';
+import {
+  geminiTts,
+  lineStartsFor,
+  pcmToWav,
+  registerRedesign2,
+  supabaseRecitations,
+} from '../../server/redesign2.js';
 
 function harness({ tts, poems = { 7: 'سطر أول * سطر ثان * سطر ثالث' } } = {}) {
   const routes = {};
-  const audio = new Map();
   const app = { get: (path, fn) => (routes[path] = fn) };
   const pool = {
     query: async (sql, args = []) => {
       if (sql.includes('width_bucket')) return { rows: [] };
-      if (sql.includes('FROM poem_audio')) {
-        const r = audio.get(`${args[0]}:${args[1]}`);
-        return { rows: r ? [r] : [] };
-      }
-      if (sql.includes('INSERT INTO poem_audio')) {
-        audio.set(`${args[0]}:${args[1]}`, {
-          audio: args[2],
-          line_starts: JSON.parse(args[3]),
-          duration: args[4],
-          model: args[5],
-        });
-        return { rows: [] };
-      }
       if (sql.includes('WHERE p.id = $1'))
         return { rows: poems[args[0]] ? [{ arabic: poems[args[0]] }] : [] };
       throw new Error(`unexpected query: ${sql.slice(0, 80)}`);
     },
   };
+  const mem = new Map();
+  const recitations = {
+    get: async (id, voice) =>
+      mem.get(`${id}:${voice}`) && { url: null, ...mem.get(`${id}:${voice}`) },
+    put: async (id, voice, row) => mem.set(`${id}:${voice}`, row),
+    read: async (id, voice) => mem.get(`${id}:${voice}`)?.audio ?? null,
+  };
   registerRedesign2(app, {
+    recitations,
     pool,
     log: { error: () => {} },
     contentExpr: () => 'p.content',
@@ -47,7 +47,7 @@ function harness({ tts, poems = { 7: 'سطر أول * سطر ثان * سطر ث�
     return out;
   };
   return {
-    audio,
+    audio: mem,
     recitation: (id, q, ip) => call('/api/v2/poems/:id/recitation', id, q, ip),
     wav: (id, q) => call('/api/v2/poems/:id/recitation.wav', id, q),
   };
@@ -129,6 +129,43 @@ describe('recitation', () => {
     const r = await h.recitation(7, { voice: 'Orus' });
     expect(r.body.duration).toBeGreaterThan(0);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('keeps the audio in Storage and only the small facts in the database', async () => {
+    const calls = [];
+    const stored = [];
+    vi.stubGlobal(
+      'fetch',
+      async (url, init) => (calls.push({ url, init }), { ok: true, status: 200 })
+    );
+    const pool = {
+      query: async (sql, args) => {
+        if (sql.includes('INSERT INTO poem_audio')) stored.push(args);
+        if (sql.includes('SELECT path'))
+          return {
+            rows: stored.map((a) => ({
+              path: a[2],
+              line_starts: JSON.parse(a[3]),
+              duration: a[4],
+            })),
+          };
+        return { rows: [] };
+      },
+    };
+    const store = supabaseRecitations(pool, { url: 'https://x.supabase.co/', key: 'k' });
+    await store.put(7, 'Orus', {
+      audio: Buffer.from('RIFF'),
+      lineStarts: [0, 1],
+      duration: 2,
+      model: 'm',
+    });
+    expect(calls[0].url).toBe('https://x.supabase.co/storage/v1/object/recitations/7/Orus.wav');
+    expect(stored[0][2]).toBe('7/Orus.wav');
+    expect(stored[0]).not.toContain(calls[0].init.body);
+    expect(await store.get(7, 'Orus')).toMatchObject({
+      url: 'https://x.supabase.co/storage/v1/object/public/recitations/7/Orus.wav',
+      lineStarts: [0, 1],
+    });
   });
 
   it('shares the length out by letters, and wraps PCM as a WAV', () => {

@@ -43,7 +43,7 @@ export const liveApi: Api = {
   tts: {
     async recitation(poemId, voice) {
       const r = await getJSON<Recitation>(`/api/v2/poems/${encodeURIComponent(poemId)}/recitation?voice=${encodeURIComponent(voice)}`, 'recitation');
-      return { ...r, url: r.url ? `${base}${r.url}` : null };
+      return { ...r, url: r.url ? (/^https?:/.test(r.url) ? r.url : `${base}${r.url}`) : null };
     },
   },
   ai: {

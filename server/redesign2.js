@@ -209,7 +209,70 @@ export async function geminiTts({ lines, voice }) {
   throw new Error(`Gemini TTS ${lastStatus}`);
 }
 
-export function registerRedesign2(app, { pool, log, contentExpr, servingFilters, gemini, tts }) {
+/** Where finished recitations live. Memory: lost on restart, for CI and local runs with no Storage. */
+const memory = new Map();
+export function memoryRecitations() {
+  return {
+    async get(id, voice) {
+      const r = memory.get(`${id}:${voice}`);
+      return r ? { url: null, lineStarts: r.lineStarts, duration: r.duration } : null;
+    },
+    async put(id, voice, row) {
+      memory.set(`${id}:${voice}`, row);
+    },
+    async read(id, voice) {
+      return memory.get(`${id}:${voice}`)?.audio ?? null;
+    },
+  };
+}
+/** The WAV goes to the public Supabase Storage bucket `recitations` (immutable path poem/voice.wav); poem_audio keeps the small facts. */
+export function supabaseRecitations(pool, { url, key }) {
+  const root = url.replace(/\/$/, '');
+  const pathOf = (id, voice) => `${id}/${voice}.wav`;
+  return {
+    async get(id, voice) {
+      const { rows } = await pool.query(
+        'SELECT path, line_starts, duration FROM poem_audio WHERE poem_id = $1 AND voice = $2',
+        [id, voice]
+      );
+      if (!rows.length) return null;
+      return {
+        url: `${root}/storage/v1/object/public/recitations/${rows[0].path}`,
+        lineStarts: rows[0].line_starts,
+        duration: Number(rows[0].duration),
+      };
+    },
+    async put(id, voice, row) {
+      const path = pathOf(id, voice);
+      const up = await fetch(`${root}/storage/v1/object/recitations/${path}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${key}`,
+          apikey: key,
+          'Content-Type': 'audio/wav',
+          'Cache-Control': 'max-age=31536000',
+          'x-upsert': 'true',
+        },
+        body: row.audio,
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!up.ok) throw new Error(`Storage ${up.status}`);
+      await pool.query(
+        `INSERT INTO poem_audio (poem_id, voice, path, line_starts, duration, model) VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (poem_id, voice) DO NOTHING`,
+        [id, voice, path, JSON.stringify(row.lineStarts), row.duration, row.model]
+      );
+    },
+    async read() {
+      return null; // served from Storage directly
+    },
+  };
+}
+
+export function registerRedesign2(
+  app,
+  { pool, log, contentExpr, servingFilters, gemini, tts, recitations }
+) {
   const servable = (alias = 'p') =>
     `${alias}.id IN (SELECT p.id FROM poems p WHERE p.full_poem_id IS NULL ${servingFilters()})`;
   let bandsCache = null;
@@ -443,16 +506,15 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     ttsDay.n++;
     return true;
   };
-  const ttsInflight = new Map(); // "poem:voice" -> promise, so a double tap generates once
-  const ttsRow = async (id, voice, withAudio) => {
-    const { rows } = await pool.query(
-      `SELECT ${withAudio ? 'audio,' : ''} line_starts, duration, model FROM poem_audio WHERE poem_id = $1 AND voice = $2`,
-      [id, voice]
-    );
-    const r = rows[0];
-    // A tone stored by a fake run never stands in for a real recitation.
-    return r && (r.model !== 'fake' || process.env.TTS_FAKE === '1') ? r : null;
+  const pickStore = () => {
+    if (recitations) return recitations;
+    const url = process.env.SUPABASE_PROJECT_URL;
+    const key = process.env.SUPABASE_SECRET_KEY;
+    return url && key && process.env.TTS_FAKE !== '1'
+      ? supabaseRecitations(pool, { url, key })
+      : memoryRecitations();
   };
+  const ttsInflight = new Map(); // "poem:voice" -> promise, so a double tap generates once
   const ttsParse = (req) => {
     const id = Number(req.params.id);
     const voice = String(req.query.voice ?? 'Zephyr');
@@ -464,12 +526,13 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     const { id, voice } = q;
     const url = `/api/v2/poems/${id}/recitation.wav?voice=${voice}`;
     try {
-      const hit = await ttsRow(id, voice, false);
+      const store = pickStore();
+      const hit = await store.get(id, voice);
       if (hit)
         return res.json({
-          url,
-          lineStarts: hit.line_starts,
-          duration: Number(hit.duration),
+          url: hit.url ?? url,
+          lineStarts: hit.lineStarts,
+          duration: hit.duration,
           cached: true,
         });
       if (!tts) return res.status(503).json({ error: 'Recitation unavailable' });
@@ -495,19 +558,14 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
               duration,
               model: out.model,
             };
-            await pool.query(
-              `INSERT INTO poem_audio (poem_id, voice, audio, line_starts, duration, model) VALUES ($1, $2, $3, $4, $5, $6)
-               ON CONFLICT (poem_id, voice) DO UPDATE SET audio = EXCLUDED.audio, line_starts = EXCLUDED.line_starts,
-                 duration = EXCLUDED.duration, model = EXCLUDED.model WHERE poem_audio.model = 'fake'`,
-              [id, voice, row.audio, JSON.stringify(row.lineStarts), row.duration, row.model]
-            );
+            await store.put(id, voice, row);
             return row;
           })().finally(() => ttsInflight.delete(k))
         );
       }
       const made = await ttsInflight.get(k);
       if (!made) return res.status(503).json({ error: 'Recitation unavailable' });
-      res.json({ url, lineStarts: made.lineStarts, duration: made.duration });
+      res.json({ url: made.url ?? url, lineStarts: made.lineStarts, duration: made.duration });
     } catch (e) {
       fail(res, 'recitation', e);
     }
@@ -516,13 +574,13 @@ export function registerRedesign2(app, { pool, log, contentExpr, servingFilters,
     const q = ttsParse(req);
     if (!q) return res.status(400).json({ error: 'Bad request' });
     try {
-      const hit = await ttsRow(q.id, q.voice, true);
-      if (!hit) return res.status(404).json({ error: 'Not generated yet' });
+      const audio = await pickStore().read(q.id, q.voice);
+      if (!audio) return res.status(404).json({ error: 'Not generated yet' });
       res.set({
         'Content-Type': 'audio/wav',
         'Cache-Control': 'public, max-age=31536000, immutable',
       });
-      res.send(hit.audio);
+      res.send(audio);
     } catch (e) {
       fail(res, 'recitation.wav', e);
     }

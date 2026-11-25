@@ -3,10 +3,13 @@ name: web prod smoke (ReDesign2)
 # Read-only @prod journeys against a deployed /new (web/journeys/prod.spec.ts).
 # The spec aborts every non-GET request and the two GETs that can fill a cache row
 # (/api/v2/poems/:id/ai, /api/v2/tonight), so it never writes to production.
-# Runs after each successful Vercel Production deployment, or by hand for any URL.
+# Runs after each successful Vercel Production deployment, every day at 06:17 UTC (a deployment that
+# never reported, or an API/database that broke on its own), or by hand for any URL.
 
 on:
   deployment_status:
+  schedule:
+    - cron: '17 6 * * *'
   workflow_dispatch:
     inputs:
       url:
@@ -26,6 +29,7 @@ jobs:
     name: Prod smoke (read-only)
     if: >-
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
       (github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production')
     runs-on: ubuntu-24.04
     timeout-minutes: 10

@@ -1,7 +1,9 @@
 name: web (ReDesign2)
 
 on:
+  # Pushes only on main; a PR is covered by pull_request (otherwise every push to a PR branch ran twice).
   push:
+    branches: [main]
     paths: ['web/**', 'server.js', 'server/**', 'supabase/**', 'scripts/db-*.sh', 'package.json', 'package-lock.json', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
   pull_request:
     paths: ['web/**', 'server.js', 'server/**', 'supabase/**', 'scripts/db-*.sh', 'package.json', 'package-lock.json', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
@@ -29,6 +31,7 @@ jobs:
       - run: npm ci
       - run: npm run tokens
       - run: npm run typecheck
+      - run: npm run check:features
       - run: npm run lint
       - run: npm test
       - run: npm run build

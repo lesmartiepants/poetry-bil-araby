@@ -2,7 +2,6 @@
 -- Requires supabase/migrations/20261125000000_redesign2_collection_subtitles.sql.
 -- Idempotent: upserts each collection by slug (id is kept, so user progress survives)
 -- and replaces that collection's steps. One transaction; any failed check aborts it.
-\set ON_ERROR_STOP on
 BEGIN;
 
 DO $$
@@ -13,7 +12,7 @@ BEGIN
     FROM (VALUES
       (89739,'قفا نبك (مقتطف)'), (48981,'يا عين جودي بدمع منك مهراق'), (89740,'واحَرَّ قلباه (مقتطف)'),
       (88077,'ألا هل لنا من بعد هذا التفرق'), (89741,'أنشودة المطر (مقتطف)'), (85954,'إلى أمي'),
-      (85330,'غربة الروح'),
+      (85330,'الجسم في بلد والروح في بلد'),
       (74289,'خمرة الرحيق وذوب العسل'), (89738,'معلقة امرئ القيس: قفا نبك'),
       (79325,'الموت لا يرعى والدهر معار'), (76508,'الشيخوخة وهلاك العمر'),
       (62403,'عتاب الزمان وخداع الأقارب'), (81220,'فخر القبيلة وحرب الأقدار'),

@@ -28,13 +28,15 @@ const rows = [];
 for (const f of pick) {
   const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
-  // Frame
+  // Frame, rendered static: the canvas runtime script stays off.
   const file = new URL(`${f.file}.dc.html`, canvas);
   if (existsSync(file)) {
-    const html = readFileSync(file, 'utf8').replace(/<script[\s\S]*?<\/script>/g, '');
-    await page.setContent(html, { waitUntil: 'networkidle' }).catch(() => {});
-    await page.waitForTimeout(300);
-    await page.screenshot({ path: new URL(`${f.frame}-mock.png`, out).pathname });
+    const still = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, javaScriptEnabled: false });
+    const mock = await still.newPage();
+    await mock.setContent(readFileSync(file, 'utf8'), { waitUntil: 'networkidle' }).catch(() => {});
+    await mock.waitForTimeout(300);
+    await mock.screenshot({ path: new URL(`${f.frame}-mock.png`, out).pathname });
+    await still.close();
   }
   // App
   await page.goto(base);

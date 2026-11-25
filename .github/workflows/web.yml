@@ -2,9 +2,12 @@ name: web (ReDesign2)
 
 on:
   push:
-    paths: ['web/**', 'server.js', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
+    paths: ['web/**', 'server.js', 'server/**', 'supabase/**', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
   pull_request:
-    paths: ['web/**', 'server.js', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
+    paths: ['web/**', 'server.js', 'server/**', 'supabase/**', 'design-review/design-refresh/canvas/**', '.github/workflows/web.yml']
+
+permissions:
+  contents: read
 
 concurrency:
   group: web-${{ github.ref }}
@@ -17,7 +20,7 @@ defaults:
 jobs:
   check:
     name: Typecheck, lint, unit, build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,7 +34,7 @@ jobs:
 
   journeys:
     name: Journey tests (mock data)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: check
     steps:
       - uses: actions/checkout@v4
@@ -53,7 +56,7 @@ jobs:
 
   live-smoke:
     name: Journey tests (live, local server + Postgres)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: check
     services:
       postgres:

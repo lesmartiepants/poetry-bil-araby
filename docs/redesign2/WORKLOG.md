@@ -6,7 +6,7 @@ Standing instructions from the user (2026-11-24). Re-read this before each step.
 2. Push `claude/fervent-galileo-u0johv`, open the PR to `main`, merge once CI passes.
 3. Check production: `/new` on Vercel and `/api/v2` on Render.
 4. Editorial seed: the other agent is done; this session takes care of it. It is a production data write, so confirm with the user before running it.
-5. Meanwhile a background agent starts V3 on a new branch. After steps 1–3, take over its work.
+5. Meanwhile a background agent starts V3 on a new branch. After steps 1–3, take over its work. Scope is ALL of V3 (every slice in BUILD-SPEC, not just doors), and every feature checked against its "Done when" criteria.
 6. Then: write a script that screenshots the app and compares it to the mocks, and checks reactive states (loading, empty, error, signed in/out, kept/unkept, progress). Collect every issue, then fix them together.
 7. Every design change goes into the app AND the design reference (canvas frame + its copy in `design-review/design-refresh/index.html`).
 8. Never echo secrets. Never commit to `main` directly. Production writes need the user's confirmation.
@@ -14,11 +14,14 @@ Standing instructions from the user (2026-11-24). Re-read this before each step.
 ## Progress
 
 - [x] 1. Migration 20261124000003 in production (column and index already existed; now recorded)
-- [ ] 2. PR opened, CI green, merged
+- [~] 2. PR #752 opened (https://github.com/lesmartiepants/poetry-bil-araby/pull/752); waiting on CI, then merge
 - [ ] 3. Production checked
-- [ ] 4. Editorial seed in production (ask first)
+- [x] 4. Editorial seed in production (user approved; launch 2026-11-25; 2 collections, 24 steps, 49 Tonight picks to 2027-01-12)
 - [~] 5. V3 agent started (branch claude/redesign2-v3-doors) / taken over
 - [ ] 6. Screenshot + state QA script, issues collected, fixes applied
+
+- [~] Test-strategy agent started (branch claude/redesign2-test-strategy): TEST-STRATEGY.md, coverage matrix by area, feature-focused CI, old-app test deprecation plan. Merge its branch after review.
+- [~] Editorial agent started (branch claude/redesign2-editorial) to gather missing content from the user; relay the user's messages to it.
 
 ## Still needed for a complete app (not covered by steps 1–6)
 

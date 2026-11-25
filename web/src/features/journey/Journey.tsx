@@ -8,7 +8,7 @@ import type { Collection } from '@core/types';
 import { Header, Segmented, Skeleton } from '@ds/primitives';
 import { Back, Bookmark, Chevron, Mark } from '@ds/icons';
 import { Pattern } from '@ds/Pattern';
-import { collectionArt, PathDock } from '@components/index';
+import { BrandLogo, collectionArt, PathDock } from '@components/index';
 import './journey.css';
 
 /** The arched door at the foot of Tonight: tap, or swipe up, to enter the poem. */
@@ -90,7 +90,8 @@ function Pathways({ onTonight }: { onTonight: () => void }) {
   const doors = useQueries({ queries: [{ queryKey: ['doors', tonight?.poem.id], queryFn: () => api.ai.doors(tonight!.poem.id), enabled: !!tonight }] })[0].data;
   return (
     <div className="screen journey">
-      <header className="journey__top journey-tabs"><Segmented pill label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={TABS} /></header>
+      <header className="hub-hdr"><BrandLogo /></header>
+      <div className="journey__top journey-tabs"><Segmented pill label="Journey" value="pathways" onChange={(v) => v === 'tonight' && onTonight()} options={TABS} /></div>
       <main className="pad stack gap-12" style={{ paddingTop: 20 }}>
         <p className="t-eyebrow t-eyebrow--accent">JOURNEYS</p>
         {journeys?.map((j) => {

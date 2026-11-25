@@ -1,6 +1,6 @@
-/* Same spot as the tab bar over Tonight's hero, so switching tabs doesn't move it. */
+/* Under the brand header, as on the other tabs; styled like the bar over Tonight's hero. */
 .journey__top {
-  padding: 52px 22px 0;
+  padding: 14px 22px 0;
 }
 .journey-tabs .seg--pill {
   height: 42px;

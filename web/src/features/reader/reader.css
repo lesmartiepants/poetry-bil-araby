@@ -5,9 +5,6 @@
 .reader--end-navigation {
   --reader-tab-lift: -76px;
 }
-.reader__end-marker {
-  height: 1px;
-}
 .reader__top {
   display: flex;
   align-items: center;

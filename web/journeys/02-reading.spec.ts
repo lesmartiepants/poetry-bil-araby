@@ -72,7 +72,8 @@ test.describe('Area 2 · Reading', () => {
     await expect(page).toHaveURL(/unshudat-al-matar/);
   });
 
-  test('the reader tabs offer Home after following the Guide through several poems', async ({ page }) => {
+  test('the reader tabs offer Home at the start of the Guide and after following its suggestions', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 700 });
     await fresh(page);
     await page.goto('./');
     await expect(page).toHaveURL(/\/new\/journey$/);
@@ -85,6 +86,13 @@ test.describe('Area 2 · Reading', () => {
     const scrollTop = () => page.evaluate(() => window.scrollY);
     const toBottom = () => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
     await expect(tabs).toHaveCount(0);
+
+    await expect(guide.getByRole('link')).toHaveCount(3);
+    await guide.evaluate((section) => {
+      window.scrollBy(0, section.getBoundingClientRect().top - (window.innerHeight - 220));
+    });
+    await expect(tabs.getByRole('link', { name: 'Home' })).toBeInViewport();
+    await expect(guide.getByRole('link').last()).not.toBeInViewport();
 
     for (let step = 0; step < 2; step++) {
       const doors = guide.getByRole('link');

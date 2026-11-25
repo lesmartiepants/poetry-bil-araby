@@ -25,7 +25,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
   const [sheet, setSheet] = useState<'none' | 'aa' | 'insights' | 'fan'>('none');
   const [gloss, setGloss] = useState<{ line: number; word: number } | null>(null);
   const [verseMenu, setVerseMenu] = useState<number | null>(null);
-  const endMarker = useRef<HTMLDivElement>(null);
+  const poemEnd = useRef<HTMLDivElement>(null);
   const [endInView, setEndInView] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -45,13 +45,13 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
     return () => window.removeEventListener('scroll', on);
   }, []);
   useEffect(() => {
-    const marker = endMarker.current;
-    if (!marker) return;
-    // Reveal the tabs once the last suggestion clears the stacked controls.
+    const end = poemEnd.current;
+    if (!end) return;
+    // Reveal the tabs as the end of the reading comes into view above the controls.
     const observer = new IntersectionObserver(([entry]) => {
       setEndInView(entry.isIntersecting);
     }, { rootMargin: '0px 0px -174px 0px' });
-    observer.observe(marker);
+    observer.observe(end);
     return () => observer.disconnect();
   }, [poemQ.data]);
   useEffect(() => () => pb.send({ type: 'STOP' }), [id]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -70,7 +70,7 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
   const listening = pb.poemId === poem.id && pb.status !== 'idle';
   const marks = prefs?.vowelMarks ?? true;
   const under = prefs?.under ?? 'english';
-  const showEndNavigation = scrolled && endInView;
+  const showEndNavigation = progress > 0 && endInView;
 
   const startListening = (fromLine = 0) => {
     pb.send({ type: 'PLAY', poemId: poem.id, lineCount: poem.lines.length, voice: pb.voice !== 'Zephyr' ? pb.voice : defaultVoice, fromLine });
@@ -115,8 +115,9 @@ export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, endNav
         ))}
         {listening && pb.status === 'error' && <MarginNote message="The recitation won’t load." onRetry={() => startListening(pb.line)} />}
       </main>
-      <EndOfPoem poem={poem} />
-      <div ref={endMarker} className="reader__end-marker" aria-hidden />
+      <div ref={poemEnd}>
+        <EndOfPoem poem={poem} />
+      </div>
       {endNavigation(showEndNavigation)}
 
       {listening ? (

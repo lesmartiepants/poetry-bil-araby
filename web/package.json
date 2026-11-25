@@ -15,6 +15,7 @@
     "test:journeys:live": "VITE_SOURCES=live playwright test --grep @live",
     "test:prod": "playwright test -c playwright.prod.config.ts",
     "qa:mocks": "node qa/qa-mocks.mjs",
+    "qa:states": "node qa/qa-states.mjs",
     "build:vercel": "if [ \"$VERCEL_ENV\" = production ]; then npm run build; else VITE_SHOW_MOCKS=1 VITE_DEV_PANEL=1 npm run build; fi",
     "build:preview": "scripts/build-preview.sh"
   },

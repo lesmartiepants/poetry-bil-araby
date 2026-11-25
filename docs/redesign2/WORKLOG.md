@@ -23,6 +23,8 @@ Standing instructions from the user (2026-11-24). Re-read this before each step.
   - V3.3 Collections and V3.4 Search: audit against Done-when + mocks.
   - V3.5 You: audit 12.3–12.7 vs mocks; fix frames.json 12.1 mapping (NYou is 12.3; 12.1 is FRYouV1). Next poem left the UI (doors replace it).
   - QA notes: 2.18 reasons repeat "A change of voice" with fixture data; 2.17 end lacks the reader dock shown in the mock.
+- [~] 5b. PR #759 (claude/redesign2-v3-rest): 9.2, 9.3, 9.5, 9.8, 10.1, 10.2, 11.2, 11.3, 12.7 matched to mocks; waiting on test-agent sign-off (the original test agent's session ended, so a new ci-test-guardian agent replaced it). IA note: in the 11.2 mock, search sits under the Library tab; the app puts it under Explore.
+- [~] 5c. Sonnet agent: editorial journey subtitle (subtitle_en/subtitle_ar column, cards, template, seed) on claude/redesign2-journey-subtitle, replacing the derived first-to-last-poet span. Production migration and seed need user approval.
 - [ ] 6. Screenshot + state QA script, issues collected, fixes applied
 
 - [~] Test-strategy agent started (branch claude/redesign2-test-strategy): TEST-STRATEGY.md, coverage matrix by area, feature-focused CI, old-app test deprecation plan. The agent opens a PR when done; this session reviews and integrates (merges) that PR itself. It must make real changes (tests, CI), not just docs. STANDING RULE: every time this session opens a PR, wake the test agent (SendMessage) with the PR number so it checks the PR's tests/CI and pushes fixes. Do NOT merge a PR until the test agent signs off that CI is sound.

@@ -31,19 +31,19 @@
       "steps": [{ "hold": ["[aria-label='Poem actions']", 800] }, { "wait": 100 }]
     },
     { "frame": "2.1", "file": "NReading", "route": "/p/amurru" },
-    { "frame": "2.2", "file": "NImmersed", "route": "/p/amurru", "steps": [{ "scroll": 400 }] },
+    { "frame": "2.2", "file": "NImmersed", "route": "/p/amurru", "steps": [{ "scroll": 250 }] },
     {
       "frame": "2.3",
       "file": "NFan",
       "route": "/p/amurru",
-      "steps": [{ "scroll": 400 }, { "click": "[aria-label=Actions]" }]
+      "steps": [{ "scroll": 250 }, { "click": "[aria-label=Actions]" }]
     },
     {
       "frame": "2.4",
       "file": "FRAaFont",
       "route": "/p/amurru",
       "steps": [
-        { "scroll": 400 },
+        { "scroll": 250 },
         { "click": "[aria-label=Actions]" },
         { "click": "[aria-label=Text]" }
       ]
@@ -106,7 +106,7 @@
       "frame": "3.4",
       "file": "NListenPill",
       "route": "/p/amurru",
-      "steps": [{ "click": "text=LISTEN" }, { "wait": 500 }, { "scroll": 400 }]
+      "steps": [{ "click": "text=LISTEN" }, { "wait": 500 }, { "scroll": 250 }]
     },
     {
       "frame": "3.7",

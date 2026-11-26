@@ -95,4 +95,12 @@ test.describe('Areas 4–5 · Explore and poet pages', () => {
     await page.getByRole('radio', { name: 'THE POET' }).click();
     await expect(page.getByText(/greatest elegist/)).toBeVisible();
   });
+
+  test('5.3 a poet with no bio or region yet says so, and the page still works', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./poet/kab-ibn-zuhayr/about');
+    await expect(page.getByTestId('no-bio')).toContainText('Nothing has been written about Kaʿb ibn Zuhayr');
+    await expect(page.locator('.poet-hero__meta')).not.toContainText('HIJAZ');
+    await expect(page.locator('.poet-hero__meta')).toContainText('D. C. 662');
+  });
 });

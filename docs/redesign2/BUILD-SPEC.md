@@ -333,7 +333,7 @@ Not built: `/api/voices` (the voice list is a constant in the app; samples are s
 - [ ] Keep and Share in the V1 dock and fan. Recommendation: in V1, Share sends the poem's link (deep links and previews already work) and Keep is hidden until V2.
 - [x] Where V1 and V2 go live before cut-over: decided, at `/new` on the main app.
 - [ ] 16 or 30 voices. The repo's catalogue holds 16; the other 14 were shelved, most for poor read-along timing.
-- [ ] 12.7 Translation and sounds still shows Faithful / Poetic and the Sounds style, which are Later. Redraw without them before V3.5.
+- [x] 12.7 Translation and sounds redrawn without Faithful / Poetic and the Sounds style (Later).
 
 **Risks:**
 

@@ -16,8 +16,8 @@ import './reader.css';
 
 export interface PlayerSlotProps { poem: Poem; compact: boolean; onMark: () => void; onExpand: () => void; devLongPress?: HTMLAttributes<HTMLElement> }
 
-export function ReaderScreen({ id, Player, defaultVoice, devLongPress, endNavigation }: {
-  id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; devLongPress?: HTMLAttributes<HTMLElement>; endNavigation: (visible: boolean) => ReactNode;
+export function ReaderScreen({ id, Player, defaultVoice, onLongPressMark, holding, endNavigation }: {
+  id: string; Player: ComponentType<PlayerSlotProps>; defaultVoice: string; onLongPressMark?: HTMLAttributes<HTMLElement>; holding?: boolean; endNavigation: (visible: boolean) => ReactNode;
 }) {
   const poemQ = usePoem(id);
   const prefs = usePrefs().data;
@@ -29,6 +29,7 @@ export function ReaderScreen({ id, Player, defaultVoice, devLongPress, endNaviga
   const poemEnd = useRef<HTMLDivElement>(null);
   const [endInView, setEndInView] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [bottom, setBottom] = useState(false); // at the end of the page the dock is back (2.17)
   const [progress, setProgress] = useState(0);
   const open = useOverlay((s) => s.open);
   const showToast = useOverlay((s) => s.showToast);
@@ -39,6 +40,7 @@ export function ReaderScreen({ id, Player, defaultVoice, devLongPress, endNaviga
     const on = () => {
       setScrolled(window.scrollY > 80);
       const max = document.documentElement.scrollHeight - window.innerHeight;
+      setBottom(max > 0 && window.scrollY >= max - 2);
       setProgress(max > 0 ? Math.min(100, Math.round((window.scrollY / max) * 100)) : 0);
     };
     on();
@@ -136,14 +138,14 @@ export function ReaderScreen({ id, Player, defaultVoice, devLongPress, endNaviga
       {endNavigation(showEndNavigation)}
 
       {listening ? (
-        <Player poem={poem} compact={scrolled} onMark={() => setSheet('fan')} onExpand={() => window.scrollTo({ top: 0, behavior: 'smooth' })} devLongPress={devLongPress} />
-      ) : scrolled ? (
+        <Player poem={poem} compact={scrolled} onMark={() => setSheet('fan')} onExpand={() => window.scrollTo({ top: 0, behavior: 'smooth' })} devLongPress={onLongPressMark} />
+      ) : scrolled && !bottom ? (
         <div className="reader__fold">
-          <button className="reader__mark" aria-label="Actions" onClick={() => setSheet('fan')} {...devLongPress}><Mark size={34} colour="var(--c-accent)" /></button>
+          <button className={`reader__mark${holding ? ' reader__mark--holding' : ''}`} aria-label="Actions" onClick={() => setSheet('fan')} {...onLongPressMark}><Mark size={34} colour="var(--c-accent)" /></button>
           <span className="reader__progress" aria-hidden><span style={{ width: `${progress}%` }} /></span>
         </div>
       ) : (
-        <Dock {...actions} listening={false} kept={kept} devLongPress={devLongPress} />
+        <Dock {...actions} listening={false} kept={kept} hold={onLongPressMark} holding={holding} />
       )}
 
       {sheet === 'fan' && <Fan {...actions} kept={kept} listening={listening && pb.status === 'playing'} onClose={() => setSheet('none')} />}
@@ -182,9 +184,9 @@ function ReaderBackdrop() {
 
 type Actions = { listen: () => void; insights: () => void; keep: () => void; share: () => void; aa: () => void; listening: boolean; kept: boolean };
 
-function Dock({ listen, insights, keep, share, kept, devLongPress }: Actions & { devLongPress?: HTMLAttributes<HTMLElement> }) {
+function Dock({ listen, insights, keep, share, kept, hold, holding }: Actions & { hold?: HTMLAttributes<HTMLElement>; holding?: boolean }) {
   return (
-    <nav aria-label="Poem actions" className="dock" {...devLongPress}>
+    <nav aria-label="Poem actions" className={`dock${holding ? ' dock--holding' : ''}`} {...hold}>
       <button className="dock__btn" onClick={listen}><Play size={14} /> LISTEN</button>
       <button className="dock__btn dock__btn--main" onClick={insights}><Lamp size={18} /> INSIGHTS</button>
       <button className={`dock__btn${kept ? ' dock__btn--kept' : ''}`} aria-label={kept ? 'Kept. Tap to remove' : 'Keep'} onClick={keep}><Heart filled={kept} /></button>

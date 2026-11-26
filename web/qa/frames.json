@@ -35,20 +35,26 @@
         { "fill": ["textarea[name=description]", "Recitation froze on line 3 after Insights opened, then resumed on its own."] }
       ]
     },
+    {
+      "frame": "1.7",
+      "file": "FRDevToggleRead",
+      "route": "/p/amurru",
+      "steps": [{ "hold": ["[aria-label='Poem actions']", 800] }, { "wait": 100 }]
+    },
     { "frame": "2.1", "file": "NReading", "route": "/p/amurru" },
-    { "frame": "2.2", "file": "NImmersed", "route": "/p/amurru", "steps": [{ "scroll": 400 }] },
+    { "frame": "2.2", "file": "NImmersed", "route": "/p/amurru", "steps": [{ "scroll": 250 }] },
     {
       "frame": "2.3",
       "file": "NFan",
       "route": "/p/amurru",
-      "steps": [{ "scroll": 400 }, { "click": "[aria-label=Actions]" }]
+      "steps": [{ "scroll": 250 }, { "click": "[aria-label=Actions]" }]
     },
     {
       "frame": "2.4",
       "file": "FRAaFont",
       "route": "/p/amurru",
       "steps": [
-        { "scroll": 400 },
+        { "scroll": 250 },
         { "click": "[aria-label=Actions]" },
         { "click": "[aria-label=Text]" }
       ]
@@ -111,7 +117,7 @@
       "frame": "3.4",
       "file": "NListenPill",
       "route": "/p/amurru",
-      "steps": [{ "click": "text=LISTEN" }, { "wait": 500 }, { "scroll": 400 }]
+      "steps": [{ "click": "text=LISTEN" }, { "wait": 500 }, { "scroll": 250 }]
     },
     {
       "frame": "3.7",
@@ -230,6 +236,57 @@
       ]
     },
     {
+      "frame": "8.5",
+      "file": "NLibraryPoets",
+      "route": "/library/poets",
+      "steps": [
+        {
+          "storage": {
+            "local": {
+              "mock.account": "{\"signedIn\":true,\"provider\":\"apple\"}",
+              "mock.follows": "[\"al-khansa\",\"imru-al-qais\",\"abu-firas\",\"gibran\",\"al-sayyab\"]"
+            }
+          }
+        },
+        { "reload": true }
+      ]
+    },
+    {
+      "frame": "8.6",
+      "file": "NLibraryPoems",
+      "route": "/library",
+      "steps": [
+        {
+          "storage": {
+            "local": {
+              "mock.account": "{\"signedIn\":true,\"provider\":\"apple\"}",
+              "mock.keeps": "[\"87201\",\"1001\",\"1002\",\"1003\",\"1004\",\"1006\"]"
+            }
+          }
+        },
+        { "reload": true },
+        { "click": "role=radio[name='POEMS']" }
+      ]
+    },
+    {
+      "frame": "8.7",
+      "file": "NLibraryPoemsEn",
+      "route": "/library",
+      "steps": [
+        {
+          "storage": {
+            "local": {
+              "mock.account": "{\"signedIn\":true,\"provider\":\"apple\"}",
+              "mock.keeps": "[\"87201\",\"1001\",\"1002\",\"1003\",\"1004\",\"1006\"]"
+            }
+          }
+        },
+        { "reload": true },
+        { "click": "role=radio[name='POEMS']" },
+        { "click": "text=ARABIC A–Z" }
+      ]
+    },
+    {
       "frame": "8.12",
       "file": "NLibraryEmpty",
       "route": "/library",
@@ -277,17 +334,17 @@
     { "frame": "9.8", "file": "NJourneyDone", "route": "/journey/your-first-seven/done/7" },
     { "frame": "10.1", "file": "NCollectionsAll", "route": "/explore/collections" },
     { "frame": "10.2", "file": "NCollection", "route": "/collection/women-who-wrote-the-canon" },
-    { "frame": "11.1", "file": "NLibrarySearch", "route": "/search" },
+    { "frame": "11.1", "file": "NLibrarySearch", "route": "/search?from=library" },
     {
       "frame": "11.2",
       "file": "NLibraryResults",
-      "route": "/search",
+      "route": "/search?from=library",
       "steps": [{ "fill": ["input", "ليلى"] }, { "wait": 600 }]
     },
     {
       "frame": "11.3",
       "file": "NSearchEmpty",
-      "route": "/search",
+      "route": "/search?from=library",
       "steps": [{ "fill": ["input", "zzzz"] }, { "wait": 600 }]
     },
     { "frame": "12.3", "file": "NYou", "route": "/you" },

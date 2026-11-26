@@ -55,6 +55,8 @@ for (const f of pick) {
     }, s.storage);
     if (s.reload) { await page.reload(); await page.waitForTimeout(600); }
     if (s.click) await page.click(s.click, { timeout: 4000 }).catch((e) => console.warn(f.frame, 'click failed', s.click, e.message.split('\n')[0]));
+    // Press and keep holding, so the screenshot catches the held state: [selector, ms].
+    if (s.hold) { const b = await page.locator(s.hold[0]).boundingBox(); if (b) { await page.mouse.move(b.x + 20, b.y + b.height / 2); await page.mouse.down(); await page.waitForTimeout(s.hold[1]); } }
     if (s.fill) await page.fill(s.fill[0], s.fill[1]).catch(() => {});
     if (s.scroll) { await page.evaluate((y) => window.scrollTo(0, y), s.scroll); await page.waitForTimeout(200); }
     if (s.wait) await page.waitForTimeout(s.wait);

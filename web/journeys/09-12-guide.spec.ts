@@ -70,6 +70,32 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await expect(last.getByRole('link', { name: /Dry-eyed, I see Tears, from grief to love/ })).toBeVisible();
   });
 
+  test('9.5 and 2.18 the doors on Pathways and You finished follow the guide’s settings', async ({ page }) => {
+    await fresh(page, { 'mock.lastRead': JSON.stringify('1002') });
+    await page.goto('./journey');
+    await expect(page.getByText(/A poem about loving a place/)).toBeVisible();
+    await page.getByRole('radio', { name: 'PATHWAYS' }).click();
+    const doors = page.getByRole('region', { name: 'From your last poem' }).locator('.door-card');
+    await expect(doors).toHaveCount(3);
+    const before = await doors.allTextContents();
+    await page.evaluate(() => localStorage.setItem('mock.prefs', JSON.stringify({ classicalModern: 1 })));
+    await page.reload();
+    await page.getByRole('radio', { name: 'PATHWAYS' }).click();
+    await expect(doors).toHaveCount(3);
+    await expect.poll(async () => (await doors.allTextContents()).join('|')).not.toBe(before.join('|'));
+    // You finished asks the same guide, with the same settings.
+    const finished = async () => {
+      await page.goto('./p/qadhan?from=tonight');
+      await page.getByTestId('read-sentinel').scrollIntoViewIfNeeded();
+      await page.getByRole('link', { name: 'Tonight’s poem, finished' }).click();
+      await expect(page.locator('.door-card--finished')).toHaveCount(3);
+      return (await page.locator('.door-card--finished').allTextContents()).join('|');
+    };
+    const modern = await finished();
+    await page.evaluate(() => localStorage.setItem('mock.prefs', JSON.stringify({ classicalModern: 0 })));
+    expect(await finished()).not.toBe(modern);
+  });
+
   test('2.18 Tonight’s poem, read to the end, offers three doors with reasons, or enough for tonight', async ({ page }) => {
     await fresh(page);
     await page.goto('./p/qadhan?from=tonight');
@@ -115,6 +141,20 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await expect(page.getByText(/gentle/)).toBeVisible();
   });
 
+  test('12.6 each reciter has a sample, and picking one sets the voice', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./you/reciter');
+    const play = page.getByRole('button', { name: 'Play a sample of Sulafat' });
+    await play.click();
+    await expect(page.getByRole('button', { name: 'Stop the Sulafat sample' })).toBeVisible();
+    await page.getByRole('button', { name: 'Stop the Sulafat sample' }).click();
+    await expect(play).toBeVisible();
+    await page.getByRole('radio', { name: /Sulafat/ }).click();
+    await expect(page.getByRole('radio', { name: /Sulafat/ })).toBeChecked();
+    await page.goto('./you');
+    await expect(page.getByText('Sulafat', { exact: true })).toBeVisible();
+  });
+
   test('12.7 the translation choice is previewed on a real line', async ({ page }) => {
     await fresh(page);
     await page.goto('./you/translation');
@@ -125,6 +165,8 @@ test.describe('Areas 9–12 · First run, journeys, collections, search, You', (
     await page.getByRole('radio', { name: 'NOTHING' }).click();
     await expect(preview).not.toContainText('I pass by the dwellings');
     await expect(preview).not.toContainText('amurru');
+    // Faithful / Poetic and the Sounds style are Later: not offered.
+    await expect(page.getByText(/FAITHFUL|POETIC|SCHOLARLY/)).toHaveCount(0);
   });
 
   test('12.8 account only offers supported actions', async ({ page }) => {

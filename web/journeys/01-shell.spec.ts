@@ -235,10 +235,33 @@ test.describe('Area 1 · Shell and developer panel', () => {
     await page.reload();
     await expect(page.getByTestId('reader')).toBeVisible();
     await expect(page.getByTestId('edge-tab')).toHaveCount(0);
-    await page.evaluate(() => window.scrollTo(0, 400));
+    await page.evaluate(() => window.scrollTo(0, (document.documentElement.scrollHeight - innerHeight) / 2));
     await expect(page.getByRole('button', { name: 'Actions' })).toBeVisible();
     await hold('.reader__mark');
     await expect(page.getByTestId('edge-tab')).toBeVisible();
     await expect(page.getByRole('status')).toContainText('Developer tab shown');
+  });
+
+  test('1.7 on a poem, long-press the dock or the mark hides and shows the edge tab, with a toast', async ({ page }) => {
+    await fresh(page);
+    await page.goto('./p/amurru');
+    const hold = async (name: string) => {
+      const box = (await page.getByRole('navigation', { name }).or(page.getByRole('button', { name })).first().boundingBox())!;
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.mouse.down();
+      await page.waitForTimeout(800);
+      await page.mouse.up();
+    };
+    await expect(page.locator('.door-card')).toHaveCount(3); // the page has its full height
+    await expect(page.getByTestId('edge-tab')).toBeVisible();
+    await hold('Poem actions');
+    await expect(page.getByTestId('edge-tab')).toHaveCount(0);
+    await expect(page.getByRole('status')).toContainText('Developer tab hidden');
+    // Scrolled, the dock folds into the mark; it does the same.
+    await page.evaluate(() => window.scrollTo(0, 100));
+    await hold('Actions');
+    await expect(page.getByTestId('edge-tab')).toBeVisible();
+    await expect(page.getByRole('status')).toContainText('Developer tab shown');
+    await expect(page.getByRole('menu', { name: 'Actions' })).toHaveCount(0); // the press didn't also tap
   });
 });

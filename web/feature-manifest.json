@@ -56,6 +56,7 @@
       "name": "Foundations and developer panel",
       "version": "V1.1",
       "journeys": [
+        "01-shell.spec.ts › 1.7 on a poem, long-press the dock or the mark hides and shows the edge tab, with a toast",
         "01-shell.spec.ts › 1.7 the reader dock and folded mark toggle the same saved edge tab"
       ]
     },
@@ -181,6 +182,7 @@
       "version": "V3.2",
       "journeys": [
         "02-reading.spec.ts › 2.17 a shared image connects poems with different feelings",
+        "02-reading.spec.ts › 2.17 at the end of the poem the dock is back under the doors; mid-poem it is the mark",
         "02-reading.spec.ts › 2.17 the end of the poem offers three different doors, and the guide’s settings change them",
         "live.spec.ts › 2.17 with the guide live, every poem ends with three doors that have reasons",
         "prod.spec.ts › 2.17 a poem ends with three doors, and a door opens its poem"
@@ -191,7 +193,8 @@
       "name": "The guide's doors",
       "version": "V3.2",
       "journeys": [
-        "09-12-guide.spec.ts › 2.18 Tonight’s poem, read to the end, offers three doors with reasons, or enough for tonight"
+        "09-12-guide.spec.ts › 2.18 Tonight’s poem, read to the end, offers three doors with reasons, or enough for tonight",
+        "09-12-guide.spec.ts › 9.5 and 2.18 the doors on Pathways and You finished follow the guide’s settings"
       ]
     },
     {
@@ -365,6 +368,7 @@
       "version": "V1.6",
       "journeys": [
         "04-explore-05-poet.spec.ts › 5.1 every poet in Explore opens a page of their poems; 5.3 the poet tab shows the bio",
+        "04-explore-05-poet.spec.ts › 5.3 a poet with no bio or region yet says so, and the page still works",
         "live.spec.ts › 5.3 the poet tab shows where to find the poet",
         "prod.spec.ts › 4.1 → 5.3 the poet of the week has a bio on the poet tab"
       ]
@@ -586,6 +590,7 @@
       "name": "Library",
       "version": "V2.3",
       "journeys": [
+        "06-keep-07-share-08-library.spec.ts › 8.6 Your poems by poet files poets in Arabic letter order; the A–Z rail jumps to a letter",
         "06-keep-07-share-08-library.spec.ts › 8.6–8.9 your poems group by poet, feeling and era; the sort label switches to English order"
       ]
     },
@@ -696,6 +701,7 @@
       "version": "V3.1",
       "journeys": [
         "09-12-guide.spec.ts › 9.5 Pathways shows the doors of the last poem finished, and none before the first",
+        "09-12-guide.spec.ts › 9.5 and 2.18 the doors on Pathways and You finished follow the guide’s settings",
         "live.spec.ts › 9.5–9.6 Pathways lists the published journeys and opens one"
       ]
     },
@@ -769,7 +775,8 @@
       "name": "Search",
       "version": "V3.4",
       "journeys": [
-        "10-collections-11-search.spec.ts › 11.1 recent searches stay on the device and can be forgotten"
+        "10-collections-11-search.spec.ts › 11.1 recent searches stay on the device and can be forgotten",
+        "10-collections-11-search.spec.ts › 11.1 search opens from Explore and from the Library, and Cancel goes back to where it began"
       ]
     },
     {
@@ -831,7 +838,9 @@
       "id": "12.6",
       "name": "Reciter",
       "version": "V3.5",
-      "gap": "no journey yet"
+      "journeys": [
+        "09-12-guide.spec.ts › 12.6 each reciter has a sample, and picking one sets the voice"
+      ]
     },
     {
       "id": "12.7",

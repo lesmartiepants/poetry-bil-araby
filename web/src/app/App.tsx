@@ -10,11 +10,10 @@ import { readJSON, writeJSON } from '@core/storage';
 import { Coming, Toast } from '@ds/primitives';
 import { useOverlay } from '@components/overlays';
 import { forgetSignIn, readSignIn } from '@components/signInIntent';
-import { TabBar } from './TabBar';
 import { DEV_PANEL_ENABLED } from '@components/devlog';
-import { useLongPress } from './useLongPress';
-import { useDevPanel } from '../features/shell/devPanelState';
+import { TabBar } from './TabBar';
 import { DevPanel } from '../features/shell/DevPanel';
+import { useDevTabHold } from '../features/shell/useDevTabHold';
 import { Splash } from '../features/shell/Splash';
 import { AppearanceControls, ReaderScreen } from '../features/reader/ReaderScreen';
 import { Player, useDefaultVoice } from '../features/listening/Player';
@@ -78,10 +77,9 @@ function Home() {
 
 function Routes() {
   const voice = useDefaultVoice();
-  const toggleDevTab = useDevPanel((s) => s.toggleTab);
-  const press = useLongPress(toggleDevTab, 800);
   const [, nav] = useLocation();
   const [loc] = useLocation();
+  const hold = useDevTabHold();
   const hideTabs = loc.startsWith('/p/') || loc === '/welcome';
   return (
     <>
@@ -92,7 +90,7 @@ function Routes() {
         <Route path="/journey/finished/:id">{(p) => <Gate domains={['journey', 'ai']} title="Tonight’s poem"><FinishedScreen id={p.id} /></Gate>}</Route>
         <Route path="/journey/:slug/done/:step">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><StepDone slug={p.slug} step={Number(p.step)} /></Gate>}</Route>
         <Route path="/journey/:slug">{(p) => <Gate domains={['journey', 'collections']} title="Journeys"><JourneyScreen slug={p.slug} /></Gate>}</Route>
-        <Route path="/p/:id">{(p) => <Gate domains={['poems']} title="The reader"><ReaderScreen key={p.id} id={p.id} Player={Player} defaultVoice={voice} devLongPress={DEV_PANEL_ENABLED ? press : undefined} endNavigation={(visible) => <TabBar readerVisible={visible} />} /></Gate>}</Route>
+        <Route path="/p/:id">{(p) => <Gate domains={['poems']} title="The reader"><ReaderScreen key={p.id} id={p.id} Player={Player} defaultVoice={voice} onLongPressMark={hold.handlers} holding={hold.holding} endNavigation={(visible) => <TabBar readerVisible={visible} />} /></Gate>}</Route>
         <Route path="/explore">{() => <Gate domains={['explore', 'poets']} title="Explore"><ExploreHub /></Gate>}</Route>
         <Route path="/explore/poets">{() => <Gate domains={['poets']} title="All poets"><AllPoets /></Gate>}</Route>
         <Route path="/explore/feelings">{() => <Gate domains={['explore']} title="Feelings"><FeelingShelves /></Gate>}</Route>

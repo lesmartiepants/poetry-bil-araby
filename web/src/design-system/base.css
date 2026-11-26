@@ -761,3 +761,10 @@ a {
 .panel > :not(.pattern) {
   position: relative;
 }
+
+.toast__hint {
+  float: right;
+  font-size: 11px;
+  opacity: 0.75;
+  padding-right: 10px;
+}

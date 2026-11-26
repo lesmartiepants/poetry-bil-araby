@@ -122,3 +122,92 @@
   background: var(--c-accent);
   border-color: var(--c-accent);
 }
+
+/* 8.6 / 8.7 By poet: a header per poet, one line per poem, and the letter rail. */
+.poet-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  padding-bottom: 8px;
+  scroll-margin-top: 12px;
+}
+.poet-group__name {
+  flex: 1;
+  font-size: 14px;
+  color: var(--c-text);
+}
+.poet-group__ar {
+  font-family: var(--font-ruqah, 'Aref Ruqaa', serif);
+  color: var(--c-accent);
+}
+.poet-group__count {
+  font-size: 12px;
+  color: var(--c-muted);
+}
+.list-row.poet-poem {
+  justify-content: space-between;
+  gap: 12px;
+  padding-left: 38px;
+  min-height: 46px;
+  border-radius: 0;
+  border: none;
+  border-top: 1px solid #1f1d22;
+  background: none;
+}
+.poet-poem .list-row__ar {
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.letter-rail {
+  position: fixed;
+  right: 2px;
+  top: 8px;
+  bottom: 8px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  touch-action: none;
+}
+.letter-rail__key {
+  flex: 0 1 19px;
+  min-height: 11px;
+  width: 22px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #4a463e;
+  font-size: 11px;
+  line-height: 1;
+}
+.letter-rail__key--on {
+  color: var(--c-muted);
+}
+.letter-rail__key--held {
+  color: var(--c-bg);
+  background: var(--c-accent);
+  border-radius: 11px;
+}
+.letter-rail__bubble {
+  position: absolute;
+  right: 40px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 28px 28px 4px 28px;
+  background: #efe6d2;
+  color: #4a1620;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+.lib-poems--rail {
+  padding-right: 18px;
+}

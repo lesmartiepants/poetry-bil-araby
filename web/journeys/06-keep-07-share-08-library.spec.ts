@@ -97,10 +97,11 @@ test.describe('Areas 6–8 · Keep, share and the Library', () => {
     for (const p of ['amurru', 'qadhan', 'al-khayl']) { await page.goto(`./p/${p}`); await page.getByRole('button', { name: 'Keep' }).click(); await page.waitForTimeout(300); }
     await page.goto('./library');
     await openYourPoems(page);
-    const heads = page.locator('.t-eyebrow.mt-8');
-    await expect(heads).toHaveCount(3);
+    const poets = page.locator('.poet-group__name');
+    await expect(poets).toHaveText([/Al-Khansa/, /Majnun Layla/, /Al-Mutanabbi/]); // Arabic order: خ ق م
     await page.getByRole('button', { name: 'ARABIC A–Z' }).click();
-    await expect(heads).toHaveText(['Al-Khansa', 'Al-Mutanabbi', 'Majnun Layla']);
+    await expect(poets).toHaveText([/Al-Khansa/, /Al-Mutanabbi/, /Majnun Layla/]);
+    const heads = page.locator('.t-eyebrow.mt-8');
     await page.getByRole('button', { name: 'BY FEELING' }).click();
     await expect(heads).toHaveText(['grief', 'longing', 'pride']);
     await page.getByRole('button', { name: 'BY ERA' }).click();
@@ -152,5 +153,22 @@ test.describe('Areas 6–8 · Keep, share and the Library', () => {
     await page.getByRole('menuitem', { name: 'Copy text' }).click();
     await expect(page.getByRole('status').filter({ hasText: 'Text copied' })).toBeVisible();
     expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('أَمُرُّ');
+  });
+
+  test('8.6 Your poems by poet files poets in Arabic letter order; the A–Z rail jumps to a letter', async ({ page }) => {
+    await fresh(page, { ...signedIn, 'mock.keeps': JSON.stringify(['87201', '1001', '1002', '1003', '1004', '1006']) });
+    await page.goto('./library');
+    await openYourPoems(page);
+    // Dictionary order: "ال" and vowel marks are ignored (Al-Khansa files under خ, after Al-Sayyab under ب).
+    const names = page.locator('.poet-group__name');
+    await expect(names).toHaveText([/Abu Firas/, /Imru/, /Al-Sayyab/, /Al-Khansa/, /Majnun/, /Kaʿb/]);
+    // The rail jumps to a letter, and to the next one with poets when that letter has none.
+    await page.getByRole('navigation', { name: 'Jump to an Arabic letter' }).getByRole('button', { name: 'Jump to ك' }).click();
+    await expect(page.getByRole('navigation', { name: 'Jump to an Arabic letter' })).toBeVisible();
+    await expect(page.locator('.poet-group', { hasText: 'Kaʿb' })).toBeInViewport();
+    // English order is plain A–Z with an A–Z rail.
+    await page.getByRole('button', { name: 'ARABIC A–Z' }).click();
+    await expect(names).toHaveText([/Abu Firas/, /Al-Khansa/, /Al-Sayyab/, /Imru/, /Kaʿb/, /Majnun/]);
+    await expect(page.getByRole('navigation', { name: 'Jump to a letter' }).getByRole('button')).toHaveCount(26);
   });
 });

@@ -1,10 +1,11 @@
 // Area 8 · Library (8.1–8.15).
-import { useState, type ComponentType } from 'react';
+import { useRef, useState, type ComponentType } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useQueries } from '@tanstack/react-query';
 import { api } from '@core/api';
-import { qk, useAccount, useCollections, useFollows, useInvalidate, useKeeps, useLists, usePoems, usePoets, useProgress, useReads } from '@core/hooks';
+import { qk, useAccount, useCollections, useEras, useFollows, useInvalidate, useKeeps, useLists, usePoems, usePoets, useProgress, useReads } from '@core/hooks';
 import { isAvailable } from '@core/sources';
+import { arabicInitial, arabicSortKey, stripMarks } from '@core/logic/arabic';
 import type { Poem, Poet, UserList } from '@core/types';
 import { FullAreaError, Header, Pending, SectionLabel, Segmented, Sheet, Skeleton, TitleRow } from '@ds/primitives';
 import { Compass, Dots, Lock, Mark, Search } from '@ds/icons';
@@ -56,7 +57,7 @@ export function LibraryHub({ ListIcon }: { ListIcon: ListIconT }) {
   const tabs = (
     <div className="row gap-8">
       <div style={{ flex: 1 }}><Segmented pill label="Library" value={tab} onChange={setTab} options={[{ value: 'hub', label: 'HUB' }, { value: 'poems', label: 'POEMS' }]} /></div>
-      {isAvailable('search') && <button className="icon-btn lib-search" aria-label="Search" onClick={() => nav('/search')}><Search /></button>}
+      {isAvailable('search') && <button className="icon-btn lib-search" aria-label="Search" onClick={() => nav('/search?from=library')}><Search /></button>}
     </div>
   );
   return (
@@ -126,8 +127,23 @@ function YourPoems() {
   const [sel, setSel] = useState<string[]>([]);
   const inv = useInvalidate();
   const showToast = useOverlay((s) => s.showToast);
-  const keyOf = (p: Poem) => (group === 'poet' ? (order === 'ar' ? p.poetAr : p.poetEn) : group === 'feeling' ? p.feelingKeys[0] ?? '—' : p.eraKey);
-  const groups = [...new Set(poems.map(keyOf))].sort((a, b) => a.localeCompare(b, order === 'ar' ? 'ar' : 'en'));
+  // By poet files poets the way a dictionary does: Arabic order ignores "ال" and the vowel marks (8.6); English order is plain A–Z (8.7).
+  const keyOf = (p: Poem) => (group === 'poet' ? p.poetSlug : group === 'feeling' ? p.feelingKeys[0] ?? '—' : p.eraKey);
+  const poetBySlug = new Map<string, Poem>();
+  for (const poem of poems) if (!poetBySlug.has(poem.poetSlug)) poetBySlug.set(poem.poetSlug, poem);
+  const poetOf = (slug: string) => poetBySlug.get(slug)!;
+  const sortKey = (k: string) => (group !== 'poet' ? k : order === 'ar' ? arabicSortKey(poetOf(k).poetAr) : poetOf(k).poetEn);
+  const groups = [...new Set(poems.map(keyOf))].sort((a, b) => sortKey(a).localeCompare(sortKey(b), group === 'poet' && order === 'ar' ? 'ar' : 'en'));
+  const letterOf = (k: string) => (order === 'ar' ? arabicInitial(poetOf(k).poetAr) : poetOf(k).poetEn[0].toUpperCase());
+  const listRef = useRef<HTMLDivElement>(null);
+  const jump = (letter: string) => {
+    const els = [...(listRef.current?.querySelectorAll<HTMLElement>('[data-letter]') ?? [])];
+    const alphabet = order === 'ar' ? AR_LETTERS : EN_LETTERS;
+    // A letter with no poet takes you to the next one that has.
+    const at = alphabet.indexOf(letter);
+    const target = els.find((el) => alphabet.indexOf(el.dataset.letter!) >= at) ?? els[els.length - 1];
+    target?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  };
   const remove = async () => {
     const ids = sel;
     await api.keeps.unkeep(ids);
@@ -137,7 +153,7 @@ function YourPoems() {
     showToast({ text: `${ids.length} removed`, action: 'UNDO', onAction: async () => { for (const id of ids.reverse()) await api.keeps.keep(id); inv(qk.keeps, qk.lists); } }, 6000);
   };
   return (
-    <div className="stack gap-10">
+    <div className={`stack gap-10${group === 'poet' ? ' lib-poems--rail' : ''}`}>
       <div className="row between">
         <div className="chips" style={{ marginRight: 0 }}>
           {(['poet', 'feeling', 'era'] as const).map((g) => <button key={g} className="chip chip--sm" aria-pressed={group === g} onClick={() => setGroup(g)}>BY {g.toUpperCase()}</button>)}
@@ -147,19 +163,62 @@ function YourPoems() {
         <button className="link-btn" onClick={() => setOrder(order === 'ar' ? 'en' : 'ar')}>{order === 'ar' ? 'ARABIC A–Z' : 'ENGLISH A–Z'}</button>
         <button className="link-btn" onClick={() => { setSelecting(!selecting); setSel([]); }}>{selecting ? 'CANCEL' : 'SELECT'}</button>
       </div>
-      {groups.map((g) => (
+      <div ref={listRef} className="stack">
+      {groups.map((g, gi) => (
         <div key={g} className="stack">
-          <p className="t-eyebrow t-eyebrow--accent mt-8">{g}</p>
+          {group === 'poet' ? (() => {
+            const poet = poets?.find((x) => x.slug === g);
+            const mine = poems.filter((p) => keyOf(p) === g);
+            const letter = letterOf(g);
+            return (
+              <div className="poet-group" data-letter={letterOf(groups[gi - 1] ?? g) === letter && gi > 0 ? undefined : letter}>
+                <PoetAvatar initial={poet?.initial ?? stripMarks(mine[0].poetAr)[0]} eraKey={mine[0].eraKey} size={28} />
+                <span className="poet-group__name">{mine[0].poetEn} · <span lang="ar" className="poet-group__ar">{mine[0].poetAr}</span></span>
+                <span className="poet-group__count">{mine.length}</span>
+              </div>
+            );
+          })() : <p className="t-eyebrow t-eyebrow--accent mt-8">{g}</p>}
           {poems.filter((p) => keyOf(p) === g).map((p) => selecting ? (
             <button key={p.id} className="list-row" role="checkbox" aria-checked={sel.includes(p.id)} onClick={() => setSel(sel.includes(p.id) ? sel.filter((x) => x !== p.id) : [...sel, p.id])}>
               <span className={`check${sel.includes(p.id) ? ' check--on' : ''}`} />
               <span className="list-row__main"><span className="list-row__title">{p.titleEn}</span><span className="list-row__sub">{p.poetEn}</span></span>
             </button>
+          ) : group === 'poet' ? (
+            <Link key={p.id} href={`/p/${p.slug}`} className="list-row poet-poem">
+              <span className="list-row__title">{p.titleEn}</span>
+              <span lang="ar" className="list-row__ar">{p.firstLineAr}</span>
+            </Link>
           ) : <PoemRow key={p.id} poem={p} initial={poets?.find((x) => x.slug === p.poetSlug)?.initial} />)}
         </div>
       ))}
+      </div>
+      {group === 'poet' && groups.length > 1 && <LetterRail letters={order === 'ar' ? AR_LETTERS : EN_LETTERS} have={new Set(groups.map(letterOf))} onJump={jump} lang={order} />}
       {selecting && <div className="select-bar"><span>{sel.length} selected</span><button className="btn btn--danger" disabled={!sel.length} onClick={remove}>Remove</button></div>}
     </div>
+  );
+}
+
+const AR_LETTERS = [...'أبتثجحخدذرزسشصضطظعغفقكلمنهوي'];
+const EN_LETTERS = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'];
+
+/** 8.6 / 8.7 The A–Z rail: tap or drag a letter to jump there; the letter you hold shows large beside it. */
+function LetterRail({ letters, have, onJump, lang }: { letters: string[]; have: Set<string>; onJump: (l: string) => void; lang: 'ar' | 'en' }) {
+  const [held, setHeld] = useState<string | null>(null);
+  const at = (e: React.PointerEvent) => (document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null)?.dataset.rail ?? null;
+  const move = (e: React.PointerEvent) => {
+    const l = at(e);
+    if (l && l !== held) { setHeld(l); onJump(l); }
+  };
+  return (
+    <nav aria-label={lang === 'ar' ? 'Jump to an Arabic letter' : 'Jump to a letter'} className="letter-rail"
+      onPointerDown={(e) => { (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId); move(e); }} onPointerMove={(e) => held && move(e)}
+      onPointerUp={() => setHeld(null)} onPointerCancel={() => setHeld(null)}>
+      {held && <span className="letter-rail__bubble" aria-hidden lang={lang} >{held}</span>}
+      {letters.map((l) => (
+        <button key={l} data-rail={l} lang={lang} className={`letter-rail__key${have.has(l) ? ' letter-rail__key--on' : ''}${held === l ? ' letter-rail__key--held' : ''}`}
+          aria-label={`Jump to ${l}`} onKeyDown={(e) => e.key === 'Enter' && onJump(l)} onClick={(e) => { if (e.detail === 0) onJump(l); }}>{l}</button>
+      ))}
+    </nav>
   );
 }
 
@@ -241,23 +300,26 @@ export function ListScreen({ id, ListIcon }: { id: string; ListIcon: ListIconT }
   );
 }
 
-function FollowedPoetRow({ poet, reads }: { poet: Poet; reads: Record<string, number> }) {
+function FollowedPoetRow({ poet, reads, era }: { poet: Poet; reads: Record<string, number>; era: string }) {
   const poems = usePoems({ poet: poet.slug }).data;
   const read = poems?.filter((p) => reads[p.id]).length;
-  return <PoetRow poet={poet} sub={`${poet.poemCount} poems${read !== undefined ? ` · ${read} read` : ''}`} />;
+  return <PoetRow poet={poet} sub={`${era} · ${poet.poemCount} poems${read !== undefined ? ` · ${read} read` : ''}`.toUpperCase()} />;
 }
 
 export function FollowedPoets() {
   const follows = useFollows().data;
   const poets = usePoets().data;
   const reads = useReads().data ?? {};
+  const eras = useEras().data;
   const [, nav] = useLocation();
+  const mine = poets?.filter((p) => follows?.includes(p.slug)).sort((x, y) => arabicSortKey(x.nameAr).localeCompare(arabicSortKey(y.nameAr), 'ar'));
   return (
     <div className="screen">
       <Header onBack={() => nav('/library')} />
       <TitleRow en="Poets you follow" ar="شعراؤك" />
       <div className="pad list mt-8">
-        {poets?.filter((p) => follows?.includes(p.slug)).map((p) => <FollowedPoetRow key={p.slug} poet={p} reads={reads} />)}
+        <div className="row between t-count"><span>{mine?.length ?? 0} {mine?.length === 1 ? 'POET' : 'POETS'}</span><span>ARABIC A–Z</span></div>
+        {mine?.map((p) => <FollowedPoetRow key={p.slug} poet={p} reads={reads} era={eras?.find((e) => e.slug === p.eraKey)?.nameEn ?? ''} />)}
         <Link href="/explore/poets" className="btn mt-16" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none' }}>Find more poets</Link>
       </div>
     </div>

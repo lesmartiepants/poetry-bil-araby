@@ -89,6 +89,56 @@ test.describe('Area 2 · Reading', () => {
     await expect(page).toHaveURL(/\/p\/araka$/);
   });
 
+  test('the standard reader tabs appear at the start of the Guide and return to Journey', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 700 });
+    await fresh(page);
+    await page.goto('./');
+    await expect(page).toHaveURL(/\/new\/journey$/);
+    const tabs = page.getByRole('navigation', { name: 'Main' });
+    const tabLinks = () => tabs.getByRole('link').evaluateAll((links) =>
+      links.map((link) => [link.getAttribute('aria-label'), link.getAttribute('href')])
+    );
+    const standardLinks = await tabLinks();
+    await page.getByRole('link', { name: 'Explore', exact: true }).click();
+    await page.getByRole('link', { name: /Longing/ }).first().click();
+    await page.locator('a[href$="/p/amurru"]').first().click();
+    await expect(page).toHaveURL(/\/new\/p\/amurru$/);
+    const guide = page.getByRole('region', { name: 'Where the guide would take you next' });
+    const scrollTop = () => page.evaluate(() => window.scrollY);
+    const toBottom = () => page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await expect(tabs).toHaveCount(0);
+
+    await expect(guide.getByRole('link')).toHaveCount(3);
+    await guide.evaluate((section) => {
+      window.scrollBy(0, section.getBoundingClientRect().top - (window.innerHeight - 220));
+    });
+    await expect(tabs.getByRole('link', { name: 'Journey' })).toBeInViewport();
+    await expect(guide.getByRole('link').last()).not.toBeInViewport();
+    expect(await tabLinks()).toEqual(standardLinks);
+    await expect(tabs.getByRole('link', { name: 'Explore' })).toHaveAttribute('aria-current', 'location');
+    await expect(tabs.locator('[aria-current]')).toHaveCount(1);
+
+    for (let step = 0; step < 2; step++) {
+      const doors = guide.getByRole('link');
+      await expect(doors).toHaveCount(3);
+      await toBottom();
+      await expect(tabs.getByRole('link', { name: 'Journey' })).toBeInViewport();
+      const next = doors.nth(step);
+      const href = await next.getAttribute('href');
+      await next.click();
+      await expect(page).toHaveURL(new URL(href!, page.url()).href);
+      await expect.poll(scrollTop).toBe(0);
+      await expect(tabs).toHaveCount(0);
+    }
+
+    await expect(guide.getByRole('link')).toHaveCount(3);
+    await toBottom();
+    await tabs.getByRole('link', { name: 'Journey' }).click();
+    await expect(page).toHaveURL(/\/new\/journey$/);
+    await expect.poll(scrollTop).toBe(0);
+    await expect(page.getByRole('link', { name: 'Enter the poem' })).toBeVisible();
+  });
+
   test('2.2–2.3 scrolling folds the dock into the mark, which opens the fan', async ({ page }) => {
     await fresh(page);
     await page.goto('./p/amurru');

@@ -69,7 +69,7 @@ export function Switch({ on, onChange, label }: { on: boolean; onChange: (v: boo
 
 /** Settings choices are separate boxes; `pill` is the two-way switch between views (Hub / Poems). */
 export function Segmented<T extends string | number>({ label, value, options, onChange, tall, pill }: {
-  label: string; value: T; options: { value: T; label: ReactNode }[]; onChange: (v: T) => void; tall?: boolean; pill?: boolean;
+  label: string; value: T; options: readonly { value: T; label: ReactNode }[]; onChange: (v: T) => void; tall?: boolean; pill?: boolean;
 }) {
   return (
     <div role="radiogroup" aria-label={label} className={`seg${tall ? ' seg--tall' : ''}${pill ? ' seg--pill' : ''}`}>

@@ -24,7 +24,11 @@ import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
-import { readFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
+import { execFile } from 'node:child_process';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { promisify } from 'node:util';
 import WebSocket from 'ws';
 import { buildLiveWordTimings } from './src/utils/liveWordTiming.js';
 import { resolveProfile, curationSql } from './curation.js';
@@ -809,8 +813,12 @@ app.use(
         'http://localhost:8080',
         'https://poetry-bil-araby.vercel.app',
       ];
+      const localDev =
+        process.env.NODE_ENV !== 'production' &&
+        /^http:\/\/(?:localhost|127\.0\.0\.1|\[::1\])(?::\d+)?$/.test(origin);
       // Allow Vercel preview deployments (poetry-bil-araby-*.vercel.app)
       if (
+        localDev ||
         allowed.includes(origin) ||
         /^https:\/\/poetry-bil-araby[a-z0-9-]*\.vercel\.app$/.test(origin)
       ) {
@@ -822,6 +830,7 @@ app.use(
     allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'sentry-trace', 'baggage'],
   })
 );
+app.post('/api/bug-reports', express.json({ limit: '1mb' }));
 app.use(express.json());
 app.use('/api', devEventsMiddleware); // ReDesign2 developer panel timeline
 // Larger body limit only for AI proxy endpoints
@@ -3485,25 +3494,35 @@ app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, 
 });
 
 // ═══════════════════════════════════════════════════════════════
-// BUG REPORTS (structured log only — no DB table needed yet)
+// BUG REPORTS
 // ═══════════════════════════════════════════════════════════════
 
-async function createGitHubIssue(report, truncatedLogs) {
+const execFileAsync = promisify(execFile);
+const renderGitHubCli = resolve('.render-bin/gh');
+
+async function createGitHubIssue(report, truncatedLogs, reportId) {
   const token = process.env.GITHUB_TOKEN_SUBMIT_BUG;
   const repo = process.env.GITHUB_REPO || 'lesmartiepants/poetry-bil-araby';
   if (!token) return null;
 
   const poemInfo = report.poem
-    ? `**Poem:** ${report.poem.title || 'untitled'} — ${report.poem.poet || 'unknown'} (ID: ${report.poem.id || 'n/a'})`
+    ? `**Poem:** ${report.poem.title || 'untitled'} — ${report.poem.poet || 'unknown'} (ID: ${report.poem.id || 'n/a'})${report.poem.line ? ` · line ${report.poem.line}` : ''}${report.poem.voice ? ` · ${report.poem.voice}` : ''}`
     : 'No poem context';
 
   const stateInfo = report.appState
-    ? `Mode: ${report.appState.mode}, Theme: ${report.appState.theme}, Font: ${report.appState.font}`
+    ? [
+        report.appState.mode && `Mode: ${report.appState.mode}`,
+        report.appState.theme && `Theme: ${report.appState.theme}`,
+        report.appState.font && `Font: ${report.appState.font}`,
+        report.appState.textSize && `Text size: ${report.appState.textSize}`,
+      ]
+        .filter(Boolean)
+        .join(', ')
     : 'No app state';
 
   const logsSection =
     truncatedLogs.length > 0
-      ? `<details><summary>Client logs (${truncatedLogs.length} entries)</summary>\n\n\`\`\`json\n${JSON.stringify(truncatedLogs.slice(-20), null, 2)}\n\`\`\`\n</details>`
+      ? `<details><summary>Client logs (${Math.min(truncatedLogs.length, 20)} of ${truncatedLogs.length} entries)</summary>\n\n\`\`\`json\n${JSON.stringify(truncatedLogs.slice(-20), null, 2)}\n\`\`\`\n</details>`
       : 'No client logs attached';
 
   const envSection = [
@@ -3524,8 +3543,9 @@ async function createGitHubIssue(report, truncatedLogs) {
     ``,
     poemInfo,
     `**App state:** ${stateInfo}`,
-    `**User agent:** \`${report.userAgent}\``,
+    report.userAgent && `**User agent:** \`${report.userAgent}\``,
     `**Submitted:** ${report.timestamp}`,
+    reportId && `**Saved report:** \`bug_reports/${reportId}\``,
     envSection && ``,
     envSection && `### Environment`,
     envSection && envSection,
@@ -3545,6 +3565,7 @@ async function createGitHubIssue(report, truncatedLogs) {
   try {
     const resp = await fetch(`https://api.github.com/repos/${repo}/issues`, {
       method: 'POST',
+      signal: AbortSignal.timeout(8000),
       headers: {
         Authorization: `Bearer ${token}`,
         Accept: 'application/vnd.github+json',
@@ -3565,11 +3586,62 @@ async function createGitHubIssue(report, truncatedLogs) {
 
     const issue = await resp.json();
     log.info('BugReport', `GitHub issue created: #${issue.number}`, { url: issue.html_url });
-    return issue.number;
+    return { number: issue.number, repo };
   } catch (e) {
     Sentry.captureException(e);
     log.error('BugReport', `GitHub issue creation error: ${e.message}`);
     return null;
+  }
+}
+
+// Use GitHub's native attachment upload after creating the issue. An upload
+// failure leaves the original issue available without risking a duplicate.
+async function attachGitHubScreenshot(issue, screenshot) {
+  let directory;
+  try {
+    directory = await mkdtemp(resolve(tmpdir(), 'qafiyah-bug-report-'));
+    const image = resolve(directory, 'app-screenshot.jpg');
+    await writeFile(
+      image,
+      Buffer.from(screenshot.slice('data:image/jpeg;base64,'.length), 'base64'),
+      { mode: 0o600 }
+    );
+    await execFileAsync(
+      process.env.GITHUB_CLI_PATH || (existsSync(renderGitHubCli) ? renderGitHubCli : 'gh'),
+      [
+        'issue',
+        'edit',
+        String(issue.number),
+        '--repo',
+        issue.repo,
+        '--attach',
+        `${image}#App screenshot`,
+      ],
+      {
+        timeout: 12000,
+        env: {
+          PATH: process.env.PATH,
+          HOME: process.env.HOME,
+          GH_TOKEN: process.env.GITHUB_TOKEN_SUBMIT_BUG,
+          GH_PROMPT_DISABLED: '1',
+          GH_NO_UPDATE_NOTIFIER: '1',
+          GH_NO_EXTENSION_UPDATE_NOTIFIER: '1',
+        },
+      }
+    );
+    return true;
+  } catch (error) {
+    log.error(
+      'BugReport',
+      `GitHub screenshot attachment failed for #${issue.number} (${error.code ?? error.signal ?? 'unknown error'})`
+    );
+    return false;
+  } finally {
+    if (directory) {
+      await rm(directory, { recursive: true, force: true }).catch(() => {
+        log.error('BugReport', `Could not remove the temporary screenshot for #${issue.number}`);
+      });
+    }
   }
 }
 
@@ -3591,27 +3663,45 @@ app.post(
         online,
         referrer,
         featureFlags,
+        screenshot,
+        shareScreenshotPublicly,
       } = req.body;
 
       // Basic validation
-      if (!timestamp || !userAgent) {
-        return res.status(400).json({ error: 'Missing required fields: timestamp, userAgent' });
+      if (!timestamp) {
+        return res.status(400).json({ error: 'Missing required field: timestamp' });
+      }
+      if (
+        screenshot !== undefined &&
+        (typeof screenshot !== 'string' ||
+          screenshot.length > 250_000 ||
+          !/^data:image\/jpeg;base64,\/9j\/[A-Za-z0-9+/]*={0,2}$/.test(screenshot))
+      ) {
+        return res.status(400).json({ error: 'Invalid screenshot attachment' });
       }
 
-      // Truncate logs if too large
-      const truncatedLogs = Array.isArray(clientLogs) ? clientLogs.slice(-100) : [];
+      const truncatedLogs = Array.isArray(clientLogs) ? clientLogs.slice(-200) : [];
 
       const report = {
         description: typeof description === 'string' ? description.slice(0, 1000) : '',
         logsCount: truncatedLogs.length,
         timestamp,
         userAgent: typeof userAgent === 'string' ? userAgent.slice(0, 500) : '',
-        poem: poem ? { id: poem.id, poet: poem.poet, title: poem.title } : null,
+        poem: poem
+          ? {
+              id: poem.id,
+              poet: poem.poet,
+              title: poem.title,
+              line: Number.isInteger(poem.line) && poem.line > 0 ? poem.line : null,
+              voice: typeof poem.voice === 'string' ? poem.voice.slice(0, 80) : null,
+            }
+          : null,
         appState: appState
           ? {
               mode: appState.mode,
               theme: appState.theme,
               font: appState.font,
+              textSize: Number.isInteger(appState.textSize) ? appState.textSize : null,
             }
           : null,
         url: typeof url === 'string' ? url.slice(0, 2000) : null,
@@ -3629,26 +3719,24 @@ app.post(
         log.debug('BugReport', `Client logs (${truncatedLogs.length} entries)`, truncatedLogs);
       }
 
-      // Create GitHub issue (non-blocking — don't fail the request if this errors)
-      const issueNumber = await createGitHubIssue(report, truncatedLogs);
-
-      // Persist to PostgreSQL
+      let reportId = null;
       try {
-        await pool.query(
-          `INSERT INTO bug_reports (description, logs, timestamp, user_agent, poem_id, poem_poet, poem_title, app_mode, app_theme, app_font, github_issue_number, url, screen_size, language, online, referrer, feature_flags)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+        const { rows } = await pool.query(
+          `INSERT INTO bug_reports (description, logs, timestamp, user_agent, poem_id, poem_poet, poem_title, app_mode, app_theme, app_font, url, screen_size, language, online, referrer, feature_flags)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id`,
           [
             report.description,
             JSON.stringify(truncatedLogs),
             report.timestamp,
             report.userAgent,
-            report.poem?.id || null,
+            /^\d+$/.test(String(report.poem?.id)) && Number(report.poem.id) <= 2147483647
+              ? Number(report.poem.id)
+              : null,
             report.poem?.poet || null,
             report.poem?.title || null,
             report.appState?.mode || null,
             report.appState?.theme || null,
             report.appState?.font || null,
-            issueNumber,
             report.url,
             report.screenSize,
             report.language,
@@ -3657,16 +3745,42 @@ app.post(
             report.featureFlags ? JSON.stringify(report.featureFlags) : null,
           ]
         );
-        log.info('BugReport', `Saved to database${issueNumber ? ` (GitHub #${issueNumber})` : ''}`);
+        reportId = rows[0].id;
+        log.info('BugReport', `Saved report #${reportId} to database`);
       } catch (dbErr) {
-        // DB insert failure is non-fatal — report was already logged
-        log.error('BugReport', `DB insert failed (non-fatal): ${dbErr.message}`);
+        // Storage failure is non-fatal because the report was already logged.
+        log.error('BugReport', `Bug report storage failed: ${dbErr.message}`);
+      }
+
+      const issue = await createGitHubIssue(report, truncatedLogs, reportId);
+      const issueNumber = issue?.number;
+      // Earlier clients could send an image intended only for private storage.
+      const screenshotAttached = Boolean(
+        issue &&
+        screenshot &&
+        shareScreenshotPublicly === true &&
+        (await attachGitHubScreenshot(issue, screenshot))
+      );
+      if (reportId && issueNumber) {
+        try {
+          await pool.query('UPDATE bug_reports SET github_issue_number = $1 WHERE id = $2', [
+            issueNumber,
+            reportId,
+          ]);
+        } catch (dbErr) {
+          log.error(
+            'BugReport',
+            `Could not link report #${reportId} to GitHub #${issueNumber}: ${dbErr.message}`
+          );
+        }
       }
 
       res.status(201).json({
         success: true,
         message: 'Bug report submitted',
+        reportSaved: reportId !== null,
         ...(issueNumber && { githubIssue: issueNumber }),
+        ...(screenshot && { screenshotAttached, screenshotSaved: screenshotAttached }),
       });
     } catch (error) {
       Sentry.captureException(error);

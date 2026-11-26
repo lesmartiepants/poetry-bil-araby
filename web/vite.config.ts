@@ -6,8 +6,9 @@ import { fileURLToPath, URL } from 'node:url';
 export default defineConfig({
   base: '/new/',
   plugins: [react()],
+  define: { __DEV_BUILD_DATE__: JSON.stringify(new Date().toISOString().slice(0, 10).replaceAll('-', '.')) },
   // Pre-bundle up front: a mid-session dependency re-optimisation reloads the page (and breaks journeys).
-  optimizeDeps: { include: ['react', 'react-dom', 'wouter', '@tanstack/react-query', 'zustand', '@supabase/supabase-js'] },
+  optimizeDeps: { include: ['react', 'react-dom', 'wouter', '@tanstack/react-query', 'zustand', '@supabase/supabase-js', 'html2canvas'] },
   resolve: {
     alias: {
       '@core': fileURLToPath(new URL('./core', import.meta.url)),

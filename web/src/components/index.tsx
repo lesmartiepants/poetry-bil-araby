@@ -178,7 +178,8 @@ export function DoorCard({ door, size = 'end' }: { door: Door; size?: 'end' | 'p
   const title = poem.titleEn || poem.titleAr;
   const poet = poem.poetEn || poem.poetAr;
   return (
-    <Link href={`/p/${poem.slug}`} className={`door-card door-card--${size}`}>
+    <Link href={`/p/${poem.slug}`} className={`door-card door-card--${size}`}
+      onClick={() => requestAnimationFrame(() => window.scrollTo(0, 0))}>
       <span className="door-card__art panel" aria-hidden><Pattern {...eraArt(poem.eraKey)} scale={size === 'finished' ? 0.55 : 0.45} /></span>
       <span className="door-card__text">
         <span className="door-card__title" lang={title === poem.titleAr ? 'ar' : undefined} dir="auto">{title}</span>

@@ -1,5 +1,5 @@
 // The player that takes the dock's place while listening (3.1–3.11).
-import { useState } from 'react';
+import { useState, type HTMLAttributes } from 'react';
 import { Mark, Pause, Play } from '@ds/icons';
 import { Sheet, Toast } from '@ds/primitives';
 import { usePlayback } from '@components/playback';
@@ -9,9 +9,9 @@ import type { Poem, Voice } from '@core/types';
 import { useEngine } from './engine';
 import './listening.css';
 
-export interface PlayerProps { poem: Poem; compact: boolean; onMark: () => void; onExpand: () => void }
+export interface PlayerProps { poem: Poem; compact: boolean; onMark: () => void; onExpand: () => void; devLongPress?: HTMLAttributes<HTMLElement> }
 
-export function Player({ poem, compact, onMark, onExpand }: PlayerProps) {
+export function Player({ poem, compact, onMark, onExpand, devLongPress }: PlayerProps) {
   useEngine(poem);
   const pb = usePlayback();
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -21,7 +21,7 @@ export function Player({ poem, compact, onMark, onExpand }: PlayerProps) {
 
   if (compact) {
     return (
-      <nav aria-label="Now playing" className="player player--pill">
+      <nav aria-label="Now playing" className="player player--pill" {...devLongPress}>
         <button className="player__mark" aria-label="More actions" onClick={onMark}><Mark size={28} colour="var(--c-accent)" /></button>
         <button className="player__line" onClick={onExpand} aria-label="Show the player">LINE {pb.line + 1} OF {segs} ⌃</button>
         <button className="player__pp" aria-label={playing ? 'Pause' : 'Play'} onClick={toggle}>{playing ? <Pause /> : <Play />}</button>
@@ -30,7 +30,7 @@ export function Player({ poem, compact, onMark, onExpand }: PlayerProps) {
   }
   return (
     <>
-      <nav aria-label="Now playing" className="player">
+      <nav aria-label="Now playing" className="player" {...devLongPress}>
         <button className="player__mark" aria-label="More actions" onClick={onMark}><Mark size={31} colour="var(--c-accent)" /></button>
         <div className="player__mid">
           <div className="row between player__labels">

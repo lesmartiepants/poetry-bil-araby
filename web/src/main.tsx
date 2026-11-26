@@ -7,7 +7,8 @@ import { makeSupabaseApi } from '@core/api/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { App } from './app/App';
 import { authReturnUrl, moveSavedSessionToSharedKey } from './components/signInIntent';
-import { installDevLog } from './features/shell/devlog';
+import { restoreDevTab } from './features/shell/devPanelState';
+import { DEV_PANEL_ENABLED, installDevLog } from './components/devlog';
 import './design-system/base.css';
 import './components/components.css';
 
@@ -19,7 +20,10 @@ setStore({
 });
 // Production hides mocked areas; dev and preview builds show them.
 setShowMocks(import.meta.env.DEV || import.meta.env.VITE_SHOW_MOCKS === '1');
-installDevLog();
+if (DEV_PANEL_ENABLED) {
+  restoreDevTab();
+  installDevLog();
+}
 setApiBase(import.meta.env.VITE_API_URL ?? '');
 setAppUrl(location.origin + import.meta.env.BASE_URL);
 
